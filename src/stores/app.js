@@ -10,7 +10,13 @@ export const useAppStore = defineStore('app', () => {
       icon: '💰',
       score: 0,
       notes: '',
-      goals: []
+      goals: [],
+      reflection: {
+        why: '',
+        ten: '',
+        prevents: '',
+        desired: ''
+      }
     },
     {
       id: 'hobbies',
@@ -18,7 +24,13 @@ export const useAppStore = defineStore('app', () => {
       icon: '🎨',
       score: 0,
       notes: '',
-      goals: []
+      goals: [],
+      reflection: {
+        why: '',
+        ten: '',
+        prevents: '',
+        desired: ''
+      }
     },
     {
       id: 'friendship',
@@ -26,7 +38,13 @@ export const useAppStore = defineStore('app', () => {
       icon: '👥',
       score: 0,
       notes: '',
-      goals: []
+      goals: [],
+      reflection: {
+        why: '',
+        ten: '',
+        prevents: '',
+        desired: ''
+      }
     },
     {
       id: 'health',
@@ -34,7 +52,13 @@ export const useAppStore = defineStore('app', () => {
       icon: '❤️',
       score: 0,
       notes: '',
-      goals: []
+      goals: [],
+      reflection: {
+        why: '',
+        ten: '',
+        prevents: '',
+        desired: ''
+      }
     },
     {
       id: 'career',
@@ -42,7 +66,13 @@ export const useAppStore = defineStore('app', () => {
       icon: '💼',
       score: 0,
       notes: '',
-      goals: []
+      goals: [],
+      reflection: {
+        why: '',
+        ten: '',
+        prevents: '',
+        desired: ''
+      }
     },
     {
       id: 'love',
@@ -50,7 +80,13 @@ export const useAppStore = defineStore('app', () => {
       icon: '💕',
       score: 0,
       notes: '',
-      goals: []
+      goals: [],
+      reflection: {
+        why: '',
+        ten: '',
+        prevents: '',
+        desired: ''
+      }
     }
   ])
 

@@ -134,77 +134,82 @@
       </div>
     </div>
 
-    <!-- Step 3: Результаты -->
+    <!-- Step 3: Глубокая рефлексия -->
     <div v-if="currentStep === 3" class="step-content">
-      <div class="results-section">
+      <div class="reflection-section">
         <header class="section-header">
-          <h1>✅ Фиксирование результатов</h1>
+          <h1>🔍 Глубокая рефлексия</h1>
           <p class="subtitle">
-            Выберите 3-5 ключевых целей для фокуса
+            Ответьте на вопросы по каждой сфере жизни. Не думайте пока о реализации — просто фиксируйте мысли и желания.
           </p>
         </header>
 
-        <div class="card results-summary">
-          <h2>Ваши результаты упражнения</h2>
-          
-          <div class="summary-block">
-            <h3>📊 Колесо баланса</h3>
-            <div class="wheel-summary">
-              <div 
-                v-for="sphere in lifeSpheres" 
-                :key="sphere.id"
-                class="sphere-summary-item"
-              >
-                <div class="sphere-info">
-                  <span class="sphere-icon">{{ sphere.icon }}</span>
-                  <span class="sphere-name">{{ sphere.name }}</span>
-                </div>
-                <div class="sphere-score-bar">
-                  <div 
-                    class="score-fill" 
-                    :style="{ width: `${sphere.score * 10}%` }"
-                  ></div>
-                  <span class="score-label">{{ sphere.score }}/10</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="summary-block">
-            <h3>🎯 Банк целей</h3>
-            <p>Всего целей в банке: <strong>{{ goalsBank.length }}</strong></p>
-            <p>Истинных целей: <strong>{{ trueGoals.length }}</strong></p>
-          </div>
-
-          <div class="summary-block">
-            <h3>🎯 Выберите 3-5 приоритетных целей</h3>
-            <p class="hint">Выберите цели, которые дадут максимальный эффект для вашего роста</p>
-            
-            <div class="focus-goals-selector">
-              <div 
-                v-for="goal in trueGoals" 
-                :key="goal.id"
-                class="goal-checkbox-item"
-                :class="{ selected: goal.priority }"
-                @click="togglePriority(goal.id)"
-              >
-                <input 
-                  type="checkbox" 
-                  :checked="goal.priority"
-                  @click.stop
-                  @change="togglePriority(goal.id)"
-                />
-                <div class="goal-info">
-                  <div class="goal-title">{{ goal.title }}</div>
-                  <div class="goal-sphere">
-                    {{ getSphereById(goal.sphereId)?.icon }} {{ getSphereById(goal.sphereId)?.name }}
-                  </div>
-                </div>
+        <div class="reflection-cards">
+          <div 
+            v-for="sphere in lifeSpheres" 
+            :key="sphere.id"
+            class="reflection-card"
+          >
+            <div class="sphere-header">
+              <span class="sphere-icon">{{ sphere.icon }}</span>
+              <div class="sphere-title-info">
+                <h2>{{ sphere.name }}</h2>
+                <div class="score-badge">Оценка: {{ sphere.score }}/10</div>
               </div>
             </div>
 
-            <div v-if="priorityGoals.length > 0" class="priority-summary">
-              <p>Выбрано целей: <strong>{{ priorityGoals.length }}</strong></p>
+            <div class="questions-group">
+              <div class="question-item">
+                <label class="question-label">
+                  📌 Почему я поставил именно эту оценку?
+                </label>
+                <textarea 
+                  v-model="sphere.reflection.why"
+                  @input="saveReflection(sphere.id)"
+                  placeholder="Напишите свой ответ..."
+                  class="reflection-textarea"
+                  rows="3"
+                ></textarea>
+              </div>
+
+              <div class="question-item">
+                <label class="question-label">
+                  ⭐ Что для меня "10" в этой сфере?
+                </label>
+                <textarea 
+                  v-model="sphere.reflection.ten"
+                  @input="saveReflection(sphere.id)"
+                  placeholder="Опишите идеальное состояние..."
+                  class="reflection-textarea"
+                  rows="3"
+                ></textarea>
+              </div>
+
+              <div class="question-item">
+                <label class="question-label">
+                  🚧 Что мешает дойти до "10"?
+                </label>
+                <textarea 
+                  v-model="sphere.reflection.prevents"
+                  @input="saveReflection(sphere.id)"
+                  placeholder="Назовите препятствия и барьеры..."
+                  class="reflection-textarea"
+                  rows="3"
+                ></textarea>
+              </div>
+
+              <div class="question-item">
+                <label class="question-label">
+                  🎯 Как я хочу, чтобы было?
+                </label>
+                <textarea 
+                  v-model="sphere.reflection.desired"
+                  @input="saveReflection(sphere.id)"
+                  placeholder="Опишите, как вы хотите развивать эту сферу..."
+                  class="reflection-textarea"
+                  rows="3"
+                ></textarea>
+              </div>
             </div>
           </div>
         </div>
@@ -237,20 +242,12 @@ const steps = ['Теория', 'ССП', 'Результаты']
 const currentStep = ref(1)
 
 const lifeSpheres = computed(() => store.lifeSpheres)
-const goalsBank = computed(() => store.sspGoalsBank || [])
 const selectedSphere = ref(null)
 
 const wheelCompleted = computed(() => {
   return lifeSpheres.value.every(s => s.score > 0)
 })
 
-const trueGoals = computed(() => {
-  return goalsBank.value.filter(g => g.isTrue)
-})
-
-const priorityGoals = computed(() => {
-  return goalsBank.value.filter(g => g.priority)
-})
 
 function nextStep() {
   if (currentStep.value < 3) {
@@ -292,16 +289,21 @@ function getSphereById(sphereId) {
   return lifeSpheres.value.find(s => s.id === sphereId)
 }
 
+function saveReflection(sphereId) {
+  store.updateSphere(sphereId, {
+    reflection: lifeSpheres.value.find(s => s.id === sphereId)?.reflection
+  })
+}
+
 function completeModule() {
   store.completeSSPModule({
     completedAt: new Date().toISOString(),
     wheelData: lifeSpheres.value.map(s => ({
       id: s.id,
       score: s.score,
-      notes: s.notes
-    })),
-    goalsBank: goalsBank.value,
-    priorityGoals: priorityGoals.value
+      notes: s.notes,
+      reflection: s.reflection
+    }))
   })
   
   alert('🎉 Поздравляем! Модуль "Сбалансированная система показателей" пройден!')
@@ -569,6 +571,95 @@ function completeModule() {
   font-size: 0.9375rem;
   color: var(--text-secondary);
   margin: 0;
+}
+
+.reflection-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.reflection-card {
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  transition: all 0.3s ease;
+}
+
+.reflection-card:hover {
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-md);
+}
+
+.sphere-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.sphere-icon {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+}
+
+.sphere-title-info h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+}
+
+.score-badge {
+  display: inline-block;
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--primary-color);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.questions-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.question-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.question-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.reflection-textarea {
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: vertical;
+  transition: all 0.2s ease;
+}
+
+.reflection-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.reflection-textarea::placeholder {
+  color: var(--text-secondary);
 }
 
 .wheel-layout {
