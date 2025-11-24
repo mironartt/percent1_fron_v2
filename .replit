@@ -15,6 +15,10 @@ externalPort = 3001
 
 [[ports]]
 localPort = 3002
+externalPort = 3002
+
+[[ports]]
+localPort = 3003
 externalPort = 80
 
 [workflows]
@@ -39,4 +43,4 @@ outputType = "console"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
-waitForPort = 3001
+waitForPort = 3002
