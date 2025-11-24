@@ -1,7 +1,7 @@
 <template>
   <div id="app">
-    <Sidebar />
-    <main class="main-content">
+    <Sidebar v-if="!isRegisterPage" />
+    <main class="main-content" :class="{ 'full-width': isRegisterPage }">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
@@ -12,7 +12,15 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
+
+const route = useRoute()
+
+const isRegisterPage = computed(() => {
+  return route.name === 'register'
+})
 </script>
 
 <style scoped>
@@ -26,6 +34,11 @@ import Sidebar from './components/Sidebar.vue'
   margin-left: 280px;
   padding: 2rem;
   background: var(--bg-secondary);
+}
+
+.main-content.full-width {
+  margin-left: 0;
+  padding: 0;
 }
 
 @media (max-width: 768px) {
