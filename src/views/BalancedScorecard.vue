@@ -898,6 +898,7 @@ function completeModule() {
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: normal;
+  max-width: 100%;
 }
 
 .step-actions {

@@ -67,8 +67,8 @@
 
         <!-- Interactive handle for dragging -->
         <circle
-          :cx="center + Math.max((radius / 10) * sphere.score, radius / 15) * Math.cos(getAngle(index) + angleStep / 2)"
-          :cy="center + Math.max((radius / 10) * sphere.score, radius / 15) * Math.sin(getAngle(index) + angleStep / 2)"
+          :cx="center + getHandleRadius(sphere.score) * Math.cos(getAngle(index) + angleStep / 2)"
+          :cy="center + getHandleRadius(sphere.score) * Math.sin(getAngle(index) + angleStep / 2)"
           r="8"
           :fill="selectedSphere === sphere.id ? 'var(--primary-color)' : 'white'"
           stroke="var(--primary-color)"
@@ -138,6 +138,10 @@ const averageScore = computed(() => {
   const total = props.spheres.reduce((sum, s) => sum + s.score, 0)
   return Math.round(total / props.spheres.length * 10) / 10
 })
+
+function getHandleRadius(score) {
+  return Math.max((radius / 10) * score, radius / 15)
+}
 
 function getAngle(index) {
   return index * angleStep - Math.PI / 2
