@@ -1,0 +1,24 @@
+{
+  "name": "onepercent-mvp",
+  "version": "1.0.0",
+  "description": "Веб-приложение для системного управления жизнью и достижения целей через улучшение на 1% каждый день.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.2",
+    "vite": "^7.2.4",
+    "vue": "^3.5.24"
+  },
+  "dependencies": {
+    "pinia": "^3.0.4",
+    "vue-router": "^4.6.3"
+  }
+}
