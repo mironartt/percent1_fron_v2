@@ -98,7 +98,7 @@
             <div class="card ai-coach">
               <div class="coach-header">
                 <span class="coach-icon">🤖</span>
-                <h3>ИИ-Коуч</h3>
+                <h3>Наставник</h3>
               </div>
               <div class="coach-status">
                 <span class="status-indicator active"></span>
@@ -109,7 +109,7 @@
                 Задам вопросы, которые помогут глубже понять ситуацию.
               </p>
               <button class="btn btn-primary" @click="startCoachDialog">
-                Начать диалог с ИИ-коучем
+                Начать диалог с Наставником
               </button>
             </div>
 
@@ -118,17 +118,6 @@
               <div class="score-display-large">
                 <span class="score-value">{{ selectedSphere.score }}</span>
                 <span class="score-max">/10</span>
-              </div>
-              
-              <div class="form-group">
-                <label class="form-label">Заметки и размышления</label>
-                <textarea 
-                  v-model="selectedSphere.notes"
-                  class="form-textarea"
-                  rows="6"
-                  placeholder="Что происходит в этой сфере? Что вас беспокоит или радует?"
-                  @blur="saveSphereNotes"
-                ></textarea>
               </div>
             </div>
           </div>
