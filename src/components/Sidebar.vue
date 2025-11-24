@@ -1,7 +1,7 @@
 <template>
   <aside class="sidebar">
     <div class="sidebar-header">
-      <h1 class="logo">OnePercent</h1>
+      <img src="@/assets/logo.png" alt="OnePercent" class="logo-image" />
       <p class="tagline">+1% каждый день</p>
     </div>
 
@@ -89,14 +89,11 @@ const menuItems = [
   border-bottom: 1px solid var(--border-color);
 }
 
-.logo {
-  font-size: 1.5rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 0.25rem;
+.logo-image {
+  width: 100%;
+  height: auto;
+  max-width: 180px;
+  margin-bottom: 0.5rem;
 }
 
 .tagline {
