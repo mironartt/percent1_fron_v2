@@ -128,53 +128,14 @@
             ← Назад к теории
           </button>
           <button class="btn btn-primary btn-lg" @click="nextStep" :disabled="!wheelCompleted">
-            Перейти к банку целей →
+            Завершить →
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Step 3: Банк целей -->
+    <!-- Step 3: Результаты -->
     <div v-if="currentStep === 3" class="step-content">
-      <div class="goals-bank-section">
-        <header class="section-header">
-          <h1>🎯 Банк целей</h1>
-          <p class="subtitle">
-            Исследуйте свои желания, отделите истинные цели от навязанных
-          </p>
-        </header>
-
-        <div class="card instruction-card">
-          <h3>Как работать с банком целей</h3>
-          <ol class="instruction-list">
-            <li>Выпишите все цели и желания, которые приходят в голову</li>
-            <li>Для каждой цели подумайте: "Это действительно МОЯ цель или чья-то?"</li>
-            <li>Отметьте цели, которые откликаются внутри (истинные цели)</li>
-            <li>Привяжите каждую цель к сфере жизни</li>
-          </ol>
-        </div>
-
-        <GoalsBank 
-          :spheres="lifeSpheres"
-          :goals="goalsBank"
-          @add-goal="addGoalToBank"
-          @update-goal="updateGoalInBank"
-          @delete-goal="deleteGoalFromBank"
-        />
-
-        <div class="step-actions">
-          <button class="btn btn-secondary" @click="prevStep">
-            ← Назад к колесу баланса
-          </button>
-          <button class="btn btn-primary btn-lg" @click="nextStep" :disabled="goalsBank.length === 0">
-            Зафиксировать результаты →
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 4: Фиксирование результатов -->
-    <div v-if="currentStep === 4" class="step-content">
       <div class="results-section">
         <header class="section-header">
           <h1>✅ Фиксирование результатов</h1>
@@ -250,12 +211,11 @@
 
         <div class="step-actions">
           <button class="btn btn-secondary" @click="prevStep">
-            ← Назад к банку целей
+            ← Назад к колесу баланса
           </button>
           <button 
             class="btn btn-primary btn-lg" 
             @click="completeModule"
-            :disabled="priorityGoals.length < 3 || priorityGoals.length > 5"
           >
             ✅ Завершить модуль
           </button>
@@ -270,11 +230,10 @@
 import { ref, computed } from 'vue'
 import { useAppStore } from '../stores/app'
 import WheelOfLife from '../components/WheelOfLife.vue'
-import GoalsBank from '../components/GoalsBank.vue'
 
 const store = useAppStore()
 
-const steps = ['Теория', 'ССП', 'Банк целей', 'Результаты']
+const steps = ['Теория', 'ССП', 'Результаты']
 const currentStep = ref(1)
 
 const lifeSpheres = computed(() => store.lifeSpheres)
@@ -294,7 +253,7 @@ const priorityGoals = computed(() => {
 })
 
 function nextStep() {
-  if (currentStep.value < 4) {
+  if (currentStep.value < 3) {
     currentStep.value++
   }
 }
@@ -328,31 +287,6 @@ function startCoachDialog() {
   alert('ИИ-коуч в разработке. Скоро здесь будет интерактивный диалог!')
 }
 
-function addGoalToBank(goal) {
-  store.addGoalToSSPBank(goal)
-}
-
-function updateGoalInBank(goalId, updates) {
-  store.updateSSPGoal(goalId, updates)
-}
-
-function deleteGoalFromBank(goalId) {
-  store.deleteSSPGoal(goalId)
-}
-
-function togglePriority(goalId) {
-  const goal = goalsBank.value.find(g => g.id === goalId)
-  if (goal) {
-    const newPriority = !goal.priority
-    
-    if (newPriority && priorityGoals.value.length >= 5) {
-      alert('Можно выбрать максимум 5 приоритетных целей')
-      return
-    }
-    
-    store.updateSSPGoal(goalId, { priority: newPriority })
-  }
-}
 
 function getSphereById(sphereId) {
   return lifeSpheres.value.find(s => s.id === sphereId)
