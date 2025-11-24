@@ -39,7 +39,7 @@
           :stroke="selectedSphere === sphere.id ? 'var(--primary-color)' : 'white'"
           :stroke-width="selectedSphere === sphere.id ? 3 : 1"
           class="segment"
-          @click="selectSphere(sphere)"
+          @click="handleSegmentClick($event, sphere, index)"
           @mouseenter="hoveredSphere = sphere.id"
           @mouseleave="hoveredSphere = null"
         />
@@ -182,6 +182,24 @@ function getSegmentColor(index) {
 function selectSphere(sphere) {
   selectedSphere.value = sphere.id
   emit('update-sphere', sphere)
+}
+
+function handleSegmentClick(event, sphere, index) {
+  selectedSphere.value = sphere.id
+  
+  const svg = event.target.closest('svg')
+  const rect = svg.getBoundingClientRect()
+  
+  const x = event.clientX - rect.left - center
+  const y = event.clientY - rect.top - center
+  
+  const distance = Math.sqrt(x * x + y * y)
+  const newScore = Math.max(0, Math.min(10, Math.round((distance / radius) * 10)))
+  
+  emit('update-sphere', {
+    ...sphere,
+    score: newScore
+  })
 }
 
 function handleSliderChange(event, sphere) {
