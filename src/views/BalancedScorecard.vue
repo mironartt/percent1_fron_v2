@@ -77,7 +77,7 @@
     <div v-if="currentStep === 2" class="step-content">
       <div class="wheel-section">
         <header class="section-header">
-          <h1>⚖️ Колесо баланса жизни</h1>
+          <h1>⚖️ Система сбалансированных показателей</h1>
           <p class="subtitle">
             Оцените текущее состояние каждой сферы вашей жизни
           </p>
@@ -282,7 +282,7 @@ import GoalsBank from '../components/GoalsBank.vue'
 
 const store = useAppStore()
 
-const steps = ['Теория', 'Колесо баланса', 'Банк целей', 'Результаты']
+const steps = ['Теория', 'ССП', 'Банк целей', 'Результаты']
 const currentStep = ref(1)
 
 const lifeSpheres = computed(() => store.lifeSpheres)
