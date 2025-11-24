@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Dashboard from '../views/Dashboard.vue'
+import Register from '../views/Register.vue'
 import BalancedScorecard from '../views/BalancedScorecard.vue'
 import SSPAnalytics from '../views/SSPAnalytics.vue'
 import Goals from '../views/Goals.vue'
@@ -10,6 +11,12 @@ import Club from '../views/Club.vue'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    {
+      path: '/register',
+      name: 'register',
+      component: Register,
+      meta: { title: 'Регистрация' }
+    },
     {
       path: '/',
       name: 'dashboard',
