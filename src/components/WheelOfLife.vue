@@ -95,7 +95,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update-sphere'])
 
-const size = 600
+const size = 800
 const center = size / 2
 const radius = 200
 
