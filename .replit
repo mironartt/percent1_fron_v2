@@ -21,6 +21,14 @@ externalPort = 3002
 localPort = 3003
 externalPort = 80
 
+[[ports]]
+localPort = 5000
+externalPort = 5000
+
+[[ports]]
+localPort = 5001
+externalPort = 3003
+
 [workflows]
 runButton = "Project"
 
@@ -37,10 +45,10 @@ args = "Dev Server"
 name = "Dev Server"
 author = "agent"
 
-[workflows.workflow.metadata]
-outputType = "console"
-
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
-waitForPort = 3002
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
