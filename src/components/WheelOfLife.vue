@@ -55,8 +55,8 @@
         />
 
         <text
-          :x="center + (radius + 85) * Math.cos(getAngle(index) + angleStep / 2)"
-          :y="center + (radius + 85) * Math.sin(getAngle(index) + angleStep / 2)"
+          :x="center + (radius + 85) * Math.cos(getAngle(index) + angleStep.value / 2)"
+          :y="center + (radius + 85) * Math.sin(getAngle(index) + angleStep.value / 2)"
           text-anchor="middle"
           dominant-baseline="middle"
           class="sphere-name"
@@ -67,8 +67,8 @@
 
         <!-- Interactive handle for dragging -->
         <circle
-          :cx="center + getHandleRadius(sphere.score) * Math.cos(getAngle(index) + angleStep / 2)"
-          :cy="center + getHandleRadius(sphere.score) * Math.sin(getAngle(index) + angleStep / 2)"
+          :cx="center + getHandleRadius(sphere.score) * Math.cos(getAngle(index) + angleStep.value / 2)"
+          :cy="center + getHandleRadius(sphere.score) * Math.sin(getAngle(index) + angleStep.value / 2)"
           r="8"
           :fill="selectedSphere === sphere.id ? 'var(--primary-color)' : 'white'"
           stroke="var(--primary-color)"
@@ -132,7 +132,7 @@ const selectedSphere = ref(null)
 const hoveredSphere = ref(null)
 const dragging = ref(false)
 
-const angleStep = (2 * Math.PI) / props.spheres.length
+const angleStep = computed(() => (2 * Math.PI) / props.spheres.length)
 
 const averageScore = computed(() => {
   const total = props.spheres.reduce((sum, s) => sum + s.score, 0)
@@ -144,7 +144,7 @@ function getHandleRadius(score) {
 }
 
 function getAngle(index) {
-  return index * angleStep - Math.PI / 2
+  return index * angleStep.value - Math.PI / 2
 }
 
 function getSegmentPath(index, score) {
