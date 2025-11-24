@@ -85,6 +85,9 @@
 
         <div class="wheel-layout">
           <div class="wheel-main card">
+            <div class="wheel-instruction">
+              💡 Кликните на сектор и перетащите его край наружу или внутрь, чтобы изменить оценку от 0 до 10.
+            </div>
             <WheelOfLife 
               :spheres="lifeSpheres"
               @update-sphere="handleSphereUpdate"
@@ -881,6 +884,17 @@ function completeModule() {
   background: rgba(99, 102, 241, 0.05);
   border-radius: var(--radius-md);
   text-align: center;
+}
+
+.wheel-instruction {
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  background: rgba(99, 102, 241, 0.08);
+  border-left: 4px solid var(--primary-color);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-primary);
 }
 
 .step-actions {

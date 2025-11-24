@@ -56,8 +56,8 @@
 
         <!-- Labels -->
         <text
-          :x="center + (radius + 30) * Math.cos(getAngle(index) + angleStep / 2)"
-          :y="center + (radius + 30) * Math.sin(getAngle(index) + angleStep / 2)"
+          :x="center + (radius + 50) * Math.cos(getAngle(index) + angleStep / 2)"
+          :y="center + (radius + 50) * Math.sin(getAngle(index) + angleStep / 2)"
           text-anchor="middle"
           dominant-baseline="middle"
           class="sphere-label"
@@ -67,8 +67,8 @@
         </text>
 
         <text
-          :x="center + (radius + 60) * Math.cos(getAngle(index) + angleStep / 2)"
-          :y="center + (radius + 60) * Math.sin(getAngle(index) + angleStep / 2)"
+          :x="center + (radius + 85) * Math.cos(getAngle(index) + angleStep / 2)"
+          :y="center + (radius + 85) * Math.sin(getAngle(index) + angleStep / 2)"
           text-anchor="middle"
           dominant-baseline="middle"
           class="sphere-name"
@@ -121,30 +121,6 @@
         </text>
       </g>
     </svg>
-
-    <!-- Sphere score controls -->
-    <div class="sphere-controls">
-      <div 
-        v-for="sphere in spheres" 
-        :key="`control-${sphere.id}`"
-        class="sphere-control"
-        :class="{ active: selectedSphere === sphere.id }"
-      >
-        <div class="control-header" @click="selectSphere(sphere)">
-          <span class="control-icon">{{ sphere.icon }}</span>
-          <span class="control-name">{{ sphere.name }}</span>
-          <span class="control-score">{{ sphere.score }}</span>
-        </div>
-        <input
-          type="range"
-          min="0"
-          max="10"
-          :value="sphere.score"
-          @input="handleSliderChange($event, sphere)"
-          class="score-slider"
-        />
-      </div>
-    </div>
   </div>
 </template>
 
@@ -328,80 +304,6 @@ function startDrag(event, sphere, index) {
   fill: var(--text-secondary);
 }
 
-.sphere-controls {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.sphere-control {
-  padding: 1rem;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  border: 2px solid transparent;
-  transition: all 0.2s ease;
-}
-
-.sphere-control.active {
-  border-color: var(--primary-color);
-  background: rgba(99, 102, 241, 0.05);
-}
-
-.control-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-  cursor: pointer;
-}
-
-.control-icon {
-  font-size: 1.5rem;
-}
-
-.control-name {
-  flex: 1;
-  font-weight: 500;
-}
-
-.control-score {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--primary-color);
-  min-width: 30px;
-  text-align: right;
-}
-
-.score-slider {
-  width: 100%;
-  height: 8px;
-  border-radius: 4px;
-  background: var(--bg-tertiary);
-  outline: none;
-  -webkit-appearance: none;
-}
-
-.score-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--primary-color);
-  cursor: pointer;
-  box-shadow: var(--shadow-sm);
-}
-
-.score-slider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--primary-color);
-  cursor: pointer;
-  border: none;
-  box-shadow: var(--shadow-sm);
-}
 
 @media (max-width: 768px) {
   .sphere-name {
