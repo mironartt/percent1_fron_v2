@@ -96,20 +96,39 @@
           <div class="wheel-sidebar">
             <div class="card ai-coach">
               <div class="coach-header">
-                <span class="coach-icon">🤖</span>
-                <h3>Наставник</h3>
+                <span class="coach-icon">💬</span>
+                <h3>ИИ-коуч</h3>
               </div>
-              <div class="coach-status">
-                <span class="status-indicator active"></span>
-                <span>Готов помочь с упражнением</span>
+              
+              <div class="chat-container">
+                <div class="chat-messages">
+                  <div class="message coach-message">
+                    <span class="message-avatar">🤖</span>
+                    <div class="message-content">
+                      <p>Заполните колесо баланса, оценив каждую сферу от 0 до 10. Для этого кликните на сектор и перетащите его край наружу или внутрь.</p>
+                    </div>
+                  </div>
+                  <div v-for="msg in chatMessages" :key="msg.id" class="message" :class="msg.type">
+                    <span v-if="msg.type === 'coach'" class="message-avatar">🤖</span>
+                    <div class="message-content">
+                      <p>{{ msg.text }}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="chat-input-area">
+                  <input 
+                    v-model="userMessage"
+                    @keyup.enter="sendMessage"
+                    type="text"
+                    placeholder="Напишите ваш ответ..."
+                    class="chat-input"
+                  />
+                  <button @click="sendMessage" class="btn-send">
+                    Отправить
+                  </button>
+                </div>
               </div>
-              <p class="coach-intro">
-                Я помогу вам разобраться с каждой сферой жизни через диалог. 
-                Задам вопросы, которые помогут глубже понять ситуацию.
-              </p>
-              <button class="btn btn-primary" @click="startCoachDialog">
-                Начать диалог с Наставником
-              </button>
             </div>
 
             <div class="card sphere-details" v-if="selectedSphere">
@@ -317,6 +336,10 @@ const currentStep = ref(1)
 const lifeSpheres = computed(() => store.lifeSpheres)
 const selectedSphere = ref(null)
 
+// Chat state
+const chatMessages = ref([])
+const userMessage = ref(''))
+
 const wheelCompleted = computed(() => {
   return lifeSpheres.value.every(s => s.score > 0)
 })
@@ -353,8 +376,36 @@ function saveSphereNotes() {
   }
 }
 
-function startCoachDialog() {
-  alert('ИИ-коуч в разработке. Скоро здесь будет интерактивный диалог!')
+function sendMessage() {
+  if (!userMessage.value.trim()) return
+  
+  // Add user message
+  chatMessages.value.push({
+    id: Date.now(),
+    type: 'user',
+    text: userMessage.value
+  })
+  
+  // Generate coach response based on context
+  const coachResponses = [
+    'Спасибо за ответ! Это очень важная информация.',
+    'Интересно! Расскажите подробнее о вашем подходе к этому.',
+    'Я вижу, что это важно для вас. Как вы можете улучшить эту область?',
+    'Хорошее наблюдение! Что вы хотите изменить в этом?',
+    'Спасибо за честный ответ. Это поможет вам в развитии.'
+  ]
+  
+  const randomResponse = coachResponses[Math.floor(Math.random() * coachResponses.length)]
+  
+  setTimeout(() => {
+    chatMessages.value.push({
+      id: Date.now() + 1,
+      type: 'coach',
+      text: randomResponse
+    })
+  }, 300)
+  
+  userMessage.value = ''
 }
 
 
@@ -814,6 +865,124 @@ function completeModule() {
 .next-steps-card p {
   margin: 0 0 1.5rem 0;
   color: var(--text-secondary);
+}
+
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 500px;
+  gap: 1rem;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-right: 0.5rem;
+}
+
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+  border-radius: 10px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 10px;
+}
+
+.message {
+  display: flex;
+  gap: 0.75rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.message.user {
+  justify-content: flex-end;
+}
+
+.message.user .message-content {
+  background: var(--primary-color);
+  color: white;
+}
+
+.message.coach-message .message-content {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--text-primary);
+}
+
+.message-avatar {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  align-self: flex-end;
+}
+
+.message-content {
+  max-width: 85%;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  word-wrap: break-word;
+}
+
+.message-content p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.chat-input-area {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: auto;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.chat-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.chat-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.btn-send {
+  padding: 0.75rem 1.5rem;
+  background: #4ade80;
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.btn-send:hover {
+  background: #22c55e;
+  transform: translateY(-2px);
+}
+
+.btn-send:active {
+  transform: translateY(0);
 }
 
 .wheel-layout {
