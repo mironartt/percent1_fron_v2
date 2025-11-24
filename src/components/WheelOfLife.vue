@@ -79,35 +79,6 @@
         />
       </g>
 
-      <!-- Center score display -->
-      <g>
-        <circle
-          :cx="center"
-          :cy="center"
-          r="50"
-          fill="white"
-          stroke="var(--primary-color)"
-          stroke-width="3"
-        />
-        <text
-          :x="center"
-          :y="center - 10"
-          text-anchor="middle"
-          dominant-baseline="middle"
-          class="center-score"
-        >
-          {{ averageScore }}
-        </text>
-        <text
-          :x="center"
-          :y="center + 15"
-          text-anchor="middle"
-          dominant-baseline="middle"
-          class="center-label"
-        >
-          Средний балл
-        </text>
-      </g>
     </svg>
   </div>
 </template>
@@ -133,11 +104,6 @@ const hoveredSphere = ref(null)
 const dragging = ref(false)
 
 const angleStep = (2 * Math.PI) / props.spheres.length
-
-const averageScore = computed(() => {
-  const total = props.spheres.reduce((sum, s) => sum + s.score, 0)
-  return Math.round(total / props.spheres.length * 10) / 10
-})
 
 function getAngle(index) {
   return index * angleStep - Math.PI / 2
