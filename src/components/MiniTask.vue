@@ -39,7 +39,7 @@
         </div>
       </div>
 
-      <button class="btn btn-primary btn-large" @click="nextStep">
+      <button class="btn btn-primary btn-lg" @click="nextStep">
         Начать мини-задание
       </button>
     </div>
@@ -256,7 +256,7 @@
       </div>
 
       <button 
-        class="btn btn-primary btn-large" 
+        class="btn btn-primary btn-lg" 
         @click="completeMiniTask"
         :disabled="selectedActions.length === 0"
       >
