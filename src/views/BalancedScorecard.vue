@@ -219,6 +219,80 @@
           </button>
           <button 
             class="btn btn-primary btn-lg" 
+            @click="nextStep"
+          >
+            Продолжить к итогам →
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Итог -->
+    <div v-if="currentStep === 4" class="step-content">
+      <div class="summary-section">
+        <header class="section-header">
+          <h1>📋 Итог упражнения</h1>
+          <p class="subtitle">
+            Вы завершили Систему сбалансированных показателей
+          </p>
+        </header>
+
+        <div class="summary-content">
+          <div class="card summary-card">
+            <h2>✅ Что вы сделали</h2>
+            <div class="achievement-list">
+              <div class="achievement-item">
+                <span class="achievement-icon">1️⃣</span>
+                <div>
+                  <h3>Оценили 6 сфер жизни</h3>
+                  <p>Определили текущее состояние каждой важной области вашей жизни</p>
+                </div>
+              </div>
+              <div class="achievement-item">
+                <span class="achievement-icon">2️⃣</span>
+                <div>
+                  <h3>Провели глубокую рефлексию</h3>
+                  <p>Ответили на 4 ключевых вопроса по каждой сфере</p>
+                </div>
+              </div>
+              <div class="achievement-item">
+                <span class="achievement-icon">3️⃣</span>
+                <div>
+                  <h3>Зафиксировали свои желания</h3>
+                  <p>Записали свои думки и видение без спешки</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card insight-card">
+            <h2>💡 Ключевые insight'ы</h2>
+            <ul class="insight-list">
+              <li>Баланс в жизни — это не идеальный 10/10 везде, а осознанный выбор приоритетов</li>
+              <li>Ваши оценки показывают, где есть дисбаланс и требуется внимание</li>
+              <li>Рефлексия помогает понять корни текущей ситуации и направить энергию</li>
+              <li>Маленькие изменения в каждой сфере создают большой эффект на качество жизни</li>
+            </ul>
+          </div>
+
+          <div class="card next-steps-card">
+            <h2>🚀 Что дальше?</h2>
+            <p>Теперь у вас есть полное понимание своей текущей жизни. Это основа для:</p>
+            <ul class="next-steps-list">
+              <li>Постановки целей в каждой сфере</li>
+              <li>Создания плана развития</li>
+              <li>Ежедневного прогресса в направлении желаемого баланса</li>
+              <li>Регулярной переоценки и корректировки приоритетов</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step-actions">
+          <button class="btn btn-secondary" @click="prevStep">
+            ← Назад к рефлексии
+          </button>
+          <button 
+            class="btn btn-primary btn-lg" 
             @click="completeModule"
           >
             ✅ Завершить модуль
@@ -237,7 +311,7 @@ import WheelOfLife from '../components/WheelOfLife.vue'
 
 const store = useAppStore()
 
-const steps = ['Теория', 'ССП', 'Рефлексия']
+const steps = ['Теория', 'ССП', 'Рефлексия', 'Итог']
 const currentStep = ref(1)
 
 const lifeSpheres = computed(() => store.lifeSpheres)
@@ -249,7 +323,7 @@ const wheelCompleted = computed(() => {
 
 
 function nextStep() {
-  if (currentStep.value < 3) {
+  if (currentStep.value < 4) {
     currentStep.value++
   }
 }
@@ -658,6 +732,87 @@ function completeModule() {
 }
 
 .reflection-textarea::placeholder {
+  color: var(--text-secondary);
+}
+
+.summary-content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.summary-card,
+.insight-card,
+.next-steps-card {
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+}
+
+.summary-card h2,
+.insight-card h2,
+.next-steps-card h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.achievement-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.achievement-item {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--primary-color);
+}
+
+.achievement-icon {
+  font-size: 1.75rem;
+  flex-shrink: 0;
+}
+
+.achievement-item h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+}
+
+.achievement-item p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.insight-list,
+.next-steps-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.insight-list li,
+.next-steps-list li {
+  padding: 1rem;
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--primary-color);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.insight-card p,
+.next-steps-card p {
+  margin: 0 0 1.5rem 0;
   color: var(--text-secondary);
 }
 
