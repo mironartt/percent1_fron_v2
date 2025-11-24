@@ -34,12 +34,12 @@
         <!-- Segment path -->
         <path
           :d="getSegmentPath(index, sphere.score)"
-          :fill="getSegmentColor(index, true)"
-          :opacity="hoveredSphere === sphere.id ? 0.9 : 0.75"
-          :stroke="getSegmentColor(index, false)"
-          :stroke-width="selectedSphere === sphere.id ? 3 : 2"
+          :fill="getSegmentColor(index)"
+          :opacity="hoveredSphere === sphere.id ? 0.9 : 0.7"
+          :stroke="selectedSphere === sphere.id ? 'var(--primary-color)' : 'white'"
+          :stroke-width="selectedSphere === sphere.id ? 3 : 1"
           class="segment"
-          @click="handleSegmentClick($event, sphere, index)"
+          @click="selectSphere(sphere)"
           @mouseenter="hoveredSphere = sphere.id"
           @mouseleave="hoveredSphere = null"
         />
@@ -55,8 +55,8 @@
         />
 
         <text
-          :x="center + (radius + 85) * Math.cos(getAngle(index) + angleStep.value / 2)"
-          :y="center + (radius + 85) * Math.sin(getAngle(index) + angleStep.value / 2)"
+          :x="center + (radius + 85) * Math.cos(getAngle(index) + angleStep / 2)"
+          :y="center + (radius + 85) * Math.sin(getAngle(index) + angleStep / 2)"
           text-anchor="middle"
           dominant-baseline="middle"
           class="sphere-name"
@@ -67,8 +67,8 @@
 
         <!-- Interactive handle for dragging -->
         <circle
-          :cx="center + getHandleRadius(sphere.score) * Math.cos(getAngle(index) + angleStep.value / 2)"
-          :cy="center + getHandleRadius(sphere.score) * Math.sin(getAngle(index) + angleStep.value / 2)"
+          :cx="center + Math.max((radius / 10) * sphere.score, radius / 15) * Math.cos(getAngle(index) + angleStep / 2)"
+          :cy="center + Math.max((radius / 10) * sphere.score, radius / 15) * Math.sin(getAngle(index) + angleStep / 2)"
           r="8"
           :fill="selectedSphere === sphere.id ? 'var(--primary-color)' : 'white'"
           stroke="var(--primary-color)"
@@ -79,6 +79,35 @@
         />
       </g>
 
+      <!-- Center score display -->
+      <g>
+        <circle
+          :cx="center"
+          :cy="center"
+          r="50"
+          fill="white"
+          stroke="var(--primary-color)"
+          stroke-width="3"
+        />
+        <text
+          :x="center"
+          :y="center - 10"
+          text-anchor="middle"
+          dominant-baseline="middle"
+          class="center-score"
+        >
+          {{ averageScore }}
+        </text>
+        <text
+          :x="center"
+          :y="center + 15"
+          text-anchor="middle"
+          dominant-baseline="middle"
+          class="center-label"
+        >
+          Средний балл
+        </text>
+      </g>
     </svg>
   </div>
 </template>
@@ -103,15 +132,15 @@ const selectedSphere = ref(null)
 const hoveredSphere = ref(null)
 const dragging = ref(false)
 
-const angleStep = computed(() => (2 * Math.PI) / props.spheres.length)
+const angleStep = (2 * Math.PI) / props.spheres.length
 
-
-function getHandleRadius(score) {
-  return Math.max((radius / 10) * score, radius / 15)
-}
+const averageScore = computed(() => {
+  const total = props.spheres.reduce((sum, s) => sum + s.score, 0)
+  return Math.round(total / props.spheres.length * 10) / 10
+})
 
 function getAngle(index) {
-  return index * angleStep.value - Math.PI / 2
+  return index * angleStep - Math.PI / 2
 }
 
 function getSegmentPath(index, score) {
@@ -134,49 +163,21 @@ function getSegmentPath(index, score) {
   `
 }
 
-function getSegmentColor(index, isFill = true) {
-  const fillColors = [
-    'rgba(100, 150, 255, 0.3)',     // blue
-    'rgba(100, 200, 100, 0.3)',     // green
-    'rgba(255, 100, 150, 0.3)',     // pink/red
-    'rgba(255, 150, 100, 0.3)',     // orange
-    'rgba(150, 100, 255, 0.3)',     // purple
-    'rgba(255, 200, 100, 0.3)'      // light orange
+function getSegmentColor(index) {
+  const colors = [
+    'rgba(99, 102, 241, 0.6)',
+    'rgba(139, 92, 246, 0.6)',
+    'rgba(16, 185, 129, 0.6)',
+    'rgba(245, 158, 11, 0.6)',
+    'rgba(239, 68, 68, 0.6)',
+    'rgba(236, 72, 153, 0.6)'
   ]
-  
-  const strokeColors = [
-    'rgb(100, 150, 255)',      // blue
-    'rgb(100, 200, 100)',      // green
-    'rgb(255, 100, 150)',      // pink/red
-    'rgb(255, 150, 100)',      // orange
-    'rgb(150, 100, 255)',      // purple
-    'rgb(255, 200, 100)'       // light orange
-  ]
-  
-  return isFill ? fillColors[index % fillColors.length] : strokeColors[index % strokeColors.length]
+  return colors[index % colors.length]
 }
 
 function selectSphere(sphere) {
   selectedSphere.value = sphere.id
   emit('update-sphere', sphere)
-}
-
-function handleSegmentClick(event, sphere, index) {
-  selectedSphere.value = sphere.id
-  
-  const svg = event.target.closest('svg')
-  const rect = svg.getBoundingClientRect()
-  
-  const x = event.clientX - rect.left - center
-  const y = event.clientY - rect.top - center
-  
-  const distance = Math.sqrt(x * x + y * y)
-  const newScore = Math.max(0, Math.min(10, Math.round((distance / radius) * 10)))
-  
-  emit('update-sphere', {
-    ...sphere,
-    score: newScore
-  })
 }
 
 function handleSliderChange(event, sphere) {
@@ -280,6 +281,16 @@ function startDrag(event, sphere, index) {
   cursor: grabbing;
 }
 
+.center-score {
+  font-size: 32px;
+  font-weight: 700;
+  fill: var(--primary-color);
+}
+
+.center-label {
+  font-size: 12px;
+  fill: var(--text-secondary);
+}
 
 
 @media (max-width: 768px) {
