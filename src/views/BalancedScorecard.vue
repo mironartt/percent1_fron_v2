@@ -128,7 +128,7 @@
             ← Назад к теории
           </button>
           <button class="btn btn-primary btn-lg" @click="nextStep" :disabled="!wheelCompleted">
-            Завершить →
+            Продолжить →
           </button>
         </div>
       </div>
