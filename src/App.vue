@@ -1,7 +1,7 @@
 <template>
   <div id="app">
-    <Sidebar v-if="!isRegisterPage" />
-    <main class="main-content" :class="{ 'full-width': isRegisterPage }">
+    <Sidebar v-if="!isAuthPage" />
+    <main class="main-content" :class="{ 'full-width': isAuthPage }">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
@@ -18,8 +18,8 @@ import Sidebar from './components/Sidebar.vue'
 
 const route = useRoute()
 
-const isRegisterPage = computed(() => {
-  return route.name === 'register'
+const isAuthPage = computed(() => {
+  return route.name === 'register' || route.name === 'login'
 })
 </script>
 

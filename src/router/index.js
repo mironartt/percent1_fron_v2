@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Dashboard from '../views/Dashboard.vue'
 import Register from '../views/Register.vue'
+import Login from '../views/Login.vue'
 import BalancedScorecard from '../views/BalancedScorecard.vue'
 import SSPAnalytics from '../views/SSPAnalytics.vue'
 import Goals from '../views/Goals.vue'
@@ -16,6 +17,12 @@ const router = createRouter({
       name: 'register',
       component: Register,
       meta: { title: 'Регистрация' }
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: Login,
+      meta: { title: 'Вход в систему' }
     },
     {
       path: '/',
