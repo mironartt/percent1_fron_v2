@@ -951,37 +951,10 @@ onUnmounted(() => {
   margin-top: 1.5rem;
 }
 
-/* Buttons */
+/* Buttons - override for centering */
 .btn {
-  padding: 1rem 2rem;
-  font-size: 1.0625rem;
-  font-weight: 600;
-  border-radius: 0.75rem;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
   display: block;
   margin: 0 auto;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
-}
-
-.btn-large {
-  font-size: 1.125rem;
-  padding: 1.25rem 2.5rem;
 }
 
 .empty-state {
