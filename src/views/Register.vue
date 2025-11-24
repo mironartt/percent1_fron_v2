@@ -4,7 +4,7 @@
       <div class="register-card">
         <!-- Header -->
         <div class="register-header">
-          <img src="@/assets/logo.png" alt="OnePercent" class="register-logo-image" />
+          <h1 class="register-logo">OnePercent</h1>
           <p class="register-subtitle">+1% каждый день к лучшей жизни</p>
           <h2>Присоединяйтесь к системе</h2>
           <p class="register-description">Начните путь к достижению своих целей прямо сейчас</p>
@@ -318,11 +318,14 @@ function closeSuccess() {
   text-align: center;
 }
 
-.register-logo-image {
-  width: 100%;
-  height: auto;
-  max-width: 250px;
-  margin-bottom: 1rem;
+.register-logo {
+  font-size: 1.75rem;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
 }
 
 .register-subtitle {
