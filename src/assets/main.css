@@ -81,12 +81,12 @@ p {
 }
 
 .btn-primary {
-  background: var(--primary-color);
+  background: var(--secondary-color);
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--primary-dark);
+  background: var(--primary-color);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
