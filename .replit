@@ -1,6 +1,7 @@
 modules = ["vue-node-20", "nodejs-20", "web"]
 [agent]
 expertMode = true
+integrations = ["javascript_openai_ai_integrations:1.0.0"]
 
 [nix]
 channel = "stable-25_05"
@@ -30,7 +31,7 @@ localPort = 5001
 externalPort = 3003
 
 [[ports]]
-localPort = 40051
+localPort = 33949
 externalPort = 4200
 
 [workflows]
@@ -56,3 +57,7 @@ waitForPort = 5000
 
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[userenv]
+
+[userenv.development]

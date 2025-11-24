@@ -81,6 +81,13 @@ export const useAppStore = defineStore('app', () => {
     subscription: null
   })
 
+  // ССП - Банк целей и результаты модуля
+  const sspGoalsBank = ref([])
+  const sspModuleCompleted = ref({
+    completed: false,
+    data: null
+  })
+
   // Цели
   const goals = ref([])
   
@@ -186,7 +193,9 @@ export const useAppStore = defineStore('app', () => {
       goals: goals.value,
       weeklyPlan: weeklyPlan.value,
       dailyPlan: dailyPlan.value,
-      onboarding: onboarding.value
+      onboarding: onboarding.value,
+      sspGoalsBank: sspGoalsBank.value,
+      sspModuleCompleted: sspModuleCompleted.value
     }))
   }
 
@@ -200,6 +209,8 @@ export const useAppStore = defineStore('app', () => {
         if (parsed.weeklyPlan) weeklyPlan.value = parsed.weeklyPlan
         if (parsed.dailyPlan) dailyPlan.value = parsed.dailyPlan
         if (parsed.onboarding) onboarding.value = parsed.onboarding
+        if (parsed.sspGoalsBank) sspGoalsBank.value = parsed.sspGoalsBank
+        if (parsed.sspModuleCompleted) sspModuleCompleted.value = parsed.sspModuleCompleted
       } catch (e) {
         console.error('Error loading data:', e)
       }
@@ -231,6 +242,42 @@ export const useAppStore = defineStore('app', () => {
     saveToLocalStorage()
   }
 
+  // ССП Goals Bank methods
+  function addGoalToSSPBank(goal) {
+    sspGoalsBank.value.push({
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      isTrue: false,
+      priority: false,
+      ...goal
+    })
+    saveToLocalStorage()
+  }
+
+  function updateSSPGoal(goalId, updates) {
+    const goal = sspGoalsBank.value.find(g => g.id === goalId)
+    if (goal) {
+      Object.assign(goal, updates)
+      saveToLocalStorage()
+    }
+  }
+
+  function deleteSSPGoal(goalId) {
+    const index = sspGoalsBank.value.findIndex(g => g.id === goalId)
+    if (index !== -1) {
+      sspGoalsBank.value.splice(index, 1)
+      saveToLocalStorage()
+    }
+  }
+
+  function completeSSPModule(data) {
+    sspModuleCompleted.value = {
+      completed: true,
+      data: data
+    }
+    saveToLocalStorage()
+  }
+
   // Load data on init
   loadFromLocalStorage()
 
@@ -240,6 +287,8 @@ export const useAppStore = defineStore('app', () => {
     miniTask,
     payment,
     lifeSpheres,
+    sspGoalsBank,
+    sspModuleCompleted,
     goals,
     weeklyPlan,
     dailyPlan,
@@ -258,6 +307,10 @@ export const useAppStore = defineStore('app', () => {
     saveToLocalStorage,
     completeOnboarding,
     resetOnboarding,
-    completeMiniTask
+    completeMiniTask,
+    addGoalToSSPBank,
+    updateSSPGoal,
+    deleteSSPGoal,
+    completeSSPModule
   }
 })
