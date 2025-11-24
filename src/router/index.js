@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Dashboard from '../views/Dashboard.vue'
 import BalancedScorecard from '../views/BalancedScorecard.vue'
+import SSPAnalytics from '../views/SSPAnalytics.vue'
 import Goals from '../views/Goals.vue'
 import Planner from '../views/Planner.vue'
 import Settings from '../views/Settings.vue'
@@ -20,6 +21,12 @@ const router = createRouter({
       name: 'ssp',
       component: BalancedScorecard,
       meta: { title: 'Сбалансированная система показателей' }
+    },
+    {
+      path: '/ssp-analytics',
+      name: 'ssp-analytics',
+      component: SSPAnalytics,
+      meta: { title: 'ССП - Аналитика и Прогресс' }
     },
     {
       path: '/goals',

@@ -60,6 +60,7 @@ const menuItems = [
   { path: '/', icon: '📊', label: 'Главная', locked: true, showLock: true },
   { path: '/who', icon: '🧭', label: 'Кто ты', locked: true, showLock: false },
   { path: '/ssp', icon: '🎯', label: 'ССП', locked: true, showLock: false },
+  { path: '/ssp-analytics', icon: '📈', label: 'ССП Аналитика', locked: true, showLock: false },
   { path: '/goals', icon: '🏆', label: 'Банк целей', locked: true, showLock: false },
   { path: '/planner', icon: '📅', label: 'Планирование', locked: true, showLock: false },
   { path: '/energy', icon: '⚡', label: 'Ресурс и энергия', locked: true, showLock: false },
