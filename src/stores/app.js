@@ -240,7 +240,17 @@ export const useAppStore = defineStore('app', () => {
     if (data) {
       try {
         const parsed = JSON.parse(data)
-        if (parsed.lifeSpheres) lifeSpheres.value = parsed.lifeSpheres
+        if (parsed.lifeSpheres) {
+          lifeSpheres.value = parsed.lifeSpheres.map(sphere => ({
+            reflection: {
+              why: '',
+              ten: '',
+              prevents: '',
+              desired: ''
+            },
+            ...sphere
+          }))
+        }
         if (parsed.goals) goals.value = parsed.goals
         if (parsed.weeklyPlan) weeklyPlan.value = parsed.weeklyPlan
         if (parsed.dailyPlan) dailyPlan.value = parsed.dailyPlan
