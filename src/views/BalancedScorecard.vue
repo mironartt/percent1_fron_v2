@@ -60,8 +60,7 @@
           <ol style="margin-left: 1.5rem; line-height: 1.8; font-size: 0.95rem;">
             <li><strong>Шаг 1:</strong> Оцените каждую сферу жизни от 0 до 10, переещая секторы колеса.</li>
             <li><strong>Шаг 2:</strong> Ответьте на вопросы ИИ-коуча о каждой сфере.</li>
-            <li><strong>Шаг 3:</strong> Сформируйте банк целей, отделив свои истинные желания от навязанных.</li>
-            <li><strong>Шаг 4:</strong> Выберите 3-5 ключевых целей для фокуса.</li>
+            <li><strong>Шаг 3:</strong> Проведете глубокую рефлексию и дадите себе ответ почему поставили такой балл</li>
           </ol>
         </div>
 
@@ -238,7 +237,7 @@ import WheelOfLife from '../components/WheelOfLife.vue'
 
 const store = useAppStore()
 
-const steps = ['Теория', 'ССП', 'Результаты']
+const steps = ['Теория', 'ССП', 'Рефлексия']
 const currentStep = ref(1)
 
 const lifeSpheres = computed(() => store.lifeSpheres)
