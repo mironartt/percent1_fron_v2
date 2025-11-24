@@ -54,18 +54,6 @@
           stroke-width="2"
         />
 
-        <!-- Labels -->
-        <text
-          :x="center + (radius + 50) * Math.cos(getAngle(index) + angleStep / 2)"
-          :y="center + (radius + 50) * Math.sin(getAngle(index) + angleStep / 2)"
-          text-anchor="middle"
-          dominant-baseline="middle"
-          class="sphere-label"
-          @click="selectSphere(sphere)"
-        >
-          {{ sphere.icon }}
-        </text>
-
         <text
           :x="center + (radius + 85) * Math.cos(getAngle(index) + angleStep / 2)"
           :y="center + (radius + 85) * Math.sin(getAngle(index) + angleStep / 2)"
@@ -79,8 +67,8 @@
 
         <!-- Interactive handle for dragging -->
         <circle
-          :cx="center + ((radius / 10) * sphere.score) * Math.cos(getAngle(index) + angleStep / 2)"
-          :cy="center + ((radius / 10) * sphere.score) * Math.sin(getAngle(index) + angleStep / 2)"
+          :cx="center + Math.max((radius / 10) * sphere.score, radius / 15) * Math.cos(getAngle(index) + angleStep / 2)"
+          :cy="center + Math.max((radius / 10) * sphere.score, radius / 15) * Math.sin(getAngle(index) + angleStep / 2)"
           r="8"
           :fill="selectedSphere === sphere.id ? 'var(--primary-color)' : 'white'"
           stroke="var(--primary-color)"

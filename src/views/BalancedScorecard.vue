@@ -895,6 +895,9 @@ function completeModule() {
   font-size: 0.95rem;
   line-height: 1.6;
   color: var(--text-primary);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .step-actions {
