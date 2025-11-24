@@ -338,7 +338,7 @@ const selectedSphere = ref(null)
 
 // Chat state
 const chatMessages = ref([])
-const userMessage = ref(''))
+const userMessage = ref('')
 
 const wheelCompleted = computed(() => {
   return lifeSpheres.value.every(s => s.score > 0)
