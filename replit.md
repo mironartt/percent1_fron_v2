@@ -111,9 +111,10 @@ Both SSP and Goals Bank modules follow a 3-state pattern:
 - "Нужны идеи?" modal with example goals for each sphere
 
 **Step 2 (Проверка):**
-- Simplified AI helper: greeting text + simple input bar (opens modal on click)
-- Validation progress bar moved under "Правило 3 Почему" block
-- Single-column layout (removed sidebar for cleaner UI)
+- Two-column layout with AI Coach sidebar (matching SSP design pattern)
+- AI Coach has persistent chat interface: header, messages area, input field
+- Chat logic: goalsChatMessages, goalsUserMessage, sendGoalsMessage() with simulated responses
+- Validation progress bar under "Правило 3 Почему" block
 
 **Step 3 (Ключевые цели):**
 - Recommendations block highlighting goals from weak SSP spheres
