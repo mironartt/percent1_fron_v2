@@ -10,6 +10,14 @@ Vue 3 + Vite application for personal life management and goal tracking through 
 - **Integrations**: Replit AI Integrations (OpenAI)
 - **Persistence**: localStorage via Pinia persistence
 
+## Design System (November 25, 2025)
+- **Style**: Professional, business-like design inspired by Intelinvest
+- **Primary Color**: Blue (#2563eb) - professional and trustworthy
+- **Typography**: Inter font, clean sans-serif, smaller font sizes (13-14px base)
+- **Icons**: SVG line icons instead of emojis (cleaner, more professional)
+- **Cards**: Subtle borders, minimal shadows, clean spacing
+- **Sidebar**: 240px width, SVG icons, section dividers, MVP badge
+
 ## Project Structure
 ```
 src/
