@@ -475,11 +475,6 @@
           </div>
         </div>
 
-        <div class="required-notice card">
-          <span class="notice-icon">⚠️</span>
-          <p><strong>Обязательно:</strong> Для каждой цели необходимо выбрать, является ли она истинной или ложной. Нажмите на цель, чтобы ответить на вопросы и определить её тип.</p>
-        </div>
-
         <div class="validation-list compact">
           <div 
             v-for="idea in rawIdeas" 
@@ -1990,7 +1985,10 @@ function getStatusLabel(status) {
 
 /* AI Coach Styles */
 .ai-coach {
-  background: var(--bg-secondary);
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
 }
 
 .coach-header {
