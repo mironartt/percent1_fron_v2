@@ -98,6 +98,10 @@ Both SSP and Goals Bank modules follow a 3-state pattern:
 ## Recent Changes
 
 ### November 25, 2025 (Latest Session)
+- SSP Summary: Renamed "Ваше колесо баланса" → "Система сбалансированных показателей"
+- SSP Summary: Replaced progress bars with actual WheelOfLife component visualization
+- WheelOfLife: Added `readonly` prop to disable drag handles and hover effects for summary view
+- SSP Theory: Removed video placeholder, kept only text content
 - Collapsible accordion for SSP Step 3 (Рефлексия): spheres now expand/collapse on click, reducing page length
 - Accordion features: expand/collapse toggle, "Заполнено" badge for completed spheres, smooth animations
 - AICurator component now supports `embedded` prop for inline placement in sidebar
