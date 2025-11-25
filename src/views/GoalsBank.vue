@@ -1177,9 +1177,10 @@ function completeGoalsBankHandler() {
   const selectedGoals = validatedGoals.value.filter(g => selectedGoalIds.value.includes(g.id))
   
   const goalsToTransfer = selectedGoals.map(g => ({
-    goal: g.goal,
+    goal: g.text,
     whyImportant: g.whyImportant,
-    sphere: g.sphere
+    sphere: g.sphereId,
+    threeWhys: g.threeWhys || null
   }))
   
   store.completeGoalsBank(goalsToTransfer)

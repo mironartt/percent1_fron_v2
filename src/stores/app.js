@@ -450,7 +450,8 @@ export const useAppStore = defineStore('app', () => {
         mvp: '',
         deadline: '',
         createdAt: new Date().toISOString(),
-        source: 'goals-bank'
+        source: 'goals-bank',
+        threeWhys: selectedGoal.threeWhys || null
       })
     })
     

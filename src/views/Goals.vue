@@ -29,8 +29,8 @@
             <div class="preview-step">
               <span class="step-number">3</span>
               <div>
-                <strong>Планирование</strong>
-                <p>Определите первый шаг для старта</p>
+                <strong>Проверка</strong>
+                <p>Проверьте результат и завершите урок</p>
               </div>
             </div>
           </div>
@@ -237,57 +237,34 @@
         </div>
       </div>
 
-      <!-- Step 3: Planning -->
+      <!-- Step 3: Review and Complete -->
       <div v-if="currentStep === 3" class="step-content">
-        <h2>Определите первый шаг</h2>
+        <h2>Проверьте декомпозицию</h2>
         <p class="intro-text">
-          Выберите один шаг, который вы выполните сегодня или завтра. 
-          Маленький старт лучше большого планирования.
+          Отлично! Вы разбили цель на конкретные шаги. 
+          Проверьте результат и завершите урок.
         </p>
 
-        <div v-if="selectedGoalForPractice" class="first-step-selection card">
-          <h4>Ваши шаги для цели "{{ selectedGoalForPractice.title }}":</h4>
-          <div class="steps-selection">
+        <div v-if="selectedGoalForPractice" class="decomposition-review card">
+          <h4>Ваша цель:</h4>
+          <p class="review-goal-title">🎯 {{ selectedGoalForPractice.title }}</p>
+          
+          <h4>Ваши шаги:</h4>
+          <div class="review-steps">
             <div 
               v-for="(step, index) in practiceSteps.filter(s => s.trim())" 
               :key="index"
-              class="step-selection-item"
-              :class="{ selected: firstStepIndex === index }"
-              @click="firstStepIndex = index"
+              class="review-step-item"
             >
-              <span class="step-radio">
-                <span v-if="firstStepIndex === index" class="radio-dot"></span>
-              </span>
+              <span class="step-number-badge">{{ index + 1 }}</span>
               <span class="step-text">{{ step }}</span>
             </div>
           </div>
-        </div>
 
-        <div class="commitment-section card">
-          <h4>Ваше обязательство</h4>
-          <p>Когда вы выполните первый шаг?</p>
-          <div class="commitment-options">
-            <button 
-              class="commitment-btn"
-              :class="{ active: commitment === 'today' }"
-              @click="commitment = 'today'"
-            >
-              🌅 Сегодня
-            </button>
-            <button 
-              class="commitment-btn"
-              :class="{ active: commitment === 'tomorrow' }"
-              @click="commitment = 'tomorrow'"
-            >
-              🌄 Завтра
-            </button>
-            <button 
-              class="commitment-btn"
-              :class="{ active: commitment === 'week' }"
-              @click="commitment = 'week'"
-            >
-              📅 На этой неделе
-            </button>
+          <div class="review-summary">
+            <p class="summary-text">
+              ✅ {{ practiceSteps.filter(s => s.trim()).length }} шагов готовы к выполнению
+            </p>
           </div>
         </div>
 
@@ -304,8 +281,117 @@
       </div>
     </div>
 
-    <!-- Summary/List Mode -->
-    <div v-else class="goals-list-mode">
+    <!-- Summary State - After Lesson Completion -->
+    <div v-else-if="showSummary" class="summary-section">
+      <header class="section-header">
+        <h1>🎯 Декомпозиция — Результаты</h1>
+        <p class="subtitle">Урок завершён {{ formatCompletedDate }}</p>
+      </header>
+
+      <div class="summary-grid">
+        <div class="summary-card card">
+          <div class="summary-icon">🎯</div>
+          <div class="summary-value">{{ goals.length }}</div>
+          <div class="summary-label">Всего целей</div>
+        </div>
+
+        <div class="summary-card card">
+          <div class="summary-icon">🏦</div>
+          <div class="summary-value">{{ goalsFromBank.length }}</div>
+          <div class="summary-label">Из Банка целей</div>
+        </div>
+
+        <div class="summary-card card">
+          <div class="summary-icon">📋</div>
+          <div class="summary-value">{{ totalStepsCount }}</div>
+          <div class="summary-label">Шагов создано</div>
+        </div>
+
+        <div class="summary-card card">
+          <div class="summary-icon">✅</div>
+          <div class="summary-value">{{ completedStepsCount }}</div>
+          <div class="summary-label">Шагов выполнено</div>
+        </div>
+      </div>
+
+      <!-- Цели с декомпозицией -->
+      <div class="goals-summary card" v-if="goals.length > 0">
+        <h3>📋 Ваши цели и шаги</h3>
+        <div class="goals-accordion">
+          <div 
+            v-for="goal in goals" 
+            :key="goal.id"
+            class="accordion-item"
+            :class="{ expanded: expandedSummaryGoalId === goal.id }"
+          >
+            <div 
+              class="accordion-header"
+              @click="toggleSummaryGoalExpand(goal.id)"
+            >
+              <div class="accordion-title">
+                <span class="expand-arrow">{{ expandedSummaryGoalId === goal.id ? '▼' : '▶' }}</span>
+                <span v-if="goal.source === 'goals-bank'" class="source-badge-small">🏦</span>
+                <span class="goal-name">{{ goal.title }}</span>
+              </div>
+              <div class="goal-meta-badges">
+                <span class="progress-badge">{{ goal.progress }}%</span>
+                <span class="steps-badge">{{ goal.steps?.length || 0 }} шагов</span>
+              </div>
+            </div>
+            <transition name="accordion-expand">
+              <div v-if="expandedSummaryGoalId === goal.id" class="accordion-content">
+                <div v-if="goal.threeWhys" class="three-whys-block">
+                  <h4>Правило "3 Почему":</h4>
+                  <div class="answer-item" v-if="goal.threeWhys.why1">
+                    <div class="answer-label">1. Почему эта цель мне важна?</div>
+                    <div class="answer-text">{{ goal.threeWhys.why1 }}</div>
+                  </div>
+                  <div class="answer-item" v-if="goal.threeWhys.why2">
+                    <div class="answer-label">2. Почему именно это даст мне то, что я хочу?</div>
+                    <div class="answer-text">{{ goal.threeWhys.why2 }}</div>
+                  </div>
+                  <div class="answer-item" v-if="goal.threeWhys.why3">
+                    <div class="answer-label">3. Почему это действительно про меня?</div>
+                    <div class="answer-text">{{ goal.threeWhys.why3 }}</div>
+                  </div>
+                </div>
+                <div v-if="goal.steps && goal.steps.length > 0" class="steps-list">
+                  <h4>Шаги:</h4>
+                  <div 
+                    v-for="(step, idx) in goal.steps" 
+                    :key="step.id"
+                    class="step-item"
+                    :class="{ completed: step.completed }"
+                  >
+                    <span class="step-checkbox">{{ step.completed ? '✅' : '⬜' }}</span>
+                    <span class="step-text">{{ step.title }}</span>
+                  </div>
+                </div>
+                <div v-else class="no-steps">
+                  Шаги ещё не добавлены
+                </div>
+              </div>
+            </transition>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="empty-summary card">
+        <p>У вас пока нет целей. Создайте первую цель!</p>
+      </div>
+
+      <div class="summary-actions">
+        <button class="btn btn-primary btn-lg" @click="goToGoalsList">
+          📋 Перейти к списку целей
+        </button>
+        <button class="btn btn-secondary" @click="restartLesson">
+          🔄 Пройти урок заново
+        </button>
+      </div>
+    </div>
+
+    <!-- List Mode -->
+    <div v-else-if="showGoalsList" class="goals-list-mode">
       <header class="page-header">
         <div>
           <h1>Цели и декомпозиция</h1>
@@ -314,6 +400,9 @@
           </p>
         </div>
         <div class="header-actions">
+          <button class="btn btn-outline" @click="goToSummary">
+            📊 Результаты урока
+          </button>
           <button class="btn btn-secondary" @click="restartLesson">
             📚 Пройти урок заново
           </button>
@@ -654,9 +743,40 @@ const showLesson = computed(() => {
   return decompositionModule.value.lessonStarted && !decompositionModule.value.lessonCompleted
 })
 
+const showSummary = computed(() => {
+  return decompositionModule.value.lessonCompleted && !viewingGoalsList.value
+})
+
+const showGoalsList = computed(() => {
+  return decompositionModule.value.lessonCompleted && viewingGoalsList.value
+})
+
 const goalsFromBank = computed(() => {
   return goals.value.filter(g => g.source === 'goals-bank')
 })
+
+const totalStepsCount = computed(() => {
+  return goals.value.reduce((sum, g) => sum + (g.steps?.length || 0), 0)
+})
+
+const completedStepsCount = computed(() => {
+  return goals.value.reduce((sum, g) => {
+    return sum + (g.steps?.filter(s => s.completed)?.length || 0)
+  }, 0)
+})
+
+const formatCompletedDate = computed(() => {
+  if (!decompositionModule.value.completedAt) return ''
+  const date = new Date(decompositionModule.value.completedAt)
+  return date.toLocaleDateString('ru-RU', { 
+    day: 'numeric', 
+    month: 'long', 
+    year: 'numeric' 
+  })
+})
+
+const expandedSummaryGoalId = ref(null)
+const viewingGoalsList = ref(false)
 
 const activeGoalsCount = computed(() => goals.value.filter(g => g.status === 'active').length)
 const completedGoalsCount = computed(() => goals.value.filter(g => g.status === 'completed').length)
@@ -668,8 +788,6 @@ const filteredGoals = computed(() => {
 
 const selectedGoalForPractice = ref(null)
 const practiceSteps = ref(['', '', ''])
-const firstStepIndex = ref(null)
-const commitment = ref(null)
 
 const chatMessagesRef = ref(null)
 const listChatMessagesRef = ref(null)
@@ -687,11 +805,11 @@ const canProceedFromStep2 = computed(() => {
 })
 
 const canCompleteLesson = computed(() => {
-  return firstStepIndex.value !== null && commitment.value
+  return selectedGoalForPractice.value && practiceSteps.value.filter(s => s.trim()).length >= 1
 })
 
 function getStepLabel(step) {
-  const labels = { 1: 'Теория', 2: 'Практика', 3: 'Планирование' }
+  const labels = { 1: 'Теория', 2: 'Практика', 3: 'Проверка' }
   return labels[step]
 }
 
@@ -812,8 +930,25 @@ function completeLesson() {
 }
 
 function restartLesson() {
+  viewingGoalsList.value = false
   store.resetDecompositionModule()
   store.startDecompositionLesson()
+}
+
+function toggleSummaryGoalExpand(goalId) {
+  if (expandedSummaryGoalId.value === goalId) {
+    expandedSummaryGoalId.value = null
+  } else {
+    expandedSummaryGoalId.value = goalId
+  }
+}
+
+function goToGoalsList() {
+  viewingGoalsList.value = true
+}
+
+function goToSummary() {
+  viewingGoalsList.value = false
 }
 
 function createNewGoal() {
@@ -2072,6 +2207,263 @@ function formatDate(dateString) {
   .goal-detail-status {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+/* Summary Section */
+.summary-section {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.summary-section .section-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.summary-section .section-header h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.summary-section .section-header .subtitle {
+  color: var(--text-secondary);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.summary-card {
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.summary-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.summary-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 0.25rem;
+}
+
+.summary-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.summary-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.goals-summary {
+  margin-bottom: 1.5rem;
+}
+
+.goals-summary h3 {
+  margin-bottom: 1rem;
+}
+
+.goals-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.accordion-item {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.accordion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  cursor: pointer;
+  background: var(--bg-secondary);
+  transition: background 0.2s ease;
+}
+
+.accordion-header:hover {
+  background: var(--bg-tertiary);
+}
+
+.accordion-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.expand-arrow {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  width: 1rem;
+}
+
+.source-badge-small {
+  font-size: 0.875rem;
+}
+
+.goal-meta-badges {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.progress-badge {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.steps-badge {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.accordion-content {
+  padding: 1rem;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-primary);
+}
+
+.accordion-expand-enter-active,
+.accordion-expand-leave-active {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.accordion-expand-enter-from,
+.accordion-expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.three-whys-block {
+  margin-bottom: 1.5rem;
+}
+
+.three-whys-block h4 {
+  font-size: 0.9375rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.answer-item {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+}
+
+.answer-label {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.answer-text {
+  font-size: 0.9375rem;
+}
+
+.steps-list h4 {
+  font-size: 0.9375rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.step-item.completed .step-text {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+}
+
+.no-steps {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.empty-summary {
+  text-align: center;
+  padding: 2rem;
+}
+
+/* Decomposition Review (Step 3) */
+.decomposition-review {
+  margin-bottom: 2rem;
+}
+
+.decomposition-review h4 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+}
+
+.review-goal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.review-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.review-step-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.review-summary {
+  padding: 1rem;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.review-summary .summary-text {
+  margin: 0;
+  color: var(--success-color);
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .summary-actions {
+    flex-direction: column;
+  }
+  
+  .summary-actions .btn {
+    width: 100%;
   }
 }
 </style>
