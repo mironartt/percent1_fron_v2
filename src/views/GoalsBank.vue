@@ -406,60 +406,54 @@
     <!-- Step 2: Проверка целей -->
     <div v-if="currentStep === 2" class="step-content">
       <div class="step-section">
-          <header class="section-header">
-            <h1>🔍 Проверка целей</h1>
-            <p class="subtitle">
-              Проверь каждую цель с помощью правила "3 Почему" и отсей ложные цели
-            </p>
-          </header>
+        <header class="section-header">
+          <h1>🔍 Проверка целей</h1>
+          <p class="subtitle">
+            Проверь каждую цель с помощью правила "3 Почему" и отсей ложные цели
+          </p>
+        </header>
 
-          <div class="filters-block card">
-            <h3>⚠️ Убери следующие типы целей:</h3>
-          <div class="filter-types">
-            <div class="filter-type">
-              <span class="filter-icon">🎭</span>
-              <div>
-                <strong>Социально-приемлемые цели</strong>
-                <p>"Чтобы выглядело правильно" перед другими</p>
+        <div class="step-2-layout">
+          <div class="step-2-main">
+            <div class="filters-block card">
+              <h3>⚠️ Убери следующие типы целей:</h3>
+              <div class="filter-types">
+                <div class="filter-type">
+                  <span class="filter-icon">🎭</span>
+                  <div>
+                    <strong>Социально-приемлемые цели</strong>
+                    <p>"Чтобы выглядело правильно" перед другими</p>
+                  </div>
+                </div>
+                <div class="filter-type">
+                  <span class="filter-icon">👥</span>
+                  <div>
+                    <strong>Чужие цели</strong>
+                    <p>Взятые у авторитетов или окружения</p>
+                  </div>
+                </div>
+                <div class="filter-type">
+                  <span class="filter-icon">💭</span>
+                  <div>
+                    <strong>Суррогаты</strong>
+                    <p>Цели, не ведущие к реальному результату</p>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="filter-type">
-              <span class="filter-icon">👥</span>
-              <div>
-                <strong>Чужие цели</strong>
-                <p>Взятые у авторитетов или окружения</p>
-              </div>
+
+            <div class="three-whys-instruction card">
+              <h3>✅ Правило "3 Почему"</h3>
+              <p>Для каждой цели ответь на три вопроса:</p>
+              <ol>
+                <li><strong>Почему эта цель мне важна?</strong></li>
+                <li><strong>Почему именно это даст мне то, что я хочу?</strong></li>
+                <li><strong>Почему это действительно про меня?</strong></li>
+              </ol>
             </div>
-            <div class="filter-type">
-              <span class="filter-icon">💭</span>
-              <div>
-                <strong>Суррогаты</strong>
-                <p>Цели, не ведущие к реальному результату</p>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <div class="three-whys-instruction card">
-          <h3>✅ Правило "3 Почему"</h3>
-          <p>Для каждой цели ответь на три вопроса:</p>
-          <ol>
-            <li><strong>Почему эта цель мне важна?</strong></li>
-            <li><strong>Почему именно это даст мне то, что я хочу?</strong></li>
-            <li><strong>Почему это действительно про меня?</strong></li>
-          </ol>
-        </div>
-
-        <!-- AI Helper Compact Button -->
-        <div class="ai-helper-compact">
-          <button class="ai-helper-btn" @click="openAIChat">
-            <span class="ai-btn-icon">🤖</span>
-            <span class="ai-btn-text">Спросить помощника</span>
-          </button>
-        </div>
-
-        <!-- Validation Progress Bar -->
-        <div class="validation-progress card">
+            <!-- Validation Progress Bar -->
+            <div class="validation-progress card">
           <div class="progress-header">
             <span class="progress-title">Прогресс проверки</span>
             <span class="progress-count">{{ checkedCount }} из {{ rawIdeas.length }} целей проверено</span>
@@ -570,18 +564,61 @@
           </div>
         </div>
 
-          <div class="step-actions">
-            <button class="btn btn-secondary" @click="prevStep">
-              ← Назад
-            </button>
-            <button 
-              class="btn btn-primary btn-lg" 
-              @click="nextStep"
-              :disabled="!canProceedToStep(3)"
-            >
-              Выбрать ключевые цели →
-            </button>
+            <div class="step-actions">
+              <button class="btn btn-secondary" @click="prevStep">
+                ← Назад
+              </button>
+              <button 
+                class="btn btn-primary btn-lg" 
+                @click="nextStep"
+                :disabled="!canProceedToStep(3)"
+              >
+                Выбрать ключевые цели →
+              </button>
+            </div>
           </div>
+
+          <!-- AI Coach Sidebar -->
+          <div class="step-2-sidebar">
+            <div class="card ai-coach">
+              <div class="coach-header">
+                <span class="coach-icon">💬</span>
+                <h3>ИИ-коуч</h3>
+              </div>
+              
+              <div class="chat-container">
+                <div class="chat-messages" ref="chatMessagesContainer">
+                  <div class="message coach-message">
+                    <span class="message-avatar">🤖</span>
+                    <div class="message-content">
+                      <p>Привет! Я помогу тебе проверить цели. Ответь на 3 вопроса для каждой цели, чтобы понять — она истинная или ложная.</p>
+                    </div>
+                  </div>
+                  <div v-for="msg in goalsChatMessages" :key="msg.id" class="message" :class="msg.type + '-message'">
+                    <span v-if="msg.type === 'coach'" class="message-avatar">🤖</span>
+                    <div class="message-content">
+                      <p>{{ msg.text }}</p>
+                    </div>
+                    <span v-if="msg.type === 'user'" class="message-avatar user">👤</span>
+                  </div>
+                </div>
+                
+                <div class="chat-input-area">
+                  <input 
+                    v-model="goalsUserMessage"
+                    @keyup.enter="sendGoalsMessage"
+                    type="text"
+                    placeholder="Напишите ваш вопрос..."
+                    class="chat-input"
+                  />
+                  <button @click="sendGoalsMessage" class="btn-send" :disabled="!goalsUserMessage.trim()">
+                    →
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -700,19 +737,6 @@
     </div>
 
     </div>
-
-    <!-- AI Chat Modal -->
-    <Teleport to="body">
-      <div v-if="showAIChatModal" class="ai-modal-overlay" @click.self="closeAIChat">
-        <div class="ai-modal-content">
-          <div class="ai-modal-header">
-            <h3>🤖 ИИ-Куратор</h3>
-            <button class="btn-close" @click="closeAIChat">✕</button>
-          </div>
-          <AICurator context="goals-validation" />
-        </div>
-      </div>
-    </Teleport>
   </div>
 </template>
 
@@ -720,7 +744,6 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
-import AICurator from '../components/AICurator.vue'
 
 const store = useAppStore()
 const router = useRouter()
@@ -944,14 +967,51 @@ function toggleGoalExpansion(goalId) {
   }
 }
 
-const showAIChatModal = ref(false)
+const goalsChatMessages = ref([])
+const goalsUserMessage = ref('')
+const chatMessagesContainer = ref(null)
 
-function openAIChat() {
-  showAIChatModal.value = true
-}
-
-function closeAIChat() {
-  showAIChatModal.value = false
+async function sendGoalsMessage() {
+  if (!goalsUserMessage.value.trim()) return
+  
+  const userMsg = {
+    id: Date.now(),
+    type: 'user',
+    text: goalsUserMessage.value.trim()
+  }
+  goalsChatMessages.value.push(userMsg)
+  const question = goalsUserMessage.value.trim()
+  goalsUserMessage.value = ''
+  
+  // Scroll to bottom
+  setTimeout(() => {
+    if (chatMessagesContainer.value) {
+      chatMessagesContainer.value.scrollTop = chatMessagesContainer.value.scrollHeight
+    }
+  }, 50)
+  
+  // Demo response (in production would call AI API)
+  setTimeout(() => {
+    const responses = [
+      'Отличный вопрос! Подумай: если бы ты достиг этой цели, что бы изменилось в твоей жизни?',
+      'Попробуй спросить себя: это действительно твоя цель или ты взял её у кого-то другого?',
+      'Хороший способ проверить цель — представить, что прошёл год. Ты всё ещё хочешь этого?',
+      'Истинная цель обычно вызывает энергию и желание действовать. Что ты чувствуешь, думая об этой цели?',
+      'Если эта цель связана со слабой сферой из твоего колеса баланса — это хороший знак!'
+    ]
+    const coachMsg = {
+      id: Date.now() + 1,
+      type: 'coach',
+      text: responses[Math.floor(Math.random() * responses.length)]
+    }
+    goalsChatMessages.value.push(coachMsg)
+    
+    setTimeout(() => {
+      if (chatMessagesContainer.value) {
+        chatMessagesContainer.value.scrollTop = chatMessagesContainer.value.scrollHeight
+      }
+    }, 50)
+  }, 800)
 }
 
 const sortedSpheres = computed(() => {
@@ -1900,98 +1960,159 @@ function getStatusLabel(status) {
   opacity: 0;
 }
 
-/* Simple AI Helper Input */
-.ai-helper-simple {
-  margin-bottom: 1.5rem;
+/* Step 2 Layout with AI Coach Sidebar */
+.step-2-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 2rem;
+  align-items: start;
 }
 
-.ai-helper-greeting {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  margin-bottom: 0.75rem;
-  padding-left: 0.25rem;
+.step-2-main {
+  min-width: 0;
 }
 
-.ai-helper-input-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem 1.25rem;
+.step-2-sidebar {
+  position: sticky;
+  top: 2rem;
+}
+
+@media (max-width: 1024px) {
+  .step-2-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .step-2-sidebar {
+    position: static;
+    order: -1;
+  }
+}
+
+/* AI Coach Styles */
+.ai-coach {
   background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 50px;
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.ai-helper-input-wrapper:hover {
-  border-color: var(--primary-color);
-  background: var(--bg-primary);
-}
-
-.ai-input-icon {
-  font-size: 1.25rem;
-  color: var(--text-muted);
-  font-weight: 300;
-}
-
-.ai-input-placeholder {
-  color: var(--text-muted);
-  font-size: 0.95rem;
-}
-
-/* AI Chat Modal */
-.ai-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+.coach-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-}
-
-.ai-modal-content {
-  background: var(--bg-primary);
-  border-radius: var(--radius-lg);
-  width: 100%;
-  max-width: 500px;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
-.ai-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.25rem;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--border-color);
 }
 
-.ai-modal-header h3 {
+.coach-icon {
+  font-size: 1.25rem;
+}
+
+.coach-header h3 {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
-.ai-modal-content .ai-curator {
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 300px;
+}
+
+.chat-messages {
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-right: 0.5rem;
 }
 
-.ai-modal-content .ai-curator .curator-panel {
-  box-shadow: none;
-  border-radius: 0;
+.message {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
 }
 
-.ai-modal-content .ai-curator .curator-header {
-  display: none;
+.message-avatar {
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+
+.message-avatar.user {
+  order: 1;
+}
+
+.message-content {
+  flex: 1;
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.message-content p {
+  margin: 0;
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.coach-message .message-content p {
+  background: var(--bg-tertiary);
+}
+
+.user-message {
+  flex-direction: row-reverse;
+}
+
+.user-message .message-content {
+  flex-direction: row-reverse;
+}
+
+.user-message .message-content p {
+  background: var(--primary-color);
+  color: white;
+}
+
+.chat-input-area {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.chat-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.chat-input-area .btn-send {
+  padding: 0.6rem 1rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.2s ease;
+}
+
+.chat-input-area .btn-send:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.chat-input-area .btn-send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Validation Progress Bar */
