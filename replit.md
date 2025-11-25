@@ -1,7 +1,7 @@
 # OnePercent MVP
 
 ## Project Overview
-Vue 3 + Vite application for personal life management and goal tracking through daily 1% improvements (OnePercent system). Currently implementing the SSP (Сбалансированная система показателей / Balanced Scorecard) module for systematic life balance assessment and goal setting.
+Vue 3 + Vite application for personal life management and goal tracking through daily 1% improvements (OnePercent system). Features SSP (Сбалансированная система показателей / Balanced Scorecard) module and Банк целей (Goals Bank) for systematic life balance assessment and goal setting.
 
 ## Tech Stack
 - **Frontend**: Vue 3 (Composition API with script setup), Vite, Vue Router, Pinia (state management)
@@ -15,13 +15,14 @@ Vue 3 + Vite application for personal life management and goal tracking through 
 src/
   ├── components/
   │   ├── WheelOfLife.vue       # Interactive life balance wheel (drag-n-drop, 1-10 scale)
-  │   ├── GoalsBank.vue          # Goal management with true/priority filters
+  │   ├── GoalsBank.vue          # Goal management with true/priority filters (SSP step 3)
   │   └── AICurator.vue          # AI assistant (demo mode, no API calls)
   ├── views/
-  │   └── BalancedScorecard.vue  # SSP module main view (4-step flow)
+  │   ├── BalancedScorecard.vue  # SSP module main view (4-step flow)
+  │   └── GoalsBank.vue          # Standalone Goals Bank page (4-step process)
   ├── router/                    # Vue Router config
   ├── stores/
-  │   └── app.js                 # Pinia store with SSP state + localStorage persistence
+  │   └── app.js                 # Pinia store with SSP + Goals Bank state + localStorage persistence
   ├── assets/                    # Styles and static assets
   ├── App.vue                    # Root component
   └── main.js                    # Entry point
@@ -33,6 +34,19 @@ src/
 2. **Колесо баланса** - Interactive Wheel of Life exercise with 6 life spheres
 3. **Банк целей** - Goals bank creation and categorization (истинные/приоритетные)
 4. **Фиксация результатов** - Results summary and completion
+
+## Goals Bank Module Architecture (/goals-bank)
+4-step guided workflow with validation guards:
+1. **Банк идей** - Raw ideas collection with Excel-like table (sphere, goal, why important, MVP, decomposition)
+2. **Проверка** - Goals validation via "3 Why" rule (истинные/ложные classification)
+3. **Взаимосвязи** - Sphere analysis: identify lowest sphere (камень) and leverage sphere (рычаг)
+4. **Ключевые цели** - Formulate 3-5 key goals with "Я хочу" → "Я делаю" transformation
+
+### Step Progression Rules
+- Step 2: Requires at least 1 idea in bank
+- Step 3: Requires at least 1 validated goal
+- Step 4: Requires sphere analysis (lowest or leverage sphere selected)
+- Completion: Requires 3-5 key goals, each with action ("Я делаю...")
 
 ### Life Spheres (6)
 - Благосостояние (Wealth)
@@ -65,7 +79,20 @@ npm run build    # Build for production
 npm run preview  # Preview production build
 ```
 
-## Recent Changes (November 24, 2025)
+## Recent Changes
+
+### November 25, 2025
+- Created standalone GoalsBank.vue page with 4-step guided workflow
+- Added goalsBank state to Pinia store (rawIdeas, keyGoals, sphereAnalysis, currentStep)
+- Implemented step progression validation (canProceedToStep function)
+- Step 1: Excel-like table with textarea fields for longer text
+- Step 2: "3 Why" validation rule for goals classification
+- Step 3: Sphere analysis - identify камень (lowest sphere) and рычаг (leverage)
+- Step 4: 3-5 key goals with mandatory "Я делаю" action formulation
+- Added /goals-bank route and sidebar navigation
+- Fixed AI coach chat display on SSP step
+
+### November 24, 2025
 - Fixed all props mutation issues across WheelOfLife, GoalsBank components
 - Removed v-model on props, replaced with :value/@input pattern
 - Ensured all state updates flow through Pinia store actions

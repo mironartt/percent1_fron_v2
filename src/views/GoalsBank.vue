@@ -567,7 +567,14 @@ function prevStep() {
 }
 
 function goToStep(step) {
-  if (step < currentStep.value || (step === currentStep.value + 1 && canProceedToStep(step))) {
+  if (step < currentStep.value) {
+    store.setGoalsBankStep(step)
+  } else if (step > currentStep.value) {
+    for (let s = currentStep.value + 1; s <= step; s++) {
+      if (!canProceedToStep(s)) {
+        return
+      }
+    }
     store.setGoalsBankStep(step)
   }
 }
