@@ -111,9 +111,9 @@ Both SSP and Goals Bank modules follow a 3-state pattern:
 - "Нужны идеи?" modal with example goals for each sphere
 
 **Step 2 (Проверка):**
-- Validation progress bar showing checked/validated/rejected counts
-- AI helper sidebar with embedded AICurator for contextual "3 Why" guidance
-- Two-column responsive layout (main content + AI sidebar)
+- Simplified AI helper: greeting text + simple input bar (opens modal on click)
+- Validation progress bar moved under "Правило 3 Почему" block
+- Single-column layout (removed sidebar for cleaner UI)
 
 **Step 3 (Ключевые цели):**
 - Recommendations block highlighting goals from weak SSP spheres
