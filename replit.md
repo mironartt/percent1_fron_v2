@@ -65,7 +65,16 @@ npm run build    # Build for production
 npm run preview  # Preview production build
 ```
 
-## Recent Changes (November 24, 2025)
+## Recent Changes (November 25, 2025)
+- **Major Design Overhaul**: Professional business-style UI (inspired by Intelinvest)
+- Color scheme changed from purple (#6366f1) to blue (#2563eb)
+- Sidebar redesigned with SVG icons, cleaner layout, section dividers
+- Dashboard updated with metrics cards, data tables, professional typography
+- All components use smaller font sizes, tighter spacing, subtle shadows
+- Open AI coach chat on SSP step (always visible, no button needed)
+- Progress bar in SSP now styled as a card with compact step indicators
+
+## Previous Changes (November 24, 2025)
 - Fixed all props mutation issues across WheelOfLife, GoalsBank components
 - Removed v-model on props, replaced with :value/@input pattern
 - Ensured all state updates flow through Pinia store actions
