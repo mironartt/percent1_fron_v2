@@ -590,12 +590,12 @@
               </div>
             </div>
 
-            <div v-if="selectedGoal?.whyAnswers" class="goal-detail-section why-section">
+            <div v-if="selectedGoal?.threeWhys" class="goal-detail-section why-section">
               <h4>Почему эта цель важна (3 Почему)</h4>
               <div class="why-answers">
-                <p v-if="selectedGoal.whyAnswers.why1"><strong>1.</strong> {{ selectedGoal.whyAnswers.why1 }}</p>
-                <p v-if="selectedGoal.whyAnswers.why2"><strong>2.</strong> {{ selectedGoal.whyAnswers.why2 }}</p>
-                <p v-if="selectedGoal.whyAnswers.why3"><strong>3.</strong> {{ selectedGoal.whyAnswers.why3 }}</p>
+                <p v-if="selectedGoal.threeWhys.why1"><strong>1.</strong> {{ selectedGoal.threeWhys.why1 }}</p>
+                <p v-if="selectedGoal.threeWhys.why2"><strong>2.</strong> {{ selectedGoal.threeWhys.why2 }}</p>
+                <p v-if="selectedGoal.threeWhys.why3"><strong>3.</strong> {{ selectedGoal.threeWhys.why3 }}</p>
               </div>
             </div>
 
@@ -805,7 +805,7 @@ const canProceedFromStep2 = computed(() => {
 })
 
 const canCompleteLesson = computed(() => {
-  return selectedGoalForPractice.value && practiceSteps.value.filter(s => s.trim()).length >= 1
+  return selectedGoalForPractice.value && practiceSteps.value.filter(s => s.trim()).length >= 2
 })
 
 function getStepLabel(step) {
