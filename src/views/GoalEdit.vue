@@ -209,30 +209,7 @@
       </div>
 
       <div class="sidebar-actions">
-        <div class="card sticky-card">
-          <h4>Действия</h4>
-          <div class="action-buttons">
-            <button class="btn btn-primary btn-lg btn-full" @click="saveGoal">
-              💾 Сохранить изменения
-            </button>
-            <button class="btn btn-secondary btn-full" @click="goBack">
-              Отмена
-            </button>
-          </div>
-
-          <div class="goal-info">
-            <div class="info-item">
-              <span class="info-label">Создана:</span>
-              <span class="info-value">{{ formatDate(goal.createdAt) }}</span>
-            </div>
-            <div v-if="goal.completedAt" class="info-item">
-              <span class="info-label">Завершена:</span>
-              <span class="info-value">{{ formatDate(goal.completedAt) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="ai-coach-section card">
+        <div class="ai-coach-section card sticky-card">
           <div class="coach-header">
             <span class="coach-icon">🤖</span>
             <h3>ИИ-коуч</h3>
@@ -264,6 +241,29 @@
                 @click="sendMessage"
                 :disabled="!userMessage.trim()"
               >→</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h4>Действия</h4>
+          <div class="action-buttons">
+            <button class="btn btn-primary btn-lg btn-full" @click="saveGoal">
+              💾 Сохранить изменения
+            </button>
+            <button class="btn btn-secondary btn-full" @click="goBack">
+              Отмена
+            </button>
+          </div>
+
+          <div class="goal-info">
+            <div class="info-item">
+              <span class="info-label">Создана:</span>
+              <span class="info-value">{{ formatDate(goal.createdAt) }}</span>
+            </div>
+            <div v-if="goal.completedAt" class="info-item">
+              <span class="info-label">Завершена:</span>
+              <span class="info-value">{{ formatDate(goal.completedAt) }}</span>
             </div>
           </div>
         </div>
