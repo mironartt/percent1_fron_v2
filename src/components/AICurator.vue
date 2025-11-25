@@ -1,20 +1,20 @@
 <template>
-  <div class="ai-curator" :class="{ expanded: isExpanded, minimized: isMinimized }">
-    <!-- Minimized state -->
-    <div v-if="isMinimized" class="curator-minimized" @click="toggleMinimize">
+  <div class="ai-curator" :class="{ expanded: isExpanded, minimized: isMinimized, embedded: embedded }">
+    <!-- Minimized state (only for floating mode) -->
+    <div v-if="isMinimized && !embedded" class="curator-minimized" @click="toggleMinimize">
       <div class="minimized-icon">🤖</div>
       <div class="minimized-text">ИИ-Куратор</div>
       <div v-if="unreadCount > 0" class="unread-badge">{{ unreadCount }}</div>
     </div>
 
-    <!-- Expanded state -->
+    <!-- Expanded state / Embedded mode -->
     <div v-else class="curator-panel">
       <div class="curator-header">
         <div class="curator-title">
           <span class="curator-icon">🤖</span>
-          <h3>ИИ-Куратор</h3>
+          <h3>{{ embedded ? 'Помощник' : 'ИИ-Куратор' }}</h3>
         </div>
-        <div class="curator-actions">
+        <div v-if="!embedded" class="curator-actions">
           <button class="btn-minimize" @click="toggleExpanded" :title="isExpanded ? 'Свернуть' : 'Развернуть'">
             {{ isExpanded ? '−' : '□' }}
           </button>
@@ -31,8 +31,9 @@
 
       <div class="chat-messages" ref="messagesContainer">
         <div v-if="messages.length === 0" class="welcome-message">
-          <p>👋 Привет! Я ваш ИИ-куратор.</p>
-          <p>Задавайте вопросы по упражнениям, делитесь размышлениями или просто спрашивайте совета.</p>
+          <p v-if="goalContext">💡 Помогу с целью "{{ goalContext.title }}"</p>
+          <p v-else>👋 Привет! Я ваш ИИ-куратор.</p>
+          <p>{{ embedded ? 'Спросите о декомпозиции, MVP или следующем шаге.' : 'Задавайте вопросы по упражнениям, делитесь размышлениями или просто спрашивайте совета.' }}</p>
         </div>
 
         <div
@@ -104,10 +105,18 @@ const props = defineProps({
   context: {
     type: String,
     default: 'general'
+  },
+  embedded: {
+    type: Boolean,
+    default: false
+  },
+  goalContext: {
+    type: Object,
+    default: null
   }
 })
 
-const isExpanded = ref(false)
+const isExpanded = ref(props.embedded)
 const isMinimized = ref(false)
 const inputMessage = ref('')
 const messages = ref([])
@@ -263,6 +272,58 @@ function scrollToBottom() {
   right: 2rem;
   z-index: 100;
   transition: all 0.3s ease;
+}
+
+.ai-curator.embedded {
+  position: static;
+  bottom: auto;
+  right: auto;
+  z-index: 1;
+}
+
+.ai-curator.embedded .curator-panel {
+  width: 100%;
+  max-height: none;
+  box-shadow: none;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+}
+
+.ai-curator.embedded .curator-header {
+  padding: 1rem;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.ai-curator.embedded .curator-icon {
+  font-size: 1.25rem;
+}
+
+.ai-curator.embedded .curator-title h3 {
+  font-size: 1rem;
+}
+
+.ai-curator.embedded .chat-messages {
+  height: 200px;
+  min-height: 200px;
+  padding: 1rem;
+}
+
+.ai-curator.embedded .welcome-message {
+  padding: 1rem 0;
+  font-size: 0.875rem;
+}
+
+.ai-curator.embedded .chat-input {
+  padding: 0.75rem 1rem;
+}
+
+.ai-curator.embedded .quick-prompts {
+  padding: 0.75rem 1rem;
+}
+
+.ai-curator.embedded .quick-prompt-btn {
+  font-size: 0.75rem;
+  padding: 0.375rem 0.625rem;
 }
 
 .curator-minimized {

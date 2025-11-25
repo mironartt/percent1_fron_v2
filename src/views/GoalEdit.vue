@@ -199,10 +199,16 @@
             </div>
           </div>
         </div>
+
+        <div class="ai-helper-section">
+          <AICurator 
+            context="decomposition" 
+            :embedded="true"
+            :goalContext="{ title: goalForm.title, sphere: goalForm.sphereId }"
+          />
+        </div>
       </div>
     </div>
-
-    <AICurator context="decomposition" />
   </div>
 </template>
 
@@ -615,6 +621,13 @@ function formatDate(dateString) {
 
 .sidebar-actions {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.ai-helper-section {
+  margin-top: 0;
 }
 
 .sticky-card {

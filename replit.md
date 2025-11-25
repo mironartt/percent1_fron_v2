@@ -98,6 +98,11 @@ Both SSP and Goals Bank modules follow a 3-state pattern:
 ## Recent Changes
 
 ### November 25, 2025 (Latest Session)
+- Collapsible accordion for SSP Step 3 (Рефлексия): spheres now expand/collapse on click, reducing page length
+- Accordion features: expand/collapse toggle, "Заполнено" badge for completed spheres, smooth animations
+- AICurator component now supports `embedded` prop for inline placement in sidebar
+- Embedded AI curator integrated into GoalEdit.vue (/goals/:id) sidebar for contextual help
+- Unlocked 4 menu items (Главная, ССП, Банк целей, Декомпозиция) without payment restriction
 - Implemented empty state + lesson + summary pattern for /ssp module
 - Implemented empty state + lesson + summary pattern for /goals-bank module
 - Created GoalNew.vue page for adding new goals (/goals/new route)

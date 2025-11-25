@@ -260,75 +260,90 @@
         <header class="section-header">
           <h1>🔍 Глубокая рефлексия</h1>
           <p class="subtitle">
-            Ответьте на вопросы по каждой сфере жизни. Не думайте пока о реализации — просто фиксируйте мысли и желания.
+            Кликните на сферу, чтобы раскрыть вопросы. Отвечайте честно — не думайте пока о реализации.
           </p>
         </header>
 
-        <div class="reflection-cards">
+        <div class="reflection-accordion">
           <div 
             v-for="sphere in lifeSpheres" 
             :key="sphere.id"
-            class="reflection-card"
+            class="accordion-item"
+            :class="{ 
+              expanded: expandedSpheres.includes(sphere.id),
+              'has-content': hasReflectionContent(sphere)
+            }"
           >
-            <div class="sphere-header">
-              <span class="sphere-icon">{{ sphere.icon }}</span>
-              <div class="sphere-title-info">
-                <h2>{{ sphere.name }}</h2>
-                <div class="score-badge">Оценка: {{ sphere.score }}/10</div>
+            <div 
+              class="accordion-header"
+              @click="toggleSphereExpand(sphere.id)"
+            >
+              <div class="accordion-left">
+                <span class="sphere-icon">{{ sphere.icon }}</span>
+                <div class="sphere-title-info">
+                  <h2>{{ sphere.name }}</h2>
+                  <div class="header-meta">
+                    <span class="score-badge">{{ sphere.score }}/10</span>
+                    <span v-if="hasReflectionContent(sphere)" class="filled-badge">✓ Заполнено</span>
+                  </div>
+                </div>
               </div>
+              <span class="accordion-arrow" :class="{ rotated: expandedSpheres.includes(sphere.id) }">▼</span>
             </div>
 
-            <div class="questions-group">
-              <div class="question-item">
-                <label class="question-label">
-                  📌 Почему я поставил именно эту оценку?
-                </label>
-                <textarea 
-                  v-model="sphere.reflection.why"
-                  @input="saveReflection(sphere.id)"
-                  placeholder="Напишите свой ответ..."
-                  class="reflection-textarea"
-                  rows="3"
-                ></textarea>
-              </div>
+            <div class="accordion-content" v-show="expandedSpheres.includes(sphere.id)">
+              <div class="questions-group">
+                <div class="question-item">
+                  <label class="question-label">
+                    📌 Почему я поставил именно эту оценку?
+                  </label>
+                  <textarea 
+                    v-model="sphere.reflection.why"
+                    @input="saveReflection(sphere.id)"
+                    placeholder="Напишите свой ответ..."
+                    class="reflection-textarea"
+                    rows="3"
+                  ></textarea>
+                </div>
 
-              <div class="question-item">
-                <label class="question-label">
-                  ⭐ Что для меня "10" в этой сфере?
-                </label>
-                <textarea 
-                  v-model="sphere.reflection.ten"
-                  @input="saveReflection(sphere.id)"
-                  placeholder="Опишите идеальное состояние..."
-                  class="reflection-textarea"
-                  rows="3"
-                ></textarea>
-              </div>
+                <div class="question-item">
+                  <label class="question-label">
+                    ⭐ Что для меня "10" в этой сфере?
+                  </label>
+                  <textarea 
+                    v-model="sphere.reflection.ten"
+                    @input="saveReflection(sphere.id)"
+                    placeholder="Опишите идеальное состояние..."
+                    class="reflection-textarea"
+                    rows="3"
+                  ></textarea>
+                </div>
 
-              <div class="question-item">
-                <label class="question-label">
-                  🚧 Что мешает дойти до "10"?
-                </label>
-                <textarea 
-                  v-model="sphere.reflection.prevents"
-                  @input="saveReflection(sphere.id)"
-                  placeholder="Назовите препятствия и барьеры..."
-                  class="reflection-textarea"
-                  rows="3"
-                ></textarea>
-              </div>
+                <div class="question-item">
+                  <label class="question-label">
+                    🚧 Что мешает дойти до "10"?
+                  </label>
+                  <textarea 
+                    v-model="sphere.reflection.prevents"
+                    @input="saveReflection(sphere.id)"
+                    placeholder="Назовите препятствия и барьеры..."
+                    class="reflection-textarea"
+                    rows="3"
+                  ></textarea>
+                </div>
 
-              <div class="question-item">
-                <label class="question-label">
-                  🎯 Как я хочу, чтобы было?
-                </label>
-                <textarea 
-                  v-model="sphere.reflection.desired"
-                  @input="saveReflection(sphere.id)"
-                  placeholder="Опишите, как вы хотите развивать эту сферу..."
-                  class="reflection-textarea"
-                  rows="3"
-                ></textarea>
+                <div class="question-item">
+                  <label class="question-label">
+                    🎯 Как я хочу, чтобы было?
+                  </label>
+                  <textarea 
+                    v-model="sphere.reflection.desired"
+                    @input="saveReflection(sphere.id)"
+                    placeholder="Опишите, как вы хотите развивать эту сферу..."
+                    class="reflection-textarea"
+                    rows="3"
+                  ></textarea>
+                </div>
               </div>
             </div>
           </div>
@@ -443,6 +458,22 @@ const selectedSphere = ref(null)
 const sspModuleCompleted = computed(() => store.sspModuleCompleted)
 
 const lessonStarted = ref(false)
+const expandedSpheres = ref([])
+
+function toggleSphereExpand(sphereId) {
+  const index = expandedSpheres.value.indexOf(sphereId)
+  if (index === -1) {
+    expandedSpheres.value.push(sphereId)
+  } else {
+    expandedSpheres.value.splice(index, 1)
+  }
+}
+
+function hasReflectionContent(sphere) {
+  if (!sphere.reflection) return false
+  return sphere.reflection.why || sphere.reflection.ten || 
+         sphere.reflection.prevents || sphere.reflection.desired
+}
 
 const showEmptyState = computed(() => {
   const hasScores = lifeSpheres.value.some(s => s.score > 0)
@@ -1154,6 +1185,108 @@ function completeModule() {
 
 .reflection-textarea::placeholder {
   color: var(--text-secondary);
+}
+
+.reflection-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.accordion-item {
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.accordion-item:hover {
+  border-color: var(--primary-light);
+}
+
+.accordion-item.expanded {
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-md);
+}
+
+.accordion-item.has-content:not(.expanded) {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.02);
+}
+
+.accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s ease;
+}
+
+.accordion-header:hover {
+  background: rgba(99, 102, 241, 0.03);
+}
+
+.accordion-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.accordion-left .sphere-icon {
+  font-size: 2rem;
+}
+
+.accordion-left .sphere-title-info h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.header-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.filled-badge {
+  font-size: 0.75rem;
+  color: var(--success-color);
+  font-weight: 600;
+}
+
+.accordion-arrow {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  transition: transform 0.3s ease;
+}
+
+.accordion-arrow.rotated {
+  transform: rotate(180deg);
+}
+
+.accordion-content {
+  padding: 0 1.5rem 1.5rem 1.5rem;
+  border-top: 1px solid var(--border-color);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.accordion-content .questions-group {
+  padding-top: 1.5rem;
 }
 
 .summary-content {
