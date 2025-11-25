@@ -94,6 +94,10 @@ npm run preview  # Preview production build
 - AICurator component now supports context prop for different page prompts
 - Added /goals-bank route and sidebar navigation
 - Fixed AI coach chat display on SSP step
+- Created dedicated GoalEdit.vue page for goal editing (replaces modal)
+- Added /goals/:id route for individual goal editing
+- Edit page includes: goal details form, steps management with checkboxes, progress bar, save/delete actions
+- Clicking "Редактировать" button now navigates to dedicated edit page instead of modal
 
 ### November 24, 2025
 - Fixed all props mutation issues across WheelOfLife, GoalsBank components

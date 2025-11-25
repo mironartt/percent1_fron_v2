@@ -119,12 +119,12 @@
       </div>
     </div>
 
-    <!-- Add/Edit Goal Modal -->
+    <!-- Add Goal Modal -->
     <transition name="fade">
-      <div v-if="showAddModal || showEditModal" class="modal-overlay" @click.self="closeModals">
+      <div v-if="showAddModal" class="modal-overlay" @click.self="closeModals">
         <div class="modal modal-large">
           <div class="modal-header">
-            <h2>{{ showEditModal ? 'Редактировать цель' : 'Новая цель' }}</h2>
+            <h2>Новая цель</h2>
             <button class="btn-close" @click="closeModals">✕</button>
           </div>
 
@@ -219,7 +219,7 @@
           <div class="modal-footer">
             <button class="btn btn-secondary" @click="closeModals">Отмена</button>
             <button class="btn btn-primary" @click="saveGoal">
-              {{ showEditModal ? 'Сохранить' : 'Создать цель' }}
+              Создать цель
             </button>
           </div>
         </div>
@@ -311,9 +311,11 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import AICurator from '../components/AICurator.vue'
 
+const router = useRouter()
 const store = useAppStore()
 
 const goals = computed(() => store.goals)
@@ -323,7 +325,6 @@ const completedGoals = computed(() => store.completedGoals)
 
 const filter = ref('all')
 const showAddModal = ref(false)
-const showEditModal = ref(false)
 const showDetailModal = ref(false)
 const selectedGoal = ref(null)
 
@@ -347,16 +348,7 @@ function openGoalDetail(goal) {
 }
 
 function editGoal(goal) {
-  selectedGoal.value = goal
-  goalForm.value = {
-    title: goal.title || '',
-    description: goal.description || '',
-    sphereId: goal.sphereId || '',
-    deadline: goal.deadline || '',
-    mvp: goal.mvp || '',
-    steps: goal.steps ? [...goal.steps] : []
-  }
-  showEditModal.value = true
+  router.push(`/goals/${goal.id}`)
 }
 
 function deleteGoalConfirm(goal) {
@@ -384,18 +376,12 @@ function saveGoal() {
     steps: goalForm.value.steps.filter(s => s.title.trim())
   }
 
-  if (showEditModal.value && selectedGoal.value) {
-    store.updateGoal(selectedGoal.value.id, goalData)
-  } else {
-    store.addGoal(goalData)
-  }
-
+  store.addGoal(goalData)
   closeModals()
 }
 
 function closeModals() {
   showAddModal.value = false
-  showEditModal.value = false
   selectedGoal.value = null
   goalForm.value = {
     title: '',
