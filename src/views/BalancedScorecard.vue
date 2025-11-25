@@ -863,7 +863,7 @@ function completeModule() {
   content: '';
   position: absolute;
   top: 20px;
-  left: 50%;
+  right: 50%;
   width: 100%;
   height: 2px;
   background: var(--border-color);
@@ -874,7 +874,8 @@ function completeModule() {
   display: none;
 }
 
-.progress-step.completed::before {
+.progress-step.completed::before,
+.progress-step.active::before {
   background: var(--primary-color);
 }
 
