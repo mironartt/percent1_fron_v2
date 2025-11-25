@@ -425,8 +425,25 @@ export const useAppStore = defineStore('app', () => {
     saveToLocalStorage()
   }
 
-  function completeGoalsBank() {
+  function completeGoalsBank(selectedGoals = []) {
     goalsBank.value.completedAt = new Date().toISOString()
+    
+    selectedGoals.forEach(selectedGoal => {
+      goals.value.push({
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        title: selectedGoal.goal,
+        description: selectedGoal.whyImportant || '',
+        sphereId: selectedGoal.sphere || '',
+        status: 'active',
+        progress: 0,
+        steps: [],
+        mvp: '',
+        deadline: '',
+        createdAt: new Date().toISOString(),
+        source: 'goals-bank'
+      })
+    })
+    
     saveToLocalStorage()
   }
 

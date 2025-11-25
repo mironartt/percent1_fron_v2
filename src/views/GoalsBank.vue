@@ -339,9 +339,11 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 
 const store = useAppStore()
+const router = useRouter()
 
 const steps = ['Банк идей', 'Проверка', 'Ключевые цели']
 const currentStep = computed(() => store.goalsBank.currentStep)
@@ -521,17 +523,16 @@ function completeGoalsBankHandler() {
   }
   
   const selectedGoals = validatedGoals.value.filter(g => selectedGoalIds.value.includes(g.id))
-  selectedGoals.forEach(goal => {
-    store.addKeyGoal({
-      text: goal.text,
-      action: '',
-      sphereId: goal.sphereId,
-      originalId: goal.id
-    })
-  })
   
-  store.completeGoalsBank()
-  alert('🎉 Поздравляем! Ключевые цели выбраны!')
+  const goalsToTransfer = selectedGoals.map(g => ({
+    goal: g.goal,
+    whyImportant: g.whyImportant,
+    sphere: g.sphere
+  }))
+  
+  store.completeGoalsBank(goalsToTransfer)
+  
+  router.push('/goals')
 }
 
 function getSphereName(sphereId) {

@@ -86,6 +86,8 @@ npm run preview  # Preview production build
 - Step 1: Simple table with sphere, goal, why important fields
 - Step 2: "3 Why" validation rule for goals classification (истинные/ложные)
 - Step 3: Select 1-3 validated goals for immediate focus with click selection
+- Goals transfer: Selected goals from /goals-bank automatically transfer to /goals page on completion
+- User redirected to /goals after completing Goals Bank workflow
 - Added /goals-bank route and sidebar navigation
 - Fixed AI coach chat display on SSP step
 
