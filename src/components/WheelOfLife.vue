@@ -35,13 +35,13 @@
         <path
           :d="getSegmentPath(index, sphere.score)"
           :fill="getSegmentColor(index)"
-          :opacity="hoveredSphere === sphere.id ? 0.9 : 0.7"
-          :stroke="selectedSphere === sphere.id ? 'var(--primary-color)' : 'white'"
-          :stroke-width="selectedSphere === sphere.id ? 3 : 1"
-          class="segment"
-          @click="selectSphere(sphere)"
-          @mouseenter="hoveredSphere = sphere.id"
-          @mouseleave="hoveredSphere = null"
+          :opacity="!readonly && hoveredSphere === sphere.id ? 0.9 : 0.7"
+          :stroke="!readonly && selectedSphere === sphere.id ? 'var(--primary-color)' : 'white'"
+          :stroke-width="!readonly && selectedSphere === sphere.id ? 3 : 1"
+          :class="['segment', { 'segment-readonly': readonly }]"
+          @click="!readonly && selectSphere(sphere)"
+          @mouseenter="!readonly && (hoveredSphere = sphere.id)"
+          @mouseleave="!readonly && (hoveredSphere = null)"
         />
 
         <!-- Dividing lines -->
@@ -59,14 +59,15 @@
           :y="center + (radius + 85) * Math.sin(getAngle(index) + angleStep / 2)"
           text-anchor="middle"
           dominant-baseline="middle"
-          class="sphere-name"
-          @click="selectSphere(sphere)"
+          :class="['sphere-name', { 'sphere-name-readonly': readonly }]"
+          @click="!readonly && selectSphere(sphere)"
         >
           {{ sphere.name }}
         </text>
 
-        <!-- Interactive handle for dragging -->
+        <!-- Interactive handle for dragging (hidden in readonly mode) -->
         <circle
+          v-if="!readonly"
           :cx="center + Math.max((radius / 10) * sphere.score, radius / 15) * Math.cos(getAngle(index) + angleStep / 2)"
           :cy="center + Math.max((radius / 10) * sphere.score, radius / 15) * Math.sin(getAngle(index) + angleStep / 2)"
           r="8"
@@ -90,6 +91,10 @@ const props = defineProps({
   spheres: {
     type: Array,
     required: true
+  },
+  readonly: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -218,6 +223,18 @@ function startDrag(event, sphere, index) {
 
 .segment:hover {
   opacity: 0.9 !important;
+}
+
+.segment-readonly {
+  cursor: default;
+}
+
+.segment-readonly:hover {
+  opacity: 0.7 !important;
+}
+
+.sphere-name-readonly {
+  cursor: default;
 }
 
 .sphere-label {

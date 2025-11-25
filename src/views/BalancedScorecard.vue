@@ -77,16 +77,9 @@
       </div>
 
       <div class="wheel-summary card">
-        <h3>Ваше колесо баланса</h3>
-        <div class="spheres-results">
-          <div v-for="sphere in lifeSpheres" :key="sphere.id" class="sphere-result-item">
-            <span class="sphere-icon">{{ sphere.icon }}</span>
-            <span class="sphere-name">{{ sphere.name }}</span>
-            <div class="score-bar">
-              <div class="score-fill" :style="{ width: sphere.score * 10 + '%' }"></div>
-            </div>
-            <span class="sphere-score">{{ sphere.score }}/10</span>
-          </div>
+        <h3>Система сбалансированных показателей</h3>
+        <div class="wheel-visualization">
+          <WheelOfLife :spheres="lifeSpheres" :readonly="true" />
         </div>
       </div>
 
@@ -128,16 +121,6 @@
             Жизнь — это как компьютерная игра, и сейчас мы настраиваем твой аватар
           </p>
         </header>
-
-        <div class="card">
-          <div class="video-container">
-            <div class="video-placeholder">
-              <div class="play-button">▶</div>
-              <p>Видео: "Баланс как основа роста"</p>
-              <small>Здесь будет видео с теоретической частью</small>
-            </div>
-          </div>
-        </div>
 
         <div class="card theory-content">
           <h2>Зачем нужно ССП?</h2>
@@ -762,10 +745,20 @@ function completeModule() {
 
 .wheel-summary {
   margin-bottom: 2rem;
+  text-align: center;
 }
 
 .wheel-summary h3 {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.wheel-visualization {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem 0;
+  max-width: 500px;
+  margin: 0 auto;
 }
 
 .spheres-results {
