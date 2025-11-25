@@ -450,15 +450,12 @@
           </ol>
         </div>
 
-        <!-- AI Helper Simple Input -->
-        <div class="ai-helper-simple">
-          <div class="ai-helper-greeting">
-            🤖 Привет! Я ваш ИИ-куратор. Я вам помогу пройти проверку целей и определить их истинность
-          </div>
-          <div class="ai-helper-input-wrapper" @click="openAIChat">
-            <span class="ai-input-icon">+</span>
-            <span class="ai-input-placeholder">Спросите что-нибудь...</span>
-          </div>
+        <!-- AI Helper Compact Button -->
+        <div class="ai-helper-compact">
+          <button class="ai-helper-btn" @click="openAIChat">
+            <span class="ai-btn-icon">🤖</span>
+            <span class="ai-btn-text">Спросить помощника</span>
+          </button>
         </div>
 
         <!-- Validation Progress Bar -->
