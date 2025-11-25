@@ -1,20 +1,118 @@
 <template>
   <div class="goals-bank-container">
-    <div class="progress-bar">
-      <div 
-        v-for="(step, index) in steps" 
-        :key="index"
-        class="progress-step"
-        :class="{ 
-          active: currentStep === index + 1, 
-          completed: currentStep > index + 1 
-        }"
-        @click="goToStep(index + 1)"
-      >
-        <div class="step-number">{{ index + 1 }}</div>
-        <div class="step-label">{{ step }}</div>
+    <!-- Empty State - First Visit -->
+    <div v-if="showEmptyState" class="empty-state-section">
+      <div class="empty-state-card card">
+        <div class="empty-icon">🏦</div>
+        <h1>Банк целей</h1>
+        <p class="subtitle">
+          Систематизируй свои желания и выбери приоритеты для достижения
+        </p>
+        
+        <div class="lesson-info">
+          <h3>Что вас ждёт в уроке:</h3>
+          <div class="lesson-steps">
+            <div class="lesson-step">
+              <span class="step-num">1</span>
+              <div>
+                <strong>Банк идей</strong>
+                <p>Запишите все свои желания, мечты и цели без фильтрации</p>
+              </div>
+            </div>
+            <div class="lesson-step">
+              <span class="step-num">2</span>
+              <div>
+                <strong>Проверка</strong>
+                <p>Отфильтруйте истинные цели от ложных через правило "3 Почему"</p>
+              </div>
+            </div>
+            <div class="lesson-step">
+              <span class="step-num">3</span>
+              <div>
+                <strong>Ключевые цели</strong>
+                <p>Выберите 1-3 цели для немедленного фокуса</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-lg" @click="startLesson">
+          ✨ Начать урок
+        </button>
       </div>
     </div>
+
+    <!-- Summary State - After Completion -->
+    <div v-else-if="showSummary" class="summary-section">
+      <header class="section-header">
+        <h1>🏦 Банк целей — Результаты</h1>
+        <p class="subtitle">Урок завершён {{ formatCompletedDate }}</p>
+      </header>
+
+      <div class="summary-grid">
+        <div class="summary-card card">
+          <div class="summary-icon">💡</div>
+          <div class="summary-value">{{ rawIdeas.length }}</div>
+          <div class="summary-label">Идей в банке</div>
+        </div>
+
+        <div class="summary-card card">
+          <div class="summary-icon">✅</div>
+          <div class="summary-value">{{ validatedCount }}</div>
+          <div class="summary-label">Истинных целей</div>
+        </div>
+
+        <div class="summary-card card">
+          <div class="summary-icon">❌</div>
+          <div class="summary-value">{{ rejectedCount }}</div>
+          <div class="summary-label">Ложных целей</div>
+        </div>
+
+        <div class="summary-card card">
+          <div class="summary-icon">🎯</div>
+          <div class="summary-value">{{ transferredGoalsCount }}</div>
+          <div class="summary-label">Целей в работе</div>
+        </div>
+      </div>
+
+      <div class="key-goals-summary card" v-if="transferredGoals.length > 0">
+        <h3>🎯 Ваши ключевые цели</h3>
+        <div class="key-goals-list">
+          <div v-for="goal in transferredGoals" :key="goal.id" class="key-goal-item">
+            <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
+            <span class="goal-title">{{ goal.title }}</span>
+            <span class="goal-progress">{{ goal.progress }}%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary-actions">
+        <button class="btn btn-primary btn-lg" @click="goToDecomposition">
+          📋 Перейти к декомпозиции
+        </button>
+        <button class="btn btn-secondary" @click="restartLesson">
+          🔄 Пройти урок заново
+        </button>
+      </div>
+    </div>
+
+    <!-- Lesson Mode - In Progress -->
+    <div v-else class="lesson-mode">
+      <div class="progress-bar">
+        <div 
+          v-for="(step, index) in steps" 
+          :key="index"
+          class="progress-step"
+          :class="{ 
+            active: currentStep === index + 1, 
+            completed: currentStep > index + 1 
+          }"
+          @click="goToStep(index + 1)"
+        >
+          <div class="step-number">{{ index + 1 }}</div>
+          <div class="step-label">{{ step }}</div>
+        </div>
+      </div>
 
     <!-- Step 1: Формирование банка целей -->
     <div v-if="currentStep === 1" class="step-content">
@@ -360,6 +458,7 @@
       </div>
     </div>
 
+    </div>
   </div>
 </template>
 
@@ -378,6 +477,49 @@ const lifeSpheres = computed(() => store.lifeSpheres)
 const rawIdeas = computed(() => store.goalsBank.rawIdeas)
 const keyGoals = computed(() => store.goalsBank.keyGoals)
 const sphereAnalysis = computed(() => store.goalsBank.sphereAnalysis)
+const completedAt = computed(() => store.goalsBank.completedAt)
+const allGoals = computed(() => store.goals)
+
+const lessonStarted = ref(false)
+
+const showEmptyState = computed(() => {
+  return !completedAt.value && rawIdeas.value.length === 0 && !lessonStarted.value
+})
+
+const showSummary = computed(() => {
+  return !!completedAt.value
+})
+
+const transferredGoals = computed(() => {
+  return allGoals.value.filter(g => g.source === 'goals-bank')
+})
+
+const transferredGoalsCount = computed(() => transferredGoals.value.length)
+
+const formatCompletedDate = computed(() => {
+  if (!completedAt.value) return ''
+  const date = new Date(completedAt.value)
+  return date.toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  })
+})
+
+function startLesson() {
+  lessonStarted.value = true
+}
+
+function goToDecomposition() {
+  router.push('/goals')
+}
+
+function restartLesson() {
+  if (confirm('Вы уверены? Все данные урока будут сброшены.')) {
+    store.resetGoalsBank()
+    lessonStarted.value = false
+  }
+}
 
 const validatedGoals = computed(() => rawIdeas.value.filter(i => i.status === 'validated'))
 const validatedCount = computed(() => validatedGoals.value.length)
@@ -596,6 +738,187 @@ function getStatusLabel(status) {
   max-width: 1400px;
   margin: 0 auto;
   padding-bottom: 2rem;
+}
+
+/* Empty State Styles */
+.empty-state-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+}
+
+.empty-state-card {
+  text-align: center;
+  max-width: 600px;
+  padding: 3rem;
+}
+
+.empty-state-card .empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+}
+
+.empty-state-card h1 {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.empty-state-card .subtitle {
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+.lesson-info {
+  text-align: left;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.lesson-info h3 {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.lesson-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.lesson-step {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.lesson-step .step-num {
+  width: 28px;
+  height: 28px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.lesson-step strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.lesson-step p {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Summary Styles */
+.summary-section {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.summary-section .section-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.summary-section .section-header h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.summary-section .section-header .subtitle {
+  color: var(--text-secondary);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.summary-card {
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.summary-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.summary-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.summary-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+.key-goals-summary {
+  margin-bottom: 2rem;
+}
+
+.key-goals-summary h3 {
+  margin-bottom: 1rem;
+}
+
+.key-goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.key-goal-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.key-goal-item .goal-sphere {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.key-goal-item .goal-title {
+  flex: 1;
+  font-weight: 500;
+}
+
+.key-goal-item .goal-progress {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.summary-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .progress-bar {

@@ -1,21 +1,123 @@
 <template>
   <div class="ssp-container">
-    <!-- Progress indicator -->
-    <div class="progress-bar">
-      <div 
-        v-for="(step, index) in steps" 
-        :key="index"
-        class="progress-step"
-        :class="{ 
-          active: currentStep === index + 1, 
-          completed: currentStep > index + 1 
-        }"
-        @click="goToStep(index + 1)"
-      >
-        <div class="step-number">{{ index + 1 }}</div>
-        <div class="step-label">{{ step }}</div>
+    <!-- Empty State - First Visit -->
+    <div v-if="showEmptyState" class="empty-state-section">
+      <div class="empty-state-card card">
+        <div class="empty-icon">⚖️</div>
+        <h1>Система сбалансированных показателей</h1>
+        <p class="subtitle">
+          Оцените баланс всех сфер вашей жизни и определите точки роста
+        </p>
+        
+        <div class="lesson-info">
+          <h3>Что вас ждёт в уроке:</h3>
+          <div class="lesson-steps">
+            <div class="lesson-step">
+              <span class="step-num">1</span>
+              <div>
+                <strong>Теория</strong>
+                <p>Узнаете, как баланс влияет на качество жизни</p>
+              </div>
+            </div>
+            <div class="lesson-step">
+              <span class="step-num">2</span>
+              <div>
+                <strong>Колесо баланса</strong>
+                <p>Оцените каждую из 6 сфер жизни от 0 до 10</p>
+              </div>
+            </div>
+            <div class="lesson-step">
+              <span class="step-num">3</span>
+              <div>
+                <strong>Рефлексия</strong>
+                <p>Проведёте глубокий анализ каждой сферы</p>
+              </div>
+            </div>
+            <div class="lesson-step">
+              <span class="step-num">4</span>
+              <div>
+                <strong>Итог</strong>
+                <p>Зафиксируете результаты и инсайты</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-lg" @click="startLesson">
+          ✨ Начать оценку
+        </button>
       </div>
     </div>
+
+    <!-- Summary State - After Completion -->
+    <div v-else-if="showSummary" class="summary-section-main">
+      <header class="section-header">
+        <h1>⚖️ ССП — Результаты</h1>
+        <p class="subtitle">Оценка завершена {{ formatCompletedDate }}</p>
+      </header>
+
+      <div class="summary-grid">
+        <div class="summary-stat-card card">
+          <div class="summary-icon">📊</div>
+          <div class="summary-value">{{ averageScore.toFixed(1) }}</div>
+          <div class="summary-label">Средний балл</div>
+        </div>
+
+        <div class="summary-stat-card card" v-if="strongestSphere">
+          <div class="summary-icon">💪</div>
+          <div class="summary-value">{{ strongestSphere.icon }}</div>
+          <div class="summary-label">Самая сильная<br/>{{ strongestSphere.name }}</div>
+        </div>
+
+        <div class="summary-stat-card card" v-if="weakestSphere">
+          <div class="summary-icon">🎯</div>
+          <div class="summary-value">{{ weakestSphere.icon }}</div>
+          <div class="summary-label">Зона роста<br/>{{ weakestSphere.name }}</div>
+        </div>
+      </div>
+
+      <div class="wheel-summary card">
+        <h3>Ваше колесо баланса</h3>
+        <div class="spheres-results">
+          <div v-for="sphere in lifeSpheres" :key="sphere.id" class="sphere-result-item">
+            <span class="sphere-icon">{{ sphere.icon }}</span>
+            <span class="sphere-name">{{ sphere.name }}</span>
+            <div class="score-bar">
+              <div class="score-fill" :style="{ width: sphere.score * 10 + '%' }"></div>
+            </div>
+            <span class="sphere-score">{{ sphere.score }}/10</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary-actions">
+        <button class="btn btn-primary btn-lg" @click="goToGoalsBank">
+          🏦 Перейти в Банк целей
+        </button>
+        <button class="btn btn-secondary" @click="restartLesson">
+          🔄 Пройти оценку заново
+        </button>
+      </div>
+    </div>
+
+    <!-- Lesson Mode - In Progress -->
+    <div v-else class="lesson-mode">
+      <!-- Progress indicator -->
+      <div class="progress-bar">
+        <div 
+          v-for="(step, index) in steps" 
+          :key="index"
+          class="progress-step"
+          :class="{ 
+            active: currentStep === index + 1, 
+            completed: currentStep > index + 1 
+          }"
+          @click="goToStep(index + 1)"
+        >
+          <div class="step-number">{{ index + 1 }}</div>
+          <div class="step-label">{{ step }}</div>
+        </div>
+      </div>
 
     <!-- Step 1: Теория -->
     <div v-if="currentStep === 1" class="step-content">
@@ -320,21 +422,79 @@
       </div>
     </div>
 
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import WheelOfLife from '../components/WheelOfLife.vue'
 
 const store = useAppStore()
+const router = useRouter()
 
 const steps = ['Теория', 'ССП', 'Рефлексия', 'Итог']
 const currentStep = ref(1)
 
 const lifeSpheres = computed(() => store.lifeSpheres)
 const selectedSphere = ref(null)
+const sspModuleCompleted = computed(() => store.sspModuleCompleted)
+
+const lessonStarted = ref(false)
+
+const showEmptyState = computed(() => {
+  const hasScores = lifeSpheres.value.some(s => s.score > 0)
+  return !sspModuleCompleted.value?.completed && !hasScores && !lessonStarted.value
+})
+
+const showSummary = computed(() => {
+  return !!sspModuleCompleted.value?.completed
+})
+
+const averageScore = computed(() => {
+  const scores = lifeSpheres.value.map(s => s.score || 0)
+  return scores.reduce((a, b) => a + b, 0) / scores.length
+})
+
+const strongestSphere = computed(() => {
+  return lifeSpheres.value.reduce((max, s) => 
+    (!max || (s.score || 0) > (max.score || 0)) ? s : max
+  , null)
+})
+
+const weakestSphere = computed(() => {
+  return lifeSpheres.value.reduce((min, s) => 
+    (!min || (s.score || 0) < (min.score || 0)) ? s : min
+  , null)
+})
+
+const formatCompletedDate = computed(() => {
+  if (!sspModuleCompleted.value?.completedAt) return ''
+  const date = new Date(sspModuleCompleted.value.completedAt)
+  return date.toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  })
+})
+
+function startLesson() {
+  lessonStarted.value = true
+}
+
+function goToGoalsBank() {
+  router.push('/goals-bank')
+}
+
+function restartLesson() {
+  if (confirm('Вы уверены? Все оценки и рефлексии будут сброшены.')) {
+    store.resetSSPModule()
+    lessonStarted.value = false
+    currentStep.value = 1
+  }
+}
 
 // Chat state
 const chatMessages = ref([])
@@ -429,9 +589,6 @@ function completeModule() {
       reflection: s.reflection
     }))
   })
-  
-  alert('🎉 Поздравляем! Модуль "Сбалансированная система показателей" пройден!')
-  currentStep.value = 1
 }
 </script>
 
@@ -440,6 +597,219 @@ function completeModule() {
   max-width: 1400px;
   margin: 0 auto;
   padding-bottom: 2rem;
+}
+
+/* Empty State Styles */
+.empty-state-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+}
+
+.empty-state-card {
+  text-align: center;
+  max-width: 600px;
+  padding: 3rem;
+}
+
+.empty-state-card .empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+}
+
+.empty-state-card h1 {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.empty-state-card .subtitle {
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+.lesson-info {
+  text-align: left;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.lesson-info h3 {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.lesson-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.lesson-step {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.lesson-step .step-num {
+  width: 28px;
+  height: 28px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.lesson-step strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.lesson-step p {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Summary Styles */
+.summary-section-main {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.summary-section-main .section-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.summary-section-main .section-header h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.summary-section-main .section-header .subtitle {
+  color: var(--text-secondary);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.summary-stat-card {
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.summary-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.summary-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.summary-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+  line-height: 1.3;
+}
+
+.wheel-summary {
+  margin-bottom: 2rem;
+}
+
+.wheel-summary h3 {
+  margin-bottom: 1.5rem;
+}
+
+.spheres-results {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sphere-result-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+.sphere-icon {
+  font-size: 1.5rem;
+  width: 2rem;
+  flex-shrink: 0;
+}
+
+.sphere-name {
+  width: 180px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.score-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.score-fill {
+  height: 100%;
+  background: var(--primary-color);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.sphere-score {
+  width: 50px;
+  text-align: right;
+  font-weight: 600;
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.summary-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .sphere-result-item {
+    flex-wrap: wrap;
+  }
+  
+  .sphere-name {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  .score-bar {
+    flex: 1;
+    min-width: 150px;
+  }
 }
 
 .progress-bar {

@@ -447,6 +447,40 @@ export const useAppStore = defineStore('app', () => {
     saveToLocalStorage()
   }
 
+  function resetGoalsBank() {
+    goalsBank.value = {
+      currentStep: 1,
+      rawIdeas: [],
+      validatedGoals: [],
+      keyGoals: [],
+      sphereAnalysis: {
+        lowestSphere: null,
+        leverageSphere: null,
+        notes: ''
+      },
+      completedAt: null
+    }
+    saveToLocalStorage()
+  }
+
+  function resetSSPModule() {
+    lifeSpheres.value.forEach(sphere => {
+      sphere.score = 0
+      sphere.notes = ''
+      sphere.reflection = {
+        why: '',
+        ten: '',
+        prevents: '',
+        desired: ''
+      }
+    })
+    sspModuleCompleted.value = {
+      completed: false,
+      data: null
+    }
+    saveToLocalStorage()
+  }
+
   // Load data on init
   loadFromLocalStorage()
 
@@ -491,6 +525,8 @@ export const useAppStore = defineStore('app', () => {
     deleteKeyGoal,
     updateSphereAnalysis,
     setGoalsBankStep,
-    completeGoalsBank
+    completeGoalsBank,
+    resetGoalsBank,
+    resetSSPModule
   }
 })
