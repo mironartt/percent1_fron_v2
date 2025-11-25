@@ -98,6 +98,36 @@ Both SSP and Goals Bank modules follow a 3-state pattern:
 ## Recent Changes
 
 ### November 25, 2025 (Latest Session)
+
+#### Goals Bank Page Comprehensive Improvements
+**Summary Page:**
+- Accordion for validated goals showing "3 Почему" answers (read-only)
+- Sphere distribution visualization with progress bars (validated/rejected breakdown)
+- Rejected goals section with rejection reasons displayed
+
+**Step 1 (Банк идей):**
+- Goals grouped by spheres with collapsible sections
+- Weak spheres highlighted based on SSP scores (yellow indicator + badge)
+- "Нужны идеи?" modal with example goals for each sphere
+
+**Step 2 (Проверка):**
+- Validation progress bar showing checked/validated/rejected counts
+- AI helper sidebar with embedded AICurator for contextual "3 Why" guidance
+- Two-column responsive layout (main content + AI sidebar)
+
+**Step 3 (Ключевые цели):**
+- Recommendations block highlighting goals from weak SSP spheres
+- "Что дальше" preview explaining handoff to Decomposition module
+- Selected goals show visual indicator for weak spheres
+
+**New Computed Properties:**
+- `weakSpheres` - identifies low-scoring SSP spheres
+- `ideasBySphere` - groups raw ideas by life sphere
+- `sphereDistribution` - calculates validated/rejected per sphere
+- `weakSphereGoals` - filters validated goals from weak spheres
+- `checkedCount`, `validatedPercent`, `rejectedPercent` - progress tracking
+
+#### Earlier SSP Improvements
 - SSP Summary: Increased wheel size (max-width 500px → 700px) for better readability
 - SSP Summary: Added "Ваша рефлексия" section with read-only accordion showing saved reflection answers
 - SSP Summary: Renamed "Ваше колесо баланса" → "Система сбалансированных показателей"
