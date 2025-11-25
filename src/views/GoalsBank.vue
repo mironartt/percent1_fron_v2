@@ -75,6 +75,111 @@
         </div>
       </div>
 
+      <!-- Распределение по сферам -->
+      <div class="sphere-distribution card" v-if="rawIdeas.length > 0">
+        <h3>📊 Распределение целей по сферам</h3>
+        <div class="sphere-bars">
+          <div 
+            v-for="sphere in sphereDistribution" 
+            :key="sphere.id" 
+            class="sphere-bar-item"
+          >
+            <div class="sphere-bar-header">
+              <span class="sphere-bar-name">{{ sphere.icon }} {{ sphere.name }}</span>
+              <span class="sphere-bar-count">{{ sphere.total }} целей</span>
+            </div>
+            <div class="sphere-bar-track">
+              <div 
+                class="sphere-bar-fill validated" 
+                :style="{ width: sphere.validatedPercent + '%' }"
+                :title="sphere.validated + ' истинных'"
+              ></div>
+              <div 
+                class="sphere-bar-fill rejected" 
+                :style="{ width: sphere.rejectedPercent + '%', left: sphere.validatedPercent + '%' }"
+                :title="sphere.rejected + ' ложных'"
+              ></div>
+            </div>
+            <div class="sphere-bar-legend">
+              <span class="legend-validated">✅ {{ sphere.validated }}</span>
+              <span class="legend-rejected">❌ {{ sphere.rejected }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Истинные цели с ответами "3 Почему" -->
+      <div class="validated-goals-summary card" v-if="validatedGoals.length > 0">
+        <h3>✅ Ваши истинные цели</h3>
+        <p class="section-hint">Нажмите на цель, чтобы увидеть ваши ответы на "3 Почему"</p>
+        <div class="goals-accordion readonly">
+          <div 
+            v-for="goal in validatedGoals" 
+            :key="goal.id"
+            class="accordion-item"
+            :class="{ expanded: expandedSummaryGoalId === goal.id }"
+          >
+            <div 
+              class="accordion-header"
+              @click="toggleSummaryGoalExpand(goal.id)"
+            >
+              <div class="accordion-title">
+                <span class="expand-arrow">{{ expandedSummaryGoalId === goal.id ? '▼' : '▶' }}</span>
+                <span class="goal-sphere-badge">{{ getSphereName(goal.sphereId) }}</span>
+                <span class="goal-name">{{ goal.text }}</span>
+              </div>
+              <span v-if="isGoalTransferred(goal.id)" class="transferred-badge">🎯 В работе</span>
+            </div>
+            <transition name="accordion-expand">
+              <div v-if="expandedSummaryGoalId === goal.id" class="accordion-content">
+                <div class="why-important-block" v-if="goal.whyImportant">
+                  <div class="answer-label">Почему важно:</div>
+                  <div class="answer-text">{{ goal.whyImportant }}</div>
+                </div>
+                <div class="three-whys-answers" v-if="goal.threeWhys">
+                  <div class="answer-item" v-if="goal.threeWhys.why1">
+                    <div class="answer-label">1. Почему эта цель мне важна?</div>
+                    <div class="answer-text">{{ goal.threeWhys.why1 }}</div>
+                  </div>
+                  <div class="answer-item" v-if="goal.threeWhys.why2">
+                    <div class="answer-label">2. Почему именно это даст мне то, что я хочу?</div>
+                    <div class="answer-text">{{ goal.threeWhys.why2 }}</div>
+                  </div>
+                  <div class="answer-item" v-if="goal.threeWhys.why3">
+                    <div class="answer-label">3. Почему это действительно про меня?</div>
+                    <div class="answer-text">{{ goal.threeWhys.why3 }}</div>
+                  </div>
+                </div>
+                <div v-if="!goal.threeWhys?.why1 && !goal.threeWhys?.why2 && !goal.threeWhys?.why3" class="no-answers">
+                  Ответы на "3 Почему" не были заполнены
+                </div>
+              </div>
+            </transition>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ложные цели -->
+      <div class="rejected-goals-summary card" v-if="rejectedGoals.length > 0">
+        <h3>❌ Отклонённые цели</h3>
+        <p class="section-hint">Эти цели не прошли проверку "3 Почему" — сохраните их для рефлексии</p>
+        <div class="rejected-goals-list">
+          <div 
+            v-for="goal in rejectedGoals" 
+            :key="goal.id"
+            class="rejected-goal-item"
+          >
+            <div class="rejected-goal-header">
+              <span class="goal-sphere-badge muted">{{ getSphereName(goal.sphereId) }}</span>
+              <span class="goal-name">{{ goal.text }}</span>
+            </div>
+            <div class="rejected-reason" v-if="goal.whyImportant">
+              <span class="reason-label">Изначальная причина:</span> {{ goal.whyImportant }}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="key-goals-summary card" v-if="transferredGoals.length > 0">
         <h3>🎯 Ваши ключевые цели</h3>
         <div class="key-goals-list">
@@ -138,14 +243,70 @@
           </div>
         </div>
 
+        <!-- Weak spheres alert -->
+        <div v-if="weakSpheres.length > 0" class="weak-spheres-alert card">
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-content">
+            <h4>Обратите внимание на слабые сферы</h4>
+            <p>По результатам ССП эти сферы требуют особого внимания:</p>
+            <div class="weak-spheres-list">
+              <span 
+                v-for="sphere in weakSpheres" 
+                :key="sphere.id"
+                class="weak-sphere-tag"
+                @click="selectWeakSphere(sphere.id)"
+              >
+                {{ sphere.icon }} {{ sphere.name }} ({{ sphere.score }}/10)
+              </span>
+            </div>
+          </div>
+        </div>
+
         <div class="goals-table-container">
-          <h3 class="table-title">🏦 Банк идей и целей на жизнь</h3>
+          <div class="table-header-actions">
+            <h3 class="table-title">🏦 Банк идей и целей на жизнь</h3>
+            <button class="btn btn-secondary btn-sm" @click="toggleIdeasHelper">
+              💡 Нужны идеи?
+            </button>
+          </div>
+
+          <!-- Ideas Helper Modal -->
+          <transition name="fade">
+            <div v-if="showIdeasHelper" class="ideas-helper card">
+              <div class="ideas-helper-header">
+                <h4>💡 Примеры целей по сферам</h4>
+                <button class="btn-close" @click="showIdeasHelper = false">✕</button>
+              </div>
+              <div class="ideas-helper-content">
+                <div v-for="sphere in lifeSpheres" :key="sphere.id" class="sphere-examples">
+                  <div class="sphere-examples-header">
+                    <span>{{ sphere.icon }} {{ sphere.name }}</span>
+                  </div>
+                  <div class="example-goals">
+                    <div 
+                      v-for="(example, idx) in getGoalExamples(sphere.id)" 
+                      :key="idx"
+                      class="example-goal"
+                      @click="addExampleGoal(sphere.id, example)"
+                    >
+                      <span class="example-text">{{ example }}</span>
+                      <span class="add-icon">+</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </transition>
           
           <div class="add-idea-section">
-            <select v-model="newIdea.sphereId" class="form-select sphere-select">
+            <select v-model="newIdea.sphereId" class="form-select sphere-select" :class="{ 'weak-sphere-selected': isWeakSphere(newIdea.sphereId) }">
               <option value="">Выбери сферу</option>
-              <option v-for="sphere in lifeSpheres" :key="sphere.id" :value="sphere.id">
-                {{ sphere.icon }} {{ sphere.name }}
+              <option 
+                v-for="sphere in lifeSpheres" 
+                :key="sphere.id" 
+                :value="sphere.id"
+              >
+                {{ sphere.icon }} {{ sphere.name }} {{ isWeakSphere(sphere.id) ? '⚠️' : '' }}
               </option>
             </select>
             <input 
@@ -167,60 +328,63 @@
             </button>
           </div>
 
-          <div class="goals-table">
-            <div class="table-header">
-              <div class="col-status">Статус</div>
-              <div class="col-sphere">Сфера</div>
-              <div class="col-goal">Цель/Идея</div>
-              <div class="col-why">Почему важно?</div>
-              <div class="col-actions">Действия</div>
-            </div>
-
-            <div v-if="rawIdeas.length === 0" class="empty-table">
-              <p>Пока нет целей. Начните добавлять свои идеи и желания!</p>
-            </div>
-
+          <!-- Grouped by spheres -->
+          <div class="goals-grouped" v-if="rawIdeas.length > 0">
             <div 
-              v-for="idea in rawIdeas" 
-              :key="idea.id"
-              class="table-row"
-              :class="{ validated: idea.status === 'validated', rejected: idea.status === 'rejected' }"
+              v-for="sphereGroup in ideasBySphere" 
+              :key="sphereGroup.sphere.id"
+              class="sphere-group"
+              :class="{ 'weak': isWeakSphere(sphereGroup.sphere.id) }"
             >
-              <div class="col-status">
-                <span class="status-badge" :class="idea.status">
-                  {{ getStatusLabel(idea.status) }}
+              <div class="sphere-group-header">
+                <span class="sphere-group-name">
+                  {{ sphereGroup.sphere.icon }} {{ sphereGroup.sphere.name }}
+                  <span v-if="isWeakSphere(sphereGroup.sphere.id)" class="weak-badge">Слабая сфера</span>
                 </span>
+                <span class="sphere-group-count">{{ sphereGroup.ideas.length }} целей</span>
               </div>
-              <div class="col-sphere">
-                {{ getSphereName(idea.sphereId) }}
-              </div>
-              <div class="col-goal">
-                <input 
-                  :value="idea.text"
-                  @input="updateIdea(idea.id, { text: $event.target.value })"
-                  class="cell-input"
-                  placeholder="Цель..."
-                />
-              </div>
-              <div class="col-why">
-                <textarea 
-                  :value="idea.whyImportant"
-                  @input="updateIdea(idea.id, { whyImportant: $event.target.value })"
-                  class="cell-textarea"
-                  placeholder="Почему важно..."
-                  rows="2"
-                ></textarea>
-              </div>
-              <div class="col-actions">
-                <button 
-                  class="btn-icon delete"
-                  @click="deleteIdea(idea.id)"
-                  title="Удалить"
+              <div class="sphere-group-ideas">
+                <div 
+                  v-for="idea in sphereGroup.ideas" 
+                  :key="idea.id"
+                  class="idea-card"
+                  :class="{ validated: idea.status === 'validated', rejected: idea.status === 'rejected' }"
                 >
-                  🗑️
-                </button>
+                  <div class="idea-card-content">
+                    <input 
+                      :value="idea.text"
+                      @input="updateIdea(idea.id, { text: $event.target.value })"
+                      class="idea-input"
+                      placeholder="Цель..."
+                    />
+                    <textarea 
+                      :value="idea.whyImportant"
+                      @input="updateIdea(idea.id, { whyImportant: $event.target.value })"
+                      class="idea-textarea"
+                      placeholder="Почему важно..."
+                      rows="2"
+                    ></textarea>
+                  </div>
+                  <div class="idea-card-actions">
+                    <span class="status-indicator" :class="idea.status" v-if="idea.status && idea.status !== 'raw'">
+                      {{ idea.status === 'validated' ? '✅' : '❌' }}
+                    </span>
+                    <button 
+                      class="btn-icon delete"
+                      @click="deleteIdea(idea.id)"
+                      title="Удалить"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
+          </div>
+
+          <div v-else class="empty-table">
+            <p>Пока нет целей. Начните добавлять свои идеи и желания!</p>
+            <p class="hint">Нажмите "Нужны идеи?" для примеров целей</p>
           </div>
         </div>
 
@@ -241,16 +405,40 @@
 
     <!-- Step 2: Проверка целей -->
     <div v-if="currentStep === 2" class="step-content">
-      <div class="step-section">
-        <header class="section-header">
-          <h1>🔍 Проверка целей</h1>
-          <p class="subtitle">
-            Проверь каждую цель с помощью правила "3 Почему" и отсей ложные цели
-          </p>
-        </header>
+      <div class="step-section step-2-layout">
+        <div class="step-2-main">
+          <header class="section-header">
+            <h1>🔍 Проверка целей</h1>
+            <p class="subtitle">
+              Проверь каждую цель с помощью правила "3 Почему" и отсей ложные цели
+            </p>
+          </header>
 
-        <div class="filters-block card">
-          <h3>⚠️ Убери следующие типы целей:</h3>
+          <!-- Validation Progress Bar -->
+          <div class="validation-progress card">
+            <div class="progress-header">
+              <span class="progress-title">Прогресс проверки</span>
+              <span class="progress-count">{{ checkedCount }} из {{ rawIdeas.length }} целей проверено</span>
+            </div>
+            <div class="progress-track">
+              <div 
+                class="progress-fill validated" 
+                :style="{ width: validatedPercent + '%' }"
+              ></div>
+              <div 
+                class="progress-fill rejected" 
+                :style="{ width: rejectedPercent + '%', left: validatedPercent + '%' }"
+              ></div>
+            </div>
+            <div class="progress-legend">
+              <span class="legend-item validated">✅ Истинных: {{ validatedCount }}</span>
+              <span class="legend-item rejected">❌ Ложных: {{ rejectedCount }}</span>
+              <span class="legend-item pending">⏳ Осталось: {{ uncheckedCount }}</span>
+            </div>
+          </div>
+
+          <div class="filters-block card">
+            <h3>⚠️ Убери следующие типы целей:</h3>
           <div class="filter-types">
             <div class="filter-type">
               <span class="filter-icon">🎭</span>
@@ -375,22 +563,27 @@
           </div>
         </div>
 
-        <div class="step-actions">
-          <button class="btn btn-secondary" @click="prevStep">
-            ← Назад
-          </button>
-          <div class="validation-stats">
-            <span class="stat validated">✅ Истинных: {{ validatedCount }}</span>
-            <span class="stat rejected">❌ Ложных: {{ rejectedCount }}</span>
-            <span class="stat pending">⏳ Не проверено: {{ uncheckedCount }}</span>
+          <div class="step-actions">
+            <button class="btn btn-secondary" @click="prevStep">
+              ← Назад
+            </button>
+            <button 
+              class="btn btn-primary btn-lg" 
+              @click="nextStep"
+              :disabled="!canProceedToStep(3)"
+            >
+              Выбрать ключевые цели →
+            </button>
           </div>
-          <button 
-            class="btn btn-primary btn-lg" 
-            @click="nextStep"
-            :disabled="!canProceedToStep(3)"
-          >
-            Выбрать ключевые цели →
-          </button>
+        </div>
+
+        <!-- AI Helper Sidebar -->
+        <div class="step-2-sidebar">
+          <div class="ai-helper-card card">
+            <h4>🤖 AI-помощник</h4>
+            <p class="ai-helper-hint">Задай вопрос помощнику, чтобы разобраться с целью</p>
+            <AICurator :embedded="true" context="goals-validation" />
+          </div>
         </div>
       </div>
     </div>
@@ -414,6 +607,26 @@
           </ul>
         </div>
 
+        <!-- Recommendations for weak spheres -->
+        <div v-if="weakSphereGoals.length > 0" class="recommendations-block card">
+          <h3>💡 Рекомендуем обратить внимание</h3>
+          <p>Эти цели относятся к вашим слабым сферам (по результатам ССП):</p>
+          <div class="recommended-goals">
+            <div 
+              v-for="goal in weakSphereGoals" 
+              :key="goal.id"
+              class="recommended-goal"
+              :class="{ selected: isGoalSelected(goal.id) }"
+              @click="toggleGoalSelection(goal.id)"
+            >
+              <span class="rec-checkbox">{{ isGoalSelected(goal.id) ? '✅' : '⬜' }}</span>
+              <span class="rec-sphere">{{ getSphereName(goal.sphereId) }}</span>
+              <span class="rec-text">{{ goal.text }}</span>
+              <span class="rec-badge">⚠️ Слабая сфера</span>
+            </div>
+          </div>
+        </div>
+
         <div class="select-goals-section card">
           <h3>📋 Твои истинные цели</h3>
           <p class="select-hint">Отметь от 1 до 3 целей, над которыми будешь работать в ближайшее время</p>
@@ -423,7 +636,7 @@
               v-for="goal in validatedGoals" 
               :key="goal.id" 
               class="selectable-goal-item"
-              :class="{ selected: isGoalSelected(goal.id) }"
+              :class="{ selected: isGoalSelected(goal.id), 'weak-sphere': isWeakSphere(goal.sphereId) }"
               @click="toggleGoalSelection(goal.id)"
             >
               <div class="goal-checkbox">
@@ -431,7 +644,10 @@
                 <span v-else>⬜</span>
               </div>
               <div class="goal-content">
-                <span class="sphere-badge">{{ getSphereName(goal.sphereId) }}</span>
+                <div class="goal-header-row">
+                  <span class="sphere-badge">{{ getSphereName(goal.sphereId) }}</span>
+                  <span v-if="isWeakSphere(goal.sphereId)" class="weak-indicator">⚠️</span>
+                </div>
                 <span class="goal-text">{{ goal.text }}</span>
                 <span class="goal-why" v-if="goal.whyImportant">{{ goal.whyImportant }}</span>
               </div>
@@ -440,6 +656,34 @@
 
           <div class="selection-counter">
             Выбрано: <strong>{{ selectedGoalsCount }}</strong> / 3
+          </div>
+        </div>
+
+        <!-- Preview of what happens next -->
+        <div class="next-steps-preview card" v-if="selectedGoalsCount > 0">
+          <h3>📋 Что будет дальше</h3>
+          <div class="preview-content">
+            <div class="preview-step">
+              <span class="preview-icon">1️⃣</span>
+              <div>
+                <strong>Цели перейдут в Декомпозицию</strong>
+                <p>{{ selectedGoalsCount }} {{ selectedGoalsCount === 1 ? 'цель будет добавлена' : 'цели будут добавлены' }} в раздел "Декомпозиция"</p>
+              </div>
+            </div>
+            <div class="preview-step">
+              <span class="preview-icon">2️⃣</span>
+              <div>
+                <strong>Разбейте на шаги</strong>
+                <p>Вы сможете создать пошаговый план достижения каждой цели</p>
+              </div>
+            </div>
+            <div class="preview-step">
+              <span class="preview-icon">3️⃣</span>
+              <div>
+                <strong>Отслеживайте прогресс</strong>
+                <p>Ежедневно отмечайте выполненные шаги и двигайтесь к результату</p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -466,6 +710,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import AICurator from '../components/AICurator.vue'
 
 const store = useAppStore()
 const router = useRouter()
@@ -523,10 +768,163 @@ function restartLesson() {
 
 const validatedGoals = computed(() => rawIdeas.value.filter(i => i.status === 'validated'))
 const validatedCount = computed(() => validatedGoals.value.length)
-const rejectedCount = computed(() => rawIdeas.value.filter(i => i.status === 'rejected').length)
+const rejectedGoals = computed(() => rawIdeas.value.filter(i => i.status === 'rejected'))
+const rejectedCount = computed(() => rejectedGoals.value.length)
 const uncheckedCount = computed(() => rawIdeas.value.filter(i => !i.status || i.status === 'raw').length)
+const checkedCount = computed(() => validatedCount.value + rejectedCount.value)
+const validatedPercent = computed(() => rawIdeas.value.length > 0 ? (validatedCount.value / rawIdeas.value.length) * 100 : 0)
+const rejectedPercent = computed(() => rawIdeas.value.length > 0 ? (rejectedCount.value / rawIdeas.value.length) * 100 : 0)
 
 const expandedGoalId = ref(null)
+const expandedSummaryGoalId = ref(null)
+
+function toggleSummaryGoalExpand(goalId) {
+  if (expandedSummaryGoalId.value === goalId) {
+    expandedSummaryGoalId.value = null
+  } else {
+    expandedSummaryGoalId.value = goalId
+  }
+}
+
+function isGoalTransferred(goalId) {
+  return transferredGoals.value.some(g => g.sourceId === goalId)
+}
+
+const sphereDistribution = computed(() => {
+  const distribution = {}
+  
+  lifeSpheres.value.forEach(sphere => {
+    distribution[sphere.id] = {
+      id: sphere.id,
+      name: sphere.name,
+      icon: sphere.icon,
+      total: 0,
+      validated: 0,
+      rejected: 0,
+      validatedPercent: 0,
+      rejectedPercent: 0
+    }
+  })
+  
+  rawIdeas.value.forEach(idea => {
+    if (idea.sphereId && distribution[idea.sphereId]) {
+      distribution[idea.sphereId].total++
+      if (idea.status === 'validated') {
+        distribution[idea.sphereId].validated++
+      } else if (idea.status === 'rejected') {
+        distribution[idea.sphereId].rejected++
+      }
+    }
+  })
+  
+  return Object.values(distribution)
+    .filter(s => s.total > 0)
+    .map(s => ({
+      ...s,
+      validatedPercent: s.total > 0 ? (s.validated / s.total) * 100 : 0,
+      rejectedPercent: s.total > 0 ? (s.rejected / s.total) * 100 : 0
+    }))
+    .sort((a, b) => b.total - a.total)
+})
+
+// Step 1 features: weak spheres, ideas helper, grouping
+const showIdeasHelper = ref(false)
+
+const weakSpheres = computed(() => {
+  return lifeSpheres.value.filter(s => s.score <= 5).sort((a, b) => a.score - b.score)
+})
+
+function isWeakSphere(sphereId) {
+  return weakSpheres.value.some(s => s.id === sphereId)
+}
+
+function selectWeakSphere(sphereId) {
+  newIdea.value.sphereId = sphereId
+}
+
+function toggleIdeasHelper() {
+  showIdeasHelper.value = !showIdeasHelper.value
+}
+
+const goalExamples = {
+  wealth: [
+    'Увеличить доход на 30%',
+    'Создать пассивный источник дохода',
+    'Накопить подушку безопасности на 6 месяцев',
+    'Инвестировать 10% дохода ежемесячно'
+  ],
+  hobbies: [
+    'Научиться играть на музыкальном инструменте',
+    'Прочитать 24 книги за год',
+    'Освоить новый вид спорта',
+    'Путешествовать в новую страну'
+  ],
+  friends: [
+    'Расширить круг полезных знакомств',
+    'Проводить время с друзьями еженедельно',
+    'Найти ментора в своей области',
+    'Вступить в профессиональное сообщество'
+  ],
+  health: [
+    'Заниматься спортом 3 раза в неделю',
+    'Нормализовать режим сна',
+    'Пройти полное медицинское обследование',
+    'Сбросить/набрать вес до целевого'
+  ],
+  career: [
+    'Получить повышение на работе',
+    'Освоить новый профессиональный навык',
+    'Запустить собственный проект',
+    'Сменить сферу деятельности'
+  ],
+  love: [
+    'Улучшить качество отношений с партнёром',
+    'Проводить больше времени с семьёй',
+    'Наладить отношения с родителями',
+    'Построить серьёзные отношения'
+  ]
+}
+
+function getGoalExamples(sphereId) {
+  return goalExamples[sphereId] || []
+}
+
+function addExampleGoal(sphereId, goalText) {
+  store.addRawIdea({
+    text: goalText,
+    whyImportant: '',
+    sphereId: sphereId
+  })
+  showIdeasHelper.value = false
+}
+
+const weakSphereGoals = computed(() => {
+  return validatedGoals.value.filter(g => isWeakSphere(g.sphereId))
+})
+
+const ideasBySphere = computed(() => {
+  const grouped = {}
+  
+  rawIdeas.value.forEach(idea => {
+    const sphereId = idea.sphereId || 'unknown'
+    if (!grouped[sphereId]) {
+      const sphere = lifeSpheres.value.find(s => s.id === sphereId) || { id: 'unknown', name: 'Без сферы', icon: '❓' }
+      grouped[sphereId] = {
+        sphere,
+        ideas: []
+      }
+    }
+    grouped[sphereId].ideas.push(idea)
+  })
+  
+  // Sort: weak spheres first, then by ideas count
+  return Object.values(grouped).sort((a, b) => {
+    const aWeak = isWeakSphere(a.sphere.id) ? 0 : 1
+    const bWeak = isWeakSphere(b.sphere.id) ? 0 : 1
+    if (aWeak !== bWeak) return aWeak - bWeak
+    return b.ideas.length - a.ideas.length
+  })
+})
 
 function toggleGoalExpansion(goalId) {
   if (expandedGoalId.value === goalId) {
@@ -908,6 +1306,813 @@ function getStatusLabel(status) {
   color: var(--primary-color);
 }
 
+/* Sphere Distribution */
+.sphere-distribution {
+  margin-bottom: 2rem;
+}
+
+.sphere-distribution h3 {
+  margin-bottom: 1.5rem;
+}
+
+.sphere-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sphere-bar-item {
+  padding: 0.75rem 0;
+}
+
+.sphere-bar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.sphere-bar-name {
+  font-weight: 500;
+}
+
+.sphere-bar-count {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.sphere-bar-track {
+  position: relative;
+  height: 8px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.sphere-bar-fill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.sphere-bar-fill.validated {
+  background: var(--success-color);
+  left: 0;
+}
+
+.sphere-bar-fill.rejected {
+  background: var(--danger-color);
+}
+
+.sphere-bar-legend {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.legend-validated {
+  color: var(--success-color);
+}
+
+.legend-rejected {
+  color: var(--danger-color);
+}
+
+/* Validated Goals Accordion */
+.validated-goals-summary {
+  margin-bottom: 2rem;
+}
+
+.validated-goals-summary h3 {
+  margin-bottom: 0.5rem;
+}
+
+.section-hint {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.goals-accordion.readonly {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.goals-accordion .accordion-item {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.goals-accordion .accordion-item.expanded {
+  box-shadow: var(--shadow-md);
+}
+
+.goals-accordion .accordion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.goals-accordion .accordion-header:hover {
+  background: var(--bg-tertiary);
+}
+
+.accordion-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.expand-arrow {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+}
+
+.goal-sphere-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.goal-sphere-badge.muted {
+  opacity: 0.7;
+}
+
+.goal-name {
+  font-weight: 500;
+}
+
+.transferred-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--primary-color);
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+}
+
+.goals-accordion .accordion-content {
+  padding: 1.25rem;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-primary);
+}
+
+.why-important-block {
+  margin-bottom: 1.25rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.three-whys-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.three-whys-answers .answer-item {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+
+.answer-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.answer-text {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+}
+
+.no-answers {
+  padding: 1rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Accordion transition */
+.accordion-expand-enter-active,
+.accordion-expand-leave-active {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.accordion-expand-enter-from,
+.accordion-expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.accordion-expand-enter-to,
+.accordion-expand-leave-from {
+  opacity: 1;
+  max-height: 500px;
+}
+
+/* Rejected Goals */
+.rejected-goals-summary {
+  margin-bottom: 2rem;
+}
+
+.rejected-goals-summary h3 {
+  margin-bottom: 0.5rem;
+}
+
+.rejected-goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.rejected-goal-item {
+  padding: 1rem;
+  background: rgba(239, 68, 68, 0.05);
+  border-left: 3px solid var(--danger-color);
+  border-radius: var(--radius-md);
+}
+
+.rejected-goal-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.rejected-goal-header .goal-name {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+  text-decoration-color: var(--danger-color);
+}
+
+.rejected-reason {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.reason-label {
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* Step 1: Weak spheres alert */
+.weak-spheres-alert {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  margin-bottom: 2rem;
+}
+
+.weak-spheres-alert .alert-icon {
+  font-size: 1.5rem;
+}
+
+.weak-spheres-alert h4 {
+  margin: 0 0 0.5rem;
+  color: var(--warning-color);
+}
+
+.weak-spheres-alert p {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+}
+
+.weak-spheres-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.weak-sphere-tag {
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.weak-sphere-tag:hover {
+  background: rgba(245, 158, 11, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Table header actions */
+.table-header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.table-header-actions .table-title {
+  margin: 0;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+/* Ideas Helper */
+.ideas-helper {
+  margin-bottom: 1.5rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.ideas-helper-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.ideas-helper-header h4 {
+  margin: 0;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 0.25rem;
+}
+
+.btn-close:hover {
+  color: var(--text-primary);
+}
+
+.sphere-examples {
+  margin-bottom: 1rem;
+}
+
+.sphere-examples-header {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+}
+
+.example-goals {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-left: 0.5rem;
+}
+
+.example-goal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.example-goal:hover {
+  background: var(--bg-secondary);
+}
+
+.example-text {
+  font-size: 0.9rem;
+}
+
+.add-icon {
+  font-size: 1.25rem;
+  color: var(--primary-color);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.example-goal:hover .add-icon {
+  opacity: 1;
+}
+
+/* Weak sphere select */
+.sphere-select.weak-sphere-selected {
+  border-color: var(--warning-color);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+/* Grouped by spheres */
+.goals-grouped {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.sphere-group {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.sphere-group.weak {
+  border: 2px solid rgba(245, 158, 11, 0.4);
+}
+
+.sphere-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+}
+
+.sphere-group.weak .sphere-group-header {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
+}
+
+.sphere-group-name {
+  font-weight: 600;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.weak-badge {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  background: var(--warning-color);
+  color: white;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+}
+
+.sphere-group-count {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.sphere-group-ideas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.idea-card {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.idea-card:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.idea-card.validated {
+  border-left: 3px solid var(--success-color);
+}
+
+.idea-card.rejected {
+  border-left: 3px solid var(--danger-color);
+  opacity: 0.7;
+}
+
+.idea-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.idea-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.idea-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: var(--bg-secondary);
+}
+
+.idea-textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: 0.85rem;
+  font-family: inherit;
+  resize: vertical;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.idea-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: var(--bg-secondary);
+}
+
+.idea-card-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-indicator {
+  font-size: 1rem;
+}
+
+.empty-table .hint {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+}
+
+/* Fade transition */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Step 2 Layout with AI Sidebar */
+.step-2-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 2rem;
+  align-items: start;
+}
+
+.step-2-main {
+  min-width: 0;
+}
+
+.step-2-sidebar {
+  position: sticky;
+  top: 2rem;
+}
+
+.ai-helper-card {
+  background: var(--bg-secondary);
+}
+
+.ai-helper-card h4 {
+  margin: 0 0 0.5rem;
+}
+
+.ai-helper-hint {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 1024px) {
+  .step-2-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .step-2-sidebar {
+    position: static;
+    order: -1;
+  }
+}
+
+/* Validation Progress Bar */
+.validation-progress {
+  margin-bottom: 2rem;
+}
+
+.validation-progress .progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.validation-progress .progress-title {
+  font-weight: 600;
+}
+
+.validation-progress .progress-count {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.validation-progress .progress-track {
+  position: relative;
+  height: 12px;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.validation-progress .progress-fill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.validation-progress .progress-fill.validated {
+  background: var(--success-color);
+  left: 0;
+  border-radius: 6px 0 0 6px;
+}
+
+.validation-progress .progress-fill.rejected {
+  background: var(--danger-color);
+  border-radius: 0 6px 6px 0;
+}
+
+.validation-progress .progress-legend {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.validation-progress .legend-item.validated {
+  color: var(--success-color);
+}
+
+.validation-progress .legend-item.rejected {
+  color: var(--danger-color);
+}
+
+.validation-progress .legend-item.pending {
+  color: var(--text-secondary);
+}
+
+/* Step 3: Recommendations */
+.recommendations-block {
+  margin-bottom: 2rem;
+  background: rgba(245, 158, 11, 0.05);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.recommendations-block h3 {
+  margin-bottom: 0.5rem;
+  color: var(--warning-color);
+}
+
+.recommendations-block p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.recommended-goals {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.recommended-goal {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.recommended-goal:hover {
+  background: var(--bg-secondary);
+}
+
+.recommended-goal.selected {
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid var(--primary-color);
+}
+
+.rec-checkbox {
+  flex-shrink: 0;
+}
+
+.rec-sphere {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.rec-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+.rec-badge {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--warning-color);
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+}
+
+/* Goal header row */
+.goal-header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.weak-indicator {
+  font-size: 0.875rem;
+}
+
+.selectable-goal-item.weak-sphere {
+  border-left: 3px solid var(--warning-color);
+}
+
+/* Next Steps Preview */
+.next-steps-preview {
+  margin-bottom: 2rem;
+  background: rgba(139, 92, 246, 0.05);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.next-steps-preview h3 {
+  margin-bottom: 1.5rem;
+  color: var(--primary-color);
+}
+
+.preview-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.preview-step {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.preview-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.preview-step strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.preview-step p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
 .summary-actions {
   display: flex;
   justify-content: center;
@@ -948,14 +2153,14 @@ function getStatusLabel(status) {
   content: '';
   position: absolute;
   top: 20px;
-  left: 50%;
+  right: 50%;
   width: 100%;
   height: 2px;
   background: var(--border-color);
   z-index: 0;
 }
 
-.progress-step:last-child::after {
+.progress-step:first-child::after {
   display: none;
 }
 
