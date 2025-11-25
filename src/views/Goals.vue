@@ -303,12 +303,16 @@
         </div>
       </div>
     </transition>
+
+    <!-- AI Coach Chat -->
+    <AICurator context="decomposition" />
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { useAppStore } from '../stores/app'
+import AICurator from '../components/AICurator.vue'
 
 const store = useAppStore()
 

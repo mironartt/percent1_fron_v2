@@ -98,7 +98,14 @@
 </template>
 
 <script setup>
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, computed } from 'vue'
+
+const props = defineProps({
+  context: {
+    type: String,
+    default: 'general'
+  }
+})
 
 const isExpanded = ref(false)
 const isMinimized = ref(false)
@@ -108,11 +115,27 @@ const isLoading = ref(false)
 const unreadCount = ref(0)
 const messagesContainer = ref(null)
 
-const quickPrompts = [
-  'Как оценить сферу жизни?',
-  'Что такое истинная цель?',
-  'Помоги выбрать приоритеты'
-]
+const contextPrompts = {
+  general: [
+    'Как оценить сферу жизни?',
+    'Что такое истинная цель?',
+    'Помоги выбрать приоритеты'
+  ],
+  decomposition: [
+    'Как правильно декомпозировать цель?',
+    'Сколько шагов должно быть?',
+    'Как определить MVP цели?'
+  ],
+  ssp: [
+    'Что такое ССП?',
+    'Как работает колесо баланса?',
+    'Помоги оценить сферы'
+  ]
+}
+
+const quickPrompts = computed(() => {
+  return contextPrompts[props.context] || contextPrompts.general
+})
 
 function toggleExpanded() {
   isExpanded.value = !isExpanded.value
@@ -191,6 +214,22 @@ function getDemoResponse(message) {
   
   if (lowerMessage.includes('баланс')) {
     return 'Баланс - это когда ни одна сфера жизни не проседает критически. Проверьте: нет ли у вас оценок ниже 3? Это зоны, требующие срочного внимания.'
+  }
+  
+  if (lowerMessage.includes('декомпозир') || lowerMessage.includes('разбить')) {
+    return 'Декомпозиция цели - это разбивка большой цели на маленькие шаги. Хорошая декомпозиция отвечает на вопрос "Что конкретно я делаю завтра?". Каждый шаг должен быть понятным действием, которое можно выполнить за 1-4 часа.'
+  }
+  
+  if (lowerMessage.includes('шаг') && (lowerMessage.includes('сколько') || lowerMessage.includes('много'))) {
+    return 'Оптимальное количество шагов - от 5 до 15. Меньше - возможно, шаги слишком крупные и их нужно разбить. Больше - цель слишком масштабная, стоит выделить MVP и начать с него.'
+  }
+  
+  if (lowerMessage.includes('mvp') || lowerMessage.includes('минимальн')) {
+    return 'MVP (Minimum Viable Product) для цели - это минимальный результат, который уже считается успехом. Например, для "Выучить английский" MVP может быть "Провести 5-минутный разговор с носителем". Определите: какой минимум вас уже порадует?'
+  }
+  
+  if (lowerMessage.includes('правильн') && lowerMessage.includes('декомпоз')) {
+    return 'Правильная декомпозиция:\n1. Определите конечный результат (что именно хотите получить)\n2. Выделите MVP - минимальный жизнеспособный результат\n3. Разбейте путь к MVP на конкретные шаги\n4. Каждый шаг = конкретное действие (глагол + объект)\n5. Проверьте: можно ли каждый шаг сделать за 1-4 часа?'
   }
   
   return `Отличный вопрос! ${message.includes('?') ? 'Давайте разберемся вместе.' : 'Продолжайте работать с упражнением.'} Помните: каждый шаг приближает вас к вашей Точке Б. Что именно вас сейчас волнует больше всего?`

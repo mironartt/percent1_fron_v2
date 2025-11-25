@@ -188,67 +188,92 @@
           </ol>
         </div>
 
-        <div class="validation-list">
+        <div class="required-notice card">
+          <span class="notice-icon">⚠️</span>
+          <p><strong>Обязательно:</strong> Для каждой цели необходимо выбрать, является ли она истинной или ложной. Нажмите на цель, чтобы ответить на вопросы и определить её тип.</p>
+        </div>
+
+        <div class="validation-list compact">
           <div 
             v-for="idea in rawIdeas" 
             :key="idea.id"
-            class="validation-card card"
-            :class="{ validated: idea.status === 'validated', rejected: idea.status === 'rejected' }"
+            class="validation-card-compact card"
+            :class="{ 
+              validated: idea.status === 'validated', 
+              rejected: idea.status === 'rejected',
+              expanded: expandedGoalId === idea.id
+            }"
           >
-            <div class="validation-header">
-              <div class="goal-info">
-                <span class="sphere-badge">{{ getSphereName(idea.sphereId) }}</span>
-                <h4>{{ idea.text || 'Без названия' }}</h4>
+            <div 
+              class="validation-header-compact"
+              @click="toggleGoalExpansion(idea.id)"
+            >
+              <div class="goal-info-compact">
+                <span class="expand-icon">{{ expandedGoalId === idea.id ? '▼' : '▶' }}</span>
+                <span class="sphere-badge-small">{{ getSphereName(idea.sphereId) }}</span>
+                <h4>{{ idea.goal || idea.text || 'Без названия' }}</h4>
               </div>
-              <div class="validation-actions">
-                <button 
-                  class="btn btn-sm"
-                  :class="idea.status === 'validated' ? 'btn-success' : 'btn-secondary'"
-                  @click="validateGoal(idea.id, true)"
-                >
-                  ✅ Истинная
-                </button>
-                <button 
-                  class="btn btn-sm"
-                  :class="idea.status === 'rejected' ? 'btn-danger' : 'btn-secondary'"
-                  @click="validateGoal(idea.id, false)"
-                >
-                  ❌ Ложная
-                </button>
+              <div class="goal-status-indicator">
+                <span v-if="idea.status === 'validated'" class="status-badge validated">✅ Истинная</span>
+                <span v-else-if="idea.status === 'rejected'" class="status-badge rejected">❌ Ложная</span>
+                <span v-else class="status-badge pending">⏳ Не проверена</span>
               </div>
             </div>
-            
-            <p class="why-important">{{ idea.whyImportant }}</p>
 
-            <div class="three-whys-form">
-              <div class="why-field">
-                <label>1. Почему эта цель мне важна?</label>
-                <textarea 
-                  :value="idea.threeWhys?.why1 || ''"
-                  @input="updateIdeaWhys(idea.id, 'why1', $event.target.value)"
-                  rows="2"
-                  placeholder="Напиши свой ответ..."
-                ></textarea>
+            <transition name="expand">
+              <div v-if="expandedGoalId === idea.id" class="validation-dropdown">
+                <p class="why-important-compact" v-if="idea.whyImportant">
+                  <strong>Почему важно:</strong> {{ idea.whyImportant }}
+                </p>
+
+                <div class="three-whys-form-compact">
+                  <div class="why-field-compact">
+                    <label>1. Почему эта цель мне важна?</label>
+                    <textarea 
+                      :value="idea.threeWhys?.why1 || ''"
+                      @input="updateIdeaWhys(idea.id, 'why1', $event.target.value)"
+                      rows="2"
+                      placeholder="Напиши свой ответ..."
+                    ></textarea>
+                  </div>
+                  <div class="why-field-compact">
+                    <label>2. Почему именно это даст мне то, что я хочу?</label>
+                    <textarea 
+                      :value="idea.threeWhys?.why2 || ''"
+                      @input="updateIdeaWhys(idea.id, 'why2', $event.target.value)"
+                      rows="2"
+                      placeholder="Напиши свой ответ..."
+                    ></textarea>
+                  </div>
+                  <div class="why-field-compact">
+                    <label>3. Почему это действительно про меня?</label>
+                    <textarea 
+                      :value="idea.threeWhys?.why3 || ''"
+                      @input="updateIdeaWhys(idea.id, 'why3', $event.target.value)"
+                      rows="2"
+                      placeholder="Напиши свой ответ..."
+                    ></textarea>
+                  </div>
+                </div>
+
+                <div class="validation-buttons">
+                  <button 
+                    class="btn btn-lg"
+                    :class="idea.status === 'validated' ? 'btn-success' : 'btn-outline-success'"
+                    @click.stop="validateGoal(idea.id, true)"
+                  >
+                    ✅ Это истинная цель
+                  </button>
+                  <button 
+                    class="btn btn-lg"
+                    :class="idea.status === 'rejected' ? 'btn-danger' : 'btn-outline-danger'"
+                    @click.stop="validateGoal(idea.id, false)"
+                  >
+                    ❌ Это ложная цель
+                  </button>
+                </div>
               </div>
-              <div class="why-field">
-                <label>2. Почему именно это даст мне то, что я хочу?</label>
-                <textarea 
-                  :value="idea.threeWhys?.why2 || ''"
-                  @input="updateIdeaWhys(idea.id, 'why2', $event.target.value)"
-                  rows="2"
-                  placeholder="Напиши свой ответ..."
-                ></textarea>
-              </div>
-              <div class="why-field">
-                <label>3. Почему это действительно про меня?</label>
-                <textarea 
-                  :value="idea.threeWhys?.why3 || ''"
-                  @input="updateIdeaWhys(idea.id, 'why3', $event.target.value)"
-                  rows="2"
-                  placeholder="Напиши свой ответ..."
-                ></textarea>
-              </div>
-            </div>
+            </transition>
           </div>
         </div>
 
@@ -259,6 +284,7 @@
           <div class="validation-stats">
             <span class="stat validated">✅ Истинных: {{ validatedCount }}</span>
             <span class="stat rejected">❌ Ложных: {{ rejectedCount }}</span>
+            <span class="stat pending">⏳ Не проверено: {{ uncheckedCount }}</span>
           </div>
           <button 
             class="btn btn-primary btn-lg" 
@@ -356,6 +382,17 @@ const sphereAnalysis = computed(() => store.goalsBank.sphereAnalysis)
 const validatedGoals = computed(() => rawIdeas.value.filter(i => i.status === 'validated'))
 const validatedCount = computed(() => validatedGoals.value.length)
 const rejectedCount = computed(() => rawIdeas.value.filter(i => i.status === 'rejected').length)
+const uncheckedCount = computed(() => rawIdeas.value.filter(i => !i.status || i.status === 'raw').length)
+
+const expandedGoalId = ref(null)
+
+function toggleGoalExpansion(goalId) {
+  if (expandedGoalId.value === goalId) {
+    expandedGoalId.value = null
+  } else {
+    expandedGoalId.value = goalId
+  }
+}
 
 const sortedSpheres = computed(() => {
   return [...lifeSpheres.value].sort((a, b) => a.score - b.score)
@@ -950,6 +987,209 @@ function getStatusLabel(status) {
 
 .stat.rejected {
   color: var(--danger-color);
+}
+
+.stat.pending {
+  color: var(--text-secondary);
+}
+
+.required-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  margin-bottom: 2rem;
+}
+
+.required-notice .notice-icon {
+  font-size: 1.25rem;
+}
+
+.required-notice p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.validation-list.compact {
+  gap: 0.75rem;
+}
+
+.validation-card-compact {
+  transition: all 0.3s ease;
+  padding: 0;
+  overflow: hidden;
+}
+
+.validation-card-compact.validated {
+  border-left: 4px solid var(--success-color);
+}
+
+.validation-card-compact.rejected {
+  border-left: 4px solid var(--danger-color);
+}
+
+.validation-card-compact.expanded {
+  box-shadow: var(--shadow-md);
+}
+
+.validation-header-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.validation-header-compact:hover {
+  background: var(--bg-tertiary);
+}
+
+.goal-info-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.expand-icon {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+}
+
+.sphere-badge-small {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.goal-info-compact h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.goal-status-indicator .status-badge {
+  font-size: 0.8rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+}
+
+.goal-status-indicator .status-badge.validated {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success-color);
+}
+
+.goal-status-indicator .status-badge.rejected {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger-color);
+}
+
+.goal-status-indicator .status-badge.pending {
+  background: rgba(156, 163, 175, 0.15);
+  color: var(--text-secondary);
+}
+
+.validation-dropdown {
+  padding: 1.25rem;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+}
+
+.why-important-compact {
+  margin: 0 0 1.25rem;
+  padding: 0.75rem;
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.three-whys-form-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.why-field-compact label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.why-field-compact textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  font-family: inherit;
+  font-size: 0.9rem;
+  resize: vertical;
+  transition: all 0.2s ease;
+}
+
+.why-field-compact textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.validation-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-outline-success {
+  background: transparent;
+  border: 2px solid var(--success-color);
+  color: var(--success-color);
+}
+
+.btn-outline-success:hover {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.btn-outline-danger {
+  background: transparent;
+  border: 2px solid var(--danger-color);
+  color: var(--danger-color);
+}
+
+.btn-outline-danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.expand-enter-to,
+.expand-leave-from {
+  opacity: 1;
+  max-height: 500px;
 }
 
 .foreign-goals-theory {

@@ -61,7 +61,7 @@ const menuItems = [
   { path: '/who', icon: '🧭', label: 'Кто ты', locked: true, showLock: false },
   { path: '/ssp', icon: '🎯', label: 'ССП', locked: true, showLock: false },
   { path: '/goals-bank', icon: '🏦', label: 'Банк целей', locked: true, showLock: false },
-  { path: '/goals', icon: '🏆', label: 'Цели', locked: true, showLock: false },
+  { path: '/goals', icon: '🏆', label: 'Декомпозиция', locked: true, showLock: false },
   { path: '/planner', icon: '📅', label: 'Планирование', locked: true, showLock: false },
   { path: '/energy', icon: '⚡', label: 'Ресурс и энергия', locked: true, showLock: false },
   { path: '/principles', icon: '💎', label: 'Принципы и убеждения', locked: true, showLock: false },
