@@ -4,6 +4,7 @@ import Register from '../views/Register.vue'
 import Login from '../views/Login.vue'
 import BalancedScorecard from '../views/BalancedScorecard.vue'
 import Goals from '../views/Goals.vue'
+import GoalsBank from '../views/GoalsBank.vue'
 import Planner from '../views/Planner.vue'
 import Settings from '../views/Settings.vue'
 import Club from '../views/Club.vue'
@@ -39,6 +40,12 @@ const router = createRouter({
       path: '/goals',
       name: 'goals',
       component: Goals,
+      meta: { title: 'Цели и декомпозиция' }
+    },
+    {
+      path: '/goals-bank',
+      name: 'goals-bank',
+      component: GoalsBank,
       meta: { title: 'Банк целей' }
     },
     {

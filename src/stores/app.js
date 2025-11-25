@@ -124,6 +124,20 @@ export const useAppStore = defineStore('app', () => {
     data: null
   })
 
+  // Банк целей - полноценная система
+  const goalsBank = ref({
+    currentStep: 1,
+    rawIdeas: [],
+    validatedGoals: [],
+    keyGoals: [],
+    sphereAnalysis: {
+      lowestSphere: null,
+      leverageSphere: null,
+      notes: ''
+    },
+    completedAt: null
+  })
+
   // Цели
   const goals = ref([])
   
@@ -231,7 +245,8 @@ export const useAppStore = defineStore('app', () => {
       dailyPlan: dailyPlan.value,
       onboarding: onboarding.value,
       sspGoalsBank: sspGoalsBank.value,
-      sspModuleCompleted: sspModuleCompleted.value
+      sspModuleCompleted: sspModuleCompleted.value,
+      goalsBank: goalsBank.value
     }))
   }
 
@@ -257,6 +272,7 @@ export const useAppStore = defineStore('app', () => {
         if (parsed.onboarding) onboarding.value = parsed.onboarding
         if (parsed.sspGoalsBank) sspGoalsBank.value = parsed.sspGoalsBank
         if (parsed.sspModuleCompleted) sspModuleCompleted.value = parsed.sspModuleCompleted
+        if (parsed.goalsBank) goalsBank.value = { ...goalsBank.value, ...parsed.goalsBank }
       } catch (e) {
         console.error('Error loading data:', e)
       }
@@ -324,6 +340,96 @@ export const useAppStore = defineStore('app', () => {
     saveToLocalStorage()
   }
 
+  // Goals Bank methods
+  function addRawIdea(idea) {
+    goalsBank.value.rawIdeas.push({
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      text: idea.text || '',
+      whyImportant: idea.whyImportant || '',
+      sphereId: idea.sphereId || '',
+      mvp: idea.mvp || '',
+      decomposition: idea.decomposition || '',
+      status: 'raw',
+      validated: false,
+      threeWhys: {
+        why1: '',
+        why2: '',
+        why3: ''
+      }
+    })
+    saveToLocalStorage()
+  }
+
+  function updateRawIdea(ideaId, updates) {
+    const idea = goalsBank.value.rawIdeas.find(i => i.id === ideaId)
+    if (idea) {
+      Object.assign(idea, updates)
+      saveToLocalStorage()
+    }
+  }
+
+  function deleteRawIdea(ideaId) {
+    const index = goalsBank.value.rawIdeas.findIndex(i => i.id === ideaId)
+    if (index !== -1) {
+      goalsBank.value.rawIdeas.splice(index, 1)
+      saveToLocalStorage()
+    }
+  }
+
+  function validateIdea(ideaId, isValid) {
+    const idea = goalsBank.value.rawIdeas.find(i => i.id === ideaId)
+    if (idea) {
+      idea.validated = isValid
+      idea.status = isValid ? 'validated' : 'rejected'
+      saveToLocalStorage()
+    }
+  }
+
+  function addKeyGoal(goal) {
+    goalsBank.value.keyGoals.push({
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      text: goal.text || '',
+      action: goal.action || '',
+      sphereId: goal.sphereId || '',
+      linkedGoals: goal.linkedGoals || [],
+      priority: goal.priority || 0
+    })
+    saveToLocalStorage()
+  }
+
+  function updateKeyGoal(goalId, updates) {
+    const goal = goalsBank.value.keyGoals.find(g => g.id === goalId)
+    if (goal) {
+      Object.assign(goal, updates)
+      saveToLocalStorage()
+    }
+  }
+
+  function deleteKeyGoal(goalId) {
+    const index = goalsBank.value.keyGoals.findIndex(g => g.id === goalId)
+    if (index !== -1) {
+      goalsBank.value.keyGoals.splice(index, 1)
+      saveToLocalStorage()
+    }
+  }
+
+  function updateSphereAnalysis(analysis) {
+    goalsBank.value.sphereAnalysis = { ...goalsBank.value.sphereAnalysis, ...analysis }
+    saveToLocalStorage()
+  }
+
+  function setGoalsBankStep(step) {
+    goalsBank.value.currentStep = step
+    saveToLocalStorage()
+  }
+
+  function completeGoalsBank() {
+    goalsBank.value.completedAt = new Date().toISOString()
+    saveToLocalStorage()
+  }
+
   // Load data on init
   loadFromLocalStorage()
 
@@ -357,6 +463,17 @@ export const useAppStore = defineStore('app', () => {
     addGoalToSSPBank,
     updateSSPGoal,
     deleteSSPGoal,
-    completeSSPModule
+    completeSSPModule,
+    goalsBank,
+    addRawIdea,
+    updateRawIdea,
+    deleteRawIdea,
+    validateIdea,
+    addKeyGoal,
+    updateKeyGoal,
+    deleteKeyGoal,
+    updateSphereAnalysis,
+    setGoalsBankStep,
+    completeGoalsBank
   }
 })
