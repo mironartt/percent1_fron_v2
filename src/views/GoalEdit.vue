@@ -282,7 +282,12 @@ function updateStep(index, field, value) {
 }
 
 function toggleStepCompletion(index) {
-  goalForm.value.steps[index].completed = !goalForm.value.steps[index].completed
+  const step = goalForm.value.steps[index]
+  if (!step.title.trim()) {
+    alert('Сначала введите название шага')
+    return
+  }
+  step.completed = !step.completed
   recalculateProgress()
 }
 
