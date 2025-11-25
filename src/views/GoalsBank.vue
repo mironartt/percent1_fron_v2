@@ -75,8 +75,6 @@
               <div class="col-sphere">Сфера</div>
               <div class="col-goal">Цель/Идея</div>
               <div class="col-why">Почему важно?</div>
-              <div class="col-mvp">MVP</div>
-              <div class="col-decomposition">Декомпозиция</div>
               <div class="col-actions">Действия</div>
             </div>
 
@@ -112,24 +110,6 @@
                   @input="updateIdea(idea.id, { whyImportant: $event.target.value })"
                   class="cell-textarea"
                   placeholder="Почему важно..."
-                  rows="2"
-                ></textarea>
-              </div>
-              <div class="col-mvp">
-                <textarea 
-                  :value="idea.mvp"
-                  @input="updateIdea(idea.id, { mvp: $event.target.value })"
-                  class="cell-textarea"
-                  placeholder="MVP если цель большая..."
-                  rows="2"
-                ></textarea>
-              </div>
-              <div class="col-decomposition">
-                <textarea 
-                  :value="idea.decomposition"
-                  @input="updateIdea(idea.id, { decomposition: $event.target.value })"
-                  class="cell-textarea"
-                  placeholder="Шаги декомпозиции..."
                   rows="2"
                 ></textarea>
               </div>
@@ -862,7 +842,7 @@ function getStatusLabel(status) {
 
 .table-header {
   display: grid;
-  grid-template-columns: 80px 140px 1fr 1fr 150px 150px 80px;
+  grid-template-columns: 80px 140px 1fr 1fr 80px;
   gap: 0.5rem;
   padding: 1rem;
   background: linear-gradient(135deg, #fbbf24, #f59e0b);
@@ -873,7 +853,7 @@ function getStatusLabel(status) {
 
 .table-row {
   display: grid;
-  grid-template-columns: 80px 140px 1fr 1fr 150px 150px 80px;
+  grid-template-columns: 80px 140px 1fr 1fr 80px;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border-color);
@@ -1527,7 +1507,7 @@ function getStatusLabel(status) {
 @media (max-width: 1024px) {
   .table-header,
   .table-row {
-    grid-template-columns: 60px 120px 1fr 1fr 120px 120px 60px;
+    grid-template-columns: 60px 120px 1fr 1fr 60px;
   }
 }
 
