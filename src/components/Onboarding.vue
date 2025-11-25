@@ -364,7 +364,7 @@ async function completeOnboarding() {
 
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
   transition: width 0.5s ease;
 }
 
@@ -442,10 +442,10 @@ async function completeOnboarding() {
 .philosophy-text .highlight {
   padding: 1.25rem;
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
-  border-left: 4px solid var(--primary);
+  border-left: 4px solid var(--primary-color);
   border-radius: 0.5rem;
   font-weight: 500;
-  color: var(--primary);
+  color: var(--primary-color);
 }
 
 .key-ideas {
@@ -463,7 +463,7 @@ async function completeOnboarding() {
   padding: 1.25rem;
   background: var(--bg-primary);
   border-radius: 0.75rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-color);
   text-align: left;
   transition: transform 0.2s;
 }
@@ -511,7 +511,7 @@ async function completeOnboarding() {
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: var(--primary);
+  background: var(--primary-color);
   color: white;
   border-radius: 50%;
   font-size: 1rem;
@@ -530,7 +530,7 @@ async function completeOnboarding() {
   width: 100%;
   padding: 1rem;
   font-size: 1rem;
-  border: 2px solid var(--border);
+  border: 2px solid var(--border-color);
   border-radius: 0.75rem;
   background: var(--bg-primary);
   color: var(--text-primary);
@@ -542,7 +542,7 @@ async function completeOnboarding() {
 
 .form-textarea:focus {
   outline: none;
-  border-color: var(--primary);
+  border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
@@ -560,7 +560,7 @@ async function completeOnboarding() {
   padding: 2rem;
   background: var(--bg-primary);
   border-radius: 1rem;
-  border: 2px dashed var(--border);
+  border: 2px dashed var(--border-color);
 }
 
 .point {
@@ -582,7 +582,7 @@ async function completeOnboarding() {
 
 .journey-arrow {
   font-size: 2rem;
-  color: var(--primary);
+  color: var(--primary-color);
   font-weight: 700;
 }
 
@@ -598,7 +598,7 @@ async function completeOnboarding() {
   border-radius: 1rem;
   padding: 1.5rem;
   margin-bottom: 2rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-color);
 }
 
 .summary-card h3 {
@@ -625,7 +625,7 @@ async function completeOnboarding() {
   justify-content: center;
   width: 24px;
   height: 24px;
-  background: var(--success);
+  background: var(--success-color);
   color: white;
   border-radius: 50%;
   font-weight: 700;
@@ -653,7 +653,7 @@ async function completeOnboarding() {
   padding: 1rem;
   background: var(--bg-primary);
   border-radius: 0.75rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-color);
 }
 
 .rule-number {
@@ -662,7 +662,7 @@ async function completeOnboarding() {
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   color: white;
   border-radius: 50%;
   font-weight: 700;
@@ -680,7 +680,7 @@ async function completeOnboarding() {
   gap: 1rem;
   padding: 1.25rem;
   background: rgba(99, 102, 241, 0.05);
-  border: 2px solid var(--primary);
+  border: 2px solid var(--primary-color);
   border-radius: 0.75rem;
   cursor: pointer;
   margin-bottom: 2rem;
@@ -734,7 +734,7 @@ async function completeOnboarding() {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   color: white;
 }
 
@@ -746,7 +746,7 @@ async function completeOnboarding() {
 .btn-secondary {
   background: var(--bg-primary);
   color: var(--text-primary);
-  border: 2px solid var(--border);
+  border: 2px solid var(--border-color);
 }
 
 .btn-secondary:hover {
