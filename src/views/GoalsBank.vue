@@ -291,94 +291,99 @@
       </div>
     </div>
 
-    <!-- Step 3: Осознание взаимосвязей -->
+    <!-- Step 3: Распознавание чужих целей -->
     <div v-if="currentStep === 3" class="step-content">
       <div class="step-section">
         <header class="section-header">
-          <h1>🔗 Осознание взаимосвязей</h1>
+          <h1>🎭 Распознаём «чужие» цели</h1>
           <p class="subtitle">
-            Каждая сфера влияет на другие. Найди точки роста и "камень, который тянет вниз"
+            Научись отличать истинные желания от навязанных обществом ожиданий
           </p>
         </header>
 
-        <div class="spheres-analysis">
-          <div class="spheres-grid">
+        <div class="foreign-goals-theory card">
+          <h3>🔍 Главные признаки «чужих» целей:</h3>
+          <div class="signs-grid">
+            <div class="sign-card">
+              <div class="sign-icon">😓</div>
+              <h4>Ощущение «надо» или «должен»</h4>
+              <p>Цель вызывает не радостное предвкушение, а тяжесть и чувство обязанности.</p>
+            </div>
+            <div class="sign-card">
+              <div class="sign-icon">👀</div>
+              <h4>Фокус на внешней реакции</h4>
+              <p>Ты ловишь себя на мысли: «Что подумают люди?», «Как это будет выглядеть?».</p>
+            </div>
+            <div class="sign-card">
+              <div class="sign-icon">⚖️</div>
+              <h4>Сравнение с другими</h4>
+              <p>Желание появилось потому, что «у всех уже есть» или «так принято среди успешных людей».</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="example-card card">
+          <h3>📖 Пример проверки цели</h3>
+          <div class="example-content">
+            <div class="example-goal">
+              <strong>Цель:</strong> «Купить дорогой автомобиль премиум-класса»
+            </div>
+            <div class="example-questions">
+              <div class="example-qa">
+                <span class="q">Почему важно?</span>
+                <span class="a">«Чтобы чувствовать себя успешным и уверенным».</span>
+              </div>
+              <div class="example-qa">
+                <span class="q">Почему именно эта машина?</span>
+                <span class="a">«Это символ статуса. Но, возможно, уверенность можно обрести через мастерство в своем деле».</span>
+              </div>
+              <div class="example-qa">
+                <span class="q">Почему про меня?</span>
+                <span class="a">«Я сам этого хочу, или мне важно произвести впечатление на партнеров?».</span>
+              </div>
+            </div>
+          </div>
+          <div class="example-conclusion">
+            <p>Эта проверка поможет тебе либо <strong>утвердиться в выборе</strong>, либо <strong>найти за целью более глубокое и истинное для тебя желание</strong>.</p>
+          </div>
+        </div>
+
+        <div class="goals-review card">
+          <h3>🔄 Проверь свои цели на «чужеродность»</h3>
+          <p class="review-hint">Пересмотри свои истинные цели через призму признаков выше. Отметь те, которые требуют дополнительной проверки.</p>
+          
+          <div class="goals-review-list">
             <div 
-              v-for="sphere in sortedSpheres" 
-              :key="sphere.id"
-              class="sphere-analysis-card card"
-              :class="{ 
-                lowest: sphere.id === lowestSphere?.id,
-                selected: sphereAnalysis.lowestSphere === sphere.id || sphereAnalysis.leverageSphere === sphere.id
-              }"
+              v-for="goal in validatedGoals" 
+              :key="goal.id" 
+              class="goal-review-item"
+              :class="{ 'needs-review': goal.needsDeepReview }"
             >
-              <div class="sphere-header">
-                <span class="sphere-icon">{{ sphere.icon }}</span>
-                <div>
-                  <h4>{{ sphere.name }}</h4>
-                  <div class="sphere-score">Оценка: {{ sphere.score }}/10</div>
-                </div>
+              <div class="goal-info">
+                <span class="sphere-badge">{{ getSphereName(goal.sphereId) }}</span>
+                <span class="goal-text">{{ goal.text }}</span>
               </div>
-              <div class="sphere-goals-count">
-                Целей: {{ getGoalsCountForSphere(sphere.id) }}
-              </div>
-              <div class="sphere-actions">
+              <div class="goal-review-actions">
                 <button 
                   class="btn btn-sm"
-                  :class="sphereAnalysis.lowestSphere === sphere.id ? 'btn-danger' : 'btn-secondary'"
-                  @click="setLowestSphere(sphere.id)"
+                  :class="goal.needsDeepReview ? 'btn-warning' : 'btn-secondary'"
+                  @click="toggleDeepReview(goal.id)"
                 >
-                  ⬇️ Камень
-                </button>
-                <button 
-                  class="btn btn-sm"
-                  :class="sphereAnalysis.leverageSphere === sphere.id ? 'btn-success' : 'btn-secondary'"
-                  @click="setLeverageSphere(sphere.id)"
-                >
-                  ⬆️ Рычаг
+                  {{ goal.needsDeepReview ? '⚠️ Требует проверки' : '✅ Моя цель' }}
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="analysis-questions card">
-          <h3>📊 Анализ взаимосвязей</h3>
-          
-          <div class="analysis-field">
-            <label>
-              <span class="field-icon">⬇️</span>
-              Камень, который тянет вниз (сфера с минимальным баллом):
-            </label>
-            <div v-if="sphereAnalysis.lowestSphere" class="selected-sphere">
-              {{ getSphereName(sphereAnalysis.lowestSphere) }}
-            </div>
-            <p v-else class="hint">Выберите сферу выше</p>
-          </div>
-
-          <div class="analysis-field">
-            <label>
-              <span class="field-icon">⬆️</span>
-              Сфера-рычаг (если её улучшить, подтянутся остальные):
-            </label>
-            <div v-if="sphereAnalysis.leverageSphere" class="selected-sphere">
-              {{ getSphereName(sphereAnalysis.leverageSphere) }}
-            </div>
-            <p v-else class="hint">Выберите сферу выше</p>
-          </div>
-
-          <div class="analysis-field">
-            <label>
-              <span class="field-icon">💭</span>
-              Твои мысли о взаимосвязях:
-            </label>
-            <textarea 
-              :value="sphereAnalysis.notes"
-              @input="updateAnalysisNotes($event.target.value)"
-              rows="4"
-              placeholder="Как сферы влияют друг на друга? Какие закономерности ты видишь?"
-            ></textarea>
-          </div>
+        <div class="reflection-section card">
+          <h3>💭 Твои размышления</h3>
+          <textarea 
+            :value="sphereAnalysis.notes"
+            @input="updateAnalysisNotes($event.target.value)"
+            rows="4"
+            placeholder="Какие цели вызвали сомнения? Что ты понял о своих истинных желаниях?"
+          ></textarea>
         </div>
 
         <div class="step-actions">
@@ -512,7 +517,7 @@ import { useAppStore } from '../stores/app'
 
 const store = useAppStore()
 
-const steps = ['Банк идей', 'Проверка', 'Взаимосвязи', 'Ключевые цели']
+const steps = ['Банк идей', 'Проверка', 'Чужие цели', 'Ключевые цели']
 const currentStep = computed(() => store.goalsBank.currentStep)
 
 const lifeSpheres = computed(() => store.lifeSpheres)
@@ -549,7 +554,7 @@ function canProceedToStep(step) {
   if (step === 1) return true
   if (step === 2) return rawIdeas.value.length > 0
   if (step === 3) return rawIdeas.value.length > 0 && validatedCount.value > 0
-  if (step === 4) return validatedCount.value > 0 && (sphereAnalysis.value.lowestSphere || sphereAnalysis.value.leverageSphere)
+  if (step === 4) return validatedCount.value > 0
   return false
 }
 
@@ -631,6 +636,13 @@ function setLeverageSphere(sphereId) {
 
 function updateAnalysisNotes(notes) {
   store.updateSphereAnalysis({ notes })
+}
+
+function toggleDeepReview(goalId) {
+  const goal = rawIdeas.value.find(g => g.id === goalId)
+  if (goal) {
+    store.updateGoalIdea(goalId, { needsDeepReview: !goal.needsDeepReview })
+  }
 }
 
 function addKeyGoalHandler() {
@@ -1095,6 +1107,176 @@ function getStatusLabel(status) {
 
 .stat.rejected {
   color: var(--danger-color);
+}
+
+.foreign-goals-theory {
+  margin-bottom: 2rem;
+}
+
+.foreign-goals-theory h3 {
+  margin-bottom: 1.5rem;
+  color: var(--warning-color);
+}
+
+.signs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.sign-card {
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--warning-color);
+}
+
+.sign-icon {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.sign-card h4 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.sign-card p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.example-card {
+  margin-bottom: 2rem;
+  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+}
+
+.example-card h3 {
+  margin-bottom: 1.5rem;
+  color: var(--primary-color);
+}
+
+.example-content {
+  padding: 1.5rem;
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+}
+
+.example-goal {
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px dashed var(--border-color);
+}
+
+.example-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.example-qa {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.example-qa .q {
+  font-weight: 600;
+  color: var(--primary-color);
+  font-size: 0.9rem;
+}
+
+.example-qa .a {
+  color: var(--text-secondary);
+  font-style: italic;
+  padding-left: 1rem;
+  border-left: 2px solid var(--border-color);
+}
+
+.example-conclusion {
+  padding: 1rem;
+  background: rgba(var(--success-rgb), 0.1);
+  border-radius: var(--radius-sm);
+}
+
+.example-conclusion p {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.goals-review {
+  margin-bottom: 2rem;
+}
+
+.goals-review h3 {
+  margin-bottom: 0.5rem;
+}
+
+.review-hint {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.goals-review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.goal-review-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  transition: all 0.3s ease;
+}
+
+.goal-review-item.needs-review {
+  background: rgba(var(--warning-rgb), 0.1);
+  border: 1px solid var(--warning-color);
+}
+
+.goal-review-item .goal-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.goal-review-item .goal-text {
+  font-size: 0.95rem;
+}
+
+.reflection-section {
+  margin-bottom: 2rem;
+}
+
+.reflection-section h3 {
+  margin-bottom: 1rem;
+}
+
+.reflection-section textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: vertical;
+  min-height: 100px;
+}
+
+.reflection-section textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
 }
 
 .spheres-analysis {

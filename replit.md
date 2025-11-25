@@ -39,13 +39,13 @@ src/
 4-step guided workflow with validation guards:
 1. **Банк идей** - Raw ideas collection with Excel-like table (sphere, goal, why important, MVP, decomposition)
 2. **Проверка** - Goals validation via "3 Why" rule (истинные/ложные classification)
-3. **Взаимосвязи** - Sphere analysis: identify lowest sphere (камень) and leverage sphere (рычаг)
+3. **Чужие цели** - Identify "foreign" goals through key signs (ощущение "надо", фокус на внешней реакции, сравнение с другими)
 4. **Ключевые цели** - Formulate 3-5 key goals with "Я хочу" → "Я делаю" transformation
 
 ### Step Progression Rules
 - Step 2: Requires at least 1 idea in bank
 - Step 3: Requires at least 1 validated goal
-- Step 4: Requires sphere analysis (lowest or leverage sphere selected)
+- Step 4: Requires at least 1 validated goal
 - Completion: Requires 3-5 key goals, each with action ("Я делаю...")
 
 ### Life Spheres (6)
@@ -87,7 +87,7 @@ npm run preview  # Preview production build
 - Implemented step progression validation (canProceedToStep function)
 - Step 1: Excel-like table with textarea fields for longer text
 - Step 2: "3 Why" validation rule for goals classification
-- Step 3: Sphere analysis - identify камень (lowest sphere) and рычаг (leverage)
+- Step 3: "Чужие цели" - identify foreign goals via 3 key signs with practical example
 - Step 4: 3-5 key goals with mandatory "Я делаю" action formulation
 - Added /goals-bank route and sidebar navigation
 - Fixed AI coach chat display on SSP step
