@@ -77,9 +77,36 @@ npm run build    # Build for production
 npm run preview  # Preview production build
 ```
 
+## Module State Patterns
+Both SSP and Goals Bank modules follow a 3-state pattern:
+1. **Empty State** - Welcome message with lesson overview for first-time visitors
+2. **Lesson Mode** - Multi-step guided workflow
+3. **Summary State** - Completion stats and navigation to next module
+
+### SSP Summary View
+- Average score across all spheres
+- Strongest and weakest spheres
+- Visual score bars for each sphere
+- Navigation to Goals Bank
+
+### Goals Bank Summary View
+- Ideas count, validated/rejected counts
+- Transferred goals count
+- List of key goals in progress
+- Navigation to Decomposition
+
 ## Recent Changes
 
-### November 25, 2025
+### November 25, 2025 (Latest Session)
+- Implemented empty state + lesson + summary pattern for /ssp module
+- Implemented empty state + lesson + summary pattern for /goals-bank module
+- Created GoalNew.vue page for adding new goals (/goals/new route)
+- SSP summary shows: average score, strongest/weakest sphere, visual score bars
+- Goals Bank summary shows: idea count, validated goals, transferred goals list
+- Added "Restart lesson" functionality with store.resetGoalsBank() and store.resetSSPModule()
+- Removed modal-based forms, now using dedicated pages for goal creation/editing
+
+### November 25, 2025 (Earlier)
 - Created standalone GoalsBank.vue page with 3-step guided workflow
 - Added goalsBank state to Pinia store (rawIdeas, keyGoals, sphereAnalysis, currentStep)
 - Implemented step progression validation (canProceedToStep function)
