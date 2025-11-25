@@ -437,7 +437,7 @@ function completeModule() {
 
 <style scoped>
 .ssp-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding-bottom: 2rem;
 }
@@ -445,12 +445,8 @@ function completeModule() {
 .progress-bar {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 2rem;
-  padding: 0 1rem;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 1rem 1.5rem;
+  margin-bottom: 3rem;
+  padding: 0 2rem;
 }
 
 .progress-step {
@@ -461,7 +457,7 @@ function completeModule() {
   position: relative;
   cursor: pointer;
   opacity: 0.5;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .progress-step.active,
@@ -472,7 +468,7 @@ function completeModule() {
 .progress-step::before {
   content: '';
   position: absolute;
-  top: 14px;
+  top: 20px;
   left: 50%;
   width: 100%;
   height: 2px;
@@ -489,8 +485,8 @@ function completeModule() {
 }
 
 .step-number {
-  width: 28px;
-  height: 28px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: var(--bg-tertiary);
   color: var(--text-secondary);
@@ -498,16 +494,16 @@ function completeModule() {
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 0.75rem;
   margin-bottom: 0.5rem;
   position: relative;
   z-index: 1;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .progress-step.active .step-number {
   background: var(--primary-color);
   color: white;
+  transform: scale(1.1);
 }
 
 .progress-step.completed .step-number {
@@ -516,7 +512,7 @@ function completeModule() {
 }
 
 .step-label {
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   text-align: center;
   font-weight: 500;
   color: var(--text-secondary);
@@ -528,13 +524,13 @@ function completeModule() {
 }
 
 .step-content {
-  animation: fadeIn 0.3s ease;
+  animation: fadeIn 0.5s ease;
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(5px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -544,28 +540,28 @@ function completeModule() {
 
 .section-header {
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .section-header h1 {
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .subtitle {
-  font-size: 0.875rem;
+  font-size: 1.125rem;
   color: var(--text-secondary);
   max-width: 600px;
   margin: 0 auto;
 }
 
 .video-container {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .video-placeholder {
   aspect-ratio: 16/9;
-  background: linear-gradient(135deg, var(--primary-color), #3b82f6);
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
@@ -573,52 +569,52 @@ function completeModule() {
   justify-content: center;
   color: white;
   text-align: center;
-  padding: 1.5rem;
+  padding: 2rem;
 }
 
 .play-button {
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
-  margin-bottom: 0.75rem;
+  font-size: 2rem;
+  margin-bottom: 1rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .play-button:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(1.05);
 }
 
 .theory-content h2 {
-  font-size: 1.125rem;
-  margin-bottom: 1rem;
+  font-size: 1.75rem;
+  margin-bottom: 1.5rem;
   text-align: center;
 }
 
 .idea-block {
   display: flex;
-  gap: 1rem;
-  padding: 1.25rem;
-  background: rgba(37, 99, 235, 0.04);
+  gap: 1.5rem;
+  padding: 2rem;
+  background: rgba(99, 102, 241, 0.05);
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(37, 99, 235, 0.15);
-  margin-bottom: 1.5rem;
+  border: 2px solid rgba(99, 102, 241, 0.2);
+  margin-bottom: 2rem;
 }
 
 .idea-icon {
-  font-size: 1.5rem;
+  font-size: 3rem;
   flex-shrink: 0;
 }
 
 .idea-block h3 {
   color: var(--primary-color);
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
 }
 
 .belief-transformation {
@@ -742,11 +738,11 @@ function completeModule() {
 
 .score-badge {
   display: inline-block;
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(99, 102, 241, 0.1);
   color: var(--primary-color);
-  padding: 0.25rem 0.625rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
   font-weight: 600;
 }
 
@@ -783,7 +779,7 @@ function completeModule() {
 .reflection-textarea:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
 .reflection-textarea::placeholder {
@@ -874,8 +870,8 @@ function completeModule() {
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: 400px;
-  gap: 0.75rem;
+  height: 500px;
+  gap: 1rem;
 }
 
 .chat-messages {
@@ -883,14 +879,28 @@ function completeModule() {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding-right: 0.25rem;
+  gap: 1rem;
+  padding-right: 0.5rem;
+}
+
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+  border-radius: 10px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 10px;
 }
 
 .message {
   display: flex;
-  gap: 0.5rem;
-  animation: fadeIn 0.2s ease;
+  gap: 0.75rem;
+  animation: fadeIn 0.3s ease;
 }
 
 .message.user {
@@ -903,111 +913,113 @@ function completeModule() {
 }
 
 .message.coach-message .message-content {
-  background: var(--bg-tertiary);
+  background: rgba(99, 102, 241, 0.1);
   color: var(--text-primary);
 }
 
 .message-avatar {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   flex-shrink: 0;
   align-self: flex-end;
 }
 
 .message-content {
   max-width: 85%;
-  padding: 0.625rem 0.875rem;
+  padding: 0.75rem 1rem;
   border-radius: var(--radius-md);
   word-wrap: break-word;
 }
 
 .message-content p {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: 0.9rem;
   line-height: 1.4;
 }
 
 .chat-input-area {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
   margin-top: auto;
 }
 
 .chat-input {
   flex: 1;
-  padding: 0.5rem 0.75rem;
+  padding: 0.75rem 1rem;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-size: 0.8125rem;
+  font-size: 0.9rem;
   font-family: inherit;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
 }
 
 .chat-input:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
 .chat-input::placeholder {
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 
 .btn-send {
-  padding: 0.5rem 1rem;
-  background: var(--success-color);
+  padding: 0.75rem 1.5rem;
+  background: #4ade80;
   color: white;
   border: none;
   border-radius: var(--radius-md);
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
-  font-size: 0.8125rem;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
 }
 
 .btn-send:hover {
-  background: #16a34a;
+  background: #22c55e;
+  transform: translateY(-2px);
+}
+
+.btn-send:active {
+  transform: translateY(0);
 }
 
 .wheel-layout {
   display: grid;
-  grid-template-columns: 1.5fr 1fr;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
 }
 
 .wheel-main {
-  padding: 1.25rem;
+  padding: 2rem;
 }
 
 .wheel-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .ai-coach {
-  padding: 1rem;
+  padding: 1.5rem;
 }
 
 .coach-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--border-light);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .coach-icon {
-  font-size: 1.25rem;
+  font-size: 2rem;
 }
 
 .coach-header h3 {
   margin: 0;
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 1.25rem;
 }
 
 .coach-status {

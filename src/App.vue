@@ -31,8 +31,8 @@ const isAuthPage = computed(() => {
 
 .main-content {
   flex: 1;
-  margin-left: 240px;
-  padding: 1.5rem 2rem;
+  margin-left: 280px;
+  padding: 2rem;
   background: var(--bg-secondary);
 }
 
