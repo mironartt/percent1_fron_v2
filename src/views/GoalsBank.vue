@@ -405,37 +405,13 @@
 
     <!-- Step 2: Проверка целей -->
     <div v-if="currentStep === 2" class="step-content">
-      <div class="step-section step-2-layout">
-        <div class="step-2-main">
+      <div class="step-section">
           <header class="section-header">
             <h1>🔍 Проверка целей</h1>
             <p class="subtitle">
               Проверь каждую цель с помощью правила "3 Почему" и отсей ложные цели
             </p>
           </header>
-
-          <!-- Validation Progress Bar -->
-          <div class="validation-progress card">
-            <div class="progress-header">
-              <span class="progress-title">Прогресс проверки</span>
-              <span class="progress-count">{{ checkedCount }} из {{ rawIdeas.length }} целей проверено</span>
-            </div>
-            <div class="progress-track">
-              <div 
-                class="progress-fill validated" 
-                :style="{ width: validatedPercent + '%' }"
-              ></div>
-              <div 
-                class="progress-fill rejected" 
-                :style="{ width: rejectedPercent + '%', left: validatedPercent + '%' }"
-              ></div>
-            </div>
-            <div class="progress-legend">
-              <span class="legend-item validated">✅ Истинных: {{ validatedCount }}</span>
-              <span class="legend-item rejected">❌ Ложных: {{ rejectedCount }}</span>
-              <span class="legend-item pending">⏳ Осталось: {{ uncheckedCount }}</span>
-            </div>
-          </div>
 
           <div class="filters-block card">
             <h3>⚠️ Убери следующие типы целей:</h3>
@@ -472,6 +448,40 @@
             <li><strong>Почему именно это даст мне то, что я хочу?</strong></li>
             <li><strong>Почему это действительно про меня?</strong></li>
           </ol>
+        </div>
+
+        <!-- AI Helper Simple Input -->
+        <div class="ai-helper-simple">
+          <div class="ai-helper-greeting">
+            🤖 Привет! Я ваш ИИ-куратор. Я вам помогу пройти проверку целей и определить их истинность
+          </div>
+          <div class="ai-helper-input-wrapper" @click="openAIChat">
+            <span class="ai-input-icon">+</span>
+            <span class="ai-input-placeholder">Спросите что-нибудь...</span>
+          </div>
+        </div>
+
+        <!-- Validation Progress Bar -->
+        <div class="validation-progress card">
+          <div class="progress-header">
+            <span class="progress-title">Прогресс проверки</span>
+            <span class="progress-count">{{ checkedCount }} из {{ rawIdeas.length }} целей проверено</span>
+          </div>
+          <div class="progress-track">
+            <div 
+              class="progress-fill validated" 
+              :style="{ width: validatedPercent + '%' }"
+            ></div>
+            <div 
+              class="progress-fill rejected" 
+              :style="{ width: rejectedPercent + '%', left: validatedPercent + '%' }"
+            ></div>
+          </div>
+          <div class="progress-legend">
+            <span class="legend-item validated">✅ Истинных: {{ validatedCount }}</span>
+            <span class="legend-item rejected">❌ Ложных: {{ rejectedCount }}</span>
+            <span class="legend-item pending">⏳ Осталось: {{ uncheckedCount }}</span>
+          </div>
         </div>
 
         <div class="required-notice card">
@@ -575,16 +585,6 @@
               Выбрать ключевые цели →
             </button>
           </div>
-        </div>
-
-        <!-- AI Helper Sidebar -->
-        <div class="step-2-sidebar">
-          <div class="ai-helper-card card">
-            <h4>🤖 AI-помощник</h4>
-            <p class="ai-helper-hint">Задай вопрос помощнику, чтобы разобраться с целью</p>
-            <AICurator :embedded="true" context="goals-validation" />
-          </div>
-        </div>
       </div>
     </div>
 
@@ -703,6 +703,19 @@
     </div>
 
     </div>
+
+    <!-- AI Chat Modal -->
+    <Teleport to="body">
+      <div v-if="showAIChatModal" class="ai-modal-overlay" @click.self="closeAIChat">
+        <div class="ai-modal-content">
+          <div class="ai-modal-header">
+            <h3>🤖 ИИ-Куратор</h3>
+            <button class="btn-close" @click="closeAIChat">✕</button>
+          </div>
+          <AICurator context="goals-validation" />
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -932,6 +945,16 @@ function toggleGoalExpansion(goalId) {
   } else {
     expandedGoalId.value = goalId
   }
+}
+
+const showAIChatModal = ref(false)
+
+function openAIChat() {
+  showAIChatModal.value = true
+}
+
+function closeAIChat() {
+  showAIChatModal.value = false
 }
 
 const sortedSpheres = computed(() => {
@@ -1880,46 +1903,98 @@ function getStatusLabel(status) {
   opacity: 0;
 }
 
-/* Step 2 Layout with AI Sidebar */
-.step-2-layout {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 2rem;
-  align-items: start;
+/* Simple AI Helper Input */
+.ai-helper-simple {
+  margin-bottom: 1.5rem;
 }
 
-.step-2-main {
-  min-width: 0;
-}
-
-.step-2-sidebar {
-  position: sticky;
-  top: 2rem;
-}
-
-.ai-helper-card {
-  background: var(--bg-secondary);
-}
-
-.ai-helper-card h4 {
-  margin: 0 0 0.5rem;
-}
-
-.ai-helper-hint {
-  font-size: 0.85rem;
+.ai-helper-greeting {
+  font-size: 0.9rem;
   color: var(--text-secondary);
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
+  padding-left: 0.25rem;
 }
 
-@media (max-width: 1024px) {
-  .step-2-layout {
-    grid-template-columns: 1fr;
-  }
-  
-  .step-2-sidebar {
-    position: static;
-    order: -1;
-  }
+.ai-helper-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ai-helper-input-wrapper:hover {
+  border-color: var(--primary-color);
+  background: var(--bg-primary);
+}
+
+.ai-input-icon {
+  font-size: 1.25rem;
+  color: var(--text-muted);
+  font-weight: 300;
+}
+
+.ai-input-placeholder {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+/* AI Chat Modal */
+.ai-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.ai-modal-content {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 500px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.ai-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.ai-modal-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.ai-modal-content .ai-curator {
+  flex: 1;
+  overflow: hidden;
+}
+
+.ai-modal-content .ai-curator .curator-panel {
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.ai-modal-content .ai-curator .curator-header {
+  display: none;
 }
 
 /* Validation Progress Bar */
