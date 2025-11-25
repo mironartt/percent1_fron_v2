@@ -126,8 +126,20 @@
               v-for="(step, index) in goalForm.steps" 
               :key="step.id || index"
               class="step-card"
-              :class="{ completed: step.completed }"
+              :class="{ 
+                completed: step.completed,
+                dragging: dragIndex === index,
+                'drag-over': dragOverIndex === index && dragIndex !== index
+              }"
+              draggable="true"
+              @dragstart="handleDragStart(index, $event)"
+              @dragend="handleDragEnd"
+              @dragover="handleDragOver(index, $event)"
+              @drop="handleDrop(index, $event)"
             >
+              <div class="step-drag-handle" title="Перетащите для изменения порядка">
+                ⋮⋮
+              </div>
               <div class="step-checkbox-wrapper">
                 <input 
                   type="checkbox"
@@ -136,14 +148,48 @@
                   class="step-checkbox"
                 />
               </div>
-              <input 
-                type="text"
-                :value="step.title"
-                @input="updateStep(index, 'title', $event.target.value)"
-                class="step-input"
-                :class="{ completed: step.completed }"
-                :placeholder="`Шаг ${index + 1}: что конкретно нужно сделать?`"
-              />
+              <div class="step-main">
+                <input 
+                  type="text"
+                  :value="step.title"
+                  @input="updateStep(index, 'title', $event.target.value)"
+                  class="step-input"
+                  :class="{ completed: step.completed }"
+                  :placeholder="`Шаг ${index + 1}: что конкретно нужно сделать?`"
+                />
+                <div class="step-meta">
+                  <div class="step-time">
+                    <span class="meta-label">⏱️</span>
+                    <select 
+                      :value="step.timeEstimate || ''"
+                      @change="updateStep(index, 'timeEstimate', $event.target.value)"
+                      class="step-select"
+                    >
+                      <option value="">Время</option>
+                      <option value="30min">30 мин</option>
+                      <option value="1h">1 час</option>
+                      <option value="2h">2 часа</option>
+                      <option value="4h">4 часа</option>
+                    </select>
+                  </div>
+                  <div class="step-priority">
+                    <span class="meta-label">🎯</span>
+                    <select 
+                      :value="step.priority || ''"
+                      @change="updateStep(index, 'priority', $event.target.value)"
+                      class="step-select"
+                    >
+                      <option value="">Приоритет</option>
+                      <option value="high">Высокий</option>
+                      <option value="medium">Средний</option>
+                      <option value="low">Низкий</option>
+                    </select>
+                  </div>
+                  <div v-if="step.priority" class="priority-indicator" :class="step.priority">
+                    {{ getPriorityLabel(step.priority) }}
+                  </div>
+                </div>
+              </div>
               <button 
                 class="btn-icon delete"
                 @click="removeStep(index)"
@@ -156,6 +202,17 @@
             <button class="btn btn-secondary add-step-btn" @click="addStep">
               ➕ Добавить шаг
             </button>
+          </div>
+
+          <div v-if="goalForm.steps.length > 0" class="steps-summary">
+            <div class="summary-item">
+              <span class="summary-label">Общее время:</span>
+              <span class="summary-value">{{ totalTimeEstimate }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Высокий приоритет:</span>
+              <span class="summary-value">{{ highPriorityCount }} шагов</span>
+            </div>
           </div>
         </div>
 
@@ -243,6 +300,32 @@ const completedStepsCount = computed(() => {
   return goalForm.value.steps.filter(s => s.completed).length
 })
 
+const totalTimeEstimate = computed(() => {
+  const timeMap = {
+    '30min': 0.5,
+    '1h': 1,
+    '2h': 2,
+    '4h': 4
+  }
+  let total = 0
+  goalForm.value.steps.forEach(step => {
+    if (step.timeEstimate && timeMap[step.timeEstimate]) {
+      total += timeMap[step.timeEstimate]
+    }
+  })
+  if (total === 0) return 'Не указано'
+  if (total < 1) return `${total * 60} мин`
+  if (total === 1) return '1 час'
+  return `${total} ч`
+})
+
+const highPriorityCount = computed(() => {
+  return goalForm.value.steps.filter(s => s.priority === 'high').length
+})
+
+const dragIndex = ref(null)
+const dragOverIndex = ref(null)
+
 onMounted(() => {
   loadGoalData()
 })
@@ -274,8 +357,49 @@ function addStep() {
   goalForm.value.steps.push({ 
     id: Date.now().toString(),
     title: '', 
-    completed: false 
+    completed: false,
+    timeEstimate: '',
+    priority: ''
   })
+}
+
+function handleDragStart(index, event) {
+  dragIndex.value = index
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData('text/plain', index)
+}
+
+function handleDragEnd() {
+  dragIndex.value = null
+  dragOverIndex.value = null
+}
+
+function handleDragOver(index, event) {
+  event.preventDefault()
+  event.dataTransfer.dropEffect = 'move'
+  dragOverIndex.value = index
+}
+
+function handleDrop(index, event) {
+  event.preventDefault()
+  const fromIndex = dragIndex.value
+  if (fromIndex !== null && fromIndex !== index) {
+    const steps = [...goalForm.value.steps]
+    const [movedStep] = steps.splice(fromIndex, 1)
+    steps.splice(index, 0, movedStep)
+    goalForm.value.steps = steps
+  }
+  dragIndex.value = null
+  dragOverIndex.value = null
+}
+
+function getPriorityLabel(priority) {
+  const labels = {
+    high: '🔴 Высокий',
+    medium: '🟡 Средний',
+    low: '🟢 Низкий'
+  }
+  return labels[priority] || ''
 }
 
 function removeStep(index) {
@@ -314,10 +438,12 @@ function saveGoal() {
 
   const filteredSteps = goalForm.value.steps
     .filter(s => s.title.trim())
-    .map(s => ({
-      id: s.id || Date.now().toString(),
+    .map((s, index) => ({
+      id: s.id || `step_${Date.now()}_${index}`,
       title: s.title,
-      completed: s.completed || false
+      completed: s.completed || false,
+      timeEstimate: s.timeEstimate || '',
+      priority: s.priority || ''
     }))
 
   const progress = filteredSteps.length > 0
@@ -583,6 +709,117 @@ function formatDate(dateString) {
 .step-input.completed {
   text-decoration: line-through;
   color: var(--text-secondary);
+}
+
+.step-drag-handle {
+  cursor: grab;
+  color: var(--text-secondary);
+  font-size: 1.125rem;
+  letter-spacing: -2px;
+  padding: 0.25rem;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.step-drag-handle:active {
+  cursor: grabbing;
+}
+
+.step-card.dragging {
+  opacity: 0.5;
+  background: var(--bg-tertiary);
+}
+
+.step-card.drag-over {
+  border: 2px dashed var(--primary-color);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.step-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.step-meta {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.step-time,
+.step-priority {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.meta-label {
+  font-size: 0.875rem;
+}
+
+.step-select {
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  background: var(--bg-primary);
+  cursor: pointer;
+  min-width: 90px;
+}
+
+.step-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.priority-indicator {
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.priority-indicator.high {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger-color);
+}
+
+.priority-indicator.medium {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning-color);
+}
+
+.priority-indicator.low {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+}
+
+.steps-summary {
+  display: flex;
+  gap: 2rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  margin-top: 1rem;
+}
+
+.summary-item {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.summary-label {
+  color: var(--text-secondary);
+}
+
+.summary-value {
+  font-weight: 600;
+  color: var(--primary-color);
 }
 
 .add-step-btn {

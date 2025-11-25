@@ -138,6 +138,14 @@ export const useAppStore = defineStore('app', () => {
     completedAt: null
   })
 
+  // Модуль Декомпозиции
+  const decompositionModule = ref({
+    lessonStarted: false,
+    lessonCompleted: false,
+    currentStep: 1,
+    completedAt: null
+  })
+
   // Цели
   const goals = ref([])
   
@@ -246,7 +254,8 @@ export const useAppStore = defineStore('app', () => {
       onboarding: onboarding.value,
       sspGoalsBank: sspGoalsBank.value,
       sspModuleCompleted: sspModuleCompleted.value,
-      goalsBank: goalsBank.value
+      goalsBank: goalsBank.value,
+      decompositionModule: decompositionModule.value
     }))
   }
 
@@ -273,6 +282,7 @@ export const useAppStore = defineStore('app', () => {
         if (parsed.sspGoalsBank) sspGoalsBank.value = parsed.sspGoalsBank
         if (parsed.sspModuleCompleted) sspModuleCompleted.value = parsed.sspModuleCompleted
         if (parsed.goalsBank) goalsBank.value = { ...goalsBank.value, ...parsed.goalsBank }
+        if (parsed.decompositionModule) decompositionModule.value = { ...decompositionModule.value, ...parsed.decompositionModule }
       } catch (e) {
         console.error('Error loading data:', e)
       }
@@ -481,6 +491,34 @@ export const useAppStore = defineStore('app', () => {
     saveToLocalStorage()
   }
 
+  // Decomposition Module methods
+  function startDecompositionLesson() {
+    decompositionModule.value.lessonStarted = true
+    decompositionModule.value.currentStep = 1
+    saveToLocalStorage()
+  }
+
+  function setDecompositionStep(step) {
+    decompositionModule.value.currentStep = step
+    saveToLocalStorage()
+  }
+
+  function completeDecompositionLesson() {
+    decompositionModule.value.lessonCompleted = true
+    decompositionModule.value.completedAt = new Date().toISOString()
+    saveToLocalStorage()
+  }
+
+  function resetDecompositionModule() {
+    decompositionModule.value = {
+      lessonStarted: false,
+      lessonCompleted: false,
+      currentStep: 1,
+      completedAt: null
+    }
+    saveToLocalStorage()
+  }
+
   // Load data on init
   loadFromLocalStorage()
 
@@ -527,6 +565,11 @@ export const useAppStore = defineStore('app', () => {
     setGoalsBankStep,
     completeGoalsBank,
     resetGoalsBank,
-    resetSSPModule
+    resetSSPModule,
+    decompositionModule,
+    startDecompositionLesson,
+    setDecompositionStep,
+    completeDecompositionLesson,
+    resetDecompositionModule
   }
 })

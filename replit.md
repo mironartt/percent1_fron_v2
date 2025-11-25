@@ -99,6 +99,35 @@ Both SSP and Goals Bank modules follow a 3-state pattern:
 
 ### November 25, 2025 (Latest Session)
 
+#### Decomposition Module Complete Rewrite
+**Empty State + Lesson Pattern:**
+- Empty state for first-time visitors with lesson preview (3 steps)
+- 3-step lesson flow: Theory (декомпозиция rules) → Practice (break down goal) → Planning (first step selection)
+- Theory explains 3 rules: 1-4 hours, конкретность, измеримость
+- Practice step allows selecting goals from Goals Bank and breaking them into steps
+- AI coach sidebar in practice step for guidance
+- Commitment selection (today/tomorrow/this week) for first step
+
+**Goals List Mode:**
+- Two-column layout with AI coach sidebar
+- Filters (all/active/completed)
+- Goal cards with status badges, "Из Банка целей" source badge
+- Progress bars and step counters
+- Goal detail modal with "3 Почему" answers display
+- Completion reflection modal (success/challenges/learnings)
+- Restart lesson button
+
+**GoalEdit.vue Enhanced Steps:**
+- Drag-and-drop reordering with visual feedback
+- Time estimate per step (30min, 1h, 2h, 4h)
+- Priority levels (high/medium/low) with colored indicators
+- Steps summary showing total time and high-priority count
+
+**New Store Methods:**
+- decompositionModule state: lessonStarted, lessonCompleted, currentStep, completedAt
+- startDecompositionLesson(), setDecompositionStep(), completeDecompositionLesson(), resetDecompositionModule()
+- localStorage persistence for decompositionModule
+
 #### Goals Bank Page Comprehensive Improvements
 **Summary Page:**
 - Accordion for validated goals showing "3 Почему" answers (read-only)
