@@ -83,6 +83,60 @@
         </div>
       </div>
 
+      <!-- Reflection Summary Accordion -->
+      <div class="reflection-summary card">
+        <h3>📝 Ваша рефлексия</h3>
+        <div class="reflection-accordion readonly">
+          <div 
+            v-for="sphere in lifeSpheres" 
+            :key="sphere.id"
+            class="accordion-item"
+            :class="{ 
+              expanded: expandedSummarySpheres.includes(sphere.id),
+              'has-content': hasReflectionContent(sphere)
+            }"
+          >
+            <div 
+              class="accordion-header"
+              @click="toggleSummarySphereExpand(sphere.id)"
+            >
+              <div class="accordion-left">
+                <span class="sphere-icon">{{ sphere.icon }}</span>
+                <div class="sphere-title-info">
+                  <h2>{{ sphere.name }}</h2>
+                  <span class="score-badge">{{ sphere.score }}/10</span>
+                </div>
+              </div>
+              <span class="accordion-arrow" :class="{ rotated: expandedSummarySpheres.includes(sphere.id) }">▼</span>
+            </div>
+
+            <div class="accordion-content" v-show="expandedSummarySpheres.includes(sphere.id)">
+              <div class="reflection-answers" v-if="hasReflectionContent(sphere)">
+                <div class="answer-item" v-if="sphere.reflection?.why">
+                  <div class="answer-label">Почему такой балл?</div>
+                  <div class="answer-text">{{ sphere.reflection.why }}</div>
+                </div>
+                <div class="answer-item" v-if="sphere.reflection?.ten">
+                  <div class="answer-label">Что нужно для 10?</div>
+                  <div class="answer-text">{{ sphere.reflection.ten }}</div>
+                </div>
+                <div class="answer-item" v-if="sphere.reflection?.prevents">
+                  <div class="answer-label">Что мешает?</div>
+                  <div class="answer-text">{{ sphere.reflection.prevents }}</div>
+                </div>
+                <div class="answer-item" v-if="sphere.reflection?.desired">
+                  <div class="answer-label">Желаемое состояние</div>
+                  <div class="answer-text">{{ sphere.reflection.desired }}</div>
+                </div>
+              </div>
+              <div class="no-reflection" v-else>
+                <span>Рефлексия не заполнена</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="summary-actions">
         <button class="btn btn-primary btn-lg" @click="goToGoalsBank">
           🏦 Перейти в Банк целей
@@ -442,6 +496,7 @@ const sspModuleCompleted = computed(() => store.sspModuleCompleted)
 
 const lessonStarted = ref(false)
 const expandedSpheres = ref([])
+const expandedSummarySpheres = ref([])
 
 function toggleSphereExpand(sphereId) {
   const index = expandedSpheres.value.indexOf(sphereId)
@@ -449,6 +504,15 @@ function toggleSphereExpand(sphereId) {
     expandedSpheres.value.push(sphereId)
   } else {
     expandedSpheres.value.splice(index, 1)
+  }
+}
+
+function toggleSummarySphereExpand(sphereId) {
+  const index = expandedSummarySpheres.value.indexOf(sphereId)
+  if (index === -1) {
+    expandedSummarySpheres.value.push(sphereId)
+  } else {
+    expandedSummarySpheres.value.splice(index, 1)
   }
 }
 
@@ -757,7 +821,7 @@ function completeModule() {
   justify-content: center;
   align-items: center;
   padding: 1rem 0;
-  max-width: 500px;
+  max-width: 700px;
   margin: 0 auto;
 }
 
@@ -1281,6 +1345,56 @@ function completeModule() {
 
 .accordion-content .questions-group {
   padding-top: 1.5rem;
+}
+
+/* Reflection Summary Styles */
+.reflection-summary {
+  margin-bottom: 2rem;
+}
+
+.reflection-summary h3 {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.reflection-accordion.readonly .accordion-item {
+  cursor: pointer;
+}
+
+.reflection-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 1rem;
+}
+
+.answer-item {
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+
+.answer-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.answer-text {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+}
+
+.no-reflection {
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 .summary-content {
