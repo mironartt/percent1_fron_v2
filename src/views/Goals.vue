@@ -281,115 +281,6 @@
       </div>
     </div>
 
-    <!-- Summary State - After Lesson Completion -->
-    <div v-else-if="showSummary" class="summary-section">
-      <header class="section-header">
-        <h1>🎯 Декомпозиция — Результаты</h1>
-        <p class="subtitle">Урок завершён {{ formatCompletedDate }}</p>
-      </header>
-
-      <div class="summary-grid">
-        <div class="summary-card card">
-          <div class="summary-icon">🎯</div>
-          <div class="summary-value">{{ goals.length }}</div>
-          <div class="summary-label">Всего целей</div>
-        </div>
-
-        <div class="summary-card card">
-          <div class="summary-icon">🏦</div>
-          <div class="summary-value">{{ goalsFromBank.length }}</div>
-          <div class="summary-label">Из Банка целей</div>
-        </div>
-
-        <div class="summary-card card">
-          <div class="summary-icon">📋</div>
-          <div class="summary-value">{{ totalStepsCount }}</div>
-          <div class="summary-label">Шагов создано</div>
-        </div>
-
-        <div class="summary-card card">
-          <div class="summary-icon">✅</div>
-          <div class="summary-value">{{ completedStepsCount }}</div>
-          <div class="summary-label">Шагов выполнено</div>
-        </div>
-      </div>
-
-      <!-- Цели с декомпозицией -->
-      <div class="goals-summary card" v-if="goals.length > 0">
-        <h3>📋 Ваши цели и шаги</h3>
-        <div class="goals-accordion">
-          <div 
-            v-for="goal in goals" 
-            :key="goal.id"
-            class="accordion-item"
-            :class="{ expanded: expandedSummaryGoalId === goal.id }"
-          >
-            <div 
-              class="accordion-header"
-              @click="toggleSummaryGoalExpand(goal.id)"
-            >
-              <div class="accordion-title">
-                <span class="expand-arrow">{{ expandedSummaryGoalId === goal.id ? '▼' : '▶' }}</span>
-                <span v-if="goal.source === 'goals-bank'" class="source-badge-small">🏦</span>
-                <span class="goal-name">{{ goal.title }}</span>
-              </div>
-              <div class="goal-meta-badges">
-                <span class="progress-badge">{{ goal.progress }}%</span>
-                <span class="steps-badge">{{ goal.steps?.length || 0 }} шагов</span>
-              </div>
-            </div>
-            <transition name="accordion-expand">
-              <div v-if="expandedSummaryGoalId === goal.id" class="accordion-content">
-                <div v-if="goal.threeWhys" class="three-whys-block">
-                  <h4>Правило "3 Почему":</h4>
-                  <div class="answer-item" v-if="goal.threeWhys.why1">
-                    <div class="answer-label">1. Почему эта цель мне важна?</div>
-                    <div class="answer-text">{{ goal.threeWhys.why1 }}</div>
-                  </div>
-                  <div class="answer-item" v-if="goal.threeWhys.why2">
-                    <div class="answer-label">2. Почему именно это даст мне то, что я хочу?</div>
-                    <div class="answer-text">{{ goal.threeWhys.why2 }}</div>
-                  </div>
-                  <div class="answer-item" v-if="goal.threeWhys.why3">
-                    <div class="answer-label">3. Почему это действительно про меня?</div>
-                    <div class="answer-text">{{ goal.threeWhys.why3 }}</div>
-                  </div>
-                </div>
-                <div v-if="goal.steps && goal.steps.length > 0" class="steps-list">
-                  <h4>Шаги:</h4>
-                  <div 
-                    v-for="(step, idx) in goal.steps" 
-                    :key="step.id"
-                    class="step-item"
-                    :class="{ completed: step.completed }"
-                  >
-                    <span class="step-checkbox">{{ step.completed ? '✅' : '⬜' }}</span>
-                    <span class="step-text">{{ step.title }}</span>
-                  </div>
-                </div>
-                <div v-else class="no-steps">
-                  Шаги ещё не добавлены
-                </div>
-              </div>
-            </transition>
-          </div>
-        </div>
-      </div>
-
-      <div v-else class="empty-summary card">
-        <p>У вас пока нет целей. Создайте первую цель!</p>
-      </div>
-
-      <div class="summary-actions">
-        <button class="btn btn-primary btn-lg" @click="goToGoalsList">
-          📋 Перейти к списку целей
-        </button>
-        <button class="btn btn-secondary" @click="restartLesson">
-          🔄 Пройти урок заново
-        </button>
-      </div>
-    </div>
-
     <!-- List Mode -->
     <div v-else-if="showGoalsList" class="goals-list-mode">
       <header class="page-header">
@@ -400,9 +291,6 @@
           </p>
         </div>
         <div class="header-actions">
-          <button class="btn btn-outline" @click="goToSummary">
-            📊 Результаты урока
-          </button>
           <button class="btn btn-secondary" @click="restartLesson">
             📚 Пройти урок заново
           </button>
@@ -638,21 +526,25 @@
             </div>
           </div>
 
+          <div v-if="selectedGoal?.progress === 100 && selectedGoal?.status === 'active'" class="goal-completed-banner">
+            <div class="banner-icon">🎉</div>
+            <div class="banner-text">Цель выполнена!</div>
+          </div>
+
           <div class="modal-footer">
             <button class="btn btn-secondary" @click="showDetailModal = false">Закрыть</button>
             <button 
-              v-if="selectedGoal?.status === 'active'"
               class="btn btn-primary"
-              @click="openCompleteGoalModal(selectedGoal)"
+              @click="saveGoalFromModal"
             >
-              ✅ Завершить цель
+              💾 Сохранить
             </button>
           </div>
         </div>
       </div>
     </transition>
 
-    <!-- Completion Reflection Modal -->
+    <!-- Completion Reflection Modal (kept for potential future use) -->
     <transition name="fade">
       <div v-if="showCompletionModal" class="modal-overlay" @click.self="showCompletionModal = false">
         <div class="modal">
@@ -743,12 +635,8 @@ const showLesson = computed(() => {
   return decompositionModule.value.lessonStarted && !decompositionModule.value.lessonCompleted
 })
 
-const showSummary = computed(() => {
-  return decompositionModule.value.lessonCompleted && !viewingGoalsList.value
-})
-
 const showGoalsList = computed(() => {
-  return decompositionModule.value.lessonCompleted && viewingGoalsList.value
+  return decompositionModule.value.lessonCompleted
 })
 
 const goalsFromBank = computed(() => {
@@ -776,7 +664,6 @@ const formatCompletedDate = computed(() => {
 })
 
 const expandedSummaryGoalId = ref(null)
-const viewingGoalsList = ref(false)
 
 const activeGoalsCount = computed(() => goals.value.filter(g => g.status === 'active').length)
 const completedGoalsCount = computed(() => goals.value.filter(g => g.status === 'completed').length)
@@ -930,7 +817,6 @@ function completeLesson() {
 }
 
 function restartLesson() {
-  viewingGoalsList.value = false
   store.resetDecompositionModule()
   store.startDecompositionLesson()
 }
@@ -941,14 +827,6 @@ function toggleSummaryGoalExpand(goalId) {
   } else {
     expandedSummaryGoalId.value = goalId
   }
-}
-
-function goToGoalsList() {
-  viewingGoalsList.value = true
-}
-
-function goToSummary() {
-  viewingGoalsList.value = false
 }
 
 function createNewGoal() {
@@ -974,14 +852,32 @@ function updateGoalProgress(goal) {
   if (goal.steps && goal.steps.length > 0) {
     const completed = goal.steps.filter(s => s.completed).length
     const progress = Math.round((completed / goal.steps.length) * 100)
-    store.updateGoal(goal.id, { 
+    
+    const updateData = { 
       steps: goal.steps,
       progress 
-    })
+    }
+    
+    if (progress === 100) {
+      updateData.status = 'completed'
+      updateData.completedAt = new Date().toISOString()
+    }
+    
+    store.updateGoal(goal.id, updateData)
     if (selectedGoal.value) {
       selectedGoal.value.progress = progress
+      if (progress === 100) {
+        selectedGoal.value.status = 'completed'
+      }
     }
   }
+}
+
+function saveGoalFromModal() {
+  if (selectedGoal.value) {
+    updateGoalProgress(selectedGoal.value)
+  }
+  showDetailModal.value = false
 }
 
 function openCompleteGoalModal(goal) {
@@ -2031,6 +1927,28 @@ function formatDate(dateString) {
   padding: 1.25rem 1.5rem;
   border-top: 1px solid var(--border-color);
   justify-content: flex-end;
+}
+
+.goal-completed-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--radius-md);
+  margin: 0 1.5rem 1rem 1.5rem;
+}
+
+.goal-completed-banner .banner-icon {
+  font-size: 1.5rem;
+}
+
+.goal-completed-banner .banner-text {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #059669;
 }
 
 .goal-detail-status {

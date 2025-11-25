@@ -114,7 +114,7 @@
         <div class="card">
           <div class="card-header">
             <h3>Декомпозиция на шаги</h3>
-            <span class="steps-count">{{ completedStepsCount }} / {{ goalForm.steps.length }} выполнено</span>
+            <span class="steps-count">{{ goalForm.steps.length }} шагов</span>
           </div>
 
           <div class="form-hint decomposition-hint">
@@ -127,7 +127,6 @@
               :key="step.id || index"
               class="step-card"
               :class="{ 
-                completed: step.completed,
                 dragging: dragIndex === index,
                 'drag-over': dragOverIndex === index && dragIndex !== index
               }"
@@ -140,21 +139,13 @@
               <div class="step-drag-handle" title="Перетащите для изменения порядка">
                 ⋮⋮
               </div>
-              <div class="step-checkbox-wrapper">
-                <input 
-                  type="checkbox"
-                  :checked="step.completed"
-                  @change="toggleStepCompletion(index)"
-                  class="step-checkbox"
-                />
-              </div>
+              <span class="step-number-badge">{{ index + 1 }}</span>
               <div class="step-main">
                 <input 
                   type="text"
                   :value="step.title"
                   @input="updateStep(index, 'title', $event.target.value)"
                   class="step-input"
-                  :class="{ completed: step.completed }"
                   :placeholder="`Шаг ${index + 1}: что конкретно нужно сделать?`"
                 />
                 <div class="step-meta">
@@ -215,22 +206,6 @@
             </div>
           </div>
         </div>
-
-        <div class="card progress-card">
-          <div class="card-header">
-            <h3>Прогресс</h3>
-            <span class="progress-percentage">{{ goalForm.progress }}%</span>
-          </div>
-          <div class="progress-bar-large">
-            <div 
-              class="progress-fill"
-              :style="{ width: `${goalForm.progress}%` }"
-            ></div>
-          </div>
-          <p class="progress-hint">
-            Прогресс рассчитывается автоматически на основе выполненных шагов
-          </p>
-        </div>
       </div>
 
       <div class="sidebar-actions">
@@ -257,12 +232,40 @@
           </div>
         </div>
 
-        <div class="ai-helper-section">
-          <AICurator 
-            context="decomposition" 
-            :embedded="true"
-            :goalContext="{ title: goalForm.title, sphere: goalForm.sphereId }"
-          />
+        <div class="ai-coach-section card">
+          <div class="coach-header">
+            <span class="coach-icon">🤖</span>
+            <h3>ИИ-коуч</h3>
+          </div>
+          <div class="chat-container">
+            <div class="chat-messages" ref="chatMessagesRef">
+              <div 
+                v-for="(msg, idx) in chatMessages" 
+                :key="idx"
+                class="message"
+                :class="msg.role === 'user' ? 'user-message' : 'coach-message'"
+              >
+                <span class="message-avatar">{{ msg.role === 'user' ? '👤' : '🤖' }}</span>
+                <div class="message-content">
+                  <p>{{ msg.content }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="chat-input-area">
+              <input 
+                type="text"
+                v-model="userMessage"
+                @keyup.enter="sendMessage"
+                placeholder="Спросите совет..."
+                class="chat-input"
+              />
+              <button 
+                class="btn-send"
+                @click="sendMessage"
+                :disabled="!userMessage.trim()"
+              >→</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -270,10 +273,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
-import AICurator from '../components/AICurator.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -296,9 +298,11 @@ const goalForm = ref({
   progress: 0
 })
 
-const completedStepsCount = computed(() => {
-  return goalForm.value.steps.filter(s => s.completed).length
-})
+const chatMessagesRef = ref(null)
+const userMessage = ref('')
+const chatMessages = ref([
+  { role: 'coach', content: 'Привет! Я помогу тебе с декомпозицией цели. Спроси меня о разбивке шагов или планировании.' }
+])
 
 const totalTimeEstimate = computed(() => {
   const timeMap = {
@@ -503,6 +507,38 @@ function formatDate(dateString) {
     month: 'long',
     year: 'numeric'
   })
+}
+
+async function sendMessage() {
+  if (!userMessage.value.trim()) return
+  
+  const msg = userMessage.value
+  chatMessages.value.push({ role: 'user', content: msg })
+  userMessage.value = ''
+  
+  await nextTick()
+  if (chatMessagesRef.value) {
+    chatMessagesRef.value.scrollTop = chatMessagesRef.value.scrollHeight
+  }
+  
+  setTimeout(() => {
+    const responses = [
+      'Хороший вопрос! Попробуй разбить этот шаг на ещё более мелкие действия — каждое не больше 1-2 часов.',
+      'Помни: конкретный шаг = понятный результат. Что именно ты получишь после выполнения?',
+      'Отлично! Теперь подумай — какой первый шаг ты можешь сделать уже сегодня?',
+      'Рекомендую начать с самого простого шага — это создаст momentum для остальных.',
+      'Попробуй сформулировать шаг так, чтобы было понятно — выполнен он или нет.',
+      'Каждый шаг должен иметь чёткий результат: документ, звонок, решение.'
+    ]
+    const randomResponse = responses[Math.floor(Math.random() * responses.length)]
+    chatMessages.value.push({ role: 'coach', content: randomResponse })
+    
+    nextTick(() => {
+      if (chatMessagesRef.value) {
+        chatMessagesRef.value.scrollTop = chatMessagesRef.value.scrollHeight
+      }
+    })
+  }, 1000)
 }
 </script>
 
@@ -863,8 +899,127 @@ function formatDate(dateString) {
   gap: 1.5rem;
 }
 
-.ai-helper-section {
-  margin-top: 0;
+.ai-coach-section {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  padding: 1rem;
+}
+
+.coach-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.coach-icon {
+  font-size: 1.25rem;
+}
+
+.coach-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 300px;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.message {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.message-avatar {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.message-content {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+}
+
+.coach-message .message-content {
+  background: var(--bg-secondary);
+}
+
+.user-message .message-content {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.message-content p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.chat-input-area {
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+  margin-top: 0.75rem;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  background: var(--bg-primary);
+}
+
+.chat-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.btn-send {
+  padding: 0.625rem 1rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.btn-send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.step-number-badge {
+  width: 28px;
+  height: 28px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  flex-shrink: 0;
 }
 
 .sticky-card {
