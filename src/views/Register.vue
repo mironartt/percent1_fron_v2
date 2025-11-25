@@ -12,24 +12,33 @@
 
         <!-- Form -->
         <form @submit.prevent="handleRegister" class="register-form">
+          <!-- General Error Alert -->
+          <div v-if="generalError" class="alert alert-error">
+            <span class="alert-icon">⚠️</span>
+            <span class="alert-text">{{ generalError }}</span>
+            <button type="button" class="alert-close" @click="generalError = ''">×</button>
+          </div>
+
           <!-- Name Field -->
           <div class="form-group">
-            <label for="name" class="form-label">
+            <label for="firstName" class="form-label">
               <span class="label-text">Ваше имя</span>
             </label>
             <div class="input-wrapper">
               <span class="input-icon">👤</span>
               <input
-                id="name"
-                v-model="form.name"
+                id="firstName"
+                v-model="form.firstName"
                 type="text"
                 class="form-input"
+                :class="{ 'input-error': errors.firstName }"
                 placeholder="Введите ваше имя"
                 required
-                @blur="validateField('name')"
+                @blur="validateField('firstName')"
+                @input="clearFieldError('firstName')"
               />
             </div>
-            <span v-if="errors.name" class="form-error">{{ errors.name }}</span>
+            <span v-if="errors.firstName" class="form-error">{{ errors.firstName }}</span>
           </div>
 
           <!-- Email Field -->
@@ -44,9 +53,11 @@
                 v-model="form.email"
                 type="email"
                 class="form-input"
+                :class="{ 'input-error': errors.email }"
                 placeholder="your@email.com"
                 required
                 @blur="validateField('email')"
+                @input="clearFieldError('email')"
               />
             </div>
             <span v-if="errors.email" class="form-error">{{ errors.email }}</span>
@@ -54,20 +65,22 @@
 
           <!-- Password Field -->
           <div class="form-group">
-            <label for="password" class="form-label">
+            <label for="password1" class="form-label">
               <span class="label-text">Пароль</span>
               <span class="label-hint">(минимум 8 символов)</span>
             </label>
             <div class="input-wrapper">
               <span class="input-icon">🔒</span>
               <input
-                id="password"
-                v-model="form.password"
+                id="password1"
+                v-model="form.password1"
                 :type="showPassword ? 'text' : 'password'"
                 class="form-input"
+                :class="{ 'input-error': errors.password1 }"
                 placeholder="Придумайте надежный пароль"
                 required
-                @blur="validateField('password')"
+                @blur="validateField('password1')"
+                @input="clearFieldError('password1')"
               />
               <button
                 type="button"
@@ -78,8 +91,30 @@
                 {{ showPassword ? '👁️' : '👁️‍🗨️' }}
               </button>
             </div>
-            <span v-if="errors.password" class="form-error">{{ errors.password }}</span>
+            <span v-if="errors.password1" class="form-error">{{ errors.password1 }}</span>
             <span v-else class="form-hint">Используйте цифры, буквы и символы для безопасности</span>
+          </div>
+
+          <!-- Password Confirmation Field -->
+          <div class="form-group">
+            <label for="password2" class="form-label">
+              <span class="label-text">Подтверждение пароля</span>
+            </label>
+            <div class="input-wrapper">
+              <span class="input-icon">🔒</span>
+              <input
+                id="password2"
+                v-model="form.password2"
+                :type="showPassword ? 'text' : 'password'"
+                class="form-input"
+                :class="{ 'input-error': errors.password2 }"
+                placeholder="Повторите пароль"
+                required
+                @blur="validateField('password2')"
+                @input="clearFieldError('password2')"
+              />
+            </div>
+            <span v-if="errors.password2" class="form-error">{{ errors.password2 }}</span>
           </div>
 
           <!-- Terms -->
@@ -195,37 +230,47 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import apiService from '../services/api'
 
 const router = useRouter()
 const store = useAppStore()
 
 const form = reactive({
-  name: '',
+  firstName: '',
   email: '',
-  password: '',
+  password1: '',
+  password2: '',
   agreeTerms: false
 })
 
 const errors = reactive({
-  name: '',
+  firstName: '',
   email: '',
-  password: ''
+  password1: '',
+  password2: ''
 })
 
 const showPassword = ref(false)
 const isSubmitting = ref(false)
 const showSuccess = ref(false)
 const showTerms = ref(false)
+const generalError = ref('')
+
+function clearFieldError(field) {
+  if (errors[field]) {
+    errors[field] = ''
+  }
+}
 
 function validateField(field) {
   switch (field) {
-    case 'name':
-      if (!form.name.trim()) {
-        errors.name = 'Введите ваше имя'
-      } else if (form.name.trim().length < 2) {
-        errors.name = 'Имя должно содержать минимум 2 символа'
+    case 'firstName':
+      if (!form.firstName.trim()) {
+        errors.firstName = 'Введите ваше имя'
+      } else if (form.firstName.trim().length < 2) {
+        errors.firstName = 'Имя должно содержать минимум 2 символа'
       } else {
-        errors.name = ''
+        errors.firstName = ''
       }
       break
 
@@ -240,45 +285,143 @@ function validateField(field) {
       }
       break
 
-    case 'password':
-      if (!form.password) {
-        errors.password = 'Придумайте пароль'
-      } else if (form.password.length < 8) {
-        errors.password = 'Пароль должен содержать минимум 8 символов'
+    case 'password1':
+      if (!form.password1) {
+        errors.password1 = 'Придумайте пароль'
+      } else if (form.password1.length < 8) {
+        errors.password1 = 'Пароль должен содержать минимум 8 символов'
       } else {
-        errors.password = ''
+        errors.password1 = ''
+      }
+      break
+
+    case 'password2':
+      if (!form.password2) {
+        errors.password2 = 'Повторите пароль'
+      } else if (form.password1 !== form.password2) {
+        errors.password2 = 'Пароли не совпадают'
+      } else {
+        errors.password2 = ''
       }
       break
   }
 }
 
 function validateForm() {
-  validateField('name')
+  validateField('firstName')
   validateField('email')
-  validateField('password')
+  validateField('password1')
+  validateField('password2')
 
-  return !errors.name && !errors.email && !errors.password && form.agreeTerms
+  return !errors.firstName && !errors.email && !errors.password1 && !errors.password2 && form.agreeTerms
 }
 
-function handleRegister() {
+/**
+ * Парсит ошибки из ответа бэкенда
+ * Формат: "email: ['Ошибка 1', 'Ошибка 2'], password2: ['Ошибка']"
+ */
+function parseBackendErrors(errorKey) {
+  if (!errorKey) return {}
+
+  const fieldErrors = {}
+
+  // Разбираем строку с ошибками
+  const matches = errorKey.matchAll(/(\w+):\s*\[(.*?)\]/g)
+
+  for (const match of matches) {
+    const fieldName = match[1]
+    const errorsString = match[2]
+
+    // Извлекаем все ошибки для поля
+    const fieldErrorsList = errorsString.match(/'([^']+)'/g)
+    if (fieldErrorsList && fieldErrorsList.length > 0) {
+      // Убираем кавычки и объединяем ошибки
+      const cleanErrors = fieldErrorsList.map(e => e.replace(/'/g, ''))
+      fieldErrors[fieldName] = cleanErrors.join(' ')
+    }
+  }
+
+  return fieldErrors
+}
+
+/**
+ * Маппинг полей бэкенда на поля формы
+ */
+function mapBackendFieldToFormField(backendField) {
+  const mapping = {
+    'first_name': 'firstName',
+    'email': 'email',
+    'password1': 'password1',
+    'password2': 'password2'
+  }
+  return mapping[backendField] || backendField
+}
+
+async function handleRegister() {
+  // Очищаем предыдущие ошибки
+  generalError.value = ''
+
   if (!validateForm()) {
     return
   }
 
   isSubmitting.value = true
 
-  setTimeout(() => {
-    // Update store with user name
-    store.user.name = form.name
+  try {
+    const response = await apiService.register({
+      firstName: form.firstName,
+      email: form.email,
+      password1: form.password1,
+      password2: form.password2
+    })
 
+    if (response.success) {
+      // Успешная регистрация
+      const userData = response.data
+
+      // Обновляем store с данными пользователя
+      store.user.name = userData.first_name
+
+      // Показываем успешное сообщение
+      showSuccess.value = true
+
+      // Редирект на главную после 2 секунд
+      setTimeout(() => {
+        router.push('/')
+      }, 2000)
+    } else {
+      // Обработка ошибок от бэкенда
+      const errorData = response.error
+
+      if (errorData.error === 'VALIDATION_ERROR') {
+        // Парсим ошибки валидации
+        const backendErrors = parseBackendErrors(errorData.key)
+
+        // Маппим ошибки на поля формы
+        let hasFieldErrors = false
+        Object.keys(backendErrors).forEach(backendField => {
+          const formField = mapBackendFieldToFormField(backendField)
+          if (errors.hasOwnProperty(formField)) {
+            errors[formField] = backendErrors[backendField]
+            hasFieldErrors = true
+          }
+        })
+
+        // Если есть общее сообщение и нет конкретных ошибок полей
+        if (!hasFieldErrors && errorData.message) {
+          generalError.value = errorData.message
+        }
+      } else {
+        // Другие типы ошибок
+        generalError.value = errorData.message || 'Произошла ошибка при регистрации. Попробуйте позже.'
+      }
+    }
+  } catch (error) {
+    console.error('Registration error:', error)
+    generalError.value = 'Произошла ошибка сети. Проверьте подключение к интернету.'
+  } finally {
     isSubmitting.value = false
-    showSuccess.value = true
-
-    // Redirect after 2 seconds
-    setTimeout(() => {
-      router.push('/')
-    }, 2000)
-  }, 1000)
+  }
 }
 
 function closeSuccess() {
@@ -348,6 +491,62 @@ function closeSuccess() {
   margin-bottom: 1.5rem;
 }
 
+/* Alert styles */
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+  font-size: 0.9375rem;
+  animation: slideDown 0.3s ease;
+}
+
+.alert-error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #991b1b;
+}
+
+.alert-icon {
+  font-size: 1.125rem;
+  flex-shrink: 0;
+}
+
+.alert-text {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.alert-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  color: inherit;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+  flex-shrink: 0;
+}
+
+.alert-close:hover {
+  opacity: 1;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .form-group {
   margin-bottom: 1.5rem;
 }
@@ -400,6 +599,15 @@ function closeSuccess() {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.form-input.input-error {
+  border-color: var(--danger-color);
+}
+
+.form-input.input-error:focus {
+  border-color: var(--danger-color);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
 .form-input::placeholder {
