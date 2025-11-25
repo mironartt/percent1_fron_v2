@@ -98,8 +98,11 @@ Both SSP and Goals Bank modules follow a 3-state pattern:
 ## Recent Changes
 
 ### November 25, 2025 (Latest Session)
+- SSP Summary: Increased wheel size (max-width 500px → 700px) for better readability
+- SSP Summary: Added "Ваша рефлексия" section with read-only accordion showing saved reflection answers
 - SSP Summary: Renamed "Ваше колесо баланса" → "Система сбалансированных показателей"
 - SSP Summary: Replaced progress bars with actual WheelOfLife component visualization
+- SSP Progress Bar: Fixed connecting lines between steps (changed from left: 50% to right: 50%)
 - WheelOfLife: Added `readonly` prop to disable drag handles and hover effects for summary view
 - SSP Theory: Removed video placeholder, kept only text content
 - Collapsible accordion for SSP Step 3 (Рефлексия): spheres now expand/collapse on click, reducing page length
