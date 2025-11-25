@@ -209,7 +209,7 @@
       </div>
 
       <div class="sidebar-actions">
-        <div class="ai-coach-section card sticky-card">
+        <div class="ai-coach-section card">
           <div class="coach-header">
             <span class="coach-icon">🤖</span>
             <h3>ИИ-коуч</h3>
