@@ -265,211 +265,57 @@
             @click="nextStep"
             :disabled="!canProceedToStep(3)"
           >
-            Перейти к анализу связей →
+            Выбрать ключевые цели →
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Step 3: Распознавание чужих целей -->
+    <!-- Step 3: Выбор ключевых целей -->
     <div v-if="currentStep === 3" class="step-content">
       <div class="step-section">
         <header class="section-header">
-          <h1>🎭 Распознаём «чужие» цели</h1>
+          <h1>🎯 Выбор ключевых целей</h1>
           <p class="subtitle">
-            Научись отличать истинные желания от навязанных обществом ожиданий
-          </p>
-        </header>
-
-        <div class="foreign-goals-theory card">
-          <h3>🔍 Главные признаки «чужих» целей:</h3>
-          <div class="signs-grid">
-            <div class="sign-card">
-              <div class="sign-icon">😓</div>
-              <h4>Ощущение «надо» или «должен»</h4>
-              <p>Цель вызывает не радостное предвкушение, а тяжесть и чувство обязанности.</p>
-            </div>
-            <div class="sign-card">
-              <div class="sign-icon">👀</div>
-              <h4>Фокус на внешней реакции</h4>
-              <p>Ты ловишь себя на мысли: «Что подумают люди?», «Как это будет выглядеть?».</p>
-            </div>
-            <div class="sign-card">
-              <div class="sign-icon">⚖️</div>
-              <h4>Сравнение с другими</h4>
-              <p>Желание появилось потому, что «у всех уже есть» или «так принято среди успешных людей».</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="example-card card">
-          <h3>📖 Пример проверки цели</h3>
-          <div class="example-content">
-            <div class="example-goal">
-              <strong>Цель:</strong> «Купить дорогой автомобиль премиум-класса»
-            </div>
-            <div class="example-questions">
-              <div class="example-qa">
-                <span class="q">Почему важно?</span>
-                <span class="a">«Чтобы чувствовать себя успешным и уверенным».</span>
-              </div>
-              <div class="example-qa">
-                <span class="q">Почему именно эта машина?</span>
-                <span class="a">«Это символ статуса. Но, возможно, уверенность можно обрести через мастерство в своем деле».</span>
-              </div>
-              <div class="example-qa">
-                <span class="q">Почему про меня?</span>
-                <span class="a">«Я сам этого хочу, или мне важно произвести впечатление на партнеров?».</span>
-              </div>
-            </div>
-          </div>
-          <div class="example-conclusion">
-            <p>Эта проверка поможет тебе либо <strong>утвердиться в выборе</strong>, либо <strong>найти за целью более глубокое и истинное для тебя желание</strong>.</p>
-          </div>
-        </div>
-
-        <div class="goals-review card">
-          <h3>🔄 Проверь свои цели на «чужеродность»</h3>
-          <p class="review-hint">Пересмотри свои истинные цели через призму признаков выше. Отметь те, которые требуют дополнительной проверки.</p>
-          
-          <div class="goals-review-list">
-            <div 
-              v-for="goal in validatedGoals" 
-              :key="goal.id" 
-              class="goal-review-item"
-              :class="{ 'needs-review': goal.needsDeepReview }"
-            >
-              <div class="goal-info">
-                <span class="sphere-badge">{{ getSphereName(goal.sphereId) }}</span>
-                <span class="goal-text">{{ goal.text }}</span>
-              </div>
-              <div class="goal-review-actions">
-                <button 
-                  class="btn btn-sm"
-                  :class="goal.needsDeepReview ? 'btn-warning' : 'btn-secondary'"
-                  @click="toggleDeepReview(goal.id)"
-                >
-                  {{ goal.needsDeepReview ? '⚠️ Требует проверки' : '✅ Моя цель' }}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="reflection-section card">
-          <h3>💭 Твои размышления</h3>
-          <textarea 
-            :value="sphereAnalysis.notes"
-            @input="updateAnalysisNotes($event.target.value)"
-            rows="4"
-            placeholder="Какие цели вызвали сомнения? Что ты понял о своих истинных желаниях?"
-          ></textarea>
-        </div>
-
-        <div class="step-actions">
-          <button class="btn btn-secondary" @click="prevStep">
-            ← Назад
-          </button>
-          <button 
-            class="btn btn-primary btn-lg" 
-            @click="nextStep"
-            :disabled="!canProceedToStep(4)"
-          >
-            Сформулировать ключевые цели →
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 4: Формулирование реальных целей -->
-    <div v-if="currentStep === 4" class="step-content">
-      <div class="step-section">
-        <header class="section-header">
-          <h1>🎯 Формулирование реальных целей</h1>
-          <p class="subtitle">
-            Переведи "я хочу" в "я делаю". Сформулируй 3–5 ключевых целей.
+            Выбери 1–3 цели из истинных для выполнения в ближайшее время
           </p>
         </header>
 
         <div class="key-goals-instruction card">
-          <h3>✨ Критерии ключевых целей:</h3>
+          <h3>✨ Как выбрать цели для фокуса:</h3>
           <ul>
-            <li><strong>Реально зажигают</strong> — вызывают энтузиазм</li>
-            <li><strong>Взаимосвязаны</strong> — поддерживают друг друга</li>
-            <li><strong>Повышают баланс</strong> — улучшают общую картину жизни</li>
+            <li><strong>Реально зажигают</strong> — вызывают энтузиазм и желание действовать</li>
+            <li><strong>Достижимы сейчас</strong> — есть ресурсы и время для работы над ними</li>
+            <li><strong>Максимум 3 цели</strong> — лучше меньше, но качественнее</li>
           </ul>
         </div>
 
-        <div class="validated-goals-summary card">
-          <h3>📋 Ваши истинные цели ({{ validatedGoals.length }})</h3>
-          <div class="validated-list">
-            <div v-for="goal in validatedGoals" :key="goal.id" class="validated-goal-item">
-              <span class="sphere-mini">{{ getSphereName(goal.sphereId) }}</span>
-              <span>{{ goal.text }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="key-goals-section">
-          <h3>🏆 Мои 3-5 ключевых целей</h3>
+        <div class="select-goals-section card">
+          <h3>📋 Твои истинные цели</h3>
+          <p class="select-hint">Отметь от 1 до 3 целей, над которыми будешь работать в ближайшее время</p>
           
-          <div class="add-key-goal">
-            <select v-model="newKeyGoal.sphereId" class="form-select">
-              <option value="">Сфера</option>
-              <option v-for="sphere in lifeSpheres" :key="sphere.id" :value="sphere.id">
-                {{ sphere.icon }} {{ sphere.name }}
-              </option>
-            </select>
-            <input 
-              v-model="newKeyGoal.text"
-              type="text"
-              class="form-input"
-              placeholder="Я хочу..."
-            />
-            <input 
-              v-model="newKeyGoal.action"
-              type="text"
-              class="form-input"
-              placeholder="Я делаю..."
-            />
-            <button 
-              class="btn btn-primary" 
-              @click="addKeyGoalHandler"
-              :disabled="keyGoals.length >= 5"
-            >
-              ➕ Добавить
-            </button>
-          </div>
-
-          <div class="key-goals-list">
+          <div class="selectable-goals-list">
             <div 
-              v-for="(goal, index) in keyGoals" 
-              :key="goal.id"
-              class="key-goal-card card"
+              v-for="goal in validatedGoals" 
+              :key="goal.id" 
+              class="selectable-goal-item"
+              :class="{ selected: isGoalSelected(goal.id) }"
+              @click="toggleGoalSelection(goal.id)"
             >
-              <div class="key-goal-number">{{ index + 1 }}</div>
-              <div class="key-goal-content">
-                <div class="key-goal-sphere">{{ getSphereName(goal.sphereId) }}</div>
-                <div class="key-goal-want">
-                  <span class="label">Хочу:</span>
-                  {{ goal.text }}
-                </div>
-                <div class="key-goal-do">
-                  <span class="label">Делаю:</span>
-                  {{ goal.action }}
-                </div>
+              <div class="goal-checkbox">
+                <span v-if="isGoalSelected(goal.id)">✅</span>
+                <span v-else>⬜</span>
               </div>
-              <button 
-                class="btn-icon delete"
-                @click="removeKeyGoal(goal.id)"
-              >
-                🗑️
-              </button>
+              <div class="goal-content">
+                <span class="sphere-badge">{{ getSphereName(goal.sphereId) }}</span>
+                <span class="goal-text">{{ goal.text }}</span>
+                <span class="goal-why" v-if="goal.whyImportant">{{ goal.whyImportant }}</span>
+              </div>
             </div>
           </div>
 
-          <div v-if="keyGoals.length === 0" class="empty-key-goals">
-            <p>Добавьте от 3 до 5 ключевых целей</p>
+          <div class="selection-counter">
+            Выбрано: <strong>{{ selectedGoalsCount }}</strong> / 3
           </div>
         </div>
 
@@ -480,7 +326,7 @@
           <button 
             class="btn btn-primary btn-lg" 
             @click="completeGoalsBankHandler"
-            :disabled="keyGoals.length < 3"
+            :disabled="selectedGoalsCount < 1"
           >
             ✅ Завершить и сохранить
           </button>
@@ -497,7 +343,7 @@ import { useAppStore } from '../stores/app'
 
 const store = useAppStore()
 
-const steps = ['Банк идей', 'Проверка', 'Чужие цели', 'Ключевые цели']
+const steps = ['Банк идей', 'Проверка', 'Ключевые цели']
 const currentStep = computed(() => store.goalsBank.currentStep)
 
 const lifeSpheres = computed(() => store.lifeSpheres)
@@ -530,17 +376,35 @@ const newKeyGoal = ref({
   action: ''
 })
 
+const selectedGoalIds = ref([])
+
+const selectedGoalsCount = computed(() => selectedGoalIds.value.length)
+
+function isGoalSelected(goalId) {
+  return selectedGoalIds.value.includes(goalId)
+}
+
+function toggleGoalSelection(goalId) {
+  const index = selectedGoalIds.value.indexOf(goalId)
+  if (index > -1) {
+    selectedGoalIds.value.splice(index, 1)
+  } else {
+    if (selectedGoalIds.value.length < 3) {
+      selectedGoalIds.value.push(goalId)
+    }
+  }
+}
+
 function canProceedToStep(step) {
   if (step === 1) return true
   if (step === 2) return rawIdeas.value.length > 0
-  if (step === 3) return rawIdeas.value.length > 0 && validatedCount.value > 0
-  if (step === 4) return validatedCount.value > 0
+  if (step === 3) return validatedCount.value > 0
   return false
 }
 
 function nextStep() {
   const nextStepNum = currentStep.value + 1
-  if (nextStepNum <= 4 && canProceedToStep(nextStepNum)) {
+  if (nextStepNum <= 3 && canProceedToStep(nextStepNum)) {
     store.setGoalsBankStep(nextStepNum)
   }
 }
@@ -618,12 +482,6 @@ function updateAnalysisNotes(notes) {
   store.updateSphereAnalysis({ notes })
 }
 
-function toggleDeepReview(goalId) {
-  const goal = rawIdeas.value.find(g => g.id === goalId)
-  if (goal) {
-    store.updateGoalIdea(goalId, { needsDeepReview: !goal.needsDeepReview })
-  }
-}
 
 function addKeyGoalHandler() {
   if (!newKeyGoal.value.text.trim()) {
@@ -657,19 +515,23 @@ function removeKeyGoal(goalId) {
 }
 
 function completeGoalsBankHandler() {
-  if (keyGoals.value.length < 3) {
-    alert('Добавьте минимум 3 ключевые цели')
+  if (selectedGoalIds.value.length < 1) {
+    alert('Выберите хотя бы одну цель')
     return
   }
   
-  const missingActions = keyGoals.value.filter(g => !g.action || !g.action.trim())
-  if (missingActions.length > 0) {
-    alert('Все цели должны иметь действие (Я делаю...)')
-    return
-  }
+  const selectedGoals = validatedGoals.value.filter(g => selectedGoalIds.value.includes(g.id))
+  selectedGoals.forEach(goal => {
+    store.addKeyGoal({
+      text: goal.text,
+      action: '',
+      sphereId: goal.sphereId,
+      originalId: goal.id
+    })
+  })
   
   store.completeGoalsBank()
-  alert('🎉 Поздравляем! Банк целей сформирован!')
+  alert('🎉 Поздравляем! Ключевые цели выбраны!')
 }
 
 function getSphereName(sphereId) {
@@ -1376,6 +1238,84 @@ function getStatusLabel(status) {
   margin: 0;
   padding-left: 1.5rem;
   line-height: 2;
+}
+
+.select-goals-section {
+  margin-bottom: 2rem;
+}
+
+.select-goals-section h3 {
+  margin-bottom: 0.5rem;
+}
+
+.select-hint {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.selectable-goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.selectable-goal-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.selectable-goal-item:hover {
+  background: var(--bg-tertiary);
+}
+
+.selectable-goal-item.selected {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: var(--success-color);
+}
+
+.goal-checkbox {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.selectable-goal-item .goal-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.selectable-goal-item .goal-text {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.selectable-goal-item .goal-why {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.selection-counter {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.selection-counter strong {
+  color: var(--primary-color);
+  font-size: 1.25rem;
 }
 
 .validated-goals-summary {
