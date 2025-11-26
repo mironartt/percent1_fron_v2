@@ -800,6 +800,10 @@ const formatCompletedDate = computed(() => {
 })
 
 function startLesson() {
+  store.goalsBank.rawIdeas = []
+  store.goalsBank.currentStep = 1
+  store.goalsBank.completedAt = null
+  store.saveToLocalStorage()
   lessonStarted.value = true
 }
 
