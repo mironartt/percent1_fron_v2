@@ -1,7 +1,9 @@
 <template>
   <div class="guidance-panel" :class="{ 'guidance-panel--sticky': sticky }">
     <div class="guidance-header" v-if="title">
-      <span class="guidance-icon">{{ icon }}</span>
+      <span class="guidance-icon">
+        <ClipboardList :size="20" :stroke-width="1.5" />
+      </span>
       <h3>{{ title }}</h3>
     </div>
     
@@ -13,7 +15,9 @@
           class="tip-item"
           :class="{ 'tip-item--highlight': tip.highlight }"
         >
-          <span class="tip-icon">{{ tip.icon || '💡' }}</span>
+          <span class="tip-icon">
+            <Lightbulb :size="16" :stroke-width="1.5" />
+          </span>
           <div class="tip-content">
             <p class="tip-text">{{ tip.text }}</p>
             <p v-if="tip.example" class="tip-example">
@@ -31,19 +35,26 @@
           class="checklist-item"
           :class="{ 'checklist-item--done': item.done }"
         >
-          <span class="checklist-check">{{ item.done ? '✓' : '○' }}</span>
+          <span class="checklist-check">
+            <Check v-if="item.done" :size="14" :stroke-width="1.5" />
+            <Circle v-else :size="14" :stroke-width="1.5" />
+          </span>
           <span class="checklist-text">{{ item.text }}</span>
         </div>
       </div>
 
       <div v-if="warning" class="warning-section">
-        <span class="warning-icon">⚠️</span>
+        <span class="warning-icon">
+          <AlertTriangle :size="16" :stroke-width="1.5" />
+        </span>
         <p class="warning-text">{{ warning }}</p>
       </div>
 
       <div v-if="showAICoach" class="ai-coach-section">
         <div class="coach-header">
-          <span class="coach-icon">🤖</span>
+          <span class="coach-icon">
+            <Bot :size="18" :stroke-width="1.5" />
+          </span>
           <h4>ИИ-коуч</h4>
         </div>
         <div class="chat-container">
@@ -54,7 +65,10 @@
               class="message"
               :class="msg.role === 'user' ? 'user-message' : 'coach-message'"
             >
-              <span class="message-avatar">{{ msg.role === 'user' ? '👤' : '🤖' }}</span>
+              <span class="message-avatar">
+                <User v-if="msg.role === 'user'" :size="16" :stroke-width="1.5" />
+                <Bot v-else :size="16" :stroke-width="1.5" />
+              </span>
               <div class="message-content">
                 <p>{{ msg.content }}</p>
               </div>
@@ -83,7 +97,16 @@
 </template>
 
 <script setup>
-import { ref, nextTick, watch } from 'vue'
+import { ref, nextTick, watch, computed } from 'vue'
+import { ClipboardList, Lightbulb, AlertTriangle, Bot, User, Check, Circle } from 'lucide-vue-next'
+
+const iconComponents = {
+  ClipboardList,
+  Lightbulb,
+  AlertTriangle,
+  Bot,
+  User
+}
 
 const props = defineProps({
   title: {
@@ -200,6 +223,43 @@ async function sendMessage() {
 
 .guidance-icon {
   font-size: 1.25rem;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+}
+
+.tip-icon {
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+}
+
+.checklist-check {
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+}
+
+.checklist-item--done .checklist-check {
+  color: var(--success-color);
+}
+
+.warning-icon {
+  color: var(--warning-color);
+  display: flex;
+  align-items: center;
+}
+
+.coach-icon {
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+}
+
+.message-avatar {
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
 }
 
 .guidance-header h3 {

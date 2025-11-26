@@ -1,7 +1,7 @@
 <template>
   <div class="goals-bank">
     <div class="add-goal-section card">
-      <h3>➕ Добавить цель в банк</h3>
+      <h3 class="section-header"><Plus class="header-icon" :size="18" :stroke-width="1.5" /> Добавить цель в банк</h3>
       <form @submit.prevent="handleAddGoal" class="add-goal-form">
         <div class="form-row">
           <div class="form-group flex-1">
@@ -78,14 +78,14 @@
               @click="toggleTrue(goal)"
               title="Отметить как истинную цель"
             >
-              ✓
+              <Check :size="18" :stroke-width="1.5" />
             </button>
             <button
               class="btn-delete"
               @click="deleteGoal(goal.id)"
               title="Удалить цель"
             >
-              🗑️
+              <Trash2 :size="16" :stroke-width="1.5" />
             </button>
           </div>
         </div>
@@ -97,7 +97,7 @@
           rows="2"
         ></textarea>
         <div v-if="goal.isTrue" class="true-marker">
-          💎 Истинная цель
+          <Gem class="true-marker-icon" :size="16" :stroke-width="1.5" /> Истинная цель
         </div>
       </div>
     </div>
@@ -131,14 +131,14 @@
               @click="toggleTrue(goal)"
               title="Убрать отметку истинной цели"
             >
-              ✓
+              <Check :size="18" :stroke-width="1.5" />
             </button>
             <button
               class="btn-delete"
               @click="deleteGoal(goal.id)"
               title="Удалить цель"
             >
-              🗑️
+              <Trash2 :size="16" :stroke-width="1.5" />
             </button>
           </div>
         </div>
@@ -150,7 +150,7 @@
           rows="2"
         ></textarea>
         <div class="true-marker">
-          💎 Истинная цель
+          <Gem class="true-marker-icon" :size="16" :stroke-width="1.5" /> Истинная цель
         </div>
       </div>
     </div>
@@ -181,7 +181,7 @@
               :class="{ active: goal.isTrue }"
               @click="toggleTrue(goal)"
             >
-              ✓
+              <Check :size="14" :stroke-width="1.5" />
             </button>
             <div class="goal-content-compact">
               <input
@@ -194,7 +194,7 @@
               class="btn-delete-small"
               @click="deleteGoal(goal.id)"
             >
-              🗑️
+              <Trash2 :size="14" :stroke-width="1.5" />
             </button>
           </div>
         </div>
@@ -205,6 +205,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { Plus, Trash2, Gem, Check } from 'lucide-vue-next'
 
 const props = defineProps({
   spheres: {
@@ -302,6 +303,20 @@ function getGoalsBySphere(sphereId) {
 
 .add-goal-section h3 {
   margin-bottom: 1rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.header-icon {
+  color: #9ca3af;
+}
+
+.true-marker-icon {
+  color: var(--success-color);
 }
 
 .add-goal-form {

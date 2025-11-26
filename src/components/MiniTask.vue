@@ -13,7 +13,9 @@
 
     <!-- Step 1: Welcome -->
     <div v-if="currentStep === 1" class="step-content">
-      <div class="welcome-icon">🧹</div>
+      <div class="welcome-icon">
+        <Brush :size="80" :stroke-width="1.5" />
+      </div>
       <h1 class="step-title">Привет, {{ userName }}!</h1>
       <div class="step-description">
         <p>
@@ -26,15 +28,21 @@
 
       <div class="benefits-list">
         <div class="benefit-item">
-          <span class="benefit-icon">🧠</span>
+          <span class="benefit-icon">
+            <Brain :size="24" :stroke-width="1.5" />
+          </span>
           <span>Освободишь голову от хаоса</span>
         </div>
         <div class="benefit-item">
-          <span class="benefit-icon">✨</span>
+          <span class="benefit-icon">
+            <Sparkles :size="24" :stroke-width="1.5" />
+          </span>
           <span>Почувствуешь контроль над делами</span>
         </div>
         <div class="benefit-item">
-          <span class="benefit-icon">🎯</span>
+          <span class="benefit-icon">
+            <Target :size="24" :stroke-width="1.5" />
+          </span>
           <span>Получишь первый +1%</span>
         </div>
       </div>
@@ -48,7 +56,9 @@
     <div v-if="currentStep === 2" class="step-content">
       <h2 class="step-title">Мозговой штурм</h2>
       <div class="timer-block">
-        <span class="timer-icon">⏱️</span>
+        <span class="timer-icon">
+          <Timer :size="32" :stroke-width="1.5" />
+        </span>
         <span class="timer-value">{{ formatTime(timerSeconds) }}</span>
         <button v-if="!timerEnded" class="btn-timer-stop" @click="stopTimer">
           Закончить раньше
@@ -79,7 +89,9 @@
           placeholder="Напиши что-то и нажми Enter..."
           ref="itemInput"
         />
-        <button class="btn-add" @click="addItem">➕</button>
+        <button class="btn-add" @click="addItem">
+          <Plus :size="20" :stroke-width="1.5" />
+        </button>
       </div>
 
       <div class="items-list">
@@ -91,7 +103,9 @@
           @dragstart="dragStart(item, $event)"
         >
           <span class="item-text">{{ item.text }}</span>
-          <button class="btn-remove" @click="removeItem(item.id)">✕</button>
+          <button class="btn-remove" @click="removeItem(item.id)">
+            <X :size="14" :stroke-width="1.5" />
+          </button>
         </div>
       </div>
 
@@ -112,7 +126,9 @@
     <div v-if="currentStep === 3" class="step-content">
       <h2 class="step-title">Структурирование</h2>
       <div class="timer-block">
-        <span class="timer-icon">⏱️</span>
+        <span class="timer-icon">
+          <Timer :size="32" :stroke-width="1.5" />
+        </span>
         <span class="timer-value">{{ formatTime(timerSeconds) }}</span>
         <button v-if="!timerEnded" class="btn-timer-stop" @click="stopTimer">
           Закончить раньше
@@ -134,7 +150,9 @@
           @dragenter.prevent
         >
           <div class="category-header">
-            <span class="category-icon">{{ category.icon }}</span>
+            <span class="category-icon">
+              <component :is="category.iconComponent" :size="24" :stroke-width="1.5" />
+            </span>
             <h3 class="category-title">{{ category.name }}</h3>
           </div>
           <div class="category-description">{{ category.description }}</div>
@@ -194,7 +212,7 @@
       </div>
 
       <div class="actions-selection">
-        <h3>✅ Следующие действия:</h3>
+        <h3 class="actions-heading"><CheckCircle :size="20" :stroke-width="1.5" /> Следующие действия:</h3>
         <div v-if="nextActionItems.length === 0" class="empty-state">
           На предыдущем шаге не было задач в категории "Следующие действия". 
           Выбери любые другие дела из других категорий!
@@ -221,7 +239,7 @@
 
       <!-- Progress Section for Selected Actions -->
       <div v-if="selectedActions.length > 0" class="selected-actions-progress">
-        <h3>📊 Твой прогресс</h3>
+        <h3 class="progress-heading"><BarChart3 :size="20" :stroke-width="1.5" /> Твой прогресс</h3>
         <p class="progress-hint">Возвращайся в сервис и отмечай выполненные дела:</p>
         
         <div class="progress-items">
@@ -269,6 +287,20 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAppStore } from '../stores/app'
+import { 
+  Brush, 
+  Brain, 
+  Sparkles, 
+  Target, 
+  Timer, 
+  Plus, 
+  X, 
+  Calendar, 
+  CheckCircle, 
+  Lightbulb, 
+  BookOpen, 
+  BarChart3 
+} from 'lucide-vue-next'
 
 const store = useAppStore()
 
@@ -289,29 +321,36 @@ const brainDumpItems = ref([])
 let itemIdCounter = 0
 
 // Step 3: Categories
+const categoryIcons = {
+  calendar: Calendar,
+  next: CheckCircle,
+  someday: Lightbulb,
+  reference: BookOpen
+}
+
 const categories = [
   {
     id: 'calendar',
     name: 'Календарь',
-    icon: '🗓️',
+    iconComponent: Calendar,
     description: 'Дела с жёсткой датой/временем'
   },
   {
     id: 'next',
     name: 'Следующие действия',
-    icon: '✅',
+    iconComponent: CheckCircle,
     description: 'Что сделать в ближайшее время'
   },
   {
     id: 'someday',
     name: 'Идеи/Когда-нибудь',
-    icon: '💡',
+    iconComponent: Lightbulb,
     description: 'Не срочно, но интересно'
   },
   {
     id: 'reference',
     name: 'Справка',
-    icon: '📚',
+    iconComponent: BookOpen,
     description: 'Информация для хранения'
   }
 ]
@@ -583,6 +622,9 @@ onUnmounted(() => {
   text-align: center;
   font-size: 5rem;
   margin-bottom: 1.5rem;
+  color: #9ca3af;
+  display: flex;
+  justify-content: center;
 }
 
 .benefits-list {
@@ -605,6 +647,9 @@ onUnmounted(() => {
 
 .benefit-icon {
   font-size: 1.5rem;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
 }
 
 /* Timer */
@@ -621,6 +666,9 @@ onUnmounted(() => {
 
 .timer-icon {
   font-size: 2rem;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
 }
 
 .timer-value {
@@ -805,6 +853,21 @@ onUnmounted(() => {
 
 .category-icon {
   font-size: 1.5rem;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+}
+
+.actions-heading,
+.progress-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.actions-heading svg,
+.progress-heading svg {
+  color: #9ca3af;
 }
 
 .category-title {
