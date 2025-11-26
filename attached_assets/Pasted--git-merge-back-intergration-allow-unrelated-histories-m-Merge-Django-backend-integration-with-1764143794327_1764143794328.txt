@@ -1,0 +1,38 @@
+$ git merge back_intergration --allow-unrelated-histories -m "Merge: Django backend integration with onboarding flow"
+Автослияние .replit
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в .replit
+Автослияние package-lock.json
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в package-lock.json
+Автослияние package.json
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в package.json
+Автослияние replit.md
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в replit.md
+Автослияние src/components/Onboarding.vue
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/components/Onboarding.vue
+Автослияние src/components/Sidebar.vue
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/components/Sidebar.vue
+Автослияние src/main.js
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/main.js
+Автослияние src/router/index.js
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/router/index.js
+Автослияние src/stores/app.js
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/stores/app.js
+Автослияние src/views/BalancedScorecard.vue
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/views/BalancedScorecard.vue
+Автослияние src/views/Dashboard.vue
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/views/Dashboard.vue
+Автослияние src/views/GoalEdit.vue
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/views/GoalEdit.vue
+Автослияние src/views/GoalNew.vue
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/views/GoalNew.vue
+Автослияние src/views/Goals.vue
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/views/Goals.vue
+Автослияние src/views/GoalsBank.vue
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/views/GoalsBank.vue
+Автослияние src/views/Login.vue
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/views/Login.vue
+Автослияние src/views/Register.vue
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/views/Register.vue
+Автослияние vite.config.js
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в vite.config.js
+Сбой автоматического слияния; исправьте конфликты, затем зафиксируйте результат.
