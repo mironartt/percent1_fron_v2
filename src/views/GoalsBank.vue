@@ -1829,7 +1829,7 @@ function getStatusLabel(status) {
 }
 
 .btn-action.take-to-work:hover {
-  background: var(--primary-hover);
+  background: var(--primary-dark);
   transform: translateY(-1px);
 }
 
