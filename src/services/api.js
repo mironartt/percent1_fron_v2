@@ -178,14 +178,23 @@ export async function request(method, endpoint, data = null, options = {}) {
 
 /**
  * Построение URL с правильным объединением путей
- * @param {string} endpoint - Относительный путь эндпоинта
+ * Обрабатывает случаи когда API_BASE_URL уже содержит /api префикс
+ * @param {string} endpoint - Относительный путь эндпоинта (например /api/rest/front/csrf/)
  * @returns {string} - Полный URL
  */
 function buildUrl(endpoint) {
   const base = API_BASE_URL || window.location.origin
-  // Убираем trailing slash у base и leading slash у endpoint для чистого объединения
+  
+  // Убираем trailing slash у base и leading slash у endpoint
   const cleanBase = base.replace(/\/+$/, '')
-  const cleanEndpoint = endpoint.replace(/^\/+/, '')
+  let cleanEndpoint = endpoint.replace(/^\/+/, '')
+  
+  // Если base уже содержит /api, а endpoint тоже начинается с api/
+  // то убираем дублирующийся api/ из endpoint
+  if (cleanBase.endsWith('/api') && cleanEndpoint.startsWith('api/')) {
+    cleanEndpoint = cleanEndpoint.substring(4) // Убираем 'api/'
+  }
+  
   return `${cleanBase}/${cleanEndpoint}`
 }
 
