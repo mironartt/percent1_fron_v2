@@ -1016,7 +1016,7 @@ function formatDate(dateString) {
 }
 
 .lesson-preview {
-  text-align: left;
+  text-align: center;
   margin-bottom: 2rem;
   padding: 1.5rem;
   background: var(--bg-secondary);
@@ -1026,12 +1026,14 @@ function formatDate(dateString) {
 .lesson-preview h3 {
   font-size: 1rem;
   margin-bottom: 1rem;
+  text-align: center;
 }
 
 .preview-steps {
-  display: flex;
+  display: inline-flex;
   flex-direction: column;
   gap: 1rem;
+  text-align: left;
 }
 
 .preview-step {
