@@ -131,7 +131,7 @@
               >
                 <td class="col-status">
                   <span v-if="isGoalTransferred(goal.id)" class="status-badge in-work">
-                    🎯 В работе
+                    <span class="status-icon">✓</span> В работе
                   </span>
                   <label v-else class="checkbox-wrapper">
                     <input 
@@ -1625,18 +1625,31 @@ function getStatusLabel(status) {
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.375rem 0.75rem;
-  border-radius: var(--radius-full);
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 8px;
   font-size: 0.8125rem;
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
 }
 
 .status-badge.in-work {
-  background: rgba(99, 102, 241, 0.15);
-  color: var(--primary-color);
+  background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
   white-space: nowrap;
+}
+
+.status-badge .status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: bold;
 }
 
 .goal-cell {
