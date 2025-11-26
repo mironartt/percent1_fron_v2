@@ -80,3 +80,6 @@ Cookie-based session auth with CSRF protection. Auth guards in router check user
 - Updated Login.vue and Register.vue with API integration
 - Updated Sidebar navigation for new routes
 - Added user management to Pinia store (setUser, clearUser, isAuthenticated)
+- **Bidirectional auth redirects**: authenticated users on /auth/* (except logout) redirect to /app/, unauthenticated on /app/* redirect to /auth/login
+- **Comprehensive DEBUG_MODE logging**: Router navigation, auth checks, store user operations logged when DEBUG_MODE=true
+- **Fixed SKIP_AUTH_CHECK**: Returns mock authenticated user to allow protected route access during UI development
