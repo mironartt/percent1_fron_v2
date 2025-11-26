@@ -1503,17 +1503,25 @@ function getStatusLabel(status) {
 }
 
 .goals-table-section .table-header {
+  display: block;
+  background: none;
+  color: var(--text-primary);
+  padding: 0;
   margin-bottom: 1.5rem;
 }
 
 .goals-table-section .table-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
   margin-bottom: 0.5rem;
+  color: var(--text-primary);
 }
 
 .goals-table-section .table-header .section-hint {
   margin-bottom: 0;
   color: var(--text-secondary);
   font-size: 0.9rem;
+  font-weight: 400;
 }
 
 .goals-table-wrapper {
