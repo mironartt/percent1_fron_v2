@@ -1,9 +1,7 @@
 <template>
   <div class="mini-task-welcome">
     <div class="welcome-card">
-      <div class="welcome-icon">
-        <Target :size="80" :stroke-width="1.5" />
-      </div>
+      <div class="welcome-icon">🎯</div>
       
       <h1 class="welcome-title">Добро пожаловать в OnePercent!</h1>
       <p class="welcome-subtitle">Сейчас мы проведём тебя через твоё первое мини-задание</p>
@@ -37,7 +35,7 @@
           <div class="step-number">4</div>
           <div class="step-content">
             <h3 class="step-title">Твоя первая ачивка!</h3>
-            <p class="step-description step-with-icon">Получишь первый +1% <PartyPopper :size="16" :stroke-width="1.5" class="inline-icon" /></p>
+            <p class="step-description">Получишь первый +1% 🎉</p>
           </div>
         </div>
       </div>
@@ -50,8 +48,6 @@
 </template>
 
 <script setup>
-import { Target, PartyPopper } from 'lucide-vue-next'
-
 const emit = defineEmits(['start'])
 
 function startMiniTask() {
@@ -82,19 +78,6 @@ function startMiniTask() {
   font-size: 5rem;
   margin-bottom: 1.5rem;
   animation: bounce 2s infinite;
-  color: #9ca3af;
-  display: flex;
-  justify-content: center;
-}
-
-.step-with-icon {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.inline-icon {
-  color: #9ca3af;
 }
 
 @keyframes bounce {

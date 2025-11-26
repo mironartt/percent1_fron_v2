@@ -21,9 +21,7 @@
 
         <!-- Step 1: Philosophy -->
         <div v-if="currentStep === 1" class="step-content step-philosophy">
-          <div class="philosophy-icon">
-            <Gamepad2 :size="80" :stroke-width="1.5" />
-          </div>
+          <div class="philosophy-icon">🎮</div>
           <h1 class="step-title">Жизнь — это игра.<br>Ты — её разработчик</h1>
           <div class="philosophy-text">
             <p>
@@ -34,34 +32,28 @@
               Ты не просто игрок в чужой игре — ты разработчик своего сценария. 
               Каждый день ты делаешь выбор: развиваться или стоять на месте.
             </p>
-            <p class="highlight highlight-with-icon">
-              <Lightbulb :size="20" :stroke-width="1.5" class="highlight-icon" /> Улучшаясь на 1% каждый день, за год ты станешь сильнее в 38 раз.
+            <p class="highlight">
+              💡 Улучшаясь на 1% каждый день, за год ты станешь сильнее в 38 раз.
             </p>
           </div>
 
           <div class="key-ideas">
             <div class="key-idea-item">
-              <span class="idea-icon">
-                <Target :size="32" :stroke-width="1.5" />
-              </span>
+              <span class="idea-icon">🎯</span>
               <div>
                 <strong>Системность, а не мотивация</strong>
                 <p>Работает механика, а не эмоции</p>
               </div>
             </div>
             <div class="key-idea-item">
-              <span class="idea-icon">
-                <BarChart3 :size="32" :stroke-width="1.5" />
-              </span>
+              <span class="idea-icon">📊</span>
               <div>
                 <strong>Измеряемый прогресс</strong>
                 <p>Видишь рост в цифрах и действиях</p>
               </div>
             </div>
             <div class="key-idea-item">
-              <span class="idea-icon">
-                <RefreshCw :size="32" :stroke-width="1.5" />
-              </span>
+              <span class="idea-icon">🔄</span>
               <div>
                 <strong>Честная работа</strong>
                 <p>Без иллюзий, только реальность</p>
@@ -146,22 +138,18 @@
           <div class="journey-visual">
             <div class="point point-a">
               <span class="point-label">Точка А</span>
-              <span class="point-icon">
-                <MapPin :size="32" :stroke-width="1.5" />
-              </span>
+              <span class="point-icon">📍</span>
             </div>
             <div class="journey-arrow">→</div>
             <div class="point point-b">
               <span class="point-label">Точка Б</span>
-              <span class="point-icon">
-                <Target :size="32" :stroke-width="1.5" />
-              </span>
+              <span class="point-icon">🎯</span>
             </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label label-with-icon">
-              <MapPin :size="18" :stroke-width="1.5" class="label-icon" /> Точка А: Где я сейчас
+            <label class="form-label">
+              📍 Точка А: Где я сейчас
             </label>
             <span class="form-hint">Опиши своё текущее состояние без прикрас</span>
             <textarea 
@@ -173,8 +161,8 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label label-with-icon">
-              <Target :size="18" :stroke-width="1.5" class="label-icon" /> Точка Б: Куда хочу прийти
+            <label class="form-label">
+              🎯 Точка Б: Куда хочу прийти
             </label>
             <span class="form-hint">Конкретная картина желаемого будущего</span>
             <textarea 
@@ -186,8 +174,8 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label label-with-icon">
-              <Gem :size="18" :stroke-width="1.5" class="label-icon" /> Почему это важно для меня
+            <label class="form-label">
+              💎 Почему это важно для меня
             </label>
             <span class="form-hint">В чём глубинный смысл этих изменений?</span>
             <textarea 
@@ -212,9 +200,7 @@
 
         <!-- Step 4: Rules -->
         <div v-if="currentStep === 4" class="step-content step-rules">
-          <div class="completion-icon">
-            <CheckCircle :size="80" :stroke-width="1.5" />
-          </div>
+          <div class="completion-icon">✅</div>
           <h2 class="step-title">Почти готово!</h2>
           <p class="step-subtitle">Осталось подтвердить готовность к честной работе</p>
 
@@ -222,21 +208,15 @@
             <h3>Ты заполнил:</h3>
             <div class="summary-items">
               <div class="summary-item">
-                <span class="check-icon">
-                  <Check :size="16" :stroke-width="1.5" />
-                </span>
+                <span class="check-icon">✓</span>
                 <span>Понял философию системы</span>
               </div>
               <div class="summary-item">
-                <span class="check-icon">
-                  <Check :size="16" :stroke-width="1.5" />
-                </span>
+                <span class="check-icon">✓</span>
                 <span>Ответил на вопросы рефлексии</span>
               </div>
               <div class="summary-item">
-                <span class="check-icon">
-                  <Check :size="16" :stroke-width="1.5" />
-                </span>
+                <span class="check-icon">✓</span>
                 <span>Определил точки А и Б</span>
               </div>
             </div>
@@ -278,12 +258,11 @@
           <div class="step-actions">
             <button class="btn btn-secondary" @click="prevStep" :disabled="isSaving">Назад</button>
             <button 
-              class="btn btn-primary btn-large btn-with-icon" 
+              class="btn btn-primary btn-large" 
               @click="completeOnboarding"
               :disabled="!formData.acceptRules || isSaving"
             >
-              <Rocket v-if="!isSaving" :size="18" :stroke-width="1.5" class="btn-icon" />
-              {{ isSaving ? 'Сохранение...' : 'Приступить' }}
+              {{ isSaving ? 'Сохранение...' : '🚀 Приступить' }}
             </button>
           </div>
         </div>
@@ -296,18 +275,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAppStore } from '../stores/app'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
-import { 
-  Gamepad2, 
-  Lightbulb, 
-  Target, 
-  BarChart3, 
-  RefreshCw, 
-  MapPin, 
-  Gem, 
-  CheckCircle, 
-  Check, 
-  Rocket 
-} from 'lucide-vue-next'
 
 const store = useAppStore()
 
@@ -605,9 +572,6 @@ async function completeOnboarding() {
   font-size: 5rem;
   margin-bottom: 1.5rem;
   animation: bounce 2s infinite;
-  color: #9ca3af;
-  display: flex;
-  justify-content: center;
 }
 
 @keyframes bounce {
@@ -664,60 +628,6 @@ async function completeOnboarding() {
 
 .idea-icon {
   font-size: 2rem;
-  flex-shrink: 0;
-  color: #9ca3af;
-  display: flex;
-  align-items: center;
-}
-
-.highlight-with-icon {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-}
-
-.highlight-icon {
-  flex-shrink: 0;
-  margin-top: 0.125rem;
-}
-
-.label-with-icon {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.label-icon {
-  color: #9ca3af;
-}
-
-.point-icon {
-  color: #9ca3af;
-  display: flex;
-  justify-content: center;
-}
-
-.completion-icon {
-  color: var(--success-color);
-  display: flex;
-  justify-content: center;
-  margin-bottom: 1.5rem;
-}
-
-.check-icon {
-  color: var(--success-color);
-  display: flex;
-  align-items: center;
-}
-
-.btn-with-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.btn-icon {
   flex-shrink: 0;
 }
 

@@ -3,7 +3,7 @@
     <!-- Empty State - First Visit -->
     <div v-if="showEmptyState" class="empty-state-section">
       <div class="empty-state-card card">
-        <div class="empty-icon"><Scale :size="64" color="#9ca3af" :stroke-width="1.5" /></div>
+        <div class="empty-icon">⚖️</div>
         <h1>Система сбалансированных показателей</h1>
         <p class="subtitle">
           Оцените баланс всех сфер вашей жизни и определите точки роста
@@ -43,8 +43,8 @@
           </div>
         </div>
 
-        <button class="btn btn-primary btn-lg btn-with-icon" @click="startLesson">
-          <Sparkles :size="18" color="#9ca3af" :stroke-width="1.5" /> Начать оценку
+        <button class="btn btn-primary btn-lg" @click="startLesson">
+          ✨ Начать оценку
         </button>
       </div>
     </div>
@@ -52,25 +52,25 @@
     <!-- Summary State - After Completion -->
     <div v-else-if="showSummary" class="summary-section-main">
       <header class="section-header">
-        <h1 class="header-with-icon"><Scale :size="32" color="#9ca3af" :stroke-width="1.5" /> ССП — Результаты</h1>
+        <h1>⚖️ ССП — Результаты</h1>
         <p class="subtitle">Оценка завершена {{ formatCompletedDate }}</p>
       </header>
 
       <div class="summary-grid">
         <div class="summary-stat-card card">
-          <div class="summary-icon"><BarChart3 :size="32" color="#9ca3af" :stroke-width="1.5" /></div>
+          <div class="summary-icon">📊</div>
           <div class="summary-value">{{ averageScore.toFixed(1) }}</div>
           <div class="summary-label">Средний балл</div>
         </div>
 
         <div class="summary-stat-card card" v-if="strongestSphere">
-          <div class="summary-icon"><Dumbbell :size="32" color="#9ca3af" :stroke-width="1.5" /></div>
+          <div class="summary-icon">💪</div>
           <div class="summary-value">{{ strongestSphere.icon }}</div>
           <div class="summary-label">Самая сильная<br/>{{ strongestSphere.name }}</div>
         </div>
 
         <div class="summary-stat-card card" v-if="weakestSphere">
-          <div class="summary-icon"><Target :size="32" color="#9ca3af" :stroke-width="1.5" /></div>
+          <div class="summary-icon">🎯</div>
           <div class="summary-value">{{ weakestSphere.icon }}</div>
           <div class="summary-label">Зона роста<br/>{{ weakestSphere.name }}</div>
         </div>
@@ -85,7 +85,7 @@
 
       <!-- Reflection Summary Accordion -->
       <div class="reflection-summary card">
-        <h3 class="header-with-icon"><FileText :size="20" color="#9ca3af" :stroke-width="1.5" /> Ваша рефлексия</h3>
+        <h3>📝 Ваша рефлексия</h3>
         <div class="reflection-accordion readonly">
           <div 
             v-for="sphere in lifeSpheres" 
@@ -107,7 +107,7 @@
                   <span class="score-badge">{{ sphere.score }}/10</span>
                 </div>
               </div>
-              <ChevronDown :size="16" color="#9ca3af" :stroke-width="1.5" class="accordion-arrow" :class="{ rotated: expandedSummarySpheres.includes(sphere.id) }" />
+              <span class="accordion-arrow" :class="{ rotated: expandedSummarySpheres.includes(sphere.id) }">▼</span>
             </div>
 
             <div class="accordion-content" v-show="expandedSummarySpheres.includes(sphere.id)">
@@ -138,11 +138,11 @@
       </div>
 
       <div class="summary-actions">
-        <button class="btn btn-primary btn-lg btn-with-icon" @click="goToGoalsBank">
-          <Landmark :size="18" color="#9ca3af" :stroke-width="1.5" /> Перейти в Банк целей
+        <button class="btn btn-primary btn-lg" @click="goToGoalsBank">
+          🏦 Перейти в Банк целей
         </button>
-        <button class="btn btn-secondary btn-with-icon" @click="restartLesson">
-          <RefreshCw :size="18" color="#9ca3af" :stroke-width="1.5" /> Пройти оценку заново
+        <button class="btn btn-secondary" @click="restartLesson">
+          🔄 Пройти оценку заново
         </button>
       </div>
     </div>
@@ -188,7 +188,7 @@
           </p>
 
           <div class="idea-block" style="margin-bottom: 2rem;">
-            <div class="idea-icon"><Lightbulb :size="48" color="#9ca3af" :stroke-width="1.5" /></div>
+            <div class="idea-icon">💡</div>
             <div>
               <h3>Ключевая идея</h3>
               <p>Для роста нужен баланс. Цели работают только тогда, когда опираются на внутреннюю мотивацию и системное равновесие между всеми сферами жизни.</p>
@@ -215,7 +215,7 @@
     <div v-if="currentStep === 2" class="step-content">
       <div class="wheel-section">
         <header class="section-header">
-          <h1 class="header-with-icon"><Scale :size="32" color="#9ca3af" :stroke-width="1.5" /> Система сбалансированных показателей</h1>
+          <h1>⚖️ Система сбалансированных показателей</h1>
           <p class="subtitle">
             Оцените текущее состояние каждой сферы вашей жизни
           </p>
@@ -223,8 +223,8 @@
 
         <div class="wheel-layout">
           <div class="wheel-main card">
-            <div class="wheel-instruction instruction-with-icon">
-              <Lightbulb :size="20" color="#9ca3af" :stroke-width="1.5" /> Кликните на сектор и перетащите его край наружу или внутрь, чтобы изменить оценку от 0 до 10.
+            <div class="wheel-instruction">
+              💡 Кликните на сектор и перетащите его край наружу или внутрь, чтобы изменить оценку от 0 до 10.
             </div>
             <WheelOfLife 
               :spheres="lifeSpheres"
@@ -235,20 +235,20 @@
           <div class="wheel-sidebar">
             <div class="card ai-coach">
               <div class="coach-header">
-                <span class="coach-icon"><MessageCircle :size="24" color="#9ca3af" :stroke-width="1.5" /></span>
+                <span class="coach-icon">💬</span>
                 <h3>ИИ-коуч</h3>
               </div>
               
               <div class="chat-container">
                 <div class="chat-messages">
                   <div class="message coach-message">
-                    <span class="message-avatar"><Bot :size="20" color="#9ca3af" :stroke-width="1.5" /></span>
+                    <span class="message-avatar">🤖</span>
                     <div class="message-content">
                       <p>Заполните колесо баланса, оценив каждую сферу от 0 до 10. Для этого кликните на сектор и перетащите его край наружу или внутрь.</p>
                     </div>
                   </div>
                   <div v-for="msg in chatMessages" :key="msg.id" class="message" :class="msg.type">
-                    <span v-if="msg.type === 'coach'" class="message-avatar"><Bot :size="20" color="#9ca3af" :stroke-width="1.5" /></span>
+                    <span v-if="msg.type === 'coach'" class="message-avatar">🤖</span>
                     <div class="message-content">
                       <p>{{ msg.text }}</p>
                     </div>
@@ -483,28 +483,6 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import WheelOfLife from '../components/WheelOfLife.vue'
-import { 
-  Scale, 
-  BarChart3, 
-  Dumbbell, 
-  Target, 
-  FileText, 
-  RefreshCw, 
-  Landmark, 
-  Lightbulb, 
-  MessageCircle, 
-  Bot, 
-  ChevronDown, 
-  Pin, 
-  Star, 
-  Construction, 
-  Search, 
-  CheckCircle, 
-  Check,
-  Sparkles, 
-  Rocket,
-  ClipboardList
-} from 'lucide-vue-next'
 
 const store = useAppStore()
 const router = useRouter()

@@ -15,14 +15,14 @@
   <div v-else class="dashboard">
     <header class="page-header">
       <div>
-        <h1 class="greeting-title">Привет, {{ userName }} <Hand :size="28" :stroke-width="1.5" class="greeting-icon" /></h1>
+        <h1>Привет, {{ userName }} 👋</h1>
         <p class="subtitle">Ваша система управления жизнью и достижения целей</p>
       </div>
     </header>
 
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon"><Target :size="32" :stroke-width="1.5" /></div>
+        <div class="stat-icon">🎯</div>
         <div class="stat-content">
           <div class="stat-value">{{ averageScore }}/10</div>
           <div class="stat-label">Общий баланс жизни</div>
@@ -30,7 +30,7 @@
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon"><Rocket :size="32" :stroke-width="1.5" /></div>
+        <div class="stat-icon">🚀</div>
         <div class="stat-content">
           <div class="stat-value">{{ activeGoals }}</div>
           <div class="stat-label">Активных целей</div>
@@ -38,7 +38,7 @@
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon"><CheckCircle :size="32" :stroke-width="1.5" /></div>
+        <div class="stat-icon">✅</div>
         <div class="stat-content">
           <div class="stat-value">{{ completedGoals }}</div>
           <div class="stat-label">Достигнутых целей</div>
@@ -53,7 +53,7 @@
         </div>
         <div class="card-body">
           <router-link to="/app/ssp" class="action-link">
-            <span class="action-icon"><Target :size="24" :stroke-width="1.5" /></span>
+            <span class="action-icon">🎯</span>
             <div class="action-content">
               <div class="action-title">Оценить сферы жизни</div>
               <div class="action-desc">Проведите саморефлексию и оцените баланс</div>
@@ -61,7 +61,7 @@
           </router-link>
 
           <router-link to="/app/goals" class="action-link">
-            <span class="action-icon"><Rocket :size="24" :stroke-width="1.5" /></span>
+            <span class="action-icon">🚀</span>
             <div class="action-content">
               <div class="action-title">Создать новую цель</div>
               <div class="action-desc">Поставьте цель и декомпозируйте её</div>
@@ -69,7 +69,7 @@
           </router-link>
 
           <router-link to="/app/planner" class="action-link">
-            <span class="action-icon"><Calendar :size="24" :stroke-width="1.5" /></span>
+            <span class="action-icon">📅</span>
             <div class="action-content">
               <div class="action-title">Спланировать день</div>
               <div class="action-desc">Определите приоритеты на сегодня</div>
@@ -146,7 +146,7 @@
 
       <div class="card motivation">
         <div class="motivation-content">
-          <div class="motivation-icon"><Lightbulb :size="40" :stroke-width="1.5" /></div>
+          <div class="motivation-icon">💡</div>
           <div>
             <h3 class="motivation-title">Эффект 1%</h3>
             <p class="motivation-text">
@@ -167,7 +167,6 @@ import Onboarding from '../components/Onboarding.vue'
 import MiniTaskWelcome from '../components/MiniTaskWelcome.vue'
 import MiniTask from '../components/MiniTask.vue'
 import { DEBUG_MODE } from '@/config/settings.js'
-import { Hand, Target, Rocket, CheckCircle, Calendar, Lightbulb } from 'lucide-vue-next'
 
 const store = useAppStore()
 
@@ -239,21 +238,8 @@ function updateTask(task) {
   gap: 1rem;
 }
 
-.greeting-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.greeting-icon {
-  color: #9ca3af;
-}
-
 .stat-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #9ca3af;
+  font-size: 2rem;
 }
 
 .stat-value {
@@ -316,10 +302,7 @@ function updateTask(task) {
 }
 
 .action-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #9ca3af;
+  font-size: 1.5rem;
 }
 
 .action-title {
@@ -446,10 +429,7 @@ function updateTask(task) {
 }
 
 .motivation-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
+  font-size: 2.5rem;
 }
 
 .motivation-title {

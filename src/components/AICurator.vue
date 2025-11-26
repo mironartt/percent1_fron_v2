@@ -2,7 +2,7 @@
   <div class="ai-curator" :class="{ expanded: isExpanded, minimized: isMinimized, embedded: embedded }">
     <!-- Minimized state (only for floating mode) -->
     <div v-if="isMinimized && !embedded" class="curator-minimized" @click="toggleMinimize">
-      <Bot class="minimized-icon" :size="24" :stroke-width="1.5" />
+      <div class="minimized-icon">🤖</div>
       <div class="minimized-text">ИИ-Куратор</div>
       <div v-if="unreadCount > 0" class="unread-badge">{{ unreadCount }}</div>
     </div>
@@ -11,7 +11,7 @@
     <div v-else class="curator-panel">
       <div class="curator-header">
         <div class="curator-title">
-          <Bot class="curator-icon" :size="28" :stroke-width="1.5" />
+          <span class="curator-icon">🤖</span>
           <h3>{{ embedded ? 'Помощник' : 'ИИ-Куратор' }}</h3>
         </div>
         <div v-if="!embedded" class="curator-actions">
@@ -31,8 +31,8 @@
 
       <div class="chat-messages" ref="messagesContainer">
         <div v-if="messages.length === 0" class="welcome-message">
-          <p v-if="goalContext" class="welcome-with-icon"><Lightbulb :size="16" :stroke-width="1.5" /> Помогу с целью "{{ goalContext.title }}"</p>
-          <p v-else class="welcome-with-icon"><Hand :size="16" :stroke-width="1.5" /> Привет! Я ваш ИИ-куратор.</p>
+          <p v-if="goalContext">💡 Помогу с целью "{{ goalContext.title }}"</p>
+          <p v-else>👋 Привет! Я ваш ИИ-куратор.</p>
           <p>{{ embedded ? 'Спросите о декомпозиции, MVP или следующем шаге.' : 'Задавайте вопросы по упражнениям, делитесь размышлениями или просто спрашивайте совета.' }}</p>
         </div>
 
@@ -43,18 +43,18 @@
           :class="message.role"
         >
           <div class="message-content">
-            <div v-if="message.role === 'assistant'" class="message-avatar"><Bot :size="20" :stroke-width="1.5" /></div>
+            <div v-if="message.role === 'assistant'" class="message-avatar">🤖</div>
             <div class="message-bubble">
               <div class="message-text">{{ message.content }}</div>
               <div class="message-time">{{ formatTime(message.timestamp) }}</div>
             </div>
-            <div v-if="message.role === 'user'" class="message-avatar user"><User :size="20" :stroke-width="1.5" /></div>
+            <div v-if="message.role === 'user'" class="message-avatar user">👤</div>
           </div>
         </div>
 
         <div v-if="isLoading" class="message assistant">
           <div class="message-content">
-            <div class="message-avatar"><Bot :size="20" :stroke-width="1.5" /></div>
+            <div class="message-avatar">🤖</div>
             <div class="message-bubble">
               <div class="typing-indicator">
                 <span></span>
@@ -80,7 +80,7 @@
           @click="sendMessage"
           :disabled="!inputMessage.trim() || isLoading"
         >
-          <Send :size="18" :stroke-width="1.5" />
+          <span>📤</span>
         </button>
       </div>
 
@@ -100,7 +100,6 @@
 
 <script setup>
 import { ref, nextTick, computed } from 'vue'
-import { Bot, User, Lightbulb, Hand, Send } from 'lucide-vue-next'
 
 const props = defineProps({
   context: {
