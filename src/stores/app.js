@@ -146,6 +146,17 @@ export const useAppStore = defineStore('app', () => {
     completedAt: null
   })
 
+  // Модуль Планирования
+  const planningModule = ref({
+    lessonStarted: false,
+    lessonCompleted: false,
+    currentStep: 1,
+    completedAt: null
+  })
+
+  // Недельное планирование
+  const weeklyPlans = ref([])
+
   // Цели
   const goals = ref([])
   
@@ -255,7 +266,9 @@ export const useAppStore = defineStore('app', () => {
       sspGoalsBank: sspGoalsBank.value,
       sspModuleCompleted: sspModuleCompleted.value,
       goalsBank: goalsBank.value,
-      decompositionModule: decompositionModule.value
+      decompositionModule: decompositionModule.value,
+      planningModule: planningModule.value,
+      weeklyPlans: weeklyPlans.value
     }))
   }
 
@@ -283,6 +296,8 @@ export const useAppStore = defineStore('app', () => {
         if (parsed.sspModuleCompleted) sspModuleCompleted.value = parsed.sspModuleCompleted
         if (parsed.goalsBank) goalsBank.value = { ...goalsBank.value, ...parsed.goalsBank }
         if (parsed.decompositionModule) decompositionModule.value = { ...decompositionModule.value, ...parsed.decompositionModule }
+        if (parsed.planningModule) planningModule.value = { ...planningModule.value, ...parsed.planningModule }
+        if (parsed.weeklyPlans) weeklyPlans.value = parsed.weeklyPlans
       } catch (e) {
         console.error('Error loading data:', e)
       }
@@ -520,6 +535,112 @@ export const useAppStore = defineStore('app', () => {
     saveToLocalStorage()
   }
 
+  // Planning Module methods
+  function startPlanningLesson() {
+    planningModule.value.lessonStarted = true
+    planningModule.value.currentStep = 1
+    saveToLocalStorage()
+  }
+
+  function setPlanningStep(step) {
+    planningModule.value.currentStep = step
+    saveToLocalStorage()
+  }
+
+  function completePlanningLesson() {
+    planningModule.value.lessonCompleted = true
+    planningModule.value.completedAt = new Date().toISOString()
+    saveToLocalStorage()
+  }
+
+  function resetPlanningModule() {
+    planningModule.value = {
+      lessonStarted: false,
+      lessonCompleted: false,
+      currentStep: 1,
+      completedAt: null
+    }
+    weeklyPlans.value = []
+    saveToLocalStorage()
+  }
+
+  function createWeeklyPlan(weekStart) {
+    const plan = {
+      id: Date.now().toString(),
+      weekStart: weekStart,
+      createdAt: new Date().toISOString(),
+      scheduledTasks: [],
+      completed: false
+    }
+    weeklyPlans.value.push(plan)
+    saveToLocalStorage()
+    return plan
+  }
+
+  function getCurrentWeekPlan() {
+    const today = new Date()
+    const dayOfWeek = today.getDay()
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+    const monday = new Date(today)
+    monday.setDate(today.getDate() + mondayOffset)
+    monday.setHours(0, 0, 0, 0)
+    const mondayStr = monday.toISOString().split('T')[0]
+    
+    return weeklyPlans.value.find(p => p.weekStart === mondayStr)
+  }
+
+  function addScheduledTask(planId, task) {
+    const plan = weeklyPlans.value.find(p => p.id === planId)
+    if (plan) {
+      plan.scheduledTasks.push({
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+        goalId: task.goalId,
+        stepId: task.stepId,
+        stepTitle: task.stepTitle,
+        goalTitle: task.goalTitle,
+        scheduledDate: task.scheduledDate,
+        scheduledTime: task.scheduledTime || null,
+        completed: false,
+        completedAt: null
+      })
+      saveToLocalStorage()
+    }
+  }
+
+  function updateScheduledTask(planId, taskId, updates) {
+    const plan = weeklyPlans.value.find(p => p.id === planId)
+    if (plan) {
+      const task = plan.scheduledTasks.find(t => t.id === taskId)
+      if (task) {
+        Object.assign(task, updates)
+        saveToLocalStorage()
+      }
+    }
+  }
+
+  function removeScheduledTask(planId, taskId) {
+    const plan = weeklyPlans.value.find(p => p.id === planId)
+    if (plan) {
+      const index = plan.scheduledTasks.findIndex(t => t.id === taskId)
+      if (index !== -1) {
+        plan.scheduledTasks.splice(index, 1)
+        saveToLocalStorage()
+      }
+    }
+  }
+
+  function toggleScheduledTaskComplete(planId, taskId) {
+    const plan = weeklyPlans.value.find(p => p.id === planId)
+    if (plan) {
+      const task = plan.scheduledTasks.find(t => t.id === taskId)
+      if (task) {
+        task.completed = !task.completed
+        task.completedAt = task.completed ? new Date().toISOString() : null
+        saveToLocalStorage()
+      }
+    }
+  }
+
   // Load data on init
   loadFromLocalStorage()
 
@@ -571,6 +692,18 @@ export const useAppStore = defineStore('app', () => {
     startDecompositionLesson,
     setDecompositionStep,
     completeDecompositionLesson,
-    resetDecompositionModule
+    resetDecompositionModule,
+    planningModule,
+    weeklyPlans,
+    startPlanningLesson,
+    setPlanningStep,
+    completePlanningLesson,
+    resetPlanningModule,
+    createWeeklyPlan,
+    getCurrentWeekPlan,
+    addScheduledTask,
+    updateScheduledTask,
+    removeScheduledTask,
+    toggleScheduledTaskComplete
   }
 })

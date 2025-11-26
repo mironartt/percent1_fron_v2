@@ -7,7 +7,7 @@ import Goals from '../views/Goals.vue'
 import GoalNew from '../views/GoalNew.vue'
 import GoalEdit from '../views/GoalEdit.vue'
 import GoalsBank from '../views/GoalsBank.vue'
-import Planner from '../views/Planner.vue'
+import Planning from '../views/Planning.vue'
 import Settings from '../views/Settings.vue'
 import Club from '../views/Club.vue'
 
@@ -63,9 +63,9 @@ const router = createRouter({
       meta: { title: 'Банк целей' }
     },
     {
-      path: '/planner',
-      name: 'planner',
-      component: Planner,
+      path: '/planning',
+      name: 'planning',
+      component: Planning,
       meta: { title: 'Планирование' }
     },
     {

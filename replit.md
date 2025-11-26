@@ -1,219 +1,38 @@
 # OnePercent MVP
 
-## Project Overview
-Vue 3 + Vite application for personal life management and goal tracking through daily 1% improvements (OnePercent system). Features SSP (Сбалансированная система показателей / Balanced Scorecard) module and Банк целей (Goals Bank) for systematic life balance assessment and goal setting.
+## Overview
+This project is a Vue 3 + Vite application designed for personal life management and goal tracking, centered around the "OnePercent" system for daily incremental improvements. Its core purpose is to help users assess life balance, set systematic goals, and plan for their achievement through modules like the Balanced Scorecard (SSP) and Goals Bank. The application aims to provide a structured approach to personal development, offering guided workflows for goal identification, decomposition, and weekly planning.
 
-## Tech Stack
-- **Frontend**: Vue 3 (Composition API with script setup), Vite, Vue Router, Pinia (state management)
-- **Language**: JavaScript/ES modules
-- **Build System**: Vite
-- **Integrations**: Replit AI Integrations (OpenAI)
-- **Persistence**: localStorage via Pinia persistence
+## User Preferences
+I prefer that the agent adheres strictly to the Vue Architecture Rules (CRITICAL) outlined in the `replit.md` file, especially regarding one-way data flow and the avoidance of direct props mutation. All state updates must be handled via emit events leading to store actions. The Pinia store (`app.js`) is the single source of truth. I want to maintain the current project structure and component architecture, particularly the 3-state pattern (Empty State, Lesson Mode, Summary State) for modules. For AI features, the agent should only operate in DEMO MODE and not make real OpenAI API calls from the client, nor should it expose any API keys or secrets. The agent should prioritize the existing UI/UX decisions, including color schemes, templates, and design approaches.
 
-## Project Structure
-```
-src/
-  ├── components/
-  │   ├── WheelOfLife.vue       # Interactive life balance wheel (drag-n-drop, 1-10 scale)
-  │   ├── GoalsBank.vue          # Goal management with true/priority filters (SSP step 3)
-  │   └── AICurator.vue          # AI assistant (demo mode, no API calls)
-  ├── views/
-  │   ├── BalancedScorecard.vue  # SSP module main view (4-step flow)
-  │   └── GoalsBank.vue          # Standalone Goals Bank page (4-step process)
-  ├── router/                    # Vue Router config
-  ├── stores/
-  │   └── app.js                 # Pinia store with SSP + Goals Bank state + localStorage persistence
-  ├── assets/                    # Styles and static assets
-  ├── App.vue                    # Root component
-  └── main.js                    # Entry point
-```
+## System Architecture
 
-## SSP Module Architecture
-4-step sequential flow:
-1. **Теория** - Educational content about balanced scorecard methodology
-2. **Колесо баланса** - Interactive Wheel of Life exercise with 6 life spheres
-3. **Банк целей** - Goals bank creation and categorization (истинные/приоритетные)
-4. **Фиксация результатов** - Results summary and completion
+### UI/UX Decisions
+The application utilizes a guided, multi-step workflow pattern for key modules (SSP, Goals Bank, Decomposition, Planning), often featuring a 3-state design: an empty state for first-time users, a lesson mode for education and guided input, and a summary state for progress overview. Visual components like the interactive "Wheel of Life" and progress bars are central to user engagement. Contextual help is provided via a reusable `GuidancePanel` component, which includes tips, checklists, and an integrated AI coach (in demo mode).
 
-## Goals Bank Module Architecture (/goals-bank)
-3-step guided workflow with validation guards:
-1. **Банк идей** - Raw ideas collection with table (sphere, goal, why important)
-2. **Проверка** - Goals validation via "3 Why" rule (истинные/ложные classification)
-3. **Ключевые цели** - Select 1-3 validated goals for immediate focus
+### Technical Implementations
+-   **Frontend Framework**: Vue 3 with Composition API (`<script setup>`).
+-   **State Management**: Pinia, with a single central store (`app.js`) serving as the source of truth.
+-   **Routing**: Vue Router manages navigation and module-specific views.
+-   **Data Flow**: Strict one-way data flow is enforced; components receive data via props and emit events for all state updates, which are then processed by Pinia store actions. Direct props mutation is prohibited.
+-   **Persistence**: Pinia state is persisted to `localStorage` via a Pinia plugin.
+-   **Modularity**: Core modules (SSP, Goals Bank, Decomposition, Planning) are designed with a consistent 3-state pattern (Empty State, Lesson Mode, Summary State) to guide users through structured workflows.
+-   **Goal Management**: Features include goal creation, categorization, validation (e.g., "3 Why" rule), decomposition into actionable steps with time estimates and priorities, and weekly scheduling.
+-   **Interactive Components**: `WheelOfLife.vue` provides an interactive balance assessment tool. `GuidancePanel.vue` offers reusable contextual help and an AI coach interface.
 
-### Step Progression Rules
-- Step 2: Requires at least 1 idea in bank
-- Step 3: Requires at least 1 validated goal
-- Completion: Requires 1-3 selected goals from validated list
+### Feature Specifications
+-   **Balanced Scorecard (SSP) Module**: A 4-step sequential flow (Theory, Wheel of Life, Goals Bank, Results Summary) for life balance assessment across 6 defined spheres.
+-   **Goals Bank Module**: A 3-step guided workflow (Ideas, Validation via "3 Why" rule, Key Goals selection) for collecting, validating, and prioritizing personal goals.
+-   **Decomposition Module**: Guides users through breaking down selected goals into smaller, manageable steps, adhering to rules for specificity and measurability.
+-   **Planning Module**: Facilitates weekly planning by scheduling decomposed goal steps into a 7-day calendar grid, supporting task completion tracking.
+-   **AI Curator/Coach**: An integrated AI assistant (`AICurator.vue`) provides contextual guidance and support within various modules, operating in demo mode.
 
-### Life Spheres (6)
-- Благосостояние (Wealth)
-- Хобби и отдых (Hobbies & Recreation)
-- Дружба и окружение (Friends & Environment)
-- Здоровье и спорт (Health & Sports)
-- Работа и карьера (Work & Career)
-- Любовь/семья/отношения (Love/Family/Relationships)
+### System Design Choices
+The project is built with a focus on structured guidance and user progression, ensuring that users move through logical steps in their personal development journey. The use of Pinia for state management and strict data flow rules ensures maintainability and predictability. The architecture is designed for local development and testing, with considerations for future backend integration for production AI features.
 
-## Vue Architecture Rules (CRITICAL)
-All components follow strict one-way data flow:
-- ❌ NO direct props mutation (no v-model on props)
-- ✅ All updates via emit events → store actions
-- ✅ Components receive data via props, emit changes up
-- ✅ Store (app.js) is single source of truth
-- ✅ Persistence handled via Pinia plugin to localStorage
-
-## Security
-- AI Curator runs in DEMO MODE ONLY (no real OpenAI API calls from client)
-- No API keys/secrets exposed to client bundle
-- For production AI features: backend proxy required
-
-## Setup Instructions
-The project is configured to run on `0.0.0.0:5000` for Replit compatibility.
-
-## Running the Project
-```bash
-npm run dev      # Start development server on port 5000
-npm run build    # Build for production
-npm run preview  # Preview production build
-```
-
-## Module State Patterns
-Both SSP and Goals Bank modules follow a 3-state pattern:
-1. **Empty State** - Welcome message with lesson overview for first-time visitors
-2. **Lesson Mode** - Multi-step guided workflow
-3. **Summary State** - Completion stats and navigation to next module
-
-### SSP Summary View
-- Average score across all spheres
-- Strongest and weakest spheres
-- Visual score bars for each sphere
-- Navigation to Goals Bank
-
-### Goals Bank Summary View
-- Ideas count, validated/rejected counts
-- Transferred goals count
-- List of key goals in progress
-- Navigation to Decomposition
-
-## Recent Changes
-
-### November 25, 2025 (Latest Session)
-
-#### Decomposition Module Complete Rewrite
-**Empty State + Lesson Pattern:**
-- Empty state for first-time visitors with lesson preview (3 steps)
-- 3-step lesson flow: Theory (декомпозиция rules) → Practice (break down goal) → Review (verify steps)
-- Theory explains 3 rules: 1-4 hours, конкретность, измеримость
-- Practice step allows selecting goals from Goals Bank and breaking them into steps
-- AI coach sidebar in practice step for guidance
-- Review step shows summary of goal and created steps (removed commitment block - planning will be separate module)
-
-**Summary Page (after lesson completion):**
-- Stats grid: total goals, goals from Bank, steps created, steps completed
-- Accordion list of all goals with expandable details
-- Each goal shows "3 Почему" answers if from Goals Bank
-- Steps list with completion status
-- Navigation to goals list or lesson restart
-
-**Goals List Mode:**
-- Two-column layout with AI coach sidebar
-- Filters (all/active/completed)
-- Goal cards with status badges, "Из Банка целей" source badge
-- Progress bars and step counters
-- Goal detail modal with "3 Почему" answers display
-- Completion reflection modal (success/challenges/learnings)
-- Restart lesson button and back to summary button
-
-#### Goals Bank Transfer Fix
-- Fixed goal data transfer: now correctly uses `g.text` instead of `g.goal` and `g.sphereId` instead of `g.sphere`
-- Added `threeWhys` data transfer to preserve "3 Почему" answers when goals move to Decomposition module
-
-**GoalEdit.vue Enhanced Steps:**
-- Drag-and-drop reordering with visual feedback
-- Time estimate per step (30min, 1h, 2h, 4h)
-- Priority levels (high/medium/low) with colored indicators
-- Steps summary showing total time and high-priority count
-
-**New Store Methods:**
-- decompositionModule state: lessonStarted, lessonCompleted, currentStep, completedAt
-- startDecompositionLesson(), setDecompositionStep(), completeDecompositionLesson(), resetDecompositionModule()
-- localStorage persistence for decompositionModule
-
-#### Goals Bank Page Comprehensive Improvements
-**Summary Page:**
-- Accordion for validated goals showing "3 Почему" answers (read-only)
-- Sphere distribution visualization with progress bars (validated/rejected breakdown)
-- Rejected goals section with rejection reasons displayed
-
-**Step 1 (Банк идей):**
-- Goals grouped by spheres with collapsible sections
-- Weak spheres highlighted based on SSP scores (yellow indicator + badge)
-- "Нужны идеи?" modal with example goals for each sphere
-
-**Step 2 (Проверка):**
-- Two-column layout with AI Coach sidebar (matching SSP design pattern)
-- AI Coach has persistent chat interface: header, messages area, input field
-- Chat logic: goalsChatMessages, goalsUserMessage, sendGoalsMessage() with simulated responses
-- Validation progress bar under "Правило 3 Почему" block
-
-**Step 3 (Ключевые цели):**
-- Recommendations block highlighting goals from weak SSP spheres
-- "Что дальше" preview explaining handoff to Decomposition module
-- Selected goals show visual indicator for weak spheres
-
-**New Computed Properties:**
-- `weakSpheres` - identifies low-scoring SSP spheres
-- `ideasBySphere` - groups raw ideas by life sphere
-- `sphereDistribution` - calculates validated/rejected per sphere
-- `weakSphereGoals` - filters validated goals from weak spheres
-- `checkedCount`, `validatedPercent`, `rejectedPercent` - progress tracking
-
-#### Earlier SSP Improvements
-- SSP Summary: Increased wheel size (max-width 500px → 700px) for better readability
-- SSP Summary: Added "Ваша рефлексия" section with read-only accordion showing saved reflection answers
-- SSP Summary: Renamed "Ваше колесо баланса" → "Система сбалансированных показателей"
-- SSP Summary: Replaced progress bars with actual WheelOfLife component visualization
-- SSP Progress Bar: Fixed connecting lines between steps (changed from left: 50% to right: 50%)
-- WheelOfLife: Added `readonly` prop to disable drag handles and hover effects for summary view
-- SSP Theory: Removed video placeholder, kept only text content
-- Collapsible accordion for SSP Step 3 (Рефлексия): spheres now expand/collapse on click, reducing page length
-- Accordion features: expand/collapse toggle, "Заполнено" badge for completed spheres, smooth animations
-- AICurator component now supports `embedded` prop for inline placement in sidebar
-- Embedded AI curator integrated into GoalEdit.vue (/goals/:id) sidebar for contextual help
-- Unlocked 4 menu items (Главная, ССП, Банк целей, Декомпозиция) without payment restriction
-- Implemented empty state + lesson + summary pattern for /ssp module
-- Implemented empty state + lesson + summary pattern for /goals-bank module
-- Created GoalNew.vue page for adding new goals (/goals/new route)
-- SSP summary shows: average score, strongest/weakest sphere, visual score bars
-- Goals Bank summary shows: idea count, validated goals, transferred goals list
-- Added "Restart lesson" functionality with store.resetGoalsBank() and store.resetSSPModule()
-- Removed modal-based forms, now using dedicated pages for goal creation/editing
-
-### November 25, 2025 (Earlier)
-- Created standalone GoalsBank.vue page with 3-step guided workflow
-- Added goalsBank state to Pinia store (rawIdeas, keyGoals, sphereAnalysis, currentStep)
-- Implemented step progression validation (canProceedToStep function)
-- Step 1: Simple table with sphere, goal, why important fields
-- Step 2: Redesigned with expandable goal cards - click to expand and answer 3 questions
-- Step 2: Added required notice about истинная/ложная classification
-- Step 3: Select 1-3 validated goals for immediate focus with click selection
-- Goals transfer: Selected goals from /goals-bank automatically transfer to /goals page on completion
-- User redirected to /goals after completing Goals Bank workflow
-- Renamed sidebar "Цели" to "Декомпозиция"
-- Added AI coach chat to Goals/Decomposition page with context-specific prompts
-- AICurator component now supports context prop for different page prompts
-- Added /goals-bank route and sidebar navigation
-- Fixed AI coach chat display on SSP step
-- Created dedicated GoalEdit.vue page for goal editing (replaces modal)
-- Added /goals/:id route for individual goal editing
-- Edit page includes: goal details form, steps management with checkboxes, progress bar, save/delete actions
-- Clicking "Редактировать" button now navigates to dedicated edit page instead of modal
-
-### November 24, 2025
-- Fixed all props mutation issues across WheelOfLife, GoalsBank components
-- Removed v-model on props, replaced with :value/@input pattern
-- Ensured all state updates flow through Pinia store actions
-- Secured AICurator (demo mode only, no client-side API calls)
-- Removed VITE_ env vars that would expose secrets
-- All data properly persists to localStorage via Pinia
-- Dev server stable on port 5000 with strictPort configuration
+## External Dependencies
+-   **Build Tool**: Vite
+-   **State Management**: Pinia (with `localStorage` persistence)
+-   **Routing**: Vue Router
+-   **AI Integration**: Replit AI Integrations (OpenAI - currently in DEMO MODE ONLY, no actual API calls from client-side)
