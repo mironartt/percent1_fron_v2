@@ -1,21 +1,28 @@
 <template>
   <div class="onboarding-overlay">
     <div class="onboarding-container">
-      <!-- Progress Bar -->
-      <div class="progress-section">
-        <div class="progress-bar-bg">
-          <div 
-            class="progress-bar-fill"
-            :style="{ width: `${(currentStep / totalSteps) * 100}%` }"
-          ></div>
-        </div>
-        <div class="progress-text">Шаг {{ currentStep }} из {{ totalSteps }}</div>
+      <!-- Loading State -->
+      <div v-if="isLoading" class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Загрузка...</p>
       </div>
 
-      <!-- Step 1: Philosophy -->
-      <div v-if="currentStep === 1" class="step-content step-philosophy">
-        <div class="philosophy-icon">🎮</div>
-        <h1 class="step-title">Жизнь — это игра.<br>Ты — её разработчик</h1>
+      <template v-else>
+        <!-- Progress Bar -->
+        <div class="progress-section">
+          <div class="progress-bar-bg">
+            <div 
+              class="progress-bar-fill"
+              :style="{ width: `${(currentStep / totalSteps) * 100}%` }"
+            ></div>
+          </div>
+          <div class="progress-text">Шаг {{ currentStep }} из {{ totalSteps }}</div>
+        </div>
+
+        <!-- Step 1: Philosophy -->
+        <div v-if="currentStep === 1" class="step-content step-philosophy">
+          <div class="philosophy-icon">🎮</div>
+          <h1 class="step-title">Жизнь — это игра.<br>Ты — её разработчик</h1>
         <div class="philosophy-text">
           <p>
             Система 1% — это не курс и не набор советов. Это твой персональный движок развития, 
@@ -54,8 +61,12 @@
           </div>
         </div>
 
-        <button class="btn btn-primary btn-large" @click="nextStep">
-          Начать создание своей игры
+        <button 
+          class="btn btn-primary btn-large" 
+          @click="nextStep"
+          :disabled="isSaving"
+        >
+          {{ step1ButtonText }}
         </button>
       </div>
 
@@ -108,13 +119,13 @@
         </div>
 
         <div class="step-actions">
-          <button class="btn btn-secondary" @click="prevStep">Назад</button>
+          <button class="btn btn-secondary" @click="prevStep" :disabled="isSaving">Назад</button>
           <button 
             class="btn btn-primary" 
             @click="nextStep"
-            :disabled="!isStep2Valid"
+            :disabled="!isStep2Valid || isSaving"
           >
-            Продолжить
+            {{ isSaving ? 'Сохранение...' : 'Продолжить' }}
           </button>
         </div>
       </div>
@@ -176,13 +187,13 @@
         </div>
 
         <div class="step-actions">
-          <button class="btn btn-secondary" @click="prevStep">Назад</button>
+          <button class="btn btn-secondary" @click="prevStep" :disabled="isSaving">Назад</button>
           <button 
             class="btn btn-primary" 
             @click="nextStep"
-            :disabled="!isStep3Valid"
+            :disabled="!isStep3Valid || isSaving"
           >
-            Продолжить
+            {{ isSaving ? 'Сохранение...' : 'Продолжить' }}
           </button>
         </div>
       </div>
@@ -245,28 +256,34 @@
         </label>
 
         <div class="step-actions">
-          <button class="btn btn-secondary" @click="prevStep">Назад</button>
+          <button class="btn btn-secondary" @click="prevStep" :disabled="isSaving">Назад</button>
           <button 
             class="btn btn-primary btn-large" 
             @click="completeOnboarding"
-            :disabled="!formData.acceptRules"
+            :disabled="!formData.acceptRules || isSaving"
           >
-            🚀 Приступить
+            {{ isSaving ? 'Сохранение...' : '🚀 Приступить' }}
           </button>
         </div>
       </div>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAppStore } from '../stores/app'
+import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
 
 const store = useAppStore()
 
 const currentStep = ref(1)
 const totalSteps = 4
+const isLoading = ref(true)
+const isSaving = ref(false)
+const isResuming = ref(false)
+const lastCompletedStep = ref(0)
 
 const formData = ref({
   whyHere: '',
@@ -290,9 +307,94 @@ const isStep3Valid = computed(() => {
          formData.value.whyImportant.trim().length > 20
 })
 
-function nextStep() {
+const step1ButtonText = computed(() => {
+  return isResuming.value ? 'Продолжить создание своей игры' : 'Начать создание своей игры'
+})
+
+onMounted(async () => {
+  if (DEBUG_MODE) {
+    console.log('[Onboarding] Component mounted, loading data...')
+  }
+  
+  if (SKIP_AUTH_CHECK) {
+    if (DEBUG_MODE) {
+      console.log('[Onboarding] Auth check skipped, using local data only')
+    }
+    isLoading.value = false
+    return
+  }
+  
+  try {
+    await store.loadOnboardingFromBackend()
+    
+    const onboardingData = store.onboarding.data
+    const stepCompleted = store.onboarding.stepCompleted || 0
+    
+    if (DEBUG_MODE) {
+      console.log('[Onboarding] Data loaded from backend:', {
+        stepCompleted,
+        hasData: !!onboardingData.reason_joined
+      })
+    }
+    
+    if (stepCompleted > 0) {
+      isResuming.value = true
+      lastCompletedStep.value = stepCompleted
+      
+      formData.value.whyHere = onboardingData.reason_joined || ''
+      formData.value.whatToChange = onboardingData.desired_changes || ''
+      formData.value.growthVsComfort = onboardingData.growth_comfort_zones || ''
+      formData.value.pointA = onboardingData.current_state || ''
+      formData.value.pointB = onboardingData.goal_state || ''
+      formData.value.whyImportant = onboardingData.why_important || ''
+      
+      if (DEBUG_MODE) {
+        console.log('[Onboarding] Resuming from step:', stepCompleted + 1)
+      }
+    }
+  } catch (error) {
+    if (DEBUG_MODE) {
+      console.error('[Onboarding] Failed to load data:', error)
+    }
+  } finally {
+    isLoading.value = false
+  }
+})
+
+async function nextStep() {
   if (currentStep.value < totalSteps) {
-    currentStep.value++
+    isSaving.value = true
+    
+    let dataToSave = { step_completed: currentStep.value }
+    
+    if (currentStep.value === 2) {
+      dataToSave.reason_joined = formData.value.whyHere
+      dataToSave.desired_changes = formData.value.whatToChange
+      dataToSave.growth_comfort_zones = formData.value.growthVsComfort
+    } else if (currentStep.value === 3) {
+      dataToSave.current_state = formData.value.pointA
+      dataToSave.goal_state = formData.value.pointB
+      dataToSave.why_important = formData.value.whyImportant
+    }
+    
+    if (!SKIP_AUTH_CHECK) {
+      const saved = await store.saveOnboardingToBackend(dataToSave)
+      
+      if (DEBUG_MODE) {
+        console.log('[Onboarding] Step saved:', { step: currentStep.value, saved })
+      }
+    } else if (DEBUG_MODE) {
+      console.log('[Onboarding] Step save skipped (SKIP_AUTH_CHECK=true):', dataToSave)
+    }
+    
+    isSaving.value = false
+    
+    if (isResuming.value && currentStep.value === 1) {
+      currentStep.value = lastCompletedStep.value + 1
+      isResuming.value = false
+    } else {
+      currentStep.value++
+    }
   }
 }
 
@@ -304,9 +406,31 @@ function prevStep() {
 
 async function completeOnboarding() {
   if (!formData.value.acceptRules) return
-
-  // Сохраняем данные онбординга
-  const onboardingData = {
+  
+  isSaving.value = true
+  
+  const backendData = {
+    reason_joined: formData.value.whyHere,
+    desired_changes: formData.value.whatToChange,
+    growth_comfort_zones: formData.value.growthVsComfort,
+    current_state: formData.value.pointA,
+    goal_state: formData.value.pointB,
+    why_important: formData.value.whyImportant,
+    step_completed: 4,
+    is_complete: true
+  }
+  
+  if (!SKIP_AUTH_CHECK) {
+    const saved = await store.completeOnboardingWithBackend(backendData)
+    
+    if (DEBUG_MODE) {
+      console.log('[Onboarding] Completion saved to backend:', saved)
+    }
+  } else if (DEBUG_MODE) {
+    console.log('[Onboarding] Completion save skipped (SKIP_AUTH_CHECK=true):', backendData)
+  }
+  
+  const localData = {
     whyHere: formData.value.whyHere,
     whatToChange: formData.value.whatToChange,
     growthVsComfort: formData.value.growthVsComfort,
@@ -316,15 +440,14 @@ async function completeOnboarding() {
     acceptRules: formData.value.acceptRules,
     completedAt: new Date().toISOString()
   }
-
-  // Сохраняем в store
-  store.completeOnboarding(onboardingData)
-
-  // В будущем здесь будет отправка на backend:
-  // await api.post('/onboarding', onboardingData)
   
-  // После сохранения компонент автоматически скроется
-  // и покажется Dashboard, т.к. isOnboardingCompleted станет true
+  store.completeOnboarding(localData)
+  
+  isSaving.value = false
+  
+  if (DEBUG_MODE) {
+    console.log('[Onboarding] Completed successfully')
+  }
 }
 </script>
 
@@ -347,6 +470,36 @@ async function completeOnboarding() {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  gap: 1rem;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-state p {
+  color: var(--text-secondary);
+  font-size: 1.125rem;
 }
 
 /* Progress Bar */

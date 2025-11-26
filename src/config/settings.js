@@ -22,6 +22,12 @@ export const MIN_REQUEST_INTERVAL = localSettings.MIN_REQUEST_INTERVAL ?? 500
 // Показывать ли отладочную информацию в консоли
 export const DEBUG_MODE = localSettings.DEBUG_MODE ?? false
 
+// Принудительно показывать онбординг (для тестирования и разработки)
+export const FORCE_SHOW_ONBOARDING = localSettings.FORCE_SHOW_ONBOARDING ?? false
+
+// Принудительно показывать мини-задание (для тестирования и разработки)
+export const FORCE_SHOW_MINITASK = localSettings.FORCE_SHOW_MINITASK ?? false
+
 // Логируем загрузку настроек
 if (DEBUG_MODE) {
   console.log('[Settings] Configuration loaded:', {
@@ -29,7 +35,9 @@ if (DEBUG_MODE) {
     SKIP_AUTH_CHECK,
     API_BASE_URL,
     MIN_REQUEST_INTERVAL,
-    DEBUG_MODE
+    DEBUG_MODE,
+    FORCE_SHOW_ONBOARDING,
+    FORCE_SHOW_MINITASK
   })
 }
 
@@ -39,7 +47,9 @@ export const settings = {
   SKIP_AUTH_CHECK,
   API_BASE_URL,
   MIN_REQUEST_INTERVAL,
-  DEBUG_MODE
+  DEBUG_MODE,
+  FORCE_SHOW_ONBOARDING,
+  FORCE_SHOW_MINITASK
 }
 
 export default settings

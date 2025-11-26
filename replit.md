@@ -83,3 +83,36 @@ Cookie-based session auth with CSRF protection. Auth guards in router check user
 - **Bidirectional auth redirects**: authenticated users on /auth/* (except logout) redirect to /app/, unauthenticated on /app/* redirect to /auth/login
 - **Comprehensive DEBUG_MODE logging**: Router navigation, auth checks, store user operations logged when DEBUG_MODE=true
 - **Fixed SKIP_AUTH_CHECK**: Returns mock authenticated user to allow protected route access during UI development
+
+### Onboarding Backend Integration
+- Added `FORCE_SHOW_ONBOARDING` and `FORCE_SHOW_MINITASK` flags in local_settings.js for testing
+- Added `finish_onboarding` and `finish_minitask` fields to user in store
+- Added API methods: `getOnboardingData()`, `updateOnboardingData()`
+- Store methods: `loadOnboardingFromBackend()`, `saveOnboardingToBackend()`, `updateOnboardingStep()`, `completeOnboardingWithBackend()`
+- Computed properties: `shouldShowOnboarding`, `shouldShowMiniTask`
+- Refactored Onboarding.vue:
+  - Loads onboarding data from backend on mount
+  - Pre-fills forms when resuming incomplete onboarding
+  - Saves data to backend after each step
+  - Dynamic button text ("Продолжить создание своей игры" when resuming)
+  - Loading and saving states with visual feedback
+
+### Backend API Endpoints (Onboarding)
+- `POST /api/rest/front/app/onboard/get/` - Get onboarding data
+- `POST /api/rest/front/app/onboard/update/` - Update onboarding progress
+
+### Field Mapping (Frontend → Backend)
+| Frontend | Backend |
+|----------|---------|
+| whyHere | reason_joined |
+| whatToChange | desired_changes |
+| growthVsComfort | growth_comfort_zones |
+| pointA | current_state |
+| pointB | goal_state |
+| whyImportant | why_important |
+
+### Development Flags (local_settings.js)
+```javascript
+export const FORCE_SHOW_ONBOARDING = false  // Show onboarding even if completed
+export const FORCE_SHOW_MINITASK = false    // Show mini task even if completed
+```

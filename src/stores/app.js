@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { DEBUG_MODE } from '@/config/settings.js'
+import { DEBUG_MODE, FORCE_SHOW_ONBOARDING, FORCE_SHOW_MINITASK } from '@/config/settings.js'
+import { getOnboardingData, updateOnboardingData } from '@/services/api.js'
 
 export const useAppStore = defineStore('app', () => {
   // ========================================
@@ -13,7 +14,9 @@ export const useAppStore = defineStore('app', () => {
     email: '',
     first_name: '',
     last_name: '',
-    is_authenticated: false
+    is_authenticated: false,
+    finish_onboarding: false,
+    finish_minitask: false
   })
   
   // Флаг загрузки данных пользователя
@@ -27,7 +30,9 @@ export const useAppStore = defineStore('app', () => {
         email: userData.email || '',
         first_name: userData.first_name || userData.name || '',
         last_name: userData.last_name || '',
-        is_authenticated: true
+        is_authenticated: true,
+        finish_onboarding: userData.finish_onboarding ?? false,
+        finish_minitask: userData.finish_minitask ?? false
       }
       
       if (DEBUG_MODE) {
@@ -35,7 +40,9 @@ export const useAppStore = defineStore('app', () => {
           id: user.value.id,
           email: user.value.email,
           name: user.value.first_name,
-          isAuthenticated: user.value.is_authenticated
+          isAuthenticated: user.value.is_authenticated,
+          finishOnboarding: user.value.finish_onboarding,
+          finishMinitask: user.value.finish_minitask
         })
       }
     }
@@ -52,7 +59,9 @@ export const useAppStore = defineStore('app', () => {
       email: '',
       first_name: '',
       last_name: '',
-      is_authenticated: false
+      is_authenticated: false,
+      finish_onboarding: false,
+      finish_minitask: false
     }
   }
   
@@ -161,10 +170,19 @@ export const useAppStore = defineStore('app', () => {
     }
   ])
 
-  // Onboarding data
+  // Onboarding data (расширенная структура для синхронизации с бэкендом)
   const onboarding = ref({
     completed: false,
-    data: null
+    loading: false,
+    stepCompleted: 0,
+    data: {
+      reason_joined: '',
+      desired_changes: '',
+      growth_comfort_zones: '',
+      current_state: '',
+      goal_state: '',
+      why_important: ''
+    }
   })
 
   // Mini Task data
@@ -355,9 +373,192 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
+  // ========================================
+  // ONBOARDING BACKEND METHODS
+  // ========================================
+
+  /**
+   * Загрузить данные онбординга с сервера
+   * @returns {Promise<object|null>} - Данные онбординга или null при ошибке
+   */
+  async function loadOnboardingFromBackend() {
+    if (DEBUG_MODE) {
+      console.log('[Store] Loading onboarding data from backend...')
+    }
+    
+    onboarding.value.loading = true
+    
+    try {
+      const result = await getOnboardingData()
+      
+      if (result.status === 'ok' && result.data) {
+        const data = result.data
+        
+        onboarding.value = {
+          completed: data.is_complete ?? false,
+          loading: false,
+          stepCompleted: data.step_completed ?? 0,
+          data: {
+            reason_joined: data.reason_joined || '',
+            desired_changes: data.desired_changes || '',
+            growth_comfort_zones: data.growth_comfort_zones || '',
+            current_state: data.current_state || '',
+            goal_state: data.goal_state || '',
+            why_important: data.why_important || ''
+          }
+        }
+        
+        if (DEBUG_MODE) {
+          console.log('[Store] Onboarding data loaded:', {
+            completed: onboarding.value.completed,
+            stepCompleted: onboarding.value.stepCompleted,
+            hasData: !!onboarding.value.data.reason_joined
+          })
+        }
+        
+        return onboarding.value
+      } else {
+        if (DEBUG_MODE) {
+          console.warn('[Store] Failed to load onboarding data:', result)
+        }
+        onboarding.value.loading = false
+        return null
+      }
+    } catch (error) {
+      if (DEBUG_MODE) {
+        console.error('[Store] Error loading onboarding data:', error)
+      }
+      onboarding.value.loading = false
+      return null
+    }
+  }
+
+  /**
+   * Сохранить данные онбординга на сервер
+   * @param {object} data - Данные для сохранения
+   * @returns {Promise<boolean>} - Успешность сохранения
+   */
+  async function saveOnboardingToBackend(data) {
+    if (DEBUG_MODE) {
+      console.log('[Store] Saving onboarding data to backend:', data)
+    }
+    
+    try {
+      const result = await updateOnboardingData(data)
+      
+      if (result.status === 'ok') {
+        // Обновляем локальные данные
+        if (data.step_completed !== undefined) {
+          onboarding.value.stepCompleted = data.step_completed
+        }
+        if (data.is_complete !== undefined) {
+          onboarding.value.completed = data.is_complete
+          // Обновляем флаг пользователя
+          if (data.is_complete) {
+            user.value.finish_onboarding = true
+          }
+        }
+        
+        // Обновляем данные формы
+        const fieldMappings = [
+          'reason_joined', 'desired_changes', 'growth_comfort_zones',
+          'current_state', 'goal_state', 'why_important'
+        ]
+        
+        fieldMappings.forEach(field => {
+          if (data[field] !== undefined) {
+            onboarding.value.data[field] = data[field]
+          }
+        })
+        
+        if (DEBUG_MODE) {
+          console.log('[Store] Onboarding data saved successfully')
+        }
+        
+        return true
+      } else {
+        if (DEBUG_MODE) {
+          console.warn('[Store] Failed to save onboarding data:', result)
+        }
+        return false
+      }
+    } catch (error) {
+      if (DEBUG_MODE) {
+        console.error('[Store] Error saving onboarding data:', error)
+      }
+      return false
+    }
+  }
+
+  /**
+   * Обновить шаг онбординга
+   * @param {number} step - Номер завершённого шага
+   * @returns {Promise<boolean>}
+   */
+  async function updateOnboardingStep(step) {
+    return saveOnboardingToBackend({ step_completed: step })
+  }
+
+  /**
+   * Завершить онбординг
+   * @param {object} data - Финальные данные онбординга
+   * @returns {Promise<boolean>}
+   */
+  async function completeOnboardingWithBackend(data) {
+    return saveOnboardingToBackend({
+      ...data,
+      is_complete: true
+    })
+  }
+
+  // Вычисляемое свойство: нужно ли показывать онбординг
+  const shouldShowOnboarding = computed(() => {
+    // Если включён режим принудительного показа
+    if (FORCE_SHOW_ONBOARDING) {
+      if (DEBUG_MODE) {
+        console.log('[Store] Onboarding forced to show (FORCE_SHOW_ONBOARDING=true)')
+      }
+      return true
+    }
+    
+    // Если пользователь не авторизован - не показываем
+    if (!user.value.is_authenticated) {
+      return false
+    }
+    
+    // Если онбординг не завершён - показываем
+    return !user.value.finish_onboarding && !onboarding.value.completed
+  })
+
+  // Вычисляемое свойство: нужно ли показывать мини-задание
+  const shouldShowMiniTask = computed(() => {
+    // Если включён режим принудительного показа
+    if (FORCE_SHOW_MINITASK) {
+      if (DEBUG_MODE) {
+        console.log('[Store] MiniTask forced to show (FORCE_SHOW_MINITASK=true)')
+      }
+      return true
+    }
+    
+    // Если пользователь не авторизован - не показываем
+    if (!user.value.is_authenticated) {
+      return false
+    }
+    
+    // Если онбординг не завершён - сначала его
+    if (!user.value.finish_onboarding && !onboarding.value.completed) {
+      return false
+    }
+    
+    // Если мини-задание не завершено - показываем
+    return !user.value.finish_minitask && !miniTask.value.completed
+  })
+
   function completeOnboarding(data) {
     onboarding.value = {
       completed: true,
+      loading: false,
+      stepCompleted: 4,
       data: data
     }
     saveToLocalStorage()
@@ -366,7 +567,16 @@ export const useAppStore = defineStore('app', () => {
   function resetOnboarding() {
     onboarding.value = {
       completed: false,
-      data: null
+      loading: false,
+      stepCompleted: 0,
+      data: {
+        reason_joined: '',
+        desired_changes: '',
+        growth_comfort_zones: '',
+        current_state: '',
+        goal_state: '',
+        why_important: ''
+      }
     }
     saveToLocalStorage()
   }
@@ -614,6 +824,8 @@ export const useAppStore = defineStore('app', () => {
     totalGoals,
     activeGoals,
     completedGoals,
+    shouldShowOnboarding,
+    shouldShowMiniTask,
     
     // Actions
     updateSphere,
@@ -649,6 +861,12 @@ export const useAppStore = defineStore('app', () => {
     startDecompositionLesson,
     setDecompositionStep,
     completeDecompositionLesson,
-    resetDecompositionModule
+    resetDecompositionModule,
+    
+    // Onboarding backend methods
+    loadOnboardingFromBackend,
+    saveOnboardingToBackend,
+    updateOnboardingStep,
+    completeOnboardingWithBackend
   }
 })

@@ -295,6 +295,35 @@ export async function requestPasswordRecovery(email) {
   return request('POST', '/api/rest/front/password-recovery/', { email })
 }
 
+// ========================================
+// ONBOARDING API
+// ========================================
+
+/**
+ * Получить данные онбординга пользователя
+ * @returns {Promise<object>} - Данные онбординга
+ */
+export async function getOnboardingData() {
+  return request('POST', '/api/rest/front/app/onboard/get/')
+}
+
+/**
+ * Обновить данные онбординга
+ * @param {object} data - Данные для обновления
+ * @param {string} [data.reason_joined] - Почему пришёл в Систему 1%
+ * @param {string} [data.desired_changes] - Что хочет изменить
+ * @param {string} [data.growth_comfort_zones] - Зона роста и комфорта
+ * @param {string} [data.current_state] - Точка А: где сейчас
+ * @param {string} [data.goal_state] - Точка Б: куда хочет
+ * @param {string} [data.why_important] - Почему это важно
+ * @param {number} [data.step_completed] - Завершённый шаг
+ * @param {boolean} [data.is_complete] - Онбординг завершён
+ * @returns {Promise<object>} - Результат обновления
+ */
+export async function updateOnboardingData(data) {
+  return request('POST', '/api/rest/front/app/onboard/update/', data)
+}
+
 /**
  * Проверка статуса авторизации
  * Возвращает данные пользователя если авторизован, иначе null
@@ -324,7 +353,9 @@ export const api = {
   requestPasswordRecovery,
   checkAuth,
   getCurrentUser,
-  getCsrfToken
+  getCsrfToken,
+  getOnboardingData,
+  updateOnboardingData
 }
 
 export default api
