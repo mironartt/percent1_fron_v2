@@ -130,8 +130,19 @@
                 :class="{ 'in-work': isGoalTransferred(goal.id) }"
               >
                 <td class="col-status">
-                  <span v-if="isGoalTransferred(goal.id)" class="status-badge in-work">
-                    &#x1F3AF; В работе
+                  <span
+                    v-if="isGoalCompleted(goal.id)" 
+                    class="status-badge completed"
+                  >
+                    <span class="status-icon">✓</span> Завершена
+                  </span>
+                  <span 
+                    v-else-if="isGoalTransferred(goal.id)" 
+                    class="status-badge in-work clickable"
+                    @click="removeFromWork(goal.id)"
+                    title="Нажмите, чтобы убрать из работы"
+                  >
+                    <span class="status-icon">✓</span> В работе
                   </span>
                   <label v-else class="checkbox-wrapper">
                     <input 
@@ -886,6 +897,26 @@ function toggleSummaryGoalExpand(goalId) {
 
 function isGoalTransferred(goalId) {
   return transferredGoals.value.some(g => g.sourceId === goalId)
+}
+
+function getTransferredGoalStatus(goalId) {
+  const goal = transferredGoals.value.find(g => g.sourceId === goalId)
+  return goal ? goal.status : null
+}
+
+function isGoalCompleted(goalId) {
+  return getTransferredGoalStatus(goalId) === 'completed'
+}
+
+function removeFromWork(goalId) {
+  const goal = transferredGoals.value.find(g => g.sourceId === goalId)
+  if (goal && confirm('Убрать цель из работы? Она вернётся в список для выбора.')) {
+    store.deleteGoal(goal.id)
+    const idx = selectedForTransfer.value.indexOf(goalId)
+    if (idx > -1) {
+      selectedForTransfer.value.splice(idx, 1)
+    }
+  }
 }
 
 const sphereDistribution = computed(() => {
@@ -1647,32 +1678,75 @@ function getStatusLabel(status) {
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.375rem 0.75rem;
-  border-radius: var(--radius-full);
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 8px;
   font-size: 0.8125rem;
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
 }
 
 .status-badge.in-work {
-  background: rgba(99, 102, 241, 0.15);
-  color: var(--primary-color);
+  background: #6366f1;
+  color: white;
+  box-shadow: 0 1px 4px rgba(99, 102, 241, 0.25);
   white-space: nowrap;
+}
+
+.status-badge.in-work.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.status-badge.in-work.clickable:hover {
+  background: #4f46e5;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.4);
+}
+
+.status-badge.completed {
+  background: #10b981;
+  color: white;
+  box-shadow: 0 1px 4px rgba(16, 185, 129, 0.25);
+  white-space: nowrap;
+}
+
+.status-badge .status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 10px;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  font-size: 6px;
+  font-weight: bold;
 }
 
 .goal-cell {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.375rem;
+}
+
+.goal-cell .goal-sphere-badge {
+  font-size: 0.8125rem;
+  padding: 0.125rem 0.5rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  display: inline-block;
+  width: fit-content;
 }
 
 .goal-cell .goal-text {
+  font-size: 0.9375rem;
   font-weight: 500;
   line-height: 1.4;
+  color: var(--text-primary);
 }
 
 .why-cell {
+  font-size: 0.9375rem;
   color: var(--text-secondary);
   line-height: 1.5;
 }

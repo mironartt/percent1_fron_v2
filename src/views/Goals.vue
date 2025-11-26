@@ -853,6 +853,9 @@ function updateGoalProgress(goal) {
     if (progress === 100) {
       updateData.status = 'completed'
       updateData.completedAt = new Date().toISOString()
+    } else if (goal.status === 'completed') {
+      updateData.status = 'active'
+      updateData.completedAt = null
     }
     
     store.updateGoal(goal.id, updateData)
@@ -860,6 +863,8 @@ function updateGoalProgress(goal) {
       selectedGoal.value.progress = progress
       if (progress === 100) {
         selectedGoal.value.status = 'completed'
+      } else if (selectedGoal.value.status === 'completed') {
+        selectedGoal.value.status = 'active'
       }
     }
   }
