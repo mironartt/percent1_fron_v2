@@ -158,13 +158,13 @@
             <div class="practice-steps">
               <div 
                 v-for="(step, index) in practiceSteps" 
-                :key="index"
+                :key="step.id"
                 class="practice-step"
               >
                 <span class="step-number-badge">{{ index + 1 }}</span>
                 <input 
                   type="text"
-                  v-model="practiceSteps[index]"
+                  v-model="step.title"
                   :placeholder="`Шаг ${index + 1}: что конкретно нужно сделать?`"
                   class="step-input"
                 />
@@ -254,18 +254,18 @@
           <h4>Ваши шаги:</h4>
           <div class="review-steps">
             <div 
-              v-for="(step, index) in practiceSteps.filter(s => s.trim())" 
-              :key="index"
+              v-for="(step, index) in practiceSteps.filter(s => s.title.trim())" 
+              :key="step.id"
               class="review-step-item"
             >
               <span class="step-number-badge">{{ index + 1 }}</span>
-              <span class="step-text">{{ step }}</span>
+              <span class="step-text">{{ step.title }}</span>
             </div>
           </div>
 
           <div class="review-summary">
             <p class="summary-text">
-              ✅ {{ practiceSteps.filter(s => s.trim()).length }} шагов готовы к выполнению
+              ✅ {{ practiceSteps.filter(s => s.title.trim()).length }} шагов готовы к выполнению
             </p>
           </div>
         </div>
@@ -672,7 +672,11 @@ const filteredGoals = computed(() => {
 })
 
 const selectedGoalForPractice = ref(null)
-const practiceSteps = ref(['', '', ''])
+const practiceSteps = ref([
+  { id: 'new-1', title: '', completed: false },
+  { id: 'new-2', title: '', completed: false },
+  { id: 'new-3', title: '', completed: false }
+])
 
 const chatMessagesRef = ref(null)
 const listChatMessagesRef = ref(null)
@@ -686,11 +690,11 @@ const listChatMessages = ref([
 ])
 
 const canProceedFromStep2 = computed(() => {
-  return selectedGoalForPractice.value && practiceSteps.value.filter(s => s.trim()).length >= 2
+  return selectedGoalForPractice.value && practiceSteps.value.filter(s => s.title.trim()).length >= 2
 })
 
 const canCompleteLesson = computed(() => {
-  return selectedGoalForPractice.value && practiceSteps.value.filter(s => s.trim()).length >= 2
+  return selectedGoalForPractice.value && practiceSteps.value.filter(s => s.title.trim()).length >= 2
 })
 
 function getStepLabel(step) {
@@ -720,17 +724,49 @@ function goToStep(step) {
   }
 }
 
+function saveCurrentPracticeSteps() {
+  if (selectedGoalForPractice.value) {
+    const updatedSteps = practiceSteps.value
+      .filter(s => s.title && s.title.trim())
+      .map(step => ({
+        id: step.id || ('temp-' + Date.now() + Math.random().toString(36).substr(2, 5)),
+        title: step.title,
+        completed: step.completed || false
+      }))
+    
+    const goalIndex = goals.value.findIndex(g => g.id === selectedGoalForPractice.value.id)
+    if (goalIndex !== -1) {
+      store.updateGoal(selectedGoalForPractice.value.id, { steps: updatedSteps })
+      selectedGoalForPractice.value.steps = updatedSteps
+    }
+  }
+}
+
 function selectGoalForPractice(goal) {
+  saveCurrentPracticeSteps()
+  
   selectedGoalForPractice.value = { ...goal }
   if (goal.steps && goal.steps.length > 0) {
-    practiceSteps.value = goal.steps.map(s => s.title)
+    practiceSteps.value = goal.steps.map((s, index) => ({
+      id: s.id || ('legacy-' + index),
+      title: s.title || (typeof s === 'string' ? s : ''),
+      completed: s.completed || false
+    }))
   } else {
-    practiceSteps.value = ['', '', '']
+    practiceSteps.value = [
+      { id: 'new-1', title: '', completed: false },
+      { id: 'new-2', title: '', completed: false },
+      { id: 'new-3', title: '', completed: false }
+    ]
   }
 }
 
 function addPracticeStep() {
-  practiceSteps.value.push('')
+  practiceSteps.value.push({
+    id: 'new-' + Date.now(),
+    title: '',
+    completed: false
+  })
 }
 
 function removePracticeStep(index) {
@@ -800,12 +836,15 @@ async function sendListMessage() {
 function completeLesson() {
   if (selectedGoalForPractice.value) {
     const filteredSteps = practiceSteps.value
-      .filter(s => s.trim())
-      .map((title, index) => ({
-        id: Date.now().toString() + index,
-        title,
-        completed: false
-      }))
+      .filter(s => s.title && s.title.trim())
+      .map(step => {
+        const needsNewId = !step.id || step.id.startsWith('new-') || step.id.startsWith('temp-') || step.id.startsWith('legacy-')
+        return {
+          id: needsNewId ? Date.now().toString() + Math.random().toString(36).substr(2, 9) : step.id,
+          title: step.title,
+          completed: step.completed || false
+        }
+      })
     
     store.updateGoal(selectedGoalForPractice.value.id, {
       steps: filteredSteps,
@@ -1079,8 +1118,10 @@ function formatDate(dateString) {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--bg-tertiary);
+  background: var(--bg-primary);
   color: var(--text-secondary);
+  border: 2px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1094,12 +1135,15 @@ function formatDate(dateString) {
 .progress-step.active .step-number {
   background: var(--primary-color);
   color: white;
+  border-color: var(--primary-color);
   transform: scale(1.1);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
 }
 
 .progress-step.completed .step-number {
   background: var(--success-color);
   color: white;
+  border-color: var(--success-color);
 }
 
 .step-label {
