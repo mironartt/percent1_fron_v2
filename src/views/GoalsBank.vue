@@ -81,6 +81,35 @@
           <p class="section-hint">Ваши истинные цели, прошедшие проверку</p>
         </div>
         
+        <!-- Фильтры -->
+        <div class="goals-filters">
+          <div class="filter-group">
+            <label class="filter-label">Сфера:</label>
+            <select v-model="filterSphere" class="filter-select">
+              <option value="">Все сферы</option>
+              <option v-for="sphere in lifeSpheres" :key="sphere.id" :value="sphere.id">
+                {{ sphere.icon }} {{ sphere.name }}
+              </option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Статус:</label>
+            <select v-model="filterStatus" class="filter-select">
+              <option value="">Все статусы</option>
+              <option value="available">Доступные</option>
+              <option value="in-work">В работе</option>
+              <option value="completed">Завершённые</option>
+            </select>
+          </div>
+          <button 
+            v-if="filterSphere || filterStatus" 
+            class="btn btn-sm btn-ghost"
+            @click="clearFilters"
+          >
+            ✕ Сбросить
+          </button>
+        </div>
+        
         <div class="goals-table-wrapper">
           <table class="goals-table">
             <thead>
@@ -92,7 +121,7 @@
             </thead>
             <tbody>
               <tr 
-                v-for="goal in validatedGoals" 
+                v-for="goal in filteredValidatedGoals" 
                 :key="goal.id"
                 :class="{ 'in-work': isGoalTransferred(goal.id) }"
               >
@@ -120,6 +149,7 @@
                 <td class="col-goal">
                   <div class="goal-cell">
                     <span class="goal-sphere-badge">{{ getSphereName(goal.sphereId) }}</span>
+                    <span v-if="isWeakSphere(goal.sphereId)" class="weak-sphere-indicator" title="Проседающая сфера">⚠️</span>
                     <span class="goal-text">{{ goal.text }}</span>
                   </div>
                 </td>
@@ -131,6 +161,10 @@
               </tr>
             </tbody>
           </table>
+        </div>
+        
+        <div v-if="filteredValidatedGoals.length === 0" class="empty-filter-result">
+          Нет целей, соответствующих выбранным фильтрам
         </div>
 
       </div>
@@ -734,10 +768,12 @@ const rawIdeas = computed(() => store.goalsBank.rawIdeas)
 const keyGoals = computed(() => store.goalsBank.keyGoals)
 const sphereAnalysis = computed(() => store.goalsBank.sphereAnalysis)
 const completedAt = computed(() => store.goalsBank.completedAt)
-const allGoals = computed(() => store.goals)
+const allGoals = computed(() => [...store.goals])
 
 const lessonStarted = ref(false)
 const addingNewGoal = ref(false)
+const filterSphere = ref('')
+const filterStatus = ref('')
 
 const showEmptyState = computed(() => {
   return !completedAt.value && rawIdeas.value.length === 0 && !lessonStarted.value && !addingNewGoal.value
@@ -828,6 +864,35 @@ function isGoalCompleted(goalId) {
   return getTransferredGoalStatus(goalId) === 'completed'
 }
 
+const filteredValidatedGoals = computed(() => {
+  return validatedGoals.value.filter(goal => {
+    if (filterSphere.value && goal.sphereId !== filterSphere.value) {
+      return false
+    }
+    
+    if (filterStatus.value) {
+      const transferred = isGoalTransferred(goal.id)
+      const completed = isGoalCompleted(goal.id)
+      
+      if (filterStatus.value === 'available' && (transferred || completed)) {
+        return false
+      }
+      if (filterStatus.value === 'in-work' && (!transferred || completed)) {
+        return false
+      }
+      if (filterStatus.value === 'completed' && !completed) {
+        return false
+      }
+    }
+    
+    return true
+  })
+})
+
+function clearFilters() {
+  filterSphere.value = ''
+  filterStatus.value = ''
+}
 
 const sphereDistribution = computed(() => {
   const distribution = {}
@@ -1188,6 +1253,7 @@ function completeGoalsBankHandler() {
   const selectedGoals = validatedGoals.value.filter(g => selectedGoalIds.value.includes(g.id))
   
   const goalsToTransfer = selectedGoals.map(g => ({
+    id: g.id,
     goal: g.text,
     whyImportant: g.whyImportant,
     sphere: g.sphereId,
@@ -1541,6 +1607,73 @@ function getStatusLabel(status) {
   color: var(--text-secondary);
   font-size: 0.9rem;
   font-weight: 400;
+}
+
+.goals-filters {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.filter-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  min-width: 150px;
+  cursor: pointer;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.btn-ghost:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.weak-sphere-indicator {
+  margin-left: 0.25rem;
+  cursor: help;
+}
+
+.empty-filter-result {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
 }
 
 .goals-table-wrapper {

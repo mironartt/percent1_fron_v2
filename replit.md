@@ -118,3 +118,22 @@ The application utilizes a guided, multi-step workflow pattern for key modules (
 export const FORCE_SHOW_ONBOARDING = false  // Show onboarding even if completed
 export const FORCE_SHOW_MINITASK = false    // Show mini task even if completed
 ```
+
+### Goals Bank Improvements (November 26, 2025)
+
+#### Filters and Indicators
+- Added sphere filter dropdown in "Банк идей и целей" block
+- Added status filter (Доступные, В работе, Завершённые)
+- Added weak sphere indicator (⚠️) next to goals in weak spheres
+- Filter state managed via filterSphere and filterStatus refs
+
+#### Goal Workflow Fixes
+- Fixed reactivity issue: `allGoals` now uses spread operator `[...store.goals]` to ensure proper re-render on array mutations
+- Fixed "Завершить и сохранить" button: added `sourceId` to link created goals back to original ideas
+- Goals created via lesson completion now properly show as "В работе" in the bank
+- Removed from work goals correctly return to bank with "Взять в работу" button
+
+#### Data Model
+- Goals in store.goals now have `sourceId` field linking to original idea in goalsBank.rawIdeas
+- `isGoalTransferred(ideaId)` checks if any goal has matching sourceId
+- Remove from work deletes goal from store.goals; original idea remains in rawIdeas
