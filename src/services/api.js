@@ -23,12 +23,26 @@ export function getCsrfToken() {
   return csrfToken
 }
 
+// Эндпоинты, освобождённые от rate limiting
+const RATE_LIMIT_EXEMPT = [
+  '/api/rest/front/csrf/',
+  '/api/rest/front/login/',
+  '/api/rest/front/logout/',
+  '/api/rest/front/registration/',
+  '/api/rest/front/get-user-data/'
+]
+
 /**
  * Проверка rate limiting
  * @param {string} endpoint - URL эндпоинта
  * @returns {boolean} - true если запрос разрешён
  */
 function checkRateLimit(endpoint) {
+  // Освобождённые эндпоинты
+  if (RATE_LIMIT_EXEMPT.includes(endpoint)) {
+    return true
+  }
+  
   const now = Date.now()
   const lastRequest = requestTimestamps.get(endpoint)
   
@@ -239,6 +253,9 @@ export async function checkAuth() {
   return null
 }
 
+// Алиас для совместимости
+export const getCurrentUser = checkAuth
+
 // Экспорт API как объекта для удобства
 export const api = {
   request,
@@ -249,6 +266,7 @@ export const api = {
   getUserData,
   requestPasswordRecovery,
   checkAuth,
+  getCurrentUser,
   getCsrfToken
 }
 
