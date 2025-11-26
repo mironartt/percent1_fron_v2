@@ -17,7 +17,7 @@
           class="nav-item" 
           active-class="active"
         >
-          <span class="icon">{{ item.icon }}</span>
+          <component :is="item.icon" class="icon" :size="20" :stroke-width="1.5" />
           <span>{{ item.label }}</span>
         </router-link>
 
@@ -27,24 +27,24 @@
           :class="{ 'has-lock': item.showLock }"
           :title="item.showLock ? lockTooltip : ''"
         >
-          <span class="icon">{{ item.icon }}</span>
+          <component :is="item.icon" class="icon" :size="20" :stroke-width="1.5" />
           <span>{{ item.label }}</span>
-          <span v-if="item.showLock" class="lock-icon">🔒</span>
+          <Lock v-if="item.showLock" class="lock-icon" :size="14" :stroke-width="1.5" />
         </div>
       </div>
     </nav>
 
     <div class="sidebar-footer">
       <div class="user-info" v-if="store.isAuthenticated">
-        <span class="user-avatar">👤</span>
+        <User class="user-avatar" :size="24" :stroke-width="1.5" />
         <span class="user-name">{{ store.displayName }}</span>
       </div>
       <router-link to="/app/settings" class="settings-link">
-        <span class="icon">⚙️</span>
+        <Settings class="icon" :size="20" :stroke-width="1.5" />
         <span>Настройки</span>
       </router-link>
       <router-link to="/auth/logout" class="logout-link">
-        <span class="icon">🚪</span>
+        <LogOut class="icon" :size="20" :stroke-width="1.5" />
         <span>Выйти</span>
       </router-link>
     </div>
@@ -54,6 +54,22 @@
 <script setup>
 import { computed } from 'vue'
 import { useAppStore } from '@/stores/app'
+import { 
+  BarChart3, 
+  Compass, 
+  Target, 
+  Landmark, 
+  Trophy, 
+  Calendar, 
+  Zap, 
+  Gem, 
+  Users, 
+  Award,
+  User,
+  Settings,
+  LogOut,
+  Lock
+} from 'lucide-vue-next'
 
 const store = useAppStore()
 
@@ -64,16 +80,16 @@ const hasAccess = computed(() => {
 const lockTooltip = 'Для доступа в систему необходима подписка'
 
 const menuItems = [
-  { path: '/app', icon: '📊', label: 'Главная', locked: false, showLock: false },
-  { path: '/app/who', icon: '🧭', label: 'Кто ты', locked: true, showLock: false },
-  { path: '/app/ssp', icon: '🎯', label: 'ССП', locked: false, showLock: false },
-  { path: '/app/goals-bank', icon: '🏦', label: 'Банк целей', locked: false, showLock: false },
-  { path: '/app/goals', icon: '🏆', label: 'Декомпозиция', locked: false, showLock: false },
-  { path: '/app/planning', icon: '📅', label: 'Планирование', locked: false, showLock: false },
-  { path: '/app/energy', icon: '⚡', label: 'Ресурс и энергия', locked: true, showLock: false },
-  { path: '/app/principles', icon: '💎', label: 'Принципы и убеждения', locked: true, showLock: false },
-  { path: '/app/club', icon: '👥', label: 'Клуб 1%', locked: true, showLock: false },
-  { path: '/app/achievements', icon: '🏅', label: 'Достижения', locked: true, showLock: false }
+  { path: '/app', icon: BarChart3, label: 'Главная', locked: false, showLock: false },
+  { path: '/app/who', icon: Compass, label: 'Кто ты', locked: true, showLock: false },
+  { path: '/app/ssp', icon: Target, label: 'ССП', locked: false, showLock: false },
+  { path: '/app/goals-bank', icon: Landmark, label: 'Банк целей', locked: false, showLock: false },
+  { path: '/app/goals', icon: Trophy, label: 'Декомпозиция', locked: false, showLock: false },
+  { path: '/app/planning', icon: Calendar, label: 'Планирование', locked: false, showLock: false },
+  { path: '/app/energy', icon: Zap, label: 'Ресурс и энергия', locked: true, showLock: false },
+  { path: '/app/principles', icon: Gem, label: 'Принципы и убеждения', locked: true, showLock: false },
+  { path: '/app/club', icon: Users, label: 'Клуб 1%', locked: true, showLock: false },
+  { path: '/app/achievements', icon: Award, label: 'Достижения', locked: true, showLock: false }
 ]
 </script>
 
@@ -153,14 +169,26 @@ const menuItems = [
 }
 
 .icon {
-  font-size: 1.25rem;
-  width: 1.5rem;
-  text-align: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: #9ca3af;
+  transition: color 0.2s ease;
+}
+
+.nav-item:hover .icon {
+  color: var(--text-primary);
+}
+
+.nav-item.active .icon {
+  color: var(--primary-color);
 }
 
 .lock-icon {
   margin-left: auto;
-  font-size: 0.875rem;
+  width: 14px;
+  height: 14px;
+  color: #9ca3af;
   opacity: 0.6;
 }
 
@@ -184,7 +212,9 @@ const menuItems = [
 }
 
 .user-avatar {
-  font-size: 1.5rem;
+  width: 24px;
+  height: 24px;
+  color: #9ca3af;
 }
 
 .user-name {
