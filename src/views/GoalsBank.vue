@@ -1265,6 +1265,8 @@ function completeGoalsBankHandler() {
   }))
   
   store.completeGoalsBank(goalsToTransfer)
+  
+  router.push('/app/goals')
 }
 
 function takeGoalToWork(goal) {
