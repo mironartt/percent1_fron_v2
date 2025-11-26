@@ -109,9 +109,13 @@
                   >
                     <span class="status-icon">✓</span> В работе
                   </span>
-                  <span v-else class="status-badge pending">
-                    <span class="status-icon">○</span> Истинная
-                  </span>
+                  <button 
+                    v-else 
+                    class="btn btn-sm btn-action take-to-work"
+                    @click.stop="takeGoalToWork(goal)"
+                  >
+                    ➕ Взять в работу
+                  </button>
                 </td>
                 <td class="col-goal">
                   <div class="goal-cell">
@@ -632,7 +636,7 @@
         </div>
 
         <div class="select-goals-section card">
-          <h3>📋 Твои истинные цели</h3>
+          <h3>📋 Ключевые цели</h3>
           <p class="select-hint">Отметь от 1 до 3 целей, над которыми будешь работать в ближайшее время</p>
           
           <div class="selectable-goals-list">
@@ -1187,8 +1191,22 @@ function completeGoalsBankHandler() {
   }))
   
   store.completeGoalsBank(goalsToTransfer)
+}
+
+function takeGoalToWork(goal) {
+  if (isGoalTransferred(goal.id)) return
   
-  router.push('/app/goals')
+  const goalData = {
+    title: goal.text,
+    description: goal.whyImportant || '',
+    sphereId: goal.sphereId,
+    source: 'goals-bank',
+    sourceId: goal.id,
+    threeWhys: goal.threeWhys || null,
+    steps: [],
+    progress: 0
+  }
+  store.addGoal(goalData)
 }
 
 function getSphereName(sphereId) {
@@ -1616,6 +1634,23 @@ function getStatusLabel(status) {
   background: var(--bg-tertiary);
   color: var(--text-secondary);
   white-space: nowrap;
+}
+
+.btn-action.take-to-work {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-action.take-to-work:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
 }
 
 .status-badge .status-icon {
