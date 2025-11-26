@@ -130,7 +130,18 @@
                 :class="{ 'in-work': isGoalTransferred(goal.id) }"
               >
                 <td class="col-status">
-                  <span v-if="isGoalTransferred(goal.id)" class="status-badge in-work">
+                  <span 
+                    v-if="isGoalCompleted(goal.id)" 
+                    class="status-badge completed"
+                  >
+                    <span class="status-icon">✓</span> Завершена
+                  </span>
+                  <span 
+                    v-else-if="isGoalTransferred(goal.id)" 
+                    class="status-badge in-work clickable"
+                    @click="removeFromWork(goal.id)"
+                    title="Нажмите, чтобы убрать из работы"
+                  >
                     <span class="status-icon">✓</span> В работе
                   </span>
                   <label v-else class="checkbox-wrapper">
@@ -872,6 +883,26 @@ function toggleSummaryGoalExpand(goalId) {
 
 function isGoalTransferred(goalId) {
   return transferredGoals.value.some(g => g.sourceId === goalId)
+}
+
+function getTransferredGoalStatus(goalId) {
+  const goal = transferredGoals.value.find(g => g.sourceId === goalId)
+  return goal ? goal.status : null
+}
+
+function isGoalCompleted(goalId) {
+  return getTransferredGoalStatus(goalId) === 'completed'
+}
+
+function removeFromWork(goalId) {
+  const goal = transferredGoals.value.find(g => g.sourceId === goalId)
+  if (goal && confirm('Убрать цель из работы? Она вернётся в список для выбора.')) {
+    store.deleteGoal(goal.id)
+    const idx = selectedForTransfer.value.indexOf(goalId)
+    if (idx > -1) {
+      selectedForTransfer.value.splice(idx, 1)
+    }
+  }
 }
 
 const sphereDistribution = computed(() => {
@@ -1640,15 +1671,32 @@ function getStatusLabel(status) {
   white-space: nowrap;
 }
 
+.status-badge.in-work.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.status-badge.in-work.clickable:hover {
+  background: #4f46e5;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.4);
+}
+
+.status-badge.completed {
+  background: #10b981;
+  color: white;
+  box-shadow: 0 1px 4px rgba(16, 185, 129, 0.25);
+  white-space: nowrap;
+}
+
 .status-badge .status-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   background: rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  font-size: 8px;
+  font-size: 6px;
   font-weight: bold;
 }
 
