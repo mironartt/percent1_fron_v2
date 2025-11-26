@@ -514,7 +514,6 @@
                   <input 
                     type="checkbox"
                     v-model="step.completed"
-                    @change="updateGoalProgress(selectedGoal)"
                   />
                   <span :class="{ completed: step.completed }">{{ step.title }}</span>
                 </label>

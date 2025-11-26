@@ -1225,7 +1225,15 @@ function removeKeyGoal(goalId) {
 }
 
 function completeGoalsBankHandler() {
-  store.finishGoalsBankLesson()
+  const selectedGoals = keyGoals.value
+    .filter(goal => selectedGoalIds.value.includes(goal.id))
+    .map(goal => ({
+      goal: goal.text,
+      whyImportant: goal.action,
+      sphere: goal.sphereId
+    }))
+  
+  store.completeGoalsBank(selectedGoals)
 }
 
 function getSphereName(sphereId) {
@@ -1622,11 +1630,13 @@ function getStatusLabel(status) {
   border-radius: var(--radius-full);
   font-size: 0.8125rem;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .status-badge.in-work {
   background: rgba(99, 102, 241, 0.15);
   color: var(--primary-color);
+  white-space: nowrap;
 }
 
 .goal-cell {

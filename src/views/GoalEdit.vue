@@ -97,17 +97,6 @@
               </div>
             </div>
 
-            <div class="form-group">
-              <label class="form-label">MVP (Минимально жизнеспособный результат)</label>
-              <input 
-                type="text"
-                :value="goalForm.mvp"
-                @input="updateField('mvp', $event.target.value)"
-                class="form-input"
-                placeholder="Какой минимальный результат будет успехом?"
-              />
-              <span class="form-hint">Определите самый простой вариант достижения цели — что вас уже порадует</span>
-            </div>
           </div>
         </div>
 
