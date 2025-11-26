@@ -108,54 +108,68 @@
         </div>
       </div>
 
-      <!-- Истинные цели с ответами "3 Почему" -->
-      <div class="validated-goals-summary card" v-if="validatedGoals.length > 0">
-        <h3>✅ Ваши истинные цели</h3>
-        <p class="section-hint">Нажмите на цель, чтобы увидеть ваши ответы на "3 Почему"</p>
-        <div class="goals-accordion readonly">
-          <div 
-            v-for="goal in validatedGoals" 
-            :key="goal.id"
-            class="accordion-item"
-            :class="{ expanded: expandedSummaryGoalId === goal.id }"
-          >
-            <div 
-              class="accordion-header"
-              @click="toggleSummaryGoalExpand(goal.id)"
-            >
-              <div class="accordion-title">
-                <span class="expand-arrow">{{ expandedSummaryGoalId === goal.id ? '▼' : '▶' }}</span>
-                <span class="goal-sphere-badge">{{ getSphereName(goal.sphereId) }}</span>
-                <span class="goal-name">{{ goal.text }}</span>
-              </div>
-              <span v-if="isGoalTransferred(goal.id)" class="transferred-badge">🎯 В работе</span>
-            </div>
-            <transition name="accordion-expand">
-              <div v-if="expandedSummaryGoalId === goal.id" class="accordion-content">
-                <div class="why-important-block" v-if="goal.whyImportant">
-                  <div class="answer-label">Почему важно:</div>
-                  <div class="answer-text">{{ goal.whyImportant }}</div>
-                </div>
-                <div class="three-whys-answers" v-if="goal.threeWhys">
-                  <div class="answer-item" v-if="goal.threeWhys.why1">
-                    <div class="answer-label">1. Почему эта цель мне важна?</div>
-                    <div class="answer-text">{{ goal.threeWhys.why1 }}</div>
+      <!-- Единая таблица истинных целей -->
+      <div class="goals-table-section card" v-if="validatedGoals.length > 0">
+        <div class="table-header">
+          <h3>✅ Банк идей и целей</h3>
+          <p class="section-hint">Выберите цели для отправки в декомпозицию</p>
+        </div>
+        
+        <div class="goals-table-wrapper">
+          <table class="goals-table">
+            <thead>
+              <tr>
+                <th class="col-status">Статус</th>
+                <th class="col-goal">Цель / Идея</th>
+                <th class="col-why">Почему для меня это важно?</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr 
+                v-for="goal in validatedGoals" 
+                :key="goal.id"
+                :class="{ 'in-work': isGoalTransferred(goal.id) }"
+              >
+                <td class="col-status">
+                  <span v-if="isGoalTransferred(goal.id)" class="status-badge in-work">
+                    🎯 В работе
+                  </span>
+                  <label v-else class="checkbox-wrapper">
+                    <input 
+                      type="checkbox" 
+                      :checked="selectedForTransfer.includes(goal.id)"
+                      @change="toggleGoalForTransfer(goal.id)"
+                    />
+                    <span class="checkbox-custom"></span>
+                  </label>
+                </td>
+                <td class="col-goal">
+                  <div class="goal-cell">
+                    <span class="goal-sphere-badge">{{ getSphereName(goal.sphereId) }}</span>
+                    <span class="goal-text">{{ goal.text }}</span>
                   </div>
-                  <div class="answer-item" v-if="goal.threeWhys.why2">
-                    <div class="answer-label">2. Почему именно это даст мне то, что я хочу?</div>
-                    <div class="answer-text">{{ goal.threeWhys.why2 }}</div>
+                </td>
+                <td class="col-why">
+                  <div class="why-cell">
+                    {{ getWhyImportant(goal) }}
                   </div>
-                  <div class="answer-item" v-if="goal.threeWhys.why3">
-                    <div class="answer-label">3. Почему это действительно про меня?</div>
-                    <div class="answer-text">{{ goal.threeWhys.why3 }}</div>
-                  </div>
-                </div>
-                <div v-if="!goal.threeWhys?.why1 && !goal.threeWhys?.why2 && !goal.threeWhys?.why3" class="no-answers">
-                  Ответы на "3 Почему" не были заполнены
-                </div>
-              </div>
-            </transition>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-actions" v-if="availableForTransfer.length > 0">
+          <div class="selection-info">
+            Выбрано: {{ selectedForTransfer.length }} из {{ availableForTransfer.length }}
           </div>
+          <button 
+            class="btn btn-primary"
+            :disabled="selectedForTransfer.length === 0"
+            @click="transferSelectedGoals"
+          >
+            📋 Отправить в декомпозицию ({{ selectedForTransfer.length }})
+          </button>
         </div>
       </div>
 
@@ -176,17 +190,6 @@
             <div class="rejected-reason" v-if="goal.whyImportant">
               <span class="reason-label">Изначальная причина:</span> {{ goal.whyImportant }}
             </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="key-goals-summary card" v-if="transferredGoals.length > 0">
-        <h3>🎯 Ваши ключевые цели</h3>
-        <div class="key-goals-list">
-          <div v-for="goal in transferredGoals" :key="goal.id" class="key-goal-item">
-            <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
-            <span class="goal-title">{{ goal.title }}</span>
-            <span class="goal-progress">{{ goal.progress }}%</span>
           </div>
         </div>
       </div>
@@ -805,6 +808,53 @@ const rejectedPercent = computed(() => rawIdeas.value.length > 0 ? (rejectedCoun
 
 const expandedGoalId = ref(null)
 const expandedSummaryGoalId = ref(null)
+const selectedForTransfer = ref([])
+
+const availableForTransfer = computed(() => {
+  return validatedGoals.value.filter(g => !isGoalTransferred(g.id))
+})
+
+function toggleGoalForTransfer(goalId) {
+  const index = selectedForTransfer.value.indexOf(goalId)
+  if (index === -1) {
+    selectedForTransfer.value.push(goalId)
+  } else {
+    selectedForTransfer.value.splice(index, 1)
+  }
+}
+
+function getWhyImportant(goal) {
+  if (goal.threeWhys?.why1) {
+    return goal.threeWhys.why1
+  }
+  if (goal.whyImportant) {
+    return goal.whyImportant
+  }
+  return '—'
+}
+
+function transferSelectedGoals() {
+  if (selectedForTransfer.value.length === 0) return
+  
+  selectedForTransfer.value.forEach(goalId => {
+    const goal = validatedGoals.value.find(g => g.id === goalId)
+    if (goal && !isGoalTransferred(goalId)) {
+      const goalData = {
+        title: goal.text,
+        description: goal.whyImportant || '',
+        sphereId: goal.sphereId,
+        source: 'goals-bank',
+        sourceId: goal.id,
+        threeWhys: goal.threeWhys || null,
+        steps: [],
+        progress: 0
+      }
+      store.addGoal(goalData)
+    }
+  })
+  
+  selectedForTransfer.value = []
+}
 
 function toggleSummaryGoalExpand(goalId) {
   if (expandedSummaryGoalId.value === goalId) {
@@ -1455,6 +1505,153 @@ function getStatusLabel(status) {
 
 .legend-rejected {
   color: var(--danger-color);
+}
+
+/* Goals Table Section */
+.goals-table-section {
+  margin-bottom: 2rem;
+}
+
+.goals-table-section .table-header {
+  margin-bottom: 1.5rem;
+}
+
+.goals-table-section .table-header h3 {
+  margin-bottom: 0.5rem;
+}
+
+.goals-table-wrapper {
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.goals-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.goals-table thead {
+  background: var(--bg-secondary);
+}
+
+.goals-table th {
+  text-align: left;
+  padding: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.goals-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: top;
+}
+
+.goals-table tbody tr:hover {
+  background: var(--bg-secondary);
+}
+
+.goals-table tbody tr.in-work {
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.col-status {
+  width: 100px;
+  text-align: center;
+}
+
+.col-goal {
+  width: 35%;
+}
+
+.col-why {
+  width: auto;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.checkbox-custom {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.checkbox-wrapper:hover .checkbox-custom {
+  border-color: var(--primary-color);
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked + .checkbox-custom {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked + .checkbox-custom::after {
+  content: '✓';
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.status-badge.in-work {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--primary-color);
+}
+
+.goal-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.goal-cell .goal-text {
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.why-cell {
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.table-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.selection-info {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
 }
 
 /* Validated Goals Accordion */

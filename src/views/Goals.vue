@@ -180,9 +180,9 @@
           </div>
 
           <div v-else class="no-goal-selected card">
-            <p>Выберите цель из Банка целей выше или создайте новую</p>
-            <button class="btn btn-outline" @click="createNewGoalFromLesson">
-              ➕ Создать новую цель
+            <p>Выберите цель из Банка целей выше</p>
+            <button class="btn btn-outline" @click="goToGoalsBank">
+              📋 Перейти в Банк целей
             </button>
           </div>
         </div>
@@ -294,19 +294,15 @@
           <button class="btn btn-secondary" @click="restartLesson">
             📚 Пройти урок заново
           </button>
-          <button class="btn btn-primary" @click="createNewGoal">
-            <span>➕</span>
-            Новая цель
-          </button>
         </div>
       </header>
 
       <div v-if="goals.length === 0" class="empty-goals card">
         <div class="empty-icon">🎯</div>
         <h3>У вас пока нет целей</h3>
-        <p>Начните с постановки первой цели, которая действительно важна для вас</p>
-        <button class="btn btn-primary btn-lg" @click="createNewGoal">
-          Создать первую цель
+        <p>Добавьте цели через Банк целей — там вы сможете проверить их на истинность</p>
+        <button class="btn btn-primary btn-lg" @click="goToGoalsBank">
+          Перейти в Банк целей
         </button>
       </div>
 
@@ -733,10 +729,6 @@ function removePracticeStep(index) {
   practiceSteps.value.splice(index, 1)
 }
 
-function createNewGoalFromLesson() {
-  router.push('/goals/new')
-}
-
 async function sendMessage() {
   if (!userMessage.value.trim()) return
   
@@ -829,8 +821,8 @@ function toggleSummaryGoalExpand(goalId) {
   }
 }
 
-function createNewGoal() {
-  router.push('/goals/new')
+function goToGoalsBank() {
+  router.push('/goals-bank')
 }
 
 function openGoalDetail(goal) {
