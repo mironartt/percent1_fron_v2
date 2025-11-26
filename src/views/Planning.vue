@@ -189,7 +189,6 @@
                   >
                     <div class="step-info">
                       <span class="step-title">{{ step.title }}</span>
-                      <span v-if="step.timeEstimate" class="step-time">{{ formatTimeEstimate(step.timeEstimate) }}</span>
                     </div>
                     <div class="step-schedule-controls">
                       <select 
@@ -197,7 +196,7 @@
                         @change="scheduleStep(goal.id, step, $event.target.value)"
                         class="day-select"
                       >
-                        <option value="">Выбрать день</option>
+                        <option value="">📅 День</option>
                         <option 
                           v-for="day in weekDays" 
                           :key="day.date"
@@ -206,14 +205,38 @@
                           {{ day.label }}
                         </option>
                       </select>
-                      <button 
-                        v-if="isStepScheduled(goal.id, step.id)"
-                        class="btn-icon remove"
-                        @click="unscheduleStep(goal.id, step.id)"
-                        title="Убрать из плана"
-                      >
-                        ✕
-                      </button>
+                      <template v-if="isStepScheduled(goal.id, step.id)">
+                        <select 
+                          :value="getScheduledTimeEstimate(goal.id, step.id)"
+                          @change="updateScheduledStep(goal.id, step.id, 'timeEstimate', $event.target.value)"
+                          class="time-select"
+                          title="Время выполнения"
+                        >
+                          <option value="">⏱️ Время</option>
+                          <option value="30min">30 мин</option>
+                          <option value="1h">1 час</option>
+                          <option value="2h">2 часа</option>
+                          <option value="4h">4 часа</option>
+                        </select>
+                        <select 
+                          :value="getScheduledPriority(goal.id, step.id)"
+                          @change="updateScheduledStep(goal.id, step.id, 'priority', $event.target.value)"
+                          class="priority-select"
+                          title="Приоритет"
+                        >
+                          <option value="">🎯 Приоритет</option>
+                          <option value="high">Высокий</option>
+                          <option value="medium">Средний</option>
+                          <option value="low">Низкий</option>
+                        </select>
+                        <button 
+                          class="btn-icon remove"
+                          @click="unscheduleStep(goal.id, step.id)"
+                          title="Убрать из плана"
+                        >
+                          ✕
+                        </button>
+                      </template>
                     </div>
                   </div>
                 </div>
@@ -582,6 +605,27 @@ function getScheduledDate(goalId, stepId) {
   return task?.scheduledDate || ''
 }
 
+function getScheduledTimeEstimate(goalId, stepId) {
+  const task = scheduledTasks.value.find(t => t.goalId === goalId && t.stepId === stepId)
+  return task?.timeEstimate || ''
+}
+
+function getScheduledPriority(goalId, stepId) {
+  const task = scheduledTasks.value.find(t => t.goalId === goalId && t.stepId === stepId)
+  return task?.priority || ''
+}
+
+function updateScheduledStep(goalId, stepId, field, value) {
+  ensureWeekPlan()
+  const plan = store.getCurrentWeekPlan()
+  if (!plan) return
+
+  const existingTask = scheduledTasks.value.find(t => t.goalId === goalId && t.stepId === stepId)
+  if (existingTask) {
+    store.updateScheduledTask(plan.id, existingTask.id, { [field]: value })
+  }
+}
+
 function ensureWeekPlan() {
   if (!currentPlan.value) {
     const mondayDate = weekDays.value[0]?.date
@@ -610,7 +654,9 @@ function scheduleStep(goalId, step, dateStr) {
       stepId: step.id,
       stepTitle: step.title,
       goalTitle: goal?.title || '',
-      scheduledDate: dateStr
+      scheduledDate: dateStr,
+      timeEstimate: '',
+      priority: ''
     })
   }
 }
@@ -858,66 +904,83 @@ onMounted(() => {
 
 .progress-bar {
   display: flex;
-  justify-content: center;
-  gap: 2rem;
-  margin-bottom: 2rem;
-  padding: 1rem 0;
-  position: relative;
-}
-
-.progress-bar::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 25%;
-  right: 25%;
-  height: 2px;
-  background: var(--border-color);
-  transform: translateY(-50%);
-  z-index: 0;
+  justify-content: space-between;
+  margin-bottom: 3rem;
+  padding: 0 2rem;
 }
 
 .progress-step {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  position: relative;
   cursor: pointer;
-  z-index: 1;
+  opacity: 0.5;
+  transition: all 0.3s ease;
+}
+
+.progress-step.active,
+.progress-step.completed {
+  opacity: 1;
+}
+
+.progress-step::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  right: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--border-color);
+  z-index: 0;
+}
+
+.progress-step:first-child::before {
+  display: none;
+}
+
+.progress-step.completed::before,
+.progress-step.active::before {
+  background: var(--primary-color);
 }
 
 .progress-step .step-number {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: var(--bg-secondary);
-  border: 2px solid var(--border-color);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
+  margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 1;
   transition: all 0.3s ease;
 }
 
 .progress-step.active .step-number {
   background: var(--primary-color);
-  border-color: var(--primary-color);
   color: white;
+  transform: scale(1.1);
 }
 
 .progress-step.completed .step-number {
   background: var(--success-color);
-  border-color: var(--success-color);
   color: white;
 }
 
 .step-label {
   font-size: 0.875rem;
+  text-align: center;
+  font-weight: 500;
   color: var(--text-secondary);
 }
 
 .progress-step.active .step-label {
-  color: var(--primary-color);
+  color: var(--text-primary);
   font-weight: 600;
 }
 
@@ -1127,6 +1190,8 @@ onMounted(() => {
   gap: 0.5rem;
 }
 
+.time-select,
+.priority-select,
 .day-select {
   padding: 0.375rem 0.75rem;
   border: 1px solid var(--border-color);
@@ -1134,6 +1199,26 @@ onMounted(() => {
   font-size: 0.875rem;
   background: var(--bg-primary);
   cursor: pointer;
+}
+
+.time-select {
+  min-width: 100px;
+}
+
+.priority-select {
+  min-width: 110px;
+}
+
+.priority-select option[value="high"] {
+  color: var(--danger-color);
+}
+
+.priority-select option[value="medium"] {
+  color: var(--warning-color);
+}
+
+.priority-select option[value="low"] {
+  color: var(--success-color);
 }
 
 .btn-icon.remove {
@@ -1545,6 +1630,14 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .progress-bar {
+    padding: 0 0.5rem;
+  }
+  
+  .step-label {
+    display: none;
+  }
+  
   .calendar-grid,
   .calendar-grid-full {
     grid-template-columns: 1fr;
@@ -1564,6 +1657,8 @@ onMounted(() => {
     width: 100%;
   }
   
+  .time-select,
+  .priority-select,
   .day-select {
     flex: 1;
   }

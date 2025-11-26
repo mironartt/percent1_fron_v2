@@ -45,17 +45,19 @@
     <!-- Lesson Mode -->
     <div v-else-if="showLesson" class="lesson-mode">
       <!-- Progress Bar -->
-      <div class="lesson-progress">
-        <div class="progress-steps">
-          <div 
-            v-for="step in 3" 
-            :key="step"
-            class="progress-step"
-            :class="{ active: currentStep >= step, current: currentStep === step }"
-          >
-            <span class="step-dot">{{ step }}</span>
-            <span class="step-label">{{ getStepLabel(step) }}</span>
-          </div>
+      <div class="progress-bar">
+        <div 
+          v-for="step in 3" 
+          :key="step"
+          class="progress-step"
+          :class="{ 
+            active: currentStep === step, 
+            completed: currentStep > step 
+          }"
+          @click="goToStep(step)"
+        >
+          <div class="step-number">{{ step }}</div>
+          <div class="step-label">{{ getStepLabel(step) }}</div>
         </div>
       </div>
 
@@ -712,6 +714,12 @@ function prevStep() {
   }
 }
 
+function goToStep(step) {
+  if (step >= 1 && step <= 3) {
+    store.setDecompositionStep(step)
+  }
+}
+
 function selectGoalForPractice(goal) {
   selectedGoalForPractice.value = { ...goal }
   if (goal.steps && goal.steps.length > 0) {
@@ -1024,69 +1032,86 @@ function formatDate(dateString) {
   margin: 0 auto;
 }
 
-.lesson-progress {
-  margin-bottom: 2rem;
-}
-
-.progress-steps {
+.progress-bar {
   display: flex;
-  justify-content: center;
-  gap: 2rem;
+  justify-content: space-between;
+  margin-bottom: 3rem;
+  padding: 0 2rem;
 }
 
 .progress-step {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
   position: relative;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: all 0.3s ease;
 }
 
-.progress-step:not(:last-child)::after {
+.progress-step.active,
+.progress-step.completed {
+  opacity: 1;
+}
+
+.progress-step::before {
   content: '';
   position: absolute;
-  top: 14px;
-  left: calc(100% + 0.5rem);
-  width: calc(2rem - 1rem);
+  top: 20px;
+  right: 50%;
+  width: 100%;
   height: 2px;
   background: var(--border-color);
+  z-index: 0;
 }
 
-.progress-step.active:not(:last-child)::after {
+.progress-step:first-child::before {
+  display: none;
+}
+
+.progress-step.completed::before,
+.progress-step.active::before {
   background: var(--primary-color);
 }
 
-.step-dot {
-  width: 28px;
-  height: 28px;
+.step-number {
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 0.875rem;
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 1;
   transition: all 0.3s ease;
 }
 
-.progress-step.active .step-dot {
+.progress-step.active .step-number {
   background: var(--primary-color);
   color: white;
+  transform: scale(1.1);
 }
 
-.progress-step.current .step-dot {
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+.progress-step.completed .step-number {
+  background: var(--success-color);
+  color: white;
 }
 
 .step-label {
   font-size: 0.875rem;
+  text-align: center;
+  font-weight: 500;
   color: var(--text-secondary);
 }
 
 .progress-step.active .step-label {
   color: var(--text-primary);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* Step Content */
@@ -2107,8 +2132,8 @@ function formatDate(dateString) {
     width: 100%;
   }
   
-  .progress-steps {
-    gap: 1rem;
+  .progress-bar {
+    padding: 0 0.5rem;
   }
   
   .step-label {

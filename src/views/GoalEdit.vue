@@ -148,38 +148,6 @@
                   class="step-input"
                   :placeholder="`Шаг ${index + 1}: что конкретно нужно сделать?`"
                 />
-                <div class="step-meta">
-                  <div class="step-time">
-                    <span class="meta-label">⏱️</span>
-                    <select 
-                      :value="step.timeEstimate || ''"
-                      @change="updateStep(index, 'timeEstimate', $event.target.value)"
-                      class="step-select"
-                    >
-                      <option value="">Время</option>
-                      <option value="30min">30 мин</option>
-                      <option value="1h">1 час</option>
-                      <option value="2h">2 часа</option>
-                      <option value="4h">4 часа</option>
-                    </select>
-                  </div>
-                  <div class="step-priority">
-                    <span class="meta-label">🎯</span>
-                    <select 
-                      :value="step.priority || ''"
-                      @change="updateStep(index, 'priority', $event.target.value)"
-                      class="step-select"
-                    >
-                      <option value="">Приоритет</option>
-                      <option value="high">Высокий</option>
-                      <option value="medium">Средний</option>
-                      <option value="low">Низкий</option>
-                    </select>
-                  </div>
-                  <div v-if="step.priority" class="priority-indicator" :class="step.priority">
-                    {{ getPriorityLabel(step.priority) }}
-                  </div>
-                </div>
               </div>
               <button 
                 class="btn-icon delete"
@@ -195,16 +163,6 @@
             </button>
           </div>
 
-          <div v-if="goalForm.steps.length > 0" class="steps-summary">
-            <div class="summary-item">
-              <span class="summary-label">Общее время:</span>
-              <span class="summary-value">{{ totalTimeEstimate }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="summary-label">Высокий приоритет:</span>
-              <span class="summary-value">{{ highPriorityCount }} шагов</span>
-            </div>
-          </div>
         </div>
       </div>
 

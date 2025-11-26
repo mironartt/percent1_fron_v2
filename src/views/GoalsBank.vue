@@ -74,44 +74,11 @@
         </div>
       </div>
 
-      <!-- Распределение по сферам -->
-      <div class="sphere-distribution card" v-if="rawIdeas.length > 0">
-        <h3>📊 Распределение целей по сферам</h3>
-        <div class="sphere-bars">
-          <div 
-            v-for="sphere in sphereDistribution" 
-            :key="sphere.id" 
-            class="sphere-bar-item"
-          >
-            <div class="sphere-bar-header">
-              <span class="sphere-bar-name">{{ sphere.icon }} {{ sphere.name }}</span>
-              <span class="sphere-bar-count">{{ sphere.total }} целей</span>
-            </div>
-            <div class="sphere-bar-track">
-              <div 
-                class="sphere-bar-fill validated" 
-                :style="{ width: sphere.validatedPercent + '%' }"
-                :title="sphere.validated + ' истинных'"
-              ></div>
-              <div 
-                class="sphere-bar-fill rejected" 
-                :style="{ width: sphere.rejectedPercent + '%', left: sphere.validatedPercent + '%' }"
-                :title="sphere.rejected + ' ложных'"
-              ></div>
-            </div>
-            <div class="sphere-bar-legend">
-              <span class="legend-validated">✅ {{ sphere.validated }}</span>
-              <span class="legend-rejected">❌ {{ sphere.rejected }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- Единая таблица истинных целей -->
       <div class="goals-table-section card" v-if="validatedGoals.length > 0">
         <div class="table-header">
           <h3>&#x2705; Банк идей и целей</h3>
-          <p class="section-hint">Выберите цели для отправки в декомпозицию</p>
+          <p class="section-hint">Ваши истинные цели, прошедшие проверку</p>
         </div>
         
         <div class="goals-table-wrapper">
@@ -138,20 +105,13 @@
                   </span>
                   <span 
                     v-else-if="isGoalTransferred(goal.id)" 
-                    class="status-badge in-work clickable"
-                    @click="removeFromWork(goal.id)"
-                    title="Нажмите, чтобы убрать из работы"
+                    class="status-badge in-work"
                   >
                     <span class="status-icon">✓</span> В работе
                   </span>
-                  <label v-else class="checkbox-wrapper">
-                    <input 
-                      type="checkbox" 
-                      :checked="selectedForTransfer.includes(goal.id)"
-                      @change="toggleGoalForTransfer(goal.id)"
-                    />
-                    <span class="checkbox-custom"></span>
-                  </label>
+                  <span v-else class="status-badge pending">
+                    <span class="status-icon">○</span> Истинная
+                  </span>
                 </td>
                 <td class="col-goal">
                   <div class="goal-cell">
@@ -169,18 +129,6 @@
           </table>
         </div>
 
-        <div class="table-actions" v-if="availableForTransfer.length > 0">
-          <div class="selection-info">
-            Выбрано: {{ selectedForTransfer.length }} из {{ availableForTransfer.length }}
-          </div>
-          <button 
-            class="btn btn-primary"
-            :disabled="selectedForTransfer.length === 0"
-            @click="transferSelectedGoals"
-          >
-            &#x1F4CB; Отправить в декомпозицию ({{ selectedForTransfer.length }})
-          </button>
-        </div>
       </div>
 
       <!-- Ложные цели -->
@@ -839,20 +787,6 @@ const rejectedPercent = computed(() => rawIdeas.value.length > 0 ? (rejectedCoun
 
 const expandedGoalId = ref(null)
 const expandedSummaryGoalId = ref(null)
-const selectedForTransfer = ref([])
-
-const availableForTransfer = computed(() => {
-  return validatedGoals.value.filter(g => !isGoalTransferred(g.id))
-})
-
-function toggleGoalForTransfer(goalId) {
-  const index = selectedForTransfer.value.indexOf(goalId)
-  if (index === -1) {
-    selectedForTransfer.value.push(goalId)
-  } else {
-    selectedForTransfer.value.splice(index, 1)
-  }
-}
 
 function getWhyImportant(goal) {
   if (goal.threeWhys?.why1) {
@@ -864,28 +798,6 @@ function getWhyImportant(goal) {
   return '—'
 }
 
-function transferSelectedGoals() {
-  if (selectedForTransfer.value.length === 0) return
-  
-  selectedForTransfer.value.forEach(goalId => {
-    const goal = validatedGoals.value.find(g => g.id === goalId)
-    if (goal && !isGoalTransferred(goalId)) {
-      const goalData = {
-        title: goal.text,
-        description: goal.whyImportant || '',
-        sphereId: goal.sphereId,
-        source: 'goals-bank',
-        sourceId: goal.id,
-        threeWhys: goal.threeWhys || null,
-        steps: [],
-        progress: 0
-      }
-      store.addGoal(goalData)
-    }
-  })
-  
-  selectedForTransfer.value = []
-}
 
 function toggleSummaryGoalExpand(goalId) {
   if (expandedSummaryGoalId.value === goalId) {
@@ -908,16 +820,6 @@ function isGoalCompleted(goalId) {
   return getTransferredGoalStatus(goalId) === 'completed'
 }
 
-function removeFromWork(goalId) {
-  const goal = transferredGoals.value.find(g => g.sourceId === goalId)
-  if (goal && confirm('Убрать цель из работы? Она вернётся в список для выбора.')) {
-    store.deleteGoal(goal.id)
-    const idx = selectedForTransfer.value.indexOf(goalId)
-    if (idx > -1) {
-      selectedForTransfer.value.splice(idx, 1)
-    }
-  }
-}
 
 const sphereDistribution = computed(() => {
   const distribution = {}
@@ -1707,6 +1609,12 @@ function getStatusLabel(status) {
   background: #10b981;
   color: white;
   box-shadow: 0 1px 4px rgba(16, 185, 129, 0.25);
+  white-space: nowrap;
+}
+
+.status-badge.pending {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 
