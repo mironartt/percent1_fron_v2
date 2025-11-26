@@ -141,3 +141,23 @@ export const FORCE_SHOW_MINITASK = false    // Show mini task even if completed
 #### Lesson Reset Behavior
 - `startLesson()` clears rawIdeas, resets currentStep to 1, clears completedAt, and saves to localStorage
 - Each new lesson starts with a clean slate (no previously saved goals)
+
+### UI Customization (November 26, 2025)
+
+#### Collapsible Sidebar
+- Sidebar can collapse from 280px to 72px (icons only)
+- ChevronLeft button rotates 180° when collapsed
+- Collapse state persisted in localStorage (`sidebar-collapsed`)
+- App.vue uses `has-sidebar` class for clean CSS specificity
+
+#### Dark/Light Theme Toggle
+- Theme toggle in sidebar footer with Sun/Moon icons (Lucide)
+- Dark theme via `:root.dark` CSS variables in main.css
+- System preference detected on first load (`prefers-color-scheme: dark`)
+- Theme choice saved to localStorage (`theme`)
+
+#### CSS Architecture
+- `#app.has-sidebar` applies sidebar margins only when sidebar exists
+- `#app.has-sidebar.sidebar-collapsed` reduces margin to 72px
+- Auth pages (login/register) have no sidebar, no margins
+- Mobile breakpoint (≤768px) removes all sidebar margins

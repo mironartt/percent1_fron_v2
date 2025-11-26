@@ -1,7 +1,7 @@
 <template>
-  <div id="app" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
-    <Sidebar v-if="!isAuthPage" @collapse-change="onCollapseChange" />
-    <main class="main-content" :class="{ 'full-width': isAuthPage }">
+  <div id="app" :class="appClasses">
+    <Sidebar v-if="hasSidebar" @collapse-change="onCollapseChange" />
+    <main class="main-content">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
@@ -33,6 +33,13 @@ function onCollapseChange(collapsed) {
 const isAuthPage = computed(() => {
   return route.name === 'register' || route.name === 'login'
 })
+
+const hasSidebar = computed(() => !isAuthPage.value)
+
+const appClasses = computed(() => ({
+  'has-sidebar': hasSidebar.value,
+  'sidebar-collapsed': hasSidebar.value && sidebarCollapsed.value
+}))
 </script>
 
 <style scoped>
@@ -43,24 +50,25 @@ const isAuthPage = computed(() => {
 
 .main-content {
   flex: 1;
-  margin-left: 280px;
-  padding: 2rem;
+  margin-left: 0;
+  padding: 0;
   background: var(--bg-secondary);
   transition: margin-left 0.3s ease;
 }
 
-#app.sidebar-collapsed .main-content {
+#app.has-sidebar .main-content {
+  margin-left: 280px;
+  padding: 2rem;
+}
+
+#app.has-sidebar.sidebar-collapsed .main-content {
   margin-left: 72px;
 }
 
-.main-content.full-width {
-  margin-left: 0 !important;
-  padding: 0;
-}
-
 @media (max-width: 768px) {
-  .main-content {
-    margin-left: 0 !important;
+  #app.has-sidebar .main-content,
+  #app.has-sidebar.sidebar-collapsed .main-content {
+    margin-left: 0;
     padding: 1rem;
   }
 }
