@@ -1787,9 +1787,12 @@ function getStatusLabel(status) {
 }
 
 .status-badge.in-work {
-  background: #6366f1;
+  background: var(--primary-color);
   color: white;
-  box-shadow: 0 1px 4px rgba(99, 102, 241, 0.25);
+  border: none;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
   white-space: nowrap;
 }
 
