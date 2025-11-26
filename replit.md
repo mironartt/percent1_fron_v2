@@ -137,3 +137,7 @@ export const FORCE_SHOW_MINITASK = false    // Show mini task even if completed
 - Goals in store.goals now have `sourceId` field linking to original idea in goalsBank.rawIdeas
 - `isGoalTransferred(ideaId)` checks if any goal has matching sourceId
 - Remove from work deletes goal from store.goals; original idea remains in rawIdeas
+
+#### Lesson Reset Behavior
+- `startLesson()` clears rawIdeas, resets currentStep to 1, clears completedAt, and saves to localStorage
+- Each new lesson starts with a clean slate (no previously saved goals)
