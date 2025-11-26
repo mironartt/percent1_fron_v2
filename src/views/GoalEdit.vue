@@ -97,6 +97,7 @@
               </div>
             </div>
 
+<<<<<<< HEAD
             <div class="form-group">
               <label class="form-label">MVP (Минимально жизнеспособный результат)</label>
               <input 
@@ -108,6 +109,8 @@
               />
               <span class="form-hint">Определите самый простой вариант достижения цели — что вас уже порадует</span>
             </div>
+=======
+>>>>>>> origin/main
           </div>
         </div>
 

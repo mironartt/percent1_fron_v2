@@ -180,9 +180,15 @@
           </div>
 
           <div v-else class="no-goal-selected card">
+<<<<<<< HEAD
             <p>Выберите цель из Банка целей выше или создайте новую</p>
             <button class="btn btn-outline" @click="createNewGoalFromLesson">
               ➕ Создать новую цель
+=======
+            <p>Выберите цель из Банка целей выше</p>
+            <button class="btn btn-outline" @click="goToGoalsBank">
+              📋 Перейти в Банк целей
+>>>>>>> origin/main
             </button>
           </div>
         </div>
@@ -294,19 +300,28 @@
           <button class="btn btn-secondary" @click="restartLesson">
             📚 Пройти урок заново
           </button>
+<<<<<<< HEAD
           <button class="btn btn-primary" @click="createNewGoal">
             <span>➕</span>
             Новая цель
           </button>
+=======
+>>>>>>> origin/main
         </div>
       </header>
 
       <div v-if="goals.length === 0" class="empty-goals card">
         <div class="empty-icon">🎯</div>
         <h3>У вас пока нет целей</h3>
+<<<<<<< HEAD
         <p>Начните с постановки первой цели, которая действительно важна для вас</p>
         <button class="btn btn-primary btn-lg" @click="createNewGoal">
           Создать первую цель
+=======
+        <p>Добавьте цели через Банк целей — там вы сможете проверить их на истинность</p>
+        <button class="btn btn-primary btn-lg" @click="goToGoalsBank">
+          Перейти в Банк целей
+>>>>>>> origin/main
         </button>
       </div>
 
@@ -518,7 +533,10 @@
                   <input 
                     type="checkbox"
                     v-model="step.completed"
+<<<<<<< HEAD
                     @change="updateGoalProgress(selectedGoal)"
+=======
+>>>>>>> origin/main
                   />
                   <span :class="{ completed: step.completed }">{{ step.title }}</span>
                 </label>
@@ -733,10 +751,13 @@ function removePracticeStep(index) {
   practiceSteps.value.splice(index, 1)
 }
 
+<<<<<<< HEAD
 function createNewGoalFromLesson() {
   router.push('/goals/new')
 }
 
+=======
+>>>>>>> origin/main
 async function sendMessage() {
   if (!userMessage.value.trim()) return
   
@@ -829,8 +850,13 @@ function toggleSummaryGoalExpand(goalId) {
   }
 }
 
+<<<<<<< HEAD
 function createNewGoal() {
   router.push('/goals/new')
+=======
+function goToGoalsBank() {
+  router.push('/goals-bank')
+>>>>>>> origin/main
 }
 
 function openGoalDetail(goal) {

@@ -2,6 +2,10 @@
   <div class="register-page">
     <div class="register-container">
       <div class="register-card">
+<<<<<<< HEAD
+=======
+        <!-- Header -->
+>>>>>>> origin/main
         <div class="register-header">
           <h1 class="register-logo">OnePercent</h1>
           <p class="register-subtitle">+1% каждый день к лучшей жизни</p>
@@ -9,13 +13,23 @@
           <p class="register-description">Начните путь к достижению своих целей прямо сейчас</p>
         </div>
 
+<<<<<<< HEAD
         <form @submit.prevent="handleRegister" class="register-form">
+=======
+        <!-- Form -->
+        <form @submit.prevent="handleRegister" class="register-form">
+          <!-- Name Field -->
+>>>>>>> origin/main
           <div class="form-group">
             <label for="name" class="form-label">
               <span class="label-text">Ваше имя</span>
             </label>
             <div class="input-wrapper">
+<<<<<<< HEAD
               <span class="input-icon">&#x1F464;</span>
+=======
+              <span class="input-icon">👤</span>
+>>>>>>> origin/main
               <input
                 id="name"
                 v-model="form.name"
@@ -23,19 +37,30 @@
                 class="form-input"
                 placeholder="Введите ваше имя"
                 required
+<<<<<<< HEAD
                 :disabled="isSubmitting"
+=======
+>>>>>>> origin/main
                 @blur="validateField('name')"
               />
             </div>
             <span v-if="errors.name" class="form-error">{{ errors.name }}</span>
           </div>
 
+<<<<<<< HEAD
+=======
+          <!-- Email Field -->
+>>>>>>> origin/main
           <div class="form-group">
             <label for="email" class="form-label">
               <span class="label-text">Email адрес</span>
             </label>
             <div class="input-wrapper">
+<<<<<<< HEAD
               <span class="input-icon">&#x1F4E7;</span>
+=======
+              <span class="input-icon">📧</span>
+>>>>>>> origin/main
               <input
                 id="email"
                 v-model="form.email"
@@ -43,20 +68,31 @@
                 class="form-input"
                 placeholder="your@email.com"
                 required
+<<<<<<< HEAD
                 :disabled="isSubmitting"
+=======
+>>>>>>> origin/main
                 @blur="validateField('email')"
               />
             </div>
             <span v-if="errors.email" class="form-error">{{ errors.email }}</span>
           </div>
 
+<<<<<<< HEAD
+=======
+          <!-- Password Field -->
+>>>>>>> origin/main
           <div class="form-group">
             <label for="password" class="form-label">
               <span class="label-text">Пароль</span>
               <span class="label-hint">(минимум 8 символов)</span>
             </label>
             <div class="input-wrapper">
+<<<<<<< HEAD
               <span class="input-icon">&#x1F512;</span>
+=======
+              <span class="input-icon">🔒</span>
+>>>>>>> origin/main
               <input
                 id="password"
                 v-model="form.password"
@@ -64,7 +100,10 @@
                 class="form-input"
                 placeholder="Придумайте надежный пароль"
                 required
+<<<<<<< HEAD
                 :disabled="isSubmitting"
+=======
+>>>>>>> origin/main
                 @blur="validateField('password')"
               />
               <button
@@ -73,13 +112,18 @@
                 @click="showPassword = !showPassword"
                 :title="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
               >
+<<<<<<< HEAD
                 {{ showPassword ? '&#x1F441;' : '&#x1F441;&#x200D;&#x1F5E8;' }}
+=======
+                {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+>>>>>>> origin/main
               </button>
             </div>
             <span v-if="errors.password" class="form-error">{{ errors.password }}</span>
             <span v-else class="form-hint">Используйте цифры, буквы и символы для безопасности</span>
           </div>
 
+<<<<<<< HEAD
           <div class="form-group">
             <label for="password2" class="form-label">
               <span class="label-text">Подтвердите пароль</span>
@@ -100,6 +144,9 @@
             <span v-if="errors.password2" class="form-error">{{ errors.password2 }}</span>
           </div>
 
+=======
+          <!-- Terms -->
+>>>>>>> origin/main
           <div class="form-group checkbox-group">
             <label class="checkbox-label">
               <input
@@ -110,18 +157,28 @@
               />
               <span class="checkbox-text">
                 Я согласен с 
+<<<<<<< HEAD
                 <a href="#" @click.prevent class="link">условиями использования</a>
                 и 
                 <a href="#" @click.prevent class="link">политикой конфиденциальности</a>
+=======
+                <a href="#" @click.prevent="showTerms = true" class="link">условиями использования</a>
+                и 
+                <a href="#" @click.prevent="showTerms = true" class="link">политикой конфиденциальности</a>
+>>>>>>> origin/main
               </span>
             </label>
           </div>
 
+<<<<<<< HEAD
           <div v-if="apiError" class="api-error">
             <div class="api-error-message">{{ apiError }}</div>
             <div v-if="apiErrorDetail" class="api-error-detail">{{ apiErrorDetail }}</div>
           </div>
 
+=======
+          <!-- Submit Button -->
+>>>>>>> origin/main
           <button
             type="submit"
             class="btn btn-primary btn-lg register-submit"
@@ -132,10 +189,15 @@
           </button>
         </form>
 
+<<<<<<< HEAD
+=======
+        <!-- Divider -->
+>>>>>>> origin/main
         <div class="divider">
           <span>или</span>
         </div>
 
+<<<<<<< HEAD
         <div class="social-register">
           <button type="button" class="btn-social google" disabled>
             <span class="social-icon">&#x1F535;</span>
@@ -143,46 +205,84 @@
           </button>
           <button type="button" class="btn-social telegram" disabled>
             <span class="social-icon">&#x1F4AC;</span>
+=======
+        <!-- Social Register -->
+        <div class="social-register">
+          <button type="button" class="btn-social google">
+            <span class="social-icon">🔵</span>
+            <span>Google</span>
+          </button>
+          <button type="button" class="btn-social telegram">
+            <span class="social-icon">💬</span>
+>>>>>>> origin/main
             <span>Telegram</span>
           </button>
         </div>
 
+<<<<<<< HEAD
         <div class="register-footer">
           <p>
             Уже есть аккаунт?
             <router-link to="/auth/login" class="link">Войдите здесь</router-link>
+=======
+        <!-- Footer -->
+        <div class="register-footer">
+          <p>
+            Уже есть аккаунт?
+            <router-link to="/login" class="link">Войдите здесь</router-link>
+>>>>>>> origin/main
           </p>
         </div>
       </div>
 
+<<<<<<< HEAD
+=======
+      <!-- Benefits Sidebar -->
+>>>>>>> origin/main
       <div class="register-benefits">
         <div class="benefits-header">
           <h3>Что вас ждёт в OnePercent</h3>
         </div>
         <div class="benefits-list">
           <div class="benefit-item">
+<<<<<<< HEAD
             <span class="benefit-icon">&#x1F3AF;</span>
+=======
+            <span class="benefit-icon">🎯</span>
+>>>>>>> origin/main
             <div>
               <h4>Система управления жизнью</h4>
               <p>ССП для баланса всех сфер</p>
             </div>
           </div>
           <div class="benefit-item">
+<<<<<<< HEAD
             <span class="benefit-icon">&#x1F4CA;</span>
+=======
+            <span class="benefit-icon">📊</span>
+>>>>>>> origin/main
             <div>
               <h4>Отслеживание прогресса</h4>
               <p>Графики и статистика развития</p>
             </div>
           </div>
           <div class="benefit-item">
+<<<<<<< HEAD
             <span class="benefit-icon">&#x1F4A1;</span>
+=======
+            <span class="benefit-icon">💡</span>
+>>>>>>> origin/main
             <div>
               <h4>Персональные рекомендации</h4>
               <p>Советы для улучшения на 1%</p>
             </div>
           </div>
           <div class="benefit-item">
+<<<<<<< HEAD
             <span class="benefit-icon">&#x1F465;</span>
+=======
+            <span class="benefit-icon">👥</span>
+>>>>>>> origin/main
             <div>
               <h4>Сообщество единомышленников</h4>
               <p>Клуб 1% для взаимной поддержки</p>
@@ -192,14 +292,25 @@
       </div>
     </div>
 
+<<<<<<< HEAD
+=======
+    <!-- Success Modal -->
+>>>>>>> origin/main
     <transition name="fade">
       <div v-if="showSuccess" class="modal-overlay" @click="closeSuccess">
         <div class="modal" @click.stop>
           <div class="modal-header">
+<<<<<<< HEAD
             <h2>&#x1F389; Добро пожаловать!</h2>
           </div>
           <div class="modal-body">
             <p>Ваш аккаунт успешно создан. Сейчас вас перенаправит в личный кабинет.</p>
+=======
+            <h2>🎉 Добро пожаловать!</h2>
+          </div>
+          <div class="modal-body">
+            <p>Ваш аккаунт успешно создан. Сейчас вас перенаправит на главную страницу.</p>
+>>>>>>> origin/main
           </div>
         </div>
       </div>
@@ -208,11 +319,17 @@
 </template>
 
 <script setup>
+<<<<<<< HEAD
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import api from '@/services/api.js'
 import { resetAuthCache } from '@/router/index.js'
+=======
+import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAppStore } from '../stores/app'
+>>>>>>> origin/main
 
 const router = useRouter()
 const store = useAppStore()
@@ -221,26 +338,37 @@ const form = reactive({
   name: '',
   email: '',
   password: '',
+<<<<<<< HEAD
   password2: '',
+=======
+>>>>>>> origin/main
   agreeTerms: false
 })
 
 const errors = reactive({
   name: '',
   email: '',
+<<<<<<< HEAD
   password: '',
   password2: ''
+=======
+  password: ''
+>>>>>>> origin/main
 })
 
 const showPassword = ref(false)
 const isSubmitting = ref(false)
 const showSuccess = ref(false)
+<<<<<<< HEAD
 const apiError = ref('')
 const apiErrorDetail = ref('')
 
 onMounted(async () => {
   await api.initCsrf()
 })
+=======
+const showTerms = ref(false)
+>>>>>>> origin/main
 
 function validateField(field) {
   switch (field) {
@@ -273,6 +401,7 @@ function validateField(field) {
       } else {
         errors.password = ''
       }
+<<<<<<< HEAD
       if (form.password2 && form.password !== form.password2) {
         errors.password2 = 'Пароли не совпадают'
       }
@@ -286,6 +415,8 @@ function validateField(field) {
       } else {
         errors.password2 = ''
       }
+=======
+>>>>>>> origin/main
       break
   }
 }
@@ -294,6 +425,7 @@ function validateForm() {
   validateField('name')
   validateField('email')
   validateField('password')
+<<<<<<< HEAD
   validateField('password2')
 
   return !errors.name && !errors.email && !errors.password && !errors.password2 && form.agreeTerms
@@ -304,10 +436,19 @@ async function handleRegister() {
     if (!form.agreeTerms) {
       apiError.value = 'Необходимо согласиться с условиями использования'
     }
+=======
+
+  return !errors.name && !errors.email && !errors.password && form.agreeTerms
+}
+
+function handleRegister() {
+  if (!validateForm()) {
+>>>>>>> origin/main
     return
   }
 
   isSubmitting.value = true
+<<<<<<< HEAD
   apiError.value = ''
   apiErrorDetail.value = ''
 
@@ -336,6 +477,21 @@ async function handleRegister() {
   } finally {
     isSubmitting.value = false
   }
+=======
+
+  setTimeout(() => {
+    // Update store with user name
+    store.user.name = form.name
+
+    isSubmitting.value = false
+    showSuccess.value = true
+
+    // Redirect after 2 seconds
+    setTimeout(() => {
+      router.push('/')
+    }, 2000)
+  }, 1000)
+>>>>>>> origin/main
 }
 
 function closeSuccess() {
@@ -406,7 +562,11 @@ function closeSuccess() {
 }
 
 .form-group {
+<<<<<<< HEAD
   margin-bottom: 1.25rem;
+=======
+  margin-bottom: 1.5rem;
+>>>>>>> origin/main
 }
 
 .form-label {
@@ -463,11 +623,14 @@ function closeSuccess() {
   color: var(--text-tertiary);
 }
 
+<<<<<<< HEAD
 .form-input:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
 
+=======
+>>>>>>> origin/main
 .btn-toggle-password {
   position: absolute;
   right: 0.875rem;
@@ -500,6 +663,7 @@ function closeSuccess() {
   color: var(--text-secondary);
 }
 
+<<<<<<< HEAD
 .api-error {
   padding: 0.75rem 1rem;
   margin-bottom: 1rem;
@@ -520,6 +684,8 @@ function closeSuccess() {
   opacity: 0.85;
 }
 
+=======
+>>>>>>> origin/main
 .checkbox-group {
   margin-bottom: 1.5rem;
 }
@@ -560,6 +726,7 @@ function closeSuccess() {
   width: 100%;
 }
 
+<<<<<<< HEAD
 .btn {
   display: inline-flex;
   align-items: center;
@@ -591,6 +758,8 @@ function closeSuccess() {
   padding: 1rem 1.5rem;
 }
 
+=======
+>>>>>>> origin/main
 .divider {
   display: flex;
   align-items: center;
@@ -631,16 +800,23 @@ function closeSuccess() {
   transition: all 0.2s ease;
 }
 
+<<<<<<< HEAD
 .btn-social:hover:not(:disabled) {
+=======
+.btn-social:hover {
+>>>>>>> origin/main
   border-color: var(--primary-color);
   background: var(--bg-secondary);
 }
 
+<<<<<<< HEAD
 .btn-social:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
+=======
+>>>>>>> origin/main
 .social-icon {
   font-size: 1.125rem;
 }
@@ -695,6 +871,10 @@ function closeSuccess() {
   opacity: 0.9;
 }
 
+<<<<<<< HEAD
+=======
+/* Modal */
+>>>>>>> origin/main
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -727,6 +907,7 @@ function closeSuccess() {
   line-height: 1.6;
 }
 
+<<<<<<< HEAD
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
@@ -737,6 +918,8 @@ function closeSuccess() {
   opacity: 0;
 }
 
+=======
+>>>>>>> origin/main
 @media (max-width: 968px) {
   .register-container {
     grid-template-columns: 1fr;

@@ -14,6 +14,7 @@ export default defineConfig({
     port: 5000,
     strictPort: true,
     open: false,
+<<<<<<< HEAD
     allowedHosts: true,
     proxy: {
       '/api': {
@@ -23,5 +24,8 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, '/api')
       }
     }
+=======
+    allowedHosts: true
+>>>>>>> origin/main
   }
 })

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+<<<<<<< HEAD
 import { DEBUG_MODE, FORCE_SHOW_ONBOARDING, FORCE_SHOW_MINITASK } from '@/config/settings.js'
 import { getOnboardingData, updateOnboardingData } from '@/services/api.js'
 
@@ -83,6 +84,11 @@ export const useAppStore = defineStore('app', () => {
   // ССП (Сбалансированная система показателей)
   // ========================================
   
+=======
+
+export const useAppStore = defineStore('app', () => {
+  // ССП (Сбалансированная система показателей)
+>>>>>>> origin/main
   const lifeSpheres = ref([
     {
       id: 'wealth',
@@ -170,6 +176,7 @@ export const useAppStore = defineStore('app', () => {
     }
   ])
 
+<<<<<<< HEAD
   // Onboarding data (расширенная структура для синхронизации с бэкендом)
   const onboarding = ref({
     completed: false,
@@ -183,6 +190,17 @@ export const useAppStore = defineStore('app', () => {
       goal_state: '',
       why_important: ''
     }
+=======
+  // User data
+  const user = ref({
+    name: 'Дмитрий'
+  })
+
+  // Onboarding data
+  const onboarding = ref({
+    completed: false,
+    data: null
+>>>>>>> origin/main
   })
 
   // Mini Task data
@@ -230,6 +248,20 @@ export const useAppStore = defineStore('app', () => {
     completedAt: null
   })
 
+<<<<<<< HEAD
+=======
+  // Модуль Планирования
+  const planningModule = ref({
+    lessonStarted: false,
+    lessonCompleted: false,
+    currentStep: 1,
+    completedAt: null
+  })
+
+  // Недельное планирование
+  const weeklyPlans = ref([])
+
+>>>>>>> origin/main
   // Цели
   const goals = ref([])
   
@@ -339,7 +371,13 @@ export const useAppStore = defineStore('app', () => {
       sspGoalsBank: sspGoalsBank.value,
       sspModuleCompleted: sspModuleCompleted.value,
       goalsBank: goalsBank.value,
+<<<<<<< HEAD
       decompositionModule: decompositionModule.value
+=======
+      decompositionModule: decompositionModule.value,
+      planningModule: planningModule.value,
+      weeklyPlans: weeklyPlans.value
+>>>>>>> origin/main
     }))
   }
 
@@ -367,12 +405,18 @@ export const useAppStore = defineStore('app', () => {
         if (parsed.sspModuleCompleted) sspModuleCompleted.value = parsed.sspModuleCompleted
         if (parsed.goalsBank) goalsBank.value = { ...goalsBank.value, ...parsed.goalsBank }
         if (parsed.decompositionModule) decompositionModule.value = { ...decompositionModule.value, ...parsed.decompositionModule }
+<<<<<<< HEAD
+=======
+        if (parsed.planningModule) planningModule.value = { ...planningModule.value, ...parsed.planningModule }
+        if (parsed.weeklyPlans) weeklyPlans.value = parsed.weeklyPlans
+>>>>>>> origin/main
       } catch (e) {
         console.error('Error loading data:', e)
       }
     }
   }
 
+<<<<<<< HEAD
   // ========================================
   // ONBOARDING BACKEND METHODS
   // ========================================
@@ -559,6 +603,11 @@ export const useAppStore = defineStore('app', () => {
       completed: true,
       loading: false,
       stepCompleted: 4,
+=======
+  function completeOnboarding(data) {
+    onboarding.value = {
+      completed: true,
+>>>>>>> origin/main
       data: data
     }
     saveToLocalStorage()
@@ -567,6 +616,7 @@ export const useAppStore = defineStore('app', () => {
   function resetOnboarding() {
     onboarding.value = {
       completed: false,
+<<<<<<< HEAD
       loading: false,
       stepCompleted: 0,
       data: {
@@ -577,6 +627,9 @@ export const useAppStore = defineStore('app', () => {
         goal_state: '',
         why_important: ''
       }
+=======
+      data: null
+>>>>>>> origin/main
     }
     saveToLocalStorage()
   }
@@ -711,6 +764,14 @@ export const useAppStore = defineStore('app', () => {
     saveToLocalStorage()
   }
 
+<<<<<<< HEAD
+=======
+  function finishGoalsBankLesson() {
+    goalsBank.value.completedAt = new Date().toISOString()
+    saveToLocalStorage()
+  }
+
+>>>>>>> origin/main
   function completeGoalsBank(selectedGoals = []) {
     goalsBank.value.completedAt = new Date().toISOString()
     
@@ -796,10 +857,120 @@ export const useAppStore = defineStore('app', () => {
     saveToLocalStorage()
   }
 
+<<<<<<< HEAD
+=======
+  // Planning Module methods
+  function startPlanningLesson() {
+    planningModule.value.lessonStarted = true
+    planningModule.value.currentStep = 1
+    saveToLocalStorage()
+  }
+
+  function setPlanningStep(step) {
+    planningModule.value.currentStep = step
+    saveToLocalStorage()
+  }
+
+  function completePlanningLesson() {
+    planningModule.value.lessonCompleted = true
+    planningModule.value.completedAt = new Date().toISOString()
+    saveToLocalStorage()
+  }
+
+  function resetPlanningModule() {
+    planningModule.value = {
+      lessonStarted: false,
+      lessonCompleted: false,
+      currentStep: 1,
+      completedAt: null
+    }
+    weeklyPlans.value = []
+    saveToLocalStorage()
+  }
+
+  function createWeeklyPlan(weekStart) {
+    const plan = {
+      id: Date.now().toString(),
+      weekStart: weekStart,
+      createdAt: new Date().toISOString(),
+      scheduledTasks: [],
+      completed: false
+    }
+    weeklyPlans.value.push(plan)
+    saveToLocalStorage()
+    return plan
+  }
+
+  function getCurrentWeekPlan() {
+    const today = new Date()
+    const dayOfWeek = today.getDay()
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+    const monday = new Date(today)
+    monday.setDate(today.getDate() + mondayOffset)
+    monday.setHours(0, 0, 0, 0)
+    const mondayStr = monday.toISOString().split('T')[0]
+    
+    return weeklyPlans.value.find(p => p.weekStart === mondayStr)
+  }
+
+  function addScheduledTask(planId, task) {
+    const plan = weeklyPlans.value.find(p => p.id === planId)
+    if (plan) {
+      plan.scheduledTasks.push({
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+        goalId: task.goalId,
+        stepId: task.stepId,
+        stepTitle: task.stepTitle,
+        goalTitle: task.goalTitle,
+        scheduledDate: task.scheduledDate,
+        scheduledTime: task.scheduledTime || null,
+        completed: false,
+        completedAt: null
+      })
+      saveToLocalStorage()
+    }
+  }
+
+  function updateScheduledTask(planId, taskId, updates) {
+    const plan = weeklyPlans.value.find(p => p.id === planId)
+    if (plan) {
+      const task = plan.scheduledTasks.find(t => t.id === taskId)
+      if (task) {
+        Object.assign(task, updates)
+        saveToLocalStorage()
+      }
+    }
+  }
+
+  function removeScheduledTask(planId, taskId) {
+    const plan = weeklyPlans.value.find(p => p.id === planId)
+    if (plan) {
+      const index = plan.scheduledTasks.findIndex(t => t.id === taskId)
+      if (index !== -1) {
+        plan.scheduledTasks.splice(index, 1)
+        saveToLocalStorage()
+      }
+    }
+  }
+
+  function toggleScheduledTaskComplete(planId, taskId) {
+    const plan = weeklyPlans.value.find(p => p.id === planId)
+    if (plan) {
+      const task = plan.scheduledTasks.find(t => t.id === taskId)
+      if (task) {
+        task.completed = !task.completed
+        task.completedAt = task.completed ? new Date().toISOString() : null
+        saveToLocalStorage()
+      }
+    }
+  }
+
+>>>>>>> origin/main
   // Load data on init
   loadFromLocalStorage()
 
   return {
+<<<<<<< HEAD
     // User & Auth
     user,
     userLoading,
@@ -809,6 +980,9 @@ export const useAppStore = defineStore('app', () => {
     displayName,
     
     // Core data
+=======
+    user,
+>>>>>>> origin/main
     onboarding,
     miniTask,
     payment,
@@ -818,16 +992,22 @@ export const useAppStore = defineStore('app', () => {
     goals,
     weeklyPlan,
     dailyPlan,
+<<<<<<< HEAD
     
     // Computed
+=======
+>>>>>>> origin/main
     averageScore,
     totalGoals,
     activeGoals,
     completedGoals,
+<<<<<<< HEAD
     shouldShowOnboarding,
     shouldShowMiniTask,
     
     // Actions
+=======
+>>>>>>> origin/main
     updateSphere,
     addGoal,
     updateGoal,
@@ -854,6 +1034,10 @@ export const useAppStore = defineStore('app', () => {
     deleteKeyGoal,
     updateSphereAnalysis,
     setGoalsBankStep,
+<<<<<<< HEAD
+=======
+    finishGoalsBankLesson,
+>>>>>>> origin/main
     completeGoalsBank,
     resetGoalsBank,
     resetSSPModule,
@@ -862,11 +1046,26 @@ export const useAppStore = defineStore('app', () => {
     setDecompositionStep,
     completeDecompositionLesson,
     resetDecompositionModule,
+<<<<<<< HEAD
     
     // Onboarding backend methods
     loadOnboardingFromBackend,
     saveOnboardingToBackend,
     updateOnboardingStep,
     completeOnboardingWithBackend
+=======
+    planningModule,
+    weeklyPlans,
+    startPlanningLesson,
+    setPlanningStep,
+    completePlanningLesson,
+    resetPlanningModule,
+    createWeeklyPlan,
+    getCurrentWeekPlan,
+    addScheduledTask,
+    updateScheduledTask,
+    removeScheduledTask,
+    toggleScheduledTaskComplete
+>>>>>>> origin/main
   }
 })

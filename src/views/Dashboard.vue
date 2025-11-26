@@ -1,10 +1,19 @@
 <template>
+<<<<<<< HEAD
   <!-- Show Onboarding if needed -->
   <Onboarding v-if="shouldShowOnboarding" />
 
   <!-- Show Mini Task Welcome if onboarding done but mini task not started -->
   <MiniTaskWelcome 
     v-else-if="shouldShowMiniTask && !showMiniTask" 
+=======
+  <!-- Show Onboarding if not completed -->
+  <Onboarding v-if="!isOnboardingCompleted" />
+
+  <!-- Show Mini Task Welcome if onboarding done but mini task not started -->
+  <MiniTaskWelcome 
+    v-else-if="isOnboardingCompleted && !isMiniTaskCompleted && !showMiniTask" 
+>>>>>>> origin/main
     @start="showMiniTask = true"
   />
 
@@ -166,16 +175,24 @@ import { useAppStore } from '../stores/app'
 import Onboarding from '../components/Onboarding.vue'
 import MiniTaskWelcome from '../components/MiniTaskWelcome.vue'
 import MiniTask from '../components/MiniTask.vue'
+<<<<<<< HEAD
 import { DEBUG_MODE } from '@/config/settings.js'
 
 const store = useAppStore()
 
 const userName = computed(() => store.displayName)
+=======
+
+const store = useAppStore()
+
+const userName = computed(() => store.user.name)
+>>>>>>> origin/main
 const averageScore = computed(() => store.averageScore)
 const activeGoals = computed(() => store.activeGoals)
 const completedGoals = computed(() => store.completedGoals)
 const lifeSpheres = computed(() => store.lifeSpheres)
 const dailyTasks = computed(() => store.dailyPlan.tasks)
+<<<<<<< HEAD
 
 const shouldShowOnboarding = computed(() => {
   const show = store.shouldShowOnboarding
@@ -193,6 +210,9 @@ const shouldShowMiniTask = computed(() => {
   return show
 })
 
+=======
+const isOnboardingCompleted = computed(() => store.onboarding.completed)
+>>>>>>> origin/main
 const isMiniTaskCompleted = computed(() => store.miniTask.completed)
 
 const showMiniTask = ref(false)

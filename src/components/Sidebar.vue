@@ -35,6 +35,7 @@
     </nav>
 
     <div class="sidebar-footer">
+<<<<<<< HEAD
       <div class="user-info" v-if="store.isAuthenticated">
         <span class="user-avatar">👤</span>
         <span class="user-name">{{ store.displayName }}</span>
@@ -47,23 +48,38 @@
         <span class="icon">🚪</span>
         <span>Выйти</span>
       </router-link>
+=======
+      <router-link to="/settings" class="settings-link">
+        <span class="icon">⚙️</span>
+        <span>Настройки</span>
+      </router-link>
+>>>>>>> origin/main
     </div>
   </aside>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+<<<<<<< HEAD
 import { useAppStore } from '@/stores/app'
+=======
+import { useAppStore } from '../stores/app'
+>>>>>>> origin/main
 
 const store = useAppStore()
 
 const hasAccess = computed(() => {
+<<<<<<< HEAD
+=======
+  // Доступ есть только если оплачена подписка
+>>>>>>> origin/main
   return store.payment.completed
 })
 
 const lockTooltip = 'Для доступа в систему необходима подписка'
 
 const menuItems = [
+<<<<<<< HEAD
   { path: '/app', icon: '📊', label: 'Главная', locked: false, showLock: false },
   { path: '/app/who', icon: '🧭', label: 'Кто ты', locked: true, showLock: false },
   { path: '/app/ssp', icon: '🎯', label: 'ССП', locked: false, showLock: false },
@@ -74,6 +90,18 @@ const menuItems = [
   { path: '/app/principles', icon: '💎', label: 'Принципы и убеждения', locked: true, showLock: false },
   { path: '/app/club', icon: '👥', label: 'Клуб 1%', locked: true, showLock: false },
   { path: '/app/achievements', icon: '🏅', label: 'Достижения', locked: true, showLock: false }
+=======
+  { path: '/', icon: '📊', label: 'Главная', locked: false, showLock: false },
+  { path: '/who', icon: '🧭', label: 'Кто ты', locked: true, showLock: false },
+  { path: '/ssp', icon: '🎯', label: 'ССП', locked: false, showLock: false },
+  { path: '/goals-bank', icon: '🏦', label: 'Банк целей', locked: false, showLock: false },
+  { path: '/goals', icon: '🏆', label: 'Декомпозиция', locked: false, showLock: false },
+  { path: '/planning', icon: '📅', label: 'Планирование', locked: false, showLock: false },
+  { path: '/energy', icon: '⚡', label: 'Ресурс и энергия', locked: true, showLock: false },
+  { path: '/principles', icon: '💎', label: 'Принципы и убеждения', locked: true, showLock: false },
+  { path: '/club', icon: '👥', label: 'Клуб 1%', locked: true, showLock: false },
+  { path: '/achievements', icon: '🏅', label: 'Достижения', locked: true, showLock: false }
+>>>>>>> origin/main
 ]
 </script>
 
@@ -170,6 +198,7 @@ const menuItems = [
 }
 
 .sidebar-footer {
+<<<<<<< HEAD
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--border-color);
 }
@@ -199,6 +228,17 @@ const menuItems = [
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 0;
+=======
+  padding: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.settings-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 0;
+>>>>>>> origin/main
   color: var(--text-secondary);
   text-decoration: none;
   font-weight: 500;
@@ -207,6 +247,7 @@ const menuItems = [
   cursor: pointer;
 }
 
+<<<<<<< HEAD
 .settings-link:hover,
 .logout-link:hover {
   color: var(--text-primary);
@@ -224,6 +265,13 @@ const menuItems = [
 
 .settings-link .icon,
 .logout-link .icon {
+=======
+.settings-link:hover {
+  color: var(--text-primary);
+}
+
+.settings-link .icon {
+>>>>>>> origin/main
   font-size: 1.25rem;
   width: 1.5rem;
   text-align: center;

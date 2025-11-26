@@ -52,8 +52,12 @@
     <!-- Summary State - After Completion -->
     <div v-else-if="showSummary" class="summary-section-main">
       <header class="section-header">
+<<<<<<< HEAD
         <h1>⚖️ ССП — Результаты</h1>
         <p class="subtitle">Оценка завершена {{ formatCompletedDate }}</p>
+=======
+        <h1>⚖️ Система сбалансированных показателей</h1>
+>>>>>>> origin/main
       </header>
 
       <div class="summary-grid">

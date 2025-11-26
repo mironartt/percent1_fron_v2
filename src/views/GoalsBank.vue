@@ -45,8 +45,12 @@
     <!-- Summary State - After Completion -->
     <div v-else-if="showSummary" class="summary-section">
       <header class="section-header">
+<<<<<<< HEAD
         <h1>🏦 Банк целей — Результаты</h1>
         <p class="subtitle">Урок завершён {{ formatCompletedDate }}</p>
+=======
+        <h1>🏦 Банк целей</h1>
+>>>>>>> origin/main
       </header>
 
       <div class="summary-grid">
@@ -108,6 +112,7 @@
         </div>
       </div>
 
+<<<<<<< HEAD
       <!-- Истинные цели с ответами "3 Почему" -->
       <div class="validated-goals-summary card" v-if="validatedGoals.length > 0">
         <h3>✅ Ваши истинные цели</h3>
@@ -156,6 +161,70 @@
               </div>
             </transition>
           </div>
+=======
+      <!-- Единая таблица истинных целей -->
+      <div class="goals-table-section card" v-if="validatedGoals.length > 0">
+        <div class="table-header">
+          <h3>✅ Банк идей и целей</h3>
+          <p class="section-hint">Выберите цели для отправки в декомпозицию</p>
+        </div>
+        
+        <div class="goals-table-wrapper">
+          <table class="goals-table">
+            <thead>
+              <tr>
+                <th class="col-status">Статус</th>
+                <th class="col-goal">Цель / Идея</th>
+                <th class="col-why">Почему для меня это важно?</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr 
+                v-for="goal in validatedGoals" 
+                :key="goal.id"
+                :class="{ 'in-work': isGoalTransferred(goal.id) }"
+              >
+                <td class="col-status">
+                  <span v-if="isGoalTransferred(goal.id)" class="status-badge in-work">
+                    🎯 В работе
+                  </span>
+                  <label v-else class="checkbox-wrapper">
+                    <input 
+                      type="checkbox" 
+                      :checked="selectedForTransfer.includes(goal.id)"
+                      @change="toggleGoalForTransfer(goal.id)"
+                    />
+                    <span class="checkbox-custom"></span>
+                  </label>
+                </td>
+                <td class="col-goal">
+                  <div class="goal-cell">
+                    <span class="goal-sphere-badge">{{ getSphereName(goal.sphereId) }}</span>
+                    <span class="goal-text">{{ goal.text }}</span>
+                  </div>
+                </td>
+                <td class="col-why">
+                  <div class="why-cell">
+                    {{ getWhyImportant(goal) }}
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-actions" v-if="availableForTransfer.length > 0">
+          <div class="selection-info">
+            Выбрано: {{ selectedForTransfer.length }} из {{ availableForTransfer.length }}
+          </div>
+          <button 
+            class="btn btn-primary"
+            :disabled="selectedForTransfer.length === 0"
+            @click="transferSelectedGoals"
+          >
+            📋 Отправить в декомпозицию ({{ selectedForTransfer.length }})
+          </button>
+>>>>>>> origin/main
         </div>
       </div>
 
@@ -180,6 +249,7 @@
         </div>
       </div>
 
+<<<<<<< HEAD
       <div class="key-goals-summary card" v-if="transferredGoals.length > 0">
         <h3>🎯 Ваши ключевые цели</h3>
         <div class="key-goals-list">
@@ -191,12 +261,19 @@
         </div>
       </div>
 
+=======
+>>>>>>> origin/main
       <div class="summary-actions">
         <button class="btn btn-primary btn-lg" @click="goToDecomposition">
           📋 Перейти к декомпозиции
         </button>
+<<<<<<< HEAD
         <button class="btn btn-secondary" @click="restartLesson">
           🔄 Пройти урок заново
+=======
+        <button class="btn btn-secondary" @click="addNewGoal">
+          ➕ Добавить новую цель
+>>>>>>> origin/main
         </button>
       </div>
     </div>
@@ -754,6 +831,7 @@ const completedAt = computed(() => store.goalsBank.completedAt)
 const allGoals = computed(() => store.goals)
 
 const lessonStarted = ref(false)
+<<<<<<< HEAD
 
 const showEmptyState = computed(() => {
   return !completedAt.value && rawIdeas.value.length === 0 && !lessonStarted.value
@@ -761,6 +839,16 @@ const showEmptyState = computed(() => {
 
 const showSummary = computed(() => {
   return !!completedAt.value
+=======
+const addingNewGoal = ref(false)
+
+const showEmptyState = computed(() => {
+  return !completedAt.value && rawIdeas.value.length === 0 && !lessonStarted.value && !addingNewGoal.value
+})
+
+const showSummary = computed(() => {
+  return !!completedAt.value && !addingNewGoal.value
+>>>>>>> origin/main
 })
 
 const transferredGoals = computed(() => {
@@ -787,10 +875,22 @@ function goToDecomposition() {
   router.push('/goals')
 }
 
+<<<<<<< HEAD
+=======
+function addNewGoal() {
+  addingNewGoal.value = true
+  store.setGoalsBankStep(1)
+}
+
+>>>>>>> origin/main
 function restartLesson() {
   if (confirm('Вы уверены? Все данные урока будут сброшены.')) {
     store.resetGoalsBank()
     lessonStarted.value = false
+<<<<<<< HEAD
+=======
+    addingNewGoal.value = false
+>>>>>>> origin/main
   }
 }
 
@@ -805,6 +905,56 @@ const rejectedPercent = computed(() => rawIdeas.value.length > 0 ? (rejectedCoun
 
 const expandedGoalId = ref(null)
 const expandedSummaryGoalId = ref(null)
+<<<<<<< HEAD
+=======
+const selectedForTransfer = ref([])
+
+const availableForTransfer = computed(() => {
+  return validatedGoals.value.filter(g => !isGoalTransferred(g.id))
+})
+
+function toggleGoalForTransfer(goalId) {
+  const index = selectedForTransfer.value.indexOf(goalId)
+  if (index === -1) {
+    selectedForTransfer.value.push(goalId)
+  } else {
+    selectedForTransfer.value.splice(index, 1)
+  }
+}
+
+function getWhyImportant(goal) {
+  if (goal.threeWhys?.why1) {
+    return goal.threeWhys.why1
+  }
+  if (goal.whyImportant) {
+    return goal.whyImportant
+  }
+  return '—'
+}
+
+function transferSelectedGoals() {
+  if (selectedForTransfer.value.length === 0) return
+  
+  selectedForTransfer.value.forEach(goalId => {
+    const goal = validatedGoals.value.find(g => g.id === goalId)
+    if (goal && !isGoalTransferred(goalId)) {
+      const goalData = {
+        title: goal.text,
+        description: goal.whyImportant || '',
+        sphereId: goal.sphereId,
+        source: 'goals-bank',
+        sourceId: goal.id,
+        threeWhys: goal.threeWhys || null,
+        steps: [],
+        progress: 0
+      }
+      store.addGoal(goalData)
+    }
+  })
+  
+  selectedForTransfer.value = []
+}
+>>>>>>> origin/main
 
 function toggleSummaryGoalExpand(goalId) {
   if (expandedSummaryGoalId.value === goalId) {
@@ -1169,6 +1319,7 @@ function removeKeyGoal(goalId) {
 }
 
 function completeGoalsBankHandler() {
+<<<<<<< HEAD
   if (selectedGoalIds.value.length < 1) {
     alert('Выберите хотя бы одну цель')
     return
@@ -1186,6 +1337,17 @@ function completeGoalsBankHandler() {
   store.completeGoalsBank(goalsToTransfer)
   
   router.push('/goals')
+=======
+  const selectedGoals = keyGoals.value
+    .filter(goal => selectedGoalIds.value.includes(goal.id))
+    .map(goal => ({
+      goal: goal.text,
+      whyImportant: goal.action,
+      sphere: goal.sphereId
+    }))
+  
+  store.completeGoalsBank(selectedGoals)
+>>>>>>> origin/main
 }
 
 function getSphereName(sphereId) {
@@ -1457,6 +1619,172 @@ function getStatusLabel(status) {
   color: var(--danger-color);
 }
 
+<<<<<<< HEAD
+=======
+/* Goals Table Section */
+.goals-table-section {
+  margin-bottom: 2rem;
+}
+
+.goals-table-section .table-header {
+  display: block;
+  background: none;
+  color: var(--text-primary);
+  padding: 0;
+  margin-bottom: 1.5rem;
+}
+
+.goals-table-section .table-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.goals-table-section .table-header .section-hint {
+  margin-bottom: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+.goals-table-wrapper {
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.goals-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.goals-table thead {
+  background: var(--bg-secondary);
+}
+
+.goals-table th {
+  text-align: left;
+  padding: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.goals-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: top;
+}
+
+.goals-table tbody tr:hover {
+  background: var(--bg-secondary);
+}
+
+.goals-table tbody tr.in-work {
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.col-status {
+  width: 100px;
+  text-align: center;
+}
+
+.col-goal {
+  width: 35%;
+}
+
+.col-why {
+  width: auto;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.checkbox-custom {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.checkbox-wrapper:hover .checkbox-custom {
+  border-color: var(--primary-color);
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked + .checkbox-custom {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked + .checkbox-custom::after {
+  content: '✓';
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.status-badge.in-work {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--primary-color);
+  white-space: nowrap;
+}
+
+.goal-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.goal-cell .goal-text {
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.why-cell {
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.table-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.selection-info {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+>>>>>>> origin/main
 /* Validated Goals Accordion */
 .validated-goals-summary {
   margin-bottom: 2rem;

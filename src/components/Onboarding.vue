@@ -1,6 +1,7 @@
 <template>
   <div class="onboarding-overlay">
     <div class="onboarding-container">
+<<<<<<< HEAD
       <!-- Loading State -->
       <div v-if="isLoading" class="loading-state">
         <div class="loading-spinner"></div>
@@ -23,6 +24,23 @@
         <div v-if="currentStep === 1" class="step-content step-philosophy">
           <div class="philosophy-icon">🎮</div>
           <h1 class="step-title">Жизнь — это игра.<br>Ты — её разработчик</h1>
+=======
+      <!-- Progress Bar -->
+      <div class="progress-section">
+        <div class="progress-bar-bg">
+          <div 
+            class="progress-bar-fill"
+            :style="{ width: `${(currentStep / totalSteps) * 100}%` }"
+          ></div>
+        </div>
+        <div class="progress-text">Шаг {{ currentStep }} из {{ totalSteps }}</div>
+      </div>
+
+      <!-- Step 1: Philosophy -->
+      <div v-if="currentStep === 1" class="step-content step-philosophy">
+        <div class="philosophy-icon">🎮</div>
+        <h1 class="step-title">Жизнь — это игра.<br>Ты — её разработчик</h1>
+>>>>>>> origin/main
         <div class="philosophy-text">
           <p>
             Система 1% — это не курс и не набор советов. Это твой персональный движок развития, 
@@ -61,12 +79,17 @@
           </div>
         </div>
 
+<<<<<<< HEAD
         <button 
           class="btn btn-primary btn-large" 
           @click="nextStep"
           :disabled="isSaving"
         >
           {{ step1ButtonText }}
+=======
+        <button class="btn btn-primary btn-large" @click="nextStep">
+          Начать создание своей игры
+>>>>>>> origin/main
         </button>
       </div>
 
@@ -119,6 +142,7 @@
         </div>
 
         <div class="step-actions">
+<<<<<<< HEAD
           <button class="btn btn-secondary" @click="prevStep" :disabled="isSaving">Назад</button>
           <button 
             class="btn btn-primary" 
@@ -126,6 +150,15 @@
             :disabled="!isStep2Valid || isSaving"
           >
             {{ isSaving ? 'Сохранение...' : 'Продолжить' }}
+=======
+          <button class="btn btn-secondary" @click="prevStep">Назад</button>
+          <button 
+            class="btn btn-primary" 
+            @click="nextStep"
+            :disabled="!isStep2Valid"
+          >
+            Продолжить
+>>>>>>> origin/main
           </button>
         </div>
       </div>
@@ -187,6 +220,7 @@
         </div>
 
         <div class="step-actions">
+<<<<<<< HEAD
           <button class="btn btn-secondary" @click="prevStep" :disabled="isSaving">Назад</button>
           <button 
             class="btn btn-primary" 
@@ -194,6 +228,15 @@
             :disabled="!isStep3Valid || isSaving"
           >
             {{ isSaving ? 'Сохранение...' : 'Продолжить' }}
+=======
+          <button class="btn btn-secondary" @click="prevStep">Назад</button>
+          <button 
+            class="btn btn-primary" 
+            @click="nextStep"
+            :disabled="!isStep3Valid"
+          >
+            Продолжить
+>>>>>>> origin/main
           </button>
         </div>
       </div>
@@ -256,6 +299,7 @@
         </label>
 
         <div class="step-actions">
+<<<<<<< HEAD
           <button class="btn btn-secondary" @click="prevStep" :disabled="isSaving">Назад</button>
           <button 
             class="btn btn-primary btn-large" 
@@ -267,23 +311,43 @@
         </div>
       </div>
       </template>
+=======
+          <button class="btn btn-secondary" @click="prevStep">Назад</button>
+          <button 
+            class="btn btn-primary btn-large" 
+            @click="completeOnboarding"
+            :disabled="!formData.acceptRules"
+          >
+            🚀 Приступить
+          </button>
+        </div>
+      </div>
+>>>>>>> origin/main
     </div>
   </div>
 </template>
 
 <script setup>
+<<<<<<< HEAD
 import { ref, computed, onMounted } from 'vue'
 import { useAppStore } from '../stores/app'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
+=======
+import { ref, computed } from 'vue'
+import { useAppStore } from '../stores/app'
+>>>>>>> origin/main
 
 const store = useAppStore()
 
 const currentStep = ref(1)
 const totalSteps = 4
+<<<<<<< HEAD
 const isLoading = ref(true)
 const isSaving = ref(false)
 const isResuming = ref(false)
 const lastCompletedStep = ref(0)
+=======
+>>>>>>> origin/main
 
 const formData = ref({
   whyHere: '',
@@ -307,6 +371,7 @@ const isStep3Valid = computed(() => {
          formData.value.whyImportant.trim().length > 20
 })
 
+<<<<<<< HEAD
 const step1ButtonText = computed(() => {
   return isResuming.value ? 'Продолжить создание своей игры' : 'Начать создание своей игры'
 })
@@ -395,6 +460,11 @@ async function nextStep() {
     } else {
       currentStep.value++
     }
+=======
+function nextStep() {
+  if (currentStep.value < totalSteps) {
+    currentStep.value++
+>>>>>>> origin/main
   }
 }
 
@@ -406,6 +476,7 @@ function prevStep() {
 
 async function completeOnboarding() {
   if (!formData.value.acceptRules) return
+<<<<<<< HEAD
   
   isSaving.value = true
   
@@ -431,6 +502,11 @@ async function completeOnboarding() {
   }
   
   const localData = {
+=======
+
+  // Сохраняем данные онбординга
+  const onboardingData = {
+>>>>>>> origin/main
     whyHere: formData.value.whyHere,
     whatToChange: formData.value.whatToChange,
     growthVsComfort: formData.value.growthVsComfort,
@@ -440,6 +516,7 @@ async function completeOnboarding() {
     acceptRules: formData.value.acceptRules,
     completedAt: new Date().toISOString()
   }
+<<<<<<< HEAD
   
   store.completeOnboarding(localData)
   
@@ -448,6 +525,17 @@ async function completeOnboarding() {
   if (DEBUG_MODE) {
     console.log('[Onboarding] Completed successfully')
   }
+=======
+
+  // Сохраняем в store
+  store.completeOnboarding(onboardingData)
+
+  // В будущем здесь будет отправка на backend:
+  // await api.post('/onboarding', onboardingData)
+  
+  // После сохранения компонент автоматически скроется
+  // и покажется Dashboard, т.к. isOnboardingCompleted станет true
+>>>>>>> origin/main
 }
 </script>
 
@@ -472,6 +560,7 @@ async function completeOnboarding() {
   flex-direction: column;
 }
 
+<<<<<<< HEAD
 /* Loading State */
 .loading-state {
   display: flex;
@@ -502,6 +591,8 @@ async function completeOnboarding() {
   font-size: 1.125rem;
 }
 
+=======
+>>>>>>> origin/main
 /* Progress Bar */
 .progress-section {
   margin-bottom: 3rem;
