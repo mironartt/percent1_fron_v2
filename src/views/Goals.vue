@@ -1173,6 +1173,7 @@ function formatDate(dateString) {
 .step-content h2 {
   font-size: 1.75rem;
   margin-bottom: 1rem;
+  text-align: center;
 }
 
 .intro-text {
@@ -1180,6 +1181,9 @@ function formatDate(dateString) {
   color: var(--text-secondary);
   margin-bottom: 2rem;
   max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
 }
 
 /* Theory Section */
@@ -1194,6 +1198,7 @@ function formatDate(dateString) {
 .rules-section h3 {
   font-size: 1.25rem;
   margin-bottom: 1rem;
+  text-align: center;
 }
 
 .rule-cards {
