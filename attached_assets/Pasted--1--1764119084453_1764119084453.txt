@@ -1,0 +1,532 @@
+Так.
+Давай займемся доработкой кода.
+Есть ряд задач и моментов в работе с кодом.
+
+- 1. разработка происходит локально, поэтому фронт и бэк могут быть разнесены в разных местах, и нужно заложить это в конфгие, полагаю будет что-то вроде доработки `vite.config.js`:
+```
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import path from 'path'
+
+export default defineConfig({
+  plugins: [vue()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+  server: {
+    host: '0.0.0.0',
+    port: 5000,
+    strictPort: true,
+    open: false,
+    allowedHosts: true,
+    proxy: {  // Добавь это
+      '/api': {  // Все запросы на /api/... проксируются на бэк
+        target: 'http://127.0.0.1:8017',  // Твой Django порт
+        changeOrigin: true,  // Меняем origin на target, чтобы избежать CORS
+        secure: false,  // Для HTTP в dev (в прод HTTPS)
+        rewrite: (path) => path.replace(/^\/api/, '/api')  // Не меняем префикс, если нужно — адаптируй
+      }
+    }
+  }
+})
+```
+
+- 2. нужно скорректрировать роуты:
+-- главный путь оставить пока пустым (заложить какой нибудь шаблон простенькой страницы лендинга, доработаем позже).
+-- роуты в личном кабинете должны начинаться с `/app/....` для них обязательно быть авторизованным.
+-- роуты авторизации должны начинаться с `/auth/....`. Они доступны без авторизации.
+
+Итого получаются роуты:
+- `/` - главная страница, т.е. лендинг - ее нужно следать (описал выше)
+- `/app/` - это текущий роут `'dashboard'`
+- `/app/ssp` - это текущий роут `'ssp'`
+- `/app/goals` - это текущий роут `'goals'`
+- `/app/goals/new` - это текущий роут `'goal-new'`
+- `/app/goals/:id` - это текущий роут `'goal-edit'` (позже будет доработан)
+- `/app/goals-bank` - это текущий роут `'goals-bank'`
+- `/app/planner` - это текущий роут `planner`
+- `/app/settings` - это текущий роут `settings`
+- `/app/club` - это текущий роут `club`
+- `/auth/login` - это текущий роут `'login'`
+- `/auth/register` - это текущий роут `'register'`
+- `/auth/recovery` - это новый роут для которого нужно будет сделать и страницу. Это будет: страница восстановления пароля.
+- `/auth/logout` - это новый роут - выход из ЛК пользователя.
+
+Как писал выше, для некоторых роутов (для большинства), нужно быть авторизованным, т.е. просто так на них не попасть.
+Этот момент может затруднить разработку фронта, поэтому нужно придумать какой-нибудь флаг в настройках, чтобы инстанс проекта понимал находится ли он в прод среде или в разработке.
+И исходя из этого, можно было указать обязательно но ли проверять авторизацию или нет для открытия страницы.
+
+К примеру, в похожей ситуации для бэка, у меня в django есть файл `settings.py`, он в гите, рядом с ним я создал файл `local_settings.py` и он вне гита, свой для каждого инстанса проекта.
+В `settings.py` я указал:
+```
+try:
+    from .local_settings import *
+except ImportError:
+    pass
+```
+Т.е. импортировал значения переменных из файла локальных настроек и переопределил если они уже были указаны ранее.
+Нужно сделать что-то похожее для данного проекта.
+
+- 3. нужно придерживаться формата разработки с дроблением элементов на компоненты и их повторным использованием. Т.е. не нужно делать лишние дубли кода, лучше вынести их в отдельные части и использовать, если это возможно.
+
+- 4. нужно сделать компонент для общения с rest-api бэкенда.
+Часть общего описания REST-API бэка:
+```
+Описание и спецификация API
+
+# Авторизация
+
+Доступны следующие методы авторизации:
+
+1. **Авторизация по токену**:
+   - Отправьте заголовок `Authorization` с вашим токеном в формате `Bearer <ваш_токен>`.
+   - Пример: `Authorization: Bearer your_token_here`
+Токен выдается через поддержку.
+
+2. **Сеансовая авторизация**:
+   - Используйте сессионную куки, полученную после авторизации на сайте.
+
+**Публичные эндпоинты**:
+
+Некоторые эндпоинты доступны без авторизации. В документации к таким эндпоинтам будет указано, что аутентификация не требуется.
+
+
+# Общие ошибки
+
+Все методы могут возвращать следующие общие ошибки:
+
+| Код | Описание |
+|-----|----------|
+| 400 | Ошибка валидации входных данных |
+| 401 | Необходима авторизация |
+| 403 | Нет доступа к данному разделу |
+| 404 | Запрашиваемая страница/метод/объект не найден |
+| 405 | Нет доступа к данному методу |
+| 429 | Превышен лимит запросов |
+| 500 | Внутренняя ошибка сервера |
+```
+В нашем случае фронт будет просто всегда использовать куку авторизации без токенов.
+
+- 5. реализовать использование эндпоинтов для страниц. Далее приложу общую схему текущего REST-API и далее детальней про каждый.
+Общая схема REST-API:
+```
+openapi: 3.0.3
+info:
+  title: Front API документация
+  version: 1.0.0
+  description: |+
+    Описание и спецификация API
+
+    # Авторизация
+
+    Доступны следующие методы авторизации:
+
+    1. **Авторизация по токену**:
+       - Отправьте заголовок `Authorization` с вашим токеном в формате `Bearer <ваш_токен>`.
+       - Пример: `Authorization: Bearer your_token_here`
+    Токен выдается через поддержку.
+
+    2. **Сеансовая авторизация**:
+       - Используйте сессионную куки, полученную после авторизации на сайте.
+
+    **Публичные эндпоинты**:
+
+    Некоторые эндпоинты доступны без авторизации. В документации к таким эндпоинтам будет указано, что аутентификация не требуется.
+
+
+    # Общие ошибки
+
+    Все методы могут возвращать следующие общие ошибки:
+
+    | Код | Описание |
+    |-----|----------|
+    | 400 | Ошибка валидации входных данных |
+    | 401 | Необходима авторизация |
+    | 403 | Нет доступа к данному разделу |
+    | 404 | Запрашиваемая страница/метод/объект не найден |
+    | 405 | Нет доступа к данному методу |
+    | 429 | Превышен лимит запросов |
+    | 500 | Внутренняя ошибка сервера |
+
+paths:
+  /api/rest/front/api/rest/front/csrf/:
+    get:
+      operationId: 01_rest_csrf
+      description: sdfdsf
+      summary: Обновление csrf
+      tags:
+      - Обновление CSRF
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: 01_rest_csrf_2
+      description: sdfdsf
+      summary: Обновление csrf
+      tags:
+      - Обновление CSRF
+      responses:
+        '200':
+          description: No response body
+  /api/rest/front/registration/:
+    post:
+      operationId: 02_rest_registration
+      description: |-
+        ..
+
+        **Минимальный интервал между запросами:** 0.1 сек.
+      summary: Регистрация пользователя
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequestRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetUserDataResponse'
+          description: ''
+  /api/rest/front/login/:
+    post:
+      operationId: 03_login
+      description: |-
+        ..
+
+        **Минимальный интервал между запросами:** 0.1 сек.
+      summary: Авторизация пользователя
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequestRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginGetUserDataResponse'
+          description: ''
+  /api/rest/front/logout/:
+    post:
+      operationId: 04_logout
+      description: |-
+        ..
+
+        **Минимальный интервал между запросами:** 0.1 сек.
+      summary: Logout пользователя
+      tags:
+      - Auth
+      responses:
+        '200':
+          description: No response body
+  /api/rest/front/get-user-data/:
+    post:
+      operationId: 04_get_user_data
+      description: |-
+        ..
+
+        **Минимальный интервал между запросами:** 0.1 сек.
+      summary: Получить данные пользователя/проверить авторизацию
+      tags:
+      - Auth
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetUserDataResponse'
+          description: ''
+components:
+  schemas:
+    GetUserDataResponse:
+      type: object
+      properties:
+        status:
+          enum:
+          - ok
+          - error
+          type: string
+          x-spec-enum-id: a3da9ae335225ce8
+          description: |-
+            str: Статус ответа ("ok" или "error")
+
+            * `ok` - ok
+            * `error` - error
+        data:
+          allOf:
+          - $ref: '#/components/schemas/UserDataResponse'
+          description: Блок с данными ответа по эндпоинту
+    LoginGetUserDataResponse:
+      type: object
+      properties:
+        status:
+          enum:
+          - ok
+          - error
+          type: string
+          x-spec-enum-id: a3da9ae335225ce8
+          description: |-
+            str: Статус ответа ("ok" или "error")
+
+            * `ok` - ok
+            * `error` - error
+        data:
+          allOf:
+          - $ref: '#/components/schemas/UserDataResponse'
+          description: Блок с данными ответа по эндпоинту
+    LoginRequestRequest:
+      type: object
+      description: Сериализатор для авторизации пользователя (адаптировано из CustomAuthenticationForm)
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          description: Email адрес пользователя
+        password:
+          type: string
+          minLength: 8
+          description: Пароль пользователя
+      required:
+      - email
+      - password
+    RegisterRequestRequest:
+      type: object
+      description: |-
+        Сериализатор запроса регистрации через REST-эндпоинт.
+
+        Для валидации используем существующую CustomUserCreationForm,
+        чтобы не дублировать все правила.
+      properties:
+        first_name:
+          type: string
+          writeOnly: true
+          minLength: 1
+          description: Имя
+        email:
+          type: string
+          format: email
+          minLength: 1
+          description: Email пользователя
+        password1:
+          type: string
+          writeOnly: true
+          minLength: 1
+          description: Пароль
+        password2:
+          type: string
+          writeOnly: true
+          minLength: 1
+          description: Подтверждение пароля
+      required:
+      - email
+      - first_name
+      - password1
+      - password2
+    UserDataResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID пользователя
+        email:
+          type: string
+          format: email
+          description: EMAIL пользователя
+        first_name:
+          type: string
+          description: Имя пользователя
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: UUID
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+```
+
+Далее детальней про каждый эндпоинт:
+-- 5.1. Эндпоинт: `/api/rest/front/api/rest/front/csrf/` - ничего не ожидает на вход, предназначет для обновления куки с csrf (т.к. бэк использует django это обязательно в запросах).
+Поэтому данный эндпоинт нужно будет дергать сразу после загрузки фронт-приложения.
+У меня есть пример которым я пользовался на чистом js:
+```
+// Утилита для получения куки по имени
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) {
+        return decodeURIComponent(parts.pop().split(';').shift());
+      }
+      return null;
+    }
+
+    // Сначала запросим CSRF токен (сервер установит куку `csrftoken`)
+    function initCsrf() {
+      return fetch('http://127.0.0.1:8017/api/rest/front/csrf/', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
+      });
+    }
+
+    // Основной запрос к API
+    function callApi() {
+      const url = 'http://127.0.0.1:8017/api/rest/front/logout/';
+      const data = {};
+      const headers = {
+    // "Authorization": "Bearer <ваш_токен>",
+    "Content-Type": "application/json"
+};
+
+      // Добавляем CSRF токен в заголовки
+      const csrftoken = getCookie('csrftoken');
+      if (csrftoken) {
+        headers['X-CSRFToken'] = csrftoken;
+      }
+
+      return fetch(url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: headers,
+    body: JSON.stringify(data),
+      })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Response:', data);
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+    }
+
+    // Пример использования: сначала инициализируем CSRF, потом вызываем эндпоинт
+    initCsrf()
+      .then(() => callApi())
+      .catch(console.error);
+```
+
+-- 5.2. Эндпоинт: `/api/rest/front/registration/`
+Пример запроса:
+```
+fetch('/api/rest/front/registration/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-CSRFToken': csrftoken,
+  },
+  body: JSON.stringify({
+    "first_name": "Вася",
+    "email": "user@example.com",
+    "password1": "123456",
+    "password2": "123456"
+  }),
+  credentials: 'same-origin', // чтобы куки точно ушли
+})
+  .then(r => r.json())
+  .then(console.log)
+  .catch(console.error);
+```
+В случае успеха ответ, код 200 и тело:
+```
+status	"ok"
+data	{ first_name: "Вася", email: "user2@example.com" }
+```
+
+В случае ошибок бэк будет это возвращать код 40x, пример ответов с ошибками:
+```
+status	"error"
+error_data	{ error: "VALIDATION_ERROR", key: "email: ['Пользователь с таким адресом электронной почты уже существует.'], password2: ['Введённый пароль слишком широко распространён.', 'Введённый пароль состоит только из цифр.']", message: "Ошибка валидации данных", … }
+```
+Или:
+```
+status	"error"
+error_data	{
+    error	"VALIDATION_ERROR"
+    key	"email: ['Пользователь с таким адресом электронной почты уже существует.']"
+    message	"Ошибка валидации данных"
+    error_code	"suijnfEpFkcNUGN"
+}
+```
+Т.е. в ключе `message` выводится общее сообщение, а в ключе `key` детали по конкретной ошибке.
+Данный формат ошибок един для всех эндпоинтов. Ключевой момент означающий ошибку это код ответа не равный 2xx или наличие в ответе `status: "error"`.
+И соответственно нужно также будет выводить информацию об ошибках.
+
+-- 5.3. Эндпоинт: `/api/rest/front/login/`
+Ожидает на вход:
+```
+- email
+- password
+```
+Пример вызова:
+```
+    // Основной запрос к API
+function callApi() {
+  const url = 'http://127.0.0.1:8017/api/rest/front/login/';
+  const data = {
+"email": "admin@admin.com",
+"password": "hellopercentadmin"
+};
+  const headers = {
+// "Authorization": "Bearer <ваш_токен>",
+"Content-Type": "application/json"
+};
+
+  // Добавляем CSRF токен в заголовки
+  const csrftoken = getCookie('csrftoken');
+  if (csrftoken) {
+    headers['X-CSRFToken'] = csrftoken;
+  }
+
+  return fetch(url, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: headers,
+body: JSON.stringify(data),
+  })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Response:', data);
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
+}
+```
+Если пользователя не удалось найти по логину/паролю вернет код 401, нужно будет сказать пользователю об этом что пользователя не найдено (следовать сообщение в ответе)
+
+-- 5.4. Эндпоинт: `/api/rest/front/logout/` - если юзер захочет выйти из ЛК. На вход ничего не отправляется и ничего не идет в ответ, успех - ответ код 2xx.
+
+-- 5.5. Эндпоинт: `/api/rest/front/get-user-data/` - ничего не ожидает на вход, бэк поймет что это за пользователь по куке.
+Возвращает базовые данные по пользователю. Предполагается использовать сразу после авторизации, чтобы в ЛК можно было отобразить данные по пользователю.
+Пока возвращает не много данных, позже будет обогащен данными.
+Вызывать можно по мере необходимости.
+Пример ответа:
+```
+{"status": "ok", "data": {"id": 1, "email": "admin@admin.com", "first_name": null}}
+```
+
+- 6. нужно заложить какой-нибудь несложный контроль частоты обращений к API.
+В доке указана допустимая частота запросов, если она есть, но лучше ограничить минимум: чтобы юзер не мог чаще раза в в пол.секунды вызывать один и тот же эндпоинт.
+К примеру он несколько раз подряд нажимает на одну и ту же кнопку, нужно не слать запросы чаще указанного минимума в 0.5 сек, и второй проверкой: не чаще указанного в доке к методу API.
+
+----
+
+Твоя задача детально изучить описанные мной пункты задания.
+Систематизировать их в финальное ТЗ.
+Чтобы я мог понять, что ты правильно понял меня.
+И после этого как я проверю, и отвечу тебе, ты приступишь к работе по их выполнению.
