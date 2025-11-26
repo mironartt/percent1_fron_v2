@@ -45,8 +45,7 @@
     <!-- Summary State - After Completion -->
     <div v-else-if="showSummary" class="summary-section">
       <header class="section-header">
-        <h1>🏦 Банк целей — Результаты</h1>
-        <p class="subtitle">Урок завершён {{ formatCompletedDate }}</p>
+        <h1>🏦 Банк целей</h1>
       </header>
 
       <div class="summary-grid">
@@ -198,8 +197,8 @@
         <button class="btn btn-primary btn-lg" @click="goToDecomposition">
           📋 Перейти к декомпозиции
         </button>
-        <button class="btn btn-secondary" @click="restartLesson">
-          🔄 Пройти урок заново
+        <button class="btn btn-secondary" @click="addNewGoal">
+          ➕ Добавить новую цель
         </button>
       </div>
     </div>
@@ -757,13 +756,14 @@ const completedAt = computed(() => store.goalsBank.completedAt)
 const allGoals = computed(() => store.goals)
 
 const lessonStarted = ref(false)
+const addingNewGoal = ref(false)
 
 const showEmptyState = computed(() => {
-  return !completedAt.value && rawIdeas.value.length === 0 && !lessonStarted.value
+  return !completedAt.value && rawIdeas.value.length === 0 && !lessonStarted.value && !addingNewGoal.value
 })
 
 const showSummary = computed(() => {
-  return !!completedAt.value
+  return !!completedAt.value && !addingNewGoal.value
 })
 
 const transferredGoals = computed(() => {
@@ -790,10 +790,16 @@ function goToDecomposition() {
   router.push('/goals')
 }
 
+function addNewGoal() {
+  addingNewGoal.value = true
+  store.setGoalsBankStep(1)
+}
+
 function restartLesson() {
   if (confirm('Вы уверены? Все данные урока будут сброшены.')) {
     store.resetGoalsBank()
     lessonStarted.value = false
+    addingNewGoal.value = false
   }
 }
 
