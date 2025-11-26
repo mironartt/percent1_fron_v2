@@ -157,7 +157,7 @@
       </div>
 
       <div class="key-goals-summary card" v-if="transferredGoals.length > 0">
-        <h3>&#x1F3AF; Ваши ключевые цели</h3>
+        <h3>&#x1F3AF; Цели в работе</h3>
         <div class="key-goals-list">
           <div v-for="goal in transferredGoals" :key="goal.id" class="key-goal-item">
             <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
