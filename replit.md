@@ -161,3 +161,29 @@ export const FORCE_SHOW_MINITASK = false    // Show mini task even if completed
 - `#app.has-sidebar.sidebar-collapsed` reduces margin to 72px
 - Auth pages (login/register) have no sidebar, no margins
 - Mobile breakpoint (≤768px) removes all sidebar margins
+
+### Decomposition Module Fixes (November 26, 2025)
+
+#### Step Persistence During Practice
+- `practiceSteps` changed from string array to object array: `[{id, title, completed}]`
+- Steps now persist when switching between goals during practice phase
+- `saveCurrentPracticeSteps()` saves current steps before goal switch
+
+#### ID-based Step Tracking
+| Prefix | Purpose | Created when |
+|--------|---------|--------------|
+| `new-*` | New empty step | Starting practice or adding step |
+| `temp-*` | Saved temporary | saveCurrentPracticeSteps() without existing ID |
+| `legacy-*` | Old data migration | Loading steps without ID |
+
+- Temporary IDs replaced with permanent (timestamp + random) only in `completeLesson()`
+- Null checks for `step.id` to support legacy data
+
+#### Progress Bar Visibility Fix
+- Renamed `.progress-bar` → `.lesson-progress-bar` for lesson step indicator
+- Fixed CSS conflict: goal progress bar (height: 8px, overflow: hidden) was overriding lesson steps
+
+#### Content Centering
+- Lesson preview section (`text-align: center`)
+- Step content h2, intro-text, rules h3 — all centered
+- Preview steps use `inline-flex` for block centering with left-aligned text inside

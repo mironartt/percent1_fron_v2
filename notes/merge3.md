@@ -270,10 +270,285 @@ import {
 
 ---
 
+---
+
+## Часть 2: Исправления модуля Декомпозиции
+
+**Дата:** 26 ноября 2025 (вторая сессия)
+
+### Обзор проблем
+
+При работе с модулем Декомпозиции были обнаружены следующие проблемы:
+1. **Потеря шагов при смене цели** — введённые шаги исчезали при переключении между целями в режиме практики
+2. **Невидимый progress bar** — индикатор шагов урока (1, 2, 3) был обрезан из-за конфликта CSS-классов
+3. **Неправильное выравнивание текста** — контент урока был выровнен по левому краю вместо центра
+
+---
+
+## 9. Исправление потери шагов при смене цели
+
+### 9.1 Проблема
+
+Массив `practiceSteps` хранился как массив строк. При переключении между целями шаги не сохранялись, а при удалении шага нарушалось соответствие индексов.
+
+### 9.2 Решение: объекты вместо строк
+
+Изменена структура `practiceSteps` с массива строк на массив объектов:
+
+```javascript
+// Было:
+const practiceSteps = ref(['', '', ''])
+
+// Стало:
+const practiceSteps = ref([
+  { id: 'new-1', title: '', completed: false },
+  { id: 'new-2', title: '', completed: false },
+  { id: 'new-3', title: '', completed: false }
+])
+```
+
+### 9.3 Функция сохранения шагов перед переключением
+
+```javascript
+function saveCurrentPracticeSteps() {
+  if (selectedGoalForPractice.value) {
+    const updatedSteps = practiceSteps.value
+      .filter(s => s.title && s.title.trim())
+      .map(step => ({
+        id: step.id || ('temp-' + Date.now() + Math.random().toString(36).substr(2, 5)),
+        title: step.title,
+        completed: step.completed || false
+      }))
+    
+    const goalIndex = goals.value.findIndex(g => g.id === selectedGoalForPractice.value.id)
+    if (goalIndex !== -1) {
+      store.updateGoal(selectedGoalForPractice.value.id, { steps: updatedSteps })
+      selectedGoalForPractice.value.steps = updatedSteps
+    }
+  }
+}
+```
+
+### 9.4 Функция выбора цели с загрузкой шагов
+
+```javascript
+function selectGoalForPractice(goal) {
+  saveCurrentPracticeSteps()  // Сохраняем текущие шаги
+  
+  selectedGoalForPractice.value = { ...goal }
+  if (goal.steps && goal.steps.length > 0) {
+    practiceSteps.value = goal.steps.map((s, index) => ({
+      id: s.id || ('legacy-' + index),  // Поддержка старых данных
+      title: s.title || (typeof s === 'string' ? s : ''),
+      completed: s.completed || false
+    }))
+  } else {
+    practiceSteps.value = [
+      { id: 'new-1', title: '', completed: false },
+      { id: 'new-2', title: '', completed: false },
+      { id: 'new-3', title: '', completed: false }
+    ]
+  }
+}
+```
+
+### 9.5 Финализация ID при завершении урока
+
+```javascript
+function completeLesson() {
+  if (selectedGoalForPractice.value) {
+    const filteredSteps = practiceSteps.value
+      .filter(s => s.title && s.title.trim())
+      .map(step => {
+        // Временные ID заменяются на постоянные только при сохранении
+        const needsNewId = !step.id || 
+          step.id.startsWith('new-') || 
+          step.id.startsWith('temp-') || 
+          step.id.startsWith('legacy-')
+        return {
+          id: needsNewId ? Date.now().toString() + Math.random().toString(36).substr(2, 9) : step.id,
+          title: step.title,
+          completed: step.completed || false
+        }
+      })
+    
+    store.updateGoal(selectedGoalForPractice.value.id, {
+      steps: filteredSteps,
+      progress: 0
+    })
+  }
+  
+  store.completeDecompositionLesson()
+}
+```
+
+### 9.6 Обновление шаблона
+
+```vue
+<!-- Было -->
+<input v-model="practiceSteps[index]" ... />
+
+<!-- Стало -->
+<input v-model="step.title" ... />
+
+<!-- Обзор шагов (Step 3) -->
+<div v-for="(step, index) in practiceSteps.filter(s => s.title.trim())" :key="step.id">
+  <span>{{ step.title }}</span>
+</div>
+```
+
+---
+
+## 10. Исправление видимости Progress Bar
+
+### 10.1 Проблема
+
+Класс `.progress-bar` использовался для двух разных элементов:
+1. **Индикатор шагов урока** (1, 2, 3) — с display: flex
+2. **Полоса прогресса целей** — с height: 8px и overflow: hidden
+
+CSS второго элемента переопределял первый, скрывая индикатор шагов.
+
+### 10.2 Решение: переименование класса
+
+HTML:
+```vue
+<!-- Было -->
+<div class="progress-bar">
+
+<!-- Стало -->
+<div class="lesson-progress-bar">
+```
+
+CSS:
+```css
+/* Было */
+.progress-bar {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 3rem;
+  padding: 0 2rem;
+}
+
+/* Стало */
+.lesson-progress-bar {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 3rem;
+  padding: 0 2rem;
+}
+```
+
+Медиа-запрос:
+```css
+@media (max-width: 768px) {
+  /* Было */
+  .progress-bar { padding: 0 0.5rem; }
+  
+  /* Стало */
+  .lesson-progress-bar { padding: 0 0.5rem; }
+}
+```
+
+---
+
+## 11. Центрирование контента урока
+
+### 11.1 Preview секция (до начала урока)
+
+```css
+.lesson-preview {
+  text-align: center;  /* Было: left */
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+}
+
+.lesson-preview h3 {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.preview-steps {
+  display: inline-flex;  /* Было: flex */
+  flex-direction: column;
+  gap: 1rem;
+  text-align: left;  /* Текст внутри шагов — слева */
+}
+```
+
+### 11.2 Контент шагов урока
+
+```css
+.step-content h2 {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+  text-align: center;  /* Добавлено */
+}
+
+.intro-text {
+  font-size: 1.125rem;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  max-width: 700px;
+  margin-left: auto;   /* Добавлено */
+  margin-right: auto;  /* Добавлено */
+  text-align: center;  /* Добавлено */
+}
+
+.rules-section h3 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  text-align: center;  /* Добавлено */
+}
+```
+
+---
+
+## 12. Типы временных ID
+
+| Префикс | Назначение | Когда создаётся |
+|---------|------------|-----------------|
+| `new-*` | Новый пустой шаг | При начале практики или добавлении шага |
+| `temp-*` | Сохранённый временный | При saveCurrentPracticeSteps без существующего ID |
+| `legacy-*` | Старые данные | При загрузке данных без ID (миграция) |
+
+Все временные ID заменяются на постоянные (timestamp + random) только в `completeLesson()`.
+
+---
+
+## 13. Затронутые файлы (сессия 2)
+
+| Файл | Изменения |
+|------|-----------|
+| `src/views/Goals.vue` | Объектная структура practiceSteps, saveCurrentPracticeSteps(), ID-based tracking, переименование .progress-bar → .lesson-progress-bar, центрирование контента |
+
+---
+
+## 14. Ошибки в консоли (ожидаемые)
+
+```
+Failed to load resource: 500 (Internal Server Error)
+[API] CSRF cookie not set after request
+```
+
+Эти ошибки ожидаемы при разработке UI без запущенного Django-бэкенда. Флаг `SKIP_AUTH_CHECK=true` в `local_settings.js` позволяет работать с интерфейсом без подключения к серверу.
+
+---
+
 ## Итог
 
-Реализованы две функции кастомизации UI с правильной архитектурой CSS:
+### Часть 1: UI Customization
 - Сворачиваемый сайдбар с сохранением состояния
 - Переключатель темы с автоопределением системных предпочтений
 - Чистая CSS-специфичность через класс `has-sidebar` (без `!important`)
 - Корректное поведение на мобильных устройствах и страницах авторизации
+
+### Часть 2: Decomposition Module Fixes
+- Шаги сохраняются при переключении между целями
+- ID-based tracking предотвращает путаницу при удалении/перемещении шагов
+- Поддержка legacy данных (миграция старых строковых массивов)
+- Исправлена видимость индикатора шагов урока
+- Контент урока центрирован
