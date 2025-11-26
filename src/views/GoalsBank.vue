@@ -333,13 +333,6 @@
               placeholder="Цель/Идея (что хочу)"
               @keyup.enter="addNewIdea"
             />
-            <input 
-              v-model="newIdea.whyImportant"
-              type="text"
-              class="form-input"
-              placeholder="Почему это важно для меня?"
-              @keyup.enter="addNewIdea"
-            />
             <button class="btn btn-primary" @click="addNewIdea">
               ➕ Добавить
             </button>
@@ -374,13 +367,6 @@
                       class="idea-input"
                       placeholder="Цель..."
                     />
-                    <textarea 
-                      :value="idea.whyImportant"
-                      @input="updateIdea(idea.id, { whyImportant: $event.target.value })"
-                      class="idea-textarea"
-                      placeholder="Почему важно..."
-                      rows="2"
-                    ></textarea>
                   </div>
                   <div class="idea-card-actions">
                     <span class="status-indicator" :class="idea.status" v-if="idea.status && idea.status !== 'raw'">
@@ -1266,7 +1252,12 @@ function completeGoalsBankHandler() {
   
   store.completeGoalsBank(goalsToTransfer)
   
-  router.push('/app/goals')
+  if (addingNewGoal.value) {
+    addingNewGoal.value = false
+    router.push('/app/goals-bank')
+  } else {
+    router.push('/app/goals')
+  }
 }
 
 function takeGoalToWork(goal) {
@@ -1290,10 +1281,22 @@ function removeFromWork(goalId) {
   if (goal) {
     const hasSteps = goal.steps && goal.steps.length > 0
     const message = hasSteps 
-      ? `Убрать цель "${goal.title}" из работы? Все шаги декомпозиции будут удалены.`
-      : `Убрать цель "${goal.title}" из работы?`
+      ? `Убрать цель "${goal.title}" из работы? Все шаги декомпозиции будут удалены. Цель вернётся в банк.`
+      : `Убрать цель "${goal.title}" из работы? Цель вернётся в банк.`
     
     if (confirm(message)) {
+      if (goal.sourceId) {
+        store.updateRawIdea(goal.sourceId, { status: 'validated', validated: true })
+      } else {
+        store.addRawIdea({
+          text: goal.title,
+          whyImportant: goal.description || '',
+          sphereId: goal.sphereId,
+          status: 'validated',
+          validated: true,
+          threeWhys: goal.threeWhys || null
+        })
+      }
       store.deleteGoal(goal.id)
     }
   }
