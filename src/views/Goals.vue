@@ -45,7 +45,7 @@
     <!-- Lesson Mode -->
     <div v-else-if="showLesson" class="lesson-mode">
       <!-- Progress Bar -->
-      <div class="progress-bar">
+      <div class="lesson-progress-bar">
         <div 
           v-for="step in 3" 
           :key="step"
@@ -1071,7 +1071,7 @@ function formatDate(dateString) {
   margin: 0 auto;
 }
 
-.progress-bar {
+.lesson-progress-bar {
   display: flex;
   justify-content: space-between;
   margin-bottom: 3rem;
@@ -2176,7 +2176,7 @@ function formatDate(dateString) {
     width: 100%;
   }
   
-  .progress-bar {
+  .lesson-progress-bar {
     padding: 0 0.5rem;
   }
   
