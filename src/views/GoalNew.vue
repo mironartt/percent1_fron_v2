@@ -122,43 +122,7 @@
       </div>
 
       <div class="sidebar-actions">
-        <div class="ai-coach-section card">
-          <div class="coach-header">
-            <span class="coach-icon">🤖</span>
-            <h3>ИИ-коуч</h3>
-          </div>
-          <div class="chat-container">
-            <div class="chat-messages" ref="chatMessagesRef">
-              <div 
-                v-for="(msg, idx) in chatMessages" 
-                :key="idx"
-                class="message"
-                :class="msg.role === 'user' ? 'user-message' : 'coach-message'"
-              >
-                <span class="message-avatar">{{ msg.role === 'user' ? '👤' : '🤖' }}</span>
-                <div class="message-content">
-                  <p>{{ msg.content }}</p>
-                </div>
-              </div>
-            </div>
-            <div class="chat-input-area">
-              <input 
-                type="text"
-                v-model="userMessage"
-                @keyup.enter="sendMessage"
-                placeholder="Спросите совет..."
-                class="chat-input"
-              />
-              <button 
-                class="btn-send"
-                @click="sendMessage"
-                :disabled="!userMessage.trim()"
-              >→</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
+        <div class="card sticky-card">
           <h4>Действия</h4>
           <div class="action-buttons">
             <button class="btn btn-primary btn-lg btn-full" @click="createGoal">
@@ -181,13 +145,16 @@
         </div>
       </div>
     </div>
+
+    <AICurator context="decomposition" />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import AICurator from '../components/AICurator.vue'
 
 const router = useRouter()
 const store = useAppStore()
@@ -202,52 +169,6 @@ const goalForm = ref({
   mvp: '',
   steps: []
 })
-
-const chatMessagesRef = ref(null)
-const userMessage = ref('')
-const chatMessages = ref([
-  { role: 'coach', content: 'Привет! Помогу создать цель правильно. Спроси меня о декомпозиции или формулировке.' }
-])
-
-const coachResponses = [
-  'Хорошая идея! Не забудьте разбить цель на шаги по 1-4 часа.',
-  'Попробуйте сформулировать MVP — минимальный результат, который уже порадует.',
-  'Каждый шаг должен быть конкретным. Вместо "учить" — "пройти урок 1".',
-  'Дедлайн помогает держать фокус. Установите реалистичную дату.',
-  'Если цель кажется большой — это нормально. Разбейте её на 3-5 первых шагов.',
-  'Подумайте: как вы поймёте, что цель достигнута? Это поможет с формулировкой.',
-  'Начните с самого простого шага. Первое действие должно быть лёгким.'
-]
-
-async function sendMessage() {
-  if (!userMessage.value.trim()) return
-  
-  chatMessages.value.push({
-    role: 'user',
-    content: userMessage.value
-  })
-  
-  const userQ = userMessage.value
-  userMessage.value = ''
-  
-  await nextTick()
-  scrollToBottom()
-  
-  setTimeout(() => {
-    const randomResponse = coachResponses[Math.floor(Math.random() * coachResponses.length)]
-    chatMessages.value.push({
-      role: 'coach',
-      content: randomResponse
-    })
-    nextTick(() => scrollToBottom())
-  }, 800)
-}
-
-function scrollToBottom() {
-  if (chatMessagesRef.value) {
-    chatMessagesRef.value.scrollTop = chatMessagesRef.value.scrollHeight
-  }
-}
 
 function updateField(field, value) {
   goalForm.value[field] = value
@@ -293,11 +214,11 @@ function createGoal() {
   }
 
   store.addGoal(goalData)
-  router.push('/goals')
+  router.push('/app/goals')
 }
 
 function goBack() {
-  router.push('/goals')
+  router.push('/app/goals')
 }
 </script>
 
@@ -494,117 +415,6 @@ function goBack() {
   left: 0;
   color: var(--success-color);
   font-weight: 600;
-}
-
-.ai-coach-section {
-  margin-bottom: 1rem;
-}
-
-.coach-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.coach-header h3 {
-  font-size: 1rem;
-  margin: 0;
-}
-
-.coach-icon {
-  font-size: 1.25rem;
-}
-
-.chat-container {
-  display: flex;
-  flex-direction: column;
-  height: 280px;
-}
-
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  margin-bottom: 0.75rem;
-}
-
-.message {
-  display: flex;
-  gap: 0.5rem;
-  align-items: flex-start;
-}
-
-.message-avatar {
-  font-size: 1rem;
-  flex-shrink: 0;
-}
-
-.message-content {
-  background: var(--bg-primary);
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-  line-height: 1.4;
-  max-width: 90%;
-}
-
-.message-content p {
-  margin: 0;
-}
-
-.user-message {
-  flex-direction: row-reverse;
-}
-
-.user-message .message-content {
-  background: var(--primary-color);
-  color: white;
-}
-
-.chat-input-area {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.chat-input {
-  flex: 1;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-}
-
-.chat-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-}
-
-.btn-send {
-  padding: 0.5rem 0.75rem;
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background 0.2s ease;
-}
-
-.btn-send:hover:not(:disabled) {
-  background: var(--primary-hover);
-}
-
-.btn-send:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 @media (max-width: 1024px) {

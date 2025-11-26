@@ -1,0 +1,38 @@
+Артефакты остались, к примеру в консоли браузера я выделил прям кусок кода:
+```
+<nav data-v-6dec5f19="" class="sidebar-nav">
+    <div data-v-6dec5f19="" class="nav-item-wrapper"><a data-v-6dec5f19="" aria-current="page" href="/app" class="active router-link-exact-active nav-item"><span data-v-6dec5f19="" class="icon">&amp;#x1F4CA;</span><span data-v-6dec5f19="">Главная</span></a></div>
+    <div data-v-6dec5f19="" class="nav-item-wrapper">
+        <div data-v-6dec5f19="" class="nav-item disabled" title=""><span data-v-6dec5f19="" class="icon">&amp;#x1F9ED;</span><span data-v-6dec5f19="">Кто ты</span><!--v-if--></div>
+    </div>
+    <div data-v-6dec5f19="" class="nav-item-wrapper"><a data-v-6dec5f19="" href="/app/ssp" class="nav-item"><span data-v-6dec5f19="" class="icon">&amp;#x1F3AF;</span><span data-v-6dec5f19="">ССП</span></a></div>
+    <div data-v-6dec5f19="" class="nav-item-wrapper"><a data-v-6dec5f19="" href="/app/goals-bank" class="nav-item"><span data-v-6dec5f19="" class="icon">&amp;#x1F3E6;</span><span data-v-6dec5f19="">Банк целей</span></a></div>
+    <div data-v-6dec5f19="" class="nav-item-wrapper"><a data-v-6dec5f19="" href="/app/goals" class="nav-item"><span data-v-6dec5f19="" class="icon">&amp;#x1F3C6;</span><span data-v-6dec5f19="">Декомпозиция</span></a></div>
+    <div data-v-6dec5f19="" class="nav-item-wrapper">
+        <div data-v-6dec5f19="" class="nav-item disabled" title=""><span data-v-6dec5f19="" class="icon">&amp;#x1F4C5;</span><span data-v-6dec5f19="">Планирование</span><!--v-if--></div>
+    </div>
+    <div data-v-6dec5f19="" class="nav-item-wrapper">
+        <div data-v-6dec5f19="" class="nav-item disabled" title=""><span data-v-6dec5f19="" class="icon">&amp;#x26A1;</span><span data-v-6dec5f19="">Ресурс и энергия</span><!--v-if--></div>
+    </div>
+    <div data-v-6dec5f19="" class="nav-item-wrapper">
+        <div data-v-6dec5f19="" class="nav-item disabled" title=""><span data-v-6dec5f19="" class="icon">&amp;#x1F48E;</span><span data-v-6dec5f19="">Принципы и убеждения</span><!--v-if--></div>
+    </div>
+    <div data-v-6dec5f19="" class="nav-item-wrapper">
+        <div data-v-6dec5f19="" class="nav-item disabled" title=""><span data-v-6dec5f19="" class="icon">&amp;#x1F465;</span><span data-v-6dec5f19="">Клуб 1%</span><!--v-if--></div>
+    </div>
+    <div data-v-6dec5f19="" class="nav-item-wrapper">
+        <div data-v-6dec5f19="" class="nav-item disabled" title=""><span data-v-6dec5f19="" class="icon">&amp;#x1F3C5;</span><span data-v-6dec5f19="">Достижения</span><!--v-if--></div>
+    </div>
+</nav>
+```
+Как видно по коду, есть части:
+```
+<span data-v-6dec5f19="" class="icon">&amp;#x1F465;</span>
+или
+<span data-v-6dec5f19="" class="icon">&amp;#x1F3C6;</span>
+```
+
+Которые не отображаются как иконки, а отображаются имеено текстом, и получается наслоение непонятного текста на текст разделов (к примеру `&amp;#x1F465;` отображается текстом, и наслаивается на текст `Клуб 1%`).
+И так со всеми разделами навигации.
+
+Это нужно поправить.

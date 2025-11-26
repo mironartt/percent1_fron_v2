@@ -52,7 +52,8 @@
     <!-- Summary State - After Completion -->
     <div v-else-if="showSummary" class="summary-section-main">
       <header class="section-header">
-        <h1>⚖️ Система сбалансированных показателей</h1>
+        <h1>⚖️ ССП — Результаты</h1>
+        <p class="subtitle">Оценка завершена {{ formatCompletedDate }}</p>
       </header>
 
       <div class="summary-grid">
@@ -562,7 +563,7 @@ function startLesson() {
 }
 
 function goToGoalsBank() {
-  router.push('/goals-bank')
+  router.push('/app/goals-bank')
 }
 
 function restartLesson() {

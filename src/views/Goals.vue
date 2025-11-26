@@ -514,6 +514,7 @@
                   <input 
                     type="checkbox"
                     v-model="step.completed"
+                    @change="updateGoalProgress(selectedGoal)"
                   />
                   <span :class="{ completed: step.completed }">{{ step.title }}</span>
                 </label>
@@ -821,7 +822,7 @@ function toggleSummaryGoalExpand(goalId) {
 }
 
 function goToGoalsBank() {
-  router.push('/goals-bank')
+  router.push('/app/goals-bank')
 }
 
 function openGoalDetail(goal) {
@@ -830,7 +831,7 @@ function openGoalDetail(goal) {
 }
 
 function editGoal(goal) {
-  router.push(`/goals/${goal.id}`)
+  router.push(`/app/goals/${goal.id}`)
 }
 
 function deleteGoalConfirm(goal) {

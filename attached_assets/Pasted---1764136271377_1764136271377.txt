@@ -1,0 +1,66 @@
+Ок.
+Давай начнем с онбординга.
+Онбординг должен начинаться сразу после регистрации и проходить лишь один раз.
+Чтобы понимать прошел ли пользователь онбординг или нет в эндпоинт `/api/rest/front/get-user-data/` добавлены поля:
+```
+finish_onboarding = RestBooleanField(required=False, allow_null=True, help_text='Онбординг завершен')
+finish_minitask = RestBooleanField(required=False, allow_null=True, help_text='Минитаск завершен')
+```
+Пример ответа эндпоинта:
+```
+{"status": "ok", "data": {"id": 1, "email": "admin@admin.com", "first_name": null, "finish_onboarding": false, "finish_minitask": false}}
+```
+
+На бэке подготовлены эндпоинты:
+- `/api/rest/front/app/onboard/get/` - получение данных по текущему состоянию онбординга пользователя.
+В ответ идут поля:
+```
+reason_joined = RestCharField(required=False, allow_null=True, allow_blank=False, trim_whitespace=True, max_length=10000, help_text="Почему пришёл в Систему 1%", example="Например: Устал от хаоса, хочу системности и контроля над жизнью...")
+desired_changes = RestCharField(required=False, allow_null=True, allow_blank=False, trim_whitespace=True, max_length=10000, help_text="Что хочет изменить в сценарии игры", example="Например: Хочу выстроить здоровые отношения, увеличить доход, найти баланс...")
+growth_comfort_zones = RestCharField(required=False, allow_null=True, allow_blank=False, trim_whitespace=True, max_length=10000, help_text="Зона роста и зона комфорта", example="""Зона роста: публичные выступления, новые проекты...
+Зона комфорта: привычная работа, откладывание сложных решений...""")
+
+current_state = RestCharField(required=False, allow_null=True, allow_blank=False, trim_whitespace=True, max_length=10000, help_text="Точка А: Где сейчас", example="Например: Работаю на нелюбимой работе, доход 80к, нет времени на себя, здоровье на 5/10...")
+goal_state = RestCharField(required=False, allow_null=True, allow_blank=False, trim_whitespace=True, max_length=10000, help_text="Точка Б: Куда хочет прийти", example="Например: Работаю на себя, доход 200к+, здоровье 9/10, баланс между работой и жизнью...")
+why_important = RestCharField(required=False, allow_null=True, allow_blank=False, trim_whitespace=True, max_length=10000, help_text="Почему это важно", example="Например: Хочу чувствовать, что живу свою жизнь, а не чужой сценарий. Важна свобода и самореализация...")
+
+step_completed = RestIntegerField(required=False, allow_null=True, help_text='Завершённый шаг')
+is_complete = RestBooleanField(required=False, allow_null=True, help_text='Онбординг завершен _(юзер поставил галку с правилами и нажал "приступить")_')
+
+date_completed = RestDateTimeField(
+    required=False, allow_null=True, default=None, example="2025-01-01", input_formats=['%Y-%m-%d %H:%M:%S', '%Y-%m-%d'], format='%Y-%m-%d %H:%M:%S',
+    help_text="Дата завершения онбординга _(если он завершен)_",
+)
+```
+PS. я прикладываю поля целиком как код из моего DRF сериализатора, если будет не понятно, то тебе нужно будет отписать об этом.
+
+- `/api/rest/front/app/onboard/update/` - обновление состояние прохождения онбординга.
+Ожидает поля:
+```
+reason_joined = RestCharField(required=False, allow_null=True, allow_blank=False, trim_whitespace=True, max_length=10000, help_text="Почему пришёл в Систему 1%", example="Например: Устал от хаоса, хочу системности и контроля над жизнью...")
+desired_changes = RestCharField(required=False, allow_null=True, allow_blank=False, trim_whitespace=True, max_length=10000, help_text="Что хочет изменить в сценарии игры", example="Например: Хочу выстроить здоровые отношения, увеличить доход, найти баланс...")
+growth_comfort_zones = RestCharField(required=False, allow_null=True, allow_blank=False, trim_whitespace=True, max_length=10000, help_text="Зона роста и зона комфорта", example="""Зона роста: публичные выступления, новые проекты...
+Зона комфорта: привычная работа, откладывание сложных решений...""")
+
+current_state = RestCharField(required=False, allow_null=True, allow_blank=False, trim_whitespace=True, max_length=10000, help_text="Точка А: Где сейчас", example="Например: Работаю на нелюбимой работе, доход 80к, нет времени на себя, здоровье на 5/10...")
+goal_state = RestCharField(required=False, allow_null=True, allow_blank=False, trim_whitespace=True, max_length=10000, help_text="Точка Б: Куда хочет прийти", example="Например: Работаю на себя, доход 200к+, здоровье 9/10, баланс между работой и жизнью...")
+why_important = RestCharField(required=False, allow_null=True, allow_blank=False, trim_whitespace=True, max_length=10000, help_text="Почему это важно", example="Например: Хочу чувствовать, что живу свою жизнь, а не чужой сценарий. Важна свобода и самореализация...")
+
+step_completed = RestIntegerField(required=False, allow_null=True, help_text='Завершённый шаг')
+is_complete = RestBooleanField(required=False, allow_null=True, help_text='Онбординг завершен _(юзер поставил галку с правилами и нажал "приступить")_')
+```
+После каждого действия пользователя необходимо отправлять на данный эндпоинт обновления по онбордингу.
+Как видно, эндпоинт может принимать хоть одно поле со значением, хоть все за раз, и обновит значения в БД согласно присланным данным.
+Как только будет отправлен флаг `is_complete`, в `/api/rest/front/get-user-data/` начнет возвращатся `finish_onboarding: true`
+
+К примеру юзер кликнул на начать прохождение отправляем на данный эндпоинт обновление поля `step_completed=1`.
+И так далее.
+Далее если юзер авторизовался, и фронт видит что онбородинг не пройдет, он сразу запрашивает данные по нему, и на основание последнего пройденго шага продолжает онбординг и если нужно, заполняет поля онбординга ранее указанными данными (теми чо получил из эндпоинта `/api/rest/front/app/onboard/get/`).
+Но тут тоже есть нюансы:
+- если онборинг не пройдет, и нету даже step_completed, значит юзер не начинал, то отображать ему все как обычно.
+- если юзер прошел авторизацию, и видно что он не до конца прошел онбординг, то нужно начать со страницы шага 1, но в кнопке "Начать создание своей игры", текст должен быть "Продолжить создание своей игры", и после клика по ней, должен идти шаг следующий за последним завершенным, т.е. step_completed + 1. 
+У юзера есть возможность нажать "назад", и формы на предыдущих шагах должны уже быть предзаполненными на основание полученных данных с бэка.
+
+Также добавь в local_settings.js какой-нибудь флаг, по которому будет игнорироваться прохождение онбординга, и он будет показываться в любом случае (это пригодится при тестирование и разработке). Также добавь важные логи в консоль как и ранее по флагу `DEBUG_MODE = true`.
+
+Если тебе все понятно, то можешь начинать работу. 

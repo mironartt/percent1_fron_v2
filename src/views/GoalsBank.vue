@@ -45,7 +45,7 @@
     <!-- Summary State - After Completion -->
     <div v-else-if="showSummary" class="summary-section">
       <header class="section-header">
-        <h1>🏦 Банк целей</h1>
+        <h1>&#x1F3E6; Банк целей</h1>
       </header>
 
       <div class="summary-grid">
@@ -110,7 +110,7 @@
       <!-- Единая таблица истинных целей -->
       <div class="goals-table-section card" v-if="validatedGoals.length > 0">
         <div class="table-header">
-          <h3>✅ Банк идей и целей</h3>
+          <h3>&#x2705; Банк идей и целей</h3>
           <p class="section-hint">Выберите цели для отправки в декомпозицию</p>
         </div>
         
@@ -130,7 +130,7 @@
                 :class="{ 'in-work': isGoalTransferred(goal.id) }"
               >
                 <td class="col-status">
-                  <span 
+                  <span
                     v-if="isGoalCompleted(goal.id)" 
                     class="status-badge completed"
                   >
@@ -178,7 +178,7 @@
             :disabled="selectedForTransfer.length === 0"
             @click="transferSelectedGoals"
           >
-            📋 Отправить в декомпозицию ({{ selectedForTransfer.length }})
+            &#x1F4CB; Отправить в декомпозицию ({{ selectedForTransfer.length }})
           </button>
         </div>
       </div>
@@ -204,12 +204,26 @@
         </div>
       </div>
 
+      <div class="key-goals-summary card" v-if="transferredGoals.length > 0">
+        <h3>&#x1F3AF; Ваши ключевые цели</h3>
+        <div class="key-goals-list">
+          <div v-for="goal in transferredGoals" :key="goal.id" class="key-goal-item">
+            <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
+            <span class="goal-title">{{ goal.title }}</span>
+            <span class="goal-progress">{{ goal.progress }}%</span>
+          </div>
+        </div>
+      </div>
+
       <div class="summary-actions">
         <button class="btn btn-primary btn-lg" @click="goToDecomposition">
-          📋 Перейти к декомпозиции
+          &#x1F4CB; Перейти к декомпозиции
         </button>
         <button class="btn btn-secondary" @click="addNewGoal">
-          ➕ Добавить новую цель
+          &#x2795; Добавить новую цель
+        </button>
+        <button class="btn btn-secondary" @click="restartLesson">
+          &#x1F504; Пройти урок заново
         </button>
       </div>
     </div>
@@ -798,7 +812,7 @@ function startLesson() {
 }
 
 function goToDecomposition() {
-  router.push('/goals')
+  router.push('/app/goals')
 }
 
 function addNewGoal() {
@@ -1256,15 +1270,23 @@ function removeKeyGoal(goalId) {
 }
 
 function completeGoalsBankHandler() {
-  const selectedGoals = keyGoals.value
-    .filter(goal => selectedGoalIds.value.includes(goal.id))
-    .map(goal => ({
-      goal: goal.text,
-      whyImportant: goal.action,
-      sphere: goal.sphereId
-    }))
+  if (selectedGoalIds.value.length < 1) {
+    alert('Выберите хотя бы одну цель')
+    return
+  }
   
-  store.completeGoalsBank(selectedGoals)
+  const selectedGoals = validatedGoals.value.filter(g => selectedGoalIds.value.includes(g.id))
+  
+  const goalsToTransfer = selectedGoals.map(g => ({
+    goal: g.text,
+    whyImportant: g.whyImportant,
+    sphere: g.sphereId,
+    threeWhys: g.threeWhys || null
+  }))
+  
+  store.completeGoalsBank(goalsToTransfer)
+  
+  router.push('/app/goals')
 }
 
 function getSphereName(sphereId) {
@@ -1647,7 +1669,7 @@ function getStatusLabel(status) {
 }
 
 .checkbox-wrapper input[type="checkbox"]:checked + .checkbox-custom::after {
-  content: '✓';
+  content: '\2713';
   color: white;
   font-size: 14px;
   font-weight: bold;

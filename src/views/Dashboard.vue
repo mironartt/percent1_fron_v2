@@ -1,10 +1,10 @@
 <template>
-  <!-- Show Onboarding if not completed -->
-  <Onboarding v-if="!isOnboardingCompleted" />
+  <!-- Show Onboarding if needed -->
+  <Onboarding v-if="shouldShowOnboarding" />
 
   <!-- Show Mini Task Welcome if onboarding done but mini task not started -->
   <MiniTaskWelcome 
-    v-else-if="isOnboardingCompleted && !isMiniTaskCompleted && !showMiniTask" 
+    v-else-if="shouldShowMiniTask && !showMiniTask" 
     @start="showMiniTask = true"
   />
 
@@ -52,7 +52,7 @@
           <h3 class="card-title">Быстрые действия</h3>
         </div>
         <div class="card-body">
-          <router-link to="/ssp" class="action-link">
+          <router-link to="/app/ssp" class="action-link">
             <span class="action-icon">🎯</span>
             <div class="action-content">
               <div class="action-title">Оценить сферы жизни</div>
@@ -60,7 +60,7 @@
             </div>
           </router-link>
 
-          <router-link to="/goals" class="action-link">
+          <router-link to="/app/goals" class="action-link">
             <span class="action-icon">🚀</span>
             <div class="action-content">
               <div class="action-title">Создать новую цель</div>
@@ -68,7 +68,7 @@
             </div>
           </router-link>
 
-          <router-link to="/planner" class="action-link">
+          <router-link to="/app/planner" class="action-link">
             <span class="action-icon">📅</span>
             <div class="action-content">
               <div class="action-title">Спланировать день</div>
@@ -85,7 +85,7 @@
         <div class="card-body">
           <div v-if="dailyTasks.length === 0" class="empty-state-mini">
             <p>Нет задач на сегодня</p>
-            <router-link to="/planner" class="btn btn-sm btn-primary" style="margin-top: 1rem;">
+            <router-link to="/app/planner" class="btn btn-sm btn-primary" style="margin-top: 1rem;">
               Добавить задачи
             </router-link>
           </div>
@@ -104,7 +104,7 @@
             </label>
             <router-link 
               v-if="dailyTasks.length > 5"
-              to="/planner" 
+              to="/app/planner" 
               class="view-all-link"
             >
               Показать все ({{ dailyTasks.length }})
@@ -166,16 +166,33 @@ import { useAppStore } from '../stores/app'
 import Onboarding from '../components/Onboarding.vue'
 import MiniTaskWelcome from '../components/MiniTaskWelcome.vue'
 import MiniTask from '../components/MiniTask.vue'
+import { DEBUG_MODE } from '@/config/settings.js'
 
 const store = useAppStore()
 
-const userName = computed(() => store.user.name)
+const userName = computed(() => store.displayName)
 const averageScore = computed(() => store.averageScore)
 const activeGoals = computed(() => store.activeGoals)
 const completedGoals = computed(() => store.completedGoals)
 const lifeSpheres = computed(() => store.lifeSpheres)
 const dailyTasks = computed(() => store.dailyPlan.tasks)
-const isOnboardingCompleted = computed(() => store.onboarding.completed)
+
+const shouldShowOnboarding = computed(() => {
+  const show = store.shouldShowOnboarding
+  if (DEBUG_MODE) {
+    console.log('[Dashboard] shouldShowOnboarding:', show)
+  }
+  return show
+})
+
+const shouldShowMiniTask = computed(() => {
+  const show = store.shouldShowMiniTask
+  if (DEBUG_MODE) {
+    console.log('[Dashboard] shouldShowMiniTask:', show)
+  }
+  return show
+})
+
 const isMiniTaskCompleted = computed(() => store.miniTask.completed)
 
 const showMiniTask = ref(false)
@@ -187,7 +204,7 @@ function updateTask(task) {
 
 <style scoped>
 .dashboard {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -202,98 +219,146 @@ function updateTask(task) {
 
 .subtitle {
   color: var(--text-secondary);
-  font-size: 1rem;
 }
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
 
 .stat-card {
   background: var(--bg-primary);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
   display: flex;
   align-items: center;
   gap: 1rem;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
-  transition: transform 0.2s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
 }
 
 .stat-icon {
-  font-size: 2.5rem;
-}
-
-.stat-content {
-  flex: 1;
+  font-size: 2rem;
 }
 
 .stat-value {
   font-size: 1.75rem;
   font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1;
-  margin-bottom: 0.25rem;
+  color: var(--primary-color);
 }
 
 .stat-label {
-  font-size: 0.875rem;
   color: var(--text-secondary);
+  font-size: 0.875rem;
 }
 
 .content-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
-.quick-actions .action-link {
+.card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.action-link {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
   padding: 1rem;
   border-radius: var(--radius-md);
+  color: var(--text-primary);
   text-decoration: none;
   transition: all 0.2s ease;
   margin-bottom: 0.75rem;
 }
 
-.quick-actions .action-link:last-child {
+.action-link:last-child {
   margin-bottom: 0;
 }
 
-.quick-actions .action-link:hover {
-  background: var(--bg-tertiary);
-  transform: translateX(4px);
+.action-link:hover {
+  background: var(--bg-secondary);
 }
 
 .action-icon {
-  font-size: 2rem;
-}
-
-.action-content {
-  flex: 1;
+  font-size: 1.5rem;
 }
 
 .action-title {
   font-weight: 600;
-  color: var(--text-primary);
   margin-bottom: 0.25rem;
 }
 
 .action-desc {
   font-size: 0.875rem;
   color: var(--text-secondary);
+}
+
+.empty-state-mini {
+  text-align: center;
+  padding: 1rem;
+  color: var(--text-secondary);
+}
+
+.tasks-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.task-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.task-preview-item:hover {
+  background: var(--bg-secondary);
+}
+
+.task-preview-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-color);
+}
+
+.task-preview-item span.completed {
+  text-decoration: line-through;
+  color: var(--text-tertiary);
+}
+
+.view-all-link {
+  display: block;
+  text-align: center;
+  padding: 0.5rem;
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.875rem;
 }
 
 .spheres-preview {
@@ -303,20 +368,19 @@ function updateTask(task) {
 }
 
 .sphere-preview-item {
-  padding: 0.75rem;
-  border-radius: var(--radius-md);
-  background: var(--bg-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .sphere-preview-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
 }
 
 .sphere-icon {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
 }
 
 .sphere-name {
@@ -332,15 +396,16 @@ function updateTask(task) {
 
 .score-bar {
   flex: 1;
-  height: 6px;
+  height: 8px;
   background: var(--bg-tertiary);
-  border-radius: 3px;
+  border-radius: 4px;
   overflow: hidden;
 }
 
 .score-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  border-radius: 4px;
   transition: width 0.3s ease;
 }
 
@@ -348,111 +413,42 @@ function updateTask(task) {
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--text-secondary);
-  min-width: 45px;
-  text-align: right;
+  min-width: 40px;
 }
 
 .motivation {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05));
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
 }
 
 .motivation-content {
   display: flex;
-  align-items: center;
   gap: 1.5rem;
+  padding: 1.5rem;
+  align-items: flex-start;
 }
 
 .motivation-icon {
-  font-size: 3rem;
+  font-size: 2.5rem;
 }
 
 .motivation-title {
   font-size: 1.25rem;
+  font-weight: 600;
   margin-bottom: 0.5rem;
 }
 
 .motivation-text {
-  color: var(--text-secondary);
+  opacity: 0.9;
   line-height: 1.6;
-  margin: 0;
 }
 
-.empty-state-mini {
-  text-align: center;
-  padding: 2rem 1rem;
-  color: var(--text-secondary);
-}
-
-.empty-state-mini p {
-  margin: 0 0 1rem 0;
-}
-
-.tasks-preview {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.task-preview-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.task-preview-item:hover {
-  background: var(--bg-tertiary);
-}
-
-.task-preview-item input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.task-preview-item span {
-  flex: 1;
-  font-size: 0.9375rem;
-}
-
-.task-preview-item span.completed {
-  text-decoration: line-through;
-  color: var(--text-secondary);
-}
-
-.view-all-link {
-  display: block;
-  text-align: center;
-  padding: 0.75rem;
-  color: var(--primary-color);
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.9375rem;
-  border-radius: var(--radius-md);
-  transition: all 0.2s ease;
-}
-
-.view-all-link:hover {
-  background: var(--bg-tertiary);
-}
-
-.btn-sm {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-}
-
-@media (max-width: 768px) {
-  .content-grid {
+@media (max-width: 900px) {
+  .stats-grid {
     grid-template-columns: 1fr;
   }
-  
-  .stats-grid {
+
+  .content-grid {
     grid-template-columns: 1fr;
   }
 }

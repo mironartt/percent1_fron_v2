@@ -2,7 +2,6 @@
   <div class="login-page">
     <div class="login-container">
       <div class="login-card">
-        <!-- Header -->
         <div class="login-header">
           <h1 class="login-logo">OnePercent</h1>
           <p class="login-subtitle">+1% каждый день к лучшей жизни</p>
@@ -10,15 +9,13 @@
           <p class="login-description">Войдите в свой аккаунт, чтобы продолжить</p>
         </div>
 
-        <!-- Form -->
         <form @submit.prevent="handleLogin" class="login-form">
-          <!-- Email Field -->
           <div class="form-group">
             <label for="email" class="form-label">
               <span class="label-text">Email адрес</span>
             </label>
             <div class="input-wrapper">
-              <span class="input-icon">📧</span>
+              <span class="input-icon">&#x1F4E7;</span>
               <input
                 id="email"
                 v-model="form.email"
@@ -26,19 +23,19 @@
                 class="form-input"
                 placeholder="your@email.com"
                 required
+                :disabled="isSubmitting"
                 @blur="validateField('email')"
               />
             </div>
             <span v-if="errors.email" class="form-error">{{ errors.email }}</span>
           </div>
 
-          <!-- Password Field -->
           <div class="form-group">
             <label for="password" class="form-label">
               <span class="label-text">Пароль</span>
             </label>
             <div class="input-wrapper">
-              <span class="input-icon">🔒</span>
+              <span class="input-icon">&#x1F512;</span>
               <input
                 id="password"
                 v-model="form.password"
@@ -46,6 +43,7 @@
                 class="form-input"
                 placeholder="Введите пароль"
                 required
+                :disabled="isSubmitting"
                 @blur="validateField('password')"
               />
               <button
@@ -54,13 +52,12 @@
                 @click="showPassword = !showPassword"
                 :title="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
               >
-                {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+                {{ showPassword ? '&#x1F441;' : '&#x1F441;&#x200D;&#x1F5E8;' }}
               </button>
             </div>
             <span v-if="errors.password" class="form-error">{{ errors.password }}</span>
           </div>
 
-          <!-- Remember Me -->
           <div class="form-group checkbox-group">
             <label class="checkbox-label">
               <input
@@ -70,10 +67,14 @@
               />
               <span class="checkbox-text">Запомнить меня</span>
             </label>
-            <router-link to="#" class="forgot-link">Забыли пароль?</router-link>
+            <router-link to="/auth/recovery" class="forgot-link">Забыли пароль?</router-link>
           </div>
 
-          <!-- Submit Button -->
+          <div v-if="apiError" class="api-error">
+            <div class="api-error-message">{{ apiError }}</div>
+            <div v-if="apiErrorDetail" class="api-error-detail">{{ apiErrorDetail }}</div>
+          </div>
+
           <button
             type="submit"
             class="btn btn-primary btn-lg login-submit"
@@ -84,61 +85,57 @@
           </button>
         </form>
 
-        <!-- Divider -->
         <div class="divider">
           <span>или</span>
         </div>
 
-        <!-- Social Login -->
         <div class="social-login">
-          <button type="button" class="btn-social google">
-            <span class="social-icon">🔵</span>
+          <button type="button" class="btn-social google" disabled>
+            <span class="social-icon">&#x1F535;</span>
             <span>Google</span>
           </button>
-          <button type="button" class="btn-social telegram">
-            <span class="social-icon">💬</span>
+          <button type="button" class="btn-social telegram" disabled>
+            <span class="social-icon">&#x1F4AC;</span>
             <span>Telegram</span>
           </button>
         </div>
 
-        <!-- Footer -->
         <div class="login-footer">
           <p>
             Нет аккаунта?
-            <router-link to="/register" class="link">Зарегистрируйтесь здесь</router-link>
+            <router-link to="/auth/register" class="link">Зарегистрируйтесь здесь</router-link>
           </p>
         </div>
       </div>
 
-      <!-- Benefits Sidebar -->
       <div class="login-benefits">
         <div class="benefits-header">
           <h3>Почему выбирают OnePercent</h3>
         </div>
         <div class="benefits-list">
           <div class="benefit-item">
-            <span class="benefit-icon">🚀</span>
+            <span class="benefit-icon">&#x1F680;</span>
             <div>
               <h4>Простая система</h4>
               <p>Начните улучшать жизнь за 5 минут</p>
             </div>
           </div>
           <div class="benefit-item">
-            <span class="benefit-icon">📈</span>
+            <span class="benefit-icon">&#x1F4C8;</span>
             <div>
               <h4>Видимый прогресс</h4>
               <p>Отслеживайте свой рост день за днём</p>
             </div>
           </div>
           <div class="benefit-item">
-            <span class="benefit-icon">🎯</span>
+            <span class="benefit-icon">&#x1F3AF;</span>
             <div>
               <h4>Достижение целей</h4>
               <p>Управляйте всеми сферами жизни</p>
             </div>
           </div>
           <div class="benefit-item">
-            <span class="benefit-icon">💪</span>
+            <span class="benefit-icon">&#x1F4AA;</span>
             <div>
               <h4>Поддержка сообщества</h4>
               <p>Вместе достигать больше</p>
@@ -148,15 +145,14 @@
       </div>
     </div>
 
-    <!-- Success Modal -->
     <transition name="fade">
       <div v-if="showSuccess" class="modal-overlay" @click="closeSuccess">
         <div class="modal" @click.stop>
           <div class="modal-header">
-            <h2>🎉 Успешный вход!</h2>
+            <h2>&#x1F389; Успешный вход!</h2>
           </div>
           <div class="modal-body">
-            <p>Вы успешно вошли в систему. Сейчас вас перенаправит на главную страницу.</p>
+            <p>Вы успешно вошли в систему. Сейчас вас перенаправит в личный кабинет.</p>
           </div>
         </div>
       </div>
@@ -165,11 +161,14 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAppStore } from '../stores/app'
+import { ref, reactive, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useAppStore } from '@/stores/app'
+import api from '@/services/api.js'
+import { resetAuthCache } from '@/router/index.js'
 
 const router = useRouter()
+const route = useRoute()
 const store = useAppStore()
 
 const form = reactive({
@@ -186,6 +185,12 @@ const errors = reactive({
 const showPassword = ref(false)
 const isSubmitting = ref(false)
 const showSuccess = ref(false)
+const apiError = ref('')
+const apiErrorDetail = ref('')
+
+onMounted(async () => {
+  await api.initCsrf()
+})
 
 function validateField(field) {
   switch (field) {
@@ -203,8 +208,8 @@ function validateField(field) {
     case 'password':
       if (!form.password) {
         errors.password = 'Введите пароль'
-      } else if (form.password.length < 8) {
-        errors.password = 'Пароль должен содержать минимум 8 символов'
+      } else if (form.password.length < 6) {
+        errors.password = 'Пароль должен содержать минимум 6 символов'
       } else {
         errors.password = ''
       }
@@ -219,22 +224,41 @@ function validateForm() {
   return !errors.email && !errors.password
 }
 
-function handleLogin() {
+async function handleLogin() {
   if (!validateForm()) {
     return
   }
 
   isSubmitting.value = true
+  apiError.value = ''
+  apiErrorDetail.value = ''
 
-  setTimeout(() => {
+  try {
+    const result = await api.login(form.email, form.password)
+
+    if (result.status === 'ok') {
+      resetAuthCache()
+      
+      if (result.data) {
+        store.setUser(result.data)
+      }
+      
+      showSuccess.value = true
+
+      setTimeout(() => {
+        const redirectPath = route.query.redirect || '/app'
+        router.push(redirectPath)
+      }, 1500)
+    } else {
+      apiError.value = result.error_data?.message || 'Неверный email или пароль'
+      apiErrorDetail.value = result.error_data?.key || ''
+    }
+  } catch (e) {
+    apiError.value = 'Ошибка сети. Проверьте подключение к интернету.'
+    apiErrorDetail.value = ''
+  } finally {
     isSubmitting.value = false
-    showSuccess.value = true
-
-    // Redirect after 2 seconds
-    setTimeout(() => {
-      router.push('/')
-    }, 2000)
-  }, 1000)
+  }
 }
 
 function closeSuccess() {
@@ -350,6 +374,11 @@ function closeSuccess() {
   color: var(--text-tertiary);
 }
 
+.form-input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .btn-toggle-password {
   position: absolute;
   right: 0.875rem;
@@ -373,6 +402,26 @@ function closeSuccess() {
   margin-top: 0.35rem;
   font-size: 0.8125rem;
   color: var(--danger-color);
+}
+
+.api-error {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-md);
+  color: var(--danger-color);
+}
+
+.api-error-message {
+  font-size: 0.875rem;
+}
+
+.api-error-detail {
+  font-size: 0.75rem;
+  font-style: italic;
+  margin-top: 0.35rem;
+  opacity: 0.85;
 }
 
 .checkbox-group {
@@ -428,6 +477,37 @@ function closeSuccess() {
   width: 100%;
 }
 
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-lg {
+  padding: 1rem 1.5rem;
+}
+
 .divider {
   display: flex;
   align-items: center;
@@ -468,9 +548,14 @@ function closeSuccess() {
   transition: all 0.2s ease;
 }
 
-.btn-social:hover {
+.btn-social:hover:not(:disabled) {
   border-color: var(--primary-color);
   background: var(--bg-secondary);
+}
+
+.btn-social:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .social-icon {
@@ -527,7 +612,6 @@ function closeSuccess() {
   opacity: 0.9;
 }
 
-/* Modal */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -558,6 +642,16 @@ function closeSuccess() {
 .modal-body p {
   color: var(--text-secondary);
   line-height: 1.6;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
 @media (max-width: 968px) {
