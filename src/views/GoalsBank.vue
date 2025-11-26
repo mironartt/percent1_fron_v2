@@ -1219,23 +1219,7 @@ function removeKeyGoal(goalId) {
 }
 
 function completeGoalsBankHandler() {
-  if (selectedGoalIds.value.length < 1) {
-    alert('Выберите хотя бы одну цель')
-    return
-  }
-  
-  const selectedGoals = validatedGoals.value.filter(g => selectedGoalIds.value.includes(g.id))
-  
-  const goalsToTransfer = selectedGoals.map(g => ({
-    goal: g.text,
-    whyImportant: g.whyImportant,
-    sphere: g.sphereId,
-    threeWhys: g.threeWhys || null
-  }))
-  
-  store.completeGoalsBank(goalsToTransfer)
-  
-  router.push('/goals')
+  store.finishGoalsBankLesson()
 }
 
 function getSphereName(sphereId) {

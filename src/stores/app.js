@@ -450,6 +450,11 @@ export const useAppStore = defineStore('app', () => {
     saveToLocalStorage()
   }
 
+  function finishGoalsBankLesson() {
+    goalsBank.value.completedAt = new Date().toISOString()
+    saveToLocalStorage()
+  }
+
   function completeGoalsBank(selectedGoals = []) {
     goalsBank.value.completedAt = new Date().toISOString()
     
@@ -685,6 +690,7 @@ export const useAppStore = defineStore('app', () => {
     deleteKeyGoal,
     updateSphereAnalysis,
     setGoalsBankStep,
+    finishGoalsBankLesson,
     completeGoalsBank,
     resetGoalsBank,
     resetSSPModule,
