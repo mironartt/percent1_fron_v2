@@ -1634,9 +1634,9 @@ function getStatusLabel(status) {
 }
 
 .status-badge.in-work {
-  background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+  background: #6366f1;
   color: white;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 1px 4px rgba(99, 102, 241, 0.25);
   white-space: nowrap;
 }
 
@@ -1644,11 +1644,11 @@ function getStatusLabel(status) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
-  background: rgba(255, 255, 255, 0.25);
+  width: 12px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  font-size: 10px;
+  font-size: 8px;
   font-weight: bold;
 }
 
