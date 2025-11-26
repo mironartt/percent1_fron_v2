@@ -1642,15 +1642,28 @@ function getStatusLabel(status) {
 .goal-cell {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.375rem;
+}
+
+.goal-cell .goal-sphere-badge {
+  font-size: 0.8125rem;
+  padding: 0.125rem 0.5rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  display: inline-block;
+  width: fit-content;
 }
 
 .goal-cell .goal-text {
+  font-size: 0.9375rem;
   font-weight: 500;
   line-height: 1.4;
+  color: var(--text-primary);
 }
 
 .why-cell {
+  font-size: 0.9375rem;
   color: var(--text-secondary);
   line-height: 1.5;
 }
