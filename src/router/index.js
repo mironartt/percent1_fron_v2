@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { SKIP_AUTH_CHECK, DEBUG_MODE } from '@/config/settings.js'
-import api from '@/services/api.js'
+import api, { refreshCsrf } from '@/services/api.js'
 
 // Lazy loading компонентов
 const Landing = () => import('@/views/Landing.vue')
@@ -147,6 +147,9 @@ const AUTH_CHECK_CACHE_TIME = 30000 // 30 секунд
 router.beforeEach(async (to, from, next) => {
   // Устанавливаем title
   document.title = to.meta.title ? `${to.meta.title} - OnePercent` : 'OnePercent'
+  
+  // Обновляем CSRF токен при каждом переходе на страницу
+  await refreshCsrf()
   
   // Если роут не требует авторизации - пропускаем
   if (!to.meta.requiresAuth) {

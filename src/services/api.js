@@ -10,17 +10,29 @@
 
 import { API_BASE_URL, MIN_REQUEST_INTERVAL, DEBUG_MODE } from '@/config/settings.js'
 
-// Хранилище CSRF токена
-let csrfToken = null
-
 // Хранилище последних запросов для rate limiting
 const requestTimestamps = new Map()
 
 /**
- * Получить текущий CSRF токен
+ * Утилита для получения значения cookie по имени
+ * @param {string} name - Имя cookie
+ * @returns {string|null} - Значение cookie или null
+ */
+function getCookie(name) {
+  const value = `; ${document.cookie}`
+  const parts = value.split(`; ${name}=`)
+  if (parts.length === 2) {
+    return decodeURIComponent(parts.pop().split(';').shift())
+  }
+  return null
+}
+
+/**
+ * Получить текущий CSRF токен из cookie
+ * @returns {string|null} - CSRF токен или null
  */
 export function getCsrfToken() {
-  return csrfToken
+  return getCookie('csrftoken')
 }
 
 // Эндпоинты, освобождённые от rate limiting
@@ -86,9 +98,12 @@ export async function request(method, endpoint, data = null, options = {}) {
     'Accept': 'application/json'
   }
   
-  // Добавляем CSRF токен если есть и не пропускаем
-  if (!skipCsrf && csrfToken) {
-    headers['X-CSRFToken'] = csrfToken
+  // Добавляем CSRF токен из cookie если не пропускаем
+  if (!skipCsrf) {
+    const csrfToken = getCookie('csrftoken')
+    if (csrfToken) {
+      headers['X-CSRFToken'] = csrfToken
+    }
   }
   
   const config = {
@@ -162,27 +177,66 @@ export async function request(method, endpoint, data = null, options = {}) {
 }
 
 /**
- * Инициализация CSRF токена
- * Должен вызываться при загрузке приложения
+ * Построение URL с правильным объединением путей
+ * @param {string} endpoint - Относительный путь эндпоинта
+ * @returns {string} - Полный URL
+ */
+function buildUrl(endpoint) {
+  const base = API_BASE_URL || window.location.origin
+  // Убираем trailing slash у base и leading slash у endpoint для чистого объединения
+  const cleanBase = base.replace(/\/+$/, '')
+  const cleanEndpoint = endpoint.replace(/^\/+/, '')
+  return `${cleanBase}/${cleanEndpoint}`
+}
+
+/**
+ * Инициализация/обновление CSRF токена
+ * Делает запрос к серверу, который устанавливает cookie 'csrftoken'
+ * Должен вызываться при загрузке приложения и при переходе на страницы
  */
 export async function initCsrf() {
-  const result = await request('POST', '/api/rest/front/csrf/', null, { 
-    skipCsrf: true,
-    skipRateLimit: true 
-  })
-  
-  if (result.status === 'ok' && result.csrf_token) {
-    csrfToken = result.csrf_token
+  try {
+    const url = buildUrl('/api/rest/front/csrf/')
+    
     if (DEBUG_MODE) {
-      console.log('[API] CSRF token initialized')
+      console.log('[API] Refreshing CSRF token from:', url)
     }
-    return true
+    
+    await fetch(url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({})
+    })
+    
+    // Проверяем что cookie установлена
+    const token = getCookie('csrftoken')
+    
+    if (DEBUG_MODE) {
+      if (token) {
+        console.log('[API] CSRF token initialized from cookie')
+      } else {
+        console.warn('[API] CSRF cookie not set after request')
+      }
+    }
+    
+    return !!token
+  } catch (error) {
+    if (DEBUG_MODE) {
+      console.error('[API] Failed to initialize CSRF token:', error)
+    }
+    return false
   }
-  
-  if (DEBUG_MODE) {
-    console.error('[API] Failed to initialize CSRF token:', result)
-  }
-  return false
+}
+
+/**
+ * Обновление CSRF токена (алиас для initCsrf)
+ * Используется при переходе между страницами
+ */
+export async function refreshCsrf() {
+  return initCsrf()
 }
 
 /**
@@ -214,14 +268,7 @@ export async function register(first_name, email, password1, password2) {
  * Выход из системы
  */
 export async function logout() {
-  const result = await request('POST', '/api/rest/front/logout/')
-  
-  // Очищаем CSRF токен после выхода
-  if (result.status === 'ok') {
-    csrfToken = null
-  }
-  
-  return result
+  return request('POST', '/api/rest/front/logout/')
 }
 
 /**
@@ -260,6 +307,7 @@ export const getCurrentUser = checkAuth
 export const api = {
   request,
   initCsrf,
+  refreshCsrf,
   login,
   register,
   logout,
