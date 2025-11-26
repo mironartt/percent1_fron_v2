@@ -163,6 +163,13 @@
             <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
             <span class="goal-title">{{ goal.title }}</span>
             <span class="goal-progress">{{ goal.progress }}%</span>
+            <button 
+              class="btn-icon-remove"
+              @click.stop="removeFromWork(goal.id)"
+              title="Убрать из работы"
+            >
+              ✕
+            </button>
           </div>
         </div>
       </div>
@@ -173,9 +180,6 @@
         </button>
         <button class="btn btn-secondary" @click="addNewGoal">
           &#x2795; Добавить новую цель
-        </button>
-        <button class="btn btn-secondary" @click="restartLesson">
-          &#x1F504; Пройти урок заново
         </button>
       </div>
     </div>
@@ -1209,6 +1213,20 @@ function takeGoalToWork(goal) {
   store.addGoal(goalData)
 }
 
+function removeFromWork(goalId) {
+  const goal = transferredGoals.value.find(g => g.id === goalId)
+  if (goal) {
+    const hasSteps = goal.steps && goal.steps.length > 0
+    const message = hasSteps 
+      ? `Убрать цель "${goal.title}" из работы? Все шаги декомпозиции будут удалены.`
+      : `Убрать цель "${goal.title}" из работы?`
+    
+    if (confirm(message)) {
+      store.deleteGoal(goal.id)
+    }
+  }
+}
+
 function getSphereName(sphereId) {
   const sphere = lifeSpheres.value.find(s => s.id === sphereId)
   return sphere ? `${sphere.icon} ${sphere.name}` : 'Не указана'
@@ -1401,6 +1419,26 @@ function getStatusLabel(status) {
 .key-goal-item .goal-progress {
   font-weight: 600;
   color: var(--primary-color);
+}
+
+.key-goal-item .btn-icon-remove {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.key-goal-item .btn-icon-remove:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
 }
 
 /* Sphere Distribution */
