@@ -4,3 +4,6 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# Local settings (environment-specific)
+src/config/local_settings.js

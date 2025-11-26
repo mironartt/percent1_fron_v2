@@ -29,15 +29,23 @@
         >
           <span class="icon">{{ item.icon }}</span>
           <span>{{ item.label }}</span>
-          <span v-if="item.showLock" class="lock-icon">🔒</span>
+          <span v-if="item.showLock" class="lock-icon">&#x1F512;</span>
         </div>
       </div>
     </nav>
 
     <div class="sidebar-footer">
-      <router-link to="/settings" class="settings-link">
-        <span class="icon">⚙️</span>
+      <div class="user-info" v-if="store.isAuthenticated">
+        <span class="user-avatar">&#x1F464;</span>
+        <span class="user-name">{{ store.displayName }}</span>
+      </div>
+      <router-link to="/app/settings" class="settings-link">
+        <span class="icon">&#x2699;&#xFE0F;</span>
         <span>Настройки</span>
+      </router-link>
+      <router-link to="/auth/logout" class="logout-link">
+        <span class="icon">&#x1F6AA;</span>
+        <span>Выйти</span>
       </router-link>
     </div>
   </aside>
@@ -45,28 +53,27 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useAppStore } from '../stores/app'
+import { useAppStore } from '@/stores/app'
 
 const store = useAppStore()
 
 const hasAccess = computed(() => {
-  // Доступ есть только если оплачена подписка
   return store.payment.completed
 })
 
 const lockTooltip = 'Для доступа в систему необходима подписка'
 
 const menuItems = [
-  { path: '/', icon: '📊', label: 'Главная', locked: false, showLock: false },
-  { path: '/who', icon: '🧭', label: 'Кто ты', locked: true, showLock: false },
-  { path: '/ssp', icon: '🎯', label: 'ССП', locked: false, showLock: false },
-  { path: '/goals-bank', icon: '🏦', label: 'Банк целей', locked: false, showLock: false },
-  { path: '/goals', icon: '🏆', label: 'Декомпозиция', locked: false, showLock: false },
-  { path: '/planner', icon: '📅', label: 'Планирование', locked: true, showLock: false },
-  { path: '/energy', icon: '⚡', label: 'Ресурс и энергия', locked: true, showLock: false },
-  { path: '/principles', icon: '💎', label: 'Принципы и убеждения', locked: true, showLock: false },
-  { path: '/club', icon: '👥', label: 'Клуб 1%', locked: true, showLock: false },
-  { path: '/achievements', icon: '🏅', label: 'Достижения', locked: true, showLock: false }
+  { path: '/app', icon: '&#x1F4CA;', label: 'Главная', locked: false, showLock: false },
+  { path: '/app/who', icon: '&#x1F9ED;', label: 'Кто ты', locked: true, showLock: false },
+  { path: '/app/ssp', icon: '&#x1F3AF;', label: 'ССП', locked: false, showLock: false },
+  { path: '/app/goals-bank', icon: '&#x1F3E6;', label: 'Банк целей', locked: false, showLock: false },
+  { path: '/app/goals', icon: '&#x1F3C6;', label: 'Декомпозиция', locked: false, showLock: false },
+  { path: '/app/planner', icon: '&#x1F4C5;', label: 'Планирование', locked: true, showLock: false },
+  { path: '/app/energy', icon: '&#x26A1;', label: 'Ресурс и энергия', locked: true, showLock: false },
+  { path: '/app/principles', icon: '&#x1F48E;', label: 'Принципы и убеждения', locked: true, showLock: false },
+  { path: '/app/club', icon: '&#x1F465;', label: 'Клуб 1%', locked: true, showLock: false },
+  { path: '/app/achievements', icon: '&#x1F3C5;', label: 'Достижения', locked: true, showLock: false }
 ]
 </script>
 
@@ -163,15 +170,35 @@ const menuItems = [
 }
 
 .sidebar-footer {
-  padding: 1.5rem;
+  padding: 1rem 1.5rem;
   border-top: 1px solid var(--border-color);
 }
 
-.settings-link {
+.user-info {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.875rem 0;
+  padding: 0.75rem 0;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.user-avatar {
+  font-size: 1.5rem;
+}
+
+.user-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+}
+
+.settings-link,
+.logout-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
   color: var(--text-secondary);
   text-decoration: none;
   font-weight: 500;
@@ -180,11 +207,23 @@ const menuItems = [
   cursor: pointer;
 }
 
-.settings-link:hover {
+.settings-link:hover,
+.logout-link:hover {
   color: var(--text-primary);
 }
 
-.settings-link .icon {
+.logout-link {
+  color: var(--danger-color);
+  opacity: 0.8;
+}
+
+.logout-link:hover {
+  opacity: 1;
+  color: var(--danger-color);
+}
+
+.settings-link .icon,
+.logout-link .icon {
   font-size: 1.25rem;
   width: 1.5rem;
   text-align: center;

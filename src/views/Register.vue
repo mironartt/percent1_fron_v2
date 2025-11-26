@@ -2,7 +2,6 @@
   <div class="register-page">
     <div class="register-container">
       <div class="register-card">
-        <!-- Header -->
         <div class="register-header">
           <h1 class="register-logo">OnePercent</h1>
           <p class="register-subtitle">+1% каждый день к лучшей жизни</p>
@@ -10,15 +9,13 @@
           <p class="register-description">Начните путь к достижению своих целей прямо сейчас</p>
         </div>
 
-        <!-- Form -->
         <form @submit.prevent="handleRegister" class="register-form">
-          <!-- Name Field -->
           <div class="form-group">
             <label for="name" class="form-label">
               <span class="label-text">Ваше имя</span>
             </label>
             <div class="input-wrapper">
-              <span class="input-icon">👤</span>
+              <span class="input-icon">&#x1F464;</span>
               <input
                 id="name"
                 v-model="form.name"
@@ -26,19 +23,19 @@
                 class="form-input"
                 placeholder="Введите ваше имя"
                 required
+                :disabled="isSubmitting"
                 @blur="validateField('name')"
               />
             </div>
             <span v-if="errors.name" class="form-error">{{ errors.name }}</span>
           </div>
 
-          <!-- Email Field -->
           <div class="form-group">
             <label for="email" class="form-label">
               <span class="label-text">Email адрес</span>
             </label>
             <div class="input-wrapper">
-              <span class="input-icon">📧</span>
+              <span class="input-icon">&#x1F4E7;</span>
               <input
                 id="email"
                 v-model="form.email"
@@ -46,20 +43,20 @@
                 class="form-input"
                 placeholder="your@email.com"
                 required
+                :disabled="isSubmitting"
                 @blur="validateField('email')"
               />
             </div>
             <span v-if="errors.email" class="form-error">{{ errors.email }}</span>
           </div>
 
-          <!-- Password Field -->
           <div class="form-group">
             <label for="password" class="form-label">
               <span class="label-text">Пароль</span>
               <span class="label-hint">(минимум 8 символов)</span>
             </label>
             <div class="input-wrapper">
-              <span class="input-icon">🔒</span>
+              <span class="input-icon">&#x1F512;</span>
               <input
                 id="password"
                 v-model="form.password"
@@ -67,6 +64,7 @@
                 class="form-input"
                 placeholder="Придумайте надежный пароль"
                 required
+                :disabled="isSubmitting"
                 @blur="validateField('password')"
               />
               <button
@@ -75,14 +73,33 @@
                 @click="showPassword = !showPassword"
                 :title="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
               >
-                {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+                {{ showPassword ? '&#x1F441;' : '&#x1F441;&#x200D;&#x1F5E8;' }}
               </button>
             </div>
             <span v-if="errors.password" class="form-error">{{ errors.password }}</span>
             <span v-else class="form-hint">Используйте цифры, буквы и символы для безопасности</span>
           </div>
 
-          <!-- Terms -->
+          <div class="form-group">
+            <label for="password2" class="form-label">
+              <span class="label-text">Подтвердите пароль</span>
+            </label>
+            <div class="input-wrapper">
+              <span class="input-icon">&#x1F512;</span>
+              <input
+                id="password2"
+                v-model="form.password2"
+                :type="showPassword ? 'text' : 'password'"
+                class="form-input"
+                placeholder="Повторите пароль"
+                required
+                :disabled="isSubmitting"
+                @blur="validateField('password2')"
+              />
+            </div>
+            <span v-if="errors.password2" class="form-error">{{ errors.password2 }}</span>
+          </div>
+
           <div class="form-group checkbox-group">
             <label class="checkbox-label">
               <input
@@ -93,14 +110,17 @@
               />
               <span class="checkbox-text">
                 Я согласен с 
-                <a href="#" @click.prevent="showTerms = true" class="link">условиями использования</a>
+                <a href="#" @click.prevent class="link">условиями использования</a>
                 и 
-                <a href="#" @click.prevent="showTerms = true" class="link">политикой конфиденциальности</a>
+                <a href="#" @click.prevent class="link">политикой конфиденциальности</a>
               </span>
             </label>
           </div>
 
-          <!-- Submit Button -->
+          <div v-if="apiError" class="api-error">
+            {{ apiError }}
+          </div>
+
           <button
             type="submit"
             class="btn btn-primary btn-lg register-submit"
@@ -111,61 +131,57 @@
           </button>
         </form>
 
-        <!-- Divider -->
         <div class="divider">
           <span>или</span>
         </div>
 
-        <!-- Social Register -->
         <div class="social-register">
-          <button type="button" class="btn-social google">
-            <span class="social-icon">🔵</span>
+          <button type="button" class="btn-social google" disabled>
+            <span class="social-icon">&#x1F535;</span>
             <span>Google</span>
           </button>
-          <button type="button" class="btn-social telegram">
-            <span class="social-icon">💬</span>
+          <button type="button" class="btn-social telegram" disabled>
+            <span class="social-icon">&#x1F4AC;</span>
             <span>Telegram</span>
           </button>
         </div>
 
-        <!-- Footer -->
         <div class="register-footer">
           <p>
             Уже есть аккаунт?
-            <router-link to="/login" class="link">Войдите здесь</router-link>
+            <router-link to="/auth/login" class="link">Войдите здесь</router-link>
           </p>
         </div>
       </div>
 
-      <!-- Benefits Sidebar -->
       <div class="register-benefits">
         <div class="benefits-header">
           <h3>Что вас ждёт в OnePercent</h3>
         </div>
         <div class="benefits-list">
           <div class="benefit-item">
-            <span class="benefit-icon">🎯</span>
+            <span class="benefit-icon">&#x1F3AF;</span>
             <div>
               <h4>Система управления жизнью</h4>
               <p>ССП для баланса всех сфер</p>
             </div>
           </div>
           <div class="benefit-item">
-            <span class="benefit-icon">📊</span>
+            <span class="benefit-icon">&#x1F4CA;</span>
             <div>
               <h4>Отслеживание прогресса</h4>
               <p>Графики и статистика развития</p>
             </div>
           </div>
           <div class="benefit-item">
-            <span class="benefit-icon">💡</span>
+            <span class="benefit-icon">&#x1F4A1;</span>
             <div>
               <h4>Персональные рекомендации</h4>
               <p>Советы для улучшения на 1%</p>
             </div>
           </div>
           <div class="benefit-item">
-            <span class="benefit-icon">👥</span>
+            <span class="benefit-icon">&#x1F465;</span>
             <div>
               <h4>Сообщество единомышленников</h4>
               <p>Клуб 1% для взаимной поддержки</p>
@@ -175,15 +191,14 @@
       </div>
     </div>
 
-    <!-- Success Modal -->
     <transition name="fade">
       <div v-if="showSuccess" class="modal-overlay" @click="closeSuccess">
         <div class="modal" @click.stop>
           <div class="modal-header">
-            <h2>🎉 Добро пожаловать!</h2>
+            <h2>&#x1F389; Добро пожаловать!</h2>
           </div>
           <div class="modal-body">
-            <p>Ваш аккаунт успешно создан. Сейчас вас перенаправит на главную страницу.</p>
+            <p>Ваш аккаунт успешно создан. Сейчас вас перенаправит в личный кабинет.</p>
           </div>
         </div>
       </div>
@@ -192,9 +207,11 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAppStore } from '../stores/app'
+import { useAppStore } from '@/stores/app'
+import api from '@/services/api.js'
+import { resetAuthCache } from '@/router/index.js'
 
 const router = useRouter()
 const store = useAppStore()
@@ -203,19 +220,25 @@ const form = reactive({
   name: '',
   email: '',
   password: '',
+  password2: '',
   agreeTerms: false
 })
 
 const errors = reactive({
   name: '',
   email: '',
-  password: ''
+  password: '',
+  password2: ''
 })
 
 const showPassword = ref(false)
 const isSubmitting = ref(false)
 const showSuccess = ref(false)
-const showTerms = ref(false)
+const apiError = ref('')
+
+onMounted(async () => {
+  await api.initCsrf()
+})
 
 function validateField(field) {
   switch (field) {
@@ -248,6 +271,19 @@ function validateField(field) {
       } else {
         errors.password = ''
       }
+      if (form.password2 && form.password !== form.password2) {
+        errors.password2 = 'Пароли не совпадают'
+      }
+      break
+
+    case 'password2':
+      if (!form.password2) {
+        errors.password2 = 'Подтвердите пароль'
+      } else if (form.password !== form.password2) {
+        errors.password2 = 'Пароли не совпадают'
+      } else {
+        errors.password2 = ''
+      }
       break
   }
 }
@@ -256,29 +292,45 @@ function validateForm() {
   validateField('name')
   validateField('email')
   validateField('password')
+  validateField('password2')
 
-  return !errors.name && !errors.email && !errors.password && form.agreeTerms
+  return !errors.name && !errors.email && !errors.password && !errors.password2 && form.agreeTerms
 }
 
-function handleRegister() {
+async function handleRegister() {
   if (!validateForm()) {
+    if (!form.agreeTerms) {
+      apiError.value = 'Необходимо согласиться с условиями использования'
+    }
     return
   }
 
   isSubmitting.value = true
+  apiError.value = ''
 
-  setTimeout(() => {
-    // Update store with user name
-    store.user.name = form.name
+  try {
+    const result = await api.register(form.name, form.email, form.password, form.password2)
 
+    if (result.status === 'ok') {
+      resetAuthCache()
+      
+      if (result.data) {
+        store.setUser(result.data)
+      }
+      
+      showSuccess.value = true
+
+      setTimeout(() => {
+        router.push('/app')
+      }, 1500)
+    } else {
+      apiError.value = result.error_data?.message || 'Произошла ошибка при регистрации'
+    }
+  } catch (e) {
+    apiError.value = 'Ошибка сети. Проверьте подключение к интернету.'
+  } finally {
     isSubmitting.value = false
-    showSuccess.value = true
-
-    // Redirect after 2 seconds
-    setTimeout(() => {
-      router.push('/')
-    }, 2000)
-  }, 1000)
+  }
 }
 
 function closeSuccess() {
@@ -349,7 +401,7 @@ function closeSuccess() {
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
 .form-label {
@@ -406,6 +458,11 @@ function closeSuccess() {
   color: var(--text-tertiary);
 }
 
+.form-input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .btn-toggle-password {
   position: absolute;
   right: 0.875rem;
@@ -436,6 +493,16 @@ function closeSuccess() {
   margin-top: 0.35rem;
   font-size: 0.8125rem;
   color: var(--text-secondary);
+}
+
+.api-error {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-md);
+  color: var(--danger-color);
+  font-size: 0.875rem;
 }
 
 .checkbox-group {
@@ -478,6 +545,37 @@ function closeSuccess() {
   width: 100%;
 }
 
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-lg {
+  padding: 1rem 1.5rem;
+}
+
 .divider {
   display: flex;
   align-items: center;
@@ -518,9 +616,14 @@ function closeSuccess() {
   transition: all 0.2s ease;
 }
 
-.btn-social:hover {
+.btn-social:hover:not(:disabled) {
   border-color: var(--primary-color);
   background: var(--bg-secondary);
+}
+
+.btn-social:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .social-icon {
@@ -577,7 +680,6 @@ function closeSuccess() {
   opacity: 0.9;
 }
 
-/* Modal */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -608,6 +710,16 @@ function closeSuccess() {
 .modal-body p {
   color: var(--text-secondary);
   line-height: 1.6;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
 @media (max-width: 968px) {

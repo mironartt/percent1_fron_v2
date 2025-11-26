@@ -2,7 +2,64 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
 export const useAppStore = defineStore('app', () => {
+  // ========================================
+  // USER & AUTH
+  // ========================================
+  
+  // Данные пользователя с сервера
+  const user = ref({
+    id: null,
+    email: '',
+    first_name: '',
+    last_name: '',
+    is_authenticated: false
+  })
+  
+  // Флаг загрузки данных пользователя
+  const userLoading = ref(false)
+  
+  // Установить данные пользователя
+  function setUser(userData) {
+    if (userData) {
+      user.value = {
+        id: userData.id || null,
+        email: userData.email || '',
+        first_name: userData.first_name || userData.name || '',
+        last_name: userData.last_name || '',
+        is_authenticated: true
+      }
+    }
+  }
+  
+  // Очистить данные пользователя (при logout)
+  function clearUser() {
+    user.value = {
+      id: null,
+      email: '',
+      first_name: '',
+      last_name: '',
+      is_authenticated: false
+    }
+  }
+  
+  // Проверка авторизации
+  const isAuthenticated = computed(() => user.value.is_authenticated)
+  
+  // Имя пользователя для отображения
+  const displayName = computed(() => {
+    if (user.value.first_name) {
+      return user.value.first_name
+    }
+    if (user.value.email) {
+      return user.value.email.split('@')[0]
+    }
+    return 'Пользователь'
+  })
+
+  // ========================================
   // ССП (Сбалансированная система показателей)
+  // ========================================
+  
   const lifeSpheres = ref([
     {
       id: 'wealth',
@@ -89,11 +146,6 @@ export const useAppStore = defineStore('app', () => {
       }
     }
   ])
-
-  // User data
-  const user = ref({
-    name: 'Дмитрий'
-  })
 
   // Onboarding data
   const onboarding = ref({
@@ -524,7 +576,15 @@ export const useAppStore = defineStore('app', () => {
   loadFromLocalStorage()
 
   return {
+    // User & Auth
     user,
+    userLoading,
+    setUser,
+    clearUser,
+    isAuthenticated,
+    displayName,
+    
+    // Core data
     onboarding,
     miniTask,
     payment,
@@ -534,10 +594,14 @@ export const useAppStore = defineStore('app', () => {
     goals,
     weeklyPlan,
     dailyPlan,
+    
+    // Computed
     averageScore,
     totalGoals,
     activeGoals,
     completedGoals,
+    
+    // Actions
     updateSphere,
     addGoal,
     updateGoal,
