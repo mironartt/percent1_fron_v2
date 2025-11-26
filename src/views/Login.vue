@@ -71,7 +71,8 @@
           </div>
 
           <div v-if="apiError" class="api-error">
-            {{ apiError }}
+            <div class="api-error-message">{{ apiError }}</div>
+            <div v-if="apiErrorDetail" class="api-error-detail">{{ apiErrorDetail }}</div>
           </div>
 
           <button
@@ -185,6 +186,7 @@ const showPassword = ref(false)
 const isSubmitting = ref(false)
 const showSuccess = ref(false)
 const apiError = ref('')
+const apiErrorDetail = ref('')
 
 onMounted(async () => {
   await api.initCsrf()
@@ -229,6 +231,7 @@ async function handleLogin() {
 
   isSubmitting.value = true
   apiError.value = ''
+  apiErrorDetail.value = ''
 
   try {
     const result = await api.login(form.email, form.password)
@@ -248,9 +251,11 @@ async function handleLogin() {
       }, 1500)
     } else {
       apiError.value = result.error_data?.message || 'Неверный email или пароль'
+      apiErrorDetail.value = result.error_data?.key || ''
     }
   } catch (e) {
     apiError.value = 'Ошибка сети. Проверьте подключение к интернету.'
+    apiErrorDetail.value = ''
   } finally {
     isSubmitting.value = false
   }
@@ -406,7 +411,17 @@ function closeSuccess() {
   border: 1px solid rgba(239, 68, 68, 0.2);
   border-radius: var(--radius-md);
   color: var(--danger-color);
+}
+
+.api-error-message {
   font-size: 0.875rem;
+}
+
+.api-error-detail {
+  font-size: 0.75rem;
+  font-style: italic;
+  margin-top: 0.35rem;
+  opacity: 0.85;
 }
 
 .checkbox-group {
