@@ -52,7 +52,7 @@
           <h3 class="card-title">Быстрые действия</h3>
         </div>
         <div class="card-body">
-          <router-link to="/ssp" class="action-link">
+          <router-link to="/app/ssp" class="action-link">
             <span class="action-icon">🎯</span>
             <div class="action-content">
               <div class="action-title">Оценить сферы жизни</div>
@@ -60,7 +60,7 @@
             </div>
           </router-link>
 
-          <router-link to="/goals" class="action-link">
+          <router-link to="/app/goals" class="action-link">
             <span class="action-icon">🚀</span>
             <div class="action-content">
               <div class="action-title">Создать новую цель</div>
@@ -68,7 +68,7 @@
             </div>
           </router-link>
 
-          <router-link to="/planner" class="action-link">
+          <router-link to="/app/planner" class="action-link">
             <span class="action-icon">📅</span>
             <div class="action-content">
               <div class="action-title">Спланировать день</div>
@@ -85,7 +85,7 @@
         <div class="card-body">
           <div v-if="dailyTasks.length === 0" class="empty-state-mini">
             <p>Нет задач на сегодня</p>
-            <router-link to="/planner" class="btn btn-sm btn-primary" style="margin-top: 1rem;">
+            <router-link to="/app/planner" class="btn btn-sm btn-primary" style="margin-top: 1rem;">
               Добавить задачи
             </router-link>
           </div>
@@ -104,7 +104,7 @@
             </label>
             <router-link 
               v-if="dailyTasks.length > 5"
-              to="/planner" 
+              to="/app/planner" 
               class="view-all-link"
             >
               Показать все ({{ dailyTasks.length }})

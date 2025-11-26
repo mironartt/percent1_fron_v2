@@ -1,0 +1,143 @@
+Я пошел от обратного.
+Я переключился на мою ветку:
+```
+git checkout origin back_intergration
+git reset --hard origin/back_intergration
+git pull origin back_intergration
+```
+Далее:
+```
+$ git merge origin/main --allow-unrelated-histories
+Автослияние .replit
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в .replit
+Автослияние package-lock.json
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в package-lock.json
+Автослияние package.json
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в package.json
+Автослияние replit.md
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в replit.md
+Автослияние src/components/Onboarding.vue
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/components/Onboarding.vue
+Автослияние src/components/Sidebar.vue
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/components/Sidebar.vue
+Автослияние src/main.js
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/main.js
+Автослияние src/router/index.js
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/router/index.js
+Автослияние src/stores/app.js
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/stores/app.js
+Автослияние src/views/BalancedScorecard.vue
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/views/BalancedScorecard.vue
+Автослияние src/views/Dashboard.vue
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/views/Dashboard.vue
+Автослияние src/views/GoalEdit.vue
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/views/GoalEdit.vue
+Автослияние src/views/GoalNew.vue
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/views/GoalNew.vue
+Автослияние src/views/Goals.vue
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/views/Goals.vue
+Автослияние src/views/GoalsBank.vue
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/views/GoalsBank.vue
+Автослияние src/views/Login.vue
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/views/Login.vue
+Автослияние src/views/Register.vue
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в src/views/Register.vue
+Автослияние vite.config.js
+КОНФЛИКТ (добавление/добавление): Конфликт слияния в vite.config.js
+Сбой автоматического слияния; исправьте конфликты, затем зафиксируйте результат.
+```
+
+Получилось:
+```
+$ git status
+Текущая ветка: back_intergration
+Эта ветка соответствует «origin/back_intergration».
+
+У вас есть не слитые пути.
+  (разрешите конфликты, затем запустите «git commit»)
+  (используйте «git merge --abort», чтобы остановить операцию слияния)
+
+Изменения, которые будут включены в коммит:
+        новый файл:    attached_assets/image_1764138014558.png
+        новый файл:    attached_assets/image_1764140918860.png
+        новый файл:    attached_assets/image_1764141759629.png
+        новый файл:    src/components/GuidancePanel.vue
+        новый файл:    src/views/Planning.vue
+
+Не слитые пути:
+  (используйте «git add <файл>...», чтобы пометить разрешение конфликта)
+        оба добавлены:  .replit
+        оба добавлены:  package-lock.json
+        оба добавлены:  package.json
+        оба добавлены:  replit.md
+        оба добавлены:  src/components/Onboarding.vue
+        оба добавлены:  src/components/Sidebar.vue
+        оба добавлены:  src/main.js
+        оба добавлены:  src/router/index.js
+        оба добавлены:  src/stores/app.js
+        оба добавлены:  src/views/BalancedScorecard.vue
+        оба добавлены:  src/views/Dashboard.vue
+        оба добавлены:  src/views/GoalEdit.vue
+        оба добавлены:  src/views/GoalNew.vue
+        оба добавлены:  src/views/Goals.vue
+        оба добавлены:  src/views/GoalsBank.vue
+        оба добавлены:  src/views/Login.vue
+        оба добавлены:  src/views/Register.vue
+        оба добавлены:  vite.config.js
+```
+
+Я не знаю где что верно, поэтому добавил все:
+```
+$ git add .
+$ git status
+Текущая ветка: back_intergration
+Эта ветка соответствует «origin/back_intergration».
+
+Все конфликты исправлены, но вы все еще в процессе слияния.
+  (используйте «git commit», чтобы завершить слияние)
+
+Изменения, которые будут включены в коммит:
+        изменено:      .replit
+        новый файл:    attached_assets/image_1764138014558.png
+        новый файл:    attached_assets/image_1764140918860.png
+        новый файл:    attached_assets/image_1764141759629.png
+        изменено:      package-lock.json
+        изменено:      package.json
+        изменено:      replit.md
+        новый файл:    src/components/GuidancePanel.vue
+        изменено:      src/components/Onboarding.vue
+        изменено:      src/components/Sidebar.vue
+        изменено:      src/main.js
+        изменено:      src/router/index.js
+        изменено:      src/stores/app.js
+        изменено:      src/views/BalancedScorecard.vue
+        изменено:      src/views/Dashboard.vue
+        изменено:      src/views/GoalEdit.vue
+        изменено:      src/views/GoalNew.vue
+        изменено:      src/views/Goals.vue
+        изменено:      src/views/GoalsBank.vue
+        изменено:      src/views/Login.vue
+        новый файл:    src/views/Planning.vue
+        изменено:      src/views/Register.vue
+        изменено:      vite.config.js
+
+$ git commit -m 'tmp merge'
+[back_intergration 4a68964] tmp merge
+$ git push origin back_intergration
+Перечисление объектов: 76, готово.
+Подсчет объектов: 100% (76/76), готово.
+При сжатии изменений используется до 32 потоков
+Сжатие объектов: 100% (24/24), готово.
+Запись объектов: 100% (26/26), 13.55 КиБ | 6.78 МиБ/с, готово.
+Всего 26 (изменений 21), повторно использовано 0 (изменений 0), повторно использовано пакетов 0
+remote: Resolving deltas: 100% (21/21), completed with 20 local objects.
+To github.com:mironartt/percent1_fron_v2.git
+   62c0648..4a68964  back_intergration -> back_intergration
+```
+
+
+Теперь твоя задача провести корректные правки по слиянию указанных конфликтов.
+В ветке main, была разработка новых страниц и подобного. Т.е. приоритет в плане основной логики, работы под капотом, правила урл-маппинга, взаимодействию с бэком и подобное нужно отдавать ветке `back_intergration`, а новые странички, верстка, стили и подобное отдавать приоритет в сторону `main`.
+
+Если все понял, то приступай к работе.
+По завершению работы, проведи детальный отчет о проделанной работе. И по аналогии с прошлым разом, сделай файл `notes/merge2.md`, куда заниси все описанные тобой внесенные правки.

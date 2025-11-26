@@ -214,11 +214,11 @@ function createGoal() {
   }
 
   store.addGoal(goalData)
-  router.push('/goals')
+  router.push('/app/goals')
 }
 
 function goBack() {
-  router.push('/goals')
+  router.push('/app/goals')
 }
 </script>
 

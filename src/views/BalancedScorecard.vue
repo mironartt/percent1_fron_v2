@@ -563,7 +563,7 @@ function startLesson() {
 }
 
 function goToGoalsBank() {
-  router.push('/goals-bank')
+  router.push('/app/goals-bank')
 }
 
 function restartLesson() {

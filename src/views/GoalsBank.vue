@@ -784,7 +784,7 @@ function startLesson() {
 }
 
 function goToDecomposition() {
-  router.push('/goals')
+  router.push('/app/goals')
 }
 
 function restartLesson() {
@@ -1185,7 +1185,7 @@ function completeGoalsBankHandler() {
   
   store.completeGoalsBank(goalsToTransfer)
   
-  router.push('/goals')
+  router.push('/app/goals')
 }
 
 function getSphereName(sphereId) {

@@ -734,7 +734,7 @@ function removePracticeStep(index) {
 }
 
 function createNewGoalFromLesson() {
-  router.push('/goals/new')
+  router.push('/app/goals/new')
 }
 
 async function sendMessage() {
@@ -830,7 +830,7 @@ function toggleSummaryGoalExpand(goalId) {
 }
 
 function createNewGoal() {
-  router.push('/goals/new')
+  router.push('/app/goals/new')
 }
 
 function openGoalDetail(goal) {
@@ -839,7 +839,7 @@ function openGoalDetail(goal) {
 }
 
 function editGoal(goal) {
-  router.push(`/goals/${goal.id}`)
+  router.push(`/app/goals/${goal.id}`)
 }
 
 function deleteGoalConfirm(goal) {
