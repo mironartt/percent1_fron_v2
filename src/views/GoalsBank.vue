@@ -1510,6 +1510,12 @@ function getStatusLabel(status) {
   margin-bottom: 0.5rem;
 }
 
+.goals-table-section .table-header .section-hint {
+  margin-bottom: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
 .goals-table-wrapper {
   overflow-x: auto;
   margin-bottom: 1rem;
