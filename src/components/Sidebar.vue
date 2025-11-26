@@ -29,22 +29,22 @@
         >
           <span class="icon">{{ item.icon }}</span>
           <span>{{ item.label }}</span>
-          <span v-if="item.showLock" class="lock-icon">&#x1F512;</span>
+          <span v-if="item.showLock" class="lock-icon">🔒</span>
         </div>
       </div>
     </nav>
 
     <div class="sidebar-footer">
       <div class="user-info" v-if="store.isAuthenticated">
-        <span class="user-avatar">&#x1F464;</span>
+        <span class="user-avatar">👤</span>
         <span class="user-name">{{ store.displayName }}</span>
       </div>
       <router-link to="/app/settings" class="settings-link">
-        <span class="icon">&#x2699;&#xFE0F;</span>
+        <span class="icon">⚙️</span>
         <span>Настройки</span>
       </router-link>
       <router-link to="/auth/logout" class="logout-link">
-        <span class="icon">&#x1F6AA;</span>
+        <span class="icon">🚪</span>
         <span>Выйти</span>
       </router-link>
     </div>
@@ -64,16 +64,16 @@ const hasAccess = computed(() => {
 const lockTooltip = 'Для доступа в систему необходима подписка'
 
 const menuItems = [
-  { path: '/app', icon: '&#x1F4CA;', label: 'Главная', locked: false, showLock: false },
-  { path: '/app/who', icon: '&#x1F9ED;', label: 'Кто ты', locked: true, showLock: false },
-  { path: '/app/ssp', icon: '&#x1F3AF;', label: 'ССП', locked: false, showLock: false },
-  { path: '/app/goals-bank', icon: '&#x1F3E6;', label: 'Банк целей', locked: false, showLock: false },
-  { path: '/app/goals', icon: '&#x1F3C6;', label: 'Декомпозиция', locked: false, showLock: false },
-  { path: '/app/planner', icon: '&#x1F4C5;', label: 'Планирование', locked: true, showLock: false },
-  { path: '/app/energy', icon: '&#x26A1;', label: 'Ресурс и энергия', locked: true, showLock: false },
-  { path: '/app/principles', icon: '&#x1F48E;', label: 'Принципы и убеждения', locked: true, showLock: false },
-  { path: '/app/club', icon: '&#x1F465;', label: 'Клуб 1%', locked: true, showLock: false },
-  { path: '/app/achievements', icon: '&#x1F3C5;', label: 'Достижения', locked: true, showLock: false }
+  { path: '/app', icon: '📊', label: 'Главная', locked: false, showLock: false },
+  { path: '/app/who', icon: '🧭', label: 'Кто ты', locked: true, showLock: false },
+  { path: '/app/ssp', icon: '🎯', label: 'ССП', locked: false, showLock: false },
+  { path: '/app/goals-bank', icon: '🏦', label: 'Банк целей', locked: false, showLock: false },
+  { path: '/app/goals', icon: '🏆', label: 'Декомпозиция', locked: false, showLock: false },
+  { path: '/app/planner', icon: '📅', label: 'Планирование', locked: true, showLock: false },
+  { path: '/app/energy', icon: '⚡', label: 'Ресурс и энергия', locked: true, showLock: false },
+  { path: '/app/principles', icon: '💎', label: 'Принципы и убеждения', locked: true, showLock: false },
+  { path: '/app/club', icon: '👥', label: 'Клуб 1%', locked: true, showLock: false },
+  { path: '/app/achievements', icon: '🏅', label: 'Достижения', locked: true, showLock: false }
 ]
 </script>
 
