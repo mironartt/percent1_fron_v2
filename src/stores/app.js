@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { DEBUG_MODE } from '@/config/settings.js'
 
 export const useAppStore = defineStore('app', () => {
   // ========================================
@@ -28,11 +29,24 @@ export const useAppStore = defineStore('app', () => {
         last_name: userData.last_name || '',
         is_authenticated: true
       }
+      
+      if (DEBUG_MODE) {
+        console.log('[Store] User set:', {
+          id: user.value.id,
+          email: user.value.email,
+          name: user.value.first_name,
+          isAuthenticated: user.value.is_authenticated
+        })
+      }
     }
   }
   
   // Очистить данные пользователя (при logout)
   function clearUser() {
+    if (DEBUG_MODE) {
+      console.log('[Store] User cleared (logout)')
+    }
+    
     user.value = {
       id: null,
       email: '',
