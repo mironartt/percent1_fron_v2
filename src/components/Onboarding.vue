@@ -23,249 +23,249 @@
         <div v-if="currentStep === 1" class="step-content step-philosophy">
           <div class="philosophy-icon">🎮</div>
           <h1 class="step-title">Жизнь — это игра.<br>Ты — её разработчик</h1>
-        <div class="philosophy-text">
-          <p>
-            Система 1% — это не курс и не набор советов. Это твой персональный движок развития, 
-            где ты создаёшь правила, выбираешь цели и проходишь уровни.
-          </p>
-          <p>
-            Ты не просто игрок в чужой игре — ты разработчик своего сценария. 
-            Каждый день ты делаешь выбор: развиваться или стоять на месте.
-          </p>
-          <p class="highlight">
-            💡 Улучшаясь на 1% каждый день, за год ты станешь сильнее в 38 раз.
-          </p>
-        </div>
+          <div class="philosophy-text">
+            <p>
+              Система 1% — это не курс и не набор советов. Это твой персональный движок развития, 
+              где ты создаёшь правила, выбираешь цели и проходишь уровни.
+            </p>
+            <p>
+              Ты не просто игрок в чужой игре — ты разработчик своего сценария. 
+              Каждый день ты делаешь выбор: развиваться или стоять на месте.
+            </p>
+            <p class="highlight">
+              💡 Улучшаясь на 1% каждый день, за год ты станешь сильнее в 38 раз.
+            </p>
+          </div>
 
-        <div class="key-ideas">
-          <div class="key-idea-item">
-            <span class="idea-icon">🎯</span>
-            <div>
-              <strong>Системность, а не мотивация</strong>
-              <p>Работает механика, а не эмоции</p>
+          <div class="key-ideas">
+            <div class="key-idea-item">
+              <span class="idea-icon">🎯</span>
+              <div>
+                <strong>Системность, а не мотивация</strong>
+                <p>Работает механика, а не эмоции</p>
+              </div>
+            </div>
+            <div class="key-idea-item">
+              <span class="idea-icon">📊</span>
+              <div>
+                <strong>Измеряемый прогресс</strong>
+                <p>Видишь рост в цифрах и действиях</p>
+              </div>
+            </div>
+            <div class="key-idea-item">
+              <span class="idea-icon">🔄</span>
+              <div>
+                <strong>Честная работа</strong>
+                <p>Без иллюзий, только реальность</p>
+              </div>
             </div>
           </div>
-          <div class="key-idea-item">
-            <span class="idea-icon">📊</span>
-            <div>
-              <strong>Измеряемый прогресс</strong>
-              <p>Видишь рост в цифрах и действиях</p>
-            </div>
-          </div>
-          <div class="key-idea-item">
-            <span class="idea-icon">🔄</span>
-            <div>
-              <strong>Честная работа</strong>
-              <p>Без иллюзий, только реальность</p>
-            </div>
-          </div>
-        </div>
 
-        <button 
-          class="btn btn-primary btn-large" 
-          @click="nextStep"
-          :disabled="isSaving"
-        >
-          {{ step1ButtonText }}
-        </button>
-      </div>
-
-      <!-- Step 2: Reflection -->
-      <div v-if="currentStep === 2" class="step-content step-reflection">
-        <h2 class="step-title">Давай разберёмся, зачем ты здесь</h2>
-        <p class="step-subtitle">Честные ответы — основа твоей стратегии</p>
-
-        <div class="form-group">
-          <label class="form-label">
-            <span class="question-number">1.</span>
-            Почему ты пришёл в "Систему 1%"?
-          </label>
-          <span class="form-hint">Что привело тебя сюда? Какая боль или желание?</span>
-          <textarea 
-            v-model="formData.whyHere"
-            class="form-textarea"
-            rows="5"
-            placeholder="Например: Устал от хаоса, хочу системности и контроля над жизнью..."
-          ></textarea>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">
-            <span class="question-number">2.</span>
-            Что ты хочешь изменить в "сценарии своей игры"?
-          </label>
-          <span class="form-hint">Какие аспекты жизни требуют трансформации?</span>
-          <textarea 
-            v-model="formData.whatToChange"
-            class="form-textarea"
-            rows="5"
-            placeholder="Например: Хочу выстроить здоровые отношения, увеличить доход, найти баланс..."
-          ></textarea>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">
-            <span class="question-number">3.</span>
-            Что для тебя сейчас зона роста, а что зона комфорта?
-          </label>
-          <span class="form-hint">Будь честен: где ты растёшь, а где прячешься?</span>
-          <textarea 
-            v-model="formData.growthVsComfort"
-            class="form-textarea"
-            rows="5"
-            placeholder="Зона роста: публичные выступления, новые проекты...
-Зона комфорта: привычная работа, откладывание сложных решений..."
-          ></textarea>
-        </div>
-
-        <div class="step-actions">
-          <button class="btn btn-secondary" @click="prevStep" :disabled="isSaving">Назад</button>
-          <button 
-            class="btn btn-primary" 
-            @click="nextStep"
-            :disabled="!isStep2Valid || isSaving"
-          >
-            {{ isSaving ? 'Сохранение...' : 'Продолжить' }}
-          </button>
-        </div>
-      </div>
-
-      <!-- Step 3: My Start -->
-      <div v-if="currentStep === 3" class="step-content step-my-start">
-        <h2 class="step-title">Твоя точка старта</h2>
-        <p class="step-subtitle">Определи, откуда начинаешь и куда идёшь</p>
-
-        <div class="journey-visual">
-          <div class="point point-a">
-            <span class="point-label">Точка А</span>
-            <span class="point-icon">📍</span>
-          </div>
-          <div class="journey-arrow">→</div>
-          <div class="point point-b">
-            <span class="point-label">Точка Б</span>
-            <span class="point-icon">🎯</span>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">
-            📍 Точка А: Где я сейчас
-          </label>
-          <span class="form-hint">Опиши своё текущее состояние без прикрас</span>
-          <textarea 
-            v-model="formData.pointA"
-            class="form-textarea"
-            rows="4"
-            placeholder="Например: Работаю на нелюбимой работе, доход 80к, нет времени на себя, здоровье на 5/10..."
-          ></textarea>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">
-            🎯 Точка Б: Куда хочу прийти
-          </label>
-          <span class="form-hint">Конкретная картина желаемого будущего</span>
-          <textarea 
-            v-model="formData.pointB"
-            class="form-textarea"
-            rows="4"
-            placeholder="Например: Работаю на себя, доход 200к+, здоровье 9/10, баланс между работой и жизнью..."
-          ></textarea>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">
-            💎 Почему это важно для меня
-          </label>
-          <span class="form-hint">В чём глубинный смысл этих изменений?</span>
-          <textarea 
-            v-model="formData.whyImportant"
-            class="form-textarea"
-            rows="4"
-            placeholder="Например: Хочу чувствовать, что живу свою жизнь, а не чужой сценарий. Важна свобода и самореализация..."
-          ></textarea>
-        </div>
-
-        <div class="step-actions">
-          <button class="btn btn-secondary" @click="prevStep" :disabled="isSaving">Назад</button>
-          <button 
-            class="btn btn-primary" 
-            @click="nextStep"
-            :disabled="!isStep3Valid || isSaving"
-          >
-            {{ isSaving ? 'Сохранение...' : 'Продолжить' }}
-          </button>
-        </div>
-      </div>
-
-      <!-- Step 4: Rules -->
-      <div v-if="currentStep === 4" class="step-content step-rules">
-        <div class="completion-icon">✅</div>
-        <h2 class="step-title">Почти готово!</h2>
-        <p class="step-subtitle">Осталось подтвердить готовность к честной работе</p>
-
-        <div class="summary-card">
-          <h3>Ты заполнил:</h3>
-          <div class="summary-items">
-            <div class="summary-item">
-              <span class="check-icon">✓</span>
-              <span>Понял философию системы</span>
-            </div>
-            <div class="summary-item">
-              <span class="check-icon">✓</span>
-              <span>Ответил на вопросы рефлексии</span>
-            </div>
-            <div class="summary-item">
-              <span class="check-icon">✓</span>
-              <span>Определил точки А и Б</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="rules-section">
-          <h3>Принципы Системы 1%</h3>
-          <div class="rules-list">
-            <div class="rule-item">
-              <span class="rule-number">1</span>
-              <p>Честность с собой — основа роста. Без иллюзий и самообмана.</p>
-            </div>
-            <div class="rule-item">
-              <span class="rule-number">2</span>
-              <p>Системность важнее мотивации. Делаешь +1% каждый день, а не ждёшь вдохновения.</p>
-            </div>
-            <div class="rule-item">
-              <span class="rule-number">3</span>
-              <p>Действие, а не потребление контента. Знания без применения — иллюзия.</p>
-            </div>
-            <div class="rule-item">
-              <span class="rule-number">4</span>
-              <p>Ответственность за результат. Ты — разработчик своей игры.</p>
-            </div>
-          </div>
-        </div>
-
-        <label class="checkbox-container">
-          <input 
-            type="checkbox" 
-            v-model="formData.acceptRules"
-            class="checkbox-input"
-          />
-          <span class="checkbox-label">
-            Принимаю правила Системы 1% и готов к честной, системной работе
-          </span>
-        </label>
-
-        <div class="step-actions">
-          <button class="btn btn-secondary" @click="prevStep" :disabled="isSaving">Назад</button>
           <button 
             class="btn btn-primary btn-large" 
-            @click="completeOnboarding"
-            :disabled="!formData.acceptRules || isSaving"
+            @click="nextStep"
+            :disabled="isSaving"
           >
-            {{ isSaving ? 'Сохранение...' : '🚀 Приступить' }}
+            {{ step1ButtonText }}
           </button>
         </div>
-      </div>
+
+        <!-- Step 2: Reflection -->
+        <div v-if="currentStep === 2" class="step-content step-reflection">
+          <h2 class="step-title">Давай разберёмся, зачем ты здесь</h2>
+          <p class="step-subtitle">Честные ответы — основа твоей стратегии</p>
+
+          <div class="form-group">
+            <label class="form-label">
+              <span class="question-number">1.</span>
+              Почему ты пришёл в "Систему 1%"?
+            </label>
+            <span class="form-hint">Что привело тебя сюда? Какая боль или желание?</span>
+            <textarea 
+              v-model="formData.whyHere"
+              class="form-textarea"
+              rows="5"
+              placeholder="Например: Устал от хаоса, хочу системности и контроля над жизнью..."
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <span class="question-number">2.</span>
+              Что ты хочешь изменить в "сценарии своей игры"?
+            </label>
+            <span class="form-hint">Какие аспекты жизни требуют трансформации?</span>
+            <textarea 
+              v-model="formData.whatToChange"
+              class="form-textarea"
+              rows="5"
+              placeholder="Например: Хочу выстроить здоровые отношения, увеличить доход, найти баланс..."
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <span class="question-number">3.</span>
+              Что для тебя сейчас зона роста, а что зона комфорта?
+            </label>
+            <span class="form-hint">Будь честен: где ты растёшь, а где прячешься?</span>
+            <textarea 
+              v-model="formData.growthVsComfort"
+              class="form-textarea"
+              rows="5"
+              placeholder="Зона роста: публичные выступления, новые проекты...
+Зона комфорта: привычная работа, откладывание сложных решений..."
+            ></textarea>
+          </div>
+
+          <div class="step-actions">
+            <button class="btn btn-secondary" @click="prevStep" :disabled="isSaving">Назад</button>
+            <button 
+              class="btn btn-primary" 
+              @click="nextStep"
+              :disabled="!isStep2Valid || isSaving"
+            >
+              {{ isSaving ? 'Сохранение...' : 'Продолжить' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 3: My Start -->
+        <div v-if="currentStep === 3" class="step-content step-my-start">
+          <h2 class="step-title">Твоя точка старта</h2>
+          <p class="step-subtitle">Определи, откуда начинаешь и куда идёшь</p>
+
+          <div class="journey-visual">
+            <div class="point point-a">
+              <span class="point-label">Точка А</span>
+              <span class="point-icon">📍</span>
+            </div>
+            <div class="journey-arrow">→</div>
+            <div class="point point-b">
+              <span class="point-label">Точка Б</span>
+              <span class="point-icon">🎯</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              📍 Точка А: Где я сейчас
+            </label>
+            <span class="form-hint">Опиши своё текущее состояние без прикрас</span>
+            <textarea 
+              v-model="formData.pointA"
+              class="form-textarea"
+              rows="4"
+              placeholder="Например: Работаю на нелюбимой работе, доход 80к, нет времени на себя, здоровье на 5/10..."
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              🎯 Точка Б: Куда хочу прийти
+            </label>
+            <span class="form-hint">Конкретная картина желаемого будущего</span>
+            <textarea 
+              v-model="formData.pointB"
+              class="form-textarea"
+              rows="4"
+              placeholder="Например: Работаю на себя, доход 200к+, здоровье 9/10, баланс между работой и жизнью..."
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              💎 Почему это важно для меня
+            </label>
+            <span class="form-hint">В чём глубинный смысл этих изменений?</span>
+            <textarea 
+              v-model="formData.whyImportant"
+              class="form-textarea"
+              rows="4"
+              placeholder="Например: Хочу чувствовать, что живу свою жизнь, а не чужой сценарий. Важна свобода и самореализация..."
+            ></textarea>
+          </div>
+
+          <div class="step-actions">
+            <button class="btn btn-secondary" @click="prevStep" :disabled="isSaving">Назад</button>
+            <button 
+              class="btn btn-primary" 
+              @click="nextStep"
+              :disabled="!isStep3Valid || isSaving"
+            >
+              {{ isSaving ? 'Сохранение...' : 'Продолжить' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 4: Rules -->
+        <div v-if="currentStep === 4" class="step-content step-rules">
+          <div class="completion-icon">✅</div>
+          <h2 class="step-title">Почти готово!</h2>
+          <p class="step-subtitle">Осталось подтвердить готовность к честной работе</p>
+
+          <div class="summary-card">
+            <h3>Ты заполнил:</h3>
+            <div class="summary-items">
+              <div class="summary-item">
+                <span class="check-icon">✓</span>
+                <span>Понял философию системы</span>
+              </div>
+              <div class="summary-item">
+                <span class="check-icon">✓</span>
+                <span>Ответил на вопросы рефлексии</span>
+              </div>
+              <div class="summary-item">
+                <span class="check-icon">✓</span>
+                <span>Определил точки А и Б</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="rules-section">
+            <h3>Принципы Системы 1%</h3>
+            <div class="rules-list">
+              <div class="rule-item">
+                <span class="rule-number">1</span>
+                <p>Честность с собой — основа роста. Без иллюзий и самообмана.</p>
+              </div>
+              <div class="rule-item">
+                <span class="rule-number">2</span>
+                <p>Системность важнее мотивации. Делаешь +1% каждый день, а не ждёшь вдохновения.</p>
+              </div>
+              <div class="rule-item">
+                <span class="rule-number">3</span>
+                <p>Действие, а не потребление контента. Знания без применения — иллюзия.</p>
+              </div>
+              <div class="rule-item">
+                <span class="rule-number">4</span>
+                <p>Ответственность за результат. Ты — разработчик своей игры.</p>
+              </div>
+            </div>
+          </div>
+
+          <label class="checkbox-container">
+            <input 
+              type="checkbox" 
+              v-model="formData.acceptRules"
+              class="checkbox-input"
+            />
+            <span class="checkbox-label">
+              Принимаю правила Системы 1% и готов к честной, системной работе
+            </span>
+          </label>
+
+          <div class="step-actions">
+            <button class="btn btn-secondary" @click="prevStep" :disabled="isSaving">Назад</button>
+            <button 
+              class="btn btn-primary btn-large" 
+              @click="completeOnboarding"
+              :disabled="!formData.acceptRules || isSaving"
+            >
+              {{ isSaving ? 'Сохранение...' : '🚀 Приступить' }}
+            </button>
+          </div>
+        </div>
       </template>
     </div>
   </div>

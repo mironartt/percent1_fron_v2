@@ -69,7 +69,7 @@ const menuItems = [
   { path: '/app/ssp', icon: '🎯', label: 'ССП', locked: false, showLock: false },
   { path: '/app/goals-bank', icon: '🏦', label: 'Банк целей', locked: false, showLock: false },
   { path: '/app/goals', icon: '🏆', label: 'Декомпозиция', locked: false, showLock: false },
-  { path: '/app/planner', icon: '📅', label: 'Планирование', locked: true, showLock: false },
+  { path: '/app/planning', icon: '📅', label: 'Планирование', locked: false, showLock: false },
   { path: '/app/energy', icon: '⚡', label: 'Ресурс и энергия', locked: true, showLock: false },
   { path: '/app/principles', icon: '💎', label: 'Принципы и убеждения', locked: true, showLock: false },
   { path: '/app/club', icon: '👥', label: 'Клуб 1%', locked: true, showLock: false },
@@ -201,10 +201,8 @@ const menuItems = [
   padding: 0.75rem 0;
   color: var(--text-secondary);
   text-decoration: none;
-  font-weight: 500;
   font-size: 0.9375rem;
   transition: all 0.2s ease;
-  cursor: pointer;
 }
 
 .settings-link:hover,
@@ -214,24 +212,10 @@ const menuItems = [
 
 .logout-link {
   color: var(--danger-color);
-  opacity: 0.8;
 }
 
 .logout-link:hover {
-  opacity: 1;
   color: var(--danger-color);
-}
-
-.settings-link .icon,
-.logout-link .icon {
-  font-size: 1.25rem;
-  width: 1.5rem;
-  text-align: center;
-}
-
-@media (max-width: 768px) {
-  .sidebar {
-    display: none;
-  }
+  opacity: 0.8;
 }
 </style>

@@ -2,6 +2,7 @@
   <div class="register-page">
     <div class="register-container">
       <div class="register-card">
+        <!-- Header -->
         <div class="register-header">
           <h1 class="register-logo">OnePercent</h1>
           <p class="register-subtitle">+1% каждый день к лучшей жизни</p>
@@ -9,7 +10,9 @@
           <p class="register-description">Начните путь к достижению своих целей прямо сейчас</p>
         </div>
 
+        <!-- Form -->
         <form @submit.prevent="handleRegister" class="register-form">
+          <!-- Name Field -->
           <div class="form-group">
             <label for="name" class="form-label">
               <span class="label-text">Ваше имя</span>
@@ -30,6 +33,7 @@
             <span v-if="errors.name" class="form-error">{{ errors.name }}</span>
           </div>
 
+          <!-- Email Field -->
           <div class="form-group">
             <label for="email" class="form-label">
               <span class="label-text">Email адрес</span>
@@ -50,6 +54,7 @@
             <span v-if="errors.email" class="form-error">{{ errors.email }}</span>
           </div>
 
+          <!-- Password Field -->
           <div class="form-group">
             <label for="password" class="form-label">
               <span class="label-text">Пароль</span>
@@ -80,6 +85,7 @@
             <span v-else class="form-hint">Используйте цифры, буквы и символы для безопасности</span>
           </div>
 
+          <!-- Password Confirm Field -->
           <div class="form-group">
             <label for="password2" class="form-label">
               <span class="label-text">Подтвердите пароль</span>
@@ -100,6 +106,7 @@
             <span v-if="errors.password2" class="form-error">{{ errors.password2 }}</span>
           </div>
 
+          <!-- Terms -->
           <div class="form-group checkbox-group">
             <label class="checkbox-label">
               <input
@@ -109,19 +116,21 @@
                 required
               />
               <span class="checkbox-text">
-                Я согласен с 
+                Я согласен с
                 <a href="#" @click.prevent class="link">условиями использования</a>
-                и 
+                и
                 <a href="#" @click.prevent class="link">политикой конфиденциальности</a>
               </span>
             </label>
           </div>
 
+          <!-- API Error -->
           <div v-if="apiError" class="api-error">
             <div class="api-error-message">{{ apiError }}</div>
             <div v-if="apiErrorDetail" class="api-error-detail">{{ apiErrorDetail }}</div>
           </div>
 
+          <!-- Submit Button -->
           <button
             type="submit"
             class="btn btn-primary btn-lg register-submit"
@@ -132,10 +141,12 @@
           </button>
         </form>
 
+        <!-- Divider -->
         <div class="divider">
           <span>или</span>
         </div>
 
+        <!-- Social Register -->
         <div class="social-register">
           <button type="button" class="btn-social google" disabled>
             <span class="social-icon">&#x1F535;</span>
@@ -147,6 +158,7 @@
           </button>
         </div>
 
+        <!-- Footer -->
         <div class="register-footer">
           <p>
             Уже есть аккаунт?
@@ -155,6 +167,7 @@
         </div>
       </div>
 
+      <!-- Benefits Sidebar -->
       <div class="register-benefits">
         <div class="benefits-header">
           <h3>Что вас ждёт в OnePercent</h3>
@@ -192,6 +205,7 @@
       </div>
     </div>
 
+    <!-- Success Modal -->
     <transition name="fade">
       <div v-if="showSuccess" class="modal-overlay" @click="closeSuccess">
         <div class="modal" @click.stop>
@@ -316,11 +330,11 @@ async function handleRegister() {
 
     if (result.status === 'ok') {
       resetAuthCache()
-      
+
       if (result.data) {
         store.setUser(result.data)
       }
-      
+
       showSuccess.value = true
 
       setTimeout(() => {
@@ -632,12 +646,11 @@ function closeSuccess() {
 }
 
 .btn-social:hover:not(:disabled) {
-  border-color: var(--primary-color);
   background: var(--bg-secondary);
 }
 
 .btn-social:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
@@ -647,60 +660,54 @@ function closeSuccess() {
 
 .register-footer {
   text-align: center;
-  font-size: 0.9375rem;
   color: var(--text-secondary);
-}
-
-.register-footer p {
-  margin: 0;
+  font-size: 0.9375rem;
 }
 
 .register-benefits {
   color: white;
   padding: 2rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-xl);
-  backdrop-filter: blur(10px);
 }
 
 .benefits-header h3 {
   font-size: 1.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .benefits-list {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.5rem;
 }
 
 .benefit-item {
   display: flex;
   gap: 1rem;
+  align-items: flex-start;
 }
 
 .benefit-icon {
-  font-size: 1.75rem;
+  font-size: 2rem;
   flex-shrink: 0;
 }
 
 .benefit-item h4 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1rem;
+  margin: 0 0 0.25rem;
+  font-size: 1.125rem;
 }
 
 .benefit-item p {
   margin: 0;
-  font-size: 0.875rem;
   opacity: 0.9;
+  font-size: 0.9375rem;
 }
 
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100%;
+  height: 100%;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
@@ -713,18 +720,18 @@ function closeSuccess() {
   border-radius: var(--radius-xl);
   padding: 2rem;
   max-width: 400px;
-  box-shadow: var(--shadow-xl);
+  width: 90%;
   text-align: center;
 }
 
 .modal-header h2 {
-  margin: 0 0 1rem 0;
   font-size: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .modal-body p {
   color: var(--text-secondary);
-  line-height: 1.6;
+  margin: 0;
 }
 
 .fade-enter-active,
@@ -737,35 +744,13 @@ function closeSuccess() {
   opacity: 0;
 }
 
-@media (max-width: 968px) {
+@media (max-width: 900px) {
   .register-container {
     grid-template-columns: 1fr;
   }
 
   .register-benefits {
     display: none;
-  }
-
-  .register-card {
-    padding: 2rem;
-  }
-
-  .register-page {
-    padding: 1rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .register-card {
-    padding: 1.5rem;
-  }
-
-  .register-header h2 {
-    font-size: 1.5rem;
-  }
-
-  .social-register {
-    grid-template-columns: 1fr;
   }
 }
 </style>

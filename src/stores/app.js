@@ -8,7 +8,6 @@ export const useAppStore = defineStore('app', () => {
   // USER & AUTH
   // ========================================
   
-  // Данные пользователя с сервера
   const user = ref({
     id: null,
     email: '',
@@ -19,10 +18,8 @@ export const useAppStore = defineStore('app', () => {
     finish_minitask: false
   })
   
-  // Флаг загрузки данных пользователя
   const userLoading = ref(false)
   
-  // Установить данные пользователя
   function setUser(userData) {
     if (userData) {
       user.value = {
@@ -48,7 +45,6 @@ export const useAppStore = defineStore('app', () => {
     }
   }
   
-  // Очистить данные пользователя (при logout)
   function clearUser() {
     if (DEBUG_MODE) {
       console.log('[Store] User cleared (logout)')
@@ -65,10 +61,8 @@ export const useAppStore = defineStore('app', () => {
     }
   }
   
-  // Проверка авторизации
   const isAuthenticated = computed(() => user.value.is_authenticated)
   
-  // Имя пользователя для отображения
   const displayName = computed(() => {
     if (user.value.first_name) {
       return user.value.first_name
@@ -230,6 +224,17 @@ export const useAppStore = defineStore('app', () => {
     completedAt: null
   })
 
+  // Модуль Планирования
+  const planningModule = ref({
+    lessonStarted: false,
+    lessonCompleted: false,
+    currentStep: 1,
+    completedAt: null
+  })
+
+  // Недельное планирование
+  const weeklyPlans = ref([])
+
   // Цели
   const goals = ref([])
   
@@ -339,7 +344,9 @@ export const useAppStore = defineStore('app', () => {
       sspGoalsBank: sspGoalsBank.value,
       sspModuleCompleted: sspModuleCompleted.value,
       goalsBank: goalsBank.value,
-      decompositionModule: decompositionModule.value
+      decompositionModule: decompositionModule.value,
+      planningModule: planningModule.value,
+      weeklyPlans: weeklyPlans.value
     }))
   }
 
@@ -367,6 +374,8 @@ export const useAppStore = defineStore('app', () => {
         if (parsed.sspModuleCompleted) sspModuleCompleted.value = parsed.sspModuleCompleted
         if (parsed.goalsBank) goalsBank.value = { ...goalsBank.value, ...parsed.goalsBank }
         if (parsed.decompositionModule) decompositionModule.value = { ...decompositionModule.value, ...parsed.decompositionModule }
+        if (parsed.planningModule) planningModule.value = { ...planningModule.value, ...parsed.planningModule }
+        if (parsed.weeklyPlans) weeklyPlans.value = parsed.weeklyPlans
       } catch (e) {
         console.error('Error loading data:', e)
       }
@@ -377,10 +386,6 @@ export const useAppStore = defineStore('app', () => {
   // ONBOARDING BACKEND METHODS
   // ========================================
 
-  /**
-   * Загрузить данные онбординга с сервера
-   * @returns {Promise<object|null>} - Данные онбординга или null при ошибке
-   */
   async function loadOnboardingFromBackend() {
     if (DEBUG_MODE) {
       console.log('[Store] Loading onboarding data from backend...')
@@ -433,11 +438,6 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  /**
-   * Сохранить данные онбординга на сервер
-   * @param {object} data - Данные для сохранения
-   * @returns {Promise<boolean>} - Успешность сохранения
-   */
   async function saveOnboardingToBackend(data) {
     if (DEBUG_MODE) {
       console.log('[Store] Saving onboarding data to backend:', data)
@@ -447,19 +447,16 @@ export const useAppStore = defineStore('app', () => {
       const result = await updateOnboardingData(data)
       
       if (result.status === 'ok') {
-        // Обновляем локальные данные
         if (data.step_completed !== undefined) {
           onboarding.value.stepCompleted = data.step_completed
         }
         if (data.is_complete !== undefined) {
           onboarding.value.completed = data.is_complete
-          // Обновляем флаг пользователя
           if (data.is_complete) {
             user.value.finish_onboarding = true
           }
         }
         
-        // Обновляем данные формы
         const fieldMappings = [
           'reason_joined', 'desired_changes', 'growth_comfort_zones',
           'current_state', 'goal_state', 'why_important'
@@ -490,20 +487,10 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  /**
-   * Обновить шаг онбординга
-   * @param {number} step - Номер завершённого шага
-   * @returns {Promise<boolean>}
-   */
   async function updateOnboardingStep(step) {
     return saveOnboardingToBackend({ step_completed: step })
   }
 
-  /**
-   * Завершить онбординг
-   * @param {object} data - Финальные данные онбординга
-   * @returns {Promise<boolean>}
-   */
   async function completeOnboardingWithBackend(data) {
     return saveOnboardingToBackend({
       ...data,
@@ -511,9 +498,7 @@ export const useAppStore = defineStore('app', () => {
     })
   }
 
-  // Вычисляемое свойство: нужно ли показывать онбординг
   const shouldShowOnboarding = computed(() => {
-    // Если включён режим принудительного показа
     if (FORCE_SHOW_ONBOARDING) {
       if (DEBUG_MODE) {
         console.log('[Store] Onboarding forced to show (FORCE_SHOW_ONBOARDING=true)')
@@ -521,18 +506,14 @@ export const useAppStore = defineStore('app', () => {
       return true
     }
     
-    // Если пользователь не авторизован - не показываем
     if (!user.value.is_authenticated) {
       return false
     }
     
-    // Если онбординг не завершён - показываем
     return !user.value.finish_onboarding && !onboarding.value.completed
   })
 
-  // Вычисляемое свойство: нужно ли показывать мини-задание
   const shouldShowMiniTask = computed(() => {
-    // Если включён режим принудительного показа
     if (FORCE_SHOW_MINITASK) {
       if (DEBUG_MODE) {
         console.log('[Store] MiniTask forced to show (FORCE_SHOW_MINITASK=true)')
@@ -540,17 +521,14 @@ export const useAppStore = defineStore('app', () => {
       return true
     }
     
-    // Если пользователь не авторизован - не показываем
     if (!user.value.is_authenticated) {
       return false
     }
     
-    // Если онбординг не завершён - сначала его
     if (!user.value.finish_onboarding && !onboarding.value.completed) {
       return false
     }
     
-    // Если мини-задание не завершено - показываем
     return !user.value.finish_minitask && !miniTask.value.completed
   })
 
@@ -711,6 +689,11 @@ export const useAppStore = defineStore('app', () => {
     saveToLocalStorage()
   }
 
+  function finishGoalsBankLesson() {
+    goalsBank.value.completedAt = new Date().toISOString()
+    saveToLocalStorage()
+  }
+
   function completeGoalsBank(selectedGoals = []) {
     goalsBank.value.completedAt = new Date().toISOString()
     
@@ -796,6 +779,112 @@ export const useAppStore = defineStore('app', () => {
     saveToLocalStorage()
   }
 
+  // Planning Module methods
+  function startPlanningLesson() {
+    planningModule.value.lessonStarted = true
+    planningModule.value.currentStep = 1
+    saveToLocalStorage()
+  }
+
+  function setPlanningStep(step) {
+    planningModule.value.currentStep = step
+    saveToLocalStorage()
+  }
+
+  function completePlanningLesson() {
+    planningModule.value.lessonCompleted = true
+    planningModule.value.completedAt = new Date().toISOString()
+    saveToLocalStorage()
+  }
+
+  function resetPlanningModule() {
+    planningModule.value = {
+      lessonStarted: false,
+      lessonCompleted: false,
+      currentStep: 1,
+      completedAt: null
+    }
+    weeklyPlans.value = []
+    saveToLocalStorage()
+  }
+
+  function createWeeklyPlan(weekStart) {
+    const plan = {
+      id: Date.now().toString(),
+      weekStart: weekStart,
+      createdAt: new Date().toISOString(),
+      scheduledTasks: [],
+      completed: false
+    }
+    weeklyPlans.value.push(plan)
+    saveToLocalStorage()
+    return plan
+  }
+
+  function getCurrentWeekPlan() {
+    const today = new Date()
+    const dayOfWeek = today.getDay()
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+    const monday = new Date(today)
+    monday.setDate(today.getDate() + mondayOffset)
+    monday.setHours(0, 0, 0, 0)
+    const mondayStr = monday.toISOString().split('T')[0]
+    
+    return weeklyPlans.value.find(p => p.weekStart === mondayStr)
+  }
+
+  function addScheduledTask(planId, task) {
+    const plan = weeklyPlans.value.find(p => p.id === planId)
+    if (plan) {
+      plan.scheduledTasks.push({
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+        goalId: task.goalId,
+        stepId: task.stepId,
+        stepTitle: task.stepTitle,
+        goalTitle: task.goalTitle,
+        scheduledDate: task.scheduledDate,
+        scheduledTime: task.scheduledTime || null,
+        completed: false,
+        completedAt: null
+      })
+      saveToLocalStorage()
+    }
+  }
+
+  function updateScheduledTask(planId, taskId, updates) {
+    const plan = weeklyPlans.value.find(p => p.id === planId)
+    if (plan) {
+      const task = plan.scheduledTasks.find(t => t.id === taskId)
+      if (task) {
+        Object.assign(task, updates)
+        saveToLocalStorage()
+      }
+    }
+  }
+
+  function removeScheduledTask(planId, taskId) {
+    const plan = weeklyPlans.value.find(p => p.id === planId)
+    if (plan) {
+      const index = plan.scheduledTasks.findIndex(t => t.id === taskId)
+      if (index !== -1) {
+        plan.scheduledTasks.splice(index, 1)
+        saveToLocalStorage()
+      }
+    }
+  }
+
+  function toggleScheduledTaskComplete(planId, taskId) {
+    const plan = weeklyPlans.value.find(p => p.id === planId)
+    if (plan) {
+      const task = plan.scheduledTasks.find(t => t.id === taskId)
+      if (task) {
+        task.completed = !task.completed
+        task.completedAt = task.completed ? new Date().toISOString() : null
+        saveToLocalStorage()
+      }
+    }
+  }
+
   // Load data on init
   loadFromLocalStorage()
 
@@ -854,6 +943,7 @@ export const useAppStore = defineStore('app', () => {
     deleteKeyGoal,
     updateSphereAnalysis,
     setGoalsBankStep,
+    finishGoalsBankLesson,
     completeGoalsBank,
     resetGoalsBank,
     resetSSPModule,
@@ -867,6 +957,20 @@ export const useAppStore = defineStore('app', () => {
     loadOnboardingFromBackend,
     saveOnboardingToBackend,
     updateOnboardingStep,
-    completeOnboardingWithBackend
+    completeOnboardingWithBackend,
+    
+    // Planning Module
+    planningModule,
+    weeklyPlans,
+    startPlanningLesson,
+    setPlanningStep,
+    completePlanningLesson,
+    resetPlanningModule,
+    createWeeklyPlan,
+    getCurrentWeekPlan,
+    addScheduledTask,
+    updateScheduledTask,
+    removeScheduledTask,
+    toggleScheduledTaskComplete
   }
 })
