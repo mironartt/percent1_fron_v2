@@ -62,7 +62,6 @@ const router = createRouter({
         const store = useAppStore()
         store.clearUser()
         authCheckPromise = null
-        lastAuthCheck = 0
         if (DEBUG_MODE) {
           console.log('[Router] Logout: session cleared, redirecting to login')
         }
@@ -153,10 +152,8 @@ const router = createRouter({
   ]
 })
 
-// Кэш для проверки авторизации
+// Переменная для сброса кэша при logout
 let authCheckPromise = null
-let lastAuthCheck = 0
-const AUTH_CHECK_CACHE_TIME = 30000 // 30 секунд
 
 async function checkUserAuth() {
   if (SKIP_AUTH_CHECK) {
@@ -168,33 +165,30 @@ async function checkUserAuth() {
       userData: { 
         id: 'dev-user', 
         email: 'dev@example.com', 
-        first_name: 'Dev User' 
+        first_name: 'Dev User',
+        finish_onboarding: false,
+        finish_minitask: false
       },
       skipped: true
     }
   }
   
   try {
-    const now = Date.now()
-    
-    if (!authCheckPromise || (now - lastAuthCheck > AUTH_CHECK_CACHE_TIME)) {
-      if (DEBUG_MODE) {
-        console.log('[Router] Fetching user data from API...')
-      }
-      lastAuthCheck = now
-      authCheckPromise = api.checkAuth()
-    } else if (DEBUG_MODE) {
-      console.log('[Router] Using cached auth data')
+    // Всегда вызываем API для получения свежих данных пользователя
+    if (DEBUG_MODE) {
+      console.log('[Router] Fetching fresh user data from API...')
     }
     
-    const userData = await authCheckPromise
+    const userData = await api.checkAuth()
     
     if (DEBUG_MODE) {
       if (userData) {
         console.log('[Router] User authenticated:', {
           id: userData.id,
           email: userData.email,
-          name: userData.first_name || userData.name || 'N/A'
+          name: userData.first_name || userData.name || 'N/A',
+          finish_onboarding: userData.finish_onboarding,
+          finish_minitask: userData.finish_minitask
         })
       } else {
         console.log('[Router] User not authenticated')
@@ -206,7 +200,6 @@ async function checkUserAuth() {
     if (DEBUG_MODE) {
       console.error('[Router] Auth check error:', error)
     }
-    authCheckPromise = null
     return { isAuthenticated: false, userData: null, skipped: false }
   }
 }
@@ -292,7 +285,6 @@ router.beforeEach(async (to, from, next) => {
 // Экспорт функции для сброса кэша авторизации
 export function resetAuthCache() {
   authCheckPromise = null
-  lastAuthCheck = 0
 }
 
 export default router
