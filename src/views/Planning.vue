@@ -188,6 +188,7 @@
                   <div class="day-header">
                     <span class="day-name">{{ day.shortName }}</span>
                     <span class="day-date">{{ day.dayNum }}</span>
+                    <span v-if="getTotalTimeForDay(day.date)" class="day-time-total">{{ getTotalTimeForDay(day.date) }}</span>
                   </div>
                   <div class="day-tasks">
                     <div 
@@ -591,10 +592,13 @@
                 @drop="handleDrop(day.date)"
               >
                 <div class="day-header-full">
-                  <span class="day-name">{{ day.label }}</span>
-                  <span class="tasks-count" v-if="getTasksForDay(day.date).length > 0">
-                    {{ getTasksForDay(day.date).length }}
-                  </span>
+                  <div class="day-header-left">
+                    <span class="day-name">{{ day.label }}</span>
+                    <span class="tasks-count" v-if="getTasksForDay(day.date).length > 0">
+                      {{ getTasksForDay(day.date).length }}
+                    </span>
+                  </div>
+                  <span v-if="getTotalTimeForDay(day.date)" class="day-time-total">{{ getTotalTimeForDay(day.date) }}</span>
                 </div>
                 <div class="day-tasks-full">
                   <div 
@@ -1016,6 +1020,20 @@ function getTasksForDay(dateStr) {
       const priorityB = priorityOrder[b.priority] ?? 4
       return priorityA - priorityB
     })
+}
+
+function getTotalTimeForDay(dateStr) {
+  const timeValues = { '30min': 30, '1h': 60, '2h': 120, '4h': 240 }
+  const tasks = getTasksForDay(dateStr)
+  const totalMinutes = tasks.reduce((sum, task) => {
+    return sum + (timeValues[task.timeEstimate] || 0)
+  }, 0)
+  
+  if (totalMinutes === 0) return ''
+  if (totalMinutes < 60) return `${totalMinutes}м`
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  return minutes > 0 ? `${hours}ч${minutes}м` : `${hours}ч`
 }
 
 function isStepScheduled(goalId, stepId) {
@@ -1904,6 +1922,17 @@ onMounted(() => {
   margin-bottom: 0.5rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.day-time-total {
+  font-size: 0.7rem;
+  color: var(--primary-color);
+  background: rgba(99, 102, 241, 0.1);
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
 }
 
 .day-name {
@@ -2456,6 +2485,12 @@ onMounted(() => {
   align-items: center;
   padding: 0.75rem;
   border-bottom: 1px solid var(--border-color);
+}
+
+.day-header-full .day-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .day-header-full .day-name {
