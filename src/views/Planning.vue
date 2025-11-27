@@ -197,6 +197,7 @@
                       :class="'priority-' + (task.priority || 'optional')"
                     >
                       <span class="task-title">{{ task.stepTitle }}</span>
+                      <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
                     </div>
                     <div v-if="getTasksForDay(day.date).length === 0" class="no-tasks drop-hint">
                       {{ draggedStep ? '📥 Сюда' : '—' }}
@@ -619,6 +620,7 @@
                       <span class="task-title">{{ task.stepTitle }}</span>
                       <span class="task-goal">{{ task.goalTitle }}</span>
                     </div>
+                    <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
                     <button 
                       class="btn-icon remove-sm"
                       @click="removeTask(task.id)"
@@ -1115,6 +1117,16 @@ function formatTimeEstimate(estimate) {
     '1h': '1 час',
     '2h': '2 часа',
     '4h': '4 часа'
+  }
+  return labels[estimate] || estimate
+}
+
+function formatTimeShort(estimate) {
+  const labels = {
+    '30min': '30м',
+    '1h': '1ч',
+    '2h': '2ч',
+    '4h': '4ч'
   }
   return labels[estimate] || estimate
 }
@@ -1916,10 +1928,29 @@ onMounted(() => {
   background: var(--bg-primary);
   color: var(--text-primary);
   border-radius: var(--radius-sm);
+  border-left: 3px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+}
+
+.scheduled-task .task-title {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  border-left: 3px solid var(--border-color);
+  flex: 1;
+  min-width: 0;
+}
+
+.task-time-badge {
+  font-size: 0.65rem;
+  color: var(--text-tertiary);
+  background: var(--bg-secondary);
+  padding: 0.1rem 0.3rem;
+  border-radius: var(--radius-xs, 2px);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .scheduled-task.priority-critical {
