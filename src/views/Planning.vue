@@ -971,20 +971,21 @@ function updateScheduledStep(goalId, stepId, field, value) {
 }
 
 function ensureWeekPlan() {
-  if (!currentPlan.value) {
-    const mondayDate = weekDays.value[0]?.date
-    if (mondayDate) {
-      store.createWeeklyPlan(mondayDate)
-    }
+  const mondayDate = weekDays.value[0]?.date
+  if (!mondayDate) return null
+  
+  let plan = store.weeklyPlans.find(p => p.weekStart === mondayDate)
+  if (!plan) {
+    plan = store.createWeeklyPlan(mondayDate)
   }
+  return plan
 }
 
 function scheduleStep(goalId, step, dateStr) {
-  ensureWeekPlan()
-  const plan = store.getCurrentWeekPlan()
+  const plan = ensureWeekPlan()
   if (!plan) return
 
-  const existingTask = scheduledTasks.value.find(t => t.goalId === goalId && t.stepId === step.id)
+  const existingTask = plan.scheduledTasks.find(t => t.goalId === goalId && t.stepId === step.id)
   if (existingTask) {
     if (dateStr) {
       store.updateScheduledTask(plan.id, existingTask.id, { scheduledDate: dateStr })
