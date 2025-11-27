@@ -50,21 +50,33 @@
 
       <div class="summary-grid">
         <div class="summary-card card">
+          <div class="summary-icon summary-icon-ideas">
+            <Lightbulb :size="24" :stroke-width="2" />
+          </div>
           <div class="summary-value">{{ rawIdeas.length }}</div>
           <div class="summary-label">Идей в банке</div>
         </div>
 
         <div class="summary-card card">
+          <div class="summary-icon summary-icon-valid">
+            <CheckCircle :size="24" :stroke-width="2" />
+          </div>
           <div class="summary-value">{{ validatedCount }}</div>
           <div class="summary-label">Истинных целей</div>
         </div>
 
         <div class="summary-card card">
+          <div class="summary-icon summary-icon-rejected">
+            <XCircle :size="24" :stroke-width="2" />
+          </div>
           <div class="summary-value">{{ rejectedCount }}</div>
           <div class="summary-label">Ложных целей</div>
         </div>
 
         <div class="summary-card card">
+          <div class="summary-icon summary-icon-work">
+            <PlayCircle :size="24" :stroke-width="2" />
+          </div>
           <div class="summary-value">{{ transferredGoalsCount }}</div>
           <div class="summary-label">Целей в работе</div>
         </div>
@@ -156,12 +168,16 @@
                 <td class="col-goal">
                   <div class="goal-cell">
                     <span class="goal-text">{{ goal.text }}</span>
-                    <span class="goal-sphere-badge">{{ getSphereName(goal.sphereId) }}<span v-if="isWeakSphere(goal.sphereId)" class="weak-sphere-indicator" title="Проседающая сфера"> ⚠️</span></span>
+                    <span class="goal-sphere-badge-new" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
+                      <component :is="getSphereIcon(goal.sphereId)" :size="14" :stroke-width="2" />
+                      {{ getSphereNameOnly(goal.sphereId) }}
+                      <AlertTriangle v-if="isWeakSphere(goal.sphereId)" :size="12" class="weak-indicator" title="Проседающая сфера" />
+                    </span>
                   </div>
                 </td>
                 <td class="col-why">
-                  <div class="why-cell">
-                    {{ getWhyImportant(goal) }}
+                  <div class="why-cell" :class="{ 'why-empty': !getWhyImportant(goal) || getWhyImportant(goal) === '—' }">
+                    {{ getWhyImportant(goal) || 'Добавьте причину' }}
                   </div>
                 </td>
                 <td class="col-actions">
@@ -172,7 +188,7 @@
                       @click.stop="takeGoalToWork(goal)"
                       title="Взять в работу"
                     >
-                      <span class="icon-plus">+</span>
+                      <Plus :size="16" :stroke-width="2" />
                     </button>
                     <button 
                       v-if="isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
@@ -180,7 +196,7 @@
                       @click.stop="completeGoalFromBank(goal)"
                       title="Завершить цель"
                     >
-                      <span class="icon-check">✓</span>
+                      <Check :size="16" :stroke-width="2" />
                     </button>
                     <button 
                       v-if="isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
@@ -188,7 +204,7 @@
                       @click.stop="removeFromWorkBySourceId(goal.id)"
                       title="Убрать из работы"
                     >
-                      <span class="icon-remove">✕</span>
+                      <X :size="16" :stroke-width="2" />
                     </button>
                     <button 
                       v-if="isGoalCompleted(goal.id)"
@@ -196,7 +212,7 @@
                       @click.stop="returnToWork(goal.id)"
                       title="Вернуть в работу"
                     >
-                      <span class="icon-return">↩</span>
+                      <RotateCcw :size="16" :stroke-width="2" />
                     </button>
                   </div>
                 </td>
@@ -236,7 +252,10 @@
         <h3>Цели в работе</h3>
         <div class="key-goals-list">
           <div v-for="goal in transferredGoals" :key="goal.id" class="key-goal-item">
-            <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
+            <span class="goal-sphere-icon" :style="{ color: getSphereColor(goal.sphereId) }">
+              <component :is="getSphereIcon(goal.sphereId)" :size="16" :stroke-width="2" />
+              {{ getSphereNameOnly(goal.sphereId) }}
+            </span>
             <span class="goal-title">{{ goal.title }}</span>
             <span class="goal-progress">{{ goal.progress }}%</span>
             <button 
@@ -244,7 +263,7 @@
               @click.stop="removeFromWork(goal.id)"
               title="Убрать из работы"
             >
-              ✕
+              <X :size="14" :stroke-width="2" />
             </button>
           </div>
         </div>
@@ -818,6 +837,49 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { 
+  Lightbulb, 
+  CheckCircle, 
+  XCircle, 
+  PlayCircle,
+  Wallet, 
+  Palette, 
+  Users, 
+  Heart, 
+  Briefcase, 
+  HeartHandshake,
+  Plus,
+  Check,
+  X,
+  RotateCcw,
+  AlertTriangle
+} from 'lucide-vue-next'
+
+const sphereIcons = {
+  wealth: Wallet,
+  hobbies: Palette,
+  friendship: Users,
+  health: Heart,
+  career: Briefcase,
+  love: HeartHandshake
+}
+
+const sphereColors = {
+  wealth: '#e63946',
+  hobbies: '#f4a261',
+  friendship: '#e9c46a',
+  health: '#2a9d8f',
+  career: '#264653',
+  love: '#9b5de5'
+}
+
+function getSphereIcon(sphereId) {
+  return sphereIcons[sphereId] || Lightbulb
+}
+
+function getSphereColor(sphereId) {
+  return sphereColors[sphereId] || '#6366f1'
+}
 
 const store = useAppStore()
 const router = useRouter()
@@ -1485,6 +1547,11 @@ function getSphereName(sphereId) {
   return sphere ? `${sphere.icon} ${sphere.name}` : 'Не указана'
 }
 
+function getSphereNameOnly(sphereId) {
+  const sphere = lifeSpheres.value.find(s => s.id === sphereId)
+  return sphere ? sphere.name : 'Не указана'
+}
+
 function getGoalsCountForSphere(sphereId) {
   return rawIdeas.value.filter(i => i.sphereId === sphereId).length
 }
@@ -1619,8 +1686,33 @@ function getStatusLabel(status) {
 }
 
 .summary-icon {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 0.75rem;
+  border-radius: var(--radius-md);
+}
+
+.summary-icon-ideas {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.summary-icon-valid {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.summary-icon-rejected {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.summary-icon-work {
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.1);
 }
 
 .summary-value {
@@ -2006,6 +2098,42 @@ function getStatusLabel(status) {
   color: var(--text-secondary);
   padding: 0.375rem 0.75rem;
   border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+}
+
+/* Sphere badge with Lucide icons */
+.goal-sphere-badge-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--sphere-color);
+  background: color-mix(in srgb, var(--sphere-color) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--sphere-color) 20%, transparent);
+  white-space: nowrap;
+}
+
+.goal-sphere-badge-new .weak-indicator {
+  color: #f59e0b;
+  margin-left: 0.125rem;
+}
+
+/* Goal sphere icon in key goals list */
+.goal-sphere-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+/* Why cell empty state */
+.why-cell.why-empty {
+  color: var(--text-tertiary);
+  font-style: italic;
   font-size: 0.8125rem;
 }
 
