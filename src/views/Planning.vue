@@ -1283,8 +1283,9 @@ onMounted(() => {
 
 <style scoped>
 .planning-container {
-  max-width: 1400px;
+  max-width: 100%;
   margin: 0 auto;
+  padding: 0 1rem;
 }
 
 .empty-state-section {
@@ -2158,16 +2159,10 @@ onMounted(() => {
 }
 
 .planner-layout {
-  display: grid;
-  grid-template-columns: 1fr 350px;
-  gap: 2rem;
+  display: block;
 }
 
 .planner-main {
-  min-width: 0;
-}
-
-.planner-sidebar {
   min-width: 0;
 }
 
