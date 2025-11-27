@@ -1811,6 +1811,8 @@ function getStatusLabel(status) {
   color: white;
   box-shadow: 0 1px 4px rgba(16, 185, 129, 0.25);
   white-space: nowrap;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-md);
 }
 
 .status-badge.pending {
