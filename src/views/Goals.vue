@@ -180,8 +180,33 @@
 
           <div v-if="selectedGoalForPractice" class="practice-area card">
             <div class="practice-header">
-              <h4>Декомпозиция цели:</h4>
-              <p class="practice-goal-title">{{ selectedGoalForPractice.title }}</p>
+              <div class="practice-header-top">
+                <h4>Декомпозиция цели:</h4>
+                <span class="steps-counter" :class="{ complete: filledStepsCount >= 2 }">
+                  {{ filledStepsCount }} {{ getStepsWord(filledStepsCount) }}
+                </span>
+              </div>
+              <p class="practice-goal-title">
+                <span class="goal-sphere-icon" :style="{ borderColor: getSphereColor(selectedGoalForPractice.sphereId) }">
+                  <component :is="getSphereIconComponent(selectedGoalForPractice.sphereId)" :size="14" />
+                </span>
+                {{ selectedGoalForPractice.title }}
+              </p>
+            </div>
+
+            <div class="rules-reminder">
+              <div class="reminder-item">
+                <Clock :size="14" />
+                <span>1-4 часа</span>
+              </div>
+              <div class="reminder-item">
+                <CheckCircle :size="14" />
+                <span>Конкретно</span>
+              </div>
+              <div class="reminder-item">
+                <Target :size="14" />
+                <span>Измеримо</span>
+              </div>
             </div>
 
             <div class="practice-steps">
@@ -191,12 +216,26 @@
                 class="practice-step"
               >
                 <span class="step-number-badge">{{ index + 1 }}</span>
-                <input 
-                  type="text"
-                  v-model="step.title"
-                  :placeholder="`Шаг ${index + 1}: что конкретно нужно сделать?`"
-                  class="step-input"
-                />
+                <div class="step-input-group">
+                  <input 
+                    type="text"
+                    v-model="step.title"
+                    :placeholder="getStepPlaceholder(index)"
+                    class="step-input"
+                  />
+                  <select 
+                    v-model="step.timeEstimate" 
+                    class="time-select"
+                    title="Время на выполнение"
+                  >
+                    <option value="">⏱</option>
+                    <option value="30">30 мин</option>
+                    <option value="60">1 час</option>
+                    <option value="120">2 часа</option>
+                    <option value="180">3 часа</option>
+                    <option value="240">4 часа</option>
+                  </select>
+                </div>
                 <button 
                   v-if="practiceSteps.length > 1"
                   class="btn-icon delete"
@@ -681,10 +720,32 @@ const filteredGoals = computed(() => {
 
 const selectedGoalForPractice = ref(null)
 const practiceSteps = ref([
-  { id: 'new-1', title: '', completed: false },
-  { id: 'new-2', title: '', completed: false },
-  { id: 'new-3', title: '', completed: false }
+  { id: 'new-1', title: '', completed: false, timeEstimate: '' },
+  { id: 'new-2', title: '', completed: false, timeEstimate: '' },
+  { id: 'new-3', title: '', completed: false, timeEstimate: '' }
 ])
+
+const filledStepsCount = computed(() => {
+  return practiceSteps.value.filter(s => s.title.trim()).length
+})
+
+function getStepsWord(count) {
+  if (count === 1) return 'шаг'
+  if (count >= 2 && count <= 4) return 'шага'
+  return 'шагов'
+}
+
+const stepPlaceholders = [
+  'Найти информацию, изучить варианты (1-2 часа)',
+  'Принять решение, составить план (30 мин - 1 час)',
+  'Сделать первое действие (1-2 часа)',
+  'Проверить результат и скорректировать (30 мин)',
+  'Что ещё нужно сделать?'
+]
+
+function getStepPlaceholder(index) {
+  return stepPlaceholders[index] || `Шаг ${index + 1}: конкретное действие (1-4 часа)`
+}
 
 
 const canProceedFromStep2 = computed(() => {
@@ -729,7 +790,8 @@ function saveCurrentPracticeSteps() {
       .map(step => ({
         id: step.id || ('temp-' + Date.now() + Math.random().toString(36).substr(2, 5)),
         title: step.title,
-        completed: step.completed || false
+        completed: step.completed || false,
+        timeEstimate: step.timeEstimate || ''
       }))
     
     const goalIndex = goals.value.findIndex(g => g.id === selectedGoalForPractice.value.id)
@@ -748,13 +810,14 @@ function selectGoalForPractice(goal) {
     practiceSteps.value = goal.steps.map((s, index) => ({
       id: s.id || ('legacy-' + index),
       title: s.title || (typeof s === 'string' ? s : ''),
-      completed: s.completed || false
+      completed: s.completed || false,
+      timeEstimate: s.timeEstimate || ''
     }))
   } else {
     practiceSteps.value = [
-      { id: 'new-1', title: '', completed: false },
-      { id: 'new-2', title: '', completed: false },
-      { id: 'new-3', title: '', completed: false }
+      { id: 'new-1', title: '', completed: false, timeEstimate: '' },
+      { id: 'new-2', title: '', completed: false, timeEstimate: '' },
+      { id: 'new-3', title: '', completed: false, timeEstimate: '' }
     ]
   }
 }
@@ -763,7 +826,8 @@ function addPracticeStep() {
   practiceSteps.value.push({
     id: 'new-' + Date.now(),
     title: '',
-    completed: false
+    completed: false,
+    timeEstimate: ''
   })
 }
 
@@ -780,7 +844,8 @@ function completeLesson() {
         return {
           id: needsNewId ? Date.now().toString() + Math.random().toString(36).substr(2, 9) : step.id,
           title: step.title,
-          completed: step.completed || false
+          completed: step.completed || false,
+          timeEstimate: step.timeEstimate || ''
         }
       })
     
@@ -1434,16 +1499,61 @@ function formatDate(dateString) {
 }
 
 .practice-header {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
-.practice-header h4 {
+.practice-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 0.5rem;
 }
 
+.practice-header h4 {
+  margin: 0;
+}
+
+.steps-counter {
+  font-size: 0.875rem;
+  padding: 0.25rem 0.75rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+}
+
+.steps-counter.complete {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+}
+
 .practice-goal-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 1.125rem;
   font-weight: 600;
+  color: var(--primary-color);
+}
+
+.rules-reminder {
+  display: flex;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(99, 102, 241, 0.05);
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.reminder-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.reminder-item svg {
   color: var(--primary-color);
 }
 
@@ -1457,6 +1567,28 @@ function formatDate(dateString) {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+}
+
+.step-input-group {
+  display: flex;
+  flex: 1;
+  gap: 0.5rem;
+}
+
+.time-select {
+  width: 90px;
+  padding: 0.75rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.time-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
 }
 
 .step-number-badge {
