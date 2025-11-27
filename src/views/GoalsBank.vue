@@ -492,7 +492,7 @@
     <div v-if="currentStep === 2" class="step-content">
       <div class="step-section">
         <header class="section-header">
-          <h1>🔍 Проверка целей</h1>
+          <h1>Проверка целей</h1>
           <p class="subtitle">
             Проверь каждую цель с помощью правила "3 Почему" и отсей ложные цели
           </p>
@@ -501,24 +501,30 @@
         <div class="step-2-layout">
           <div class="step-2-main">
             <div class="filters-block card">
-              <h3>⚠️ Убери следующие типы целей:</h3>
+              <h3><AlertTriangle :size="18" :stroke-width="2" class="header-icon warning" /> Убери следующие типы целей:</h3>
               <div class="filter-types">
                 <div class="filter-type">
-                  <span class="filter-icon">🎭</span>
+                  <div class="filter-icon-wrapper social">
+                    <Eye :size="20" :stroke-width="2" />
+                  </div>
                   <div>
                     <strong>Социально-приемлемые цели</strong>
                     <p>"Чтобы выглядело правильно" перед другими</p>
                   </div>
                 </div>
                 <div class="filter-type">
-                  <span class="filter-icon">👥</span>
+                  <div class="filter-icon-wrapper others">
+                    <UserX :size="20" :stroke-width="2" />
+                  </div>
                   <div>
                     <strong>Чужие цели</strong>
                     <p>Взятые у авторитетов или окружения</p>
                   </div>
                 </div>
                 <div class="filter-type">
-                  <span class="filter-icon">💭</span>
+                  <div class="filter-icon-wrapper surrogate">
+                    <Target :size="20" :stroke-width="2" />
+                  </div>
                   <div>
                     <strong>Суррогаты</strong>
                     <p>Цели, не ведущие к реальному результату</p>
@@ -528,7 +534,7 @@
             </div>
 
             <div class="three-whys-instruction card">
-              <h3>✅ Правило "3 Почему"</h3>
+              <h3><CheckCircle :size="18" :stroke-width="2" class="header-icon success" /> Правило "3 Почему"</h3>
               <p>Для каждой цели ответь на три вопроса:</p>
               <ol>
                 <li><strong>Почему эта цель мне важна?</strong></li>
@@ -554,9 +560,9 @@
             ></div>
           </div>
           <div class="progress-legend">
-            <span class="legend-item validated">✅ Истинных: {{ validatedCount }}</span>
-            <span class="legend-item rejected">❌ Ложных: {{ rejectedCount }}</span>
-            <span class="legend-item pending">⏳ Осталось: {{ uncheckedCount }}</span>
+            <span class="legend-item validated"><CheckCircle :size="14" :stroke-width="2" /> Истинных: {{ validatedCount }}</span>
+            <span class="legend-item rejected"><XCircle :size="14" :stroke-width="2" /> Ложных: {{ rejectedCount }}</span>
+            <span class="legend-item pending"><Clock :size="14" :stroke-width="2" /> Осталось: {{ uncheckedCount }}</span>
           </div>
         </div>
 
@@ -576,14 +582,20 @@
               @click="toggleGoalExpansion(idea.id)"
             >
               <div class="goal-info-compact">
-                <span class="expand-icon">{{ expandedGoalId === idea.id ? '▼' : '▶' }}</span>
-                <span class="sphere-badge-small">{{ getSphereName(idea.sphereId) }}</span>
+                <span class="expand-icon">
+                  <ChevronDown v-if="expandedGoalId === idea.id" :size="16" :stroke-width="2" />
+                  <ChevronRight v-else :size="16" :stroke-width="2" />
+                </span>
+                <span class="sphere-badge-small" :style="{ '--sphere-color': getSphereColor(idea.sphereId) }">
+                  <component :is="getSphereIcon(idea.sphereId)" :size="14" :stroke-width="2" />
+                  {{ getSphereNameOnly(idea.sphereId) }}
+                </span>
                 <h4>{{ idea.goal || idea.text || 'Без названия' }}</h4>
               </div>
               <div class="goal-status-indicator">
-                <span v-if="idea.status === 'validated'" class="status-badge validated">✅ Истинная</span>
-                <span v-else-if="idea.status === 'rejected'" class="status-badge rejected">❌ Ложная</span>
-                <span v-else class="status-badge pending">⏳ Не проверена</span>
+                <span v-if="idea.status === 'validated'" class="status-badge validated"><CheckCircle :size="14" :stroke-width="2" /> Истинная</span>
+                <span v-else-if="idea.status === 'rejected'" class="status-badge rejected"><XCircle :size="14" :stroke-width="2" /> Ложная</span>
+                <span v-else class="status-badge pending"><Clock :size="14" :stroke-width="2" /> Не проверена</span>
               </div>
             </div>
 
@@ -629,14 +641,14 @@
                     :class="idea.status === 'validated' ? 'btn-success' : 'btn-outline-success'"
                     @click.stop="validateGoal(idea.id, true)"
                   >
-                    ✅ Это истинная цель
+                    <CheckCircle :size="16" :stroke-width="2" /> Это истинная цель
                   </button>
                   <button 
                     class="btn btn-lg"
                     :class="idea.status === 'rejected' ? 'btn-danger' : 'btn-outline-danger'"
                     @click.stop="validateGoal(idea.id, false)"
                   >
-                    ❌ Это ложная цель
+                    <XCircle :size="16" :stroke-width="2" /> Это ложная цель
                   </button>
                 </div>
               </div>
@@ -662,24 +674,24 @@
           <div class="step-2-sidebar">
             <div class="card ai-coach">
               <div class="coach-header">
-                <span class="coach-icon">💬</span>
+                <span class="coach-icon"><MessageSquare :size="18" :stroke-width="2" /></span>
                 <h3>ИИ-коуч</h3>
               </div>
               
               <div class="chat-container">
                 <div class="chat-messages" ref="chatMessagesContainer">
                   <div class="message coach-message">
-                    <span class="message-avatar">🤖</span>
+                    <span class="message-avatar"><Sparkles :size="16" :stroke-width="2" /></span>
                     <div class="message-content">
                       <p>Привет! Я помогу тебе проверить цели. Ответь на 3 вопроса для каждой цели, чтобы понять — она истинная или ложная.</p>
                     </div>
                   </div>
                   <div v-for="msg in goalsChatMessages" :key="msg.id" class="message" :class="msg.type + '-message'">
-                    <span v-if="msg.type === 'coach'" class="message-avatar">🤖</span>
+                    <span v-if="msg.type === 'coach'" class="message-avatar"><Sparkles :size="16" :stroke-width="2" /></span>
                     <div class="message-content">
                       <p>{{ msg.text }}</p>
                     </div>
-                    <span v-if="msg.type === 'user'" class="message-avatar user">👤</span>
+                    <span v-if="msg.type === 'user'" class="message-avatar user"><Users :size="16" :stroke-width="2" /></span>
                   </div>
                 </div>
                 
@@ -876,7 +888,13 @@ import {
   AlertTriangle,
   Sparkles,
   Trash2,
-  ChevronRight
+  ChevronRight,
+  ChevronDown,
+  Eye,
+  UserX,
+  Target,
+  Clock,
+  MessageSquare
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -3268,6 +3286,12 @@ function getStatusLabel(status) {
   font-size: 0.875rem;
 }
 
+.validation-progress .legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
 .validation-progress .legend-item.validated {
   color: var(--success-color);
 }
@@ -3686,14 +3710,48 @@ function getStatusLabel(status) {
   border-radius: var(--radius-md);
 }
 
-.filter-icon {
-  font-size: 1.5rem;
+.filter-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.filter-icon-wrapper.social {
+  background: rgba(156, 39, 176, 0.12);
+  color: #9c27b0;
+}
+
+.filter-icon-wrapper.others {
+  background: rgba(255, 152, 0, 0.12);
+  color: #f57c00;
+}
+
+.filter-icon-wrapper.surrogate {
+  background: rgba(0, 150, 136, 0.12);
+  color: #009688;
 }
 
 .filter-type p {
   margin: 0.25rem 0 0;
   font-size: 0.875rem;
   color: var(--text-secondary);
+}
+
+.header-icon {
+  vertical-align: middle;
+  margin-right: 0.375rem;
+}
+
+.header-icon.warning {
+  color: var(--warning-color);
+}
+
+.header-icon.success {
+  color: var(--success-color);
 }
 
 .three-whys-instruction {
@@ -3884,17 +3942,25 @@ function getStatusLabel(status) {
 }
 
 .expand-icon {
-  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--text-secondary);
   transition: transform 0.2s ease;
 }
 
 .sphere-badge-small {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
   font-size: 0.75rem;
-  padding: 0.2rem 0.5rem;
-  background: var(--bg-tertiary);
+  padding: 0.25rem 0.5rem;
+  background: white;
+  border: 1.5px solid var(--sphere-color, var(--border-color));
   border-radius: var(--radius-sm);
   white-space: nowrap;
+  color: var(--sphere-color, var(--text-secondary));
+  font-weight: 500;
 }
 
 .goal-info-compact h4 {
@@ -3978,6 +4044,12 @@ function getStatusLabel(status) {
   justify-content: center;
   padding-top: 1rem;
   border-top: 1px solid var(--border-color);
+}
+
+.validation-buttons .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .btn-outline-success {
