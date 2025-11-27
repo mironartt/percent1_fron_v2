@@ -268,6 +268,21 @@ router.beforeEach(async (to, from, next) => {
     })
   }
   
+  // Mini-task navigation blocking
+  // Block navigation to any route except settings until mini-task is complete
+  // Only applies if: user finished onboarding but not mini-task
+  if (to.meta.requiresAuth && isAuthenticated) {
+    const shouldBlockForMiniTask = store.shouldShowMiniTask
+    const allowedDuringMiniTask = ['dashboard', 'settings', 'logout']
+    
+    if (shouldBlockForMiniTask && !allowedDuringMiniTask.includes(to.name)) {
+      if (DEBUG_MODE) {
+        console.log('[Router] Blocking navigation during mini-task, redirecting to dashboard')
+      }
+      return next({ name: 'dashboard' })
+    }
+  }
+  
   if (DEBUG_MODE) {
     console.log('[Router] Navigation allowed')
   }

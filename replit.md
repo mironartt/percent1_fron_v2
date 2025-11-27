@@ -95,6 +95,27 @@ The application uses a modular structure with dedicated components, services, vi
 - Removed unused imports (GuidancePanel, ChevronLeft, ChevronRight from Lucide)
 - Clean, focused planning interface without AI coach distractions
 
+### Mini-Task Backend Integration (27 Nov 2025)
+- **API Methods** (api.js): Added `getMiniTaskData()` and `updateMiniTaskData()` for backend sync
+- **Store Methods** (app.js): 
+  - `loadMiniTaskFromBackend()` - loads tasks, categories, step progress
+  - `saveMiniTaskToBackend()` - saves tasks with step completion
+  - `saveMiniTaskTasks()` - saves brain dump and categorized tasks
+  - `updateMiniTaskStep()` - updates completed step number
+  - `completeMiniTaskWithBackend()` - marks mini-task as complete
+  - `resetMiniTask()` - resets local state
+- **MiniTask.vue Component Updates**:
+  - Loading state with spinner
+  - Resume prompt for returning users ("Продолжить мини-задание?")
+  - Category mapping: frontend (calendar, next, someday, reference) ↔ backend (calendar, action, idea, info)
+  - Auto-save after each step transition
+  - LocalId tracking for drag-and-drop while preserving backend task_id
+  - Saving state indicator on buttons
+- **Router Navigation Blocking**: Blocks access to app routes (except dashboard, settings, logout) until mini-task complete
+- **API Endpoints**:
+  - GET: `/api/rest/front/app/onboard/mini-task/get/`
+  - POST: `/api/rest/front/app/onboard/mini-task/update/`
+
 ## External Dependencies
 - **Django REST API Backend**: Provides authentication, user data, onboarding, and goal management services.
 - **Lucide Vue Next**: Used for minimalist line icons across the UI.
