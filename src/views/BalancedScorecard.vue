@@ -52,7 +52,7 @@
     <!-- Summary State - After Completion -->
     <div v-else-if="showSummary" class="summary-section-main">
       <header class="section-header">
-        <h1>⚖️ Система сбалансированных показателей</h1>
+        <h1>Система сбалансированных показателей</h1>
       </header>
 
       <div class="summary-grid">
@@ -211,7 +211,7 @@
     <div v-if="currentStep === 2" class="step-content">
       <div class="wheel-section">
         <header class="section-header">
-          <h1>⚖️ Система сбалансированных показателей</h1>
+          <h1>Система сбалансированных показателей</h1>
           <p class="subtitle">
             Оцените текущее состояние каждой сферы вашей жизни
           </p>
