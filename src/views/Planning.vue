@@ -222,11 +222,40 @@
                     <div 
                       v-for="task in getTasksForDay(day.date)" 
                       :key="task.id"
-                      class="scheduled-task"
-                      :class="'priority-' + (task.priority || 'optional')"
+                      class="scheduled-task-wrapper"
                     >
-                      <span class="task-title">{{ task.stepTitle }}</span>
-                      <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
+                      <div 
+                        class="scheduled-task"
+                        :class="'priority-' + (task.priority || 'optional')"
+                      >
+                        <span class="task-title">{{ task.stepTitle }}</span>
+                        <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
+                      </div>
+                      <div class="task-popover">
+                        <div class="popover-header">
+                          <span 
+                            class="popover-priority-badge"
+                            :style="{ backgroundColor: getPriorityColor(task.priority) }"
+                          >
+                            {{ getPriorityLabel(task.priority) }}
+                          </span>
+                        </div>
+                        <div class="popover-title">{{ task.stepTitle }}</div>
+                        <div class="popover-goal">
+                          <Target :size="12" />
+                          {{ task.goalTitle }}
+                        </div>
+                        <div class="popover-meta">
+                          <span v-if="task.timeEstimate" class="popover-time">
+                            <Clock :size="12" />
+                            {{ formatTimeEstimate(task.timeEstimate) }}
+                          </span>
+                        </div>
+                        <div v-if="task.comment" class="popover-comment">
+                          <MessageSquare :size="12" />
+                          {{ task.comment }}
+                        </div>
+                      </div>
                     </div>
                     <div v-if="getTasksForDay(day.date).length === 0" class="no-tasks drop-hint">
                       {{ draggedStep ? 'Сюда' : '—' }}
@@ -759,7 +788,9 @@ import {
   Sparkles,
   Square,
   ArrowRight,
-  CheckSquare
+  CheckSquare,
+  Clock,
+  MessageSquare
 } from 'lucide-vue-next'
 
 const store = useAppStore()
@@ -1205,6 +1236,23 @@ function formatTimeShort(estimate) {
     '4h': '4ч'
   }
   return labels[estimate] || estimate
+}
+
+const priorityOptions = [
+  { value: 'critical', label: 'Критично', color: '#ef4444' },
+  { value: 'desirable', label: 'Важно', color: '#f97316' },
+  { value: 'attention', label: 'Внимание', color: '#3b82f6' },
+  { value: 'optional', label: 'Опционально', color: '#9ca3af' }
+]
+
+function getPriorityColor(priority) {
+  const option = priorityOptions.find(p => p.value === priority)
+  return option ? option.color : '#9ca3af'
+}
+
+function getPriorityLabel(priority) {
+  const option = priorityOptions.find(p => p.value === priority)
+  return option ? option.label : 'Опционально'
 }
 
 function pluralize(n, one, few, many) {
@@ -1790,16 +1838,22 @@ onMounted(() => {
   align-items: center;
   gap: 0.75rem;
   flex: 1;
+  min-width: 0;
 }
 
 .expand-icon {
   font-size: 0.7rem;
   color: var(--text-secondary);
   transition: transform 0.2s;
+  flex-shrink: 0;
 }
 
 .goal-header-left h4 {
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .goal-header-right {
@@ -1911,10 +1965,15 @@ onMounted(() => {
   align-items: center;
   gap: 0.75rem;
   flex: 1;
+  min-width: 0;
 }
 
 .step-title {
   font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .step-time {
@@ -2099,6 +2158,109 @@ onMounted(() => {
 .scheduled-task.priority-optional {
   border-left-color: #9ca3af;
   background: rgba(156, 163, 175, 0.1);
+}
+
+/* Task popover on hover */
+.scheduled-task-wrapper {
+  position: relative;
+}
+
+.task-popover {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: 4px;
+  min-width: 220px;
+  max-width: 300px;
+  padding: 0.75rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  animation: popoverFadeIn 0.15s ease;
+}
+
+@keyframes popoverFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.scheduled-task-wrapper:hover .task-popover {
+  display: block;
+}
+
+.popover-header {
+  margin-bottom: 0.5rem;
+}
+
+.popover-priority-badge {
+  font-size: 0.7rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-sm);
+  color: white;
+  font-weight: 500;
+}
+
+.popover-title {
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.popover-goal {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.popover-goal svg {
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.popover-meta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.popover-time {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  padding: 0.125rem 0.375rem;
+  border-radius: var(--radius-sm);
+}
+
+.popover-time svg {
+  color: var(--primary-color);
+}
+
+.popover-comment {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-color);
+  line-height: 1.4;
+}
+
+.popover-comment svg {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
 }
 
 .no-tasks {
