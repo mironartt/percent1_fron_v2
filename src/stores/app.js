@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { DEBUG_MODE, FORCE_SHOW_ONBOARDING, FORCE_SHOW_MINITASK } from '@/config/settings.js'
-import { getOnboardingData, updateOnboardingData } from '@/services/api.js'
+import { getOnboardingData, updateOnboardingData, getMiniTaskData, updateMiniTaskData } from '@/services/api.js'
 
 export const useAppStore = defineStore('app', () => {
   // ========================================
@@ -179,12 +179,13 @@ export const useAppStore = defineStore('app', () => {
     }
   })
 
-  // Mini Task data
+  // Mini Task data (расширенная структура для синхронизации с бэкендом)
   const miniTask = ref({
     completed: false,
-    data: null,
-    currentStep: 1,
-    brainDump: [],
+    loading: false,
+    stepCompleted: 0,
+    tasks: [],
+    categories: [],
     selectedActions: [],
     completedActions: []
   })
@@ -577,11 +578,189 @@ export const useAppStore = defineStore('app', () => {
     saveToLocalStorage()
   }
 
+  // ========================================
+  // MINI-TASK BACKEND METHODS
+  // ========================================
+
+  /**
+   * Загрузить данные мини-задания с бэкенда
+   */
+  async function loadMiniTaskFromBackend() {
+    if (DEBUG_MODE) {
+      console.log('[Store] Loading mini-task data from backend...')
+    }
+    
+    miniTask.value.loading = true
+    
+    try {
+      const result = await getMiniTaskData()
+      
+      if (result.status === 'ok' && result.data) {
+        const data = result.data
+        
+        miniTask.value = {
+          completed: data.is_complete ?? false,
+          loading: false,
+          stepCompleted: data.step_completed ?? 0,
+          tasks: data.tasks || [],
+          categories: data.categories_data || [],
+          selectedActions: [],
+          completedActions: []
+        }
+        
+        // Извлекаем selectedActions и completedActions из tasks
+        if (data.tasks && data.tasks.length > 0) {
+          miniTask.value.selectedActions = data.tasks
+            .filter(t => t.is_selected_for_action)
+            .map(t => t.task_id)
+          
+          miniTask.value.completedActions = data.tasks
+            .filter(t => t.is_completed)
+            .map(t => t.task_id)
+        }
+        
+        if (DEBUG_MODE) {
+          console.log('[Store] Mini-task data loaded:', {
+            completed: miniTask.value.completed,
+            stepCompleted: miniTask.value.stepCompleted,
+            tasksCount: miniTask.value.tasks.length,
+            categoriesCount: miniTask.value.categories.length
+          })
+        }
+        
+        return miniTask.value
+      } else {
+        if (DEBUG_MODE) {
+          console.warn('[Store] Failed to load mini-task data:', result)
+        }
+        miniTask.value.loading = false
+        return null
+      }
+    } catch (error) {
+      if (DEBUG_MODE) {
+        console.error('[Store] Error loading mini-task data:', error)
+      }
+      miniTask.value.loading = false
+      return null
+    }
+  }
+
+  /**
+   * Сохранить данные мини-задания на бэкенд
+   * @param {object} data - Данные для сохранения
+   */
+  async function saveMiniTaskToBackend(data) {
+    if (DEBUG_MODE) {
+      console.log('[Store] Saving mini-task data to backend:', data)
+    }
+    
+    try {
+      const result = await updateMiniTaskData(data)
+      
+      if (result.status === 'ok') {
+        // Обновляем локальное состояние
+        if (data.step_completed !== undefined) {
+          miniTask.value.stepCompleted = data.step_completed
+        }
+        if (data.is_complete !== undefined) {
+          miniTask.value.completed = data.is_complete
+          if (data.is_complete) {
+            user.value.finish_minitask = true
+          }
+        }
+        
+        // Если пришли обновлённые tasks с task_id, обновляем локальный массив
+        if (result.data && result.data.tasks) {
+          miniTask.value.tasks = result.data.tasks
+        }
+        
+        if (DEBUG_MODE) {
+          console.log('[Store] Mini-task data saved successfully')
+        }
+        
+        return { success: true, data: result.data }
+      } else {
+        if (DEBUG_MODE) {
+          console.warn('[Store] Failed to save mini-task data:', result)
+        }
+        return { success: false, error: result.error_data }
+      }
+    } catch (error) {
+      if (DEBUG_MODE) {
+        console.error('[Store] Error saving mini-task data:', error)
+      }
+      return { success: false, error }
+    }
+  }
+
+  /**
+   * Обновить шаг мини-задания
+   */
+  async function updateMiniTaskStep(step) {
+    return saveMiniTaskToBackend({ step_completed: step })
+  }
+
+  /**
+   * Сохранить задачи мини-задания (шаг 2 - brain dump)
+   * @param {Array} tasks - Массив задач с текстом
+   * @param {number} stepCompleted - Номер завершённого шага
+   */
+  async function saveMiniTaskTasks(tasks, stepCompleted) {
+    const formattedTasks = tasks.map((task, index) => ({
+      task_id: task.task_id || null,
+      text: task.text,
+      category: task.category || null,
+      order: index,
+      is_selected_for_action: task.is_selected_for_action || false,
+      is_completed: task.is_completed || false
+    }))
+    
+    return saveMiniTaskToBackend({
+      tasks: formattedTasks,
+      step_completed: stepCompleted,
+      is_complete: false
+    })
+  }
+
+  /**
+   * Завершить мини-задание
+   */
+  async function completeMiniTaskWithBackend(tasks) {
+    const formattedTasks = tasks.map((task, index) => ({
+      task_id: task.task_id || null,
+      text: task.text,
+      category: task.category,
+      order: index,
+      is_selected_for_action: task.is_selected_for_action || false,
+      is_completed: task.is_completed || false
+    }))
+    
+    return saveMiniTaskToBackend({
+      tasks: formattedTasks,
+      step_completed: 4,
+      is_complete: true
+    })
+  }
+
   function completeMiniTask(data) {
     miniTask.value = {
+      ...miniTask.value,
       completed: true,
-      data: data,
       completedAt: new Date().toISOString()
+    }
+    user.value.finish_minitask = true
+    saveToLocalStorage()
+  }
+
+  function resetMiniTask() {
+    miniTask.value = {
+      completed: false,
+      loading: false,
+      stepCompleted: 0,
+      tasks: [],
+      categories: [],
+      selectedActions: [],
+      completedActions: []
     }
     saveToLocalStorage()
   }
@@ -1002,6 +1181,15 @@ export const useAppStore = defineStore('app', () => {
     saveOnboardingToBackend,
     updateOnboardingStep,
     completeOnboardingWithBackend,
+    
+    // Mini-task backend methods
+    loadMiniTaskFromBackend,
+    saveMiniTaskToBackend,
+    saveMiniTaskTasks,
+    updateMiniTaskStep,
+    completeMiniTaskWithBackend,
+    completeMiniTask,
+    resetMiniTask,
     
     // Planning Module
     planningModule,

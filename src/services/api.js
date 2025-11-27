@@ -341,6 +341,31 @@ export async function checkAuth() {
 // Алиас для совместимости
 export const getCurrentUser = checkAuth
 
+// ========================================
+// MINI-TASK API
+// ========================================
+
+/**
+ * Получить данные мини-задания пользователя
+ * Возвращает текущий статус, задачи и категории для шага 3
+ * @returns {Promise<object>} - Данные мини-задания
+ */
+export async function getMiniTaskData() {
+  return request('POST', '/api/rest/front/app/onboard/mini-task/get/')
+}
+
+/**
+ * Обновить данные мини-задания
+ * @param {object} data - Данные для обновления
+ * @param {Array} [data.tasks] - Массив задач
+ * @param {number} [data.step_completed] - Завершённый шаг (1-4)
+ * @param {boolean} [data.is_complete] - Мини-задание завершено
+ * @returns {Promise<object>} - Результат обновления
+ */
+export async function updateMiniTaskData(data) {
+  return request('POST', '/api/rest/front/app/onboard/mini-task/update/', data)
+}
+
 // Экспорт API как объекта для удобства
 export const api = {
   request,
@@ -355,7 +380,9 @@ export const api = {
   getCurrentUser,
   getCsrfToken,
   getOnboardingData,
-  updateOnboardingData
+  updateOnboardingData,
+  getMiniTaskData,
+  updateMiniTaskData
 }
 
 export default api
