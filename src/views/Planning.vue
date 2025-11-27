@@ -764,6 +764,13 @@
         </div>
       </div>
     </div>
+
+    <Transition name="toast">
+      <div v-if="showUndoToast" class="undo-toast">
+        <span>Задача удалена</span>
+        <button class="btn-undo" @click="undoDeleteTask">Отменить</button>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -801,6 +808,9 @@ const draggedTask = ref(null)
 const dragOverDay = ref(null)
 const quickAddDay = ref(null)
 const draggedStep = ref(null)
+const deletedTask = ref(null)
+const showUndoToast = ref(false)
+let undoTimeout = null
 
 function handleStepDragStart(event, goal, step) {
   console.log('[Planning] DragStart - step:', step.title, 'goal:', goal.title)
@@ -1185,7 +1195,28 @@ function toggleTaskComplete(taskId) {
 function removeTask(taskId) {
   const plan = currentPlan.value
   if (plan) {
-    store.removeScheduledTask(plan.id, taskId)
+    const taskToDelete = plan.scheduledTasks.find(t => t.id === taskId)
+    if (taskToDelete) {
+      deletedTask.value = { ...taskToDelete, planId: plan.id }
+      store.removeScheduledTask(plan.id, taskId)
+      showUndoToast.value = true
+      
+      if (undoTimeout) clearTimeout(undoTimeout)
+      undoTimeout = setTimeout(() => {
+        showUndoToast.value = false
+        deletedTask.value = null
+      }, 4000)
+    }
+  }
+}
+
+function undoDeleteTask() {
+  if (deletedTask.value) {
+    const { planId, ...task } = deletedTask.value
+    store.addScheduledTask(planId, task)
+    showUndoToast.value = false
+    deletedTask.value = null
+    if (undoTimeout) clearTimeout(undoTimeout)
   }
 }
 
@@ -2945,5 +2976,53 @@ onMounted(() => {
   .notification-options {
     gap: 0.5rem;
   }
+}
+
+.undo-toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
+.undo-toast span {
+  font-size: 0.9rem;
+}
+
+.btn-undo {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--primary-color);
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-undo:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--primary-color);
+}
+
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(1rem);
 }
 </style>
