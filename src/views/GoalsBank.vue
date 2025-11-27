@@ -1889,6 +1889,7 @@ function getStatusLabel(status) {
 .col-status {
   width: 100px;
   text-align: center;
+  vertical-align: middle;
 }
 
 .col-goal {
@@ -1998,6 +1999,7 @@ function getStatusLabel(status) {
 .col-checkbox {
   width: 40px;
   text-align: center;
+  vertical-align: middle;
 }
 
 .table-checkbox {
@@ -2011,6 +2013,7 @@ function getStatusLabel(status) {
 .col-actions {
   width: 90px;
   text-align: center;
+  vertical-align: middle;
 }
 
 .actions-cell {
