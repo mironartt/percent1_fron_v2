@@ -6,6 +6,9 @@ The OnePercent MVP is a Vue 3 + Vite application for personal life management an
 ## User Preferences
 I prefer simple language and iterative development. Ask before making major changes. I prefer detailed explanations. Do not make changes to the folder `Z`. Do not make changes to the file `Y`.
 
+## Checkpoints
+- **base_norm** (27 Nov 2025): Stable state with complete Mini-Task backend integration. All modules working: SSP, Goals Bank, Decomposition, Planning, Onboarding, MiniTask. Layered backend sync architecture with preserved local UX. If user says "вернись к base_norm" — rollback to this commit.
+
 ## System Architecture
 
 ### UI/UX Decisions
