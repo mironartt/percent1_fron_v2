@@ -313,22 +313,29 @@
               expanded: expandedSpheres.includes(sphere.id),
               'has-content': hasReflectionContent(sphere)
             }"
+            :style="{ '--sphere-color': getSphereColor(sphere.id) }"
           >
             <div 
               class="accordion-header"
               @click="toggleSphereExpand(sphere.id)"
             >
               <div class="accordion-left">
-                <span class="sphere-icon">{{ sphere.icon }}</span>
+                <div class="sphere-icon-wrapper" :style="{ color: getSphereColor(sphere.id) }">
+                  <component :is="getSphereIcon(sphere.id)" :size="24" :stroke-width="2" />
+                </div>
                 <div class="sphere-title-info">
                   <h2>{{ sphere.name }}</h2>
                   <div class="header-meta">
-                    <span class="score-badge">{{ sphere.score }}/10</span>
-                    <span v-if="hasReflectionContent(sphere)" class="filled-badge">✓ Заполнено</span>
+                    <span class="score-badge-neutral">{{ sphere.score }}/10</span>
+                    <span v-if="hasReflectionContent(sphere)" class="filled-badge">Заполнено</span>
                   </div>
                 </div>
               </div>
-              <span class="accordion-arrow" :class="{ rotated: expandedSpheres.includes(sphere.id) }">▼</span>
+              <ChevronDown 
+                :size="20" 
+                class="accordion-chevron" 
+                :class="{ rotated: expandedSpheres.includes(sphere.id) }" 
+              />
             </div>
 
             <div class="accordion-content" v-show="expandedSpheres.includes(sphere.id)">
