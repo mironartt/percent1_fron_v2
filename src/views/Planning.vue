@@ -1356,13 +1356,73 @@ onMounted(() => {
   padding: 3rem;
 }
 
-.empty-icon {
-  font-size: 4rem;
+.empty-state-card h1 {
+  margin-bottom: 0.5rem;
+}
+
+/* Icon wrapper system */
+.icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.icon-wrapper.xs {
+  width: 24px;
+  height: 24px;
+}
+
+.icon-wrapper.sm {
+  width: 32px;
+  height: 32px;
+}
+
+.icon-wrapper.md {
+  width: 48px;
+  height: 48px;
+}
+
+.icon-wrapper.lg {
+  width: 72px;
+  height: 72px;
   margin-bottom: 1rem;
 }
 
-.empty-state-card h1 {
-  margin-bottom: 0.5rem;
+.icon-wrapper.primary {
+  background: rgba(124, 58, 237, 0.15);
+  color: var(--primary-color);
+}
+
+.icon-wrapper.accent {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.icon-wrapper.target {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.icon-wrapper.zap {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.icon-wrapper.warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.icon-wrapper.refresh {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.icon-wrapper.phone {
+  background: rgba(6, 182, 212, 0.15);
+  color: #06b6d4;
 }
 
 .subtitle {
@@ -1543,8 +1603,15 @@ onMounted(() => {
   padding: 1.5rem;
 }
 
-.theory-block h3 {
+.theory-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   margin-bottom: 0.75rem;
+}
+
+.theory-header h3 {
+  margin: 0;
 }
 
 .theory-block p {
@@ -1554,15 +1621,16 @@ onMounted(() => {
 
 .key-point {
   display: flex;
-  gap: 0.5rem;
-  padding: 0.75rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
   font-size: 0.9rem;
 }
 
-.key-icon {
-  flex-shrink: 0;
+.key-point.warning {
+  background: rgba(245, 158, 11, 0.1);
 }
 
 .balance-tips {
@@ -1585,9 +1653,58 @@ onMounted(() => {
   font-size: 0.9rem;
 }
 
-.tg-message ul {
-  margin: 0.5rem 0 0;
-  padding-left: 1.25rem;
+.tg-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.tg-icon {
+  color: var(--primary-color);
+}
+
+.tg-tasks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tg-tasks li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.task-check {
+  color: var(--text-secondary);
+}
+
+.header-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-with-icon h1 {
+  margin: 0;
+}
+
+.calendar-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.calendar-icon {
+  color: var(--primary-color);
+}
+
+.btn.btn-primary.btn-lg {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .step-actions {
