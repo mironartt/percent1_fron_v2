@@ -169,7 +169,9 @@
                 :class="{ selected: selectedGoalForPractice?.id === goal.id }"
                 @click="selectGoalForPractice(goal)"
               >
-                <span class="goal-sphere">{{ getSphereIcon(goal.sphereId) }}</span>
+                <span class="goal-sphere-icon" :style="{ borderColor: getSphereColor(goal.sphereId) }">
+                  <component :is="getSphereIconComponent(goal.sphereId)" :size="14" />
+                </span>
                 <span class="goal-name">{{ goal.title }}</span>
                 <span v-if="selectedGoalForPractice?.id === goal.id" class="selected-badge">Выбрана</span>
               </div>
@@ -274,6 +276,14 @@
               {{ practiceSteps.filter(s => s.title.trim()).length }} шагов готовы к выполнению
             </p>
           </div>
+        </div>
+
+        <div v-else class="no-goal-selected card">
+          <p>Вернитесь на предыдущий шаг и выберите цель для декомпозиции</p>
+          <button class="btn btn-outline btn-with-icon" @click="prevStep">
+            <ArrowRight :size="16" class="icon-flip" />
+            Вернуться к практике
+          </button>
         </div>
 
         <div class="step-actions">
@@ -1393,8 +1403,16 @@ function formatDate(dateString) {
   background: rgba(99, 102, 241, 0.05);
 }
 
-.goal-sphere {
-  font-size: 1.25rem;
+.goal-sphere-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid;
+  border-radius: 50%;
+  flex-shrink: 0;
+  color: var(--text-primary);
 }
 
 .goal-name {
