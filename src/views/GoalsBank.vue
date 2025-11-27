@@ -2007,30 +2007,30 @@ function getStatusLabel(status) {
   accent-color: var(--primary-color);
 }
 
-/* Actions column */
+/* Actions column - compact */
 .col-actions {
-  width: 120px;
+  width: 90px;
   text-align: center;
 }
 
 .actions-cell {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.25rem;
   justify-content: center;
   align-items: center;
 }
 
 .btn-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-md);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
-  font-size: 1rem;
+  transition: all 0.15s ease;
+  font-size: 0.875rem;
   font-weight: bold;
 }
 
