@@ -7,13 +7,6 @@
       </button>
       <div class="header-actions">
         <button 
-          v-if="goal && goal.status === 'active'"
-          class="btn btn-success"
-          @click="completeGoal"
-        >
-          ✅ Завершить цель
-        </button>
-        <button 
           class="btn btn-danger-outline"
           @click="deleteGoalConfirm"
         >
@@ -422,17 +415,6 @@ function goBack() {
 function deleteGoalConfirm() {
   if (confirm(`Удалить цель "${goal.value.title}"?`)) {
     store.deleteGoal(goal.value.id)
-    router.push('/app/goals')
-  }
-}
-
-function completeGoal() {
-  if (confirm(`Завершить цель "${goal.value.title}"?`)) {
-    store.updateGoal(goal.value.id, { 
-      status: 'completed',
-      progress: 100,
-      completedAt: new Date().toISOString()
-    })
     router.push('/app/goals')
   }
 }
