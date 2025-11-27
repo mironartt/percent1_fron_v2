@@ -6,37 +6,37 @@
       :viewBox="`0 0 ${svgSize} ${svgSize}`"
       class="wheel-svg"
     >
-      <!-- Background circle -->
+      <!-- Outer wheel circle (full boundary) -->
       <circle
         :cx="center"
         :cy="center"
-        :r="radius"
+        :r="outerRadius"
         fill="var(--wheel-bg, #f8f9fa)"
         stroke="var(--border-color)"
         stroke-width="1"
       />
 
-      <!-- Grid circles (10 levels) -->
+      <!-- Grid circles (10 levels) - inside the score area -->
       <circle
         v-for="i in 10"
         :key="`grid-${i}`"
         :cx="center"
         :cy="center"
-        :r="(radius / 10) * i"
+        :r="(gridRadius / 10) * i"
         fill="none"
         stroke="var(--border-color)"
         stroke-width="1"
         opacity="0.4"
       />
 
-      <!-- Radial dividing lines -->
+      <!-- Radial dividing lines (from center to outer edge) -->
       <line
         v-for="(sphere, index) in spheres"
         :key="`line-${sphere.id}`"
         :x1="center"
         :y1="center"
-        :x2="center + radius * Math.cos(getAngle(index))"
-        :y2="center + radius * Math.sin(getAngle(index))"
+        :x2="center + outerRadius * Math.cos(getAngle(index))"
+        :y2="center + outerRadius * Math.sin(getAngle(index))"
         stroke="var(--border-color)"
         stroke-width="1"
         opacity="0.5"
@@ -57,7 +57,7 @@
         @mouseleave="!readonly && (hoveredSphere = null)"
       />
 
-      <!-- Sphere labels - inside sectors, along radius -->
+      <!-- Sphere labels - in outer ring, beyond the grid -->
       <text
         v-for="(sphere, index) in spheres"
         :key="`label-${sphere.id}`"
@@ -78,8 +78,8 @@
         v-for="(sphere, index) in spheres"
         :key="`handle-${sphere.id}`"
         v-if="!readonly"
-        :cx="center + Math.max((radius / 10) * sphere.score, radius / 15) * Math.cos(getAngle(index) + angleStep / 2)"
-        :cy="center + Math.max((radius / 10) * sphere.score, radius / 15) * Math.sin(getAngle(index) + angleStep / 2)"
+        :cx="center + Math.max((gridRadius / 10) * sphere.score, gridRadius / 15) * Math.cos(getAngle(index) + angleStep / 2)"
+        :cy="center + Math.max((gridRadius / 10) * sphere.score, gridRadius / 15) * Math.sin(getAngle(index) + angleStep / 2)"
         r="10"
         :fill="selectedSphere === sphere.id ? getSphereColor(index) : 'white'"
         :stroke="getSphereColor(index)"
@@ -108,10 +108,11 @@ const props = defineProps({
 
 const emit = defineEmits(['update-sphere'])
 
-const svgSize = 600
+const svgSize = 700
 const center = svgSize / 2
-const radius = 260
-const labelRadius = radius * 0.75
+const outerRadius = 320
+const gridRadius = 240
+const labelRadius = (gridRadius + outerRadius) / 2 + 10
 
 const selectedSphere = ref(null)
 const hoveredSphere = ref(null)
@@ -139,7 +140,7 @@ function getMidAngle(index) {
 function getSegmentPath(index, score) {
   const startAngle = getAngle(index)
   const endAngle = getAngle(index + 1)
-  const scoreRadius = (radius / 10) * Math.max(score, 0.5)
+  const scoreRadius = (gridRadius / 10) * Math.max(score, 0.5)
 
   const x1 = center + scoreRadius * Math.cos(startAngle)
   const y1 = center + scoreRadius * Math.sin(startAngle)
@@ -206,7 +207,7 @@ function startDrag(event, sphere, index) {
     const y = (touch.clientY - rect.top) * scale - center
     
     const distance = Math.sqrt(x * x + y * y)
-    const newScore = Math.max(0, Math.min(10, Math.round((distance / radius) * 10)))
+    const newScore = Math.max(0, Math.min(10, Math.round((distance / gridRadius) * 10)))
     
     emit('update-sphere', {
       ...sphere,
