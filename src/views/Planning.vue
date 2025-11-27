@@ -810,7 +810,7 @@ function handleDrop(newDate) {
 }
 
 function updateTaskDate(taskId, newDate) {
-  const plan = store.getCurrentWeekPlan()
+  const plan = currentPlan.value
   if (!plan) return
   
   const task = plan.scheduledTasks.find(t => t.id === taskId)
@@ -946,8 +946,16 @@ const currentStreak = computed(() => {
   return streak
 })
 
+const priorityOrder = { critical: 0, desirable: 1, attention: 2, optional: 3, '': 4 }
+
 function getTasksForDay(dateStr) {
-  return scheduledTasks.value.filter(t => t.scheduledDate === dateStr)
+  return scheduledTasks.value
+    .filter(t => t.scheduledDate === dateStr)
+    .sort((a, b) => {
+      const priorityA = priorityOrder[a.priority] ?? 4
+      const priorityB = priorityOrder[b.priority] ?? 4
+      return priorityA - priorityB
+    })
 }
 
 function isStepScheduled(goalId, stepId) {
@@ -970,11 +978,10 @@ function getScheduledPriority(goalId, stepId) {
 }
 
 function updateScheduledStep(goalId, stepId, field, value) {
-  ensureWeekPlan()
-  const plan = store.getCurrentWeekPlan()
+  const plan = ensureWeekPlan()
   if (!plan) return
 
-  const existingTask = scheduledTasks.value.find(t => t.goalId === goalId && t.stepId === stepId)
+  const existingTask = plan.scheduledTasks.find(t => t.goalId === goalId && t.stepId === stepId)
   if (existingTask) {
     store.updateScheduledTask(plan.id, existingTask.id, { [field]: value })
   }
@@ -1022,23 +1029,23 @@ function scheduleStep(goalId, step, dateStr) {
 }
 
 function unscheduleStep(goalId, stepId) {
-  const plan = store.getCurrentWeekPlan()
+  const plan = currentPlan.value
   if (!plan) return
-  const task = scheduledTasks.value.find(t => t.goalId === goalId && t.stepId === stepId)
+  const task = plan.scheduledTasks.find(t => t.goalId === goalId && t.stepId === stepId)
   if (task) {
     store.removeScheduledTask(plan.id, task.id)
   }
 }
 
 function toggleTaskComplete(taskId) {
-  const plan = store.getCurrentWeekPlan()
+  const plan = currentPlan.value
   if (plan) {
     store.toggleScheduledTaskComplete(plan.id, taskId)
   }
 }
 
 function removeTask(taskId) {
-  const plan = store.getCurrentWeekPlan()
+  const plan = currentPlan.value
   if (plan) {
     store.removeScheduledTask(plan.id, taskId)
   }
@@ -1221,7 +1228,7 @@ function setupDemoData() {
     demoGoals.forEach(g => store.addGoal(g))
   }
   
-  const plan = store.getCurrentWeekPlan()
+  const plan = currentPlan.value
   if (plan && (!plan.scheduledTasks || plan.scheduledTasks.length === 0)) {
     const getDateStr = (offset) => {
       const d = new Date(monday)
