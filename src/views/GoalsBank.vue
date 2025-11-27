@@ -430,7 +430,7 @@
                 <span class="sphere-group-name">
                   <component :is="getSphereIcon(sphereGroup.sphere.id)" :size="18" :stroke-width="2" class="sphere-group-icon" />
                   {{ getSphereNameOnly(sphereGroup.sphere.id) }}
-                  <span v-if="isWeakSphere(sphereGroup.sphere.id)" class="weak-badge">Слабая сфера</span>
+                  <span v-if="isWeakSphere(sphereGroup.sphere.id)" class="weak-badge">Сфера роста</span>
                 </span>
                 <span class="sphere-group-count">{{ sphereGroup.ideas.length }} целей</span>
               </div>
@@ -736,7 +736,7 @@
               <span class="rec-checkbox">{{ isGoalSelected(goal.id) ? '✅' : '⬜' }}</span>
               <span class="rec-sphere">{{ getSphereName(goal.sphereId) }}</span>
               <span class="rec-text">{{ goal.text }}</span>
-              <span class="rec-badge">⚠️ Слабая сфера</span>
+              <span class="rec-badge">⚠️ Сфера роста</span>
             </div>
           </div>
         </div>
