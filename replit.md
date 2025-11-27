@@ -62,14 +62,24 @@ The application uses a modular structure with dedicated components, services, vi
 - Added helper functions: getSphereIconComponent(), getSphereColor()
 
 ### Goal Edit Page (GoalEdit.vue)
-- AI Coach header: 🤖 emoji replaced with Bot icon in purple circular wrapper
-- Chat avatars: 🤖/👤 replaced with Bot/User icons with color-coded circular backgrounds
-- "Назад к списку" button: ← replaced with ArrowLeft icon
-- "Удалить" button: 🗑️ emoji replaced with Trash2 icon
-- "Сохранить изменения" button: 💾 emoji replaced with Save icon
-- "Добавить шаг" button: ➕ emoji replaced with Plus icon
-- Step delete button: ✕ replaced with X icon
-- Drag handle: ⋮⋮ replaced with GripVertical icon
+- AI Coach header: Bot icon in purple circular wrapper
+- Chat avatars: Bot/User icons with color-coded circular backgrounds
+- Navigation: ArrowLeft icon
+- Actions: Save, Trash2, Plus icons
+- Step management: X icon, GripVertical drag handle
+- Custom dropdown for sphere selection with Lucide icons
+
+### Onboarding Component (Onboarding.vue)
+- Philosophy icon: Gamepad2 icon in large purple circular wrapper
+- Key ideas section: Target, BarChart3, RefreshCcw icons in colored wrappers
+- Highlight block: Lightbulb icon in amber wrapper
+- Step 3 journey visual: MapPin and Target icons for points A and B
+- Form labels: MapPin, Target, Gem icons in small wrappers
+- Completion section: CheckCircle2 icon in large green wrapper
+- Summary checkmarks: Check icons in small green wrappers
+- Final button: Rocket icon with text
+- CSS icon-wrapper system with size variants (xs, sm, md, lg) and color classes
+- Arrow line using CSS gradients instead of text arrow
 
 ## External Dependencies
 - **Django REST API Backend**: Provides authentication, user data, onboarding, and goal management services.
