@@ -94,6 +94,10 @@ The application uses a modular structure with dedicated components, services, vi
 - Added comment field for each step (textarea with placeholder)
 - Step model now includes: id, title, completed, comment, timeEstimate, priority
 - Progress recalculates automatically when toggling step completion
+- **Removed AI coach sidebar** - cleaner, distraction-free editing experience
+- **Moved action buttons to header** - "Сохранить", "Отмена", "Удалить" all in one row
+- **Single-column layout** - form takes full width (max 900px), no sidebar
+- **Date info relocated** - "Создана: дата" now at bottom of steps card
 
 ## External Dependencies
 - **Django REST API Backend**: Provides authentication, user data, onboarding, and goal management services.
