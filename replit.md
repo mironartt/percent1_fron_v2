@@ -87,6 +87,14 @@ The application uses a modular structure with dedicated components, services, vi
 - Removed unused imports (GuidancePanel, ChevronLeft, ChevronRight from Lucide)
 - Clean, focused planning interface without AI coach distractions
 
+### Goal Edit Page Improvements (GoalEdit.vue)
+- Click on goal card now navigates directly to edit page (removed popup modal)
+- Added step completion checkboxes with Lucide icons (Square/CheckSquare)
+- Completed steps show with green left border, strikethrough text, and muted colors
+- Added comment field for each step (textarea with placeholder)
+- Step model now includes: id, title, completed, comment, timeEstimate, priority
+- Progress recalculates automatically when toggling step completion
+
 ## External Dependencies
 - **Django REST API Backend**: Provides authentication, user data, onboarding, and goal management services.
 - **Lucide Vue Next**: Used for minimalist line icons across the UI.
