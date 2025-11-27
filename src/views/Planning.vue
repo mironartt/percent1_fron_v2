@@ -225,9 +225,10 @@
                           title="Приоритет"
                         >
                           <option value="">🎯 Приоритет</option>
-                          <option value="high">Высокий</option>
-                          <option value="medium">Средний</option>
-                          <option value="low">Низкий</option>
+                          <option value="critical">🔴 Важно</option>
+                          <option value="desirable">🟠 Желательно</option>
+                          <option value="attention">🔵 В поле внимания</option>
+                          <option value="optional">⚪ Опционально</option>
                         </select>
                         <button 
                           class="btn-icon remove"
@@ -262,6 +263,7 @@
                       v-for="task in getTasksForDay(day.date)" 
                       :key="task.id"
                       class="scheduled-task"
+                      :class="'priority-' + (task.priority || 'optional')"
                     >
                       <span class="task-title">{{ task.stepTitle }}</span>
                     </div>
@@ -387,11 +389,28 @@
           <header class="section-header">
             <div class="header-row">
               <h1>📅 Планирование недели</h1>
-              <button class="btn btn-secondary btn-sm" @click="restartLesson">
-                🔄 Пройти урок заново
+              <div class="header-actions">
+                <button class="btn btn-secondary btn-sm" @click="restartLesson">
+                  🔄 Пройти урок заново
+                </button>
+              </div>
+            </div>
+            <div class="week-navigation">
+              <button class="btn btn-icon-nav" @click="prevWeek" title="Предыдущая неделя">
+                ←
+              </button>
+              <span class="week-range-text">{{ weekRangeText }}</span>
+              <button class="btn btn-icon-nav" @click="nextWeek" title="Следующая неделя">
+                →
+              </button>
+              <button 
+                v-if="!isCurrentWeek" 
+                class="btn btn-text-sm" 
+                @click="goToCurrentWeek"
+              >
+                Сегодня
               </button>
             </div>
-            <p class="subtitle">{{ weekRangeText }}</p>
           </header>
 
           <!-- Goals with steps -->
@@ -433,6 +452,19 @@
                         {{ day.shortName }}
                       </option>
                     </select>
+                    <select 
+                      v-if="isStepScheduled(goal.id, step.id)"
+                      :value="getScheduledPriority(goal.id, step.id)"
+                      @change="updateScheduledStep(goal.id, step.id, 'priority', $event.target.value)"
+                      class="priority-select-sm"
+                      title="Приоритет"
+                    >
+                      <option value="">🎯</option>
+                      <option value="critical">🔴</option>
+                      <option value="desirable">🟠</option>
+                      <option value="attention">🔵</option>
+                      <option value="optional">⚪</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -460,7 +492,10 @@
                     v-for="task in getTasksForDay(day.date)" 
                     :key="task.id"
                     class="task-card"
-                    :class="{ completed: task.completed }"
+                    :class="[
+                      { completed: task.completed },
+                      'priority-' + (task.priority || 'optional')
+                    ]"
                   >
                     <input 
                       type="checkbox"
@@ -511,6 +546,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import GuidancePanel from '../components/GuidancePanel.vue'
+import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 
 const store = useAppStore()
 const router = useRouter()
@@ -520,6 +556,8 @@ const lessonSteps = ['Теория', 'Практика', 'Напоминания
 const lessonStarted = computed(() => store.planningModule.lessonStarted)
 const lessonCompleted = computed(() => store.planningModule.lessonCompleted)
 const currentStep = computed(() => store.planningModule.currentStep)
+
+const weekOffset = ref(0)
 
 const showEmptyState = computed(() => {
   return !lessonStarted.value && !lessonCompleted.value
@@ -547,7 +585,7 @@ const weekDays = computed(() => {
   const dayOfWeek = today.getDay()
   const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
   const monday = new Date(today)
-  monday.setDate(today.getDate() + mondayOffset)
+  monday.setDate(today.getDate() + mondayOffset + (weekOffset.value * 7))
   
   const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
   const fullNames = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
@@ -564,6 +602,20 @@ const weekDays = computed(() => {
   }
   return days
 })
+
+const isCurrentWeek = computed(() => weekOffset.value === 0)
+
+function prevWeek() {
+  weekOffset.value--
+}
+
+function nextWeek() {
+  weekOffset.value++
+}
+
+function goToCurrentWeek() {
+  weekOffset.value = 0
+}
 
 const weekRangeText = computed(() => {
   if (weekDays.value.length < 7) return ''
@@ -1206,19 +1258,23 @@ onMounted(() => {
 }
 
 .priority-select {
-  min-width: 110px;
+  min-width: 140px;
 }
 
-.priority-select option[value="high"] {
-  color: var(--danger-color);
+.priority-select option[value="critical"] {
+  color: #dc2626;
 }
 
-.priority-select option[value="medium"] {
-  color: var(--warning-color);
+.priority-select option[value="desirable"] {
+  color: #ea580c;
 }
 
-.priority-select option[value="low"] {
-  color: var(--success-color);
+.priority-select option[value="attention"] {
+  color: #2563eb;
+}
+
+.priority-select option[value="optional"] {
+  color: #6b7280;
 }
 
 .btn-icon.remove {
@@ -1297,12 +1353,33 @@ onMounted(() => {
 .scheduled-task {
   font-size: 0.75rem;
   padding: 0.25rem 0.5rem;
-  background: var(--primary-color);
-  color: white;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   border-radius: var(--radius-sm);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  border-left: 3px solid var(--border-color);
+}
+
+.scheduled-task.priority-critical {
+  border-left-color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.scheduled-task.priority-desirable {
+  border-left-color: #ea580c;
+  background: rgba(234, 88, 12, 0.1);
+}
+
+.scheduled-task.priority-attention {
+  border-left-color: #2563eb;
+  background: rgba(37, 99, 235, 0.1);
+}
+
+.scheduled-task.priority-optional {
+  border-left-color: #9ca3af;
+  background: rgba(156, 163, 175, 0.1);
 }
 
 .no-tasks {
@@ -1472,12 +1549,58 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-.day-select-sm {
+.day-select-sm,
+.priority-select-sm {
   padding: 0.25rem 0.5rem;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   font-size: 0.8rem;
   background: var(--bg-primary);
+  cursor: pointer;
+}
+
+.priority-select-sm {
+  width: 100px;
+}
+
+.week-navigation {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.week-navigation .btn-icon {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.week-navigation .btn-icon:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.week-range-text {
+  font-weight: 500;
+  min-width: 180px;
+  text-align: center;
+}
+
+.btn-today {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 
@@ -1550,6 +1673,27 @@ onMounted(() => {
   background: var(--bg-primary);
   border-radius: var(--radius-sm);
   font-size: 0.8rem;
+  border-left: 3px solid var(--border-color);
+}
+
+.task-card.priority-critical {
+  border-left-color: #dc2626;
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.task-card.priority-desirable {
+  border-left-color: #ea580c;
+  background: rgba(234, 88, 12, 0.08);
+}
+
+.task-card.priority-attention {
+  border-left-color: #2563eb;
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.task-card.priority-optional {
+  border-left-color: #9ca3af;
+  background: rgba(156, 163, 175, 0.08);
 }
 
 .task-card.completed {
