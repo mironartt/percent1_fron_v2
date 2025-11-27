@@ -1,9 +1,9 @@
 <template>
   <div class="wheel-of-life">
     <svg 
-      :width="size" 
-      :height="size" 
-      :viewBox="`0 0 ${size} ${size}`"
+      :width="svgSize" 
+      :height="svgSize" 
+      :viewBox="`0 0 ${svgSize} ${svgSize}`"
       class="wheel-svg"
     >
       <!-- Background circle -->
@@ -57,21 +57,33 @@
         @mouseleave="!readonly && (hoveredSphere = null)"
       />
 
-      <!-- Sphere labels (positioned outside, rotated) -->
-      <g v-for="(sphere, index) in spheres" :key="`label-${sphere.id}`">
-        <text
-          :x="center"
-          :y="center"
-          :transform="getLabelTransform(index)"
+      <!-- Sphere labels using textPath for curved text -->
+      <defs>
+        <path
+          v-for="(sphere, index) in spheres"
+          :key="`arc-path-${sphere.id}`"
+          :id="`labelArc-${index}`"
+          :d="getLabelArcPath(index)"
+          fill="none"
+        />
+      </defs>
+
+      <text
+        v-for="(sphere, index) in spheres"
+        :key="`label-${sphere.id}`"
+        :fill="getSphereColor(index)"
+        :class="['sphere-label', { 'sphere-label-readonly': readonly }]"
+        @click="!readonly && selectSphere(sphere)"
+      >
+        <textPath
+          :href="`#labelArc-${index}`"
+          startOffset="50%"
           text-anchor="middle"
           dominant-baseline="middle"
-          :fill="getSphereColor(index)"
-          :class="['sphere-label', { 'sphere-label-readonly': readonly }]"
-          @click="!readonly && selectSphere(sphere)"
         >
           {{ sphere.name.toUpperCase() }}
-        </text>
-      </g>
+        </textPath>
+      </text>
 
       <!-- Interactive handle for dragging (hidden in readonly mode) -->
       <circle
@@ -93,7 +105,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 const props = defineProps({
   spheres: {
@@ -108,16 +120,16 @@ const props = defineProps({
 
 const emit = defineEmits(['update-sphere'])
 
-const size = 600
-const center = size / 2
-const radius = 220
-const labelRadius = radius + 45
+const svgSize = 700
+const center = svgSize / 2
+const radius = 240
+const labelRadius = radius + 30
 
 const selectedSphere = ref(null)
 const hoveredSphere = ref(null)
 const dragging = ref(false)
 
-const angleStep = (2 * Math.PI) / props.spheres.length
+const angleStep = computed(() => (2 * Math.PI) / props.spheres.length)
 
 const sphereColors = [
   '#e63946',
@@ -129,7 +141,7 @@ const sphereColors = [
 ]
 
 function getAngle(index) {
-  return index * angleStep - Math.PI / 2
+  return index * angleStep.value - Math.PI / 2
 }
 
 function getSegmentPath(index, score) {
@@ -156,18 +168,26 @@ function getSphereColor(index) {
   return sphereColors[index % sphereColors.length]
 }
 
-function getLabelTransform(index) {
-  const midAngle = getAngle(index) + angleStep / 2
-  const labelX = center + labelRadius * Math.cos(midAngle)
-  const labelY = center + labelRadius * Math.sin(midAngle)
+function getLabelArcPath(index) {
+  const startAngle = getAngle(index) + 0.05
+  const endAngle = getAngle(index + 1) - 0.05
+  const midAngle = (startAngle + endAngle) / 2
   
-  let rotationAngle = (midAngle * 180) / Math.PI + 90
+  const isBottomHalf = midAngle > 0 && midAngle < Math.PI
   
-  if (rotationAngle > 90 && rotationAngle < 270) {
-    rotationAngle += 180
+  if (isBottomHalf) {
+    const x1 = center + labelRadius * Math.cos(endAngle)
+    const y1 = center + labelRadius * Math.sin(endAngle)
+    const x2 = center + labelRadius * Math.cos(startAngle)
+    const y2 = center + labelRadius * Math.sin(startAngle)
+    return `M ${x1} ${y1} A ${labelRadius} ${labelRadius} 0 0 0 ${x2} ${y2}`
+  } else {
+    const x1 = center + labelRadius * Math.cos(startAngle)
+    const y1 = center + labelRadius * Math.sin(startAngle)
+    const x2 = center + labelRadius * Math.cos(endAngle)
+    const y2 = center + labelRadius * Math.sin(endAngle)
+    return `M ${x1} ${y1} A ${labelRadius} ${labelRadius} 0 0 1 ${x2} ${y2}`
   }
-  
-  return `translate(${labelX}, ${labelY}) rotate(${rotationAngle})`
 }
 
 function selectSphere(sphere) {
@@ -186,7 +206,7 @@ function startDrag(event, sphere, index) {
     const touch = e.touches ? e.touches[0] : e
     const svg = event.target.closest('svg')
     const rect = svg.getBoundingClientRect()
-    const scale = size / rect.width
+    const scale = svgSize / rect.width
     
     const x = (touch.clientX - rect.left) * scale - center
     const y = (touch.clientY - rect.top) * scale - center
@@ -251,9 +271,9 @@ function startDrag(event, sphere, index) {
 }
 
 .sphere-label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
   cursor: pointer;
   user-select: none;
 }
