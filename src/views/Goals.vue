@@ -532,6 +532,13 @@
           <div class="modal-footer">
             <button class="btn btn-secondary" @click="showDetailModal = false">Закрыть</button>
             <button 
+              v-if="selectedGoal?.status === 'active'"
+              class="btn btn-success"
+              @click="completeGoalFromModal"
+            >
+              ✅ Завершить цель
+            </button>
+            <button 
               class="btn btn-primary"
               @click="saveGoalFromModal"
             >
@@ -922,6 +929,21 @@ function saveGoalFromModal() {
     updateGoalProgress(selectedGoal.value)
   }
   showDetailModal.value = false
+}
+
+function completeGoalFromModal() {
+  if (!selectedGoal.value) return
+  
+  if (confirm(`Завершить цель "${selectedGoal.value.title}"?`)) {
+    store.updateGoal(selectedGoal.value.id, { 
+      status: 'completed',
+      progress: 100,
+      completedAt: new Date().toISOString()
+    })
+    selectedGoal.value.status = 'completed'
+    selectedGoal.value.progress = 100
+    showDetailModal.value = false
+  }
 }
 
 function openCompleteGoalModal(goal) {

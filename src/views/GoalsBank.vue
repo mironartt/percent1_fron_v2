@@ -132,12 +132,21 @@
                   >
                     <span class="status-icon">✓</span> Завершена
                   </span>
-                  <span 
+                  <div 
                     v-else-if="isGoalTransferred(goal.id)" 
-                    class="status-badge in-work"
+                    class="status-actions"
                   >
-                    <span class="status-icon">✓</span> В работе
-                  </span>
+                    <span class="status-badge in-work">
+                      <span class="status-icon">✓</span> В работе
+                    </span>
+                    <button 
+                      class="btn btn-sm btn-success complete-goal-btn"
+                      @click.stop="completeGoalFromBank(goal)"
+                      title="Завершить цель"
+                    >
+                      ✓ Завершить
+                    </button>
+                  </div>
                   <button 
                     v-else 
                     class="btn btn-sm btn-action take-to-work"
@@ -1276,6 +1285,19 @@ function takeGoalToWork(goal) {
   store.addGoal(goalData)
 }
 
+function completeGoalFromBank(goal) {
+  const transferredGoal = store.goals.find(g => g.sourceId === goal.id)
+  if (!transferredGoal) return
+  
+  if (confirm(`Завершить цель "${transferredGoal.title}"?`)) {
+    store.updateGoal(transferredGoal.id, { 
+      status: 'completed',
+      progress: 100,
+      completedAt: new Date().toISOString()
+    })
+  }
+}
+
 function removeFromWork(goalId) {
   const goal = transferredGoals.value.find(g => g.id === goalId)
   if (goal) {
@@ -1836,6 +1858,30 @@ function getStatusLabel(status) {
 
 .btn-action.take-to-work:hover {
   background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.status-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.complete-goal-btn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.complete-goal-btn:hover {
+  background: #059669;
   transform: translateY(-1px);
 }
 
