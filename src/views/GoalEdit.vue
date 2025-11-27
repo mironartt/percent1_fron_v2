@@ -2,15 +2,23 @@
   <div class="goal-edit-container">
     <header class="page-header">
       <button class="btn btn-secondary btn-back" @click="goBack">
-        <span>←</span>
+        <ArrowLeft :size="16" />
         Назад к списку
       </button>
       <div class="header-actions">
+        <button class="btn btn-primary btn-with-icon" @click="saveGoal">
+          <Save :size="16" />
+          Сохранить
+        </button>
+        <button class="btn btn-secondary" @click="goBack">
+          Отмена
+        </button>
         <button 
-          class="btn btn-danger-outline"
+          class="btn btn-danger-outline btn-with-icon"
           @click="deleteGoalConfirm"
         >
-          🗑️ Удалить
+          <Trash2 :size="16" />
+          Удалить
         </button>
       </div>
     </header>
@@ -63,20 +71,35 @@
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Сфера жизни</label>
-                <select 
-                  :value="goalForm.sphereId"
-                  @change="updateField('sphereId', $event.target.value)"
-                  class="form-select"
-                >
-                  <option value="">Выберите сферу</option>
-                  <option 
-                    v-for="sphere in lifeSpheres" 
-                    :key="sphere.id"
-                    :value="sphere.id"
+                <div class="custom-select-wrapper" ref="sphereDropdownRef">
+                  <div 
+                    class="custom-select-trigger"
+                    @click="toggleSphereDropdown"
                   >
-                    {{ sphere.icon }} {{ sphere.name }}
-                  </option>
-                </select>
+                    <div class="selected-sphere" v-if="goalForm.sphereId">
+                      <span class="sphere-icon-wrapper" :style="{ '--sphere-color': getSphereColor(goalForm.sphereId) }">
+                        <component :is="getSphereIconComponent(goalForm.sphereId)" :size="16" />
+                      </span>
+                      <span>{{ getSphereName(goalForm.sphereId) }}</span>
+                    </div>
+                    <span v-else class="placeholder-text">Выберите сферу</span>
+                    <ChevronDown :size="16" class="dropdown-arrow" :class="{ open: sphereDropdownOpen }" />
+                  </div>
+                  <div class="custom-select-options" v-show="sphereDropdownOpen">
+                    <div 
+                      v-for="sphere in lifeSpheres" 
+                      :key="sphere.id"
+                      class="custom-select-option"
+                      :class="{ selected: goalForm.sphereId === sphere.id }"
+                      @click="selectSphere(sphere.id)"
+                    >
+                      <span class="sphere-icon-wrapper" :style="{ '--sphere-color': getSphereColor(sphere.id) }">
+                        <component :is="getSphereIconComponent(sphere.id)" :size="16" />
+                      </span>
+                      <span>{{ sphere.name }}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div class="form-group">
@@ -110,7 +133,8 @@
               class="step-card"
               :class="{ 
                 dragging: dragIndex === index,
-                'drag-over': dragOverIndex === index && dragIndex !== index
+                'drag-over': dragOverIndex === index && dragIndex !== index,
+                'step-completed': step.completed
               }"
               draggable="true"
               @dragstart="handleDragStart(index, $event)"
@@ -119,8 +143,27 @@
               @drop="handleDrop(index, $event)"
             >
               <div class="step-drag-handle" title="Перетащите для изменения порядка">
-                ⋮⋮
+                <GripVertical :size="16" />
               </div>
+              
+              <div class="step-checkbox-wrapper">
+                <input 
+                  type="checkbox"
+                  :checked="step.completed"
+                  @change="toggleStepCompletion(index)"
+                  class="step-checkbox"
+                  :id="`step-checkbox-${index}`"
+                />
+                <label 
+                  :for="`step-checkbox-${index}`" 
+                  class="step-checkbox-label"
+                  :title="step.completed ? 'Отметить как невыполненный' : 'Отметить как выполненный'"
+                >
+                  <CheckSquare v-if="step.completed" :size="20" class="check-icon checked" />
+                  <Square v-else :size="20" class="check-icon" />
+                </label>
+              </div>
+
               <span class="step-number-badge">{{ index + 1 }}</span>
               <div class="step-main">
                 <input 
@@ -128,94 +171,61 @@
                   :value="step.title"
                   @input="updateStep(index, 'title', $event.target.value)"
                   class="step-input"
+                  :class="{ 'completed-text': step.completed }"
                   :placeholder="`Шаг ${index + 1}: что конкретно нужно сделать?`"
                 />
+                <div class="step-comment-section">
+                  <textarea 
+                    :value="step.comment || ''"
+                    @input="updateStep(index, 'comment', $event.target.value)"
+                    class="step-comment-input"
+                    :placeholder="'Комментарий к шагу (необязательно)'"
+                    rows="1"
+                  ></textarea>
+                </div>
               </div>
               <button 
                 class="btn-icon delete"
                 @click="removeStep(index)"
                 title="Удалить шаг"
               >
-                ✕
+                <X :size="16" />
               </button>
             </div>
 
-            <button class="btn btn-secondary add-step-btn" @click="addStep">
-              ➕ Добавить шаг
+            <button class="btn btn-secondary add-step-btn btn-with-icon" @click="addStep">
+              <Plus :size="16" />
+              Добавить шаг
             </button>
+          </div>
+
+          <div class="goal-meta-info">
+            <span class="meta-item">
+              <span class="meta-label">Создана:</span>
+              {{ formatDate(goal.createdAt) }}
+            </span>
+            <span v-if="goal.completedAt" class="meta-item">
+              <span class="meta-label">Завершена:</span>
+              {{ formatDate(goal.completedAt) }}
+            </span>
           </div>
 
         </div>
       </div>
 
-      <div class="sidebar-actions">
-        <div class="ai-coach-section card">
-          <div class="coach-header">
-            <span class="coach-icon">🤖</span>
-            <h3>ИИ-коуч</h3>
-          </div>
-          <div class="chat-container">
-            <div class="chat-messages" ref="chatMessagesRef">
-              <div 
-                v-for="(msg, idx) in chatMessages" 
-                :key="idx"
-                class="message"
-                :class="msg.role === 'user' ? 'user-message' : 'coach-message'"
-              >
-                <span class="message-avatar">{{ msg.role === 'user' ? '👤' : '🤖' }}</span>
-                <div class="message-content">
-                  <p>{{ msg.content }}</p>
-                </div>
-              </div>
-            </div>
-            <div class="chat-input-area">
-              <input 
-                type="text"
-                v-model="userMessage"
-                @keyup.enter="sendMessage"
-                placeholder="Спросите совет..."
-                class="chat-input"
-              />
-              <button 
-                class="btn-send"
-                @click="sendMessage"
-                :disabled="!userMessage.trim()"
-              >→</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h4>Действия</h4>
-          <div class="action-buttons">
-            <button class="btn btn-primary btn-lg btn-full" @click="saveGoal">
-              💾 Сохранить изменения
-            </button>
-            <button class="btn btn-secondary btn-full" @click="goBack">
-              Отмена
-            </button>
-          </div>
-
-          <div class="goal-info">
-            <div class="info-item">
-              <span class="info-label">Создана:</span>
-              <span class="info-value">{{ formatDate(goal.createdAt) }}</span>
-            </div>
-            <div v-if="goal.completedAt" class="info-item">
-              <span class="info-label">Завершена:</span>
-              <span class="info-value">{{ formatDate(goal.completedAt) }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { 
+  Trash2, Save, Plus, ArrowLeft, GripVertical, X, ChevronDown,
+  Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target,
+  Square, CheckSquare
+} from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
@@ -238,11 +248,53 @@ const goalForm = ref({
   progress: 0
 })
 
-const chatMessagesRef = ref(null)
-const userMessage = ref('')
-const chatMessages = ref([
-  { role: 'coach', content: 'Привет! Я помогу тебе с декомпозицией цели. Спроси меня о разбивке шагов или планировании.' }
-])
+
+const sphereDropdownRef = ref(null)
+const sphereDropdownOpen = ref(false)
+
+function toggleSphereDropdown() {
+  sphereDropdownOpen.value = !sphereDropdownOpen.value
+}
+
+function selectSphere(sphereId) {
+  goalForm.value.sphereId = sphereId
+  sphereDropdownOpen.value = false
+}
+
+function getSphereIconComponent(sphereId) {
+  const iconMap = {
+    'wealth': Wallet,
+    'hobbies': Palette,
+    'friendship': Users,
+    'health': Heart,
+    'career': Briefcase,
+    'love': HeartHandshake
+  }
+  return iconMap[sphereId] || Target
+}
+
+function getSphereColor(sphereId) {
+  const colorMap = {
+    'wealth': '#e63946',
+    'hobbies': '#f4a261',
+    'friendship': '#e9c46a',
+    'health': '#2a9d8f',
+    'career': '#264653',
+    'love': '#9b5de5'
+  }
+  return colorMap[sphereId] || '#6366f1'
+}
+
+function getSphereName(sphereId) {
+  const sphere = lifeSpheres.value.find(s => s.id === sphereId)
+  return sphere ? sphere.name : 'Не указана'
+}
+
+function handleClickOutside(event) {
+  if (sphereDropdownRef.value && !sphereDropdownRef.value.contains(event.target)) {
+    sphereDropdownOpen.value = false
+  }
+}
 
 const totalTimeEstimate = computed(() => {
   const timeMap = {
@@ -272,6 +324,11 @@ const dragOverIndex = ref(null)
 
 onMounted(() => {
   loadGoalData()
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
 })
 
 watch(() => route.params.id, () => {
@@ -302,6 +359,7 @@ function addStep() {
     id: Date.now().toString(),
     title: '', 
     completed: false,
+    comment: '',
     timeEstimate: '',
     priority: ''
   })
@@ -386,6 +444,7 @@ function saveGoal() {
       id: s.id || `step_${Date.now()}_${index}`,
       title: s.title,
       completed: s.completed || false,
+      comment: s.comment || '',
       timeEstimate: s.timeEstimate || '',
       priority: s.priority || ''
     }))
@@ -438,37 +497,6 @@ function formatDate(dateString) {
   })
 }
 
-async function sendMessage() {
-  if (!userMessage.value.trim()) return
-  
-  const msg = userMessage.value
-  chatMessages.value.push({ role: 'user', content: msg })
-  userMessage.value = ''
-  
-  await nextTick()
-  if (chatMessagesRef.value) {
-    chatMessagesRef.value.scrollTop = chatMessagesRef.value.scrollHeight
-  }
-  
-  setTimeout(() => {
-    const responses = [
-      'Хороший вопрос! Попробуй разбить этот шаг на ещё более мелкие действия — каждое не больше 1-2 часов.',
-      'Помни: конкретный шаг = понятный результат. Что именно ты получишь после выполнения?',
-      'Отлично! Теперь подумай — какой первый шаг ты можешь сделать уже сегодня?',
-      'Рекомендую начать с самого простого шага — это создаст momentum для остальных.',
-      'Попробуй сформулировать шаг так, чтобы было понятно — выполнен он или нет.',
-      'Каждый шаг должен иметь чёткий результат: документ, звонок, решение.'
-    ]
-    const randomResponse = responses[Math.floor(Math.random() * responses.length)]
-    chatMessages.value.push({ role: 'coach', content: randomResponse })
-    
-    nextTick(() => {
-      if (chatMessagesRef.value) {
-        chatMessagesRef.value.scrollTop = chatMessagesRef.value.scrollHeight
-      }
-    })
-  }, 1000)
-}
 </script>
 
 <style scoped>
@@ -484,6 +512,7 @@ async function sendMessage() {
   margin-bottom: 2rem;
   flex-wrap: wrap;
   gap: 1rem;
+  max-width: 900px;
 }
 
 .btn-back {
@@ -539,10 +568,10 @@ async function sendMessage() {
 }
 
 .edit-layout {
-  display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 2rem;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 900px;
 }
 
 .main-content {
@@ -611,6 +640,97 @@ async function sendMessage() {
   gap: 1rem;
 }
 
+.custom-select-wrapper {
+  position: relative;
+}
+
+.custom-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.custom-select-trigger:hover {
+  border-color: var(--primary-color);
+}
+
+.selected-sphere {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sphere-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--sphere-color, #6366f1);
+  border: 1.5px solid var(--sphere-color, var(--border-color));
+}
+
+.placeholder-text {
+  color: var(--text-secondary);
+}
+
+.dropdown-arrow {
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+}
+
+.dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+.custom-select-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 0.25rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.custom-select-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.custom-select-option:hover {
+  background: var(--bg-secondary);
+}
+
+.custom-select-option.selected {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.custom-select-option:first-child {
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.custom-select-option:last-child {
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
 .steps-count {
   font-size: 0.875rem;
   color: var(--text-secondary);
@@ -640,19 +760,80 @@ async function sendMessage() {
   transition: all 0.2s ease;
 }
 
-.step-card.completed {
-  background: rgba(16, 185, 129, 0.05);
+.step-card.step-completed {
+  background: rgba(16, 185, 129, 0.08);
+  border-left: 3px solid var(--success-color);
 }
 
 .step-checkbox-wrapper {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
 .step-checkbox {
-  width: 24px;
-  height: 24px;
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.step-checkbox-label {
   cursor: pointer;
-  accent-color: var(--success-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.step-checkbox-label:hover {
+  background: var(--bg-tertiary);
+}
+
+.check-icon {
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.check-icon.checked {
+  color: var(--success-color);
+}
+
+.step-input.completed-text {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.step-comment-section {
+  margin-top: 0.25rem;
+}
+
+.step-comment-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  background: transparent;
+  color: var(--text-secondary);
+  resize: none;
+  transition: all 0.2s ease;
+  min-height: 32px;
+}
+
+.step-comment-input:focus {
+  outline: none;
+  border-color: var(--border-color);
+  background: var(--bg-primary);
+}
+
+.step-comment-input::placeholder {
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 .step-input {
@@ -821,120 +1002,29 @@ async function sendMessage() {
   margin: 0;
 }
 
-.sidebar-actions {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.ai-coach-section {
-  background: #ffffff;
-  border: 1px solid var(--border-color);
-  padding: 1rem;
-}
-
-.coach-header {
-  display: flex;
+.btn-with-icon {
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--border-color);
 }
 
-.coach-icon {
-  font-size: 1.25rem;
-}
-
-.coach-header h3 {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.chat-container {
+.goal-meta-info {
   display: flex;
-  flex-direction: column;
-  height: 300px;
-}
-
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 0.5rem 0;
-}
-
-.message {
-  display: flex;
-  gap: 0.5rem;
-  align-items: flex-start;
-}
-
-.message-avatar {
-  font-size: 1.25rem;
-  flex-shrink: 0;
-}
-
-.message-content {
-  flex: 1;
-  padding: 0.75rem;
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-}
-
-.coach-message .message-content {
-  background: var(--bg-secondary);
-}
-
-.user-message .message-content {
-  background: rgba(99, 102, 241, 0.1);
-}
-
-.message-content p {
-  margin: 0;
-  line-height: 1.5;
-}
-
-.chat-input-area {
-  display: flex;
-  gap: 0.5rem;
-  padding-top: 0.75rem;
+  gap: 2rem;
+  padding-top: 1.5rem;
+  margin-top: 1.5rem;
   border-top: 1px solid var(--border-color);
-  margin-top: 0.75rem;
-}
-
-.chat-input {
-  flex: 1;
-  padding: 0.625rem 0.875rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
   font-size: 0.875rem;
-  background: var(--bg-primary);
+  color: var(--text-secondary);
 }
 
-.chat-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
+.goal-meta-info .meta-item {
+  display: flex;
+  gap: 0.5rem;
 }
 
-.btn-send {
-  padding: 0.625rem 1rem;
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.btn-send:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.goal-meta-info .meta-label {
+  color: var(--text-muted);
 }
 
 .step-number-badge {
@@ -951,70 +1041,6 @@ async function sendMessage() {
   flex-shrink: 0;
 }
 
-.sticky-card {
-  position: sticky;
-  top: 2rem;
-}
-
-.sticky-card h4 {
-  margin-bottom: 1rem;
-  font-size: 1rem;
-}
-
-.action-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 2rem;
-}
-
-.btn-full {
-  width: 100%;
-}
-
-.goal-info {
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.info-label {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.info-value {
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-@media (max-width: 1024px) {
-  .edit-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .sidebar-actions {
-    order: -1;
-  }
-
-  .sticky-card {
-    position: static;
-  }
-
-  .action-buttons {
-    flex-direction: row;
-  }
-}
 
 @media (max-width: 768px) {
   .page-header {
@@ -1023,15 +1049,23 @@ async function sendMessage() {
   }
 
   .header-actions {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .header-actions .btn {
+    flex: 1;
+    min-width: 100px;
   }
 
   .form-row {
     grid-template-columns: 1fr;
   }
 
-  .action-buttons {
+  .goal-meta-info {
     flex-direction: column;
+    gap: 0.5rem;
   }
 }
 </style>

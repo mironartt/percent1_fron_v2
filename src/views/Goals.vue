@@ -3,7 +3,11 @@
     <!-- Empty State: First-time visitors -->
     <div v-if="showEmptyState" class="empty-welcome">
       <div class="welcome-card card">
-        <div class="welcome-icon">🎯</div>
+        <div class="welcome-icon">
+          <span class="icon-wrapper icon-wrapper-lg purple">
+            <Target :size="32" />
+          </span>
+        </div>
         <h1>Декомпозиция</h1>
         <p class="welcome-subtitle">
           Превратите большие желания в системный план действий
@@ -73,18 +77,30 @@
           <div class="rules-section">
             <h3>3 правила хорошего шага</h3>
             <div class="rule-cards">
-              <div class="rule-card">
-                <div class="rule-icon">⏱️</div>
+              <div class="rule-card rule-card-blue">
+                <div class="rule-icon">
+                  <span class="icon-wrapper icon-wrapper-md info">
+                    <Clock :size="24" />
+                  </span>
+                </div>
                 <h4>1-4 часа</h4>
                 <p>Каждый шаг должен быть выполним за 1-4 часа. Если дольше — разбейте его дальше.</p>
               </div>
-              <div class="rule-card">
-                <div class="rule-icon">✅</div>
+              <div class="rule-card rule-card-green">
+                <div class="rule-icon">
+                  <span class="icon-wrapper icon-wrapper-md success">
+                    <CheckCircle :size="24" />
+                  </span>
+                </div>
                 <h4>Конкретность</h4>
                 <p>Шаг должен быть настолько конкретным, чтобы было понятно — выполнен он или нет.</p>
               </div>
-              <div class="rule-card">
-                <div class="rule-icon">🎯</div>
+              <div class="rule-card rule-card-purple">
+                <div class="rule-icon">
+                  <span class="icon-wrapper icon-wrapper-md purple">
+                    <Target :size="24" />
+                  </span>
+                </div>
                 <h4>Измеримость</h4>
                 <p>У шага должен быть чёткий результат: файл, звонок, документ, решение.</p>
               </div>
@@ -95,24 +111,34 @@
             <h4>Пример хорошей декомпозиции</h4>
             <div class="goal-example">
               <div class="goal-title-example">
-                <span class="goal-icon">🎯</span>
+                <span class="icon-wrapper icon-wrapper-sm purple">
+                  <Target :size="16" />
+                </span>
                 <span>Выучить английский до B2</span>
               </div>
               <div class="steps-example">
                 <div class="step-example good">
-                  <span class="check">✓</span>
+                  <span class="step-check-icon success">
+                    <Check :size="16" />
+                  </span>
                   <span>Пройти тест на определение уровня (30 мин)</span>
                 </div>
                 <div class="step-example good">
-                  <span class="check">✓</span>
+                  <span class="step-check-icon success">
+                    <Check :size="16" />
+                  </span>
                   <span>Выбрать онлайн-школу и записаться на пробный урок (1 час)</span>
                 </div>
                 <div class="step-example good">
-                  <span class="check">✓</span>
+                  <span class="step-check-icon success">
+                    <Check :size="16" />
+                  </span>
                   <span>Составить расписание занятий на неделю (30 мин)</span>
                 </div>
                 <div class="step-example bad">
-                  <span class="cross">✗</span>
+                  <span class="step-check-icon danger">
+                    <X :size="16" />
+                  </span>
                   <span>"Учить английский" — слишком размыто!</span>
                 </div>
               </div>
@@ -121,15 +147,16 @@
         </div>
 
         <div class="step-actions">
-          <button class="btn btn-primary btn-lg" @click="nextStep">
-            Понял, продолжить →
+          <button class="btn btn-primary btn-lg btn-with-icon" @click="nextStep">
+            Понял, продолжить
+            <ArrowRight :size="18" />
           </button>
         </div>
       </div>
 
       <!-- Step 2: Practice -->
-      <div v-if="currentStep === 2" class="step-content step-2-layout">
-        <div class="step-2-main">
+      <div v-if="currentStep === 2" class="step-content step-content-centered">
+        <div class="step-2-wrapper">
           <h2>Практика: разбиваем цель</h2>
           
           <div v-if="goalsFromBank.length > 0" class="goals-from-bank card">
@@ -142,7 +169,9 @@
                 :class="{ selected: selectedGoalForPractice?.id === goal.id }"
                 @click="selectGoalForPractice(goal)"
               >
-                <span class="goal-sphere">{{ getSphereIcon(goal.sphereId) }}</span>
+                <span class="goal-sphere-icon" :style="{ borderColor: getSphereColor(goal.sphereId) }">
+                  <component :is="getSphereIconComponent(goal.sphereId)" :size="14" />
+                </span>
                 <span class="goal-name">{{ goal.title }}</span>
                 <span v-if="selectedGoalForPractice?.id === goal.id" class="selected-badge">Выбрана</span>
               </div>
@@ -151,8 +180,33 @@
 
           <div v-if="selectedGoalForPractice" class="practice-area card">
             <div class="practice-header">
-              <h4>Декомпозиция цели:</h4>
-              <p class="practice-goal-title">{{ selectedGoalForPractice.title }}</p>
+              <div class="practice-header-top">
+                <h4>Декомпозиция цели:</h4>
+                <span class="steps-counter" :class="{ complete: filledStepsCount >= 2 }">
+                  {{ filledStepsCount }} {{ getStepsWord(filledStepsCount) }}
+                </span>
+              </div>
+              <p class="practice-goal-title">
+                <span class="goal-sphere-icon" :style="{ borderColor: getSphereColor(selectedGoalForPractice.sphereId) }">
+                  <component :is="getSphereIconComponent(selectedGoalForPractice.sphereId)" :size="14" />
+                </span>
+                {{ selectedGoalForPractice.title }}
+              </p>
+            </div>
+
+            <div class="rules-reminder">
+              <div class="reminder-item">
+                <Clock :size="14" />
+                <span>1-4 часа</span>
+              </div>
+              <div class="reminder-item">
+                <CheckCircle :size="14" />
+                <span>Конкретно</span>
+              </div>
+              <div class="reminder-item">
+                <Target :size="14" />
+                <span>Измеримо</span>
+              </div>
             </div>
 
             <div class="practice-steps">
@@ -162,80 +216,80 @@
                 class="practice-step"
               >
                 <span class="step-number-badge">{{ index + 1 }}</span>
-                <input 
-                  type="text"
-                  v-model="step.title"
-                  :placeholder="`Шаг ${index + 1}: что конкретно нужно сделать?`"
-                  class="step-input"
-                />
+                <div class="step-input-group">
+                  <input 
+                    type="text"
+                    v-model="step.title"
+                    :placeholder="getStepPlaceholder(index)"
+                    class="step-input"
+                  />
+                  <select 
+                    v-model="step.timeEstimate" 
+                    class="time-select"
+                    title="Время на выполнение"
+                  >
+                    <option value="">⏱</option>
+                    <option value="30">30 мин</option>
+                    <option value="60">1 час</option>
+                    <option value="120">2 часа</option>
+                    <option value="180">3 часа</option>
+                    <option value="240">4 часа</option>
+                  </select>
+                  <select 
+                    v-model="step.priority" 
+                    class="priority-select"
+                    :style="{ borderColor: step.priority ? getPriorityColor(step.priority) : '' }"
+                    title="Приоритет"
+                  >
+                    <option value="">Приоритет</option>
+                    <option 
+                      v-for="p in priorityOptions" 
+                      :key="p.value" 
+                      :value="p.value"
+                    >
+                      {{ p.label }}
+                    </option>
+                  </select>
+                </div>
                 <button 
                   v-if="practiceSteps.length > 1"
                   class="btn-icon delete"
                   @click="removePracticeStep(index)"
-                >✕</button>
+                  title="Удалить шаг"
+                >
+                  <X :size="16" />
+                </button>
               </div>
 
-              <button class="btn btn-secondary" @click="addPracticeStep">
-                ➕ Добавить шаг
+              <button class="btn btn-secondary btn-with-icon" @click="addPracticeStep">
+                <Plus :size="16" />
+                Добавить шаг
               </button>
             </div>
           </div>
 
           <div v-else class="no-goal-selected card">
             <p>Выберите цель из Банка целей выше</p>
-            <button class="btn btn-outline" @click="goToGoalsBank">
-              📋 Перейти в Банк целей
+            <button class="btn btn-outline btn-with-icon" @click="goToGoalsBank">
+              <Landmark :size="16" />
+              Перейти в Банк целей
             </button>
           </div>
-        </div>
 
-        <div class="step-2-sidebar">
-          <div class="ai-coach card">
-            <div class="coach-header">
-              <span class="coach-icon">🤖</span>
-              <h3>ИИ-коуч</h3>
-            </div>
-            <div class="chat-container">
-              <div class="chat-messages" ref="chatMessagesRef">
-                <div 
-                  v-for="(msg, idx) in chatMessages" 
-                  :key="idx"
-                  class="message"
-                  :class="msg.role === 'user' ? 'user-message' : 'coach-message'"
-                >
-                  <span class="message-avatar">{{ msg.role === 'user' ? '👤' : '🤖' }}</span>
-                  <div class="message-content">
-                    <p>{{ msg.content }}</p>
-                  </div>
-                </div>
-              </div>
-              <div class="chat-input-area">
-                <input 
-                  type="text"
-                  v-model="userMessage"
-                  @keyup.enter="sendMessage"
-                  placeholder="Спросите совет..."
-                  class="chat-input"
-                />
-                <button 
-                  class="btn-send"
-                  @click="sendMessage"
-                  :disabled="!userMessage.trim()"
-                >→</button>
-              </div>
-            </div>
+          <div class="step-actions step-actions-centered">
+            <button class="btn btn-secondary btn-with-icon" @click="prevStep">
+              <ArrowRight :size="16" class="icon-flip" />
+              Назад
+            </button>
+            <button 
+              class="btn btn-primary btn-lg btn-with-icon" 
+              @click="nextStep"
+              :disabled="!canProceedFromStep2"
+            >
+              Продолжить
+              <ArrowRight :size="18" />
+            </button>
           </div>
-        </div>
-
-        <div class="step-actions full-width">
-          <button class="btn btn-secondary" @click="prevStep">← Назад</button>
-          <button 
-            class="btn btn-primary btn-lg" 
-            @click="nextStep"
-            :disabled="!canProceedFromStep2"
-          >
-            Продолжить →
-          </button>
         </div>
       </div>
 
@@ -249,7 +303,12 @@
 
         <div v-if="selectedGoalForPractice" class="decomposition-review card">
           <h4>Ваша цель:</h4>
-          <p class="review-goal-title">🎯 {{ selectedGoalForPractice.title }}</p>
+          <p class="review-goal-title">
+            <span class="icon-wrapper icon-wrapper-sm purple">
+              <Target :size="16" />
+            </span>
+            {{ selectedGoalForPractice.title }}
+          </p>
           
           <h4>Ваши шаги:</h4>
           <div class="review-steps">
@@ -259,25 +318,55 @@
               class="review-step-item"
             >
               <span class="step-number-badge">{{ index + 1 }}</span>
-              <span class="step-text">{{ step.title }}</span>
+              <div class="step-content-review">
+                <span class="step-text">{{ step.title }}</span>
+                <div class="step-meta">
+                  <span 
+                    v-if="step.priority" 
+                    class="priority-badge"
+                    :style="{ backgroundColor: getPriorityColor(step.priority), color: 'white' }"
+                  >
+                    {{ getPriorityLabel(step.priority) }}
+                  </span>
+                  <span v-if="step.timeEstimate" class="time-badge">
+                    <Clock :size="12" />
+                    {{ formatTimeEstimate(step.timeEstimate) }}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
           <div class="review-summary">
             <p class="summary-text">
-              ✅ {{ practiceSteps.filter(s => s.title.trim()).length }} шагов готовы к выполнению
+              <span class="icon-wrapper icon-wrapper-sm success">
+                <CheckCircle :size="16" />
+              </span>
+              {{ practiceSteps.filter(s => s.title.trim()).length }} шагов готовы к выполнению
             </p>
           </div>
         </div>
 
+        <div v-else class="no-goal-selected card">
+          <p>Вернитесь на предыдущий шаг и выберите цель для декомпозиции</p>
+          <button class="btn btn-outline btn-with-icon" @click="prevStep">
+            <ArrowRight :size="16" class="icon-flip" />
+            Вернуться к практике
+          </button>
+        </div>
+
         <div class="step-actions">
-          <button class="btn btn-secondary" @click="prevStep">← Назад</button>
+          <button class="btn btn-secondary btn-with-icon" @click="prevStep">
+            <ArrowRight :size="16" class="icon-flip" />
+            Назад
+          </button>
           <button 
-            class="btn btn-primary btn-lg" 
+            class="btn btn-primary btn-lg btn-with-icon" 
             @click="completeLesson"
             :disabled="!canCompleteLesson"
           >
-            ✨ Завершить урок
+            <Sparkles :size="18" />
+            Завершить урок
           </button>
         </div>
       </div>
@@ -293,17 +382,23 @@
           </p>
         </div>
         <div class="header-actions">
-          <button class="btn btn-secondary" @click="restartLesson">
-            📚 Пройти урок заново
+          <button class="btn btn-secondary btn-with-icon" @click="restartLesson">
+            <RotateCcw :size="16" />
+            Пройти урок заново
           </button>
         </div>
       </header>
 
       <div v-if="goals.length === 0" class="empty-goals card">
-        <div class="empty-icon">🎯</div>
+        <div class="empty-icon">
+          <span class="icon-wrapper icon-wrapper-lg purple">
+            <Target :size="32" />
+          </span>
+        </div>
         <h3>У вас пока нет целей</h3>
         <p>Добавьте цели через Банк целей — там вы сможете проверить их на истинность</p>
-        <button class="btn btn-primary btn-lg" @click="goToGoalsBank">
+        <button class="btn btn-primary btn-lg btn-with-icon" @click="goToGoalsBank">
+          <Landmark :size="18" />
           Перейти в Банк целей
         </button>
       </div>
@@ -339,7 +434,7 @@
               v-for="goal in filteredGoals" 
               :key="goal.id"
               class="goal-card card"
-              @click="openGoalDetail(goal)"
+              @click="editGoal(goal)"
             >
               <div class="goal-header">
                 <div class="goal-title-section">
@@ -352,24 +447,25 @@
                       {{ getStatusLabel(goal.status) }}
                     </span>
                     <span v-if="goal.source === 'goals-bank'" class="source-badge">
-                      🏦 Из Банка целей
+                      <Landmark :size="12" />
+                      Из Банка целей
                     </span>
                   </div>
                 </div>
                 <div class="goal-actions">
                   <button 
-                    class="btn-icon"
+                    class="btn-icon edit"
                     @click.stop="editGoal(goal)"
                     title="Редактировать"
                   >
-                    ✏️
+                    <Edit2 :size="16" />
                   </button>
                   <button 
                     class="btn-icon delete"
                     @click.stop="deleteGoalConfirm(goal)"
                     title="Удалить"
                   >
-                    🗑️
+                    <Trash2 :size="16" />
                   </button>
                 </div>
               </div>
@@ -381,7 +477,10 @@
               <div class="goal-meta">
                 <div class="goal-meta-item">
                   <span class="meta-label">Сфера:</span>
-                  <span class="meta-value">{{ getSphereName(goal.sphereId) }}</span>
+                  <span class="sphere-badge" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
+                    <component :is="getSphereIconComponent(goal.sphereId)" :size="14" />
+                    {{ getSphereName(goal.sphereId) }}
+                  </span>
                 </div>
                 <div v-if="goal.deadline" class="goal-meta-item">
                   <span class="meta-label">Дедлайн:</span>
@@ -411,43 +510,6 @@
           </div>
         </div>
 
-        <div class="goals-sidebar">
-          <div class="ai-coach card">
-            <div class="coach-header">
-              <span class="coach-icon">🤖</span>
-              <h3>ИИ-коуч</h3>
-            </div>
-            <div class="chat-container">
-              <div class="chat-messages" ref="listChatMessagesRef">
-                <div 
-                  v-for="(msg, idx) in listChatMessages" 
-                  :key="idx"
-                  class="message"
-                  :class="msg.role === 'user' ? 'user-message' : 'coach-message'"
-                >
-                  <span class="message-avatar">{{ msg.role === 'user' ? '👤' : '🤖' }}</span>
-                  <div class="message-content">
-                    <p>{{ msg.content }}</p>
-                  </div>
-                </div>
-              </div>
-              <div class="chat-input-area">
-                <input 
-                  type="text"
-                  v-model="listUserMessage"
-                  @keyup.enter="sendListMessage"
-                  placeholder="Спросите совет..."
-                  class="chat-input"
-                />
-                <button 
-                  class="btn-send"
-                  @click="sendListMessage"
-                  :disabled="!listUserMessage.trim()"
-                >→</button>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -457,7 +519,9 @@
         <div class="modal modal-large">
           <div class="modal-header">
             <h2>{{ selectedGoal?.title }}</h2>
-            <button class="btn-close" @click="showDetailModal = false">✕</button>
+            <button class="btn-close" @click="showDetailModal = false">
+              <X :size="18" />
+            </button>
           </div>
 
           <div class="modal-body">
@@ -596,8 +660,9 @@
 
           <div class="modal-footer">
             <button class="btn btn-secondary" @click="showCompletionModal = false">Отмена</button>
-            <button class="btn btn-primary" @click="confirmCompleteGoal">
-              ✅ Завершить цель
+            <button class="btn btn-primary btn-with-icon" @click="confirmCompleteGoal">
+              <CheckCircle :size="16" />
+              Завершить цель
             </button>
           </div>
         </div>
@@ -607,9 +672,14 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { 
+  Sparkles, Landmark, Edit2, Trash2, RotateCcw, Plus, X, GripVertical,
+  Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target,
+  Clock, CheckCircle, Check, ArrowRight
+} from 'lucide-vue-next'
 
 const router = useRouter()
 const store = useAppStore()
@@ -680,21 +750,58 @@ const filteredGoals = computed(() => {
 
 const selectedGoalForPractice = ref(null)
 const practiceSteps = ref([
-  { id: 'new-1', title: '', completed: false },
-  { id: 'new-2', title: '', completed: false },
-  { id: 'new-3', title: '', completed: false }
+  { id: 'new-1', title: '', completed: false, timeEstimate: '', priority: '' },
+  { id: 'new-2', title: '', completed: false, timeEstimate: '', priority: '' },
+  { id: 'new-3', title: '', completed: false, timeEstimate: '', priority: '' }
 ])
 
-const chatMessagesRef = ref(null)
-const listChatMessagesRef = ref(null)
-const userMessage = ref('')
-const listUserMessage = ref('')
-const chatMessages = ref([
-  { role: 'coach', content: 'Привет! Я помогу тебе разбить цель на конкретные шаги. Выбери цель из списка или задай вопрос.' }
-])
-const listChatMessages = ref([
-  { role: 'coach', content: 'Привет! Чем могу помочь с твоими целями? Спроси о декомпозиции или планировании.' }
-])
+const priorityOptions = [
+  { value: 'critical', label: 'Критично', color: '#ef4444' },
+  { value: 'important', label: 'Важно', color: '#f97316' },
+  { value: 'attention', label: 'Внимание', color: '#3b82f6' },
+  { value: 'optional', label: 'Опционально', color: '#9ca3af' }
+]
+
+function getPriorityColor(priority) {
+  const option = priorityOptions.find(p => p.value === priority)
+  return option ? option.color : '#9ca3af'
+}
+
+function getPriorityLabel(priority) {
+  const option = priorityOptions.find(p => p.value === priority)
+  return option ? option.label : ''
+}
+
+function formatTimeEstimate(minutes) {
+  const min = parseInt(minutes)
+  if (!min) return ''
+  if (min < 60) return `${min} мин`
+  const hours = Math.floor(min / 60)
+  return `${hours} ч`
+}
+
+const filledStepsCount = computed(() => {
+  return practiceSteps.value.filter(s => s.title.trim()).length
+})
+
+function getStepsWord(count) {
+  if (count === 1) return 'шаг'
+  if (count >= 2 && count <= 4) return 'шага'
+  return 'шагов'
+}
+
+const stepPlaceholders = [
+  'Найти информацию, изучить варианты (1-2 часа)',
+  'Принять решение, составить план (30 мин - 1 час)',
+  'Сделать первое действие (1-2 часа)',
+  'Проверить результат и скорректировать (30 мин)',
+  'Что ещё нужно сделать?'
+]
+
+function getStepPlaceholder(index) {
+  return stepPlaceholders[index] || `Шаг ${index + 1}: конкретное действие (1-4 часа)`
+}
+
 
 const canProceedFromStep2 = computed(() => {
   return selectedGoalForPractice.value && practiceSteps.value.filter(s => s.title.trim()).length >= 2
@@ -738,7 +845,9 @@ function saveCurrentPracticeSteps() {
       .map(step => ({
         id: step.id || ('temp-' + Date.now() + Math.random().toString(36).substr(2, 5)),
         title: step.title,
-        completed: step.completed || false
+        completed: step.completed || false,
+        timeEstimate: step.timeEstimate || '',
+        priority: step.priority || ''
       }))
     
     const goalIndex = goals.value.findIndex(g => g.id === selectedGoalForPractice.value.id)
@@ -757,13 +866,15 @@ function selectGoalForPractice(goal) {
     practiceSteps.value = goal.steps.map((s, index) => ({
       id: s.id || ('legacy-' + index),
       title: s.title || (typeof s === 'string' ? s : ''),
-      completed: s.completed || false
+      completed: s.completed || false,
+      timeEstimate: s.timeEstimate || '',
+      priority: s.priority || ''
     }))
   } else {
     practiceSteps.value = [
-      { id: 'new-1', title: '', completed: false },
-      { id: 'new-2', title: '', completed: false },
-      { id: 'new-3', title: '', completed: false }
+      { id: 'new-1', title: '', completed: false, timeEstimate: '', priority: '' },
+      { id: 'new-2', title: '', completed: false, timeEstimate: '', priority: '' },
+      { id: 'new-3', title: '', completed: false, timeEstimate: '', priority: '' }
     ]
   }
 }
@@ -772,72 +883,14 @@ function addPracticeStep() {
   practiceSteps.value.push({
     id: 'new-' + Date.now(),
     title: '',
-    completed: false
+    completed: false,
+    timeEstimate: '',
+    priority: ''
   })
 }
 
 function removePracticeStep(index) {
   practiceSteps.value.splice(index, 1)
-}
-
-async function sendMessage() {
-  if (!userMessage.value.trim()) return
-  
-  const msg = userMessage.value
-  chatMessages.value.push({ role: 'user', content: msg })
-  userMessage.value = ''
-  
-  await nextTick()
-  if (chatMessagesRef.value) {
-    chatMessagesRef.value.scrollTop = chatMessagesRef.value.scrollHeight
-  }
-  
-  setTimeout(() => {
-    const responses = [
-      'Хороший вопрос! Попробуй разбить этот шаг на ещё более мелкие действия — каждое не больше 1-2 часов.',
-      'Помни: конкретный шаг = понятный результат. Что именно ты получишь после выполнения?',
-      'Отлично! Теперь подумай — какой первый шаг ты можешь сделать уже сегодня?',
-      'Рекомендую начать с самого простого шага — это создаст momentum для остальных.'
-    ]
-    const randomResponse = responses[Math.floor(Math.random() * responses.length)]
-    chatMessages.value.push({ role: 'coach', content: randomResponse })
-    
-    nextTick(() => {
-      if (chatMessagesRef.value) {
-        chatMessagesRef.value.scrollTop = chatMessagesRef.value.scrollHeight
-      }
-    })
-  }, 1000)
-}
-
-async function sendListMessage() {
-  if (!listUserMessage.value.trim()) return
-  
-  const msg = listUserMessage.value
-  listChatMessages.value.push({ role: 'user', content: msg })
-  listUserMessage.value = ''
-  
-  await nextTick()
-  if (listChatMessagesRef.value) {
-    listChatMessagesRef.value.scrollTop = listChatMessagesRef.value.scrollHeight
-  }
-  
-  setTimeout(() => {
-    const responses = [
-      'Сфокусируйся на одной цели за раз. Какая сейчас самая важная?',
-      'Проверь прогресс по активным целям — есть ли шаги, которые можно выполнить сегодня?',
-      'Если застрял — разбей текущий шаг на ещё более мелкие действия.',
-      'Помни про правило 1-4 часа: каждый шаг должен быть выполним за это время.'
-    ]
-    const randomResponse = responses[Math.floor(Math.random() * responses.length)]
-    listChatMessages.value.push({ role: 'coach', content: randomResponse })
-    
-    nextTick(() => {
-      if (listChatMessagesRef.value) {
-        listChatMessagesRef.value.scrollTop = listChatMessagesRef.value.scrollHeight
-      }
-    })
-  }, 1000)
 }
 
 function completeLesson() {
@@ -849,7 +902,9 @@ function completeLesson() {
         return {
           id: needsNewId ? Date.now().toString() + Math.random().toString(36).substr(2, 9) : step.id,
           title: step.title,
-          completed: step.completed || false
+          completed: step.completed || false,
+          timeEstimate: step.timeEstimate || '',
+          priority: step.priority || ''
         }
       })
     
@@ -974,12 +1029,36 @@ function getCompletedSteps(goal) {
 
 function getSphereName(sphereId) {
   const sphere = lifeSpheres.value.find(s => s.id === sphereId)
-  return sphere ? `${sphere.icon} ${sphere.name}` : 'Не указана'
+  return sphere ? sphere.name : 'Не указана'
 }
 
 function getSphereIcon(sphereId) {
   const sphere = lifeSpheres.value.find(s => s.id === sphereId)
   return sphere ? sphere.icon : '🎯'
+}
+
+function getSphereIconComponent(sphereId) {
+  const iconMap = {
+    'wealth': Wallet,
+    'hobbies': Palette,
+    'friendship': Users,
+    'health': Heart,
+    'career': Briefcase,
+    'love': HeartHandshake
+  }
+  return iconMap[sphereId] || Target
+}
+
+function getSphereColor(sphereId) {
+  const colorMap = {
+    'wealth': '#e63946',
+    'hobbies': '#f4a261',
+    'friendship': '#e9c46a',
+    'health': '#2a9d8f',
+    'career': '#264653',
+    'love': '#9b5de5'
+  }
+  return colorMap[sphereId] || '#6366f1'
 }
 
 function getStatusLabel(status) {
@@ -1005,6 +1084,86 @@ function formatDate(dateString) {
 .goals-container {
   max-width: 1400px;
   margin: 0 auto;
+}
+
+/* Icon Wrapper System */
+.icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.icon-wrapper-sm {
+  width: 28px;
+  height: 28px;
+}
+
+.icon-wrapper-md {
+  width: 40px;
+  height: 40px;
+}
+
+.icon-wrapper-lg {
+  width: 56px;
+  height: 56px;
+}
+
+.icon-wrapper.purple {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
+
+.icon-wrapper.success {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+}
+
+.icon-wrapper.info {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.icon-wrapper.danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger-color);
+}
+
+.icon-wrapper.warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning-color);
+}
+
+.btn-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.icon-flip {
+  transform: rotate(180deg);
+}
+
+/* Step Check Icons */
+.step-check-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.step-check-icon.success {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success-color);
+}
+
+.step-check-icon.danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger-color);
 }
 
 /* Empty Welcome State */
@@ -1187,6 +1346,17 @@ function formatDate(dateString) {
   animation: fadeIn 0.3s ease;
 }
 
+.step-content-centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.step-2-wrapper {
+  width: 100%;
+  max-width: 700px;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -1235,11 +1405,30 @@ function formatDate(dateString) {
   border-radius: var(--radius-lg);
   padding: 1.5rem;
   text-align: center;
+  transition: all 0.2s ease;
+}
+
+.rule-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.rule-card-blue {
+  border-left: 3px solid #3b82f6;
+}
+
+.rule-card-green {
+  border-left: 3px solid var(--success-color);
+}
+
+.rule-card-purple {
+  border-left: 3px solid #8b5cf6;
 }
 
 .rule-icon {
-  font-size: 2.5rem;
   margin-bottom: 0.75rem;
+  display: flex;
+  justify-content: center;
 }
 
 .rule-card h4 {
@@ -1309,24 +1498,8 @@ function formatDate(dateString) {
 }
 
 /* Step 2 Layout */
-.step-2-layout {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 2rem;
-  align-items: start;
-}
-
 .step-2-main {
-  min-width: 0;
-}
-
-.step-2-sidebar {
-  position: sticky;
-  top: 2rem;
-}
-
-.full-width {
-  grid-column: 1 / -1;
+  max-width: 700px;
 }
 
 /* Goals from Bank */
@@ -1365,8 +1538,16 @@ function formatDate(dateString) {
   background: rgba(99, 102, 241, 0.05);
 }
 
-.goal-sphere {
-  font-size: 1.25rem;
+.goal-sphere-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid;
+  border-radius: 50%;
+  flex-shrink: 0;
+  color: var(--text-primary);
 }
 
 .goal-name {
@@ -1388,16 +1569,61 @@ function formatDate(dateString) {
 }
 
 .practice-header {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
-.practice-header h4 {
+.practice-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 0.5rem;
 }
 
+.practice-header h4 {
+  margin: 0;
+}
+
+.steps-counter {
+  font-size: 0.875rem;
+  padding: 0.25rem 0.75rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+}
+
+.steps-counter.complete {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+}
+
 .practice-goal-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 1.125rem;
   font-weight: 600;
+  color: var(--primary-color);
+}
+
+.rules-reminder {
+  display: flex;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(99, 102, 241, 0.05);
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.reminder-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.reminder-item svg {
   color: var(--primary-color);
 }
 
@@ -1411,6 +1637,49 @@ function formatDate(dateString) {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+}
+
+.step-input-group {
+  display: flex;
+  flex: 1;
+  gap: 0.5rem;
+}
+
+.time-select {
+  width: 90px;
+  padding: 0.75rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.time-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.priority-select {
+  width: 110px;
+  padding: 0.75rem 0.5rem;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.priority-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.priority-select option {
+  padding: 0.5rem;
 }
 
 .step-number-badge {
@@ -1452,121 +1721,19 @@ function formatDate(dateString) {
   margin-bottom: 1rem;
 }
 
-/* AI Coach */
-.ai-coach {
-  background: #ffffff;
-  border: 1px solid var(--border-color);
-  padding: 1rem;
-}
-
-.coach-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.coach-icon {
-  font-size: 1.25rem;
-}
-
-.coach-header h3 {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.chat-container {
-  display: flex;
-  flex-direction: column;
-  height: 300px;
-}
-
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-  padding-right: 0.5rem;
-}
-
-.message {
-  display: flex;
-  gap: 0.5rem;
-  align-items: flex-start;
-}
-
-.message-avatar {
-  flex-shrink: 0;
-  font-size: 1rem;
-}
-
-.message-content {
-  flex: 1;
-}
-
-.message-content p {
-  margin: 0;
-  padding: 0.6rem 0.85rem;
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-  line-height: 1.4;
-}
-
-.coach-message .message-content p {
-  background: var(--bg-tertiary);
-}
-
-.user-message {
-  flex-direction: row-reverse;
-}
-
-.user-message .message-content p {
-  background: var(--primary-color);
-  color: white;
-}
-
-.chat-input-area {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.chat-input {
-  flex: 1;
-  padding: 0.6rem 0.85rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-  background: var(--bg-primary);
-}
-
-.chat-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-}
-
-.btn-send {
-  padding: 0.6rem 1rem;
-  background: var(--primary-color);
-  color: white;
+.btn-icon.delete {
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  background: transparent;
   border: none;
-  border-radius: var(--radius-md);
+  color: var(--text-secondary);
   cursor: pointer;
-  font-size: 1rem;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
 }
 
-.btn-send:hover:not(:disabled) {
-  background: var(--primary-dark);
-}
-
-.btn-send:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.btn-icon.delete:hover {
+  color: var(--danger-color);
+  background: rgba(239, 68, 68, 0.1);
 }
 
 /* Step 3: First Step Selection */
@@ -1680,6 +1847,10 @@ function formatDate(dateString) {
   justify-content: flex-end;
 }
 
+.step-actions-centered {
+  justify-content: center;
+}
+
 /* Goals List Mode */
 .goals-list-mode .page-header {
   display: flex;
@@ -1725,21 +1896,9 @@ function formatDate(dateString) {
   margin-bottom: 2rem;
 }
 
-/* Goals Layout with Sidebar */
-.goals-layout {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 2rem;
-  align-items: start;
-}
-
+/* Goals Layout */
 .goals-main {
-  min-width: 0;
-}
-
-.goals-sidebar {
-  position: sticky;
-  top: 2rem;
+  max-width: 900px;
 }
 
 .goals-filters {
@@ -1838,12 +1997,43 @@ function formatDate(dateString) {
 }
 
 .source-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
   padding: 0.25rem 0.5rem;
   background: rgba(99, 102, 241, 0.1);
   color: var(--primary-color);
   border-radius: var(--radius-sm);
   font-size: 0.75rem;
   font-weight: 500;
+}
+
+.sphere-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  background: white;
+  border: 1.5px solid var(--sphere-color, var(--border-color));
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  color: var(--sphere-color, var(--text-secondary));
+  font-weight: 500;
+}
+
+.btn-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-icon.edit {
+  color: var(--text-secondary);
+}
+
+.btn-icon.edit:hover {
+  color: var(--primary-color);
+  background: rgba(99, 102, 241, 0.1);
 }
 
 .goal-actions {
@@ -2178,19 +2368,6 @@ function formatDate(dateString) {
 }
 
 /* Responsive */
-@media (max-width: 1024px) {
-  .step-2-layout,
-  .goals-layout {
-    grid-template-columns: 1fr;
-  }
-  
-  .step-2-sidebar,
-  .goals-sidebar {
-    position: static;
-    order: -1;
-  }
-}
-
 @media (max-width: 768px) {
   .goals-list-mode .page-header {
     flex-direction: column;
@@ -2446,11 +2623,42 @@ function formatDate(dateString) {
 
 .review-step-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
   padding: 0.75rem 1rem;
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
+}
+
+.step-content-review {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.step-meta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.priority-badge {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+}
+
+.time-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
 }
 
 .review-summary {

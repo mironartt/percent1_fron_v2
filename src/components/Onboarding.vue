@@ -21,7 +21,11 @@
 
         <!-- Step 1: Philosophy -->
         <div v-if="currentStep === 1" class="step-content step-philosophy">
-          <div class="philosophy-icon">🎮</div>
+          <div class="philosophy-icon">
+            <span class="icon-wrapper icon-wrapper-lg primary">
+              <Gamepad2 :size="48" />
+            </span>
+          </div>
           <h1 class="step-title">Жизнь — это игра.<br>Ты — её разработчик</h1>
           <div class="philosophy-text">
             <p>
@@ -32,28 +36,37 @@
               Ты не просто игрок в чужой игре — ты разработчик своего сценария. 
               Каждый день ты делаешь выбор: развиваться или стоять на месте.
             </p>
-            <p class="highlight">
-              💡 Улучшаясь на 1% каждый день, за год ты станешь сильнее в 38 раз.
-            </p>
+            <div class="highlight">
+              <span class="icon-wrapper icon-wrapper-sm accent">
+                <Lightbulb :size="16" />
+              </span>
+              <p>Улучшаясь на 1% каждый день, за год ты станешь сильнее в 38 раз.</p>
+            </div>
           </div>
 
           <div class="key-ideas">
             <div class="key-idea-item">
-              <span class="idea-icon">🎯</span>
+              <span class="icon-wrapper icon-wrapper-md target">
+                <Target :size="24" />
+              </span>
               <div>
                 <strong>Системность, а не мотивация</strong>
                 <p>Работает механика, а не эмоции</p>
               </div>
             </div>
             <div class="key-idea-item">
-              <span class="idea-icon">📊</span>
+              <span class="icon-wrapper icon-wrapper-md chart">
+                <BarChart3 :size="24" />
+              </span>
               <div>
                 <strong>Измеряемый прогресс</strong>
                 <p>Видишь рост в цифрах и действиях</p>
               </div>
             </div>
             <div class="key-idea-item">
-              <span class="idea-icon">🔄</span>
+              <span class="icon-wrapper icon-wrapper-md refresh">
+                <RefreshCcw :size="24" />
+              </span>
               <div>
                 <strong>Честная работа</strong>
                 <p>Без иллюзий, только реальность</p>
@@ -138,18 +151,27 @@
           <div class="journey-visual">
             <div class="point point-a">
               <span class="point-label">Точка А</span>
-              <span class="point-icon">📍</span>
+              <span class="icon-wrapper icon-wrapper-md map-pin">
+                <MapPin :size="24" />
+              </span>
             </div>
-            <div class="journey-arrow">→</div>
+            <div class="journey-arrow">
+              <span class="arrow-line"></span>
+            </div>
             <div class="point point-b">
               <span class="point-label">Точка Б</span>
-              <span class="point-icon">🎯</span>
+              <span class="icon-wrapper icon-wrapper-md target">
+                <Target :size="24" />
+              </span>
             </div>
           </div>
 
           <div class="form-group">
             <label class="form-label">
-              📍 Точка А: Где я сейчас
+              <span class="icon-wrapper icon-wrapper-xs map-pin">
+                <MapPin :size="14" />
+              </span>
+              Точка А: Где я сейчас
             </label>
             <span class="form-hint">Опиши своё текущее состояние без прикрас</span>
             <textarea 
@@ -162,7 +184,10 @@
 
           <div class="form-group">
             <label class="form-label">
-              🎯 Точка Б: Куда хочу прийти
+              <span class="icon-wrapper icon-wrapper-xs target">
+                <Target :size="14" />
+              </span>
+              Точка Б: Куда хочу прийти
             </label>
             <span class="form-hint">Конкретная картина желаемого будущего</span>
             <textarea 
@@ -175,7 +200,10 @@
 
           <div class="form-group">
             <label class="form-label">
-              💎 Почему это важно для меня
+              <span class="icon-wrapper icon-wrapper-xs gem">
+                <Gem :size="14" />
+              </span>
+              Почему это важно для меня
             </label>
             <span class="form-hint">В чём глубинный смысл этих изменений?</span>
             <textarea 
@@ -200,7 +228,11 @@
 
         <!-- Step 4: Rules -->
         <div v-if="currentStep === 4" class="step-content step-rules">
-          <div class="completion-icon">✅</div>
+          <div class="completion-icon">
+            <span class="icon-wrapper icon-wrapper-lg success">
+              <CheckCircle2 :size="48" />
+            </span>
+          </div>
           <h2 class="step-title">Почти готово!</h2>
           <p class="step-subtitle">Осталось подтвердить готовность к честной работе</p>
 
@@ -208,15 +240,21 @@
             <h3>Ты заполнил:</h3>
             <div class="summary-items">
               <div class="summary-item">
-                <span class="check-icon">✓</span>
+                <span class="icon-wrapper icon-wrapper-xs success">
+                  <Check :size="12" />
+                </span>
                 <span>Понял философию системы</span>
               </div>
               <div class="summary-item">
-                <span class="check-icon">✓</span>
+                <span class="icon-wrapper icon-wrapper-xs success">
+                  <Check :size="12" />
+                </span>
                 <span>Ответил на вопросы рефлексии</span>
               </div>
               <div class="summary-item">
-                <span class="check-icon">✓</span>
+                <span class="icon-wrapper icon-wrapper-xs success">
+                  <Check :size="12" />
+                </span>
                 <span>Определил точки А и Б</span>
               </div>
             </div>
@@ -258,11 +296,12 @@
           <div class="step-actions">
             <button class="btn btn-secondary" @click="prevStep" :disabled="isSaving">Назад</button>
             <button 
-              class="btn btn-primary btn-large" 
+              class="btn btn-primary btn-large btn-with-icon" 
               @click="completeOnboarding"
               :disabled="!formData.acceptRules || isSaving"
             >
-              {{ isSaving ? 'Сохранение...' : '🚀 Приступить' }}
+              <Rocket :size="18" />
+              {{ isSaving ? 'Сохранение...' : 'Приступить' }}
             </button>
           </div>
         </div>
@@ -275,6 +314,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAppStore } from '../stores/app'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
+import { 
+  Gamepad2, Target, BarChart3, RefreshCcw, MapPin, Gem, 
+  CheckCircle2, Check, Rocket, Lightbulb
+} from 'lucide-vue-next'
 
 const store = useAppStore()
 
@@ -569,7 +612,6 @@ async function completeOnboarding() {
 }
 
 .philosophy-icon {
-  font-size: 5rem;
   margin-bottom: 1.5rem;
   animation: bounce 2s infinite;
 }
@@ -577,6 +619,75 @@ async function completeOnboarding() {
 @keyframes bounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
+}
+
+/* Icon Wrappers */
+.icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.icon-wrapper-xs {
+  width: 20px;
+  height: 20px;
+}
+
+.icon-wrapper-sm {
+  width: 28px;
+  height: 28px;
+}
+
+.icon-wrapper-md {
+  width: 48px;
+  height: 48px;
+}
+
+.icon-wrapper-lg {
+  width: 96px;
+  height: 96px;
+}
+
+.icon-wrapper.primary {
+  background: rgba(99, 102, 241, 0.15);
+  color: #6366f1;
+}
+
+.icon-wrapper.accent {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.icon-wrapper.target {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.icon-wrapper.chart {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.icon-wrapper.refresh {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.icon-wrapper.map-pin {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.icon-wrapper.gem {
+  background: rgba(168, 85, 247, 0.15);
+  color: #a855f7;
+}
+
+.icon-wrapper.success {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
 }
 
 .philosophy-text {
@@ -593,10 +704,17 @@ async function completeOnboarding() {
 }
 
 .philosophy-text .highlight {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   padding: 1.25rem;
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
   border-left: 4px solid var(--primary-color);
   border-radius: 0.5rem;
+}
+
+.philosophy-text .highlight p {
+  margin: 0;
   font-weight: 500;
   color: var(--primary-color);
 }
@@ -626,10 +744,6 @@ async function completeOnboarding() {
   box-shadow: var(--shadow-md);
 }
 
-.idea-icon {
-  font-size: 2rem;
-  flex-shrink: 0;
-}
 
 .key-idea-item strong {
   display: block;
@@ -729,19 +843,32 @@ async function completeOnboarding() {
   color: var(--text-secondary);
 }
 
-.point-icon {
-  font-size: 3rem;
+.journey-arrow {
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
 }
 
-.journey-arrow {
-  font-size: 2rem;
-  color: var(--primary-color);
-  font-weight: 700;
+.arrow-line {
+  display: block;
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  position: relative;
+}
+
+.arrow-line::after {
+  content: '';
+  position: absolute;
+  right: -2px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-left: 8px solid var(--secondary-color);
 }
 
 /* Step 4: Completion */
 .completion-icon {
-  font-size: 5rem;
   text-align: center;
   margin-bottom: 1rem;
 }
@@ -772,17 +899,8 @@ async function completeOnboarding() {
   font-size: 1rem;
 }
 
-.check-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  background: var(--success-color);
-  color: white;
-  border-radius: 50%;
-  font-weight: 700;
-  font-size: 0.875rem;
+.summary-item .icon-wrapper {
+  flex-shrink: 0;
 }
 
 .rules-section {
@@ -911,6 +1029,12 @@ async function completeOnboarding() {
   padding: 1.25rem 2.5rem;
 }
 
+.btn-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 @media (max-width: 768px) {
   .onboarding-container {
     padding: 1rem;
@@ -927,6 +1051,11 @@ async function completeOnboarding() {
 
   .journey-arrow {
     transform: rotate(90deg);
+    padding: 0.5rem 0;
+  }
+  
+  .arrow-line {
+    width: 40px;
   }
 
   .step-actions {

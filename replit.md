@@ -43,6 +43,58 @@ The application uses a modular structure with dedicated components, services, vi
 - Icon wrapper with semi-transparent color-matched background
 - Applied consistent design to both Summary and Step 3 (Рефлексия) accordions
 
+### Goals Bank Module (Summary Page)
+- Added Lucide icons to stat cards (Lightbulb, CheckCircle, XCircle, PlayCircle) with color-coded backgrounds
+- Replaced sphere emojis with Lucide icons matching SSP module (Wallet, Palette, Users, Heart, Briefcase, HeartHandshake)
+- Color-coded sphere badges using CSS custom properties for sphere-specific colors
+- Action buttons now use Lucide icons (Plus, Check, X, RotateCcw) instead of text/emoji
+- Updated "Цели в работе" section with sphere icons
+- Added styling for empty "Почему важно" cells
+- Helper functions: getSphereIcon(), getSphereColor(), getSphereNameOnly()
+
+### Decomposition Module (Goals.vue) - Complete Cleanup
+- **Removed AI Coach completely** from both lesson mode and goals list mode
+- Removed all chat-related HTML, CSS, and JavaScript (~200+ lines of code)
+- Removed unused Bot, User imports
+- "Пройти урок заново" button: 📚 emoji replaced with RotateCcw icon
+- "Из Банка целей" badge: 🏦 emoji replaced with Landmark icon
+- Edit/Delete buttons: ✏️/🗑️ emojis replaced with Edit2/Trash2 Lucide icons with hover effects
+- Sphere display: Emoji icons replaced with Lucide icons (Wallet, Palette, Users, Heart, Briefcase, HeartHandshake) with colored borders
+- Modal close button: ✕ text replaced with X Lucide icon
+- **Single-column layout** - removed step-2-layout and goals-layout sidebar grid
+- Clean, focused interface without chat distractions
+
+### Goal Edit Page (GoalEdit.vue) - Redesign
+- **Removed AI coach sidebar** - cleaner, distraction-free editing experience
+- **Moved action buttons to header** - "Сохранить", "Отмена", "Удалить" all in one row
+- **Single-column layout** - form takes full width (max 900px), no sidebar
+- Navigation: ArrowLeft icon in header
+- Actions: Save, Trash2, Plus Lucide icons with hover effects
+- Step completion checkboxes with Lucide icons (Square/CheckSquare)
+- Completed steps show with green left border, strikethrough text, muted colors
+- Added comment field for each step (textarea with placeholder)
+- Step management: X icon, GripVertical drag handle
+- Custom dropdown for sphere selection with Lucide icons
+- **Date info relocated** - "Создана: дата" now at bottom of steps card
+
+### Onboarding Component (Onboarding.vue)
+- Philosophy icon: Gamepad2 icon in large purple circular wrapper
+- Key ideas section: Target, BarChart3, RefreshCcw icons in colored wrappers
+- Highlight block: Lightbulb icon in amber wrapper
+- Step 3 journey visual: MapPin and Target icons for points A and B
+- Form labels: MapPin, Target, Gem icons in small wrappers
+- Completion section: CheckCircle2 icon in large green wrapper
+- Summary checkmarks: Check icons in small green wrappers
+- Final button: Rocket icon with text
+- CSS icon-wrapper system with size variants (xs, sm, md, lg) and color classes
+- Arrow line using CSS gradients instead of text arrow
+
+### Planning Module (Planning.vue) - Cleanup
+- Removed all 4 GuidancePanel components with AI coach from lesson steps and planner mode
+- Removed planningCoachResponses array and related tips arrays (theoryTips, practiceTips, telegramTips, plannerTips)
+- Removed unused imports (GuidancePanel, ChevronLeft, ChevronRight from Lucide)
+- Clean, focused planning interface without AI coach distractions
+
 ## External Dependencies
 - **Django REST API Backend**: Provides authentication, user data, onboarding, and goal management services.
 - **Lucide Vue Next**: Used for minimalist line icons across the UI.

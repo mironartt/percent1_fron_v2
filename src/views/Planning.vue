@@ -3,7 +3,9 @@
     <!-- Empty State - First Visit -->
     <div v-if="showEmptyState" class="empty-state-section">
       <div class="empty-state-card card">
-        <div class="empty-icon">📅</div>
+        <div class="icon-wrapper lg primary">
+          <Calendar :size="32" />
+        </div>
         <h1>Планирование</h1>
         <p class="subtitle">
           Распределите шаги по дням недели и получайте напоминания
@@ -37,7 +39,8 @@
         </div>
 
         <button class="btn btn-primary btn-lg" @click="startLesson">
-          ✨ Начать урок
+          <Sparkles :size="18" />
+          Начать урок
         </button>
       </div>
     </div>
@@ -65,7 +68,12 @@
         <div class="step-layout">
           <div class="step-main">
             <header class="section-header">
-              <h1>📚 Теория недельного планирования</h1>
+              <div class="header-with-icon">
+                <div class="icon-wrapper md primary">
+                  <BookOpen :size="24" />
+                </div>
+                <h1>Теория недельного планирования</h1>
+              </div>
               <p class="subtitle">
                 Научитесь планировать неделю так, чтобы двигаться к целям каждый день
               </p>
@@ -73,31 +81,50 @@
 
             <div class="theory-content">
               <div class="theory-block card">
-                <h3>🎯 Принцип «Неделя вперёд»</h3>
+                <div class="theory-header">
+                  <div class="icon-wrapper sm target">
+                    <Target :size="18" />
+                  </div>
+                  <h3>Принцип «Неделя вперёд»</h3>
+                </div>
                 <p>
                   Планируйте неделю заранее — в выходные или в начале недели. 
                   Это даёт ясность и снижает стресс от неопределённости.
                 </p>
                 <div class="key-point">
-                  <span class="key-icon">💡</span>
+                  <div class="icon-wrapper xs accent">
+                    <Lightbulb :size="14" />
+                  </div>
                   <span>Лучшее время для планирования: воскресенье вечером или понедельник утром</span>
                 </div>
               </div>
 
               <div class="theory-block card">
-                <h3>⚡ Правило 3 шагов в день</h3>
+                <div class="theory-header">
+                  <div class="icon-wrapper sm zap">
+                    <Zap :size="18" />
+                  </div>
+                  <h3>Правило 3 шагов в день</h3>
+                </div>
                 <p>
                   Не перегружайте день. Выберите максимум 3 ключевых шага из ваших целей.
                   Остальное время оставьте для рутины и непредвиденных задач.
                 </p>
-                <div class="key-point">
-                  <span class="key-icon">⚠️</span>
+                <div class="key-point warning">
+                  <div class="icon-wrapper xs warning">
+                    <AlertTriangle :size="14" />
+                  </div>
                   <span>Перегруженный план = срыв плана. Меньше = лучше.</span>
                 </div>
               </div>
 
               <div class="theory-block card">
-                <h3>🔄 Баланс сфер жизни</h3>
+                <div class="theory-header">
+                  <div class="icon-wrapper sm refresh">
+                    <RefreshCcw :size="18" />
+                  </div>
+                  <h3>Баланс сфер жизни</h3>
+                </div>
                 <p>
                   Распределяйте шаги из разных сфер жизни по неделе.
                   Это поможет поддерживать баланс и не выгорать.
@@ -110,18 +137,26 @@
               </div>
 
               <div class="theory-block card">
-                <h3>📱 Напоминания = дисциплина</h3>
+                <div class="theory-header">
+                  <div class="icon-wrapper sm phone">
+                    <Smartphone :size="18" />
+                  </div>
+                  <h3>Напоминания = дисциплина</h3>
+                </div>
                 <p>
                   Ежедневные напоминания в Telegram помогут не забыть о запланированных шагах.
                   Отмечайте выполнение прямо в мессенджере — и прогресс синхронизируется.
                 </p>
                 <div class="telegram-preview">
                   <div class="tg-message">
-                    <strong>🎯 Задачи на сегодня:</strong>
-                    <ul>
-                      <li>☐ Пробежка 30 минут</li>
-                      <li>☐ Прочитать главу книги</li>
-                      <li>☐ Позвонить другу</li>
+                    <div class="tg-header">
+                      <Target :size="16" class="tg-icon" />
+                      <strong>Задачи на сегодня:</strong>
+                    </div>
+                    <ul class="tg-tasks">
+                      <li><Square :size="14" class="task-check" /> Пробежка 30 минут</li>
+                      <li><Square :size="14" class="task-check" /> Прочитать главу книги</li>
+                      <li><Square :size="14" class="task-check" /> Позвонить другу</li>
                     </ul>
                   </div>
                 </div>
@@ -130,23 +165,12 @@
 
             <div class="step-actions">
               <button class="btn btn-primary btn-lg" @click="nextStep">
-                Перейти к практике →
+                Перейти к практике
+                <ArrowRight :size="18" />
               </button>
             </div>
           </div>
 
-          <div class="step-sidebar">
-            <GuidancePanel
-              title="Подсказки"
-              icon="💡"
-              :tips="theoryTips"
-              :showAICoach="true"
-              initialMessage="Привет! Я помогу разобраться с планированием. Спрашивай, если что-то непонятно."
-              chatPlaceholder="Задайте вопрос о планировании..."
-              :coachResponses="planningCoachResponses"
-              sticky
-            />
-          </div>
         </div>
       </div>
 
@@ -170,7 +194,11 @@
 
             <!-- Weekly Calendar View (moved above goals) -->
             <div class="week-calendar card">
-              <h3>📅 Ваш план на неделю <span class="drag-hint" v-if="draggedStep">(отпустите на нужный день)</span></h3>
+              <h3 class="calendar-title">
+                <Calendar :size="20" class="calendar-icon" />
+                Ваш план на неделю 
+                <span class="drag-hint" v-if="draggedStep">(отпустите на нужный день)</span>
+              </h3>
               <div class="calendar-grid">
                 <div 
                   v-for="day in weekDays" 
@@ -201,7 +229,7 @@
                       <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
                     </div>
                     <div v-if="getTasksForDay(day.date).length === 0" class="no-tasks drop-hint">
-                      {{ draggedStep ? '📥 Сюда' : '—' }}
+                      {{ draggedStep ? 'Сюда' : '—' }}
                     </div>
                   </div>
                 </div>
@@ -323,20 +351,6 @@
             </div>
           </div>
 
-          <div class="step-sidebar">
-            <GuidancePanel
-              title="Подсказки"
-              icon="💡"
-              :tips="practiceTips"
-              :checklist="practiceChecklist"
-              checklistTitle="Чек-лист"
-              :showAICoach="true"
-              initialMessage="Отлично! Распределяй шаги по дням. Помни: не больше 3 шагов в день."
-              chatPlaceholder="Спросите совет..."
-              :coachResponses="planningCoachResponses"
-              sticky
-            />
-          </div>
         </div>
       </div>
 
@@ -486,18 +500,6 @@
             </div>
           </div>
 
-          <div class="step-sidebar">
-            <GuidancePanel
-              title="Подсказки"
-              icon="💡"
-              :tips="telegramTips"
-              :showAICoach="true"
-              initialMessage="Отлично! Ваш план готов. Скоро мы добавим интеграцию с Telegram."
-              chatPlaceholder="Задайте вопрос..."
-              :coachResponses="planningCoachResponses"
-              sticky
-            />
-          </div>
         </div>
       </div>
     </div>
@@ -728,18 +730,6 @@
           </div>
         </div>
 
-        <div class="planner-sidebar">
-          <GuidancePanel
-            title="ИИ-коуч"
-            icon="🤖"
-            :tips="plannerTips"
-            :showAICoach="true"
-            initialMessage="Привет! Как идёт выполнение плана? Могу помочь с распределением задач."
-            chatPlaceholder="Спросите совет..."
-            :coachResponses="planningCoachResponses"
-            sticky
-          />
-        </div>
       </div>
     </div>
 
@@ -756,9 +746,21 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
-import GuidancePanel from '../components/GuidancePanel.vue'
-import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import { DEMO_PLANNING_MODE } from '../config/settings.js'
+import { 
+  Calendar, 
+  BookOpen, 
+  Target, 
+  Lightbulb, 
+  Zap, 
+  AlertTriangle, 
+  RefreshCcw, 
+  Smartphone, 
+  Sparkles,
+  Square,
+  ArrowRight,
+  CheckSquare
+} from 'lucide-vue-next'
 
 const store = useAppStore()
 const router = useRouter()
@@ -1205,6 +1207,23 @@ function formatTimeShort(estimate) {
   return labels[estimate] || estimate
 }
 
+const priorityOptions = [
+  { value: 'critical', label: 'Критично', color: '#ef4444' },
+  { value: 'desirable', label: 'Важно', color: '#f97316' },
+  { value: 'attention', label: 'Внимание', color: '#3b82f6' },
+  { value: 'optional', label: 'Опционально', color: '#9ca3af' }
+]
+
+function getPriorityColor(priority) {
+  const option = priorityOptions.find(p => p.value === priority)
+  return option ? option.color : '#9ca3af'
+}
+
+function getPriorityLabel(priority) {
+  const option = priorityOptions.find(p => p.value === priority)
+  return option ? option.label : 'Опционально'
+}
+
 function pluralize(n, one, few, many) {
   if (n % 10 === 1 && n % 100 !== 11) return one
   if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) return few
@@ -1246,83 +1265,6 @@ function restartLesson() {
 function goToDecomposition() {
   router.push('/goals')
 }
-
-const theoryTips = [
-  { 
-    icon: '📅', 
-    text: 'Планируйте неделю в воскресенье вечером или понедельник утром',
-    highlight: true
-  },
-  { 
-    icon: '3️⃣', 
-    text: 'Не больше 3 ключевых шагов в день — это реалистично и достижимо'
-  },
-  { 
-    icon: '⚖️', 
-    text: 'Чередуйте задачи из разных сфер жизни для баланса'
-  }
-]
-
-const practiceTips = [
-  { 
-    icon: '🎯', 
-    text: 'Сначала распределите самые важные шаги',
-    highlight: true
-  },
-  { 
-    icon: '⏰', 
-    text: 'Учитывайте время выполнения каждого шага'
-  },
-  { 
-    icon: '🌅', 
-    text: 'Сложные задачи лучше планировать на утро'
-  }
-]
-
-const practiceChecklist = computed(() => [
-  { text: 'Распределить хотя бы 1 шаг', done: scheduledTasksCount.value >= 1 },
-  { text: 'Задачи на разные дни', done: scheduledDaysCount.value >= 2 || scheduledTasksCount.value <= 1 }
-])
-
-const telegramTips = [
-  { 
-    icon: '📱', 
-    text: 'Telegram-бот будет присылать задачи каждое утро',
-    highlight: true
-  },
-  { 
-    icon: '✅', 
-    text: 'Отмечайте выполнение прямо в Telegram'
-  },
-  { 
-    icon: '🔄', 
-    text: 'Статус синхронизируется с личным кабинетом'
-  }
-]
-
-const plannerTips = [
-  { 
-    icon: '📊', 
-    text: 'Проверяйте план каждое утро'
-  },
-  { 
-    icon: '✅', 
-    text: 'Отмечайте выполненные шаги сразу'
-  },
-  { 
-    icon: '🔄', 
-    text: 'Переносите невыполненное на следующий день'
-  }
-]
-
-const planningCoachResponses = [
-  'Хороший план! Помни: не больше 3 важных задач в день.',
-  'Попробуй распределить задачи равномерно по неделе.',
-  'Учитывай своё расписание — когда у тебя больше энергии?',
-  'Сложные задачи лучше ставить на утро, пока есть силы.',
-  'Оставляй буфер времени — всегда что-то идёт не по плану.',
-  'Регулярность важнее объёма. Лучше каждый день понемногу.'
-]
 
 function setupDemoData() {
   if (!DEMO_PLANNING_MODE) return
@@ -1412,8 +1354,9 @@ onMounted(() => {
 
 <style scoped>
 .planning-container {
-  max-width: 1400px;
+  max-width: 100%;
   margin: 0 auto;
+  padding: 0 1rem;
 }
 
 .empty-state-section {
@@ -1430,13 +1373,73 @@ onMounted(() => {
   padding: 3rem;
 }
 
-.empty-icon {
-  font-size: 4rem;
+.empty-state-card h1 {
+  margin-bottom: 0.5rem;
+}
+
+/* Icon wrapper system */
+.icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.icon-wrapper.xs {
+  width: 24px;
+  height: 24px;
+}
+
+.icon-wrapper.sm {
+  width: 32px;
+  height: 32px;
+}
+
+.icon-wrapper.md {
+  width: 48px;
+  height: 48px;
+}
+
+.icon-wrapper.lg {
+  width: 72px;
+  height: 72px;
   margin-bottom: 1rem;
 }
 
-.empty-state-card h1 {
-  margin-bottom: 0.5rem;
+.icon-wrapper.primary {
+  background: rgba(124, 58, 237, 0.15);
+  color: var(--primary-color);
+}
+
+.icon-wrapper.accent {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.icon-wrapper.target {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.icon-wrapper.zap {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.icon-wrapper.warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.icon-wrapper.refresh {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.icon-wrapper.phone {
+  background: rgba(6, 182, 212, 0.15);
+  color: #06b6d4;
 }
 
 .subtitle {
@@ -1617,8 +1620,15 @@ onMounted(() => {
   padding: 1.5rem;
 }
 
-.theory-block h3 {
+.theory-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   margin-bottom: 0.75rem;
+}
+
+.theory-header h3 {
+  margin: 0;
 }
 
 .theory-block p {
@@ -1628,15 +1638,16 @@ onMounted(() => {
 
 .key-point {
   display: flex;
-  gap: 0.5rem;
-  padding: 0.75rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
   font-size: 0.9rem;
 }
 
-.key-icon {
-  flex-shrink: 0;
+.key-point.warning {
+  background: rgba(245, 158, 11, 0.1);
 }
 
 .balance-tips {
@@ -1659,9 +1670,58 @@ onMounted(() => {
   font-size: 0.9rem;
 }
 
-.tg-message ul {
-  margin: 0.5rem 0 0;
-  padding-left: 1.25rem;
+.tg-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.tg-icon {
+  color: var(--primary-color);
+}
+
+.tg-tasks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tg-tasks li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.task-check {
+  color: var(--text-secondary);
+}
+
+.header-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-with-icon h1 {
+  margin: 0;
+}
+
+.calendar-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.calendar-icon {
+  color: var(--primary-color);
+}
+
+.btn.btn-primary.btn-lg {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .step-actions {
@@ -1747,16 +1807,22 @@ onMounted(() => {
   align-items: center;
   gap: 0.75rem;
   flex: 1;
+  min-width: 0;
 }
 
 .expand-icon {
   font-size: 0.7rem;
   color: var(--text-secondary);
   transition: transform 0.2s;
+  flex-shrink: 0;
 }
 
 .goal-header-left h4 {
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .goal-header-right {
@@ -1868,10 +1934,15 @@ onMounted(() => {
   align-items: center;
   gap: 0.75rem;
   flex: 1;
+  min-width: 0;
 }
 
 .step-title {
   font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .step-time {
@@ -2287,16 +2358,10 @@ onMounted(() => {
 }
 
 .planner-layout {
-  display: grid;
-  grid-template-columns: 1fr 350px;
-  gap: 2rem;
+  display: block;
 }
 
 .planner-main {
-  min-width: 0;
-}
-
-.planner-sidebar {
   min-width: 0;
 }
 
@@ -2601,8 +2666,8 @@ onMounted(() => {
 
 .calendar-grid-full {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 0.75rem;
+  grid-template-columns: repeat(7, minmax(120px, 1fr));
+  gap: 0.5rem;
 }
 
 .calendar-day-full {
@@ -2811,11 +2876,6 @@ onMounted(() => {
     order: -1;
   }
   
-  .calendar-grid,
-  .calendar-grid-full {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -2828,11 +2888,6 @@ onMounted(() => {
   
   .step-label {
     display: none;
-  }
-  
-  .calendar-grid,
-  .calendar-grid-full {
-    grid-template-columns: 1fr;
   }
   
   .step-actions {
