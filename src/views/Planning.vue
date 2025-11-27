@@ -1195,7 +1195,6 @@ const practiceTips = [
 
 const practiceChecklist = computed(() => [
   { text: 'Распределить хотя бы 1 шаг', done: scheduledTasksCount.value >= 1 },
-  { text: 'Не больше 3 шагов в день', done: !weekDays.value.some(d => getTasksForDay(d.date).length > 3) },
   { text: 'Задачи на разные дни', done: scheduledDaysCount.value >= 2 || scheduledTasksCount.value <= 1 }
 ])
 
