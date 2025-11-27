@@ -2422,7 +2422,7 @@ onMounted(() => {
 .steps-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.35rem;
 }
 
 .step-item {
@@ -2430,14 +2430,10 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.4rem 0.75rem;
+  padding: 0.35rem 0.6rem;
   background: var(--bg-secondary);
   border-radius: var(--radius-sm);
   border-left: 3px solid transparent;
-  min-height: 0;
-  height: auto;
-  max-height: 50px;
-  box-sizing: border-box;
 }
 
 .step-item.scheduled {
@@ -2481,24 +2477,25 @@ onMounted(() => {
 .day-select-sm,
 .time-select-sm,
 .priority-select-sm {
-  padding: 0.35rem 0.5rem;
+  padding: 0.25rem 0.4rem;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   background: var(--bg-primary);
   cursor: pointer;
+  height: 28px;
 }
 
 .day-select-sm {
-  min-width: 60px;
+  min-width: 50px;
 }
 
 .time-select-sm {
-  min-width: 55px;
+  min-width: 45px;
 }
 
 .priority-select-sm {
-  min-width: 100px;
+  min-width: 85px;
 }
 
 .priority-select-sm.priority-critical {
