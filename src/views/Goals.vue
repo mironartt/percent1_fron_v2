@@ -345,7 +345,7 @@
               v-for="goal in filteredGoals" 
               :key="goal.id"
               class="goal-card card"
-              @click="openGoalDetail(goal)"
+              @click="editGoal(goal)"
             >
               <div class="goal-header">
                 <div class="goal-title-section">
