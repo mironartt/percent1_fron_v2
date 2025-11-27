@@ -718,14 +718,14 @@
     <div v-if="currentStep === 3" class="step-content">
       <div class="step-section">
         <header class="section-header">
-          <h1>🎯 Выбор ключевых целей</h1>
+          <h1>Выбор ключевых целей</h1>
           <p class="subtitle">
             Выбери 1–3 цели из истинных для выполнения в ближайшее время
           </p>
         </header>
 
         <div class="key-goals-instruction card">
-          <h3>✨ Как выбрать цели для фокуса:</h3>
+          <h3><Sparkles :size="18" :stroke-width="2" class="header-icon accent" /> Как выбрать цели для фокуса:</h3>
           <ul>
             <li><strong>Реально зажигают</strong> — вызывают энтузиазм и желание действовать</li>
             <li><strong>Достижимы сейчас</strong> — есть ресурсы и время для работы над ними</li>
@@ -735,8 +735,8 @@
 
         <!-- Recommendations for weak spheres -->
         <div v-if="weakSphereGoals.length > 0" class="recommendations-block card">
-          <h3>💡 Рекомендуем обратить внимание</h3>
-          <p>Эти цели относятся к вашим слабым сферам (по результатам ССП):</p>
+          <h3><Lightbulb :size="18" :stroke-width="2" class="header-icon warning" /> Рекомендуем обратить внимание</h3>
+          <p>Эти цели относятся к вашим сферам роста (по результатам ССП):</p>
           <div class="recommended-goals">
             <div 
               v-for="goal in weakSphereGoals" 
@@ -745,16 +745,22 @@
               :class="{ selected: isGoalSelected(goal.id) }"
               @click="toggleGoalSelection(goal.id)"
             >
-              <span class="rec-checkbox">{{ isGoalSelected(goal.id) ? '✅' : '⬜' }}</span>
-              <span class="rec-sphere">{{ getSphereName(goal.sphereId) }}</span>
+              <span class="rec-checkbox">
+                <CheckSquare v-if="isGoalSelected(goal.id)" :size="18" :stroke-width="2" />
+                <Square v-else :size="18" :stroke-width="2" />
+              </span>
+              <span class="rec-sphere" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
+                <component :is="getSphereIcon(goal.sphereId)" :size="14" :stroke-width="2" />
+                {{ getSphereNameOnly(goal.sphereId) }}
+              </span>
               <span class="rec-text">{{ goal.text }}</span>
-              <span class="rec-badge">⚠️ Сфера роста</span>
+              <span class="rec-badge"><AlertTriangle :size="12" :stroke-width="2" /> Сфера роста</span>
             </div>
           </div>
         </div>
 
         <div class="select-goals-section card">
-          <h3>📋 Ключевые цели</h3>
+          <h3><ClipboardList :size="18" :stroke-width="2" class="header-icon primary" /> Ключевые цели</h3>
           <p class="select-hint">Отметь от 1 до 3 целей, над которыми будешь работать в ближайшее время</p>
           
           <div class="selectable-goals-list">
@@ -766,13 +772,16 @@
               @click="toggleGoalSelection(goal.id)"
             >
               <div class="goal-checkbox">
-                <span v-if="isGoalSelected(goal.id)">✅</span>
-                <span v-else>⬜</span>
+                <CheckSquare v-if="isGoalSelected(goal.id)" :size="20" :stroke-width="2" class="checkbox-checked" />
+                <Square v-else :size="20" :stroke-width="2" class="checkbox-unchecked" />
               </div>
               <div class="goal-content">
                 <div class="goal-header-row">
-                  <span class="sphere-badge">{{ getSphereName(goal.sphereId) }}</span>
-                  <span v-if="isWeakSphere(goal.sphereId)" class="weak-indicator">⚠️</span>
+                  <span class="sphere-badge" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
+                    <component :is="getSphereIcon(goal.sphereId)" :size="14" :stroke-width="2" />
+                    {{ getSphereNameOnly(goal.sphereId) }}
+                  </span>
+                  <span v-if="isWeakSphere(goal.sphereId)" class="weak-indicator"><AlertTriangle :size="14" :stroke-width="2" /></span>
                 </div>
                 <span class="goal-text">{{ goal.text }}</span>
                 <span class="goal-why" v-if="goal.whyImportant">{{ goal.whyImportant }}</span>
@@ -787,24 +796,24 @@
 
         <!-- Preview of what happens next -->
         <div class="next-steps-preview card" v-if="selectedGoalsCount > 0">
-          <h3>📋 Что будет дальше</h3>
+          <h3><ListChecks :size="18" :stroke-width="2" class="header-icon primary" /> Что будет дальше</h3>
           <div class="preview-content">
             <div class="preview-step">
-              <span class="preview-icon">1️⃣</span>
+              <span class="preview-icon step-1">1</span>
               <div>
                 <strong>Цели перейдут в Декомпозицию</strong>
                 <p>{{ selectedGoalsCount }} {{ selectedGoalsCount === 1 ? 'цель будет добавлена' : 'цели будут добавлены' }} в раздел "Декомпозиция"</p>
               </div>
             </div>
             <div class="preview-step">
-              <span class="preview-icon">2️⃣</span>
+              <span class="preview-icon step-2">2</span>
               <div>
                 <strong>Разбейте на шаги</strong>
                 <p>Вы сможете создать пошаговый план достижения каждой цели</p>
               </div>
             </div>
             <div class="preview-step">
-              <span class="preview-icon">3️⃣</span>
+              <span class="preview-icon step-3">3</span>
               <div>
                 <strong>Отслеживайте прогресс</strong>
                 <p>Ежедневно отмечайте выполненные шаги и двигайтесь к результату</p>
@@ -822,7 +831,7 @@
             @click="completeGoalsBankHandler"
             :disabled="selectedGoalsCount < 1"
           >
-            ✅ Завершить и сохранить
+            <CheckCircle :size="16" :stroke-width="2" /> Завершить и сохранить
           </button>
         </div>
       </div>
@@ -894,7 +903,12 @@ import {
   UserX,
   Target,
   Clock,
-  MessageSquare
+  MessageSquare,
+  ClipboardList,
+  Square,
+  CheckSquare,
+  ArrowRight,
+  ListChecks
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -3349,15 +3363,29 @@ function getStatusLabel(status) {
 }
 
 .rec-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  color: var(--text-secondary);
+}
+
+.recommended-goal.selected .rec-checkbox {
+  color: var(--primary-color);
 }
 
 .rec-sphere {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
   font-size: 0.75rem;
-  padding: 0.2rem 0.5rem;
-  background: var(--bg-tertiary);
+  padding: 0.25rem 0.5rem;
+  background: white;
+  border: 1.5px solid var(--sphere-color, var(--border-color));
   border-radius: var(--radius-sm);
   flex-shrink: 0;
+  color: var(--sphere-color, var(--text-secondary));
+  font-weight: 500;
 }
 
 .rec-text {
@@ -3366,9 +3394,12 @@ function getStatusLabel(status) {
 }
 
 .rec-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   font-size: 0.7rem;
-  padding: 0.2rem 0.5rem;
-  background: rgba(245, 158, 11, 0.2);
+  padding: 0.25rem 0.5rem;
+  background: rgba(245, 158, 11, 0.15);
   color: var(--warning-color);
   border-radius: var(--radius-sm);
   font-weight: 500;
@@ -3382,7 +3413,9 @@ function getStatusLabel(status) {
 }
 
 .weak-indicator {
-  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  color: var(--warning-color);
 }
 
 .selectable-goal-item.weak-sphere {
@@ -3414,8 +3447,28 @@ function getStatusLabel(status) {
 }
 
 .preview-icon {
-  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 0.875rem;
+  font-weight: 600;
   flex-shrink: 0;
+  color: white;
+}
+
+.preview-icon.step-1 {
+  background: var(--primary-color);
+}
+
+.preview-icon.step-2 {
+  background: #8b5cf6;
+}
+
+.preview-icon.step-3 {
+  background: var(--success-color);
 }
 
 .preview-step strong {
@@ -3754,6 +3807,14 @@ function getStatusLabel(status) {
   color: var(--success-color);
 }
 
+.header-icon.accent {
+  color: #f59e0b;
+}
+
+.header-icon.primary {
+  color: var(--primary-color);
+}
+
 .three-whys-instruction {
   margin-bottom: 2rem;
 }
@@ -3801,12 +3862,17 @@ function getStatusLabel(status) {
 }
 
 .sphere-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
   padding: 0.25rem 0.75rem;
-  background: var(--bg-tertiary);
+  background: white;
+  border: 1.5px solid var(--sphere-color, var(--border-color));
   border-radius: var(--radius-sm);
   font-size: 0.75rem;
   margin-bottom: 0.5rem;
+  color: var(--sphere-color, var(--text-secondary));
+  font-weight: 500;
 }
 
 .goal-info h4 {
@@ -4421,9 +4487,17 @@ function getStatusLabel(status) {
 }
 
 .goal-checkbox {
-  font-size: 1.5rem;
   display: flex;
   align-items: center;
+  justify-content: center;
+}
+
+.goal-checkbox .checkbox-unchecked {
+  color: var(--text-secondary);
+}
+
+.goal-checkbox .checkbox-checked {
+  color: var(--success-color);
 }
 
 .selectable-goal-item .goal-content {
