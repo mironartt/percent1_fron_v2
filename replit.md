@@ -26,6 +26,23 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite with a pr
 ### System Design Choices
 The application uses a modular structure with dedicated components, services, views, router, and stores. State management is handled by Pinia, ensuring data persistence and reactivity. Authentication is cookie-based with CSRF protection. The application prioritizes user guidance and visual feedback throughout the various modules.
 
+## Recent Changes (27 Nov 2025)
+
+### WheelOfLife Component
+- Redesigned to match reference image with curved text labels using SVG `<textPath>`
+- Labels positioned in outer ring (between grid and wheel boundary)
+- Auto-flip text for bottom sectors for left-to-right readability
+- Increased font size to 14px with letter-spacing: 2px
+
+### Reflection Accordion (SSP Module)
+- Replaced emoji icons with Lucide icons (Wallet, Palette, Users, Heart, Briefcase, HeartHandshake)
+- Added color-coded left border matching wheel colors for each sphere
+- Neutral score badge styling (gray background instead of green)
+- ChevronDown icon replacing text arrow
+- Hover effects with background and shadow transitions
+- Icon wrapper with semi-transparent color-matched background
+- Applied consistent design to both Summary and Step 3 (Рефлексия) accordions
+
 ## External Dependencies
 - **Django REST API Backend**: Provides authentication, user data, onboarding, and goal management services.
 - **Lucide Vue Next**: Used for minimalist line icons across the UI.
