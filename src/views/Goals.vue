@@ -610,6 +610,10 @@
 import { ref, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { 
+  Bot, User, Sparkles, Landmark, Edit2, Trash2, RotateCcw,
+  Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target
+} from 'lucide-vue-next'
 
 const router = useRouter()
 const store = useAppStore()
@@ -974,12 +978,36 @@ function getCompletedSteps(goal) {
 
 function getSphereName(sphereId) {
   const sphere = lifeSpheres.value.find(s => s.id === sphereId)
-  return sphere ? `${sphere.icon} ${sphere.name}` : 'Не указана'
+  return sphere ? sphere.name : 'Не указана'
 }
 
 function getSphereIcon(sphereId) {
   const sphere = lifeSpheres.value.find(s => s.id === sphereId)
   return sphere ? sphere.icon : '🎯'
+}
+
+function getSphereIconComponent(sphereId) {
+  const iconMap = {
+    'wealth': Wallet,
+    'hobbies': Palette,
+    'friendship': Users,
+    'health': Heart,
+    'career': Briefcase,
+    'love': HeartHandshake
+  }
+  return iconMap[sphereId] || Target
+}
+
+function getSphereColor(sphereId) {
+  const colorMap = {
+    'wealth': '#e63946',
+    'hobbies': '#f4a261',
+    'friendship': '#e9c46a',
+    'health': '#2a9d8f',
+    'career': '#264653',
+    'love': '#9b5de5'
+  }
+  return colorMap[sphereId] || '#6366f1'
 }
 
 function getStatusLabel(status) {
