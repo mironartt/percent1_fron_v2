@@ -45,30 +45,26 @@
     <!-- Summary State - After Completion -->
     <div v-else-if="showSummary" class="summary-section">
       <header class="section-header">
-        <h1>&#x1F3E6; Банк целей</h1>
+        <h1>Банк целей</h1>
       </header>
 
       <div class="summary-grid">
         <div class="summary-card card">
-          <div class="summary-icon">💡</div>
           <div class="summary-value">{{ rawIdeas.length }}</div>
           <div class="summary-label">Идей в банке</div>
         </div>
 
         <div class="summary-card card">
-          <div class="summary-icon">✅</div>
           <div class="summary-value">{{ validatedCount }}</div>
           <div class="summary-label">Истинных целей</div>
         </div>
 
         <div class="summary-card card">
-          <div class="summary-icon">❌</div>
           <div class="summary-value">{{ rejectedCount }}</div>
           <div class="summary-label">Ложных целей</div>
         </div>
 
         <div class="summary-card card">
-          <div class="summary-icon">🎯</div>
           <div class="summary-value">{{ transferredGoalsCount }}</div>
           <div class="summary-label">Целей в работе</div>
         </div>
@@ -77,7 +73,7 @@
       <!-- Единая таблица истинных целей -->
       <div class="goals-table-section card" v-if="validatedGoals.length > 0">
         <div class="table-header">
-          <h3>&#x2705; Банк идей и целей</h3>
+          <h3>Банк идей и целей</h3>
           <p class="section-hint">Ваши истинные цели, прошедшие проверку</p>
         </div>
         
@@ -109,53 +105,99 @@
             ✕ Сбросить
           </button>
         </div>
-        
+
         <div class="goals-table-wrapper">
           <table class="goals-table">
             <thead>
               <tr>
+                <th class="col-checkbox">
+                  <input 
+                    type="checkbox" 
+                    :checked="isAllBankGoalsSelected"
+                    :indeterminate="isSomeBankGoalsSelected && !isAllBankGoalsSelected"
+                    @change="toggleAllBankGoals"
+                    class="table-checkbox"
+                  />
+                </th>
                 <th class="col-status">Статус</th>
                 <th class="col-goal">Цель / Идея</th>
                 <th class="col-why">Почему для меня это важно?</th>
+                <th class="col-actions">Действия</th>
               </tr>
             </thead>
             <tbody>
               <tr 
                 v-for="goal in filteredValidatedGoals" 
                 :key="goal.id"
-                :class="{ 'in-work': isGoalTransferred(goal.id) }"
+                :class="{ 
+                  'in-work': isGoalTransferred(goal.id),
+                  'row-selected': isBankGoalSelected(goal.id)
+                }"
               >
+                <td class="col-checkbox">
+                  <input 
+                    type="checkbox" 
+                    :checked="isBankGoalSelected(goal.id)"
+                    @change="toggleBankGoalSelection(goal.id)"
+                    class="table-checkbox"
+                  />
+                </td>
                 <td class="col-status">
-                  <span
-                    v-if="isGoalCompleted(goal.id)" 
-                    class="status-badge completed"
-                  >
-                    <span class="status-icon">✓</span> Завершена
+                  <span v-if="isGoalCompleted(goal.id)" class="status-badge completed">
+                    Завершена
                   </span>
-                  <span 
-                    v-else-if="isGoalTransferred(goal.id)" 
-                    class="status-badge in-work"
-                  >
-                    <span class="status-icon">✓</span> В работе
+                  <span v-else-if="isGoalTransferred(goal.id)" class="status-badge in-work">
+                    В работе
                   </span>
-                  <button 
-                    v-else 
-                    class="btn btn-sm btn-action take-to-work"
-                    @click.stop="takeGoalToWork(goal)"
-                  >
-                    ➕ Взять в работу
-                  </button>
+                  <span v-else class="status-badge available">
+                    Доступна
+                  </span>
                 </td>
                 <td class="col-goal">
                   <div class="goal-cell">
-                    <span class="goal-sphere-badge">{{ getSphereName(goal.sphereId) }}</span>
-                    <span v-if="isWeakSphere(goal.sphereId)" class="weak-sphere-indicator" title="Проседающая сфера">⚠️</span>
                     <span class="goal-text">{{ goal.text }}</span>
+                    <span class="goal-sphere-badge">{{ getSphereName(goal.sphereId) }}<span v-if="isWeakSphere(goal.sphereId)" class="weak-sphere-indicator" title="Проседающая сфера"> ⚠️</span></span>
                   </div>
                 </td>
                 <td class="col-why">
                   <div class="why-cell">
                     {{ getWhyImportant(goal) }}
+                  </div>
+                </td>
+                <td class="col-actions">
+                  <div class="actions-cell">
+                    <button 
+                      v-if="!isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
+                      class="btn-icon btn-icon-primary"
+                      @click.stop="takeGoalToWork(goal)"
+                      title="Взять в работу"
+                    >
+                      <span class="icon-plus">+</span>
+                    </button>
+                    <button 
+                      v-if="isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
+                      class="btn-icon btn-icon-success"
+                      @click.stop="completeGoalFromBank(goal)"
+                      title="Завершить цель"
+                    >
+                      <span class="icon-check">✓</span>
+                    </button>
+                    <button 
+                      v-if="isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
+                      class="btn-icon btn-icon-danger"
+                      @click.stop="removeFromWorkBySourceId(goal.id)"
+                      title="Убрать из работы"
+                    >
+                      <span class="icon-remove">✕</span>
+                    </button>
+                    <button 
+                      v-if="isGoalCompleted(goal.id)"
+                      class="btn-icon btn-icon-secondary"
+                      @click.stop="returnToWork(goal.id)"
+                      title="Вернуть в работу"
+                    >
+                      <span class="icon-return">↩</span>
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -191,7 +233,7 @@
       </div>
 
       <div class="key-goals-summary card" v-if="transferredGoals.length > 0">
-        <h3>&#x1F3AF; Цели в работе</h3>
+        <h3>Цели в работе</h3>
         <div class="key-goals-list">
           <div v-for="goal in transferredGoals" :key="goal.id" class="key-goal-item">
             <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
@@ -281,7 +323,7 @@
 
         <div class="goals-table-container">
           <div class="table-header-actions">
-            <h3 class="table-title">🏦 Банк идей и целей на жизнь</h3>
+            <h3 class="table-title">Банк идей и целей на жизнь</h3>
             <button class="btn btn-secondary btn-sm" @click="toggleIdeasHelper">
               💡 Нужны идеи?
             </button>
@@ -735,6 +777,40 @@
     </div>
 
     </div>
+
+    <!-- Floating Action Bar -->
+    <Transition name="slide-up">
+      <div v-if="selectedBankGoals.length > 0" class="floating-action-bar">
+        <div class="fab-content">
+          <div class="fab-info">
+            <span class="fab-count">Выбрано: {{ selectedBankGoals.length }}</span>
+          </div>
+          <div class="fab-buttons">
+            <button 
+              v-if="canBulkTakeToWork" 
+              class="btn btn-primary"
+              @click="bulkTakeToWork"
+            >
+              ➕ Взять в работу
+            </button>
+            <button 
+              v-if="canBulkComplete" 
+              class="btn btn-success"
+              @click="bulkCompleteGoals"
+            >
+              ✓ Завершить
+            </button>
+            <button 
+              class="btn btn-ghost fab-close"
+              @click="clearBankSelection"
+              title="Снять выделение"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -760,6 +836,7 @@ const lessonStarted = ref(false)
 const addingNewGoal = ref(false)
 const filterSphere = ref('')
 const filterStatus = ref('')
+const selectedBankGoals = ref([])
 
 const showEmptyState = computed(() => {
   return !completedAt.value && rawIdeas.value.length === 0 && !lessonStarted.value && !addingNewGoal.value
@@ -770,7 +847,7 @@ const showSummary = computed(() => {
 })
 
 const transferredGoals = computed(() => {
-  return allGoals.value.filter(g => g.source === 'goals-bank')
+  return allGoals.value.filter(g => g.source === 'goals-bank' && g.status !== 'completed')
 })
 
 const transferredGoalsCount = computed(() => transferredGoals.value.length)
@@ -842,11 +919,11 @@ function toggleSummaryGoalExpand(goalId) {
 }
 
 function isGoalTransferred(goalId) {
-  return transferredGoals.value.some(g => g.sourceId === goalId)
+  return allGoals.value.some(g => g.sourceId === goalId && g.source === 'goals-bank')
 }
 
 function getTransferredGoalStatus(goalId) {
-  const goal = transferredGoals.value.find(g => g.sourceId === goalId)
+  const goal = allGoals.value.find(g => g.sourceId === goalId && g.source === 'goals-bank')
   return goal ? goal.status : null
 }
 
@@ -882,6 +959,82 @@ const filteredValidatedGoals = computed(() => {
 function clearFilters() {
   filterSphere.value = ''
   filterStatus.value = ''
+}
+
+const isBankGoalSelected = (goalId) => selectedBankGoals.value.includes(goalId)
+
+const isAllBankGoalsSelected = computed(() => {
+  if (filteredValidatedGoals.value.length === 0) return false
+  return filteredValidatedGoals.value.every(g => selectedBankGoals.value.includes(g.id))
+})
+
+const isSomeBankGoalsSelected = computed(() => selectedBankGoals.value.length > 0)
+
+function toggleBankGoalSelection(goalId) {
+  const index = selectedBankGoals.value.indexOf(goalId)
+  if (index === -1) {
+    selectedBankGoals.value.push(goalId)
+  } else {
+    selectedBankGoals.value.splice(index, 1)
+  }
+}
+
+function toggleAllBankGoals() {
+  if (isAllBankGoalsSelected.value) {
+    selectedBankGoals.value = []
+  } else {
+    selectedBankGoals.value = filteredValidatedGoals.value.map(g => g.id)
+  }
+}
+
+function clearBankSelection() {
+  selectedBankGoals.value = []
+}
+
+const canBulkTakeToWork = computed(() => {
+  return selectedBankGoals.value.some(id => {
+    const goal = validatedGoals.value.find(g => g.id === id)
+    return goal && !isGoalTransferred(id) && !isGoalCompleted(id)
+  })
+})
+
+const canBulkComplete = computed(() => {
+  return selectedBankGoals.value.some(id => {
+    return isGoalTransferred(id) && !isGoalCompleted(id)
+  })
+})
+
+function bulkTakeToWork() {
+  const goalsToTake = selectedBankGoals.value
+    .map(id => validatedGoals.value.find(g => g.id === id))
+    .filter(goal => goal && !isGoalTransferred(goal.id) && !isGoalCompleted(goal.id))
+  
+  if (goalsToTake.length === 0) return
+  
+  goalsToTake.forEach(goal => takeGoalToWork(goal))
+  clearBankSelection()
+}
+
+function bulkCompleteGoals() {
+  const goalsToComplete = selectedBankGoals.value
+    .filter(id => isGoalTransferred(id) && !isGoalCompleted(id))
+  
+  if (goalsToComplete.length === 0) return
+  
+  if (confirm(`Завершить ${goalsToComplete.length} ${goalsToComplete.length === 1 ? 'цель' : 'целей'}?`)) {
+    goalsToComplete.forEach(sourceId => {
+      const goal = validatedGoals.value.find(g => g.id === sourceId)
+      if (goal) completeGoalFromBank(goal)
+    })
+    clearBankSelection()
+  }
+}
+
+function removeFromWorkBySourceId(sourceId) {
+  const goal = store.goals.find(g => g.sourceId === sourceId)
+  if (goal) {
+    removeFromWork(goal.id)
+  }
 }
 
 const sphereDistribution = computed(() => {
@@ -1274,6 +1427,31 @@ function takeGoalToWork(goal) {
     progress: 0
   }
   store.addGoal(goalData)
+}
+
+function completeGoalFromBank(goal) {
+  const transferredGoal = store.goals.find(g => g.sourceId === goal.id)
+  if (!transferredGoal) return
+  
+  if (confirm(`Завершить цель "${transferredGoal.title}"?`)) {
+    store.updateGoal(transferredGoal.id, { 
+      status: 'completed',
+      progress: 100,
+      completedAt: new Date().toISOString()
+    })
+  }
+}
+
+function returnToWork(sourceId) {
+  const goal = store.goals.find(g => g.sourceId === sourceId && g.source === 'goals-bank')
+  if (!goal) return
+  
+  if (confirm(`Вернуть цель "${goal.title}" в работу?`)) {
+    store.updateGoal(goal.id, { 
+      status: 'active',
+      completedAt: null
+    })
+  }
 }
 
 function removeFromWork(goalId) {
@@ -1725,6 +1903,7 @@ function getStatusLabel(status) {
 .col-status {
   width: 100px;
   text-align: center;
+  vertical-align: middle;
 }
 
 .col-goal {
@@ -1811,12 +1990,225 @@ function getStatusLabel(status) {
   color: white;
   box-shadow: 0 1px 4px rgba(16, 185, 129, 0.25);
   white-space: nowrap;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
 }
 
 .status-badge.pending {
   background: var(--bg-tertiary);
   color: var(--text-secondary);
   white-space: nowrap;
+}
+
+.status-badge.available {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+}
+
+/* Table checkbox column */
+.col-checkbox {
+  width: 40px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.table-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--primary-color);
+}
+
+/* Actions column - compact */
+.col-actions {
+  width: 90px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.25rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border-color);
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.btn-icon-primary {
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+.btn-icon-primary:hover {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+  transform: scale(1.05);
+}
+
+.btn-icon-success {
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+.btn-icon-success:hover {
+  background: #10b981;
+  border-color: #10b981;
+  color: white;
+  transform: scale(1.05);
+}
+
+.btn-icon-danger {
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+.btn-icon-danger:hover {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: white;
+  transform: scale(1.05);
+}
+
+.btn-icon-secondary {
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+.btn-icon-secondary:hover {
+  background: #6b7280;
+  border-color: #6b7280;
+  color: white;
+  transform: scale(1.05);
+}
+
+.action-done {
+  color: var(--text-tertiary);
+  font-size: 1rem;
+}
+
+/* Row selection highlight */
+.goals-table tbody tr.row-selected {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+/* Floating Action Bar */
+.floating-action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 1rem;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0));
+  background: linear-gradient(to top, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.95) 100%);
+  border-top: 1px solid var(--border-color);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+}
+
+:root.dark .floating-action-bar {
+  background: linear-gradient(to top, rgba(30,30,30,0.98) 0%, rgba(30,30,30,0.95) 100%);
+}
+
+.fab-content {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.fab-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.fab-count {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--primary-color);
+}
+
+.fab-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.fab-close {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+}
+
+.fab-close:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+/* Slide-up transition */
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(100%);
+  opacity: 0;
+}
+
+.slide-up-enter-to,
+.slide-up-leave-from {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.btn-success {
+  background: #10b981;
+  color: white;
+  border: none;
+}
+
+.btn-success:hover {
+  background: #059669;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-ghost:hover {
+  background: var(--bg-tertiary);
 }
 
 .btn-action.take-to-work {
@@ -1833,6 +2225,30 @@ function getStatusLabel(status) {
 
 .btn-action.take-to-work:hover {
   background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.status-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.complete-goal-btn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.complete-goal-btn:hover {
+  background: #059669;
   transform: translateY(-1px);
 }
 

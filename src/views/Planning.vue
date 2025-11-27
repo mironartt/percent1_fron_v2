@@ -155,7 +155,7 @@
         <div class="step-layout">
           <div class="step-main">
             <header class="section-header">
-              <h1>📋 Планирование недели</h1>
+              <h1>Планирование недели</h1>
               <p class="subtitle">
                 Распределите шаги из ваших целей по дням недели
               </p>
@@ -168,26 +168,91 @@
               </div>
             </div>
 
-            <!-- Goals with steps to schedule -->
+            <!-- Weekly Calendar View (moved above goals) -->
+            <div class="week-calendar card">
+              <h3>📅 Ваш план на неделю <span class="drag-hint" v-if="draggedStep">(отпустите на нужный день)</span></h3>
+              <div class="calendar-grid">
+                <div 
+                  v-for="day in weekDays" 
+                  :key="day.date"
+                  class="calendar-day"
+                  :class="{ 
+                    today: isToday(day.date), 
+                    'has-tasks': getTasksForDay(day.date).length > 0,
+                    'drag-over-day': dragOverDay === day.date 
+                  }"
+                  @dragover.prevent="handleDayDragOver($event, day.date)"
+                  @dragleave="handleDayDragLeave"
+                  @drop="handleDayDrop($event, day.date)"
+                >
+                  <div class="day-header">
+                    <span class="day-name">{{ day.shortName }}</span>
+                    <span class="day-date">{{ day.dayNum }}</span>
+                    <span v-if="getTotalTimeForDay(day.date)" class="day-time-total">{{ getTotalTimeForDay(day.date) }}</span>
+                  </div>
+                  <div class="day-tasks">
+                    <div 
+                      v-for="task in getTasksForDay(day.date)" 
+                      :key="task.id"
+                      class="scheduled-task"
+                      :class="'priority-' + (task.priority || 'optional')"
+                    >
+                      <span class="task-title">{{ task.stepTitle }}</span>
+                      <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
+                    </div>
+                    <div v-if="getTasksForDay(day.date).length === 0" class="no-tasks drop-hint">
+                      {{ draggedStep ? '📥 Сюда' : '—' }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Goals with steps to schedule (accordion) -->
             <div class="goals-to-schedule">
-              <h3>🎯 Ваши цели и шаги</h3>
+              <div class="goals-header">
+                <h3>🎯 Ваши цели и шаги</h3>
+                <button 
+                  v-if="goalsWithSteps.length > 0"
+                  class="btn btn-sm btn-outline toggle-all-btn"
+                  @click="toggleAllGoals"
+                >
+                  {{ allGoalsExpanded ? 'Свернуть все' : 'Развернуть все' }}
+                </button>
+              </div>
               <p class="hint" v-if="goalsWithSteps.length === 0">
                 У вас пока нет целей с шагами. Сначала добавьте цели в модуле Декомпозиция.
               </p>
               
-              <div v-for="goal in goalsWithSteps" :key="goal.id" class="goal-schedule-card card">
-                <div class="goal-header">
-                  <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
-                  <h4>{{ goal.title }}</h4>
+              <div v-for="goal in goalsWithSteps" :key="goal.id" class="goal-schedule-card card" :class="{ collapsed: !expandedGoals[goal.id] }">
+                <div class="goal-header-accordion" @click="toggleGoal(goal.id)">
+                  <div class="goal-header-left">
+                    <span class="expand-icon">{{ expandedGoals[goal.id] ? '▼' : '▶' }}</span>
+                    <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
+                    <h4>{{ goal.title }}</h4>
+                  </div>
+                  <div class="goal-header-right">
+                    <span class="steps-count">{{ getUncompletedSteps(goal).length }} шагов</span>
+                    <span class="scheduled-count" v-if="getScheduledStepsCount(goal) > 0">
+                      ✓ {{ getScheduledStepsCount(goal) }} запланировано
+                    </span>
+                  </div>
                 </div>
-                <div class="steps-to-schedule">
+                <div class="steps-to-schedule" v-show="expandedGoals[goal.id]">
                   <div 
                     v-for="step in getUncompletedSteps(goal)" 
                     :key="step.id"
                     class="step-schedule-item"
-                    :class="{ scheduled: isStepScheduled(goal.id, step.id) }"
+                    :class="{ 
+                      scheduled: isStepScheduled(goal.id, step.id),
+                      dragging: draggedStep && draggedStep.stepId === step.id 
+                    }"
+                    draggable="true"
+                    @dragstart="handleStepDragStart($event, goal, step)"
+                    @dragend="handleStepDragEnd"
                   >
                     <div class="step-info">
+                      <span class="drag-handle-lesson">⠿</span>
                       <span class="step-title">{{ step.title }}</span>
                     </div>
                     <div class="step-schedule-controls">
@@ -225,9 +290,10 @@
                           title="Приоритет"
                         >
                           <option value="">🎯 Приоритет</option>
-                          <option value="high">Высокий</option>
-                          <option value="medium">Средний</option>
-                          <option value="low">Низкий</option>
+                          <option value="critical">🔴 Важно</option>
+                          <option value="desirable">🟠 Желательно</option>
+                          <option value="attention">🔵 В поле внимания</option>
+                          <option value="optional">⚪ Опционально</option>
                         </select>
                         <button 
                           class="btn-icon remove"
@@ -237,36 +303,6 @@
                           ✕
                         </button>
                       </template>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Weekly Calendar View -->
-            <div class="week-calendar card">
-              <h3>📅 Ваш план на неделю</h3>
-              <div class="calendar-grid">
-                <div 
-                  v-for="day in weekDays" 
-                  :key="day.date"
-                  class="calendar-day"
-                  :class="{ today: isToday(day.date), 'has-tasks': getTasksForDay(day.date).length > 0 }"
-                >
-                  <div class="day-header">
-                    <span class="day-name">{{ day.shortName }}</span>
-                    <span class="day-date">{{ day.dayNum }}</span>
-                  </div>
-                  <div class="day-tasks">
-                    <div 
-                      v-for="task in getTasksForDay(day.date)" 
-                      :key="task.id"
-                      class="scheduled-task"
-                    >
-                      <span class="task-title">{{ task.stepTitle }}</span>
-                    </div>
-                    <div v-if="getTasksForDay(day.date).length === 0" class="no-tasks">
-                      —
                     </div>
                   </div>
                 </div>
@@ -315,17 +351,103 @@
               </p>
             </header>
 
-            <div class="telegram-setup card">
-              <div class="telegram-icon">📱</div>
-              <h3>Telegram-бот (скоро)</h3>
-              <p>
-                Интеграция с Telegram находится в разработке. 
-                Скоро вы сможете получать ежедневные напоминания о запланированных задачах 
-                и отмечать их выполнение прямо в мессенджере.
-              </p>
-              <div class="coming-soon-badge">
-                🚧 В разработке
+            <!-- Connected State -->
+            <div v-if="telegramConnected" class="telegram-setup card connected">
+              <div class="telegram-header">
+                <div class="telegram-icon connected">✅</div>
+                <div class="telegram-info">
+                  <h3>Telegram подключён</h3>
+                  <p class="telegram-username">@{{ telegramUsername }}</p>
+                </div>
               </div>
+              
+              <div class="notification-settings">
+                <h4>Настройки уведомлений</h4>
+                
+                <label class="toggle-setting">
+                  <input 
+                    type="checkbox" 
+                    :checked="notificationSettings.morningPlan"
+                    @change="updateNotification('morningPlan', $event.target.checked)"
+                  />
+                  <span class="toggle-label">
+                    <span class="toggle-title">🌅 Утренний план</span>
+                    <span class="toggle-desc">Задачи на сегодня в {{ notificationSettings.morningTime }}</span>
+                  </span>
+                </label>
+                
+                <label class="toggle-setting">
+                  <input 
+                    type="checkbox" 
+                    :checked="notificationSettings.eveningReview"
+                    @change="updateNotification('eveningReview', $event.target.checked)"
+                  />
+                  <span class="toggle-label">
+                    <span class="toggle-title">🌙 Вечерний обзор</span>
+                    <span class="toggle-desc">Итоги дня в {{ notificationSettings.eveningTime }}</span>
+                  </span>
+                </label>
+                
+                <label class="toggle-setting">
+                  <input 
+                    type="checkbox" 
+                    :checked="notificationSettings.weekendPlanning"
+                    @change="updateNotification('weekendPlanning', $event.target.checked)"
+                  />
+                  <span class="toggle-label">
+                    <span class="toggle-title">📅 Планирование выходных</span>
+                    <span class="toggle-desc">Пятница — обзор недели, воскресенье — план на неделю</span>
+                  </span>
+                </label>
+              </div>
+              
+              <button class="btn btn-danger-outline btn-sm" @click="handleDisconnectTelegram">
+                Отключить Telegram
+              </button>
+            </div>
+
+            <!-- Not Connected State -->
+            <div v-else class="telegram-setup card">
+              <div class="telegram-icon">📱</div>
+              <h3>Подключите Telegram</h3>
+              <p>
+                Получайте ежедневные напоминания о задачах и отмечайте выполнение прямо в мессенджере.
+              </p>
+              
+              <div class="connection-steps">
+                <div class="connection-step">
+                  <span class="step-number">1</span>
+                  <span class="step-text">Откройте бота <a href="https://t.me/OnePercentLifeBot" target="_blank">@OnePercentLifeBot</a></span>
+                </div>
+                <div class="connection-step">
+                  <span class="step-number">2</span>
+                  <span class="step-text">Нажмите "Начать" и следуйте инструкциям</span>
+                </div>
+                <div class="connection-step">
+                  <span class="step-number">3</span>
+                  <span class="step-text">Введите код подключения ниже</span>
+                </div>
+              </div>
+              
+              <div class="connection-form">
+                <input 
+                  type="text" 
+                  v-model="telegramCode"
+                  placeholder="Введите код из бота"
+                  class="input-lg"
+                />
+                <button 
+                  class="btn btn-primary" 
+                  @click="handleConnectTelegram"
+                  :disabled="!telegramCode.trim()"
+                >
+                  Подключить
+                </button>
+              </div>
+              
+              <p class="skip-note">
+                Можно пропустить этот шаг и настроить позже в настройках.
+              </p>
             </div>
 
             <div class="plan-summary card">
@@ -342,15 +464,15 @@
               </div>
 
               <div class="daily-breakdown">
-                <div 
-                  v-for="day in weekDays" 
-                  :key="day.date"
-                  class="day-summary"
-                  v-if="getTasksForDay(day.date).length > 0"
-                >
-                  <span class="day-name">{{ day.label }}:</span>
-                  <span class="day-tasks-count">{{ getTasksForDay(day.date).length }} {{ pluralize(getTasksForDay(day.date).length, 'шаг', 'шага', 'шагов') }}</span>
-                </div>
+                <template v-for="day in weekDays" :key="day.date">
+                  <div 
+                    v-if="getTasksForDay(day.date).length > 0"
+                    class="day-summary"
+                  >
+                    <span class="day-name">{{ day.label }}:</span>
+                    <span class="day-tasks-count">{{ getTasksForDay(day.date).length }} {{ pluralize(getTasksForDay(day.date).length, 'шаг', 'шага', 'шагов') }}</span>
+                  </div>
+                </template>
               </div>
             </div>
 
@@ -386,82 +508,103 @@
         <div class="planner-main">
           <header class="section-header">
             <div class="header-row">
-              <h1>📅 Планирование недели</h1>
-              <button class="btn btn-secondary btn-sm" @click="restartLesson">
-                🔄 Пройти урок заново
+              <h1>Планирование недели</h1>
+            </div>
+            <div class="week-navigation">
+              <button class="btn btn-icon-nav" @click="prevWeek" title="Предыдущая неделя">
+                ←
+              </button>
+              <span class="week-range-text">{{ weekRangeText }}</span>
+              <button class="btn btn-icon-nav" @click="nextWeek" title="Следующая неделя">
+                →
+              </button>
+              <button 
+                v-if="!isCurrentWeek" 
+                class="btn btn-text-sm" 
+                @click="goToCurrentWeek"
+              >
+                Сегодня
               </button>
             </div>
-            <p class="subtitle">{{ weekRangeText }}</p>
           </header>
 
-          <!-- Goals with steps -->
-          <div class="goals-section">
-            <h3>🎯 Цели и шаги</h3>
-            <div v-if="goalsWithSteps.length === 0" class="empty-goals card">
-              <p>У вас пока нет целей с шагами.</p>
-              <button class="btn btn-primary" @click="goToDecomposition">
-                Перейти к декомпозиции
-              </button>
-            </div>
-
-            <div v-for="goal in goalsWithSteps" :key="goal.id" class="goal-card card">
-              <div class="goal-header">
-                <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
-                <h4>{{ goal.title }}</h4>
-                <span class="goal-progress">{{ goal.progress }}%</span>
-              </div>
-              <div class="steps-list">
-                <div 
-                  v-for="step in getUncompletedSteps(goal)" 
-                  :key="step.id"
-                  class="step-item"
-                  :class="{ scheduled: isStepScheduled(goal.id, step.id) }"
-                >
-                  <span class="step-title">{{ step.title }}</span>
-                  <div class="step-actions">
-                    <select 
-                      :value="getScheduledDate(goal.id, step.id)"
-                      @change="scheduleStep(goal.id, step, $event.target.value)"
-                      class="day-select-sm"
-                    >
-                      <option value="">—</option>
-                      <option 
-                        v-for="day in weekDays" 
-                        :key="day.date"
-                        :value="day.date"
-                      >
-                        {{ day.shortName }}
-                      </option>
-                    </select>
-                  </div>
+          <!-- Weekly Statistics -->
+          <div class="weekly-stats card">
+            <div class="stats-grid">
+              <div class="stat-box">
+                <div class="stat-content">
+                  <span class="stat-number">{{ weeklyCompletedTasks }}</span>
+                  <span class="stat-label">Выполнено</span>
                 </div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-content">
+                  <span class="stat-number">{{ weeklyTotalTasks }}</span>
+                  <span class="stat-label">Всего задач</span>
+                </div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-content">
+                  <span class="stat-number">{{ weeklyCompletionRate }}%</span>
+                  <span class="stat-label">Прогресс</span>
+                </div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-content">
+                  <span class="stat-number">{{ currentStreak }}</span>
+                  <span class="stat-label">Дней подряд</span>
+                </div>
+              </div>
+            </div>
+            <div class="progress-bar-container">
+              <div class="progress-bar-bg">
+                <div 
+                  class="progress-bar-fill" 
+                  :style="{ width: weeklyCompletionRate + '%' }"
+                ></div>
               </div>
             </div>
           </div>
 
-          <!-- Week Calendar -->
+          <!-- Week Calendar (moved above goals) -->
           <div class="week-calendar-full card">
-            <h3>📅 План на неделю</h3>
+            <h3>План на неделю <span class="drag-hint">Перетаскивайте задачи между днями</span></h3>
             <div class="calendar-grid-full">
               <div 
                 v-for="day in weekDays" 
                 :key="day.date"
                 class="calendar-day-full"
-                :class="{ today: isToday(day.date) }"
+                :class="{ 
+                  today: isToday(day.date),
+                  'drag-over': dragOverDay === day.date
+                }"
+                @dragover.prevent="handleDragOver(day.date)"
+                @dragleave="handleDragLeave"
+                @drop="handleDrop(day.date)"
               >
                 <div class="day-header-full">
-                  <span class="day-name">{{ day.label }}</span>
-                  <span class="tasks-count" v-if="getTasksForDay(day.date).length > 0">
-                    {{ getTasksForDay(day.date).length }}
-                  </span>
+                  <div class="day-header-left">
+                    <span class="day-name">{{ day.label }}</span>
+                    <span class="tasks-count" v-if="getTasksForDay(day.date).length > 0">
+                      {{ getTasksForDay(day.date).length }}
+                    </span>
+                  </div>
+                  <span v-if="getTotalTimeForDay(day.date)" class="day-time-total">{{ getTotalTimeForDay(day.date) }}</span>
                 </div>
                 <div class="day-tasks-full">
                   <div 
                     v-for="task in getTasksForDay(day.date)" 
                     :key="task.id"
                     class="task-card"
-                    :class="{ completed: task.completed }"
+                    :class="[
+                      { completed: task.completed, dragging: draggedTaskId === task.id },
+                      'priority-' + (task.priority || 'optional')
+                    ]"
+                    draggable="true"
+                    @dragstart="handleDragStart(task)"
+                    @dragend="handleDragEnd"
                   >
+                    <div class="drag-handle">⋮⋮</div>
                     <input 
                       type="checkbox"
                       :checked="task.completed"
@@ -472,6 +615,7 @@
                       <span class="task-title">{{ task.stepTitle }}</span>
                       <span class="task-goal">{{ task.goalTitle }}</span>
                     </div>
+                    <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
                     <button 
                       class="btn-icon remove-sm"
                       @click="removeTask(task.id)"
@@ -480,8 +624,103 @@
                       ✕
                     </button>
                   </div>
-                  <div v-if="getTasksForDay(day.date).length === 0" class="empty-day">
-                    Нет задач
+                  <div v-if="getTasksForDay(day.date).length === 0" class="empty-day drop-zone">
+                    Перетащите задачу сюда
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Goals with steps (accordion) -->
+          <div class="goals-section">
+            <div class="goals-header">
+              <h3>Цели и шаги</h3>
+              <button 
+                v-if="goalsWithSteps.length > 0"
+                class="btn btn-sm btn-outline toggle-all-btn"
+                @click="toggleAllGoals"
+              >
+                {{ allGoalsExpanded ? 'Свернуть все' : 'Развернуть все' }}
+              </button>
+            </div>
+            <div v-if="goalsWithSteps.length === 0" class="empty-goals card">
+              <p>У вас пока нет целей с шагами.</p>
+              <button class="btn btn-primary" @click="goToDecomposition">
+                Перейти к декомпозиции
+              </button>
+            </div>
+
+            <div v-for="goal in goalsWithSteps" :key="goal.id" class="goal-card card" :class="{ collapsed: !expandedGoals[goal.id] }">
+              <div class="goal-header-accordion" @click="toggleGoal(goal.id)">
+                <div class="goal-header-left">
+                  <span class="expand-icon">{{ expandedGoals[goal.id] ? '▼' : '▶' }}</span>
+                  <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
+                  <h4>{{ goal.title }}</h4>
+                </div>
+                <div class="goal-header-right">
+                  <span class="steps-count">{{ getUncompletedSteps(goal).length }} шагов</span>
+                  <span class="scheduled-count" v-if="getScheduledStepsCount(goal) > 0">
+                    ✓ {{ getScheduledStepsCount(goal) }} запланировано
+                  </span>
+                  <span class="goal-progress">{{ goal.progress || 0 }}%</span>
+                </div>
+              </div>
+              <div class="steps-list" v-show="expandedGoals[goal.id]">
+                <div 
+                  v-for="step in getUncompletedSteps(goal)" 
+                  :key="step.id"
+                  class="step-item"
+                  :class="{ 
+                    scheduled: isStepScheduled(goal.id, step.id),
+                    ['priority-' + getScheduledPriority(goal.id, step.id)]: isStepScheduled(goal.id, step.id),
+                    dragging: draggedStep && draggedStep.stepId === step.id
+                  }"
+                  draggable="true"
+                  @dragstart="handleStepDragStart($event, goal, step)"
+                  @dragend="handleStepDragEnd"
+                >
+                  <span class="step-title">{{ step.title }}</span>
+                  <div class="step-actions">
+                    <select 
+                      :value="getScheduledDate(goal.id, step.id)"
+                      @change="scheduleStep(goal.id, step, $event.target.value)"
+                      class="day-select-sm"
+                    >
+                      <option value="">День</option>
+                      <option 
+                        v-for="day in weekDays" 
+                        :key="day.date"
+                        :value="day.date"
+                      >
+                        {{ day.shortName }}
+                      </option>
+                    </select>
+                    <select 
+                      :value="getScheduledTimeEstimate(goal.id, step.id)"
+                      @change="updateScheduledStep(goal.id, step.id, 'timeEstimate', $event.target.value)"
+                      class="time-select-sm"
+                      title="Время"
+                    >
+                      <option value="">⏱</option>
+                      <option value="30min">30м</option>
+                      <option value="1h">1ч</option>
+                      <option value="2h">2ч</option>
+                      <option value="4h">4ч</option>
+                    </select>
+                    <select 
+                      :value="getScheduledPriority(goal.id, step.id)"
+                      @change="updateScheduledStep(goal.id, step.id, 'priority', $event.target.value)"
+                      class="priority-select-sm"
+                      :class="'priority-' + (getScheduledPriority(goal.id, step.id) || 'none')"
+                      title="Приоритет"
+                    >
+                      <option value="">—</option>
+                      <option value="critical">Критично</option>
+                      <option value="desirable">Важно</option>
+                      <option value="attention">Внимание</option>
+                      <option value="optional">Опционально</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -503,6 +742,13 @@
         </div>
       </div>
     </div>
+
+    <Transition name="toast">
+      <div v-if="showUndoToast" class="undo-toast">
+        <span>Задача удалена</span>
+        <button class="btn-undo" @click="undoDeleteTask">Отменить</button>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -511,6 +757,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import GuidancePanel from '../components/GuidancePanel.vue'
+import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { DEMO_PLANNING_MODE } from '../config/settings.js'
 
 const store = useAppStore()
 const router = useRouter()
@@ -518,17 +766,168 @@ const router = useRouter()
 const lessonSteps = ['Теория', 'Практика', 'Напоминания']
 
 const lessonStarted = computed(() => store.planningModule.lessonStarted)
-const lessonCompleted = computed(() => store.planningModule.lessonCompleted)
+const lessonCompleted = computed(() => store.planningModule.lessonCompleted || DEMO_PLANNING_MODE)
 const currentStep = computed(() => store.planningModule.currentStep)
 
+const weekOffset = ref(0)
+
 const showEmptyState = computed(() => {
+  if (DEMO_PLANNING_MODE) return false
   return !lessonStarted.value && !lessonCompleted.value
 })
 
+const telegramCode = ref('')
+const telegramConnected = computed(() => store.telegramSettings.connected)
+const telegramUsername = computed(() => store.telegramSettings.username)
+const notificationSettings = computed(() => store.telegramSettings.notifications)
+
+const draggedTaskId = ref(null)
+const draggedTask = ref(null)
+const dragOverDay = ref(null)
+const draggedStep = ref(null)
+const deletedTask = ref(null)
+const showUndoToast = ref(false)
+let undoTimeout = null
+
+function handleStepDragStart(event, goal, step) {
+  console.log('[Planning] DragStart - step:', step.title, 'goal:', goal.title)
+  draggedStep.value = {
+    goalId: goal.id,
+    stepId: step.id,
+    stepTitle: step.title,
+    goal: goal
+  }
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData('text/plain', step.id)
+}
+
+function handleStepDragEnd() {
+  draggedStep.value = null
+  dragOverDay.value = null
+}
+
+function handleDayDragOver(event, dayDate) {
+  event.preventDefault()
+  if (draggedStep.value) {
+    dragOverDay.value = dayDate
+  }
+}
+
+function handleDayDragLeave() {
+  dragOverDay.value = null
+}
+
+function handleDayDrop(event, dayDate) {
+  if (draggedStep.value) {
+    event.preventDefault()
+    console.log('[Planning] Drop step:', draggedStep.value.stepTitle, 'on day:', dayDate)
+    scheduleStep(draggedStep.value.goalId, { 
+      id: draggedStep.value.stepId, 
+      title: draggedStep.value.stepTitle 
+    }, dayDate)
+    handleStepDragEnd()
+  }
+}
+
+function handleConnectTelegram() {
+  if (!telegramCode.value.trim()) return
+  const code = telegramCode.value.trim()
+  const username = 'user_' + code.substring(0, 6)
+  store.connectTelegram(code, username)
+  telegramCode.value = ''
+}
+
+function handleDisconnectTelegram() {
+  store.disconnectTelegram()
+}
+
+function updateNotification(key, value) {
+  store.updateTelegramNotifications({ [key]: value })
+}
+
+function handleDragStart(task) {
+  draggedTaskId.value = task.id
+  draggedTask.value = task
+}
+
+function handleDragEnd() {
+  draggedTaskId.value = null
+  draggedTask.value = null
+  dragOverDay.value = null
+}
+
+function handleDragOver(dayDate) {
+  // Highlight day for both task and step dragging
+  if (draggedTask.value || draggedStep.value) {
+    dragOverDay.value = dayDate
+  }
+}
+
+function handleDragLeave() {
+  dragOverDay.value = null
+}
+
+function handleDrop(newDate) {
+  // Handle step drag from goals section
+  if (draggedStep.value) {
+    console.log('[Planning] Drop step:', draggedStep.value.stepTitle, 'on day:', newDate)
+    scheduleStep(draggedStep.value.goalId, { 
+      id: draggedStep.value.stepId, 
+      title: draggedStep.value.stepTitle 
+    }, newDate)
+    handleStepDragEnd()
+    return
+  }
+  
+  // Handle task drag between days
+  if (draggedTask.value && draggedTask.value.scheduledDate !== newDate) {
+    updateTaskDate(draggedTask.value.id, newDate)
+  }
+  handleDragEnd()
+}
+
+function updateTaskDate(taskId, newDate) {
+  const plan = currentPlan.value
+  if (!plan) return
+  
+  const task = plan.scheduledTasks.find(t => t.id === taskId)
+  if (task) {
+    task.scheduledDate = newDate
+    store.saveToLocalStorage()
+  }
+}
+
 const goals = computed(() => store.goals)
 const goalsWithSteps = computed(() => {
-  return goals.value.filter(g => g.status === 'active' && g.steps && g.steps.length > 0)
+  const filtered = goals.value.filter(g => g.status === 'active' && g.steps && g.steps.length > 0)
+  console.log('[Planning] goalsWithSteps:', filtered.length, 'goals with steps, all goals:', goals.value.length)
+  if (filtered.length > 0) {
+    filtered.forEach(g => console.log('[Planning] Goal:', g.title, 'steps:', g.steps?.length))
+  }
+  return filtered
 })
+
+const expandedGoals = ref({})
+
+function toggleGoal(goalId) {
+  expandedGoals.value[goalId] = !expandedGoals.value[goalId]
+}
+
+const allGoalsExpanded = computed(() => {
+  if (goalsWithSteps.value.length === 0) return false
+  return goalsWithSteps.value.every(g => expandedGoals.value[g.id])
+})
+
+function toggleAllGoals() {
+  const newState = !allGoalsExpanded.value
+  goalsWithSteps.value.forEach(g => {
+    expandedGoals.value[g.id] = newState
+  })
+}
+
+function getScheduledStepsCount(goal) {
+  return scheduledTasks.value.filter(t => t.goalId === goal.id).length
+}
 
 const lifeSpheres = computed(() => store.lifeSpheres)
 
@@ -547,7 +946,7 @@ const weekDays = computed(() => {
   const dayOfWeek = today.getDay()
   const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
   const monday = new Date(today)
-  monday.setDate(today.getDate() + mondayOffset)
+  monday.setDate(today.getDate() + mondayOffset + (weekOffset.value * 7))
   
   const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
   const fullNames = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
@@ -565,6 +964,20 @@ const weekDays = computed(() => {
   return days
 })
 
+const isCurrentWeek = computed(() => weekOffset.value === 0)
+
+function prevWeek() {
+  weekOffset.value--
+}
+
+function nextWeek() {
+  weekOffset.value++
+}
+
+function goToCurrentWeek() {
+  weekOffset.value = 0
+}
+
 const weekRangeText = computed(() => {
   if (weekDays.value.length < 7) return ''
   const start = new Date(weekDays.value[0].date)
@@ -578,7 +991,9 @@ function isToday(dateStr) {
 }
 
 const currentPlan = computed(() => {
-  return store.getCurrentWeekPlan()
+  const mondayDate = weekDays.value[0]?.date
+  if (!mondayDate) return null
+  return store.weeklyPlans.find(p => p.weekStart === mondayDate)
 })
 
 const scheduledTasks = computed(() => {
@@ -592,8 +1007,68 @@ const scheduledDaysCount = computed(() => {
   return days.size
 })
 
+const weeklyTotalTasks = computed(() => scheduledTasks.value.length)
+
+const weeklyCompletedTasks = computed(() => {
+  return scheduledTasks.value.filter(t => t.completed).length
+})
+
+const weeklyCompletionRate = computed(() => {
+  if (weeklyTotalTasks.value === 0) return 0
+  return Math.round((weeklyCompletedTasks.value / weeklyTotalTasks.value) * 100)
+})
+
+const currentStreak = computed(() => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  let streak = 0
+  
+  for (let i = 0; i < 30; i++) {
+    const checkDate = new Date(today)
+    checkDate.setDate(today.getDate() - i)
+    const dateStr = checkDate.toISOString().split('T')[0]
+    
+    const dayTasks = scheduledTasks.value.filter(t => t.scheduledDate === dateStr)
+    if (dayTasks.length === 0) {
+      if (i === 0) continue
+      break
+    }
+    
+    const allCompleted = dayTasks.every(t => t.completed)
+    if (allCompleted) {
+      streak++
+    } else if (i > 0) {
+      break
+    }
+  }
+  
+  return streak
+})
+
+const priorityOrder = { critical: 0, desirable: 1, attention: 2, optional: 3, '': 4 }
+
 function getTasksForDay(dateStr) {
-  return scheduledTasks.value.filter(t => t.scheduledDate === dateStr)
+  return scheduledTasks.value
+    .filter(t => t.scheduledDate === dateStr)
+    .sort((a, b) => {
+      const priorityA = priorityOrder[a.priority] ?? 4
+      const priorityB = priorityOrder[b.priority] ?? 4
+      return priorityA - priorityB
+    })
+}
+
+function getTotalTimeForDay(dateStr) {
+  const timeValues = { '30min': 30, '1h': 60, '2h': 120, '4h': 240 }
+  const tasks = getTasksForDay(dateStr)
+  const totalMinutes = tasks.reduce((sum, task) => {
+    return sum + (timeValues[task.timeEstimate] || 0)
+  }, 0)
+  
+  if (totalMinutes === 0) return ''
+  if (totalMinutes < 60) return `${totalMinutes}м`
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  return minutes > 0 ? `${hours}ч${minutes}м` : `${hours}ч`
 }
 
 function isStepScheduled(goalId, stepId) {
@@ -616,31 +1091,36 @@ function getScheduledPriority(goalId, stepId) {
 }
 
 function updateScheduledStep(goalId, stepId, field, value) {
-  ensureWeekPlan()
-  const plan = store.getCurrentWeekPlan()
+  const plan = ensureWeekPlan()
   if (!plan) return
 
-  const existingTask = scheduledTasks.value.find(t => t.goalId === goalId && t.stepId === stepId)
+  const existingTask = plan.scheduledTasks.find(t => t.goalId === goalId && t.stepId === stepId)
   if (existingTask) {
     store.updateScheduledTask(plan.id, existingTask.id, { [field]: value })
   }
 }
 
 function ensureWeekPlan() {
-  if (!currentPlan.value) {
-    const mondayDate = weekDays.value[0]?.date
-    if (mondayDate) {
-      store.createWeeklyPlan(mondayDate)
-    }
+  const mondayDate = weekDays.value[0]?.date
+  console.log('[Planning] ensureWeekPlan - mondayDate:', mondayDate)
+  if (!mondayDate) return null
+  
+  let plan = store.weeklyPlans.find(p => p.weekStart === mondayDate)
+  console.log('[Planning] Found existing plan:', plan?.id || 'none')
+  if (!plan) {
+    plan = store.createWeeklyPlan(mondayDate)
+    console.log('[Planning] Created new plan:', plan.id)
   }
+  return plan
 }
 
 function scheduleStep(goalId, step, dateStr) {
-  ensureWeekPlan()
-  const plan = store.getCurrentWeekPlan()
+  console.log('[Planning] scheduleStep called:', { goalId, stepId: step?.id, dateStr })
+  const plan = ensureWeekPlan()
+  console.log('[Planning] Plan for scheduling:', plan?.id || 'null')
   if (!plan) return
 
-  const existingTask = scheduledTasks.value.find(t => t.goalId === goalId && t.stepId === step.id)
+  const existingTask = plan.scheduledTasks.find(t => t.goalId === goalId && t.stepId === step.id)
   if (existingTask) {
     if (dateStr) {
       store.updateScheduledTask(plan.id, existingTask.id, { scheduledDate: dateStr })
@@ -662,25 +1142,46 @@ function scheduleStep(goalId, step, dateStr) {
 }
 
 function unscheduleStep(goalId, stepId) {
-  const plan = store.getCurrentWeekPlan()
+  const plan = currentPlan.value
   if (!plan) return
-  const task = scheduledTasks.value.find(t => t.goalId === goalId && t.stepId === stepId)
+  const task = plan.scheduledTasks.find(t => t.goalId === goalId && t.stepId === stepId)
   if (task) {
     store.removeScheduledTask(plan.id, task.id)
   }
 }
 
 function toggleTaskComplete(taskId) {
-  const plan = store.getCurrentWeekPlan()
+  const plan = currentPlan.value
   if (plan) {
     store.toggleScheduledTaskComplete(plan.id, taskId)
   }
 }
 
 function removeTask(taskId) {
-  const plan = store.getCurrentWeekPlan()
+  const plan = currentPlan.value
   if (plan) {
-    store.removeScheduledTask(plan.id, taskId)
+    const taskToDelete = plan.scheduledTasks.find(t => t.id === taskId)
+    if (taskToDelete) {
+      deletedTask.value = { ...taskToDelete, planId: plan.id }
+      store.removeScheduledTask(plan.id, taskId)
+      showUndoToast.value = true
+      
+      if (undoTimeout) clearTimeout(undoTimeout)
+      undoTimeout = setTimeout(() => {
+        showUndoToast.value = false
+        deletedTask.value = null
+      }, 4000)
+    }
+  }
+}
+
+function undoDeleteTask() {
+  if (deletedTask.value) {
+    const { planId, ...task } = deletedTask.value
+    store.addScheduledTask(planId, task)
+    showUndoToast.value = false
+    deletedTask.value = null
+    if (undoTimeout) clearTimeout(undoTimeout)
   }
 }
 
@@ -690,6 +1191,16 @@ function formatTimeEstimate(estimate) {
     '1h': '1 час',
     '2h': '2 часа',
     '4h': '4 часа'
+  }
+  return labels[estimate] || estimate
+}
+
+function formatTimeShort(estimate) {
+  const labels = {
+    '30min': '30м',
+    '1h': '1ч',
+    '2h': '2ч',
+    '4h': '4ч'
   }
   return labels[estimate] || estimate
 }
@@ -770,7 +1281,6 @@ const practiceTips = [
 
 const practiceChecklist = computed(() => [
   { text: 'Распределить хотя бы 1 шаг', done: scheduledTasksCount.value >= 1 },
-  { text: 'Не больше 3 шагов в день', done: !weekDays.value.some(d => getTasksForDay(d.date).length > 3) },
   { text: 'Задачи на разные дни', done: scheduledDaysCount.value >= 2 || scheduledTasksCount.value <= 1 }
 ])
 
@@ -814,8 +1324,89 @@ const planningCoachResponses = [
   'Регулярность важнее объёма. Лучше каждый день понемногу.'
 ]
 
+function setupDemoData() {
+  if (!DEMO_PLANNING_MODE) return
+  
+  const today = new Date()
+  const dayOfWeek = today.getDay()
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+  const monday = new Date(today)
+  monday.setDate(today.getDate() + mondayOffset)
+  
+  const demoGoals = [
+    {
+      id: 'demo-goal-1',
+      title: 'Улучшить физическую форму',
+      sphere: 'health',
+      status: 'active',
+      steps: [
+        { id: 'step-1-1', title: 'Пробежка 3 км', completed: false },
+        { id: 'step-1-2', title: 'Зарядка 15 минут', completed: false },
+        { id: 'step-1-3', title: 'Тренировка в зале', completed: false }
+      ]
+    },
+    {
+      id: 'demo-goal-2', 
+      title: 'Изучить новый навык',
+      sphere: 'development',
+      status: 'active',
+      steps: [
+        { id: 'step-2-1', title: 'Прочитать главу книги', completed: false },
+        { id: 'step-2-2', title: 'Пройти урок курса', completed: false }
+      ]
+    },
+    {
+      id: 'demo-goal-3',
+      title: 'Улучшить отношения',
+      sphere: 'relationships',
+      status: 'active',
+      steps: [
+        { id: 'step-3-1', title: 'Позвонить родителям', completed: false },
+        { id: 'step-3-2', title: 'Встретиться с друзьями', completed: false }
+      ]
+    }
+  ]
+  
+  if (store.goals.length === 0) {
+    demoGoals.forEach(g => store.addGoal(g))
+  }
+  
+  const plan = currentPlan.value
+  if (plan && (!plan.scheduledTasks || plan.scheduledTasks.length === 0)) {
+    const getDateStr = (offset) => {
+      const d = new Date(monday)
+      d.setDate(monday.getDate() + offset)
+      return d.toISOString().split('T')[0]
+    }
+    
+    const demoTasks = [
+      { goalId: 'demo-goal-1', stepId: 'step-1-1', stepTitle: 'Пробежка 3 км', goalTitle: 'Улучшить физическую форму', scheduledDate: getDateStr(0), timeEstimate: '30', priority: 'critical', completed: false },
+      { goalId: 'demo-goal-1', stepId: 'step-1-2', stepTitle: 'Зарядка 15 минут', goalTitle: 'Улучшить физическую форму', scheduledDate: getDateStr(1), timeEstimate: '15', priority: 'desirable', completed: false },
+      { goalId: 'demo-goal-2', stepId: 'step-2-1', stepTitle: 'Прочитать главу книги', goalTitle: 'Изучить новый навык', scheduledDate: getDateStr(1), timeEstimate: '45', priority: 'attention', completed: false },
+      { goalId: 'demo-goal-1', stepId: 'step-1-3', stepTitle: 'Тренировка в зале', goalTitle: 'Улучшить физическую форму', scheduledDate: getDateStr(2), timeEstimate: '60', priority: 'critical', completed: true },
+      { goalId: 'demo-goal-2', stepId: 'step-2-2', stepTitle: 'Пройти урок курса', goalTitle: 'Изучить новый навык', scheduledDate: getDateStr(3), timeEstimate: '30', priority: 'desirable', completed: false },
+      { goalId: 'demo-goal-3', stepId: 'step-3-1', stepTitle: 'Позвонить родителям', goalTitle: 'Улучшить отношения', scheduledDate: getDateStr(4), timeEstimate: '20', priority: 'critical', completed: false },
+      { goalId: 'demo-goal-3', stepId: 'step-3-2', stepTitle: 'Встретиться с друзьями', goalTitle: 'Улучшить отношения', scheduledDate: getDateStr(5), timeEstimate: '120', priority: 'optional', completed: false }
+    ]
+    
+    demoTasks.forEach(task => {
+      plan.scheduledTasks.push({
+        id: `demo-task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        ...task
+      })
+    })
+    store.saveToLocalStorage()
+  }
+}
+
 onMounted(() => {
+  console.log('[Planning] onMounted - goals count:', store.goals.length)
+  console.log('[Planning] onMounted - goalsWithSteps:', goalsWithSteps.value.length)
+  store.goals.forEach(g => {
+    console.log('[Planning] Goal:', g.title, 'status:', g.status, 'steps:', g.steps?.length || 0)
+  })
   ensureWeekPlan()
+  setupDemoData()
 })
 </script>
 
@@ -1106,8 +1697,20 @@ onMounted(() => {
   margin-bottom: 2rem;
 }
 
-.goals-to-schedule h3 {
+.goals-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 1rem;
+}
+
+.goals-header h3 {
+  margin: 0;
+}
+
+.toggle-all-btn {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.75rem;
 }
 
 .hint {
@@ -1117,7 +1720,64 @@ onMounted(() => {
 
 .goal-schedule-card {
   margin-bottom: 1rem;
-  padding: 1.25rem;
+  padding: 0;
+  overflow: hidden;
+}
+
+.goal-schedule-card.collapsed {
+  background: var(--bg-primary);
+}
+
+.goal-header-accordion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.goal-header-accordion:hover {
+  background: var(--bg-secondary);
+}
+
+.goal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.expand-icon {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  transition: transform 0.2s;
+}
+
+.goal-header-left h4 {
+  margin: 0;
+}
+
+.goal-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.steps-count {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.scheduled-count {
+  font-size: 0.85rem;
+  color: var(--success-color, #10b981);
+  font-weight: 500;
+}
+
+.goal-schedule-card .steps-to-schedule {
+  padding: 0 1.25rem 1.25rem;
 }
 
 .goal-header {
@@ -1165,6 +1825,44 @@ onMounted(() => {
   border-left: 3px solid var(--primary-color);
 }
 
+.step-schedule-item[draggable="true"] {
+  cursor: grab;
+}
+
+.step-schedule-item[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.step-schedule-item.dragging {
+  opacity: 0.5;
+  transform: scale(0.98);
+}
+
+.drag-handle-lesson {
+  color: var(--text-tertiary);
+  font-size: 0.9rem;
+  cursor: grab;
+  user-select: none;
+}
+
+.drag-handle-lesson:active {
+  cursor: grabbing;
+}
+
+.calendar-day.drag-over-day {
+  background: rgba(99, 102, 241, 0.15);
+  border: 2px dashed var(--primary-color);
+}
+
+.calendar-day.drag-over-day .no-tasks {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.drop-hint {
+  transition: all 0.2s;
+}
+
 .step-info {
   display: flex;
   align-items: center;
@@ -1206,19 +1904,23 @@ onMounted(() => {
 }
 
 .priority-select {
-  min-width: 110px;
+  min-width: 140px;
 }
 
-.priority-select option[value="high"] {
-  color: var(--danger-color);
+.priority-select option[value="critical"] {
+  color: #dc2626;
 }
 
-.priority-select option[value="medium"] {
-  color: var(--warning-color);
+.priority-select option[value="desirable"] {
+  color: #ea580c;
 }
 
-.priority-select option[value="low"] {
-  color: var(--success-color);
+.priority-select option[value="attention"] {
+  color: #2563eb;
+}
+
+.priority-select option[value="optional"] {
+  color: #6b7280;
 }
 
 .btn-icon.remove {
@@ -1276,6 +1978,17 @@ onMounted(() => {
   margin-bottom: 0.5rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.day-time-total {
+  font-size: 0.7rem;
+  color: var(--primary-color);
+  background: rgba(99, 102, 241, 0.1);
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
 }
 
 .day-name {
@@ -1297,12 +2010,52 @@ onMounted(() => {
 .scheduled-task {
   font-size: 0.75rem;
   padding: 0.25rem 0.5rem;
-  background: var(--primary-color);
-  color: white;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   border-radius: var(--radius-sm);
+  border-left: 3px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+}
+
+.scheduled-task .task-title {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.task-time-badge {
+  font-size: 0.65rem;
+  color: var(--text-tertiary);
+  background: var(--bg-secondary);
+  padding: 0.1rem 0.3rem;
+  border-radius: var(--radius-xs, 2px);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.scheduled-task.priority-critical {
+  border-left-color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.scheduled-task.priority-desirable {
+  border-left-color: #ea580c;
+  background: rgba(234, 88, 12, 0.1);
+}
+
+.scheduled-task.priority-attention {
+  border-left-color: #2563eb;
+  background: rgba(37, 99, 235, 0.1);
+}
+
+.scheduled-task.priority-optional {
+  border-left-color: #9ca3af;
+  background: rgba(156, 163, 175, 0.1);
 }
 
 .no-tasks {
@@ -1313,20 +2066,53 @@ onMounted(() => {
 
 .telegram-setup {
   text-align: center;
-  padding: 3rem;
+  padding: 2rem;
   margin-bottom: 1.5rem;
 }
 
+.telegram-setup.connected {
+  text-align: left;
+}
+
+.telegram-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
 .telegram-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+  font-size: 2.5rem;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border-radius: 50%;
+}
+
+.telegram-icon.connected {
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.telegram-info h3 {
+  margin: 0 0 0.25rem;
+}
+
+.telegram-username {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 0.9rem;
 }
 
 .telegram-setup h3 {
   margin-bottom: 0.75rem;
 }
 
-.telegram-setup p {
+.telegram-setup > p {
   color: var(--text-secondary);
   margin-bottom: 1.5rem;
   max-width: 400px;
@@ -1334,13 +2120,114 @@ onMounted(() => {
   margin-right: auto;
 }
 
-.coming-soon-badge {
-  display: inline-block;
-  padding: 0.5rem 1rem;
-  background: rgba(245, 158, 11, 0.1);
-  color: var(--warning-color);
-  border-radius: var(--radius-md);
+.connection-steps {
+  text-align: left;
+  max-width: 400px;
+  margin: 0 auto 1.5rem;
+}
+
+.connection-step {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+}
+
+.step-number {
+  width: 28px;
+  height: 28px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 600;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.step-text {
+  color: var(--text-primary);
+}
+
+.step-text a {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.connection-form {
+  display: flex;
+  gap: 0.75rem;
+  max-width: 350px;
+  margin: 0 auto 1rem;
+}
+
+.connection-form .input-lg {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+}
+
+.skip-note {
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+  margin-top: 1rem;
+}
+
+.notification-settings {
+  margin-bottom: 1.5rem;
+}
+
+.notification-settings h4 {
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+.toggle-setting {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+}
+
+.toggle-setting input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  cursor: pointer;
+}
+
+.toggle-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.toggle-title {
+  font-weight: 500;
+}
+
+.toggle-desc {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.btn-danger-outline {
+  border: 1px solid var(--danger-color);
+  color: var(--danger-color);
+  background: transparent;
+}
+
+.btn-danger-outline:hover {
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .plan-summary {
@@ -1421,12 +2308,81 @@ onMounted(() => {
   gap: 1rem;
 }
 
-.goals-section {
-  margin-bottom: 2rem;
+.weekly-stats {
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
-.goals-section h3 {
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
   margin-bottom: 1rem;
+}
+
+.stat-box {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.stat-icon {
+  font-size: 1.5rem;
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-number {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.stat-box .stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.progress-bar-container {
+  margin-top: 0.5rem;
+}
+
+.progress-bar-bg {
+  height: 8px;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-color), #818cf8);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.goals-section {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.goals-section .goals-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.goals-section .goals-header h3 {
+  margin: 0;
 }
 
 .empty-goals {
@@ -1441,43 +2397,197 @@ onMounted(() => {
 
 .goal-card {
   margin-bottom: 1rem;
-  padding: 1.25rem;
+  padding: 0;
+  overflow: hidden;
+}
+
+.goal-card.collapsed {
+  background: var(--bg-primary);
+}
+
+.goal-card .goal-header-accordion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.goal-card .goal-header-accordion:hover {
+  background: var(--bg-secondary);
+}
+
+.goal-card .goal-progress {
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-left: 0.5rem;
+}
+
+.goal-card .steps-list {
+  padding: 0 1.25rem 1.25rem;
 }
 
 .steps-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.35rem;
 }
 
 .step-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem 0.75rem;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px;
+  padding: 6px 12px;
   background: var(--bg-secondary);
   border-radius: var(--radius-sm);
+  border-left: 3px solid transparent;
+  cursor: grab;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.step-item:active {
+  cursor: grabbing;
+}
+
+.step-item.dragging {
+  opacity: 0.5;
+  transform: scale(0.98);
 }
 
 .step-item.scheduled {
   background: rgba(99, 102, 241, 0.08);
+  border-left-color: var(--primary-color);
+}
+
+.step-item.priority-critical {
+  border-left-color: var(--danger-color);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.step-item.priority-desirable {
+  border-left-color: var(--warning-color);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.step-item.priority-attention {
+  border-left-color: var(--info-color);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.step-item.priority-optional {
+  border-left-color: var(--text-tertiary);
+  background: rgba(156, 163, 175, 0.05);
 }
 
 .step-item .step-title {
-  flex: 1;
+  flex: 1 1 auto;
   font-size: 0.875rem;
+  min-width: 0;
+  line-height: 28px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .step-item .step-actions {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 6px;
   flex-shrink: 0;
+  flex-wrap: nowrap !important;
+}
+
+.day-select-sm,
+.time-select-sm,
+.priority-select-sm {
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  background: var(--bg-primary);
+  cursor: pointer;
+  height: 28px;
 }
 
 .day-select-sm {
-  padding: 0.25rem 0.5rem;
+  min-width: 50px;
+}
+
+.time-select-sm {
+  min-width: 45px;
+}
+
+.priority-select-sm {
+  min-width: 85px;
+}
+
+.priority-select-sm.priority-critical {
+  border-color: var(--danger-color);
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger-color);
+}
+
+.priority-select-sm.priority-desirable {
+  border-color: var(--warning-color);
+  background: rgba(245, 158, 11, 0.1);
+  color: #b45309;
+}
+
+.priority-select-sm.priority-attention {
+  border-color: var(--info-color);
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--info-color);
+}
+
+.priority-select-sm.priority-optional {
+  border-color: var(--text-tertiary);
+  background: rgba(156, 163, 175, 0.1);
+}
+
+.week-navigation {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.week-navigation .btn-icon {
+  width: 32px;
+  height: 32px;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  font-size: 0.8rem;
   background: var(--bg-primary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.week-navigation .btn-icon:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.week-range-text {
+  font-weight: 500;
+  min-width: 180px;
+  text-align: center;
+}
+
+.btn-today {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 
@@ -1515,6 +2625,12 @@ onMounted(() => {
   border-bottom: 1px solid var(--border-color);
 }
 
+.day-header-full .day-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .day-header-full .day-name {
   font-weight: 600;
   font-size: 0.8rem;
@@ -1550,6 +2666,27 @@ onMounted(() => {
   background: var(--bg-primary);
   border-radius: var(--radius-sm);
   font-size: 0.8rem;
+  border-left: 3px solid var(--border-color);
+}
+
+.task-card.priority-critical {
+  border-left-color: #dc2626;
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.task-card.priority-desirable {
+  border-left-color: #ea580c;
+  background: rgba(234, 88, 12, 0.08);
+}
+
+.task-card.priority-attention {
+  border-left-color: #2563eb;
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.task-card.priority-optional {
+  border-left-color: #9ca3af;
+  background: rgba(156, 163, 175, 0.08);
 }
 
 .task-card.completed {
@@ -1558,6 +2695,55 @@ onMounted(() => {
 
 .task-card.completed .task-title {
   text-decoration: line-through;
+}
+
+.task-card.dragging {
+  opacity: 0.5;
+  transform: scale(0.98);
+}
+
+.task-card[draggable="true"] {
+  cursor: grab;
+}
+
+.task-card[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.drag-handle {
+  color: var(--text-tertiary);
+  font-size: 0.7rem;
+  cursor: grab;
+  padding: 0 0.125rem;
+  user-select: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.calendar-day-full.drag-over {
+  background: rgba(99, 102, 241, 0.15);
+  border: 2px dashed var(--primary-color);
+}
+
+.calendar-day-full.drag-over .empty-day {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.drop-zone {
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-sm);
+  min-height: 60px;
+  transition: all 0.2s;
+}
+
+.drag-hint {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  font-weight: 400;
+  margin-left: 0.5rem;
 }
 
 .task-checkbox {
@@ -1608,8 +2794,10 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
   color: var(--text-tertiary);
   font-size: 0.8rem;
+  min-height: 80px;
 }
 
 @media (max-width: 1024px) {
@@ -1627,10 +2815,14 @@ onMounted(() => {
   .calendar-grid-full {
     grid-template-columns: repeat(3, 1fr);
   }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
-  .progress-bar {
+  .lesson-progress-bar {
     padding: 0 0.5rem;
   }
   
@@ -1645,6 +2837,10 @@ onMounted(() => {
   
   .step-actions {
     flex-direction: column;
+  }
+  
+  .step-item .step-actions {
+    flex-direction: row !important;
   }
   
   .step-schedule-item {
@@ -1662,5 +2858,109 @@ onMounted(() => {
   .day-select {
     flex: 1;
   }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  
+  .stat-box {
+    padding: 0.5rem;
+  }
+  
+  .stat-icon {
+    font-size: 1.25rem;
+  }
+  
+  .stat-number {
+    font-size: 1rem;
+  }
+  
+  .header-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .week-navigation {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .task-card {
+    padding: 0.75rem;
+  }
+  
+  .task-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+  
+  .task-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .telegram-setup {
+    padding: 1rem;
+  }
+  
+  .telegram-status {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .notification-options {
+    gap: 0.5rem;
+  }
+}
+
+.undo-toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
+.undo-toast span {
+  font-size: 0.9rem;
+}
+
+.btn-undo {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--primary-color);
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-undo:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--primary-color);
+}
+
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(1rem);
 }
 </style>

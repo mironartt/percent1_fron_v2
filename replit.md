@@ -1,189 +1,49 @@
 # OnePercent MVP
 
 ## Overview
-The OnePercent MVP is a Vue 3 + Vite application designed for personal life management and goal tracking, inspired by the "1% improvement" philosophy. It incorporates a Balanced Scorecard (SSP) module for life balance assessment and a Goals Bank for structured goal setting. Integrates with Django REST API backend for authentication.
+The OnePercent MVP is a Vue 3 + Vite application for personal life management and goal tracking, inspired by the "1% improvement" philosophy. It features a Balanced Scorecard (SSP) module for life balance assessment and a Goals Bank for structured goal setting, integrating with a Django REST API backend for authentication. The project aims to provide a guided, multi-step workflow for personal development, leveraging interactive UI components and an AI coach for user engagement.
 
 ## User Preferences
 I prefer simple language and iterative development. Ask before making major changes. I prefer detailed explanations. Do not make changes to the folder `Z`. Do not make changes to the file `Y`.
 
-## Project Structure
-```
-src/
-  ├── config/
-  │   ├── settings.js            # Application settings (loads local_settings.js)
-  │   ├── local_settings.js      # Local development settings (NOT in git)
-  │   └── local_settings.example.js # Template for local settings
-  ├── components/
-  │   ├── Sidebar.vue            # Navigation sidebar with Lucide icons
-  │   ├── WheelOfLife.vue        # Interactive balance assessment
-  │   ├── GuidancePanel.vue      # Contextual help and AI coach
-  │   └── ...
-  ├── services/
-  │   └── api.js                 # API client for Django backend
-  ├── views/
-  │   ├── Landing.vue            # Public landing page (/)
-  │   ├── Login.vue              # Auth page (/auth/login)
-  │   ├── Register.vue           # Registration (/auth/register)
-  │   ├── Recovery.vue           # Password recovery (/auth/recovery)
-  │   └── ...                    # Protected app views (/app/*)
-  ├── router/index.js            # Vue Router with auth guards
-  └── stores/app.js              # Pinia store with user management
-```
-
-## Route Structure
-- `/` - Public landing page
-- `/auth/login`, `/auth/register`, `/auth/recovery`, `/auth/logout` - Auth routes
-- `/app`, `/app/ssp`, `/app/goals-bank`, `/app/goals/*` - Protected routes
-
-## Django Backend Integration
-
-### API Endpoints (via Vite proxy → localhost:8017)
-- `POST /api/rest/front/csrf/` - Get CSRF token
-- `POST /api/rest/front/login/` - User login
-- `POST /api/rest/front/registration/` - User registration
-- `POST /api/rest/front/logout/` - User logout
-- `POST /api/rest/front/get-user-data/` - Get current user data
-
-### Configuration (Django-style local_settings)
-```javascript
-// src/config/local_settings.js (NOT in git)
-export const DEV_MODE = true
-export const SKIP_AUTH_CHECK = true  // Bypass auth for UI development
-export const DEBUG_MODE = true
-```
-
 ## System Architecture
 
 ### UI/UX Decisions
-The application utilizes a guided, multi-step workflow pattern for key modules (SSP, Goals Bank, Decomposition, Planning), often featuring a 3-state design: an empty state for first-time users, a lesson mode for education and guided input, and a summary state for progress overview. Visual components like the interactive "Wheel of Life" and progress bars are central to user engagement.
+The application employs a guided, multi-step workflow for core modules (SSP, Goals Bank, Decomposition, Planning) with a 3-state design: empty state, lesson mode for education, and summary state for overview. Key visual components include an interactive "Wheel of Life" and progress bars. The UI features a collapsible sidebar, a dark/light theme toggle, and responsive design for various screen sizes. UI elements are styled with a consistent color priority system (red for critical, orange for desirable, blue for attention, gray for optional) and utilize Lucide Vue Next for minimalist line icons.
 
-### Technical Stack
-- Vue 3 (Composition API, script setup)
-- Vite with proxy to Django backend
-- Vue Router with auth guards
-- Pinia with localStorage persistence
-- **Lucide Vue Next** - Minimalist line icons for UI
+### Technical Implementations
+The frontend is built with Vue 3 (Composition API, script setup), Vite with a proxy to the Django backend, Vue Router for navigation with authentication guards, and Pinia for state management with localStorage persistence. A custom Django-style configuration system (`settings.js` + `local_settings.js`) is used for environment-specific settings.
 
-### Feature Modules
-- **SSP Module**: 4-step guided flow for life balance assessment
-- **Goals Bank Module**: 3-step workflow for goal validation
-- **Decomposition Module**: Breaking goals into actionable steps
-- **AI Curator**: Demo mode only (no real API calls)
+### Feature Specifications
+- **SSP Module**: A 4-step guided flow for life balance assessment.
+- **Goals Bank Module**: A 3-step workflow for goal validation, allowing filtering by sphere and status, with mechanisms to transfer ideas to actionable goals.
+- **Decomposition Module**: Facilitates breaking down goals into actionable steps, with step persistence and ID-based tracking.
+- **Planning Module**: Includes week navigation, color-coded priority tasks, drag & drop task management, a daily time budget indicator, and weekly statistics. It supports quick-add functionality for unscheduled steps and an undo feature for task deletion. Goals are presented in an accordion layout within the planner.
+- **Authentication**: Integrates with the Django backend for user login, registration, and logout, featuring bidirectional redirects and auth guards.
+- **Onboarding**: A guided onboarding process for new users, with fields mapping to backend data.
+- **AI Curator**: Currently in demo mode without live API calls.
 
-## Setup for Development
-1. Copy `src/config/local_settings.example.js` to `src/config/local_settings.js`
-2. Set `SKIP_AUTH_CHECK = true` to bypass auth during UI development
-3. Start Django backend on localhost:8017
-4. Run `npm run dev`
+### System Design Choices
+The application uses a modular structure with dedicated components, services, views, router, and stores. State management is handled by Pinia, ensuring data persistence and reactivity. Authentication is cookie-based with CSRF protection. The application prioritizes user guidance and visual feedback throughout the various modules.
 
-## Recent Changes (November 26, 2025)
+## Recent Changes (27 Nov 2025)
 
-### Icon Library Migration
-- Replaced emoji icons with Lucide Vue minimalist line icons
-- Sidebar.vue now uses: BarChart3, Compass, Target, Landmark, Trophy, Calendar, Zap, Gem, Users, Award, User, Settings, LogOut, Lock
-- Icons styled with gray (#9ca3af) color, hover and active state transitions
+### WheelOfLife Component
+- Redesigned to match reference image with curved text labels using SVG `<textPath>`
+- Labels positioned in outer ring (between grid and wheel boundary)
+- Auto-flip text for bottom sectors for left-to-right readability
+- Increased font size to 14px with letter-spacing: 2px
 
-### Django Backend Integration
-- Added Vite proxy for Django backend (localhost:8017)
-- Created Django-style configuration system (settings.js + local_settings.js)
-- Created API client with CSRF, rate limiting, cookie-based auth
-- Restructured routes: /app/* (protected), /auth/* (public)
-- Added auth guards with SKIP_AUTH_CHECK flag
-- Created Landing.vue and Recovery.vue pages
-- Updated Login.vue and Register.vue with API integration
-- **Bidirectional auth redirects**: authenticated users on /auth/* redirect to /app/
-- **Comprehensive DEBUG_MODE logging**: Router navigation, auth checks logged when DEBUG_MODE=true
+### Reflection Accordion (SSP Module)
+- Replaced emoji icons with Lucide icons (Wallet, Palette, Users, Heart, Briefcase, HeartHandshake)
+- Added color-coded left border matching wheel colors for each sphere
+- Neutral score badge styling (gray background instead of green)
+- ChevronDown icon replacing text arrow
+- Hover effects with background and shadow transitions
+- Icon wrapper with semi-transparent color-matched background
+- Applied consistent design to both Summary and Step 3 (Рефлексия) accordions
 
-### Onboarding Backend Integration
-- Added `FORCE_SHOW_ONBOARDING` and `FORCE_SHOW_MINITASK` flags in local_settings.js for testing
-- Added `finish_onboarding` and `finish_minitask` fields to user in store
-- Added API methods: `getOnboardingData()`, `updateOnboardingData()`
-
-### Backend API Endpoints (Onboarding)
-- `POST /api/rest/front/app/onboard/get/` - Get onboarding data
-- `POST /api/rest/front/app/onboard/update/` - Update onboarding progress
-
-### Field Mapping (Frontend → Backend)
-| Frontend | Backend |
-|----------|---------|
-| whyHere | reason_joined |
-| whatToChange | desired_changes |
-| growthVsComfort | growth_comfort_zones |
-| pointA | current_state |
-| pointB | goal_state |
-| whyImportant | why_important |
-
-### Development Flags (local_settings.js)
-```javascript
-export const FORCE_SHOW_ONBOARDING = false  // Show onboarding even if completed
-export const FORCE_SHOW_MINITASK = false    // Show mini task even if completed
-```
-
-### Goals Bank Improvements (November 26, 2025)
-
-#### Filters and Indicators
-- Added sphere filter dropdown in "Банк идей и целей" block
-- Added status filter (Доступные, В работе, Завершённые)
-- Added weak sphere indicator (⚠️) next to goals in weak spheres
-- Filter state managed via filterSphere and filterStatus refs
-
-#### Goal Workflow Fixes
-- Fixed reactivity issue: `allGoals` now uses spread operator `[...store.goals]` to ensure proper re-render on array mutations
-- Fixed "Завершить и сохранить" button: added `sourceId` to link created goals back to original ideas
-- Goals created via lesson completion now properly show as "В работе" in the bank
-- Removed from work goals correctly return to bank with "Взять в работу" button
-
-#### Data Model
-- Goals in store.goals now have `sourceId` field linking to original idea in goalsBank.rawIdeas
-- `isGoalTransferred(ideaId)` checks if any goal has matching sourceId
-- Remove from work deletes goal from store.goals; original idea remains in rawIdeas
-
-#### Lesson Reset Behavior
-- `startLesson()` clears rawIdeas, resets currentStep to 1, clears completedAt, and saves to localStorage
-- Each new lesson starts with a clean slate (no previously saved goals)
-
-### UI Customization (November 26, 2025)
-
-#### Collapsible Sidebar
-- Sidebar can collapse from 280px to 72px (icons only)
-- ChevronLeft button rotates 180° when collapsed
-- Collapse state persisted in localStorage (`sidebar-collapsed`)
-- App.vue uses `has-sidebar` class for clean CSS specificity
-
-#### Dark/Light Theme Toggle
-- Theme toggle in sidebar footer with Sun/Moon icons (Lucide)
-- Dark theme via `:root.dark` CSS variables in main.css
-- System preference detected on first load (`prefers-color-scheme: dark`)
-- Theme choice saved to localStorage (`theme`)
-
-#### CSS Architecture
-- `#app.has-sidebar` applies sidebar margins only when sidebar exists
-- `#app.has-sidebar.sidebar-collapsed` reduces margin to 72px
-- Auth pages (login/register) have no sidebar, no margins
-- Mobile breakpoint (≤768px) removes all sidebar margins
-
-### Decomposition Module Fixes (November 26, 2025)
-
-#### Step Persistence During Practice
-- `practiceSteps` changed from string array to object array: `[{id, title, completed}]`
-- Steps now persist when switching between goals during practice phase
-- `saveCurrentPracticeSteps()` saves current steps before goal switch
-
-#### ID-based Step Tracking
-| Prefix | Purpose | Created when |
-|--------|---------|--------------|
-| `new-*` | New empty step | Starting practice or adding step |
-| `temp-*` | Saved temporary | saveCurrentPracticeSteps() without existing ID |
-| `legacy-*` | Old data migration | Loading steps without ID |
-
-- Temporary IDs replaced with permanent (timestamp + random) only in `completeLesson()`
-- Null checks for `step.id` to support legacy data
-
-#### Progress Bar Visibility Fix
-- Renamed `.progress-bar` → `.lesson-progress-bar` for lesson step indicator
-- Fixed CSS conflict: goal progress bar (height: 8px, overflow: hidden) was overriding lesson steps
-
-#### Content Centering
-- Lesson preview section (`text-align: center`)
-- Step content h2, intro-text, rules h3 — all centered
-- Preview steps use `inline-flex` for block centering with left-aligned text inside
+## External Dependencies
+- **Django REST API Backend**: Provides authentication, user data, onboarding, and goal management services.
+- **Lucide Vue Next**: Used for minimalist line icons across the UI.
+- **Vite**: Frontend build tool with proxy capabilities for seamless backend integration.

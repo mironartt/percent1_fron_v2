@@ -52,24 +52,21 @@
     <!-- Summary State - After Completion -->
     <div v-else-if="showSummary" class="summary-section-main">
       <header class="section-header">
-        <h1>⚖️ Система сбалансированных показателей</h1>
+        <h1>Система сбалансированных показателей</h1>
       </header>
 
       <div class="summary-grid">
         <div class="summary-stat-card card">
-          <div class="summary-icon">📊</div>
           <div class="summary-value">{{ averageScore.toFixed(1) }}</div>
           <div class="summary-label">Средний балл</div>
         </div>
 
         <div class="summary-stat-card card" v-if="strongestSphere">
-          <div class="summary-icon">💪</div>
           <div class="summary-value">{{ strongestSphere.icon }}</div>
           <div class="summary-label">Самая сильная<br/>{{ strongestSphere.name }}</div>
         </div>
 
         <div class="summary-stat-card card" v-if="weakestSphere">
-          <div class="summary-icon">🎯</div>
           <div class="summary-value">{{ weakestSphere.icon }}</div>
           <div class="summary-label">Зона роста<br/>{{ weakestSphere.name }}</div>
         </div>
@@ -84,7 +81,7 @@
 
       <!-- Reflection Summary Accordion -->
       <div class="reflection-summary card">
-        <h3>📝 Ваша рефлексия</h3>
+        <h3>Ваша рефлексия</h3>
         <div class="reflection-accordion readonly">
           <div 
             v-for="sphere in lifeSpheres" 
@@ -94,19 +91,26 @@
               expanded: expandedSummarySpheres.includes(sphere.id),
               'has-content': hasReflectionContent(sphere)
             }"
+            :style="{ '--sphere-color': getSphereColor(sphere.id) }"
           >
             <div 
               class="accordion-header"
               @click="toggleSummarySphereExpand(sphere.id)"
             >
               <div class="accordion-left">
-                <span class="sphere-icon">{{ sphere.icon }}</span>
+                <div class="sphere-icon-wrapper" :style="{ color: getSphereColor(sphere.id) }">
+                  <component :is="getSphereIcon(sphere.id)" :size="24" :stroke-width="2" />
+                </div>
                 <div class="sphere-title-info">
                   <h2>{{ sphere.name }}</h2>
-                  <span class="score-badge">{{ sphere.score }}/10</span>
+                  <span class="score-badge-neutral">{{ sphere.score }}/10</span>
                 </div>
               </div>
-              <span class="accordion-arrow" :class="{ rotated: expandedSummarySpheres.includes(sphere.id) }">▼</span>
+              <ChevronDown 
+                :size="20" 
+                class="accordion-chevron" 
+                :class="{ rotated: expandedSummarySpheres.includes(sphere.id) }" 
+              />
             </div>
 
             <div class="accordion-content" v-show="expandedSummarySpheres.includes(sphere.id)">
@@ -214,7 +218,7 @@
     <div v-if="currentStep === 2" class="step-content">
       <div class="wheel-section">
         <header class="section-header">
-          <h1>⚖️ Система сбалансированных показателей</h1>
+          <h1>Система сбалансированных показателей</h1>
           <p class="subtitle">
             Оцените текущее состояние каждой сферы вашей жизни
           </p>
@@ -309,22 +313,29 @@
               expanded: expandedSpheres.includes(sphere.id),
               'has-content': hasReflectionContent(sphere)
             }"
+            :style="{ '--sphere-color': getSphereColor(sphere.id) }"
           >
             <div 
               class="accordion-header"
               @click="toggleSphereExpand(sphere.id)"
             >
               <div class="accordion-left">
-                <span class="sphere-icon">{{ sphere.icon }}</span>
+                <div class="sphere-icon-wrapper" :style="{ color: getSphereColor(sphere.id) }">
+                  <component :is="getSphereIcon(sphere.id)" :size="24" :stroke-width="2" />
+                </div>
                 <div class="sphere-title-info">
                   <h2>{{ sphere.name }}</h2>
                   <div class="header-meta">
-                    <span class="score-badge">{{ sphere.score }}/10</span>
-                    <span v-if="hasReflectionContent(sphere)" class="filled-badge">✓ Заполнено</span>
+                    <span class="score-badge-neutral">{{ sphere.score }}/10</span>
+                    <span v-if="hasReflectionContent(sphere)" class="filled-badge">Заполнено</span>
                   </div>
                 </div>
               </div>
-              <span class="accordion-arrow" :class="{ rotated: expandedSpheres.includes(sphere.id) }">▼</span>
+              <ChevronDown 
+                :size="20" 
+                class="accordion-chevron" 
+                :class="{ rotated: expandedSpheres.includes(sphere.id) }" 
+              />
             </div>
 
             <div class="accordion-content" v-show="expandedSpheres.includes(sphere.id)">
@@ -482,6 +493,41 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import WheelOfLife from '../components/WheelOfLife.vue'
+import { 
+  Wallet, 
+  Palette, 
+  Users, 
+  Heart, 
+  Briefcase, 
+  HeartHandshake,
+  ChevronDown
+} from 'lucide-vue-next'
+
+const sphereIcons = {
+  wealth: Wallet,
+  hobbies: Palette,
+  friendship: Users,
+  health: Heart,
+  career: Briefcase,
+  love: HeartHandshake
+}
+
+const sphereColors = {
+  wealth: '#e63946',
+  hobbies: '#f4a261',
+  friendship: '#e9c46a',
+  health: '#2a9d8f',
+  career: '#264653',
+  love: '#9b5de5'
+}
+
+function getSphereIcon(sphereId) {
+  return sphereIcons[sphereId] || Wallet
+}
+
+function getSphereColor(sphereId) {
+  return sphereColors[sphereId] || '#6366f1'
+}
 
 const store = useAppStore()
 const router = useRouter()
@@ -1252,25 +1298,35 @@ function completeModule() {
 }
 
 .accordion-item {
+  position: relative;
   background: var(--bg-secondary);
-  border: 2px solid var(--border-color);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--sphere-color, var(--border-color));
   border-radius: var(--radius-lg);
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .accordion-item:hover {
-  border-color: var(--primary-light);
+  background: var(--bg-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .accordion-item.expanded {
-  border-color: var(--primary-color);
+  border-left-width: 4px;
   box-shadow: var(--shadow-md);
 }
 
-.accordion-item.has-content:not(.expanded) {
-  border-color: rgba(16, 185, 129, 0.3);
-  background: rgba(16, 185, 129, 0.02);
+.accordion-item.has-content:not(.expanded)::after {
+  content: '';
+  position: absolute;
+  right: 3.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background: var(--success-color);
+  border-radius: 50%;
 }
 
 .accordion-header {
@@ -1295,6 +1351,40 @@ function completeModule() {
 
 .accordion-left .sphere-icon {
   font-size: 2rem;
+}
+
+.sphere-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  transition: all 0.2s ease;
+}
+
+.accordion-item:hover .sphere-icon-wrapper {
+  background: color-mix(in srgb, currentColor 15%, transparent);
+}
+
+.score-badge-neutral {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: 0.15rem 0.5rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+.accordion-chevron {
+  color: var(--text-secondary);
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.accordion-chevron.rotated {
+  transform: rotate(180deg);
 }
 
 .accordion-left .sphere-title-info h2 {

@@ -100,7 +100,7 @@
               <div class="setting-title">Telegram бот</div>
               <div class="setting-desc">Интеграция с мессенджером</div>
             </div>
-            <button class="btn btn-secondary btn-sm">Подключить</button>
+            <button class="btn btn-secondary btn-sm" @click="goToTelegramSettings">Настроить</button>
           </div>
         </div>
       </div>
@@ -195,8 +195,10 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 
+const router = useRouter()
 const store = useAppStore()
 
 const userName = ref(store.user.name)
@@ -222,9 +224,12 @@ function formatDate(dateString) {
 function resetOnboarding() {
   if (confirm('Вы уверены? Все данные онбординга будут сброшены и вы вернётесь к началу.')) {
     store.resetOnboarding()
-    // Перенаправляем на главную, где покажется онбординг
     window.location.href = '/'
   }
+}
+
+function goToTelegramSettings() {
+  router.push('/app/planning')
 }
 </script>
 
