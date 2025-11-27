@@ -192,7 +192,9 @@
         <div class="step-2-sidebar">
           <div class="ai-coach card">
             <div class="coach-header">
-              <span class="coach-icon">🤖</span>
+              <span class="coach-icon-wrapper">
+                <Bot :size="20" />
+              </span>
               <h3>ИИ-коуч</h3>
             </div>
             <div class="chat-container">
@@ -203,7 +205,10 @@
                   class="message"
                   :class="msg.role === 'user' ? 'user-message' : 'coach-message'"
                 >
-                  <span class="message-avatar">{{ msg.role === 'user' ? '👤' : '🤖' }}</span>
+                  <span class="message-avatar" :class="msg.role">
+                    <User v-if="msg.role === 'user'" :size="14" />
+                    <Bot v-else :size="14" />
+                  </span>
                   <div class="message-content">
                     <p>{{ msg.content }}</p>
                   </div>
@@ -293,8 +298,9 @@
           </p>
         </div>
         <div class="header-actions">
-          <button class="btn btn-secondary" @click="restartLesson">
-            📚 Пройти урок заново
+          <button class="btn btn-secondary btn-with-icon" @click="restartLesson">
+            <RotateCcw :size="16" />
+            Пройти урок заново
           </button>
         </div>
       </header>
@@ -352,24 +358,25 @@
                       {{ getStatusLabel(goal.status) }}
                     </span>
                     <span v-if="goal.source === 'goals-bank'" class="source-badge">
-                      🏦 Из Банка целей
+                      <Landmark :size="12" />
+                      Из Банка целей
                     </span>
                   </div>
                 </div>
                 <div class="goal-actions">
                   <button 
-                    class="btn-icon"
+                    class="btn-icon edit"
                     @click.stop="editGoal(goal)"
                     title="Редактировать"
                   >
-                    ✏️
+                    <Edit2 :size="16" />
                   </button>
                   <button 
                     class="btn-icon delete"
                     @click.stop="deleteGoalConfirm(goal)"
                     title="Удалить"
                   >
-                    🗑️
+                    <Trash2 :size="16" />
                   </button>
                 </div>
               </div>
@@ -381,7 +388,10 @@
               <div class="goal-meta">
                 <div class="goal-meta-item">
                   <span class="meta-label">Сфера:</span>
-                  <span class="meta-value">{{ getSphereName(goal.sphereId) }}</span>
+                  <span class="sphere-badge" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
+                    <component :is="getSphereIconComponent(goal.sphereId)" :size="14" />
+                    {{ getSphereName(goal.sphereId) }}
+                  </span>
                 </div>
                 <div v-if="goal.deadline" class="goal-meta-item">
                   <span class="meta-label">Дедлайн:</span>
@@ -414,7 +424,9 @@
         <div class="goals-sidebar">
           <div class="ai-coach card">
             <div class="coach-header">
-              <span class="coach-icon">🤖</span>
+              <span class="coach-icon-wrapper">
+                <Bot :size="20" />
+              </span>
               <h3>ИИ-коуч</h3>
             </div>
             <div class="chat-container">
@@ -425,7 +437,10 @@
                   class="message"
                   :class="msg.role === 'user' ? 'user-message' : 'coach-message'"
                 >
-                  <span class="message-avatar">{{ msg.role === 'user' ? '👤' : '🤖' }}</span>
+                  <span class="message-avatar" :class="msg.role">
+                    <User v-if="msg.role === 'user'" :size="14" />
+                    <Bot v-else :size="14" />
+                  </span>
                   <div class="message-content">
                     <p>{{ msg.content }}</p>
                   </div>
@@ -1496,8 +1511,15 @@ function formatDate(dateString) {
   border-bottom: 1px solid var(--border-color);
 }
 
-.coach-icon {
-  font-size: 1.25rem;
+.coach-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 50%;
+  color: #8b5cf6;
 }
 
 .coach-header h3 {
@@ -1529,8 +1551,23 @@ function formatDate(dateString) {
 }
 
 .message-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
   flex-shrink: 0;
-  font-size: 1rem;
+}
+
+.message-avatar.user {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+}
+
+.message-avatar.coach {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
 }
 
 .message-content {
@@ -1866,12 +1903,43 @@ function formatDate(dateString) {
 }
 
 .source-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
   padding: 0.25rem 0.5rem;
   background: rgba(99, 102, 241, 0.1);
   color: var(--primary-color);
   border-radius: var(--radius-sm);
   font-size: 0.75rem;
   font-weight: 500;
+}
+
+.sphere-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  background: white;
+  border: 1.5px solid var(--sphere-color, var(--border-color));
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  color: var(--sphere-color, var(--text-secondary));
+  font-weight: 500;
+}
+
+.btn-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-icon.edit {
+  color: var(--text-secondary);
+}
+
+.btn-icon.edit:hover {
+  color: var(--primary-color);
+  background: rgba(99, 102, 241, 0.1);
 }
 
 .goal-actions {
