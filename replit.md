@@ -43,6 +43,15 @@ The application uses a modular structure with dedicated components, services, vi
 - Icon wrapper with semi-transparent color-matched background
 - Applied consistent design to both Summary and Step 3 (Рефлексия) accordions
 
+### Goals Bank Module (Summary Page)
+- Added Lucide icons to stat cards (Lightbulb, CheckCircle, XCircle, PlayCircle) with color-coded backgrounds
+- Replaced sphere emojis with Lucide icons matching SSP module (Wallet, Palette, Users, Heart, Briefcase, HeartHandshake)
+- Color-coded sphere badges using CSS custom properties for sphere-specific colors
+- Action buttons now use Lucide icons (Plus, Check, X, RotateCcw) instead of text/emoji
+- Updated "Цели в работе" section with sphere icons
+- Added styling for empty "Почему важно" cells
+- Helper functions: getSphereIcon(), getSphereColor(), getSphereNameOnly()
+
 ## External Dependencies
 - **Django REST API Backend**: Provides authentication, user data, onboarding, and goal management services.
 - **Lucide Vue Next**: Used for minimalist line icons across the UI.
