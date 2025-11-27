@@ -756,6 +756,7 @@ function handleDayDragLeave() {
 function handleDayDrop(event, dayDate) {
   if (draggedStep.value) {
     event.preventDefault()
+    console.log('[Planning] Drop step:', draggedStep.value.stepTitle, 'on day:', dayDate)
     scheduleStep(draggedStep.value.goalId, { 
       id: draggedStep.value.stepId, 
       title: draggedStep.value.stepTitle 
@@ -884,7 +885,9 @@ function isToday(dateStr) {
 }
 
 const currentPlan = computed(() => {
-  return store.getCurrentWeekPlan()
+  const mondayDate = weekDays.value[0]?.date
+  if (!mondayDate) return null
+  return store.weeklyPlans.find(p => p.weekStart === mondayDate)
 })
 
 const scheduledTasks = computed(() => {
@@ -972,17 +975,22 @@ function updateScheduledStep(goalId, stepId, field, value) {
 
 function ensureWeekPlan() {
   const mondayDate = weekDays.value[0]?.date
+  console.log('[Planning] ensureWeekPlan - mondayDate:', mondayDate)
   if (!mondayDate) return null
   
   let plan = store.weeklyPlans.find(p => p.weekStart === mondayDate)
+  console.log('[Planning] Found existing plan:', plan?.id || 'none')
   if (!plan) {
     plan = store.createWeeklyPlan(mondayDate)
+    console.log('[Planning] Created new plan:', plan.id)
   }
   return plan
 }
 
 function scheduleStep(goalId, step, dateStr) {
+  console.log('[Planning] scheduleStep called:', { goalId, stepId: step?.id, dateStr })
   const plan = ensureWeekPlan()
+  console.log('[Planning] Plan for scheduling:', plan?.id || 'null')
   if (!plan) return
 
   const existingTask = plan.scheduledTasks.find(t => t.goalId === goalId && t.stepId === step.id)
