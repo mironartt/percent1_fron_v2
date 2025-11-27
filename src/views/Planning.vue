@@ -3,7 +3,9 @@
     <!-- Empty State - First Visit -->
     <div v-if="showEmptyState" class="empty-state-section">
       <div class="empty-state-card card">
-        <div class="empty-icon">📅</div>
+        <div class="icon-wrapper lg primary">
+          <Calendar :size="32" />
+        </div>
         <h1>Планирование</h1>
         <p class="subtitle">
           Распределите шаги по дням недели и получайте напоминания
@@ -37,7 +39,8 @@
         </div>
 
         <button class="btn btn-primary btn-lg" @click="startLesson">
-          ✨ Начать урок
+          <Sparkles :size="18" />
+          Начать урок
         </button>
       </div>
     </div>
@@ -65,7 +68,12 @@
         <div class="step-layout">
           <div class="step-main">
             <header class="section-header">
-              <h1>📚 Теория недельного планирования</h1>
+              <div class="header-with-icon">
+                <div class="icon-wrapper md primary">
+                  <BookOpen :size="24" />
+                </div>
+                <h1>Теория недельного планирования</h1>
+              </div>
               <p class="subtitle">
                 Научитесь планировать неделю так, чтобы двигаться к целям каждый день
               </p>
@@ -73,31 +81,50 @@
 
             <div class="theory-content">
               <div class="theory-block card">
-                <h3>🎯 Принцип «Неделя вперёд»</h3>
+                <div class="theory-header">
+                  <div class="icon-wrapper sm target">
+                    <Target :size="18" />
+                  </div>
+                  <h3>Принцип «Неделя вперёд»</h3>
+                </div>
                 <p>
                   Планируйте неделю заранее — в выходные или в начале недели. 
                   Это даёт ясность и снижает стресс от неопределённости.
                 </p>
                 <div class="key-point">
-                  <span class="key-icon">💡</span>
+                  <div class="icon-wrapper xs accent">
+                    <Lightbulb :size="14" />
+                  </div>
                   <span>Лучшее время для планирования: воскресенье вечером или понедельник утром</span>
                 </div>
               </div>
 
               <div class="theory-block card">
-                <h3>⚡ Правило 3 шагов в день</h3>
+                <div class="theory-header">
+                  <div class="icon-wrapper sm zap">
+                    <Zap :size="18" />
+                  </div>
+                  <h3>Правило 3 шагов в день</h3>
+                </div>
                 <p>
                   Не перегружайте день. Выберите максимум 3 ключевых шага из ваших целей.
                   Остальное время оставьте для рутины и непредвиденных задач.
                 </p>
-                <div class="key-point">
-                  <span class="key-icon">⚠️</span>
+                <div class="key-point warning">
+                  <div class="icon-wrapper xs warning">
+                    <AlertTriangle :size="14" />
+                  </div>
                   <span>Перегруженный план = срыв плана. Меньше = лучше.</span>
                 </div>
               </div>
 
               <div class="theory-block card">
-                <h3>🔄 Баланс сфер жизни</h3>
+                <div class="theory-header">
+                  <div class="icon-wrapper sm refresh">
+                    <RefreshCcw :size="18" />
+                  </div>
+                  <h3>Баланс сфер жизни</h3>
+                </div>
                 <p>
                   Распределяйте шаги из разных сфер жизни по неделе.
                   Это поможет поддерживать баланс и не выгорать.
@@ -110,18 +137,26 @@
               </div>
 
               <div class="theory-block card">
-                <h3>📱 Напоминания = дисциплина</h3>
+                <div class="theory-header">
+                  <div class="icon-wrapper sm phone">
+                    <Smartphone :size="18" />
+                  </div>
+                  <h3>Напоминания = дисциплина</h3>
+                </div>
                 <p>
                   Ежедневные напоминания в Telegram помогут не забыть о запланированных шагах.
                   Отмечайте выполнение прямо в мессенджере — и прогресс синхронизируется.
                 </p>
                 <div class="telegram-preview">
                   <div class="tg-message">
-                    <strong>🎯 Задачи на сегодня:</strong>
-                    <ul>
-                      <li>☐ Пробежка 30 минут</li>
-                      <li>☐ Прочитать главу книги</li>
-                      <li>☐ Позвонить другу</li>
+                    <div class="tg-header">
+                      <Target :size="16" class="tg-icon" />
+                      <strong>Задачи на сегодня:</strong>
+                    </div>
+                    <ul class="tg-tasks">
+                      <li><Square :size="14" class="task-check" /> Пробежка 30 минут</li>
+                      <li><Square :size="14" class="task-check" /> Прочитать главу книги</li>
+                      <li><Square :size="14" class="task-check" /> Позвонить другу</li>
                     </ul>
                   </div>
                 </div>
@@ -130,7 +165,8 @@
 
             <div class="step-actions">
               <button class="btn btn-primary btn-lg" @click="nextStep">
-                Перейти к практике →
+                Перейти к практике
+                <ArrowRight :size="18" />
               </button>
             </div>
           </div>
@@ -158,7 +194,11 @@
 
             <!-- Weekly Calendar View (moved above goals) -->
             <div class="week-calendar card">
-              <h3>📅 Ваш план на неделю <span class="drag-hint" v-if="draggedStep">(отпустите на нужный день)</span></h3>
+              <h3 class="calendar-title">
+                <Calendar :size="20" class="calendar-icon" />
+                Ваш план на неделю 
+                <span class="drag-hint" v-if="draggedStep">(отпустите на нужный день)</span>
+              </h3>
               <div class="calendar-grid">
                 <div 
                   v-for="day in weekDays" 
@@ -189,7 +229,7 @@
                       <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
                     </div>
                     <div v-if="getTasksForDay(day.date).length === 0" class="no-tasks drop-hint">
-                      {{ draggedStep ? '📥 Сюда' : '—' }}
+                      {{ draggedStep ? 'Сюда' : '—' }}
                     </div>
                   </div>
                 </div>
