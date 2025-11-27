@@ -2041,54 +2041,64 @@ function getStatusLabel(status) {
   width: 28px;
   height: 28px;
   border-radius: var(--radius-sm);
-  border: none;
+  border: 1.5px solid var(--border-color);
+  background: transparent;
+  color: var(--text-tertiary);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
   font-size: 0.875rem;
-  font-weight: bold;
+  font-weight: 500;
 }
 
 .btn-icon-primary {
-  background: var(--primary-color);
-  color: white;
+  border-color: var(--border-color);
+  color: var(--text-secondary);
 }
 
 .btn-icon-primary:hover {
-  background: var(--primary-dark);
-  transform: scale(1.1);
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+  transform: scale(1.05);
 }
 
 .btn-icon-success {
-  background: #10b981;
-  color: white;
+  border-color: var(--border-color);
+  color: var(--text-secondary);
 }
 
 .btn-icon-success:hover {
-  background: #059669;
-  transform: scale(1.1);
+  background: #10b981;
+  border-color: #10b981;
+  color: white;
+  transform: scale(1.05);
 }
 
 .btn-icon-danger {
-  background: #ef4444;
-  color: white;
+  border-color: var(--border-color);
+  color: var(--text-secondary);
 }
 
 .btn-icon-danger:hover {
-  background: #dc2626;
-  transform: scale(1.1);
+  background: #ef4444;
+  border-color: #ef4444;
+  color: white;
+  transform: scale(1.05);
 }
 
 .btn-icon-secondary {
-  background: #6b7280;
-  color: white;
+  border-color: var(--border-color);
+  color: var(--text-secondary);
 }
 
 .btn-icon-secondary:hover {
-  background: #4b5563;
-  transform: scale(1.1);
+  background: #6b7280;
+  border-color: #6b7280;
+  color: white;
+  transform: scale(1.05);
 }
 
 .action-done {
