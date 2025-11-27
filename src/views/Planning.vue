@@ -2046,6 +2046,7 @@ onMounted(() => {
 .week-calendar {
   padding: 1.5rem;
   margin-bottom: 1rem;
+  overflow: visible;
 }
 
 .week-calendar h3 {
@@ -2056,6 +2057,7 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 0.5rem;
+  overflow: visible;
 }
 
 .calendar-day {
@@ -2063,6 +2065,7 @@ onMounted(() => {
   border-radius: var(--radius-md);
   padding: 0.75rem;
   min-height: 100px;
+  overflow: visible;
 }
 
 .calendar-day.today {
@@ -2107,6 +2110,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  overflow: visible;
 }
 
 .scheduled-task {
