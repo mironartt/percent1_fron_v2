@@ -81,6 +81,12 @@ The application uses a modular structure with dedicated components, services, vi
 - CSS icon-wrapper system with size variants (xs, sm, md, lg) and color classes
 - Arrow line using CSS gradients instead of text arrow
 
+### Planning Module (Planning.vue) - Cleanup
+- Removed all 4 GuidancePanel components with AI coach from lesson steps and planner mode
+- Removed planningCoachResponses array and related tips arrays (theoryTips, practiceTips, telegramTips, plannerTips)
+- Removed unused imports (GuidancePanel, ChevronLeft, ChevronRight from Lucide)
+- Clean, focused planning interface without AI coach distractions
+
 ## External Dependencies
 - **Django REST API Backend**: Provides authentication, user data, onboarding, and goal management services.
 - **Lucide Vue Next**: Used for minimalist line icons across the UI.
