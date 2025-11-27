@@ -95,26 +95,41 @@ The application uses a modular structure with dedicated components, services, vi
 - Removed unused imports (GuidancePanel, ChevronLeft, ChevronRight from Lucide)
 - Clean, focused planning interface without AI coach distractions
 
-### Mini-Task Backend Integration (27 Nov 2025)
-- **API Methods** (api.js): Added `getMiniTaskData()` and `updateMiniTaskData()` for backend sync
-- **Store Methods** (app.js): 
-  - `loadMiniTaskFromBackend()` - loads tasks, categories, step progress
-  - `saveMiniTaskToBackend()` - saves tasks with step completion
-  - `saveMiniTaskTasks()` - saves brain dump and categorized tasks
-  - `updateMiniTaskStep()` - updates completed step number
-  - `completeMiniTaskWithBackend()` - marks mini-task as complete
-  - `resetMiniTask()` - resets local state
-- **MiniTask.vue Component Updates**:
-  - Loading state with spinner
-  - Resume prompt for returning users ("Продолжить мини-задание?")
+### Mini-Task Backend Integration (27 Nov 2025) - FINAL
+**Architecture: Layered Backend Sync (local state preserved)**
+
+- **Categories**: HARDCODED in component with icons (not from backend)
+  - `categories` array with id, name, icon, color
+  - Icons preserved: 🗓️ Календарь, ✅ Следующие действия, 💡 Идеи, 📚 Справка
   - Category mapping: frontend (calendar, next, someday, reference) ↔ backend (calendar, action, idea, info)
-  - Auto-save after each step transition
-  - LocalId tracking for drag-and-drop while preserving backend task_id
-  - Saving state indicator on buttons
-- **Router Navigation Blocking**: Blocks access to app routes (except dashboard, settings, logout) until mini-task complete
+
+- **Local State**: Component manages its own arrays
+  - `brainDumpItems` - reactive ref for all items
+  - `selectedActions`, `completedActions` - reactive refs
+  - Drag/drop works on local arrays, then syncs to backend
+
+- **Backend Sync Functions**:
+  - `formatTasksForBackend()` - serializes local items with category mapping
+  - `loadDataFromBackend()` - hydrates local state from backend response
+  - `saveBrainDump()`, `saveCategorization()`, `saveMiniTaskProgress()` - auto-save to backend
+  - `startFresh()` - resets backend first, then local state
+
+- **Resume Flow**:
+  - Loading state with spinner during backend fetch
+  - Resume prompt shows step count and task count
+  - `resumeFromStep()` handles step >= 4 as complete (blocks step 5)
+  - "Продолжить" vs "Начать заново" options
+
 - **API Endpoints**:
   - GET: `/api/rest/front/app/onboard/mini-task/get/`
   - POST: `/api/rest/front/app/onboard/mini-task/update/`
+
+- **Store Methods** (app.js):
+  - `loadMiniTaskFromBackend()`, `saveMiniTaskToBackend()`
+  - `saveMiniTaskTasks()`, `updateMiniTaskStep()`
+  - `completeMiniTaskWithBackend()`, `resetMiniTask()`
+
+- **Router Navigation Blocking**: Allows dashboard/settings, blocks other routes until mini-task complete
 
 ## External Dependencies
 - **Django REST API Backend**: Provides authentication, user data, onboarding, and goal management services.
