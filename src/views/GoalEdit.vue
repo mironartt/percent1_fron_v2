@@ -126,7 +126,8 @@
               class="step-card"
               :class="{ 
                 dragging: dragIndex === index,
-                'drag-over': dragOverIndex === index && dragIndex !== index
+                'drag-over': dragOverIndex === index && dragIndex !== index,
+                'step-completed': step.completed
               }"
               draggable="true"
               @dragstart="handleDragStart(index, $event)"
@@ -137,6 +138,25 @@
               <div class="step-drag-handle" title="Перетащите для изменения порядка">
                 <GripVertical :size="16" />
               </div>
+              
+              <div class="step-checkbox-wrapper">
+                <input 
+                  type="checkbox"
+                  :checked="step.completed"
+                  @change="toggleStepCompletion(index)"
+                  class="step-checkbox"
+                  :id="`step-checkbox-${index}`"
+                />
+                <label 
+                  :for="`step-checkbox-${index}`" 
+                  class="step-checkbox-label"
+                  :title="step.completed ? 'Отметить как невыполненный' : 'Отметить как выполненный'"
+                >
+                  <CheckSquare v-if="step.completed" :size="20" class="check-icon checked" />
+                  <Square v-else :size="20" class="check-icon" />
+                </label>
+              </div>
+
               <span class="step-number-badge">{{ index + 1 }}</span>
               <div class="step-main">
                 <input 
@@ -144,8 +164,18 @@
                   :value="step.title"
                   @input="updateStep(index, 'title', $event.target.value)"
                   class="step-input"
+                  :class="{ 'completed-text': step.completed }"
                   :placeholder="`Шаг ${index + 1}: что конкретно нужно сделать?`"
                 />
+                <div class="step-comment-section">
+                  <textarea 
+                    :value="step.comment || ''"
+                    @input="updateStep(index, 'comment', $event.target.value)"
+                    class="step-comment-input"
+                    :placeholder="'Комментарий к шагу (необязательно)'"
+                    rows="1"
+                  ></textarea>
+                </div>
               </div>
               <button 
                 class="btn-icon delete"
@@ -241,7 +271,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { 
   Bot, User, Trash2, Save, Plus, ArrowLeft, GripVertical, X, ChevronDown,
-  Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target
+  Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target,
+  Square, CheckSquare
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -381,6 +412,7 @@ function addStep() {
     id: Date.now().toString(),
     title: '', 
     completed: false,
+    comment: '',
     timeEstimate: '',
     priority: ''
   })
@@ -465,6 +497,7 @@ function saveGoal() {
       id: s.id || `step_${Date.now()}_${index}`,
       title: s.title,
       completed: s.completed || false,
+      comment: s.comment || '',
       timeEstimate: s.timeEstimate || '',
       priority: s.priority || ''
     }))
@@ -810,19 +843,80 @@ async function sendMessage() {
   transition: all 0.2s ease;
 }
 
-.step-card.completed {
-  background: rgba(16, 185, 129, 0.05);
+.step-card.step-completed {
+  background: rgba(16, 185, 129, 0.08);
+  border-left: 3px solid var(--success-color);
 }
 
 .step-checkbox-wrapper {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
 .step-checkbox {
-  width: 24px;
-  height: 24px;
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.step-checkbox-label {
   cursor: pointer;
-  accent-color: var(--success-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.step-checkbox-label:hover {
+  background: var(--bg-tertiary);
+}
+
+.check-icon {
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.check-icon.checked {
+  color: var(--success-color);
+}
+
+.step-input.completed-text {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.step-comment-section {
+  margin-top: 0.25rem;
+}
+
+.step-comment-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  background: transparent;
+  color: var(--text-secondary);
+  resize: none;
+  transition: all 0.2s ease;
+  min-height: 32px;
+}
+
+.step-comment-input:focus {
+  outline: none;
+  border-color: var(--border-color);
+  background: var(--bg-primary);
+}
+
+.step-comment-input::placeholder {
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 .step-input {
