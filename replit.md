@@ -52,6 +52,15 @@ The application uses a modular structure with dedicated components, services, vi
 - Added styling for empty "Почему важно" cells
 - Helper functions: getSphereIcon(), getSphereColor(), getSphereNameOnly()
 
+### Decomposition Module (Goals.vue)
+- AI Coach header: 🤖 emoji replaced with Bot icon in purple circular wrapper
+- Chat avatars: 🤖/👤 replaced with Bot/User icons with color-coded circular backgrounds
+- "Пройти урок заново" button: 📚 emoji replaced with RotateCcw icon
+- "Из Банка целей" badge: 🏦 emoji replaced with Landmark icon
+- Edit/Delete buttons: ✏️/🗑️ emojis replaced with Edit2/Trash2 Lucide icons with hover effects
+- Sphere display: Emoji icons replaced with Lucide icons (Wallet, Palette, Users, Heart, Briefcase, HeartHandshake) with colored borders
+- Added helper functions: getSphereIconComponent(), getSphereColor()
+
 ## External Dependencies
 - **Django REST API Backend**: Provides authentication, user data, onboarding, and goal management services.
 - **Lucide Vue Next**: Used for minimalist line icons across the UI.
