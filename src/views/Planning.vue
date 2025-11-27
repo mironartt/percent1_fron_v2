@@ -2426,19 +2426,15 @@ onMounted(() => {
 }
 
 .step-item {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 0.5rem !important;
-  padding: 6px 10px !important;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 8px 12px;
   background: var(--bg-secondary);
   border-radius: var(--radius-sm);
   border-left: 3px solid transparent;
-  min-height: 0 !important;
-  height: 36px !important;
-  max-height: 36px !important;
-  box-sizing: border-box !important;
-  overflow: hidden;
 }
 
 .step-item.scheduled {
@@ -2470,12 +2466,16 @@ onMounted(() => {
   flex: 1;
   font-size: 0.875rem;
   min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .step-item .step-actions {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 0.5rem;
+  gap: 6px;
   flex-shrink: 0;
 }
 
