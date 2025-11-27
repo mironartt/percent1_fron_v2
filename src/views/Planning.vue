@@ -222,40 +222,11 @@
                     <div 
                       v-for="task in getTasksForDay(day.date)" 
                       :key="task.id"
-                      class="scheduled-task-wrapper"
+                      class="scheduled-task"
+                      :class="'priority-' + (task.priority || 'optional')"
                     >
-                      <div 
-                        class="scheduled-task"
-                        :class="'priority-' + (task.priority || 'optional')"
-                      >
-                        <span class="task-title">{{ task.stepTitle }}</span>
-                        <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
-                      </div>
-                      <div class="task-popover">
-                        <div class="popover-header">
-                          <span 
-                            class="popover-priority-badge"
-                            :style="{ backgroundColor: getPriorityColor(task.priority) }"
-                          >
-                            {{ getPriorityLabel(task.priority) }}
-                          </span>
-                        </div>
-                        <div class="popover-title">{{ task.stepTitle }}</div>
-                        <div class="popover-goal">
-                          <Target :size="12" />
-                          {{ task.goalTitle }}
-                        </div>
-                        <div class="popover-meta">
-                          <span v-if="task.timeEstimate" class="popover-time">
-                            <Clock :size="12" />
-                            {{ formatTimeEstimate(task.timeEstimate) }}
-                          </span>
-                        </div>
-                        <div v-if="task.comment" class="popover-comment">
-                          <MessageSquare :size="12" />
-                          {{ task.comment }}
-                        </div>
-                      </div>
+                      <span class="task-title">{{ task.stepTitle }}</span>
+                      <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
                     </div>
                     <div v-if="getTasksForDay(day.date).length === 0" class="no-tasks drop-hint">
                       {{ draggedStep ? 'Сюда' : '—' }}
@@ -626,64 +597,34 @@
                   <div 
                     v-for="task in getTasksForDay(day.date)" 
                     :key="task.id"
-                    class="task-card-wrapper"
+                    class="task-card"
+                    :class="[
+                      { completed: task.completed, dragging: draggedTaskId === task.id },
+                      'priority-' + (task.priority || 'optional')
+                    ]"
+                    draggable="true"
+                    @dragstart="handleDragStart(task)"
+                    @dragend="handleDragEnd"
                   >
-                    <div
-                      class="task-card"
-                      :class="[
-                        { completed: task.completed, dragging: draggedTaskId === task.id },
-                        'priority-' + (task.priority || 'optional')
-                      ]"
-                      draggable="true"
-                      @dragstart="handleDragStart(task)"
-                      @dragend="handleDragEnd"
+                    <div class="drag-handle">⋮⋮</div>
+                    <input 
+                      type="checkbox"
+                      :checked="task.completed"
+                      @change="toggleTaskComplete(task.id)"
+                      class="task-checkbox"
+                    />
+                    <div class="task-info">
+                      <span class="task-title">{{ task.stepTitle }}</span>
+                      <span class="task-goal">{{ task.goalTitle }}</span>
+                    </div>
+                    <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
+                    <button 
+                      class="btn-icon remove-sm"
+                      @click="removeTask(task.id)"
+                      title="Удалить"
                     >
-                      <div class="drag-handle">⋮⋮</div>
-                      <input 
-                        type="checkbox"
-                        :checked="task.completed"
-                        @change="toggleTaskComplete(task.id)"
-                        class="task-checkbox"
-                      />
-                      <div class="task-info">
-                        <span class="task-title">{{ task.stepTitle }}</span>
-                        <span class="task-goal">{{ task.goalTitle }}</span>
-                      </div>
-                      <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
-                      <button 
-                        class="btn-icon remove-sm"
-                        @click="removeTask(task.id)"
-                        title="Удалить"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                    <!-- Popover on hover -->
-                    <div class="task-card-popover">
-                      <div class="popover-header">
-                        <span 
-                          class="popover-priority-badge"
-                          :style="{ backgroundColor: getPriorityColor(task.priority) }"
-                        >
-                          {{ getPriorityLabel(task.priority) }}
-                        </span>
-                      </div>
-                      <div class="popover-title">{{ task.stepTitle }}</div>
-                      <div class="popover-goal">
-                        <Target :size="12" />
-                        {{ task.goalTitle }}
-                      </div>
-                      <div class="popover-meta">
-                        <span v-if="task.timeEstimate" class="popover-time">
-                          <Clock :size="12" />
-                          {{ formatTimeEstimate(task.timeEstimate) }}
-                        </span>
-                      </div>
-                      <div v-if="task.comment" class="popover-comment">
-                        <MessageSquare :size="12" />
-                        {{ task.comment }}
-                      </div>
-                    </div>
+                      ✕
+                    </button>
                   </div>
                   <div v-if="getTasksForDay(day.date).length === 0" class="empty-day drop-zone">
                     Перетащите задачу сюда
@@ -818,9 +759,7 @@ import {
   Sparkles,
   Square,
   ArrowRight,
-  CheckSquare,
-  Clock,
-  MessageSquare
+  CheckSquare
 } from 'lucide-vue-next'
 
 const store = useAppStore()
@@ -2076,7 +2015,6 @@ onMounted(() => {
 .week-calendar {
   padding: 1.5rem;
   margin-bottom: 1rem;
-  overflow: visible;
 }
 
 .week-calendar h3 {
@@ -2087,7 +2025,6 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 0.5rem;
-  overflow: visible;
 }
 
 .calendar-day {
@@ -2095,7 +2032,6 @@ onMounted(() => {
   border-radius: var(--radius-md);
   padding: 0.75rem;
   min-height: 100px;
-  overflow: visible;
 }
 
 .calendar-day.today {
@@ -2140,7 +2076,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  overflow: visible;
 }
 
 .scheduled-task {
@@ -2192,111 +2127,6 @@ onMounted(() => {
 .scheduled-task.priority-optional {
   border-left-color: #9ca3af;
   background: rgba(156, 163, 175, 0.1);
-}
-
-/* Task popover on hover */
-.scheduled-task-wrapper {
-  position: relative;
-}
-
-.scheduled-task-wrapper .task-popover {
-  display: none;
-  position: absolute;
-  left: 0;
-  top: 100%;
-  margin-top: 4px;
-  min-width: 220px;
-  max-width: 300px;
-  padding: 0.75rem;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-  animation: popoverFadeIn 0.15s ease;
-  pointer-events: none;
-}
-
-@keyframes popoverFadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.scheduled-task-wrapper:hover .task-popover {
-  display: block;
-  pointer-events: auto;
-}
-
-.popover-header {
-  margin-bottom: 0.5rem;
-}
-
-.popover-priority-badge {
-  font-size: 0.7rem;
-  padding: 0.125rem 0.5rem;
-  border-radius: var(--radius-sm);
-  color: white;
-  font-weight: 500;
-}
-
-.popover-title {
-  font-weight: 600;
-  font-size: 0.875rem;
-  margin-bottom: 0.5rem;
-  color: var(--text-primary);
-  line-height: 1.4;
-}
-
-.popover-goal {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  margin-bottom: 0.5rem;
-}
-
-.popover-goal svg {
-  color: var(--primary-color);
-  flex-shrink: 0;
-}
-
-.popover-meta {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.popover-time {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  background: var(--bg-secondary);
-  padding: 0.125rem 0.375rem;
-  border-radius: var(--radius-sm);
-}
-
-.popover-time svg {
-  color: var(--primary-color);
-}
-
-.popover-comment {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.375rem;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--border-color);
-  line-height: 1.4;
-}
-
-.popover-comment svg {
-  flex-shrink: 0;
-  margin-top: 0.125rem;
 }
 
 .no-tasks {
@@ -2828,7 +2658,6 @@ onMounted(() => {
 
 .week-calendar-full {
   padding: 1.5rem;
-  overflow: visible;
 }
 
 .week-calendar-full h3 {
@@ -2839,7 +2668,6 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(7, minmax(120px, 1fr));
   gap: 0.5rem;
-  overflow: visible;
 }
 
 .calendar-day-full {
@@ -2848,7 +2676,6 @@ onMounted(() => {
   min-height: 150px;
   display: flex;
   flex-direction: column;
-  overflow: visible;
 }
 
 .calendar-day-full.today {
@@ -2894,35 +2721,6 @@ onMounted(() => {
   flex-direction: column;
   gap: 0.375rem;
   overflow-y: auto;
-  overflow-x: visible;
-}
-
-/* Task card wrapper for popover positioning */
-.task-card-wrapper {
-  position: relative;
-}
-
-.task-card-wrapper .task-card-popover {
-  display: none;
-  position: absolute;
-  left: 100%;
-  top: 0;
-  margin-left: 8px;
-  min-width: 240px;
-  max-width: 320px;
-  padding: 0.75rem;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-  animation: popoverFadeIn 0.15s ease;
-  pointer-events: none;
-}
-
-.task-card-wrapper:hover .task-card-popover {
-  display: block;
-  pointer-events: auto;
 }
 
 .task-card {
