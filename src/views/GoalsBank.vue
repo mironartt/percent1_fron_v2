@@ -110,50 +110,76 @@
           </button>
         </div>
         
+        <!-- Панель массовых действий -->
+        <div v-if="selectedBankGoals.length > 0" class="bulk-actions-bar">
+          <div class="bulk-info">
+            <span class="bulk-count">Выбрано: {{ selectedBankGoals.length }}</span>
+            <button class="btn btn-ghost btn-sm" @click="clearBankSelection">Снять выделение</button>
+          </div>
+          <div class="bulk-buttons">
+            <button 
+              v-if="canBulkTakeToWork" 
+              class="btn btn-primary btn-sm"
+              @click="bulkTakeToWork"
+            >
+              ➕ Взять в работу
+            </button>
+            <button 
+              v-if="canBulkComplete" 
+              class="btn btn-success btn-sm"
+              @click="bulkCompleteGoals"
+            >
+              ✓ Завершить
+            </button>
+          </div>
+        </div>
+
         <div class="goals-table-wrapper">
           <table class="goals-table">
             <thead>
               <tr>
+                <th class="col-checkbox">
+                  <input 
+                    type="checkbox" 
+                    :checked="isAllBankGoalsSelected"
+                    :indeterminate="isSomeBankGoalsSelected && !isAllBankGoalsSelected"
+                    @change="toggleAllBankGoals"
+                    class="table-checkbox"
+                  />
+                </th>
                 <th class="col-status">Статус</th>
                 <th class="col-goal">Цель / Идея</th>
                 <th class="col-why">Почему для меня это важно?</th>
+                <th class="col-actions">Действия</th>
               </tr>
             </thead>
             <tbody>
               <tr 
                 v-for="goal in filteredValidatedGoals" 
                 :key="goal.id"
-                :class="{ 'in-work': isGoalTransferred(goal.id) }"
+                :class="{ 
+                  'in-work': isGoalTransferred(goal.id),
+                  'row-selected': isBankGoalSelected(goal.id)
+                }"
               >
+                <td class="col-checkbox">
+                  <input 
+                    type="checkbox" 
+                    :checked="isBankGoalSelected(goal.id)"
+                    @change="toggleBankGoalSelection(goal.id)"
+                    class="table-checkbox"
+                  />
+                </td>
                 <td class="col-status">
-                  <span
-                    v-if="isGoalCompleted(goal.id)" 
-                    class="status-badge completed"
-                  >
-                    <span class="status-icon">✓</span> Завершена
+                  <span v-if="isGoalCompleted(goal.id)" class="status-badge completed">
+                    Завершена
                   </span>
-                  <div 
-                    v-else-if="isGoalTransferred(goal.id)" 
-                    class="status-actions"
-                  >
-                    <span class="status-badge in-work">
-                      <span class="status-icon">✓</span> В работе
-                    </span>
-                    <button 
-                      class="btn btn-sm btn-success complete-goal-btn"
-                      @click.stop="completeGoalFromBank(goal)"
-                      title="Завершить цель"
-                    >
-                      ✓ Завершить
-                    </button>
-                  </div>
-                  <button 
-                    v-else 
-                    class="btn btn-sm btn-action take-to-work"
-                    @click.stop="takeGoalToWork(goal)"
-                  >
-                    ➕ Взять в работу
-                  </button>
+                  <span v-else-if="isGoalTransferred(goal.id)" class="status-badge in-work">
+                    В работе
+                  </span>
+                  <span v-else class="status-badge available">
+                    Доступна
+                  </span>
                 </td>
                 <td class="col-goal">
                   <div class="goal-cell">
@@ -165,6 +191,35 @@
                 <td class="col-why">
                   <div class="why-cell">
                     {{ getWhyImportant(goal) }}
+                  </div>
+                </td>
+                <td class="col-actions">
+                  <div class="actions-cell">
+                    <button 
+                      v-if="!isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
+                      class="btn-icon btn-icon-primary"
+                      @click.stop="takeGoalToWork(goal)"
+                      title="Взять в работу"
+                    >
+                      <span class="icon-plus">+</span>
+                    </button>
+                    <button 
+                      v-if="isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
+                      class="btn-icon btn-icon-success"
+                      @click.stop="completeGoalFromBank(goal)"
+                      title="Завершить цель"
+                    >
+                      <span class="icon-check">✓</span>
+                    </button>
+                    <button 
+                      v-if="isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
+                      class="btn-icon btn-icon-danger"
+                      @click.stop="removeFromWorkBySourceId(goal.id)"
+                      title="Убрать из работы"
+                    >
+                      <span class="icon-remove">✕</span>
+                    </button>
+                    <span v-if="isGoalCompleted(goal.id)" class="action-done">—</span>
                   </div>
                 </td>
               </tr>
@@ -769,6 +824,7 @@ const lessonStarted = ref(false)
 const addingNewGoal = ref(false)
 const filterSphere = ref('')
 const filterStatus = ref('')
+const selectedBankGoals = ref([])
 
 const showEmptyState = computed(() => {
   return !completedAt.value && rawIdeas.value.length === 0 && !lessonStarted.value && !addingNewGoal.value
@@ -891,6 +947,82 @@ const filteredValidatedGoals = computed(() => {
 function clearFilters() {
   filterSphere.value = ''
   filterStatus.value = ''
+}
+
+const isBankGoalSelected = (goalId) => selectedBankGoals.value.includes(goalId)
+
+const isAllBankGoalsSelected = computed(() => {
+  if (filteredValidatedGoals.value.length === 0) return false
+  return filteredValidatedGoals.value.every(g => selectedBankGoals.value.includes(g.id))
+})
+
+const isSomeBankGoalsSelected = computed(() => selectedBankGoals.value.length > 0)
+
+function toggleBankGoalSelection(goalId) {
+  const index = selectedBankGoals.value.indexOf(goalId)
+  if (index === -1) {
+    selectedBankGoals.value.push(goalId)
+  } else {
+    selectedBankGoals.value.splice(index, 1)
+  }
+}
+
+function toggleAllBankGoals() {
+  if (isAllBankGoalsSelected.value) {
+    selectedBankGoals.value = []
+  } else {
+    selectedBankGoals.value = filteredValidatedGoals.value.map(g => g.id)
+  }
+}
+
+function clearBankSelection() {
+  selectedBankGoals.value = []
+}
+
+const canBulkTakeToWork = computed(() => {
+  return selectedBankGoals.value.some(id => {
+    const goal = validatedGoals.value.find(g => g.id === id)
+    return goal && !isGoalTransferred(id) && !isGoalCompleted(id)
+  })
+})
+
+const canBulkComplete = computed(() => {
+  return selectedBankGoals.value.some(id => {
+    return isGoalTransferred(id) && !isGoalCompleted(id)
+  })
+})
+
+function bulkTakeToWork() {
+  const goalsToTake = selectedBankGoals.value
+    .map(id => validatedGoals.value.find(g => g.id === id))
+    .filter(goal => goal && !isGoalTransferred(goal.id) && !isGoalCompleted(goal.id))
+  
+  if (goalsToTake.length === 0) return
+  
+  goalsToTake.forEach(goal => takeGoalToWork(goal))
+  clearBankSelection()
+}
+
+function bulkCompleteGoals() {
+  const goalsToComplete = selectedBankGoals.value
+    .filter(id => isGoalTransferred(id) && !isGoalCompleted(id))
+  
+  if (goalsToComplete.length === 0) return
+  
+  if (confirm(`Завершить ${goalsToComplete.length} ${goalsToComplete.length === 1 ? 'цель' : 'целей'}?`)) {
+    goalsToComplete.forEach(sourceId => {
+      const goal = validatedGoals.value.find(g => g.id === sourceId)
+      if (goal) completeGoalFromBank(goal)
+    })
+    clearBankSelection()
+  }
+}
+
+function removeFromWorkBySourceId(sourceId) {
+  const goal = store.goals.find(g => g.sourceId === sourceId)
+  if (goal) {
+    removeFromWork(goal.id)
+  }
 }
 
 const sphereDistribution = computed(() => {
@@ -1842,6 +1974,141 @@ function getStatusLabel(status) {
   background: var(--bg-tertiary);
   color: var(--text-secondary);
   white-space: nowrap;
+}
+
+.status-badge.available {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+}
+
+/* Table checkbox column */
+.col-checkbox {
+  width: 40px;
+  text-align: center;
+}
+
+.table-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--primary-color);
+}
+
+/* Actions column */
+.col-actions {
+  width: 120px;
+  text-align: center;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.btn-icon-primary {
+  background: var(--primary-color);
+  color: white;
+}
+
+.btn-icon-primary:hover {
+  background: var(--primary-dark);
+  transform: scale(1.1);
+}
+
+.btn-icon-success {
+  background: #10b981;
+  color: white;
+}
+
+.btn-icon-success:hover {
+  background: #059669;
+  transform: scale(1.1);
+}
+
+.btn-icon-danger {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-icon-danger:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+.action-done {
+  color: var(--text-tertiary);
+  font-size: 1rem;
+}
+
+/* Row selection highlight */
+.goals-table tbody tr.row-selected {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+/* Bulk actions bar */
+.bulk-actions-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: var(--primary-light);
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+}
+
+.bulk-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.bulk-count {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.bulk-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-success {
+  background: #10b981;
+  color: white;
+  border: none;
+}
+
+.btn-success:hover {
+  background: #059669;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-ghost:hover {
+  background: var(--bg-tertiary);
 }
 
 .btn-action.take-to-work {
