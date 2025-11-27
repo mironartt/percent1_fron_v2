@@ -81,7 +81,7 @@
 
       <!-- Reflection Summary Accordion -->
       <div class="reflection-summary card">
-        <h3>📝 Ваша рефлексия</h3>
+        <h3>Ваша рефлексия</h3>
         <div class="reflection-accordion readonly">
           <div 
             v-for="sphere in lifeSpheres" 
