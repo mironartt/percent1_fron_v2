@@ -1813,6 +1813,7 @@ function getStatusLabel(status) {
   white-space: nowrap;
   padding: 0.375rem 0.75rem;
   border-radius: var(--radius-md);
+  font-size: 0.8125rem;
 }
 
 .status-badge.pending {
