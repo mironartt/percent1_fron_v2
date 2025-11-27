@@ -6,6 +6,17 @@
       :viewBox="`0 0 ${svgSize} ${svgSize}`"
       class="wheel-svg"
     >
+      <defs>
+        <!-- Arc paths for curved text -->
+        <path
+          v-for="(sphere, index) in spheres"
+          :key="`arc-path-${sphere.id}`"
+          :id="`text-arc-${index}`"
+          :d="getTextArcPath(index)"
+          fill="none"
+        />
+      </defs>
+
       <!-- Outer wheel circle (full boundary) -->
       <circle
         :cx="center"
@@ -57,20 +68,22 @@
         @mouseleave="!readonly && (hoveredSphere = null)"
       />
 
-      <!-- Sphere labels - in outer ring, beyond the grid -->
+      <!-- Sphere labels - curved text following arc -->
       <text
         v-for="(sphere, index) in spheres"
         :key="`label-${sphere.id}`"
-        :x="getLabelX(index)"
-        :y="getLabelY(index)"
-        :transform="getLabelTransform(index)"
         :fill="getSphereColor(index)"
         :class="['sphere-label', { 'sphere-label-readonly': readonly }]"
-        text-anchor="middle"
-        dominant-baseline="middle"
         @click="!readonly && selectSphere(sphere)"
       >
-        {{ sphere.name.toUpperCase() }}
+        <textPath
+          :href="`#text-arc-${index}`"
+          startOffset="50%"
+          text-anchor="middle"
+          dominant-baseline="middle"
+        >
+          {{ sphere.name.toUpperCase() }}
+        </textPath>
       </text>
 
       <!-- Interactive handle for dragging (hidden in readonly mode) -->
@@ -112,7 +125,7 @@ const svgSize = 700
 const center = svgSize / 2
 const outerRadius = 320
 const gridRadius = 240
-const labelRadius = (gridRadius + outerRadius) / 2 + 10
+const labelRadius = (gridRadius + outerRadius) / 2 + 15
 
 const selectedSphere = ref(null)
 const hoveredSphere = ref(null)
@@ -137,6 +150,32 @@ function getMidAngle(index) {
   return getAngle(index) + angleStep.value / 2
 }
 
+function getTextArcPath(index) {
+  const startAngle = getAngle(index)
+  const endAngle = getAngle(index + 1)
+  const midAngle = getMidAngle(index)
+  
+  const isBottomHalf = midAngle > 0 && midAngle < Math.PI
+  
+  let arcStart, arcEnd
+  if (isBottomHalf) {
+    arcStart = endAngle
+    arcEnd = startAngle
+  } else {
+    arcStart = startAngle
+    arcEnd = endAngle
+  }
+  
+  const x1 = center + labelRadius * Math.cos(arcStart)
+  const y1 = center + labelRadius * Math.sin(arcStart)
+  const x2 = center + labelRadius * Math.cos(arcEnd)
+  const y2 = center + labelRadius * Math.sin(arcEnd)
+  
+  const sweepFlag = isBottomHalf ? 0 : 1
+  
+  return `M ${x1} ${y1} A ${labelRadius} ${labelRadius} 0 0 ${sweepFlag} ${x2} ${y2}`
+}
+
 function getSegmentPath(index, score) {
   const startAngle = getAngle(index)
   const endAngle = getAngle(index + 1)
@@ -159,30 +198,6 @@ function getSegmentPath(index, score) {
 
 function getSphereColor(index) {
   return sphereColors[index % sphereColors.length]
-}
-
-function getLabelX(index) {
-  const midAngle = getMidAngle(index)
-  return center + labelRadius * Math.cos(midAngle)
-}
-
-function getLabelY(index) {
-  const midAngle = getMidAngle(index)
-  return center + labelRadius * Math.sin(midAngle)
-}
-
-function getLabelTransform(index) {
-  const midAngle = getMidAngle(index)
-  const x = getLabelX(index)
-  const y = getLabelY(index)
-  
-  let rotationDeg = (midAngle * 180) / Math.PI + 90
-  
-  if (rotationDeg > 90 && rotationDeg <= 270) {
-    rotationDeg += 180
-  }
-  
-  return `rotate(${rotationDeg}, ${x}, ${y})`
 }
 
 function selectSphere(sphere) {
@@ -266,9 +281,9 @@ function startDrag(event, sphere, index) {
 }
 
 .sphere-label {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 1.5px;
+  letter-spacing: 2px;
   cursor: pointer;
   user-select: none;
 }
@@ -293,7 +308,7 @@ function startDrag(event, sphere, index) {
 
 @media (max-width: 768px) {
   .sphere-label {
-    font-size: 9px;
+    font-size: 11px;
     letter-spacing: 1px;
   }
 }
