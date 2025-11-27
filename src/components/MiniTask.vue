@@ -20,11 +20,11 @@
       </div>
 
       <div class="resume-buttons">
-        <button class="btn btn-primary" @click="resumeFromStep(store.miniTask.stepCompleted)">
+        <button class="btn btn-primary" @click="resumeFromStep(store.miniTask.stepCompleted)" :disabled="resetting">
           Продолжить
         </button>
-        <button class="btn btn-outline" @click="startFresh">
-          Начать заново
+        <button class="btn btn-outline" @click="startFresh" :disabled="resetting">
+          {{ resetting ? 'Сброс...' : 'Начать заново' }}
         </button>
       </div>
     </div>
@@ -311,6 +311,7 @@ const currentStep = ref(1)
 const totalSteps = 4
 const loading = ref(false)
 const saving = ref(false)
+const resetting = ref(false)
 const showResumePrompt = ref(false)
 
 // Timer
@@ -578,6 +579,13 @@ async function saveCategorization() {
 }
 
 function resumeFromStep(step) {
+  // Если уже завершён шаг 4, это означает полное завершение
+  if (step >= 4) {
+    emit('complete')
+    return
+  }
+  
+  // Переходим на следующий шаг после завершённого
   currentStep.value = step + 1
   showResumePrompt.value = false
   
@@ -586,13 +594,31 @@ function resumeFromStep(step) {
   }
 }
 
-function startFresh() {
-  currentStep.value = 1
-  showResumePrompt.value = false
-  brainDumpItems.value = []
-  selectedActions.value = []
-  completedActions.value = []
-  store.resetMiniTask()
+async function startFresh() {
+  resetting.value = true
+  
+  try {
+    // Сбрасываем данные на бэкенде
+    await store.saveMiniTaskToBackend({
+      step_completed: 0,
+      is_complete: false,
+      tasks: []
+    })
+    
+    // Сбрасываем локальное состояние
+    currentStep.value = 1
+    showResumePrompt.value = false
+    brainDumpItems.value = []
+    selectedActions.value = []
+    completedActions.value = []
+    store.resetMiniTask()
+  } catch (error) {
+    if (DEBUG_MODE) {
+      console.error('[MiniTask] Error resetting:', error)
+    }
+  } finally {
+    resetting.value = false
+  }
 }
 
 async function loadDataFromBackend() {
@@ -631,10 +657,12 @@ async function loadDataFromBackend() {
           .map(item => item.localId)
       }
       
-      if (data.stepCompleted > 0 && !data.completed) {
-        showResumePrompt.value = true
-      } else if (data.completed) {
+      // Если stepCompleted >= 4, это означает полное завершение
+      // (даже если is_complete ещё не установлен на бэкенде)
+      if (data.stepCompleted >= 4 || data.completed) {
         emit('complete')
+      } else if (data.stepCompleted > 0) {
+        showResumePrompt.value = true
       }
     }
   } catch (error) {
