@@ -232,6 +232,22 @@ export const useAppStore = defineStore('app', () => {
     completedAt: null
   })
 
+  // Настройки Telegram
+  const telegramSettings = ref({
+    connected: false,
+    chatId: '',
+    username: '',
+    notifications: {
+      morningPlan: true,
+      morningTime: '08:00',
+      eveningReview: true,
+      eveningTime: '21:00',
+      weekendPlanning: true,
+      taskReminders: false
+    },
+    connectedAt: null
+  })
+
   // Недельное планирование
   const weeklyPlans = ref([])
 
@@ -346,7 +362,8 @@ export const useAppStore = defineStore('app', () => {
       goalsBank: goalsBank.value,
       decompositionModule: decompositionModule.value,
       planningModule: planningModule.value,
-      weeklyPlans: weeklyPlans.value
+      weeklyPlans: weeklyPlans.value,
+      telegramSettings: telegramSettings.value
     }))
   }
 
@@ -376,6 +393,7 @@ export const useAppStore = defineStore('app', () => {
         if (parsed.decompositionModule) decompositionModule.value = { ...decompositionModule.value, ...parsed.decompositionModule }
         if (parsed.planningModule) planningModule.value = { ...planningModule.value, ...parsed.planningModule }
         if (parsed.weeklyPlans) weeklyPlans.value = parsed.weeklyPlans
+        if (parsed.telegramSettings) telegramSettings.value = { ...telegramSettings.value, ...parsed.telegramSettings }
       } catch (e) {
         console.error('Error loading data:', e)
       }
@@ -809,6 +827,31 @@ export const useAppStore = defineStore('app', () => {
     saveToLocalStorage()
   }
 
+  // Telegram Settings methods
+  function connectTelegram(chatId, username) {
+    telegramSettings.value.connected = true
+    telegramSettings.value.chatId = chatId
+    telegramSettings.value.username = username
+    telegramSettings.value.connectedAt = new Date().toISOString()
+    saveToLocalStorage()
+  }
+
+  function disconnectTelegram() {
+    telegramSettings.value.connected = false
+    telegramSettings.value.chatId = ''
+    telegramSettings.value.username = ''
+    telegramSettings.value.connectedAt = null
+    saveToLocalStorage()
+  }
+
+  function updateTelegramNotifications(settings) {
+    telegramSettings.value.notifications = {
+      ...telegramSettings.value.notifications,
+      ...settings
+    }
+    saveToLocalStorage()
+  }
+
   function createWeeklyPlan(weekStart) {
     const plan = {
       id: Date.now().toString(),
@@ -972,6 +1015,12 @@ export const useAppStore = defineStore('app', () => {
     addScheduledTask,
     updateScheduledTask,
     removeScheduledTask,
-    toggleScheduledTaskComplete
+    toggleScheduledTaskComplete,
+    
+    // Telegram Settings
+    telegramSettings,
+    connectTelegram,
+    disconnectTelegram,
+    updateTelegramNotifications
   }
 })

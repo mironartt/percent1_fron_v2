@@ -317,17 +317,103 @@
               </p>
             </header>
 
-            <div class="telegram-setup card">
-              <div class="telegram-icon">📱</div>
-              <h3>Telegram-бот (скоро)</h3>
-              <p>
-                Интеграция с Telegram находится в разработке. 
-                Скоро вы сможете получать ежедневные напоминания о запланированных задачах 
-                и отмечать их выполнение прямо в мессенджере.
-              </p>
-              <div class="coming-soon-badge">
-                🚧 В разработке
+            <!-- Connected State -->
+            <div v-if="telegramConnected" class="telegram-setup card connected">
+              <div class="telegram-header">
+                <div class="telegram-icon connected">✅</div>
+                <div class="telegram-info">
+                  <h3>Telegram подключён</h3>
+                  <p class="telegram-username">@{{ telegramUsername }}</p>
+                </div>
               </div>
+              
+              <div class="notification-settings">
+                <h4>Настройки уведомлений</h4>
+                
+                <label class="toggle-setting">
+                  <input 
+                    type="checkbox" 
+                    :checked="notificationSettings.morningPlan"
+                    @change="updateNotification('morningPlan', $event.target.checked)"
+                  />
+                  <span class="toggle-label">
+                    <span class="toggle-title">🌅 Утренний план</span>
+                    <span class="toggle-desc">Задачи на сегодня в {{ notificationSettings.morningTime }}</span>
+                  </span>
+                </label>
+                
+                <label class="toggle-setting">
+                  <input 
+                    type="checkbox" 
+                    :checked="notificationSettings.eveningReview"
+                    @change="updateNotification('eveningReview', $event.target.checked)"
+                  />
+                  <span class="toggle-label">
+                    <span class="toggle-title">🌙 Вечерний обзор</span>
+                    <span class="toggle-desc">Итоги дня в {{ notificationSettings.eveningTime }}</span>
+                  </span>
+                </label>
+                
+                <label class="toggle-setting">
+                  <input 
+                    type="checkbox" 
+                    :checked="notificationSettings.weekendPlanning"
+                    @change="updateNotification('weekendPlanning', $event.target.checked)"
+                  />
+                  <span class="toggle-label">
+                    <span class="toggle-title">📅 Планирование выходных</span>
+                    <span class="toggle-desc">Пятница — обзор недели, воскресенье — план на неделю</span>
+                  </span>
+                </label>
+              </div>
+              
+              <button class="btn btn-danger-outline btn-sm" @click="handleDisconnectTelegram">
+                Отключить Telegram
+              </button>
+            </div>
+
+            <!-- Not Connected State -->
+            <div v-else class="telegram-setup card">
+              <div class="telegram-icon">📱</div>
+              <h3>Подключите Telegram</h3>
+              <p>
+                Получайте ежедневные напоминания о задачах и отмечайте выполнение прямо в мессенджере.
+              </p>
+              
+              <div class="connection-steps">
+                <div class="connection-step">
+                  <span class="step-number">1</span>
+                  <span class="step-text">Откройте бота <a href="https://t.me/OnePercentLifeBot" target="_blank">@OnePercentLifeBot</a></span>
+                </div>
+                <div class="connection-step">
+                  <span class="step-number">2</span>
+                  <span class="step-text">Нажмите "Начать" и следуйте инструкциям</span>
+                </div>
+                <div class="connection-step">
+                  <span class="step-number">3</span>
+                  <span class="step-text">Введите код подключения ниже</span>
+                </div>
+              </div>
+              
+              <div class="connection-form">
+                <input 
+                  type="text" 
+                  v-model="telegramCode"
+                  placeholder="Введите код из бота"
+                  class="input-lg"
+                />
+                <button 
+                  class="btn btn-primary" 
+                  @click="handleConnectTelegram"
+                  :disabled="!telegramCode.trim()"
+                >
+                  Подключить
+                </button>
+              </div>
+              
+              <p class="skip-note">
+                Можно пропустить этот шаг и настроить позже в настройках.
+              </p>
             </div>
 
             <div class="plan-summary card">
@@ -413,6 +499,48 @@
             </div>
           </header>
 
+          <!-- Weekly Statistics -->
+          <div class="weekly-stats card">
+            <div class="stats-grid">
+              <div class="stat-box">
+                <div class="stat-icon">✅</div>
+                <div class="stat-content">
+                  <span class="stat-number">{{ weeklyCompletedTasks }}</span>
+                  <span class="stat-label">Выполнено</span>
+                </div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-icon">📋</div>
+                <div class="stat-content">
+                  <span class="stat-number">{{ weeklyTotalTasks }}</span>
+                  <span class="stat-label">Всего задач</span>
+                </div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-icon">📊</div>
+                <div class="stat-content">
+                  <span class="stat-number">{{ weeklyCompletionRate }}%</span>
+                  <span class="stat-label">Прогресс</span>
+                </div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-icon">🔥</div>
+                <div class="stat-content">
+                  <span class="stat-number">{{ currentStreak }}</span>
+                  <span class="stat-label">Дней подряд</span>
+                </div>
+              </div>
+            </div>
+            <div class="progress-bar-container">
+              <div class="progress-bar-bg">
+                <div 
+                  class="progress-bar-fill" 
+                  :style="{ width: weeklyCompletionRate + '%' }"
+                ></div>
+              </div>
+            </div>
+          </div>
+
           <!-- Goals with steps -->
           <div class="goals-section">
             <h3>🎯 Цели и шаги</h3>
@@ -473,13 +601,19 @@
 
           <!-- Week Calendar -->
           <div class="week-calendar-full card">
-            <h3>📅 План на неделю</h3>
+            <h3>📅 План на неделю <span class="drag-hint">Перетаскивайте задачи между днями</span></h3>
             <div class="calendar-grid-full">
               <div 
                 v-for="day in weekDays" 
                 :key="day.date"
                 class="calendar-day-full"
-                :class="{ today: isToday(day.date) }"
+                :class="{ 
+                  today: isToday(day.date),
+                  'drag-over': dragOverDay === day.date
+                }"
+                @dragover.prevent="handleDragOver(day.date)"
+                @dragleave="handleDragLeave"
+                @drop="handleDrop(day.date)"
               >
                 <div class="day-header-full">
                   <span class="day-name">{{ day.label }}</span>
@@ -493,10 +627,14 @@
                     :key="task.id"
                     class="task-card"
                     :class="[
-                      { completed: task.completed },
+                      { completed: task.completed, dragging: draggedTaskId === task.id },
                       'priority-' + (task.priority || 'optional')
                     ]"
+                    draggable="true"
+                    @dragstart="handleDragStart(task)"
+                    @dragend="handleDragEnd"
                   >
+                    <div class="drag-handle">⋮⋮</div>
                     <input 
                       type="checkbox"
                       :checked="task.completed"
@@ -515,8 +653,8 @@
                       ✕
                     </button>
                   </div>
-                  <div v-if="getTasksForDay(day.date).length === 0" class="empty-day">
-                    Нет задач
+                  <div v-if="getTasksForDay(day.date).length === 0" class="empty-day drop-zone">
+                    Перетащите задачу сюда
                   </div>
                 </div>
               </div>
@@ -564,6 +702,68 @@ const showEmptyState = computed(() => {
   if (DEMO_PLANNING_MODE) return false
   return !lessonStarted.value && !lessonCompleted.value
 })
+
+const telegramCode = ref('')
+const telegramConnected = computed(() => store.telegramSettings.connected)
+const telegramUsername = computed(() => store.telegramSettings.username)
+const notificationSettings = computed(() => store.telegramSettings.notifications)
+
+const draggedTaskId = ref(null)
+const draggedTask = ref(null)
+const dragOverDay = ref(null)
+
+function handleConnectTelegram() {
+  if (!telegramCode.value.trim()) return
+  const code = telegramCode.value.trim()
+  const username = 'user_' + code.substring(0, 6)
+  store.connectTelegram(code, username)
+  telegramCode.value = ''
+}
+
+function handleDisconnectTelegram() {
+  store.disconnectTelegram()
+}
+
+function updateNotification(key, value) {
+  store.updateTelegramNotifications({ [key]: value })
+}
+
+function handleDragStart(task) {
+  draggedTaskId.value = task.id
+  draggedTask.value = task
+}
+
+function handleDragEnd() {
+  draggedTaskId.value = null
+  draggedTask.value = null
+  dragOverDay.value = null
+}
+
+function handleDragOver(dayDate) {
+  dragOverDay.value = dayDate
+}
+
+function handleDragLeave() {
+  dragOverDay.value = null
+}
+
+function handleDrop(newDate) {
+  if (draggedTask.value && draggedTask.value.scheduledDate !== newDate) {
+    updateTaskDate(draggedTask.value.id, newDate)
+  }
+  handleDragEnd()
+}
+
+function updateTaskDate(taskId, newDate) {
+  const plan = store.getCurrentWeekPlan()
+  if (!plan) return
+  
+  const task = plan.scheduledTasks.find(t => t.id === taskId)
+  if (task) {
+    task.scheduledDate = newDate
+    store.saveToLocalStorage()
+  }
+}
 
 const goals = computed(() => store.goals)
 const goalsWithSteps = computed(() => {
@@ -644,6 +844,44 @@ const scheduledTasksCount = computed(() => scheduledTasks.value.length)
 const scheduledDaysCount = computed(() => {
   const days = new Set(scheduledTasks.value.map(t => t.scheduledDate))
   return days.size
+})
+
+const weeklyTotalTasks = computed(() => scheduledTasks.value.length)
+
+const weeklyCompletedTasks = computed(() => {
+  return scheduledTasks.value.filter(t => t.completed).length
+})
+
+const weeklyCompletionRate = computed(() => {
+  if (weeklyTotalTasks.value === 0) return 0
+  return Math.round((weeklyCompletedTasks.value / weeklyTotalTasks.value) * 100)
+})
+
+const currentStreak = computed(() => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  let streak = 0
+  
+  for (let i = 0; i < 30; i++) {
+    const checkDate = new Date(today)
+    checkDate.setDate(today.getDate() - i)
+    const dateStr = checkDate.toISOString().split('T')[0]
+    
+    const dayTasks = scheduledTasks.value.filter(t => t.scheduledDate === dateStr)
+    if (dayTasks.length === 0) {
+      if (i === 0) continue
+      break
+    }
+    
+    const allCompleted = dayTasks.every(t => t.completed)
+    if (allCompleted) {
+      streak++
+    } else if (i > 0) {
+      break
+    }
+  }
+  
+  return streak
 })
 
 function getTasksForDay(dateStr) {
@@ -1468,20 +1706,53 @@ onMounted(() => {
 
 .telegram-setup {
   text-align: center;
-  padding: 3rem;
+  padding: 2rem;
   margin-bottom: 1.5rem;
 }
 
+.telegram-setup.connected {
+  text-align: left;
+}
+
+.telegram-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
 .telegram-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+  font-size: 2.5rem;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border-radius: 50%;
+}
+
+.telegram-icon.connected {
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.telegram-info h3 {
+  margin: 0 0 0.25rem;
+}
+
+.telegram-username {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 0.9rem;
 }
 
 .telegram-setup h3 {
   margin-bottom: 0.75rem;
 }
 
-.telegram-setup p {
+.telegram-setup > p {
   color: var(--text-secondary);
   margin-bottom: 1.5rem;
   max-width: 400px;
@@ -1489,13 +1760,114 @@ onMounted(() => {
   margin-right: auto;
 }
 
-.coming-soon-badge {
-  display: inline-block;
-  padding: 0.5rem 1rem;
-  background: rgba(245, 158, 11, 0.1);
-  color: var(--warning-color);
-  border-radius: var(--radius-md);
+.connection-steps {
+  text-align: left;
+  max-width: 400px;
+  margin: 0 auto 1.5rem;
+}
+
+.connection-step {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+}
+
+.step-number {
+  width: 28px;
+  height: 28px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 600;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.step-text {
+  color: var(--text-primary);
+}
+
+.step-text a {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.connection-form {
+  display: flex;
+  gap: 0.75rem;
+  max-width: 350px;
+  margin: 0 auto 1rem;
+}
+
+.connection-form .input-lg {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+}
+
+.skip-note {
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+  margin-top: 1rem;
+}
+
+.notification-settings {
+  margin-bottom: 1.5rem;
+}
+
+.notification-settings h4 {
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+.toggle-setting {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+}
+
+.toggle-setting input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  cursor: pointer;
+}
+
+.toggle-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.toggle-title {
+  font-weight: 500;
+}
+
+.toggle-desc {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.btn-danger-outline {
+  border: 1px solid var(--danger-color);
+  color: var(--danger-color);
+  background: transparent;
+}
+
+.btn-danger-outline:hover {
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .plan-summary {
@@ -1574,6 +1946,65 @@ onMounted(() => {
   align-items: center;
   flex-wrap: wrap;
   gap: 1rem;
+}
+
+.weekly-stats {
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.stat-box {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.stat-icon {
+  font-size: 1.5rem;
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-number {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.stat-box .stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.progress-bar-container {
+  margin-top: 0.5rem;
+}
+
+.progress-bar-bg {
+  height: 8px;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-color), #818cf8);
+  border-radius: 4px;
+  transition: width 0.3s ease;
 }
 
 .goals-section {
@@ -1782,6 +2213,55 @@ onMounted(() => {
   text-decoration: line-through;
 }
 
+.task-card.dragging {
+  opacity: 0.5;
+  transform: scale(0.98);
+}
+
+.task-card[draggable="true"] {
+  cursor: grab;
+}
+
+.task-card[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.drag-handle {
+  color: var(--text-tertiary);
+  font-size: 0.7rem;
+  cursor: grab;
+  padding: 0 0.125rem;
+  user-select: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.calendar-day-full.drag-over {
+  background: rgba(99, 102, 241, 0.15);
+  border: 2px dashed var(--primary-color);
+}
+
+.calendar-day-full.drag-over .empty-day {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.drop-zone {
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-sm);
+  min-height: 60px;
+  transition: all 0.2s;
+}
+
+.drag-hint {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  font-weight: 400;
+  margin-left: 0.5rem;
+}
+
 .task-checkbox {
   margin-top: 2px;
   cursor: pointer;
@@ -1849,10 +2329,14 @@ onMounted(() => {
   .calendar-grid-full {
     grid-template-columns: repeat(3, 1fr);
   }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
-  .progress-bar {
+  .lesson-progress-bar {
     padding: 0 0.5rem;
   }
   
@@ -1883,6 +2367,62 @@ onMounted(() => {
   .priority-select,
   .day-select {
     flex: 1;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  
+  .stat-box {
+    padding: 0.5rem;
+  }
+  
+  .stat-icon {
+    font-size: 1.25rem;
+  }
+  
+  .stat-number {
+    font-size: 1rem;
+  }
+  
+  .header-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .week-navigation {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .task-card {
+    padding: 0.75rem;
+  }
+  
+  .task-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+  
+  .task-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .telegram-setup {
+    padding: 1rem;
+  }
+  
+  .telegram-status {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .notification-options {
+    gap: 0.5rem;
   }
 }
 </style>

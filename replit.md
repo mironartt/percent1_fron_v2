@@ -221,3 +221,32 @@ export const DEMO_PLANNING_MODE = true  // Show planner with demo tasks
 - Creates 7 scheduled tasks across the week
 - Shows all priority types in action
 - Skips lesson requirement for UI testing
+
+#### Telegram Integration (Step 3)
+- Bot setup UI with connection status indicator
+- Notification preferences: daily plan, Friday review, Sunday planning
+- Store: `telegramSettings` with connected, chatId, username, notifications
+- Methods: `connectTelegram()`, `disconnectTelegram()`, `updateTelegramNotifications()`
+- Settings persisted in localStorage
+
+#### Drag & Drop Task Management
+- HTML5 native drag & drop API
+- Visual feedback: `.dragging` opacity, `.drag-over` highlight
+- `draggedTask` ref for state management
+- Tasks can be moved between calendar days
+
+#### Weekly Statistics Section
+- Stats grid: completed tasks, total tasks, completion rate, streak days
+- Progress bar visualization
+- Computed from `scheduledTasks` completion status
+- `currentStreak` calculates consecutive days with all tasks completed
+
+#### Responsive Design Enhancements
+| Breakpoint | Changes |
+|------------|---------|
+| ≤1024px | Planner layout single column, stats grid 2-col, calendar 3-col |
+| ≤768px | Stats grid 2-col, calendar 1-col, step labels hidden, task cards stacked |
+
+#### Settings Page Updates
+- Telegram settings link navigates to Planning module
+- Uses vue-router for navigation
