@@ -51,7 +51,7 @@
       <div class="summary-grid">
         <div class="summary-card card">
           <div class="summary-icon summary-icon-ideas">
-            <Lightbulb :size="24" :stroke-width="2" />
+            <Lightbulb :size="18" :stroke-width="2" />
           </div>
           <div class="summary-value">{{ rawIdeas.length }}</div>
           <div class="summary-label">Идей в банке</div>
@@ -59,7 +59,7 @@
 
         <div class="summary-card card">
           <div class="summary-icon summary-icon-valid">
-            <CheckCircle :size="24" :stroke-width="2" />
+            <CheckCircle :size="18" :stroke-width="2" />
           </div>
           <div class="summary-value">{{ validatedCount }}</div>
           <div class="summary-label">Истинных целей</div>
@@ -67,7 +67,7 @@
 
         <div class="summary-card card">
           <div class="summary-icon summary-icon-rejected">
-            <XCircle :size="24" :stroke-width="2" />
+            <XCircle :size="18" :stroke-width="2" />
           </div>
           <div class="summary-value">{{ rejectedCount }}</div>
           <div class="summary-label">Ложных целей</div>
@@ -75,7 +75,7 @@
 
         <div class="summary-card card">
           <div class="summary-icon summary-icon-work">
-            <PlayCircle :size="24" :stroke-width="2" />
+            <PlayCircle :size="18" :stroke-width="2" />
           </div>
           <div class="summary-value">{{ transferredGoalsCount }}</div>
           <div class="summary-label">Целей в работе</div>
@@ -1682,17 +1682,17 @@ function getStatusLabel(status) {
 
 .summary-card {
   text-align: center;
-  padding: 1.5rem;
+  padding: 0.875rem 0.75rem;
 }
 
 .summary-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  margin: 0 auto 0.75rem;
-  border-radius: var(--radius-md);
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 0.5rem;
+  border-radius: var(--radius-sm);
 }
 
 .summary-icon-ideas {
@@ -1716,15 +1716,16 @@ function getStatusLabel(status) {
 }
 
 .summary-value {
-  font-size: 2.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: var(--primary-color);
+  line-height: 1.2;
 }
 
 .summary-label {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
-  margin-top: 0.25rem;
+  margin-top: 0.125rem;
 }
 
 .key-goals-summary {
