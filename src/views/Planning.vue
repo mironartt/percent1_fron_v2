@@ -185,9 +185,16 @@
                     v-for="step in getUncompletedSteps(goal)" 
                     :key="step.id"
                     class="step-schedule-item"
-                    :class="{ scheduled: isStepScheduled(goal.id, step.id) }"
+                    :class="{ 
+                      scheduled: isStepScheduled(goal.id, step.id),
+                      dragging: draggedStep && draggedStep.stepId === step.id 
+                    }"
+                    draggable="true"
+                    @dragstart="handleStepDragStart($event, goal, step)"
+                    @dragend="handleStepDragEnd"
                   >
                     <div class="step-info">
+                      <span class="drag-handle-lesson">⠿</span>
                       <span class="step-title">{{ step.title }}</span>
                     </div>
                     <div class="step-schedule-controls">
@@ -246,13 +253,20 @@
 
             <!-- Weekly Calendar View -->
             <div class="week-calendar card">
-              <h3>📅 Ваш план на неделю</h3>
+              <h3>📅 Ваш план на неделю <span class="drag-hint" v-if="draggedStep">(отпустите на нужный день)</span></h3>
               <div class="calendar-grid">
                 <div 
                   v-for="day in weekDays" 
                   :key="day.date"
                   class="calendar-day"
-                  :class="{ today: isToday(day.date), 'has-tasks': getTasksForDay(day.date).length > 0 }"
+                  :class="{ 
+                    today: isToday(day.date), 
+                    'has-tasks': getTasksForDay(day.date).length > 0,
+                    'drag-over-day': dragOverDay === day.date 
+                  }"
+                  @dragover.prevent="handleDayDragOver($event, day.date)"
+                  @dragleave="handleDayDragLeave"
+                  @drop="handleDayDrop($event, day.date)"
                 >
                   <div class="day-header">
                     <span class="day-name">{{ day.shortName }}</span>
@@ -267,8 +281,8 @@
                     >
                       <span class="task-title">{{ task.stepTitle }}</span>
                     </div>
-                    <div v-if="getTasksForDay(day.date).length === 0" class="no-tasks">
-                      —
+                    <div v-if="getTasksForDay(day.date).length === 0" class="no-tasks drop-hint">
+                      {{ draggedStep ? '📥 Сюда' : '—' }}
                     </div>
                   </div>
                 </div>
@@ -711,6 +725,44 @@ const notificationSettings = computed(() => store.telegramSettings.notifications
 const draggedTaskId = ref(null)
 const draggedTask = ref(null)
 const dragOverDay = ref(null)
+const draggedStep = ref(null)
+
+function handleStepDragStart(event, goal, step) {
+  draggedStep.value = {
+    goalId: goal.id,
+    stepId: step.id,
+    stepTitle: step.title,
+    goal: goal
+  }
+  event.dataTransfer.effectAllowed = 'move'
+}
+
+function handleStepDragEnd() {
+  draggedStep.value = null
+  dragOverDay.value = null
+}
+
+function handleDayDragOver(event, dayDate) {
+  if (draggedStep.value) {
+    event.preventDefault()
+    dragOverDay.value = dayDate
+  }
+}
+
+function handleDayDragLeave() {
+  dragOverDay.value = null
+}
+
+function handleDayDrop(event, dayDate) {
+  if (draggedStep.value) {
+    event.preventDefault()
+    scheduleStep(draggedStep.value.goalId, { 
+      id: draggedStep.value.stepId, 
+      title: draggedStep.value.stepTitle 
+    }, dayDate)
+    handleStepDragEnd()
+  }
+}
 
 function handleConnectTelegram() {
   if (!telegramCode.value.trim()) return
@@ -1531,6 +1583,44 @@ onMounted(() => {
 .step-schedule-item.scheduled {
   background: rgba(99, 102, 241, 0.1);
   border-left: 3px solid var(--primary-color);
+}
+
+.step-schedule-item[draggable="true"] {
+  cursor: grab;
+}
+
+.step-schedule-item[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.step-schedule-item.dragging {
+  opacity: 0.5;
+  transform: scale(0.98);
+}
+
+.drag-handle-lesson {
+  color: var(--text-tertiary);
+  font-size: 0.9rem;
+  cursor: grab;
+  user-select: none;
+}
+
+.drag-handle-lesson:active {
+  cursor: grabbing;
+}
+
+.calendar-day.drag-over-day {
+  background: rgba(99, 102, 241, 0.15);
+  border: 2px dashed var(--primary-color);
+}
+
+.calendar-day.drag-over-day .no-tasks {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.drop-hint {
+  transition: all 0.2s;
 }
 
 .step-info {
