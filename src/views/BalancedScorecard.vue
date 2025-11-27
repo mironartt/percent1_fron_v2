@@ -412,73 +412,63 @@
 
     <!-- Step 4: Итог -->
     <div v-if="currentStep === 4" class="step-content">
-      <div class="summary-section">
-        <header class="section-header">
-          <h1>Итог упражнения</h1>
-          <p class="subtitle">
-            Вы завершили Систему сбалансированных показателей
-          </p>
-        </header>
-
-        <div class="summary-content">
-          <div class="card summary-card">
-            <h2>Что вы сделали</h2>
-            <div class="achievement-list">
-              <div class="achievement-item">
-                <span class="achievement-icon">1️⃣</span>
-                <div>
-                  <h3>Оценили 6 сфер жизни</h3>
-                  <p>Определили текущее состояние каждой важной области вашей жизни</p>
-                </div>
-              </div>
-              <div class="achievement-item">
-                <span class="achievement-icon">2️⃣</span>
-                <div>
-                  <h3>Провели глубокую рефлексию</h3>
-                  <p>Ответили на 4 ключевых вопроса по каждой сфере</p>
-                </div>
-              </div>
-              <div class="achievement-item">
-                <span class="achievement-icon">3️⃣</span>
-                <div>
-                  <h3>Зафиксировали свои желания</h3>
-                  <p>Записали свои думки и видение без спешки</p>
-                </div>
-              </div>
-            </div>
+      <div class="completion-section">
+        <!-- Hero Celebration Block -->
+        <div class="completion-hero">
+          <div class="completion-icon">
+            <CheckCircle2 :size="72" :stroke-width="1.5" />
           </div>
-
-          <div class="card insight-card">
-            <h2>Ключевые инсайты</h2>
-            <ul class="insight-list">
-              <li>Баланс в жизни — это не идеальный 10/10 везде, а осознанный выбор приоритетов</li>
-              <li>Ваши оценки показывают, где есть дисбаланс и требуется внимание</li>
-              <li>Рефлексия помогает понять корни текущей ситуации и направить энергию</li>
-              <li>Маленькие изменения в каждой сфере создают большой эффект на качество жизни</li>
-            </ul>
-          </div>
-
-          <div class="card next-steps-card">
-            <h2>Что дальше?</h2>
-            <p>Теперь у вас есть полное понимание своей текущей жизни. Это основа для:</p>
-            <ul class="next-steps-list">
-              <li>Постановки целей в каждой сфере</li>
-              <li>Создания плана развития</li>
-              <li>Ежедневного прогресса в направлении желаемого баланса</li>
-              <li>Регулярной переоценки и корректировки приоритетов</li>
-            </ul>
+          <h1>Модуль завершён!</h1>
+          <div class="completion-score">
+            <span class="score-label">Ваш баланс</span>
+            <span class="score-value">{{ averageScore.toFixed(1) }}/10</span>
           </div>
         </div>
 
-        <div class="step-actions">
-          <button class="btn btn-secondary" @click="prevStep">
-            ← Назад к рефлексии
+        <!-- Compact Metrics Row -->
+        <div class="completion-metrics">
+          <div class="metric-card">
+            <div class="metric-icon">
+              <Circle :size="24" :stroke-width="2" />
+            </div>
+            <div class="metric-value">6</div>
+            <div class="metric-label">сфер оценено</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">
+              <MessageSquare :size="24" :stroke-width="2" />
+            </div>
+            <div class="metric-value">24</div>
+            <div class="metric-label">вопроса рефлексии</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">
+              <Target :size="24" :stroke-width="2" />
+            </div>
+            <div class="metric-value">1</div>
+            <div class="metric-label">колесо баланса</div>
+          </div>
+        </div>
+
+        <!-- Single Insight Quote -->
+        <div class="completion-insight">
+          <blockquote>
+            Баланс — это осознанный выбор приоритетов, а не идеальные 10/10 везде
+          </blockquote>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="completion-actions">
+          <button class="btn btn-secondary" @click="resetModule">
+            <RotateCcw :size="18" />
+            Пройти заново
           </button>
           <button 
             class="btn btn-primary btn-lg" 
             @click="completeModule"
           >
-            ✅ Завершить модуль
+            Перейти в Банк целей
+            <ArrowRight :size="18" />
           </button>
         </div>
       </div>
@@ -500,7 +490,13 @@ import {
   Heart, 
   Briefcase, 
   HeartHandshake,
-  ChevronDown
+  ChevronDown,
+  CheckCircle2,
+  Circle,
+  MessageSquare,
+  Target,
+  ArrowRight,
+  RotateCcw
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -712,6 +708,14 @@ function completeModule() {
       reflection: s.reflection
     }))
   })
+  router.push('/app/goals')
+}
+
+function resetModule() {
+  currentStep.value = 1
+  lessonStarted.value = false
+  expandedSpheres.value = []
+  expandedSummarySpheres.value = []
 }
 </script>
 
@@ -1976,6 +1980,143 @@ function completeModule() {
 
   .benefits-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Completion Section (Step 4) */
+.completion-section {
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.completion-hero {
+  margin-bottom: 2.5rem;
+}
+
+.completion-icon {
+  color: #22c55e;
+  margin-bottom: 1rem;
+  animation: scaleIn 0.5s ease-out;
+}
+
+@keyframes scaleIn {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.completion-hero h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.completion-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+}
+
+.score-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.score-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.completion-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.metric-card {
+  padding: 1.25rem 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  transition: all 0.2s ease;
+}
+
+.metric-card:hover {
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.metric-icon {
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+}
+
+.metric-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.metric-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.completion-insight {
+  margin-bottom: 2.5rem;
+}
+
+.completion-insight blockquote {
+  font-size: 1.1rem;
+  font-style: italic;
+  color: var(--text-secondary);
+  padding: 1.25rem 1.5rem;
+  margin: 0;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(99, 102, 241, 0.02));
+  border-left: 4px solid var(--primary-color);
+  border-radius: var(--radius-md);
+  line-height: 1.6;
+}
+
+.completion-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.completion-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .completion-metrics {
+    grid-template-columns: 1fr;
+  }
+  
+  .completion-hero h1 {
+    font-size: 1.5rem;
+  }
+  
+  .completion-actions {
+    flex-direction: column;
+  }
+  
+  .completion-actions .btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 </style>
