@@ -109,30 +109,6 @@
             ✕ Сбросить
           </button>
         </div>
-        
-        <!-- Панель массовых действий -->
-        <div v-if="selectedBankGoals.length > 0" class="bulk-actions-bar">
-          <div class="bulk-info">
-            <span class="bulk-count">Выбрано: {{ selectedBankGoals.length }}</span>
-            <button class="btn btn-ghost btn-sm" @click="clearBankSelection">Снять выделение</button>
-          </div>
-          <div class="bulk-buttons">
-            <button 
-              v-if="canBulkTakeToWork" 
-              class="btn btn-primary btn-sm"
-              @click="bulkTakeToWork"
-            >
-              ➕ Взять в работу
-            </button>
-            <button 
-              v-if="canBulkComplete" 
-              class="btn btn-success btn-sm"
-              @click="bulkCompleteGoals"
-            >
-              ✓ Завершить
-            </button>
-          </div>
-        </div>
 
         <div class="goals-table-wrapper">
           <table class="goals-table">
@@ -799,6 +775,40 @@
     </div>
 
     </div>
+
+    <!-- Floating Action Bar -->
+    <Transition name="slide-up">
+      <div v-if="selectedBankGoals.length > 0" class="floating-action-bar">
+        <div class="fab-content">
+          <div class="fab-info">
+            <span class="fab-count">Выбрано: {{ selectedBankGoals.length }}</span>
+          </div>
+          <div class="fab-buttons">
+            <button 
+              v-if="canBulkTakeToWork" 
+              class="btn btn-primary"
+              @click="bulkTakeToWork"
+            >
+              ➕ Взять в работу
+            </button>
+            <button 
+              v-if="canBulkComplete" 
+              class="btn btn-success"
+              @click="bulkCompleteGoals"
+            >
+              ✓ Завершить
+            </button>
+            <button 
+              class="btn btn-ghost fab-close"
+              @click="clearBankSelection"
+              title="Снять выделение"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -2064,31 +2074,84 @@ function getStatusLabel(status) {
   background: rgba(99, 102, 241, 0.08);
 }
 
-/* Bulk actions bar */
-.bulk-actions-bar {
+/* Floating Action Bar */
+.floating-action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 1rem;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0));
+  background: linear-gradient(to top, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.95) 100%);
+  border-top: 1px solid var(--border-color);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+}
+
+:root.dark .floating-action-bar {
+  background: linear-gradient(to top, rgba(30,30,30,0.98) 0%, rgba(30,30,30,0.95) 100%);
+}
+
+.fab-content {
+  max-width: 800px;
+  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 1rem;
-  background: var(--primary-light);
-  border-radius: var(--radius-md);
-  margin-bottom: 1rem;
+  gap: 1rem;
 }
 
-.bulk-info {
+.fab-info {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-.bulk-count {
+.fab-count {
   font-weight: 600;
+  font-size: 1rem;
   color: var(--primary-color);
 }
 
-.bulk-buttons {
+.fab-buttons {
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.fab-close {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+}
+
+.fab-close:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+/* Slide-up transition */
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(100%);
+  opacity: 0;
+}
+
+.slide-up-enter-to,
+.slide-up-leave-from {
+  transform: translateY(0);
+  opacity: 1;
 }
 
 .btn-success {
