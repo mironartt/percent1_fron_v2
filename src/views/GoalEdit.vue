@@ -64,20 +64,35 @@
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Сфера жизни</label>
-                <select 
-                  :value="goalForm.sphereId"
-                  @change="updateField('sphereId', $event.target.value)"
-                  class="form-select"
-                >
-                  <option value="">Выберите сферу</option>
-                  <option 
-                    v-for="sphere in lifeSpheres" 
-                    :key="sphere.id"
-                    :value="sphere.id"
+                <div class="custom-select-wrapper" ref="sphereDropdownRef">
+                  <div 
+                    class="custom-select-trigger"
+                    @click="toggleSphereDropdown"
                   >
-                    {{ sphere.icon }} {{ sphere.name }}
-                  </option>
-                </select>
+                    <div class="selected-sphere" v-if="goalForm.sphereId">
+                      <span class="sphere-icon-wrapper" :style="{ '--sphere-color': getSphereColor(goalForm.sphereId) }">
+                        <component :is="getSphereIconComponent(goalForm.sphereId)" :size="16" />
+                      </span>
+                      <span>{{ getSphereName(goalForm.sphereId) }}</span>
+                    </div>
+                    <span v-else class="placeholder-text">Выберите сферу</span>
+                    <ChevronDown :size="16" class="dropdown-arrow" :class="{ open: sphereDropdownOpen }" />
+                  </div>
+                  <div class="custom-select-options" v-show="sphereDropdownOpen">
+                    <div 
+                      v-for="sphere in lifeSpheres" 
+                      :key="sphere.id"
+                      class="custom-select-option"
+                      :class="{ selected: goalForm.sphereId === sphere.id }"
+                      @click="selectSphere(sphere.id)"
+                    >
+                      <span class="sphere-icon-wrapper" :style="{ '--sphere-color': getSphereColor(sphere.id) }">
+                        <component :is="getSphereIconComponent(sphere.id)" :size="16" />
+                      </span>
+                      <span>{{ sphere.name }}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div class="form-group">
@@ -221,11 +236,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { 
-  Bot, User, Trash2, Save, Plus, ArrowLeft, GripVertical, X
+  Bot, User, Trash2, Save, Plus, ArrowLeft, GripVertical, X, ChevronDown,
+  Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -255,6 +271,53 @@ const chatMessages = ref([
   { role: 'coach', content: 'Привет! Я помогу тебе с декомпозицией цели. Спроси меня о разбивке шагов или планировании.' }
 ])
 
+const sphereDropdownRef = ref(null)
+const sphereDropdownOpen = ref(false)
+
+function toggleSphereDropdown() {
+  sphereDropdownOpen.value = !sphereDropdownOpen.value
+}
+
+function selectSphere(sphereId) {
+  goalForm.value.sphereId = sphereId
+  sphereDropdownOpen.value = false
+}
+
+function getSphereIconComponent(sphereId) {
+  const iconMap = {
+    'wealth': Wallet,
+    'hobbies': Palette,
+    'friendship': Users,
+    'health': Heart,
+    'career': Briefcase,
+    'love': HeartHandshake
+  }
+  return iconMap[sphereId] || Target
+}
+
+function getSphereColor(sphereId) {
+  const colorMap = {
+    'wealth': '#e63946',
+    'hobbies': '#f4a261',
+    'friendship': '#e9c46a',
+    'health': '#2a9d8f',
+    'career': '#264653',
+    'love': '#9b5de5'
+  }
+  return colorMap[sphereId] || '#6366f1'
+}
+
+function getSphereName(sphereId) {
+  const sphere = lifeSpheres.value.find(s => s.id === sphereId)
+  return sphere ? sphere.name : 'Не указана'
+}
+
+function handleClickOutside(event) {
+  if (sphereDropdownRef.value && !sphereDropdownRef.value.contains(event.target)) {
+    sphereDropdownOpen.value = false
+  }
+}
+
 const totalTimeEstimate = computed(() => {
   const timeMap = {
     '30min': 0.5,
@@ -283,6 +346,11 @@ const dragOverIndex = ref(null)
 
 onMounted(() => {
   loadGoalData()
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
 })
 
 watch(() => route.params.id, () => {
@@ -620,6 +688,97 @@ async function sendMessage() {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+}
+
+.custom-select-wrapper {
+  position: relative;
+}
+
+.custom-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.custom-select-trigger:hover {
+  border-color: var(--primary-color);
+}
+
+.selected-sphere {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sphere-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--sphere-color, #6366f1);
+  border: 1.5px solid var(--sphere-color, var(--border-color));
+}
+
+.placeholder-text {
+  color: var(--text-secondary);
+}
+
+.dropdown-arrow {
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+}
+
+.dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+.custom-select-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 0.25rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.custom-select-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.custom-select-option:hover {
+  background: var(--bg-secondary);
+}
+
+.custom-select-option.selected {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.custom-select-option:first-child {
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.custom-select-option:last-child {
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
 
 .steps-count {
