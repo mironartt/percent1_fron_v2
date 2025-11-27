@@ -232,8 +232,15 @@ export const DEMO_PLANNING_MODE = true  // Show planner with demo tasks
 #### Drag & Drop Task Management
 - HTML5 native drag & drop API
 - Visual feedback: `.dragging` opacity, `.drag-over` highlight
-- `draggedTask` ref for state management
+- `draggedTask` ref for planner mode state management
 - Tasks can be moved between calendar days
+
+#### Drag & Drop on Lesson Step 2 (Practice)
+- Steps can be dragged to calendar days during lesson practice
+- `draggedStep` ref tracks goalId, stepId, stepTitle
+- Calendar days show "📥 Сюда" hint when dragging
+- Uses same `scheduleStep()` function as dropdown selects
+- CSS classes: `.drag-handle-lesson`, `.drag-over-day`
 
 #### Weekly Statistics Section
 - Stats grid: completed tasks, total tasks, completion rate, streak days
