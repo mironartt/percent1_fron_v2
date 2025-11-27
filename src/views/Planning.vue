@@ -728,6 +728,7 @@ const dragOverDay = ref(null)
 const draggedStep = ref(null)
 
 function handleStepDragStart(event, goal, step) {
+  console.log('[Planning] DragStart - step:', step.title, 'goal:', goal.title)
   draggedStep.value = {
     goalId: goal.id,
     stepId: step.id,
@@ -735,6 +736,7 @@ function handleStepDragStart(event, goal, step) {
     goal: goal
   }
   event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData('text/plain', step.id)
 }
 
 function handleStepDragEnd() {
@@ -743,8 +745,8 @@ function handleStepDragEnd() {
 }
 
 function handleDayDragOver(event, dayDate) {
+  event.preventDefault()
   if (draggedStep.value) {
-    event.preventDefault()
     dragOverDay.value = dayDate
   }
 }
@@ -820,7 +822,12 @@ function updateTaskDate(taskId, newDate) {
 
 const goals = computed(() => store.goals)
 const goalsWithSteps = computed(() => {
-  return goals.value.filter(g => g.status === 'active' && g.steps && g.steps.length > 0)
+  const filtered = goals.value.filter(g => g.status === 'active' && g.steps && g.steps.length > 0)
+  console.log('[Planning] goalsWithSteps:', filtered.length, 'goals with steps, all goals:', goals.value.length)
+  if (filtered.length > 0) {
+    filtered.forEach(g => console.log('[Planning] Goal:', g.title, 'steps:', g.steps?.length))
+  }
+  return filtered
 })
 
 const lifeSpheres = computed(() => store.lifeSpheres)
@@ -1243,6 +1250,11 @@ function setupDemoData() {
 }
 
 onMounted(() => {
+  console.log('[Planning] onMounted - goals count:', store.goals.length)
+  console.log('[Planning] onMounted - goalsWithSteps:', goalsWithSteps.value.length)
+  store.goals.forEach(g => {
+    console.log('[Planning] Goal:', g.title, 'status:', g.status, 'steps:', g.steps?.length || 0)
+  })
   ensureWeekPlan()
   setupDemoData()
 })
