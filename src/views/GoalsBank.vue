@@ -50,25 +50,21 @@
 
       <div class="summary-grid">
         <div class="summary-card card">
-          <div class="summary-icon">💡</div>
           <div class="summary-value">{{ rawIdeas.length }}</div>
           <div class="summary-label">Идей в банке</div>
         </div>
 
         <div class="summary-card card">
-          <div class="summary-icon">✅</div>
           <div class="summary-value">{{ validatedCount }}</div>
           <div class="summary-label">Истинных целей</div>
         </div>
 
         <div class="summary-card card">
-          <div class="summary-icon">❌</div>
           <div class="summary-value">{{ rejectedCount }}</div>
           <div class="summary-label">Ложных целей</div>
         </div>
 
         <div class="summary-card card">
-          <div class="summary-icon">🎯</div>
           <div class="summary-value">{{ transferredGoalsCount }}</div>
           <div class="summary-label">Целей в работе</div>
         </div>
