@@ -135,18 +135,6 @@
             </div>
           </div>
 
-          <div class="step-sidebar">
-            <GuidancePanel
-              title="Подсказки"
-              icon="💡"
-              :tips="theoryTips"
-              :showAICoach="true"
-              initialMessage="Привет! Я помогу разобраться с планированием. Спрашивай, если что-то непонятно."
-              chatPlaceholder="Задайте вопрос о планировании..."
-              :coachResponses="planningCoachResponses"
-              sticky
-            />
-          </div>
         </div>
       </div>
 
@@ -323,20 +311,6 @@
             </div>
           </div>
 
-          <div class="step-sidebar">
-            <GuidancePanel
-              title="Подсказки"
-              icon="💡"
-              :tips="practiceTips"
-              :checklist="practiceChecklist"
-              checklistTitle="Чек-лист"
-              :showAICoach="true"
-              initialMessage="Отлично! Распределяй шаги по дням. Помни: не больше 3 шагов в день."
-              chatPlaceholder="Спросите совет..."
-              :coachResponses="planningCoachResponses"
-              sticky
-            />
-          </div>
         </div>
       </div>
 
@@ -486,18 +460,6 @@
             </div>
           </div>
 
-          <div class="step-sidebar">
-            <GuidancePanel
-              title="Подсказки"
-              icon="💡"
-              :tips="telegramTips"
-              :showAICoach="true"
-              initialMessage="Отлично! Ваш план готов. Скоро мы добавим интеграцию с Telegram."
-              chatPlaceholder="Задайте вопрос..."
-              :coachResponses="planningCoachResponses"
-              sticky
-            />
-          </div>
         </div>
       </div>
     </div>
@@ -728,18 +690,6 @@
           </div>
         </div>
 
-        <div class="planner-sidebar">
-          <GuidancePanel
-            title="ИИ-коуч"
-            icon="🤖"
-            :tips="plannerTips"
-            :showAICoach="true"
-            initialMessage="Привет! Как идёт выполнение плана? Могу помочь с распределением задач."
-            chatPlaceholder="Спросите совет..."
-            :coachResponses="planningCoachResponses"
-            sticky
-          />
-        </div>
       </div>
     </div>
 
