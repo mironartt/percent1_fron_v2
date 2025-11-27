@@ -2426,12 +2426,13 @@ onMounted(() => {
 }
 
 .step-item {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 8px 12px;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px;
+  padding: 6px 12px;
   background: var(--bg-secondary);
   border-radius: var(--radius-sm);
   border-left: 3px solid transparent;
@@ -2463,20 +2464,22 @@ onMounted(() => {
 }
 
 .step-item .step-title {
-  flex: 1;
+  flex: 1 1 auto;
   font-size: 0.875rem;
   min-width: 0;
+  line-height: 28px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .step-item .step-actions {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
   gap: 6px;
   flex-shrink: 0;
+  flex-wrap: nowrap !important;
 }
 
 .day-select-sm,
