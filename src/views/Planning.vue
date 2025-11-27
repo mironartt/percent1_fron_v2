@@ -2467,8 +2467,8 @@ onMounted(() => {
 
 .calendar-grid-full {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 0.75rem;
+  grid-template-columns: repeat(7, minmax(120px, 1fr));
+  gap: 0.5rem;
 }
 
 .calendar-day-full {
@@ -2677,11 +2677,6 @@ onMounted(() => {
     order: -1;
   }
   
-  .calendar-grid,
-  .calendar-grid-full {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -2694,11 +2689,6 @@ onMounted(() => {
   
   .step-label {
     display: none;
-  }
-  
-  .calendar-grid,
-  .calendar-grid-full {
-    grid-template-columns: 1fr;
   }
   
   .step-actions {
