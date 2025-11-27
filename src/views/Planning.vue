@@ -2429,12 +2429,15 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.5rem 0.75rem;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
   background: var(--bg-secondary);
   border-radius: var(--radius-sm);
   border-left: 3px solid transparent;
-  min-height: auto;
+  min-height: 0;
+  height: auto;
+  max-height: 50px;
+  box-sizing: border-box;
 }
 
 .step-item.scheduled {
