@@ -257,3 +257,28 @@ export const DEMO_PLANNING_MODE = true  // Show planner with demo tasks
 #### Settings Page Updates
 - Telegram settings link navigates to Planning module
 - Uses vue-router for navigation
+
+#### Accordion Goals Layout (November 27, 2025)
+- Calendar moved ABOVE goals section in both lesson practice and planner mode
+- Goals collapsed by default, click to expand and see steps
+- Collapsed state shows: step count, scheduled count, goal progress %
+- "Развернуть все / Свернуть все" button for quick toggle
+- `expandedGoals` ref tracks which goals are expanded
+- `toggleGoal(goalId)`, `toggleAllGoals()`, `allGoalsExpanded` computed
+- `getScheduledStepsCount(goal)` shows count of scheduled steps
+
+#### CSS Classes for Accordion
+| Class | Purpose |
+|-------|---------|
+| `.goal-header-accordion` | Clickable header row |
+| `.goal-header-left` | Icon, sphere, title |
+| `.goal-header-right` | Steps count, scheduled count, progress |
+| `.expand-icon` | ▶ / ▼ indicator |
+| `.collapsed` | Applied when goal is collapsed |
+| `.toggle-all-btn` | Expand/collapse all button |
+
+#### Week Plan Bug Fix (November 27, 2025)
+- Replaced all `store.getCurrentWeekPlan()` calls with `currentPlan.value`
+- `currentPlan` computed uses `weekDays[0].date` to respect `weekOffset`
+- Fixed functions: `unscheduleStep`, `updateScheduledStep`, `toggleTaskComplete`, `removeTask`, `updateTaskDate`, `setupDemoData`
+- Added priority-based task sorting in `getTasksForDay()` (critical→desirable→attention→optional)
