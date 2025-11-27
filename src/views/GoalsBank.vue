@@ -329,7 +329,7 @@
             <AlertTriangle :size="20" :stroke-width="2" />
           </div>
           <div class="alert-content">
-            <h4>Обратите внимание на слабые сферы</h4>
+            <h4>Обратите внимание на сферы роста</h4>
             <p>По результатам ССП эти сферы требуют особого внимания:</p>
             <div class="weak-spheres-list">
               <span 
@@ -2700,19 +2700,21 @@ function getStatusLabel(status) {
   align-items: center;
   gap: 0.375rem;
   padding: 0.375rem 0.75rem;
-  background: color-mix(in srgb, var(--sphere-color) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--sphere-color) 25%, transparent);
+  background: white;
+  border: 1.5px solid var(--sphere-color);
   border-radius: var(--radius-sm);
   font-size: 0.8125rem;
   cursor: pointer;
   transition: all 0.2s ease;
   color: var(--sphere-color);
   font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .weak-sphere-tag:hover {
-  background: color-mix(in srgb, var(--sphere-color) 20%, transparent);
+  background: color-mix(in srgb, var(--sphere-color) 10%, white);
   transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 /* Table header actions */
