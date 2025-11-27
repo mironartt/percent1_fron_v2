@@ -509,11 +509,6 @@
           <header class="section-header">
             <div class="header-row">
               <h1>📅 Планирование недели</h1>
-              <div class="header-actions">
-                <button class="btn btn-secondary btn-sm" @click="restartLesson">
-                  🔄 Пройти урок заново
-                </button>
-              </div>
             </div>
             <div class="week-navigation">
               <button class="btn btn-icon-nav" @click="prevWeek" title="Предыдущая неделя">
@@ -682,8 +677,12 @@
                   class="step-item"
                   :class="{ 
                     scheduled: isStepScheduled(goal.id, step.id),
-                    ['priority-' + getScheduledPriority(goal.id, step.id)]: isStepScheduled(goal.id, step.id)
+                    ['priority-' + getScheduledPriority(goal.id, step.id)]: isStepScheduled(goal.id, step.id),
+                    dragging: draggedStep && draggedStep.stepId === step.id
                   }"
+                  draggable="true"
+                  @dragstart="handleStepDragStart($event, goal, step)"
+                  @dragend="handleStepDragEnd"
                 >
                   <span class="step-title">{{ step.title }}</span>
                   <div class="step-actions">
@@ -862,7 +861,10 @@ function handleDragEnd() {
 }
 
 function handleDragOver(dayDate) {
-  dragOverDay.value = dayDate
+  // Highlight day for both task and step dragging
+  if (draggedTask.value || draggedStep.value) {
+    dragOverDay.value = dayDate
+  }
 }
 
 function handleDragLeave() {
@@ -870,6 +872,18 @@ function handleDragLeave() {
 }
 
 function handleDrop(newDate) {
+  // Handle step drag from goals section
+  if (draggedStep.value) {
+    console.log('[Planning] Drop step:', draggedStep.value.stepTitle, 'on day:', newDate)
+    scheduleStep(draggedStep.value.goalId, { 
+      id: draggedStep.value.stepId, 
+      title: draggedStep.value.stepTitle 
+    }, newDate)
+    handleStepDragEnd()
+    return
+  }
+  
+  // Handle task drag between days
   if (draggedTask.value && draggedTask.value.scheduledDate !== newDate) {
     updateTaskDate(draggedTask.value.id, newDate)
   }
@@ -2436,6 +2450,17 @@ onMounted(() => {
   background: var(--bg-secondary);
   border-radius: var(--radius-sm);
   border-left: 3px solid transparent;
+  cursor: grab;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.step-item:active {
+  cursor: grabbing;
+}
+
+.step-item.dragging {
+  opacity: 0.5;
+  transform: scale(0.98);
 }
 
 .step-item.scheduled {
@@ -2773,8 +2798,10 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
   color: var(--text-tertiary);
   font-size: 0.8rem;
+  min-height: 80px;
 }
 
 @media (max-width: 1024px) {
