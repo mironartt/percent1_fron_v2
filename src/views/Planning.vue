@@ -547,6 +547,7 @@ import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import GuidancePanel from '../components/GuidancePanel.vue'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { DEMO_PLANNING_MODE } from '../config/settings.js'
 
 const store = useAppStore()
 const router = useRouter()
@@ -554,12 +555,13 @@ const router = useRouter()
 const lessonSteps = ['Теория', 'Практика', 'Напоминания']
 
 const lessonStarted = computed(() => store.planningModule.lessonStarted)
-const lessonCompleted = computed(() => store.planningModule.lessonCompleted)
+const lessonCompleted = computed(() => store.planningModule.lessonCompleted || DEMO_PLANNING_MODE)
 const currentStep = computed(() => store.planningModule.currentStep)
 
 const weekOffset = ref(0)
 
 const showEmptyState = computed(() => {
+  if (DEMO_PLANNING_MODE) return false
   return !lessonStarted.value && !lessonCompleted.value
 })
 
@@ -866,8 +868,84 @@ const planningCoachResponses = [
   'Регулярность важнее объёма. Лучше каждый день понемногу.'
 ]
 
+function setupDemoData() {
+  if (!DEMO_PLANNING_MODE) return
+  
+  const today = new Date()
+  const dayOfWeek = today.getDay()
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+  const monday = new Date(today)
+  monday.setDate(today.getDate() + mondayOffset)
+  
+  const demoGoals = [
+    {
+      id: 'demo-goal-1',
+      title: 'Улучшить физическую форму',
+      sphere: 'health',
+      status: 'active',
+      steps: [
+        { id: 'step-1-1', title: 'Пробежка 3 км', completed: false },
+        { id: 'step-1-2', title: 'Зарядка 15 минут', completed: false },
+        { id: 'step-1-3', title: 'Тренировка в зале', completed: false }
+      ]
+    },
+    {
+      id: 'demo-goal-2', 
+      title: 'Изучить новый навык',
+      sphere: 'development',
+      status: 'active',
+      steps: [
+        { id: 'step-2-1', title: 'Прочитать главу книги', completed: false },
+        { id: 'step-2-2', title: 'Пройти урок курса', completed: false }
+      ]
+    },
+    {
+      id: 'demo-goal-3',
+      title: 'Улучшить отношения',
+      sphere: 'relationships',
+      status: 'active',
+      steps: [
+        { id: 'step-3-1', title: 'Позвонить родителям', completed: false },
+        { id: 'step-3-2', title: 'Встретиться с друзьями', completed: false }
+      ]
+    }
+  ]
+  
+  if (store.goals.length === 0) {
+    demoGoals.forEach(g => store.addGoal(g))
+  }
+  
+  const plan = store.getCurrentWeekPlan()
+  if (plan && (!plan.scheduledTasks || plan.scheduledTasks.length === 0)) {
+    const getDateStr = (offset) => {
+      const d = new Date(monday)
+      d.setDate(monday.getDate() + offset)
+      return d.toISOString().split('T')[0]
+    }
+    
+    const demoTasks = [
+      { goalId: 'demo-goal-1', stepId: 'step-1-1', stepTitle: 'Пробежка 3 км', goalTitle: 'Улучшить физическую форму', scheduledDate: getDateStr(0), timeEstimate: '30', priority: 'critical', completed: false },
+      { goalId: 'demo-goal-1', stepId: 'step-1-2', stepTitle: 'Зарядка 15 минут', goalTitle: 'Улучшить физическую форму', scheduledDate: getDateStr(1), timeEstimate: '15', priority: 'desirable', completed: false },
+      { goalId: 'demo-goal-2', stepId: 'step-2-1', stepTitle: 'Прочитать главу книги', goalTitle: 'Изучить новый навык', scheduledDate: getDateStr(1), timeEstimate: '45', priority: 'attention', completed: false },
+      { goalId: 'demo-goal-1', stepId: 'step-1-3', stepTitle: 'Тренировка в зале', goalTitle: 'Улучшить физическую форму', scheduledDate: getDateStr(2), timeEstimate: '60', priority: 'critical', completed: true },
+      { goalId: 'demo-goal-2', stepId: 'step-2-2', stepTitle: 'Пройти урок курса', goalTitle: 'Изучить новый навык', scheduledDate: getDateStr(3), timeEstimate: '30', priority: 'desirable', completed: false },
+      { goalId: 'demo-goal-3', stepId: 'step-3-1', stepTitle: 'Позвонить родителям', goalTitle: 'Улучшить отношения', scheduledDate: getDateStr(4), timeEstimate: '20', priority: 'critical', completed: false },
+      { goalId: 'demo-goal-3', stepId: 'step-3-2', stepTitle: 'Встретиться с друзьями', goalTitle: 'Улучшить отношения', scheduledDate: getDateStr(5), timeEstimate: '120', priority: 'optional', completed: false }
+    ]
+    
+    demoTasks.forEach(task => {
+      plan.scheduledTasks.push({
+        id: `demo-task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        ...task
+      })
+    })
+    store.saveToLocalStorage()
+  }
+}
+
 onMounted(() => {
   ensureWeekPlan()
+  setupDemoData()
 })
 </script>
 

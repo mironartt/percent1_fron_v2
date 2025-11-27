@@ -28,6 +28,9 @@ export const FORCE_SHOW_ONBOARDING = localSettings.FORCE_SHOW_ONBOARDING ?? fals
 // Принудительно показывать мини-задание (для тестирования и разработки)
 export const FORCE_SHOW_MINITASK = localSettings.FORCE_SHOW_MINITASK ?? false
 
+// Демо-режим планировщика (для демонстрации UI)
+export const DEMO_PLANNING_MODE = localSettings.DEMO_PLANNING_MODE ?? false
+
 // Логируем загрузку настроек
 if (DEBUG_MODE) {
   console.log('[Settings] Configuration loaded:', {
@@ -37,7 +40,8 @@ if (DEBUG_MODE) {
     MIN_REQUEST_INTERVAL,
     DEBUG_MODE,
     FORCE_SHOW_ONBOARDING,
-    FORCE_SHOW_MINITASK
+    FORCE_SHOW_MINITASK,
+    DEMO_PLANNING_MODE
   })
 }
 
@@ -49,7 +53,8 @@ export const settings = {
   MIN_REQUEST_INTERVAL,
   DEBUG_MODE,
   FORCE_SHOW_ONBOARDING,
-  FORCE_SHOW_MINITASK
+  FORCE_SHOW_MINITASK,
+  DEMO_PLANNING_MODE
 }
 
 export default settings

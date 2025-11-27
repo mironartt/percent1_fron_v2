@@ -187,3 +187,37 @@ export const FORCE_SHOW_MINITASK = false    // Show mini task even if completed
 - Lesson preview section (`text-align: center`)
 - Step content h2, intro-text, rules h3 — all centered
 - Preview steps use `inline-flex` for block centering with left-aligned text inside
+
+### Planning Module Enhancements (November 27, 2025)
+
+#### Week Navigation
+- Arrow buttons (← →) to switch between weeks
+- Week range display (e.g., "24 ноября — 30 ноября")
+- "Сегодня" button to return to current week
+- Uses `weekOffset` ref to shift date calculations
+- Lucide icons: ChevronLeft, ChevronRight
+
+#### Color Priority System
+| Priority | Color | CSS Class | Use Case |
+|----------|-------|-----------|----------|
+| critical | 🔴 Red (#dc2626) | priority-critical | Важно - критически важные задачи |
+| desirable | 🟠 Orange (#ea580c) | priority-desirable | Желательно - желательные задачи |
+| attention | 🔵 Blue (#2563eb) | priority-attention | Внимание - требуют внимания |
+| optional | ⚪ Gray (#9ca3af) | priority-optional | Опционально - можно отложить |
+
+#### Task Card Styling
+- `border-left: 3px solid` with priority color
+- Light background tint matching priority color
+- Priority selector dropdown with emoji indicators
+- Completed tasks: opacity 0.6, strikethrough title
+
+#### Development Flags (local_settings.js)
+```javascript
+export const DEMO_PLANNING_MODE = true  // Show planner with demo tasks
+```
+
+#### Demo Mode Features
+- Auto-populates 3 demo goals with steps
+- Creates 7 scheduled tasks across the week
+- Shows all priority types in action
+- Skips lesson requirement for UI testing
