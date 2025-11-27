@@ -155,8 +155,8 @@
       </div>
 
       <!-- Step 2: Practice -->
-      <div v-if="currentStep === 2" class="step-content">
-        <div class="step-2-main">
+      <div v-if="currentStep === 2" class="step-content step-content-centered">
+        <div class="step-2-wrapper">
           <h2>Практика: разбиваем цель</h2>
           
           <div v-if="goalsFromBank.length > 0" class="goals-from-bank card">
@@ -235,6 +235,21 @@
                     <option value="180">3 часа</option>
                     <option value="240">4 часа</option>
                   </select>
+                  <select 
+                    v-model="step.priority" 
+                    class="priority-select"
+                    :style="{ borderColor: step.priority ? getPriorityColor(step.priority) : '' }"
+                    title="Приоритет"
+                  >
+                    <option value="">Приоритет</option>
+                    <option 
+                      v-for="p in priorityOptions" 
+                      :key="p.value" 
+                      :value="p.value"
+                    >
+                      {{ p.label }}
+                    </option>
+                  </select>
                 </div>
                 <button 
                   v-if="practiceSteps.length > 1"
@@ -260,21 +275,21 @@
               Перейти в Банк целей
             </button>
           </div>
-        </div>
 
-        <div class="step-actions">
-          <button class="btn btn-secondary btn-with-icon" @click="prevStep">
-            <ArrowRight :size="16" class="icon-flip" />
-            Назад
-          </button>
-          <button 
-            class="btn btn-primary btn-lg btn-with-icon" 
-            @click="nextStep"
-            :disabled="!canProceedFromStep2"
-          >
-            Продолжить
-            <ArrowRight :size="18" />
-          </button>
+          <div class="step-actions step-actions-centered">
+            <button class="btn btn-secondary btn-with-icon" @click="prevStep">
+              <ArrowRight :size="16" class="icon-flip" />
+              Назад
+            </button>
+            <button 
+              class="btn btn-primary btn-lg btn-with-icon" 
+              @click="nextStep"
+              :disabled="!canProceedFromStep2"
+            >
+              Продолжить
+              <ArrowRight :size="18" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -720,10 +735,22 @@ const filteredGoals = computed(() => {
 
 const selectedGoalForPractice = ref(null)
 const practiceSteps = ref([
-  { id: 'new-1', title: '', completed: false, timeEstimate: '' },
-  { id: 'new-2', title: '', completed: false, timeEstimate: '' },
-  { id: 'new-3', title: '', completed: false, timeEstimate: '' }
+  { id: 'new-1', title: '', completed: false, timeEstimate: '', priority: '' },
+  { id: 'new-2', title: '', completed: false, timeEstimate: '', priority: '' },
+  { id: 'new-3', title: '', completed: false, timeEstimate: '', priority: '' }
 ])
+
+const priorityOptions = [
+  { value: 'critical', label: 'Критично', color: '#ef4444' },
+  { value: 'important', label: 'Важно', color: '#f97316' },
+  { value: 'attention', label: 'Внимание', color: '#3b82f6' },
+  { value: 'optional', label: 'Опционально', color: '#9ca3af' }
+]
+
+function getPriorityColor(priority) {
+  const option = priorityOptions.find(p => p.value === priority)
+  return option ? option.color : '#9ca3af'
+}
 
 const filledStepsCount = computed(() => {
   return practiceSteps.value.filter(s => s.title.trim()).length
@@ -791,7 +818,8 @@ function saveCurrentPracticeSteps() {
         id: step.id || ('temp-' + Date.now() + Math.random().toString(36).substr(2, 5)),
         title: step.title,
         completed: step.completed || false,
-        timeEstimate: step.timeEstimate || ''
+        timeEstimate: step.timeEstimate || '',
+        priority: step.priority || ''
       }))
     
     const goalIndex = goals.value.findIndex(g => g.id === selectedGoalForPractice.value.id)
@@ -811,13 +839,14 @@ function selectGoalForPractice(goal) {
       id: s.id || ('legacy-' + index),
       title: s.title || (typeof s === 'string' ? s : ''),
       completed: s.completed || false,
-      timeEstimate: s.timeEstimate || ''
+      timeEstimate: s.timeEstimate || '',
+      priority: s.priority || ''
     }))
   } else {
     practiceSteps.value = [
-      { id: 'new-1', title: '', completed: false, timeEstimate: '' },
-      { id: 'new-2', title: '', completed: false, timeEstimate: '' },
-      { id: 'new-3', title: '', completed: false, timeEstimate: '' }
+      { id: 'new-1', title: '', completed: false, timeEstimate: '', priority: '' },
+      { id: 'new-2', title: '', completed: false, timeEstimate: '', priority: '' },
+      { id: 'new-3', title: '', completed: false, timeEstimate: '', priority: '' }
     ]
   }
 }
@@ -827,7 +856,8 @@ function addPracticeStep() {
     id: 'new-' + Date.now(),
     title: '',
     completed: false,
-    timeEstimate: ''
+    timeEstimate: '',
+    priority: ''
   })
 }
 
@@ -845,7 +875,8 @@ function completeLesson() {
           id: needsNewId ? Date.now().toString() + Math.random().toString(36).substr(2, 9) : step.id,
           title: step.title,
           completed: step.completed || false,
-          timeEstimate: step.timeEstimate || ''
+          timeEstimate: step.timeEstimate || '',
+          priority: step.priority || ''
         }
       })
     
@@ -1287,6 +1318,17 @@ function formatDate(dateString) {
   animation: fadeIn 0.3s ease;
 }
 
+.step-content-centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.step-2-wrapper {
+  width: 100%;
+  max-width: 700px;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -1591,6 +1633,27 @@ function formatDate(dateString) {
   border-color: var(--primary-color);
 }
 
+.priority-select {
+  width: 110px;
+  padding: 0.75rem 0.5rem;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.priority-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.priority-select option {
+  padding: 0.5rem;
+}
+
 .step-number-badge {
   width: 28px;
   height: 28px;
@@ -1754,6 +1817,10 @@ function formatDate(dateString) {
   gap: 1rem;
   margin-top: 2rem;
   justify-content: flex-end;
+}
+
+.step-actions-centered {
+  justify-content: center;
 }
 
 /* Goals List Mode */
