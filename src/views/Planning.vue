@@ -702,7 +702,6 @@
                       </option>
                     </select>
                     <select 
-                      v-if="isStepScheduled(goal.id, step.id)"
                       :value="getScheduledTimeEstimate(goal.id, step.id)"
                       @change="updateScheduledStep(goal.id, step.id, 'timeEstimate', $event.target.value)"
                       class="time-select-sm"
@@ -715,7 +714,6 @@
                       <option value="4h">4ч</option>
                     </select>
                     <select 
-                      v-if="isStepScheduled(goal.id, step.id)"
                       :value="getScheduledPriority(goal.id, step.id)"
                       @change="updateScheduledStep(goal.id, step.id, 'priority', $event.target.value)"
                       class="priority-select-sm"
@@ -2431,11 +2429,12 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
   background: var(--bg-secondary);
   border-radius: var(--radius-sm);
   border-left: 3px solid transparent;
+  min-height: auto;
 }
 
 .step-item.scheduled {
