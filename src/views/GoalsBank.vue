@@ -195,7 +195,14 @@
                     >
                       <span class="icon-remove">✕</span>
                     </button>
-                    <span v-if="isGoalCompleted(goal.id)" class="action-done">—</span>
+                    <button 
+                      v-if="isGoalCompleted(goal.id)"
+                      class="btn-icon btn-icon-secondary"
+                      @click.stop="returnToWork(goal.id)"
+                      title="Вернуть в работу"
+                    >
+                      <span class="icon-return">↩</span>
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -1440,6 +1447,18 @@ function completeGoalFromBank(goal) {
   }
 }
 
+function returnToWork(sourceId) {
+  const goal = store.goals.find(g => g.sourceId === sourceId && g.source === 'goals-bank')
+  if (!goal) return
+  
+  if (confirm(`Вернуть цель "${goal.title}" в работу?`)) {
+    store.updateGoal(goal.id, { 
+      status: 'active',
+      completedAt: null
+    })
+  }
+}
+
 function removeFromWork(goalId) {
   const goal = transferredGoals.value.find(g => g.id === goalId)
   if (goal) {
@@ -2064,6 +2083,16 @@ function getStatusLabel(status) {
 
 .btn-icon-danger:hover {
   background: #dc2626;
+  transform: scale(1.1);
+}
+
+.btn-icon-secondary {
+  background: #6b7280;
+  color: white;
+}
+
+.btn-icon-secondary:hover {
+  background: #4b5563;
   transform: scale(1.1);
 }
 
