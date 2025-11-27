@@ -2023,12 +2023,14 @@ function resetModule() {
   border: 1px solid var(--border-color);
 }
 
-.score-label {
+.completion-score .score-label {
+  position: static;
+  transform: none;
   font-size: 0.9rem;
   color: var(--text-secondary);
 }
 
-.score-value {
+.completion-score .score-value {
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--primary-color);
