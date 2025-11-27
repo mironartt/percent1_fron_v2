@@ -634,39 +634,7 @@
                     </button>
                   </div>
                   <div v-if="getTasksForDay(day.date).length === 0" class="empty-day drop-zone">
-                    <span>Перетащите задачу сюда</span>
-                    <button 
-                      v-if="getUnscheduledSteps().length > 0" 
-                      class="quick-add-btn"
-                      @click.stop="openQuickAdd(day.date)"
-                      title="Добавить задачу"
-                    >+</button>
-                  </div>
-                  <button 
-                    v-else-if="getUnscheduledSteps().length > 0"
-                    class="quick-add-btn floating"
-                    @click.stop="openQuickAdd(day.date)"
-                    title="Добавить задачу"
-                  >+</button>
-                  <div v-if="quickAddDay === day.date" class="quick-add-popup">
-                    <div class="quick-add-header">
-                      <span>Добавить на {{ day.shortName }}</span>
-                      <button class="btn-close" @click="quickAddDay = null">✕</button>
-                    </div>
-                    <div class="quick-add-list">
-                      <div 
-                        v-for="item in getUnscheduledSteps()" 
-                        :key="item.step.id"
-                        class="quick-add-item"
-                        @click="quickAddStep(item, day.date)"
-                      >
-                        <span class="step-name">{{ item.step.title }}</span>
-                        <span class="goal-name">{{ item.goalTitle }}</span>
-                      </div>
-                      <div v-if="getUnscheduledSteps().length === 0" class="no-steps">
-                        Нет доступных шагов
-                      </div>
-                    </div>
+                    Перетащите задачу сюда
                   </div>
                 </div>
               </div>
@@ -806,7 +774,6 @@ const notificationSettings = computed(() => store.telegramSettings.notifications
 const draggedTaskId = ref(null)
 const draggedTask = ref(null)
 const dragOverDay = ref(null)
-const quickAddDay = ref(null)
 const draggedStep = ref(null)
 const deletedTask = ref(null)
 const showUndoToast = ref(false)
@@ -1081,33 +1048,6 @@ function getTotalTimeForDay(dateStr) {
 
 function isStepScheduled(goalId, stepId) {
   return scheduledTasks.value.some(t => t.goalId === goalId && t.stepId === stepId)
-}
-
-function getUnscheduledSteps() {
-  const result = []
-  for (const goal of goalsWithSteps.value) {
-    for (const step of goal.steps || []) {
-      if (step.completed) continue
-      if (!isStepScheduled(goal.id, step.id)) {
-        result.push({
-          goalId: goal.id,
-          goalTitle: goal.title,
-          sphereId: goal.sphereId,
-          step
-        })
-      }
-    }
-  }
-  return result
-}
-
-function openQuickAdd(dayDate) {
-  quickAddDay.value = quickAddDay.value === dayDate ? null : dayDate
-}
-
-function quickAddStep(item, dayDate) {
-  scheduleStep(item.goalId, item.step, dayDate)
-  quickAddDay.value = null
 }
 
 function getScheduledDate(goalId, stepId) {
@@ -2747,121 +2687,6 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  color: var(--text-tertiary);
-  font-size: 0.8rem;
-}
-
-.quick-add-btn {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 1px dashed var(--border-color);
-  background: var(--bg-secondary);
-  color: var(--text-tertiary);
-  font-size: 1rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.quick-add-btn:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-  background: rgba(99, 102, 241, 0.1);
-}
-
-.quick-add-btn.floating {
-  position: absolute;
-  bottom: 0.5rem;
-  right: 0.5rem;
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: var(--primary-color);
-  color: white;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
-
-.quick-add-btn.floating:hover {
-  background: var(--primary-hover);
-  transform: scale(1.1);
-}
-
-.calendar-day-full {
-  position: relative;
-}
-
-.quick-add-popup {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  z-index: 100;
-  max-height: 250px;
-  overflow: hidden;
-}
-
-.quick-add-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid var(--border-color);
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.quick-add-header .btn-close {
-  background: none;
-  border: none;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  padding: 0.25rem;
-}
-
-.quick-add-list {
-  overflow-y: auto;
-  max-height: 200px;
-}
-
-.quick-add-item {
-  padding: 0.5rem 0.75rem;
-  cursor: pointer;
-  border-bottom: 1px solid var(--border-color);
-  transition: background 0.2s;
-}
-
-.quick-add-item:last-child {
-  border-bottom: none;
-}
-
-.quick-add-item:hover {
-  background: rgba(99, 102, 241, 0.1);
-}
-
-.quick-add-item .step-name {
-  display: block;
-  font-size: 0.85rem;
-  color: var(--text-primary);
-}
-
-.quick-add-item .goal-name {
-  display: block;
-  font-size: 0.7rem;
-  color: var(--text-tertiary);
-  margin-top: 0.15rem;
-}
-
-.no-steps {
-  padding: 1rem;
-  text-align: center;
   color: var(--text-tertiary);
   font-size: 0.8rem;
 }
