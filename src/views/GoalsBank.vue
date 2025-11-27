@@ -349,10 +349,20 @@
         <div class="goals-table-container">
           <div class="table-header-actions">
             <h3 class="table-title">Банк идей и целей на жизнь</h3>
-            <button class="btn btn-secondary btn-sm ideas-helper-btn" @click="toggleIdeasHelper">
-              <Sparkles :size="14" :stroke-width="2" />
-              Нужны идеи?
-            </button>
+          </div>
+          
+          <!-- Ideas Helper Prompt - More Prominent -->
+          <div class="ideas-prompt card" @click="toggleIdeasHelper">
+            <div class="ideas-prompt-icon">
+              <Sparkles :size="20" :stroke-width="2" />
+            </div>
+            <div class="ideas-prompt-content">
+              <span class="ideas-prompt-title">Нужны идеи для целей?</span>
+              <span class="ideas-prompt-subtitle">Посмотрите примеры целей по сферам жизни</span>
+            </div>
+            <div class="ideas-prompt-arrow">
+              <ChevronRight :size="20" />
+            </div>
           </div>
 
           <!-- Ideas Helper Modal -->
@@ -865,7 +875,8 @@ import {
   RotateCcw,
   AlertTriangle,
   Sparkles,
-  Trash2
+  Trash2,
+  ChevronRight
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -2716,10 +2727,64 @@ function getStatusLabel(status) {
   margin: 0;
 }
 
-.ideas-helper-btn {
-  display: inline-flex;
+.ideas-prompt {
+  display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.05));
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ideas-prompt:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.08));
+  border-color: rgba(99, 102, 241, 0.25);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.ideas-prompt-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: var(--radius-sm);
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.ideas-prompt-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.ideas-prompt-title {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+}
+
+.ideas-prompt-subtitle {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.ideas-prompt-arrow {
+  color: var(--text-tertiary);
+  transition: transform 0.2s ease;
+}
+
+.ideas-prompt:hover .ideas-prompt-arrow {
+  transform: translateX(4px);
+  color: var(--primary-color);
 }
 
 .add-idea-btn {
