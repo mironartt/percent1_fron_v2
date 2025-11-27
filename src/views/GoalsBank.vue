@@ -917,11 +917,11 @@ function toggleSummaryGoalExpand(goalId) {
 }
 
 function isGoalTransferred(goalId) {
-  return transferredGoals.value.some(g => g.sourceId === goalId)
+  return allGoals.value.some(g => g.sourceId === goalId && g.source === 'goals-bank')
 }
 
 function getTransferredGoalStatus(goalId) {
-  const goal = transferredGoals.value.find(g => g.sourceId === goalId)
+  const goal = allGoals.value.find(g => g.sourceId === goalId && g.source === 'goals-bank')
   return goal ? goal.status : null
 }
 
