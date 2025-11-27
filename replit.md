@@ -134,6 +134,13 @@ The application uses a modular structure with dedicated components, services, vi
 
 - **Router Navigation Blocking**: Allows dashboard/settings, blocks other routes until mini-task complete
 
+### Fresh User Data on Every Navigation (27 Nov 2025)
+- **Removed auth caching**: Previously cached for 30 seconds (AUTH_CHECK_CACHE_TIME)
+- **Always fetches fresh data**: Every navigation to requiresAuth/guestOnly routes calls `/api/rest/front/get-user-data/`
+- **Store automatically updated**: `store.setUser(userData)` called on each navigation
+- **Fields synced**: id, email, first_name, last_name, finish_onboarding, finish_minitask
+- **Purpose**: Backend can update user flags (onboarding/minitask completion) and frontend will reflect changes immediately
+
 ## External Dependencies
 - **Django REST API Backend**: Provides authentication, user data, onboarding, and goal management services.
 - **Lucide Vue Next**: Used for minimalist line icons across the UI.
