@@ -2816,6 +2816,10 @@ onMounted(() => {
     flex-direction: column;
   }
   
+  .step-item .step-actions {
+    flex-direction: row !important;
+  }
+  
   .step-schedule-item {
     flex-direction: column;
     align-items: flex-start;
