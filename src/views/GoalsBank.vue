@@ -156,8 +156,7 @@
                 <td class="col-goal">
                   <div class="goal-cell">
                     <span class="goal-text">{{ goal.text }}</span>
-                    <span class="goal-sphere-badge">{{ getSphereName(goal.sphereId) }}</span>
-                    <span v-if="isWeakSphere(goal.sphereId)" class="weak-sphere-indicator" title="Проседающая сфера">⚠️</span>
+                    <span class="goal-sphere-badge">{{ getSphereName(goal.sphereId) }}<span v-if="isWeakSphere(goal.sphereId)" class="weak-sphere-indicator" title="Проседающая сфера"> ⚠️</span></span>
                   </div>
                 </td>
                 <td class="col-why">
