@@ -301,7 +301,7 @@
     <div v-if="currentStep === 1" class="step-content">
       <div class="step-section">
         <header class="section-header">
-          <h1>📝 Формирование банка целей</h1>
+          <h1>Формирование банка целей</h1>
           <p class="subtitle">
             Запиши все идеи, желания, мечты, цели, хотелки для каждой сферы.
             <strong>Не фильтруй, не рационализируй.</strong>
@@ -309,7 +309,9 @@
         </header>
 
         <div class="instruction-card card">
-          <div class="instruction-icon">💡</div>
+          <div class="instruction-icon">
+            <Lightbulb :size="24" :stroke-width="2" />
+          </div>
           <div>
             <h3>Как заполнять?</h3>
             <ul>
@@ -323,7 +325,9 @@
 
         <!-- Weak spheres alert -->
         <div v-if="weakSpheres.length > 0" class="weak-spheres-alert card">
-          <div class="alert-icon">⚠️</div>
+          <div class="alert-icon">
+            <AlertTriangle :size="20" :stroke-width="2" />
+          </div>
           <div class="alert-content">
             <h4>Обратите внимание на слабые сферы</h4>
             <p>По результатам ССП эти сферы требуют особого внимания:</p>
@@ -332,9 +336,11 @@
                 v-for="sphere in weakSpheres" 
                 :key="sphere.id"
                 class="weak-sphere-tag"
+                :style="{ '--sphere-color': getSphereColor(sphere.id) }"
                 @click="selectWeakSphere(sphere.id)"
               >
-                {{ sphere.icon }} {{ sphere.name }} ({{ sphere.score }}/10)
+                <component :is="getSphereIcon(sphere.id)" :size="14" :stroke-width="2" />
+                {{ getSphereNameOnly(sphere.id) }} ({{ sphere.score }}/10)
               </span>
             </div>
           </div>
@@ -343,8 +349,9 @@
         <div class="goals-table-container">
           <div class="table-header-actions">
             <h3 class="table-title">Банк идей и целей на жизнь</h3>
-            <button class="btn btn-secondary btn-sm" @click="toggleIdeasHelper">
-              💡 Нужны идеи?
+            <button class="btn btn-secondary btn-sm ideas-helper-btn" @click="toggleIdeasHelper">
+              <Sparkles :size="14" :stroke-width="2" />
+              Нужны идеи?
             </button>
           </div>
 
@@ -352,13 +359,14 @@
           <transition name="fade">
             <div v-if="showIdeasHelper" class="ideas-helper card">
               <div class="ideas-helper-header">
-                <h4>💡 Примеры целей по сферам</h4>
-                <button class="btn-close" @click="showIdeasHelper = false">✕</button>
+                <h4><Lightbulb :size="18" :stroke-width="2" /> Примеры целей по сферам</h4>
+                <button class="btn-close" @click="showIdeasHelper = false"><X :size="16" /></button>
               </div>
               <div class="ideas-helper-content">
                 <div v-for="sphere in lifeSpheres" :key="sphere.id" class="sphere-examples">
-                  <div class="sphere-examples-header">
-                    <span>{{ sphere.icon }} {{ sphere.name }}</span>
+                  <div class="sphere-examples-header" :style="{ '--sphere-color': getSphereColor(sphere.id) }">
+                    <component :is="getSphereIcon(sphere.id)" :size="16" :stroke-width="2" />
+                    <span>{{ getSphereNameOnly(sphere.id) }}</span>
                   </div>
                   <div class="example-goals">
                     <div 
@@ -368,7 +376,7 @@
                       @click="addExampleGoal(sphere.id, example)"
                     >
                       <span class="example-text">{{ example }}</span>
-                      <span class="add-icon">+</span>
+                      <Plus :size="14" class="add-icon" />
                     </div>
                   </div>
                 </div>
@@ -384,7 +392,7 @@
                 :key="sphere.id" 
                 :value="sphere.id"
               >
-                {{ sphere.icon }} {{ sphere.name }} {{ isWeakSphere(sphere.id) ? '⚠️' : '' }}
+                {{ getSphereNameOnly(sphere.id) }}
               </option>
             </select>
             <input 
@@ -394,8 +402,9 @@
               placeholder="Цель/Идея (что хочу)"
               @keyup.enter="addNewIdea"
             />
-            <button class="btn btn-primary" @click="addNewIdea">
-              ➕ Добавить
+            <button class="btn btn-primary add-idea-btn" @click="addNewIdea">
+              <Plus :size="16" :stroke-width="2" />
+              Добавить
             </button>
           </div>
 
@@ -407,9 +416,10 @@
               class="sphere-group"
               :class="{ 'weak': isWeakSphere(sphereGroup.sphere.id) }"
             >
-              <div class="sphere-group-header">
+              <div class="sphere-group-header" :style="{ '--sphere-color': getSphereColor(sphereGroup.sphere.id) }">
                 <span class="sphere-group-name">
-                  {{ sphereGroup.sphere.icon }} {{ sphereGroup.sphere.name }}
+                  <component :is="getSphereIcon(sphereGroup.sphere.id)" :size="18" :stroke-width="2" class="sphere-group-icon" />
+                  {{ getSphereNameOnly(sphereGroup.sphere.id) }}
                   <span v-if="isWeakSphere(sphereGroup.sphere.id)" class="weak-badge">Слабая сфера</span>
                 </span>
                 <span class="sphere-group-count">{{ sphereGroup.ideas.length }} целей</span>
@@ -431,14 +441,15 @@
                   </div>
                   <div class="idea-card-actions">
                     <span class="status-indicator" :class="idea.status" v-if="idea.status && idea.status !== 'raw'">
-                      {{ idea.status === 'validated' ? '✅' : '❌' }}
+                      <CheckCircle v-if="idea.status === 'validated'" :size="16" class="status-icon validated" />
+                      <XCircle v-else :size="16" class="status-icon rejected" />
                     </span>
                     <button 
                       class="btn-icon delete"
                       @click="deleteIdea(idea.id)"
                       title="Удалить"
                     >
-                      🗑️
+                      <Trash2 :size="16" :stroke-width="2" />
                     </button>
                   </div>
                 </div>
@@ -852,7 +863,9 @@ import {
   Check,
   X,
   RotateCcw,
-  AlertTriangle
+  AlertTriangle,
+  Sparkles,
+  Trash2
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -2644,7 +2657,15 @@ function getStatusLabel(status) {
 }
 
 .weak-spheres-alert .alert-icon {
-  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: var(--radius-sm);
+  color: #f59e0b;
+  flex-shrink: 0;
 }
 
 .weak-spheres-alert h4 {
@@ -2664,18 +2685,22 @@ function getStatusLabel(status) {
 }
 
 .weak-sphere-tag {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
   padding: 0.375rem 0.75rem;
-  background: rgba(245, 158, 11, 0.2);
-  border: 1px solid rgba(245, 158, 11, 0.4);
+  background: color-mix(in srgb, var(--sphere-color) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--sphere-color) 25%, transparent);
   border-radius: var(--radius-sm);
-  font-size: 0.85rem;
+  font-size: 0.8125rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  color: var(--sphere-color);
+  font-weight: 500;
 }
 
 .weak-sphere-tag:hover {
-  background: rgba(245, 158, 11, 0.3);
+  background: color-mix(in srgb, var(--sphere-color) 20%, transparent);
   transform: translateY(-1px);
 }
 
@@ -2689,6 +2714,18 @@ function getStatusLabel(status) {
 
 .table-header-actions .table-title {
   margin: 0;
+}
+
+.ideas-helper-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.add-idea-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
 }
 
 .btn-sm {
@@ -2734,11 +2771,16 @@ function getStatusLabel(status) {
 }
 
 .sphere-examples-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
-  padding: 0.5rem;
-  background: var(--bg-secondary);
+  padding: 0.5rem 0.75rem;
+  background: color-mix(in srgb, var(--sphere-color) 10%, var(--bg-secondary));
   border-radius: var(--radius-sm);
+  color: var(--sphere-color);
+  border-left: 3px solid var(--sphere-color);
 }
 
 .example-goals {
@@ -2767,10 +2809,10 @@ function getStatusLabel(status) {
 }
 
 .add-icon {
-  font-size: 1.25rem;
   color: var(--primary-color);
   opacity: 0;
   transition: opacity 0.2s ease;
+  flex-shrink: 0;
 }
 
 .example-goal:hover .add-icon {
@@ -2818,6 +2860,10 @@ function getStatusLabel(status) {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.sphere-group-icon {
+  color: var(--sphere-color);
 }
 
 .weak-badge {
@@ -2914,7 +2960,16 @@ function getStatusLabel(status) {
 }
 
 .status-indicator {
-  font-size: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.status-icon.validated {
+  color: #22c55e;
+}
+
+.status-icon.rejected {
+  color: #ef4444;
 }
 
 .empty-table .hint {
@@ -3394,7 +3449,15 @@ function getStatusLabel(status) {
 }
 
 .instruction-icon {
-  font-size: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: var(--radius-md);
+  color: #f59e0b;
+  flex-shrink: 0;
 }
 
 .instruction-card h3 {
