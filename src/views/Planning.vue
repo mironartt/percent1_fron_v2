@@ -2426,14 +2426,19 @@ onMounted(() => {
 }
 
 .step-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.35rem 0.6rem;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.5rem !important;
+  padding: 6px 10px !important;
   background: var(--bg-secondary);
   border-radius: var(--radius-sm);
   border-left: 3px solid transparent;
+  min-height: 0 !important;
+  height: 36px !important;
+  max-height: 36px !important;
+  box-sizing: border-box !important;
+  overflow: hidden;
 }
 
 .step-item.scheduled {
