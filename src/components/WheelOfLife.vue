@@ -57,32 +57,20 @@
         @mouseleave="!readonly && (hoveredSphere = null)"
       />
 
-      <!-- Sphere labels using textPath for curved text -->
-      <defs>
-        <path
-          v-for="(sphere, index) in spheres"
-          :key="`arc-path-${sphere.id}`"
-          :id="`labelArc-${index}`"
-          :d="getLabelArcPath(index)"
-          fill="none"
-        />
-      </defs>
-
+      <!-- Sphere labels - inside sectors, along radius -->
       <text
         v-for="(sphere, index) in spheres"
         :key="`label-${sphere.id}`"
+        :x="getLabelX(index)"
+        :y="getLabelY(index)"
+        :transform="getLabelTransform(index)"
         :fill="getSphereColor(index)"
         :class="['sphere-label', { 'sphere-label-readonly': readonly }]"
+        text-anchor="middle"
+        dominant-baseline="middle"
         @click="!readonly && selectSphere(sphere)"
       >
-        <textPath
-          :href="`#labelArc-${index}`"
-          startOffset="50%"
-          text-anchor="middle"
-          dominant-baseline="middle"
-        >
-          {{ sphere.name.toUpperCase() }}
-        </textPath>
+        {{ sphere.name.toUpperCase() }}
       </text>
 
       <!-- Interactive handle for dragging (hidden in readonly mode) -->
@@ -120,10 +108,10 @@ const props = defineProps({
 
 const emit = defineEmits(['update-sphere'])
 
-const svgSize = 700
+const svgSize = 600
 const center = svgSize / 2
-const radius = 240
-const labelRadius = radius + 30
+const radius = 260
+const labelRadius = radius * 0.75
 
 const selectedSphere = ref(null)
 const hoveredSphere = ref(null)
@@ -142,6 +130,10 @@ const sphereColors = [
 
 function getAngle(index) {
   return index * angleStep.value - Math.PI / 2
+}
+
+function getMidAngle(index) {
+  return getAngle(index) + angleStep.value / 2
 }
 
 function getSegmentPath(index, score) {
@@ -168,26 +160,28 @@ function getSphereColor(index) {
   return sphereColors[index % sphereColors.length]
 }
 
-function getLabelArcPath(index) {
-  const startAngle = getAngle(index) + 0.05
-  const endAngle = getAngle(index + 1) - 0.05
-  const midAngle = (startAngle + endAngle) / 2
+function getLabelX(index) {
+  const midAngle = getMidAngle(index)
+  return center + labelRadius * Math.cos(midAngle)
+}
+
+function getLabelY(index) {
+  const midAngle = getMidAngle(index)
+  return center + labelRadius * Math.sin(midAngle)
+}
+
+function getLabelTransform(index) {
+  const midAngle = getMidAngle(index)
+  const x = getLabelX(index)
+  const y = getLabelY(index)
   
-  const isBottomHalf = midAngle > 0 && midAngle < Math.PI
+  let rotationDeg = (midAngle * 180) / Math.PI + 90
   
-  if (isBottomHalf) {
-    const x1 = center + labelRadius * Math.cos(endAngle)
-    const y1 = center + labelRadius * Math.sin(endAngle)
-    const x2 = center + labelRadius * Math.cos(startAngle)
-    const y2 = center + labelRadius * Math.sin(startAngle)
-    return `M ${x1} ${y1} A ${labelRadius} ${labelRadius} 0 0 0 ${x2} ${y2}`
-  } else {
-    const x1 = center + labelRadius * Math.cos(startAngle)
-    const y1 = center + labelRadius * Math.sin(startAngle)
-    const x2 = center + labelRadius * Math.cos(endAngle)
-    const y2 = center + labelRadius * Math.sin(endAngle)
-    return `M ${x1} ${y1} A ${labelRadius} ${labelRadius} 0 0 1 ${x2} ${y2}`
+  if (rotationDeg > 90 && rotationDeg <= 270) {
+    rotationDeg += 180
   }
+  
+  return `rotate(${rotationDeg}, ${x}, ${y})`
 }
 
 function selectSphere(sphere) {
@@ -271,9 +265,9 @@ function startDrag(event, sphere, index) {
 }
 
 .sphere-label {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
   cursor: pointer;
   user-select: none;
 }
@@ -298,7 +292,8 @@ function startDrag(event, sphere, index) {
 
 @media (max-width: 768px) {
   .sphere-label {
-    font-size: 10px;
+    font-size: 9px;
+    letter-spacing: 1px;
   }
 }
 </style>
