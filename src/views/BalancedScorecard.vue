@@ -57,19 +57,16 @@
 
       <div class="summary-grid">
         <div class="summary-stat-card card">
-          <div class="summary-icon">📊</div>
           <div class="summary-value">{{ averageScore.toFixed(1) }}</div>
           <div class="summary-label">Средний балл</div>
         </div>
 
         <div class="summary-stat-card card" v-if="strongestSphere">
-          <div class="summary-icon">💪</div>
           <div class="summary-value">{{ strongestSphere.icon }}</div>
           <div class="summary-label">Самая сильная<br/>{{ strongestSphere.name }}</div>
         </div>
 
         <div class="summary-stat-card card" v-if="weakestSphere">
-          <div class="summary-icon">🎯</div>
           <div class="summary-value">{{ weakestSphere.icon }}</div>
           <div class="summary-label">Зона роста<br/>{{ weakestSphere.name }}</div>
         </div>
