@@ -680,7 +680,10 @@
                   v-for="step in getUncompletedSteps(goal)" 
                   :key="step.id"
                   class="step-item"
-                  :class="{ scheduled: isStepScheduled(goal.id, step.id) }"
+                  :class="{ 
+                    scheduled: isStepScheduled(goal.id, step.id),
+                    ['priority-' + getScheduledPriority(goal.id, step.id)]: isStepScheduled(goal.id, step.id)
+                  }"
                 >
                   <span class="step-title">{{ step.title }}</span>
                   <div class="step-actions">
@@ -689,7 +692,7 @@
                       @change="scheduleStep(goal.id, step, $event.target.value)"
                       class="day-select-sm"
                     >
-                      <option value="">—</option>
+                      <option value="">День</option>
                       <option 
                         v-for="day in weekDays" 
                         :key="day.date"
@@ -700,16 +703,30 @@
                     </select>
                     <select 
                       v-if="isStepScheduled(goal.id, step.id)"
+                      :value="getScheduledTimeEstimate(goal.id, step.id)"
+                      @change="updateScheduledStep(goal.id, step.id, 'timeEstimate', $event.target.value)"
+                      class="time-select-sm"
+                      title="Время"
+                    >
+                      <option value="">⏱</option>
+                      <option value="30min">30м</option>
+                      <option value="1h">1ч</option>
+                      <option value="2h">2ч</option>
+                      <option value="4h">4ч</option>
+                    </select>
+                    <select 
+                      v-if="isStepScheduled(goal.id, step.id)"
                       :value="getScheduledPriority(goal.id, step.id)"
                       @change="updateScheduledStep(goal.id, step.id, 'priority', $event.target.value)"
                       class="priority-select-sm"
+                      :class="'priority-' + (getScheduledPriority(goal.id, step.id) || 'none')"
                       title="Приоритет"
                     >
-                      <option value="">🎯</option>
-                      <option value="critical">🔴</option>
-                      <option value="desirable">🟠</option>
-                      <option value="attention">🔵</option>
-                      <option value="optional">⚪</option>
+                      <option value="">—</option>
+                      <option value="critical">Критично</option>
+                      <option value="desirable">Важно</option>
+                      <option value="attention">Внимание</option>
+                      <option value="optional">Опционально</option>
                     </select>
                   </div>
                 </div>
@@ -2343,7 +2360,10 @@ onMounted(() => {
 }
 
 .goals-section {
+  margin-top: 2rem;
   margin-bottom: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
 }
 
 .goals-section .goals-header {
@@ -2411,27 +2431,55 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 0.75rem;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
   background: var(--bg-secondary);
   border-radius: var(--radius-sm);
+  border-left: 3px solid transparent;
 }
 
 .step-item.scheduled {
   background: rgba(99, 102, 241, 0.08);
+  border-left-color: var(--primary-color);
+}
+
+.step-item.priority-critical {
+  border-left-color: var(--danger-color);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.step-item.priority-desirable {
+  border-left-color: var(--warning-color);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.step-item.priority-attention {
+  border-left-color: var(--info-color);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.step-item.priority-optional {
+  border-left-color: var(--text-tertiary);
+  background: rgba(156, 163, 175, 0.05);
 }
 
 .step-item .step-title {
   flex: 1;
   font-size: 0.875rem;
+  min-width: 0;
 }
 
 .step-item .step-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   flex-shrink: 0;
 }
 
 .day-select-sm,
+.time-select-sm,
 .priority-select-sm {
-  padding: 0.25rem 0.5rem;
+  padding: 0.35rem 0.5rem;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   font-size: 0.8rem;
@@ -2439,8 +2487,39 @@ onMounted(() => {
   cursor: pointer;
 }
 
+.day-select-sm {
+  min-width: 60px;
+}
+
+.time-select-sm {
+  min-width: 55px;
+}
+
 .priority-select-sm {
-  width: 100px;
+  min-width: 100px;
+}
+
+.priority-select-sm.priority-critical {
+  border-color: var(--danger-color);
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger-color);
+}
+
+.priority-select-sm.priority-desirable {
+  border-color: var(--warning-color);
+  background: rgba(245, 158, 11, 0.1);
+  color: #b45309;
+}
+
+.priority-select-sm.priority-attention {
+  border-color: var(--info-color);
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--info-color);
+}
+
+.priority-select-sm.priority-optional {
+  border-color: var(--text-tertiary);
+  background: rgba(156, 163, 175, 0.1);
 }
 
 .week-navigation {
