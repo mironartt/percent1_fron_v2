@@ -61,6 +61,16 @@ The application uses a modular structure with dedicated components, services, vi
 - Sphere display: Emoji icons replaced with Lucide icons (Wallet, Palette, Users, Heart, Briefcase, HeartHandshake) with colored borders
 - Added helper functions: getSphereIconComponent(), getSphereColor()
 
+### Goal Edit Page (GoalEdit.vue)
+- AI Coach header: 🤖 emoji replaced with Bot icon in purple circular wrapper
+- Chat avatars: 🤖/👤 replaced with Bot/User icons with color-coded circular backgrounds
+- "Назад к списку" button: ← replaced with ArrowLeft icon
+- "Удалить" button: 🗑️ emoji replaced with Trash2 icon
+- "Сохранить изменения" button: 💾 emoji replaced with Save icon
+- "Добавить шаг" button: ➕ emoji replaced with Plus icon
+- Step delete button: ✕ replaced with X icon
+- Drag handle: ⋮⋮ replaced with GripVertical icon
+
 ## External Dependencies
 - **Django REST API Backend**: Provides authentication, user data, onboarding, and goal management services.
 - **Lucide Vue Next**: Used for minimalist line icons across the UI.
