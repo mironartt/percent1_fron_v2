@@ -2,15 +2,16 @@
   <div class="goal-edit-container">
     <header class="page-header">
       <button class="btn btn-secondary btn-back" @click="goBack">
-        <span>←</span>
+        <ArrowLeft :size="16" />
         Назад к списку
       </button>
       <div class="header-actions">
         <button 
-          class="btn btn-danger-outline"
+          class="btn btn-danger-outline btn-with-icon"
           @click="deleteGoalConfirm"
         >
-          🗑️ Удалить
+          <Trash2 :size="16" />
+          Удалить
         </button>
       </div>
     </header>
@@ -119,7 +120,7 @@
               @drop="handleDrop(index, $event)"
             >
               <div class="step-drag-handle" title="Перетащите для изменения порядка">
-                ⋮⋮
+                <GripVertical :size="16" />
               </div>
               <span class="step-number-badge">{{ index + 1 }}</span>
               <div class="step-main">
@@ -136,12 +137,13 @@
                 @click="removeStep(index)"
                 title="Удалить шаг"
               >
-                ✕
+                <X :size="16" />
               </button>
             </div>
 
-            <button class="btn btn-secondary add-step-btn" @click="addStep">
-              ➕ Добавить шаг
+            <button class="btn btn-secondary add-step-btn btn-with-icon" @click="addStep">
+              <Plus :size="16" />
+              Добавить шаг
             </button>
           </div>
 
@@ -151,7 +153,9 @@
       <div class="sidebar-actions">
         <div class="ai-coach-section card">
           <div class="coach-header">
-            <span class="coach-icon">🤖</span>
+            <span class="coach-icon-wrapper">
+              <Bot :size="20" />
+            </span>
             <h3>ИИ-коуч</h3>
           </div>
           <div class="chat-container">
@@ -162,7 +166,10 @@
                 class="message"
                 :class="msg.role === 'user' ? 'user-message' : 'coach-message'"
               >
-                <span class="message-avatar">{{ msg.role === 'user' ? '👤' : '🤖' }}</span>
+                <span class="message-avatar" :class="msg.role">
+                  <User v-if="msg.role === 'user'" :size="14" />
+                  <Bot v-else :size="14" />
+                </span>
                 <div class="message-content">
                   <p>{{ msg.content }}</p>
                 </div>
@@ -188,8 +195,9 @@
         <div class="card">
           <h4>Действия</h4>
           <div class="action-buttons">
-            <button class="btn btn-primary btn-lg btn-full" @click="saveGoal">
-              💾 Сохранить изменения
+            <button class="btn btn-primary btn-lg btn-full btn-with-icon" @click="saveGoal">
+              <Save :size="16" />
+              Сохранить изменения
             </button>
             <button class="btn btn-secondary btn-full" @click="goBack">
               Отмена
@@ -216,6 +224,9 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { 
+  Bot, User, Trash2, Save, Plus, ArrowLeft, GripVertical, X
+} from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
@@ -843,8 +854,15 @@ async function sendMessage() {
   border-bottom: 1px solid var(--border-color);
 }
 
-.coach-icon {
-  font-size: 1.25rem;
+.coach-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 50%;
+  color: #8b5cf6;
 }
 
 .coach-header h3 {
@@ -875,8 +893,29 @@ async function sendMessage() {
 }
 
 .message-avatar {
-  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
   flex-shrink: 0;
+}
+
+.message-avatar.user {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+}
+
+.message-avatar.coach {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
+
+.btn-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .message-content {
