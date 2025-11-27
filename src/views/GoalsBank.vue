@@ -45,7 +45,7 @@
     <!-- Summary State - After Completion -->
     <div v-else-if="showSummary" class="summary-section">
       <header class="section-header">
-        <h1>&#x1F3E6; Банк целей</h1>
+        <h1>Банк целей</h1>
       </header>
 
       <div class="summary-grid">
@@ -73,7 +73,7 @@
       <!-- Единая таблица истинных целей -->
       <div class="goals-table-section card" v-if="validatedGoals.length > 0">
         <div class="table-header">
-          <h3>&#x2705; Банк идей и целей</h3>
+          <h3>Банк идей и целей</h3>
           <p class="section-hint">Ваши истинные цели, прошедшие проверку</p>
         </div>
         
@@ -234,7 +234,7 @@
       </div>
 
       <div class="key-goals-summary card" v-if="transferredGoals.length > 0">
-        <h3>&#x1F3AF; Цели в работе</h3>
+        <h3>Цели в работе</h3>
         <div class="key-goals-list">
           <div v-for="goal in transferredGoals" :key="goal.id" class="key-goal-item">
             <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
@@ -324,7 +324,7 @@
 
         <div class="goals-table-container">
           <div class="table-header-actions">
-            <h3 class="table-title">🏦 Банк идей и целей на жизнь</h3>
+            <h3 class="table-title">Банк идей и целей на жизнь</h3>
             <button class="btn btn-secondary btn-sm" @click="toggleIdeasHelper">
               💡 Нужны идеи?
             </button>
