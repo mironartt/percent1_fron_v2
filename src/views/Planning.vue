@@ -626,34 +626,64 @@
                   <div 
                     v-for="task in getTasksForDay(day.date)" 
                     :key="task.id"
-                    class="task-card"
-                    :class="[
-                      { completed: task.completed, dragging: draggedTaskId === task.id },
-                      'priority-' + (task.priority || 'optional')
-                    ]"
-                    draggable="true"
-                    @dragstart="handleDragStart(task)"
-                    @dragend="handleDragEnd"
+                    class="task-card-wrapper"
                   >
-                    <div class="drag-handle">⋮⋮</div>
-                    <input 
-                      type="checkbox"
-                      :checked="task.completed"
-                      @change="toggleTaskComplete(task.id)"
-                      class="task-checkbox"
-                    />
-                    <div class="task-info">
-                      <span class="task-title">{{ task.stepTitle }}</span>
-                      <span class="task-goal">{{ task.goalTitle }}</span>
-                    </div>
-                    <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
-                    <button 
-                      class="btn-icon remove-sm"
-                      @click="removeTask(task.id)"
-                      title="Удалить"
+                    <div
+                      class="task-card"
+                      :class="[
+                        { completed: task.completed, dragging: draggedTaskId === task.id },
+                        'priority-' + (task.priority || 'optional')
+                      ]"
+                      draggable="true"
+                      @dragstart="handleDragStart(task)"
+                      @dragend="handleDragEnd"
                     >
-                      ✕
-                    </button>
+                      <div class="drag-handle">⋮⋮</div>
+                      <input 
+                        type="checkbox"
+                        :checked="task.completed"
+                        @change="toggleTaskComplete(task.id)"
+                        class="task-checkbox"
+                      />
+                      <div class="task-info">
+                        <span class="task-title">{{ task.stepTitle }}</span>
+                        <span class="task-goal">{{ task.goalTitle }}</span>
+                      </div>
+                      <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
+                      <button 
+                        class="btn-icon remove-sm"
+                        @click="removeTask(task.id)"
+                        title="Удалить"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <!-- Popover on hover -->
+                    <div class="task-card-popover">
+                      <div class="popover-header">
+                        <span 
+                          class="popover-priority-badge"
+                          :style="{ backgroundColor: getPriorityColor(task.priority) }"
+                        >
+                          {{ getPriorityLabel(task.priority) }}
+                        </span>
+                      </div>
+                      <div class="popover-title">{{ task.stepTitle }}</div>
+                      <div class="popover-goal">
+                        <Target :size="12" />
+                        {{ task.goalTitle }}
+                      </div>
+                      <div class="popover-meta">
+                        <span v-if="task.timeEstimate" class="popover-time">
+                          <Clock :size="12" />
+                          {{ formatTimeEstimate(task.timeEstimate) }}
+                        </span>
+                      </div>
+                      <div v-if="task.comment" class="popover-comment">
+                        <MessageSquare :size="12" />
+                        {{ task.comment }}
+                      </div>
+                    </div>
                   </div>
                   <div v-if="getTasksForDay(day.date).length === 0" class="empty-day drop-zone">
                     Перетащите задачу сюда
@@ -2169,7 +2199,7 @@ onMounted(() => {
   position: relative;
 }
 
-.task-popover {
+.scheduled-task-wrapper .task-popover {
   display: none;
   position: absolute;
   left: 0;
@@ -2182,8 +2212,9 @@ onMounted(() => {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  z-index: 100;
+  z-index: 1000;
   animation: popoverFadeIn 0.15s ease;
+  pointer-events: none;
 }
 
 @keyframes popoverFadeIn {
@@ -2193,6 +2224,7 @@ onMounted(() => {
 
 .scheduled-task-wrapper:hover .task-popover {
   display: block;
+  pointer-events: auto;
 }
 
 .popover-header {
@@ -2796,6 +2828,7 @@ onMounted(() => {
 
 .week-calendar-full {
   padding: 1.5rem;
+  overflow: visible;
 }
 
 .week-calendar-full h3 {
@@ -2806,6 +2839,7 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(7, minmax(120px, 1fr));
   gap: 0.5rem;
+  overflow: visible;
 }
 
 .calendar-day-full {
@@ -2814,6 +2848,7 @@ onMounted(() => {
   min-height: 150px;
   display: flex;
   flex-direction: column;
+  overflow: visible;
 }
 
 .calendar-day-full.today {
@@ -2859,6 +2894,35 @@ onMounted(() => {
   flex-direction: column;
   gap: 0.375rem;
   overflow-y: auto;
+  overflow-x: visible;
+}
+
+/* Task card wrapper for popover positioning */
+.task-card-wrapper {
+  position: relative;
+}
+
+.task-card-wrapper .task-card-popover {
+  display: none;
+  position: absolute;
+  left: 100%;
+  top: 0;
+  margin-left: 8px;
+  min-width: 240px;
+  max-width: 320px;
+  padding: 0.75rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  animation: popoverFadeIn 0.15s ease;
+  pointer-events: none;
+}
+
+.task-card-wrapper:hover .task-card-popover {
+  display: block;
+  pointer-events: auto;
 }
 
 .task-card {
