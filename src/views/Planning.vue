@@ -155,7 +155,7 @@
         <div class="step-layout">
           <div class="step-main">
             <header class="section-header">
-              <h1>📋 Планирование недели</h1>
+              <h1>Планирование недели</h1>
               <p class="subtitle">
                 Распределите шаги из ваших целей по дням недели
               </p>
@@ -508,7 +508,7 @@
         <div class="planner-main">
           <header class="section-header">
             <div class="header-row">
-              <h1>📅 Планирование недели</h1>
+              <h1>Планирование недели</h1>
             </div>
             <div class="week-navigation">
               <button class="btn btn-icon-nav" @click="prevWeek" title="Предыдущая неделя">
@@ -532,28 +532,24 @@
           <div class="weekly-stats card">
             <div class="stats-grid">
               <div class="stat-box">
-                <div class="stat-icon">✅</div>
                 <div class="stat-content">
                   <span class="stat-number">{{ weeklyCompletedTasks }}</span>
                   <span class="stat-label">Выполнено</span>
                 </div>
               </div>
               <div class="stat-box">
-                <div class="stat-icon">📋</div>
                 <div class="stat-content">
                   <span class="stat-number">{{ weeklyTotalTasks }}</span>
                   <span class="stat-label">Всего задач</span>
                 </div>
               </div>
               <div class="stat-box">
-                <div class="stat-icon">📊</div>
                 <div class="stat-content">
                   <span class="stat-number">{{ weeklyCompletionRate }}%</span>
                   <span class="stat-label">Прогресс</span>
                 </div>
               </div>
               <div class="stat-box">
-                <div class="stat-icon">🔥</div>
                 <div class="stat-content">
                   <span class="stat-number">{{ currentStreak }}</span>
                   <span class="stat-label">Дней подряд</span>
@@ -572,7 +568,7 @@
 
           <!-- Week Calendar (moved above goals) -->
           <div class="week-calendar-full card">
-            <h3>📅 План на неделю <span class="drag-hint">Перетаскивайте задачи между днями</span></h3>
+            <h3>План на неделю <span class="drag-hint">Перетаскивайте задачи между днями</span></h3>
             <div class="calendar-grid-full">
               <div 
                 v-for="day in weekDays" 
@@ -639,7 +635,7 @@
           <!-- Goals with steps (accordion) -->
           <div class="goals-section">
             <div class="goals-header">
-              <h3>🎯 Цели и шаги</h3>
+              <h3>Цели и шаги</h3>
               <button 
                 v-if="goalsWithSteps.length > 0"
                 class="btn btn-sm btn-outline toggle-all-btn"
