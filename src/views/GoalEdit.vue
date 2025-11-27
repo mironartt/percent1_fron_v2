@@ -512,6 +512,7 @@ function formatDate(dateString) {
   margin-bottom: 2rem;
   flex-wrap: wrap;
   gap: 1rem;
+  max-width: 900px;
 }
 
 .btn-back {
