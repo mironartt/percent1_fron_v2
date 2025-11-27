@@ -6,6 +6,13 @@
         Назад к списку
       </button>
       <div class="header-actions">
+        <button class="btn btn-primary btn-with-icon" @click="saveGoal">
+          <Save :size="16" />
+          Сохранить
+        </button>
+        <button class="btn btn-secondary" @click="goBack">
+          Отмена
+        </button>
         <button 
           class="btn btn-danger-outline btn-with-icon"
           @click="deleteGoalConfirm"
@@ -192,85 +199,30 @@
             </button>
           </div>
 
-        </div>
-      </div>
-
-      <div class="sidebar-actions">
-        <div class="ai-coach-section card">
-          <div class="coach-header">
-            <span class="coach-icon-wrapper">
-              <Bot :size="20" />
+          <div class="goal-meta-info">
+            <span class="meta-item">
+              <span class="meta-label">Создана:</span>
+              {{ formatDate(goal.createdAt) }}
             </span>
-            <h3>ИИ-коуч</h3>
-          </div>
-          <div class="chat-container">
-            <div class="chat-messages" ref="chatMessagesRef">
-              <div 
-                v-for="(msg, idx) in chatMessages" 
-                :key="idx"
-                class="message"
-                :class="msg.role === 'user' ? 'user-message' : 'coach-message'"
-              >
-                <span class="message-avatar" :class="msg.role">
-                  <User v-if="msg.role === 'user'" :size="14" />
-                  <Bot v-else :size="14" />
-                </span>
-                <div class="message-content">
-                  <p>{{ msg.content }}</p>
-                </div>
-              </div>
-            </div>
-            <div class="chat-input-area">
-              <input 
-                type="text"
-                v-model="userMessage"
-                @keyup.enter="sendMessage"
-                placeholder="Спросите совет..."
-                class="chat-input"
-              />
-              <button 
-                class="btn-send"
-                @click="sendMessage"
-                :disabled="!userMessage.trim()"
-              >→</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h4>Действия</h4>
-          <div class="action-buttons">
-            <button class="btn btn-primary btn-lg btn-full btn-with-icon" @click="saveGoal">
-              <Save :size="16" />
-              Сохранить изменения
-            </button>
-            <button class="btn btn-secondary btn-full" @click="goBack">
-              Отмена
-            </button>
+            <span v-if="goal.completedAt" class="meta-item">
+              <span class="meta-label">Завершена:</span>
+              {{ formatDate(goal.completedAt) }}
+            </span>
           </div>
 
-          <div class="goal-info">
-            <div class="info-item">
-              <span class="info-label">Создана:</span>
-              <span class="info-value">{{ formatDate(goal.createdAt) }}</span>
-            </div>
-            <div v-if="goal.completedAt" class="info-item">
-              <span class="info-label">Завершена:</span>
-              <span class="info-value">{{ formatDate(goal.completedAt) }}</span>
-            </div>
-          </div>
         </div>
       </div>
+
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { 
-  Bot, User, Trash2, Save, Plus, ArrowLeft, GripVertical, X, ChevronDown,
+  Trash2, Save, Plus, ArrowLeft, GripVertical, X, ChevronDown,
   Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target,
   Square, CheckSquare
 } from 'lucide-vue-next'
@@ -296,11 +248,6 @@ const goalForm = ref({
   progress: 0
 })
 
-const chatMessagesRef = ref(null)
-const userMessage = ref('')
-const chatMessages = ref([
-  { role: 'coach', content: 'Привет! Я помогу тебе с декомпозицией цели. Спроси меня о разбивке шагов или планировании.' }
-])
 
 const sphereDropdownRef = ref(null)
 const sphereDropdownOpen = ref(false)
@@ -550,37 +497,6 @@ function formatDate(dateString) {
   })
 }
 
-async function sendMessage() {
-  if (!userMessage.value.trim()) return
-  
-  const msg = userMessage.value
-  chatMessages.value.push({ role: 'user', content: msg })
-  userMessage.value = ''
-  
-  await nextTick()
-  if (chatMessagesRef.value) {
-    chatMessagesRef.value.scrollTop = chatMessagesRef.value.scrollHeight
-  }
-  
-  setTimeout(() => {
-    const responses = [
-      'Хороший вопрос! Попробуй разбить этот шаг на ещё более мелкие действия — каждое не больше 1-2 часов.',
-      'Помни: конкретный шаг = понятный результат. Что именно ты получишь после выполнения?',
-      'Отлично! Теперь подумай — какой первый шаг ты можешь сделать уже сегодня?',
-      'Рекомендую начать с самого простого шага — это создаст momentum для остальных.',
-      'Попробуй сформулировать шаг так, чтобы было понятно — выполнен он или нет.',
-      'Каждый шаг должен иметь чёткий результат: документ, звонок, решение.'
-    ]
-    const randomResponse = responses[Math.floor(Math.random() * responses.length)]
-    chatMessages.value.push({ role: 'coach', content: randomResponse })
-    
-    nextTick(() => {
-      if (chatMessagesRef.value) {
-        chatMessagesRef.value.scrollTop = chatMessagesRef.value.scrollHeight
-      }
-    })
-  }, 1000)
-}
 </script>
 
 <style scoped>
@@ -651,10 +567,10 @@ async function sendMessage() {
 }
 
 .edit-layout {
-  display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 2rem;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 900px;
 }
 
 .main-content {
@@ -1085,148 +1001,29 @@ async function sendMessage() {
   margin: 0;
 }
 
-.sidebar-actions {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.ai-coach-section {
-  background: #ffffff;
-  border: 1px solid var(--border-color);
-  padding: 1rem;
-}
-
-.coach-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.coach-icon-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: rgba(139, 92, 246, 0.1);
-  border-radius: 50%;
-  color: #8b5cf6;
-}
-
-.coach-header h3 {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.chat-container {
-  display: flex;
-  flex-direction: column;
-  height: 300px;
-}
-
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 0.5rem 0;
-}
-
-.message {
-  display: flex;
-  gap: 0.5rem;
-  align-items: flex-start;
-}
-
-.message-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.message-avatar.user {
-  background: rgba(99, 102, 241, 0.1);
-  color: #6366f1;
-}
-
-.message-avatar.coach {
-  background: rgba(139, 92, 246, 0.1);
-  color: #8b5cf6;
-}
-
 .btn-with-icon {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.message-content {
-  flex: 1;
-  padding: 0.75rem;
-  border-radius: var(--radius-md);
+.goal-meta-info {
+  display: flex;
+  gap: 2rem;
+  padding-top: 1.5rem;
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
   font-size: 0.875rem;
+  color: var(--text-secondary);
 }
 
-.coach-message .message-content {
-  background: var(--bg-secondary);
-}
-
-.user-message .message-content {
-  background: rgba(99, 102, 241, 0.1);
-}
-
-.message-content p {
-  margin: 0;
-  line-height: 1.5;
-}
-
-.chat-input-area {
+.goal-meta-info .meta-item {
   display: flex;
   gap: 0.5rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--border-color);
-  margin-top: 0.75rem;
 }
 
-.chat-input {
-  flex: 1;
-  padding: 0.625rem 0.875rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-  background: var(--bg-primary);
-}
-
-.chat-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-}
-
-.btn-send {
-  padding: 0.625rem 1rem;
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.btn-send:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.goal-meta-info .meta-label {
+  color: var(--text-muted);
 }
 
 .step-number-badge {
@@ -1243,70 +1040,6 @@ async function sendMessage() {
   flex-shrink: 0;
 }
 
-.sticky-card {
-  position: sticky;
-  top: 2rem;
-}
-
-.sticky-card h4 {
-  margin-bottom: 1rem;
-  font-size: 1rem;
-}
-
-.action-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 2rem;
-}
-
-.btn-full {
-  width: 100%;
-}
-
-.goal-info {
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.info-label {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.info-value {
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-@media (max-width: 1024px) {
-  .edit-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .sidebar-actions {
-    order: -1;
-  }
-
-  .sticky-card {
-    position: static;
-  }
-
-  .action-buttons {
-    flex-direction: row;
-  }
-}
 
 @media (max-width: 768px) {
   .page-header {
@@ -1315,15 +1048,23 @@ async function sendMessage() {
   }
 
   .header-actions {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .header-actions .btn {
+    flex: 1;
+    min-width: 100px;
   }
 
   .form-row {
     grid-template-columns: 1fr;
   }
 
-  .action-buttons {
+  .goal-meta-info {
     flex-direction: column;
+    gap: 0.5rem;
   }
 }
 </style>
