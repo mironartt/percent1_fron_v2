@@ -282,3 +282,9 @@ export const DEMO_PLANNING_MODE = true  // Show planner with demo tasks
 - `currentPlan` computed uses `weekDays[0].date` to respect `weekOffset`
 - Fixed functions: `unscheduleStep`, `updateScheduledStep`, `toggleTaskComplete`, `removeTask`, `updateTaskDate`, `setupDemoData`
 - Added priority-based task sorting in `getTasksForDay()` (critical→desirable→attention→optional)
+
+#### Template Bug Fixes (November 27, 2025)
+- Fixed `v-if` + `v-for` on same element in `daily-breakdown` section
+- Vue 3 evaluates `v-if` before `v-for`, causing `day` to be undefined
+- Solution: wrap `v-for` in `<template>` tag, put `v-if` on inner element
+- Removed "Не больше 3 шагов в день" from `practiceChecklist`
