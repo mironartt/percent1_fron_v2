@@ -845,7 +845,7 @@ const showSummary = computed(() => {
 })
 
 const transferredGoals = computed(() => {
-  return allGoals.value.filter(g => g.source === 'goals-bank')
+  return allGoals.value.filter(g => g.source === 'goals-bank' && g.status !== 'completed')
 })
 
 const transferredGoalsCount = computed(() => transferredGoals.value.length)
