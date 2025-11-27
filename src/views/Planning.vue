@@ -707,6 +707,20 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { DEMO_PLANNING_MODE } from '../config/settings.js'
+import { 
+  Calendar, 
+  BookOpen, 
+  Target, 
+  Lightbulb, 
+  Zap, 
+  AlertTriangle, 
+  RefreshCcw, 
+  Smartphone, 
+  Sparkles,
+  Square,
+  ArrowRight,
+  CheckSquare
+} from 'lucide-vue-next'
 
 const store = useAppStore()
 const router = useRouter()
