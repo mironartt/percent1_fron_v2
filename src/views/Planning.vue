@@ -168,19 +168,75 @@
               </div>
             </div>
 
-            <!-- Goals with steps to schedule -->
+            <!-- Weekly Calendar View (moved above goals) -->
+            <div class="week-calendar card">
+              <h3>📅 Ваш план на неделю <span class="drag-hint" v-if="draggedStep">(отпустите на нужный день)</span></h3>
+              <div class="calendar-grid">
+                <div 
+                  v-for="day in weekDays" 
+                  :key="day.date"
+                  class="calendar-day"
+                  :class="{ 
+                    today: isToday(day.date), 
+                    'has-tasks': getTasksForDay(day.date).length > 0,
+                    'drag-over-day': dragOverDay === day.date 
+                  }"
+                  @dragover.prevent="handleDayDragOver($event, day.date)"
+                  @dragleave="handleDayDragLeave"
+                  @drop="handleDayDrop($event, day.date)"
+                >
+                  <div class="day-header">
+                    <span class="day-name">{{ day.shortName }}</span>
+                    <span class="day-date">{{ day.dayNum }}</span>
+                  </div>
+                  <div class="day-tasks">
+                    <div 
+                      v-for="task in getTasksForDay(day.date)" 
+                      :key="task.id"
+                      class="scheduled-task"
+                      :class="'priority-' + (task.priority || 'optional')"
+                    >
+                      <span class="task-title">{{ task.stepTitle }}</span>
+                    </div>
+                    <div v-if="getTasksForDay(day.date).length === 0" class="no-tasks drop-hint">
+                      {{ draggedStep ? '📥 Сюда' : '—' }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Goals with steps to schedule (accordion) -->
             <div class="goals-to-schedule">
-              <h3>🎯 Ваши цели и шаги</h3>
+              <div class="goals-header">
+                <h3>🎯 Ваши цели и шаги</h3>
+                <button 
+                  v-if="goalsWithSteps.length > 0"
+                  class="btn btn-sm btn-outline toggle-all-btn"
+                  @click="toggleAllGoals"
+                >
+                  {{ allGoalsExpanded ? 'Свернуть все' : 'Развернуть все' }}
+                </button>
+              </div>
               <p class="hint" v-if="goalsWithSteps.length === 0">
                 У вас пока нет целей с шагами. Сначала добавьте цели в модуле Декомпозиция.
               </p>
               
-              <div v-for="goal in goalsWithSteps" :key="goal.id" class="goal-schedule-card card">
-                <div class="goal-header">
-                  <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
-                  <h4>{{ goal.title }}</h4>
+              <div v-for="goal in goalsWithSteps" :key="goal.id" class="goal-schedule-card card" :class="{ collapsed: !expandedGoals[goal.id] }">
+                <div class="goal-header-accordion" @click="toggleGoal(goal.id)">
+                  <div class="goal-header-left">
+                    <span class="expand-icon">{{ expandedGoals[goal.id] ? '▼' : '▶' }}</span>
+                    <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
+                    <h4>{{ goal.title }}</h4>
+                  </div>
+                  <div class="goal-header-right">
+                    <span class="steps-count">{{ getUncompletedSteps(goal).length }} шагов</span>
+                    <span class="scheduled-count" v-if="getScheduledStepsCount(goal) > 0">
+                      ✓ {{ getScheduledStepsCount(goal) }} запланировано
+                    </span>
+                  </div>
                 </div>
-                <div class="steps-to-schedule">
+                <div class="steps-to-schedule" v-show="expandedGoals[goal.id]">
                   <div 
                     v-for="step in getUncompletedSteps(goal)" 
                     :key="step.id"
@@ -245,44 +301,6 @@
                           ✕
                         </button>
                       </template>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Weekly Calendar View -->
-            <div class="week-calendar card">
-              <h3>📅 Ваш план на неделю <span class="drag-hint" v-if="draggedStep">(отпустите на нужный день)</span></h3>
-              <div class="calendar-grid">
-                <div 
-                  v-for="day in weekDays" 
-                  :key="day.date"
-                  class="calendar-day"
-                  :class="{ 
-                    today: isToday(day.date), 
-                    'has-tasks': getTasksForDay(day.date).length > 0,
-                    'drag-over-day': dragOverDay === day.date 
-                  }"
-                  @dragover.prevent="handleDayDragOver($event, day.date)"
-                  @dragleave="handleDayDragLeave"
-                  @drop="handleDayDrop($event, day.date)"
-                >
-                  <div class="day-header">
-                    <span class="day-name">{{ day.shortName }}</span>
-                    <span class="day-date">{{ day.dayNum }}</span>
-                  </div>
-                  <div class="day-tasks">
-                    <div 
-                      v-for="task in getTasksForDay(day.date)" 
-                      :key="task.id"
-                      class="scheduled-task"
-                      :class="'priority-' + (task.priority || 'optional')"
-                    >
-                      <span class="task-title">{{ task.stepTitle }}</span>
-                    </div>
-                    <div v-if="getTasksForDay(day.date).length === 0" class="no-tasks drop-hint">
-                      {{ draggedStep ? '📥 Сюда' : '—' }}
                     </div>
                   </div>
                 </div>
@@ -555,65 +573,7 @@
             </div>
           </div>
 
-          <!-- Goals with steps -->
-          <div class="goals-section">
-            <h3>🎯 Цели и шаги</h3>
-            <div v-if="goalsWithSteps.length === 0" class="empty-goals card">
-              <p>У вас пока нет целей с шагами.</p>
-              <button class="btn btn-primary" @click="goToDecomposition">
-                Перейти к декомпозиции
-              </button>
-            </div>
-
-            <div v-for="goal in goalsWithSteps" :key="goal.id" class="goal-card card">
-              <div class="goal-header">
-                <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
-                <h4>{{ goal.title }}</h4>
-                <span class="goal-progress">{{ goal.progress }}%</span>
-              </div>
-              <div class="steps-list">
-                <div 
-                  v-for="step in getUncompletedSteps(goal)" 
-                  :key="step.id"
-                  class="step-item"
-                  :class="{ scheduled: isStepScheduled(goal.id, step.id) }"
-                >
-                  <span class="step-title">{{ step.title }}</span>
-                  <div class="step-actions">
-                    <select 
-                      :value="getScheduledDate(goal.id, step.id)"
-                      @change="scheduleStep(goal.id, step, $event.target.value)"
-                      class="day-select-sm"
-                    >
-                      <option value="">—</option>
-                      <option 
-                        v-for="day in weekDays" 
-                        :key="day.date"
-                        :value="day.date"
-                      >
-                        {{ day.shortName }}
-                      </option>
-                    </select>
-                    <select 
-                      v-if="isStepScheduled(goal.id, step.id)"
-                      :value="getScheduledPriority(goal.id, step.id)"
-                      @change="updateScheduledStep(goal.id, step.id, 'priority', $event.target.value)"
-                      class="priority-select-sm"
-                      title="Приоритет"
-                    >
-                      <option value="">🎯</option>
-                      <option value="critical">🔴</option>
-                      <option value="desirable">🟠</option>
-                      <option value="attention">🔵</option>
-                      <option value="optional">⚪</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Week Calendar -->
+          <!-- Week Calendar (moved above goals) -->
           <div class="week-calendar-full card">
             <h3>📅 План на неделю <span class="drag-hint">Перетаскивайте задачи между днями</span></h3>
             <div class="calendar-grid-full">
@@ -669,6 +629,82 @@
                   </div>
                   <div v-if="getTasksForDay(day.date).length === 0" class="empty-day drop-zone">
                     Перетащите задачу сюда
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Goals with steps (accordion) -->
+          <div class="goals-section">
+            <div class="goals-header">
+              <h3>🎯 Цели и шаги</h3>
+              <button 
+                v-if="goalsWithSteps.length > 0"
+                class="btn btn-sm btn-outline toggle-all-btn"
+                @click="toggleAllGoals"
+              >
+                {{ allGoalsExpanded ? 'Свернуть все' : 'Развернуть все' }}
+              </button>
+            </div>
+            <div v-if="goalsWithSteps.length === 0" class="empty-goals card">
+              <p>У вас пока нет целей с шагами.</p>
+              <button class="btn btn-primary" @click="goToDecomposition">
+                Перейти к декомпозиции
+              </button>
+            </div>
+
+            <div v-for="goal in goalsWithSteps" :key="goal.id" class="goal-card card" :class="{ collapsed: !expandedGoals[goal.id] }">
+              <div class="goal-header-accordion" @click="toggleGoal(goal.id)">
+                <div class="goal-header-left">
+                  <span class="expand-icon">{{ expandedGoals[goal.id] ? '▼' : '▶' }}</span>
+                  <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
+                  <h4>{{ goal.title }}</h4>
+                </div>
+                <div class="goal-header-right">
+                  <span class="steps-count">{{ getUncompletedSteps(goal).length }} шагов</span>
+                  <span class="scheduled-count" v-if="getScheduledStepsCount(goal) > 0">
+                    ✓ {{ getScheduledStepsCount(goal) }} запланировано
+                  </span>
+                  <span class="goal-progress">{{ goal.progress || 0 }}%</span>
+                </div>
+              </div>
+              <div class="steps-list" v-show="expandedGoals[goal.id]">
+                <div 
+                  v-for="step in getUncompletedSteps(goal)" 
+                  :key="step.id"
+                  class="step-item"
+                  :class="{ scheduled: isStepScheduled(goal.id, step.id) }"
+                >
+                  <span class="step-title">{{ step.title }}</span>
+                  <div class="step-actions">
+                    <select 
+                      :value="getScheduledDate(goal.id, step.id)"
+                      @change="scheduleStep(goal.id, step, $event.target.value)"
+                      class="day-select-sm"
+                    >
+                      <option value="">—</option>
+                      <option 
+                        v-for="day in weekDays" 
+                        :key="day.date"
+                        :value="day.date"
+                      >
+                        {{ day.shortName }}
+                      </option>
+                    </select>
+                    <select 
+                      v-if="isStepScheduled(goal.id, step.id)"
+                      :value="getScheduledPriority(goal.id, step.id)"
+                      @change="updateScheduledStep(goal.id, step.id, 'priority', $event.target.value)"
+                      class="priority-select-sm"
+                      title="Приоритет"
+                    >
+                      <option value="">🎯</option>
+                      <option value="critical">🔴</option>
+                      <option value="desirable">🟠</option>
+                      <option value="attention">🔵</option>
+                      <option value="optional">⚪</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -829,6 +865,28 @@ const goalsWithSteps = computed(() => {
   }
   return filtered
 })
+
+const expandedGoals = ref({})
+
+function toggleGoal(goalId) {
+  expandedGoals.value[goalId] = !expandedGoals.value[goalId]
+}
+
+const allGoalsExpanded = computed(() => {
+  if (goalsWithSteps.value.length === 0) return false
+  return goalsWithSteps.value.every(g => expandedGoals.value[g.id])
+})
+
+function toggleAllGoals() {
+  const newState = !allGoalsExpanded.value
+  goalsWithSteps.value.forEach(g => {
+    expandedGoals.value[g.id] = newState
+  })
+}
+
+function getScheduledStepsCount(goal) {
+  return scheduledTasks.value.filter(t => t.goalId === goal.id).length
+}
 
 const lifeSpheres = computed(() => store.lifeSpheres)
 
@@ -1554,8 +1612,20 @@ onMounted(() => {
   margin-bottom: 2rem;
 }
 
-.goals-to-schedule h3 {
+.goals-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 1rem;
+}
+
+.goals-header h3 {
+  margin: 0;
+}
+
+.toggle-all-btn {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.75rem;
 }
 
 .hint {
@@ -1565,7 +1635,64 @@ onMounted(() => {
 
 .goal-schedule-card {
   margin-bottom: 1rem;
-  padding: 1.25rem;
+  padding: 0;
+  overflow: hidden;
+}
+
+.goal-schedule-card.collapsed {
+  background: var(--bg-primary);
+}
+
+.goal-header-accordion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.goal-header-accordion:hover {
+  background: var(--bg-secondary);
+}
+
+.goal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.expand-icon {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  transition: transform 0.2s;
+}
+
+.goal-header-left h4 {
+  margin: 0;
+}
+
+.goal-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.steps-count {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.scheduled-count {
+  font-size: 0.85rem;
+  color: var(--success-color, #10b981);
+  font-weight: 500;
+}
+
+.goal-schedule-card .steps-to-schedule {
+  padding: 0 1.25rem 1.25rem;
 }
 
 .goal-header {
@@ -2129,8 +2256,15 @@ onMounted(() => {
   margin-bottom: 2rem;
 }
 
-.goals-section h3 {
+.goals-section .goals-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 1rem;
+}
+
+.goals-section .goals-header h3 {
+  margin: 0;
 }
 
 .empty-goals {
@@ -2145,7 +2279,36 @@ onMounted(() => {
 
 .goal-card {
   margin-bottom: 1rem;
-  padding: 1.25rem;
+  padding: 0;
+  overflow: hidden;
+}
+
+.goal-card.collapsed {
+  background: var(--bg-primary);
+}
+
+.goal-card .goal-header-accordion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.goal-card .goal-header-accordion:hover {
+  background: var(--bg-secondary);
+}
+
+.goal-card .goal-progress {
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-left: 0.5rem;
+}
+
+.goal-card .steps-list {
+  padding: 0 1.25rem 1.25rem;
 }
 
 .steps-list {
