@@ -318,7 +318,22 @@
               class="review-step-item"
             >
               <span class="step-number-badge">{{ index + 1 }}</span>
-              <span class="step-text">{{ step.title }}</span>
+              <div class="step-content-review">
+                <span class="step-text">{{ step.title }}</span>
+                <div class="step-meta">
+                  <span 
+                    v-if="step.priority" 
+                    class="priority-badge"
+                    :style="{ backgroundColor: getPriorityColor(step.priority), color: 'white' }"
+                  >
+                    {{ getPriorityLabel(step.priority) }}
+                  </span>
+                  <span v-if="step.timeEstimate" class="time-badge">
+                    <Clock :size="12" />
+                    {{ formatTimeEstimate(step.timeEstimate) }}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -750,6 +765,19 @@ const priorityOptions = [
 function getPriorityColor(priority) {
   const option = priorityOptions.find(p => p.value === priority)
   return option ? option.color : '#9ca3af'
+}
+
+function getPriorityLabel(priority) {
+  const option = priorityOptions.find(p => p.value === priority)
+  return option ? option.label : ''
+}
+
+function formatTimeEstimate(minutes) {
+  const min = parseInt(minutes)
+  if (!min) return ''
+  if (min < 60) return `${min} мин`
+  const hours = Math.floor(min / 60)
+  return `${hours} ч`
 }
 
 const filledStepsCount = computed(() => {
@@ -2595,11 +2623,42 @@ function formatDate(dateString) {
 
 .review-step-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
   padding: 0.75rem 1rem;
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
+}
+
+.step-content-review {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.step-meta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.priority-badge {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+}
+
+.time-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
 }
 
 .review-summary {
