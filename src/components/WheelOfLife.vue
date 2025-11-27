@@ -11,12 +11,12 @@
         :cx="center"
         :cy="center"
         :r="radius"
-        fill="var(--bg-secondary)"
+        fill="var(--wheel-bg, #f8f9fa)"
         stroke="var(--border-color)"
-        stroke-width="2"
+        stroke-width="1"
       />
 
-      <!-- Grid circles -->
+      <!-- Grid circles (10 levels) -->
       <circle
         v-for="i in 10"
         :key="`grid-${i}`"
@@ -26,66 +26,74 @@
         fill="none"
         stroke="var(--border-color)"
         stroke-width="1"
-        opacity="0.3"
+        opacity="0.4"
       />
 
-      <!-- Sphere segments -->
-      <g v-for="(sphere, index) in spheres" :key="sphere.id">
-        <!-- Segment path -->
-        <path
-          :d="getSegmentPath(index, sphere.score)"
-          :fill="getSegmentColor(index)"
-          :opacity="!readonly && hoveredSphere === sphere.id ? 0.9 : 0.7"
-          :stroke="!readonly && selectedSphere === sphere.id ? 'var(--primary-color)' : 'white'"
-          :stroke-width="!readonly && selectedSphere === sphere.id ? 3 : 1"
-          :class="['segment', { 'segment-readonly': readonly }]"
-          @click="!readonly && selectSphere(sphere)"
-          @mouseenter="!readonly && (hoveredSphere = sphere.id)"
-          @mouseleave="!readonly && (hoveredSphere = null)"
-        />
+      <!-- Radial dividing lines -->
+      <line
+        v-for="(sphere, index) in spheres"
+        :key="`line-${sphere.id}`"
+        :x1="center"
+        :y1="center"
+        :x2="center + radius * Math.cos(getAngle(index))"
+        :y2="center + radius * Math.sin(getAngle(index))"
+        stroke="var(--border-color)"
+        stroke-width="1"
+        opacity="0.5"
+      />
 
-        <!-- Dividing lines -->
-        <line
-          :x1="center"
-          :y1="center"
-          :x2="center + radius * Math.cos(getAngle(index))"
-          :y2="center + radius * Math.sin(getAngle(index))"
-          stroke="white"
-          stroke-width="2"
-        />
+      <!-- Sphere segments (filled based on score) -->
+      <path
+        v-for="(sphere, index) in spheres"
+        :key="`segment-${sphere.id}`"
+        :d="getSegmentPath(index, sphere.score)"
+        :fill="getSphereColor(index)"
+        :opacity="!readonly && hoveredSphere === sphere.id ? 1 : 0.85"
+        :stroke="!readonly && selectedSphere === sphere.id ? getSphereColor(index) : 'white'"
+        :stroke-width="!readonly && selectedSphere === sphere.id ? 3 : 1"
+        :class="['segment', { 'segment-readonly': readonly }]"
+        @click="!readonly && selectSphere(sphere)"
+        @mouseenter="!readonly && (hoveredSphere = sphere.id)"
+        @mouseleave="!readonly && (hoveredSphere = null)"
+      />
 
+      <!-- Sphere labels (positioned outside, rotated) -->
+      <g v-for="(sphere, index) in spheres" :key="`label-${sphere.id}`">
         <text
-          :x="center + (radius + 85) * Math.cos(getAngle(index) + angleStep / 2)"
-          :y="center + (radius + 85) * Math.sin(getAngle(index) + angleStep / 2)"
+          :x="center"
+          :y="center"
+          :transform="getLabelTransform(index)"
           text-anchor="middle"
           dominant-baseline="middle"
-          :class="['sphere-name', { 'sphere-name-readonly': readonly }]"
+          :fill="getSphereColor(index)"
+          :class="['sphere-label', { 'sphere-label-readonly': readonly }]"
           @click="!readonly && selectSphere(sphere)"
         >
-          {{ sphere.name }}
+          {{ sphere.name.toUpperCase() }}
         </text>
-
-        <!-- Interactive handle for dragging (hidden in readonly mode) -->
-        <circle
-          v-if="!readonly"
-          :cx="center + Math.max((radius / 10) * sphere.score, radius / 15) * Math.cos(getAngle(index) + angleStep / 2)"
-          :cy="center + Math.max((radius / 10) * sphere.score, radius / 15) * Math.sin(getAngle(index) + angleStep / 2)"
-          r="8"
-          :fill="selectedSphere === sphere.id ? 'var(--primary-color)' : 'white'"
-          stroke="var(--primary-color)"
-          stroke-width="2"
-          class="drag-handle"
-          @mousedown="startDrag($event, sphere, index)"
-          @touchstart="startDrag($event, sphere, index)"
-        />
       </g>
 
+      <!-- Interactive handle for dragging (hidden in readonly mode) -->
+      <circle
+        v-for="(sphere, index) in spheres"
+        :key="`handle-${sphere.id}`"
+        v-if="!readonly"
+        :cx="center + Math.max((radius / 10) * sphere.score, radius / 15) * Math.cos(getAngle(index) + angleStep / 2)"
+        :cy="center + Math.max((radius / 10) * sphere.score, radius / 15) * Math.sin(getAngle(index) + angleStep / 2)"
+        r="10"
+        :fill="selectedSphere === sphere.id ? getSphereColor(index) : 'white'"
+        :stroke="getSphereColor(index)"
+        stroke-width="3"
+        class="drag-handle"
+        @mousedown="startDrag($event, sphere, index)"
+        @touchstart="startDrag($event, sphere, index)"
+      />
     </svg>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 
 const props = defineProps({
   spheres: {
@@ -100,15 +108,25 @@ const props = defineProps({
 
 const emit = defineEmits(['update-sphere'])
 
-const size = 800
+const size = 600
 const center = size / 2
-const radius = 200
+const radius = 220
+const labelRadius = radius + 45
 
 const selectedSphere = ref(null)
 const hoveredSphere = ref(null)
 const dragging = ref(false)
 
 const angleStep = (2 * Math.PI) / props.spheres.length
+
+const sphereColors = [
+  '#e63946',
+  '#f4a261',
+  '#e9c46a',
+  '#2a9d8f',
+  '#264653',
+  '#9b5de5'
+]
 
 function getAngle(index) {
   return index * angleStep - Math.PI / 2
@@ -117,7 +135,7 @@ function getAngle(index) {
 function getSegmentPath(index, score) {
   const startAngle = getAngle(index)
   const endAngle = getAngle(index + 1)
-  const scoreRadius = (radius / 10) * score
+  const scoreRadius = (radius / 10) * Math.max(score, 0.5)
 
   const x1 = center + scoreRadius * Math.cos(startAngle)
   const y1 = center + scoreRadius * Math.sin(startAngle)
@@ -134,32 +152,26 @@ function getSegmentPath(index, score) {
   `
 }
 
-function getSegmentColor(index) {
-  const colors = [
-    'rgba(99, 102, 241, 0.6)',
-    'rgba(139, 92, 246, 0.6)',
-    'rgba(16, 185, 129, 0.6)',
-    'rgba(245, 158, 11, 0.6)',
-    'rgba(239, 68, 68, 0.6)',
-    'rgba(236, 72, 153, 0.6)'
-  ]
-  return colors[index % colors.length]
+function getSphereColor(index) {
+  return sphereColors[index % sphereColors.length]
+}
+
+function getLabelTransform(index) {
+  const midAngle = getAngle(index) + angleStep / 2
+  const labelX = center + labelRadius * Math.cos(midAngle)
+  const labelY = center + labelRadius * Math.sin(midAngle)
+  
+  let rotationAngle = (midAngle * 180) / Math.PI + 90
+  
+  if (rotationAngle > 90 && rotationAngle < 270) {
+    rotationAngle += 180
+  }
+  
+  return `translate(${labelX}, ${labelY}) rotate(${rotationAngle})`
 }
 
 function selectSphere(sphere) {
   selectedSphere.value = sphere.id
-  emit('update-sphere', sphere)
-}
-
-function handleSliderChange(event, sphere) {
-  const newScore = parseInt(event.target.value, 10)
-  emit('update-sphere', {
-    ...sphere,
-    score: newScore
-  })
-}
-
-function updateScore(sphere) {
   emit('update-sphere', sphere)
 }
 
@@ -174,9 +186,10 @@ function startDrag(event, sphere, index) {
     const touch = e.touches ? e.touches[0] : e
     const svg = event.target.closest('svg')
     const rect = svg.getBoundingClientRect()
+    const scale = size / rect.width
     
-    const x = touch.clientX - rect.left - center
-    const y = touch.clientY - rect.top - center
+    const x = (touch.clientX - rect.left) * scale - center
+    const y = (touch.clientY - rect.top) * scale - center
     
     const distance = Math.sqrt(x * x + y * y)
     const newScore = Math.max(0, Math.min(10, Math.round((distance / radius) * 10)))
@@ -207,7 +220,7 @@ function startDrag(event, sphere, index) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2rem;
+  width: 100%;
 }
 
 .wheel-svg {
@@ -216,13 +229,17 @@ function startDrag(event, sphere, index) {
   cursor: pointer;
 }
 
+:root.dark .wheel-svg {
+  --wheel-bg: #1e1e1e;
+}
+
 .segment {
   cursor: pointer;
   transition: opacity 0.2s ease;
 }
 
 .segment:hover {
-  opacity: 0.9 !important;
+  opacity: 1 !important;
 }
 
 .segment-readonly {
@@ -230,54 +247,37 @@ function startDrag(event, sphere, index) {
 }
 
 .segment-readonly:hover {
-  opacity: 0.7 !important;
-}
-
-.sphere-name-readonly {
-  cursor: default;
+  opacity: 0.85 !important;
 }
 
 .sphere-label {
-  font-size: 24px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
   cursor: pointer;
   user-select: none;
 }
 
-.sphere-name {
-  font-size: 14px;
-  font-weight: 500;
-  fill: var(--text-primary);
-  cursor: pointer;
-  user-select: none;
+.sphere-label-readonly {
+  cursor: default;
 }
 
 .drag-handle {
   cursor: grab;
   transition: all 0.2s ease;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 }
 
 .drag-handle:hover {
-  r: 10;
+  r: 12;
 }
 
 .drag-handle:active {
   cursor: grabbing;
 }
 
-.center-score {
-  font-size: 32px;
-  font-weight: 700;
-  fill: var(--primary-color);
-}
-
-.center-label {
-  font-size: 12px;
-  fill: var(--text-secondary);
-}
-
-
 @media (max-width: 768px) {
-  .sphere-name {
+  .sphere-label {
     font-size: 10px;
   }
 }
