@@ -462,15 +462,15 @@
               </div>
 
               <div class="daily-breakdown">
-                <div 
-                  v-for="day in weekDays" 
-                  :key="day.date"
-                  class="day-summary"
-                  v-if="getTasksForDay(day.date).length > 0"
-                >
-                  <span class="day-name">{{ day.label }}:</span>
-                  <span class="day-tasks-count">{{ getTasksForDay(day.date).length }} {{ pluralize(getTasksForDay(day.date).length, 'шаг', 'шага', 'шагов') }}</span>
-                </div>
+                <template v-for="day in weekDays" :key="day.date">
+                  <div 
+                    v-if="getTasksForDay(day.date).length > 0"
+                    class="day-summary"
+                  >
+                    <span class="day-name">{{ day.label }}:</span>
+                    <span class="day-tasks-count">{{ getTasksForDay(day.date).length }} {{ pluralize(getTasksForDay(day.date).length, 'шаг', 'шага', 'шагов') }}</span>
+                  </div>
+                </template>
               </div>
             </div>
 
