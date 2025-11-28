@@ -50,6 +50,14 @@ The application uses a modular structure with dedicated components, services, vi
 - CSS: `.sphere-toggle-btn` with CSS variables `--sphere-color`, `--sphere-bg`
 - Design rationale: Single element for both sphere identification and completion toggle
 
+### Task Cards - Two-Line Layout
+- **Step title (bold)**: First line shows step name in 600 weight, 0.9rem
+- **Goal title (light)**: Second line shows goal name in 300 weight, 0.8rem, secondary color
+- Both lines clamped to 1 line with ellipsis overflow
+- Provides context: user sees both the step AND which goal it belongs to
+- Increased planner max-width from 1100px to 1400px for wider cards
+- CSS: `.task-step`, `.task-goal` with different weights and colors
+
 ### Text Overflow Utilities (Global)
 - Added CSS text truncation utilities to `main.css`:
   - `.truncate-1` — single line with ellipsis (text-overflow: ellipsis)

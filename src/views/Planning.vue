@@ -634,9 +634,9 @@
                       <Check v-else :size="14" class="check-icon" />
                     </button>
                     <div class="task-info">
-                      <span class="task-title" :title="task.stepTitle">{{ task.stepTitle }}</span>
+                      <span class="task-step" :title="task.stepTitle">{{ task.stepTitle }}</span>
+                      <span class="task-goal" :title="task.goalTitle">{{ task.goalTitle }}</span>
                     </div>
-                    <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
                     <button 
                       class="btn-icon remove-sm"
                       @click.stop="removeTask(task.id)"
@@ -708,9 +708,9 @@
                         <Check v-else :size="14" class="check-icon" />
                       </button>
                       <div class="task-info">
-                        <span class="task-title" :title="task.stepTitle">{{ task.stepTitle }}</span>
+                        <span class="task-step" :title="task.stepTitle">{{ task.stepTitle }}</span>
+                        <span class="task-goal" :title="task.goalTitle">{{ task.goalTitle }}</span>
                       </div>
-                      <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
                       <button 
                         class="btn-icon remove-sm"
                         @click.stop="removeTask(task.id)"
@@ -2520,7 +2520,7 @@ onMounted(() => {
 
 .planner-main {
   min-width: 0;
-  max-width: 1100px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -3063,31 +3063,30 @@ onMounted(() => {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.15rem;
 }
 
-.task-info .task-title {
+.task-info .task-step {
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 0.9rem;
   line-height: 1.3;
   word-break: break-word;
+  color: var(--text-primary);
 }
 
 .task-info .task-goal {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  background: var(--bg-secondary);
-  padding: 0.15rem 0.4rem;
-  border-radius: var(--radius-xs, 2px);
-  max-width: fit-content;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: var(--text-secondary);
+  line-height: 1.3;
 }
 
 .btn-icon.remove-sm {
@@ -3237,8 +3236,12 @@ onMounted(() => {
   }
   
   .scheduled-task .task-title,
-  .task-info .task-title {
-    -webkit-line-clamp: 1;
+  .task-info .task-step {
+    font-size: 0.85rem;
+  }
+  
+  .task-info .task-goal {
+    font-size: 0.75rem;
   }
 }
 
