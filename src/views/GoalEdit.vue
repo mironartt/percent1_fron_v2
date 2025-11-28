@@ -577,15 +577,20 @@ function formatDate(dateString) {
 
 .goal-title-section {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
   flex-wrap: wrap;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .goal-title {
   font-size: 1.5rem;
   margin: 0;
   color: var(--text-primary);
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 .edit-in-bank-btn {
