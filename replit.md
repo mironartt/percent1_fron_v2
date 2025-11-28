@@ -20,13 +20,26 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite with a pr
 - **Decomposition Module**: Facilitates breaking down goals into actionable steps, with step persistence and ID-based tracking.
 - **Planning Module**: Includes week navigation, color-coded priority tasks, drag & drop task management, a daily time budget indicator, and weekly statistics. It supports quick-add functionality for unscheduled steps and an undo feature for task deletion. Goals are presented in an accordion layout within the planner.
 - **Authentication**: Integrates with the Django backend for user login, registration, and logout, featuring bidirectional redirects and auth guards.
-- **Onboarding**: A guided onboarding process for new users, with fields mapping to backend data.
+- **Onboarding**: A streamlined 3-step onboarding process (Philosophy → Points A/B → Rules), with optional fields and skip functionality for faster user activation.
 - **AI Curator**: Currently in demo mode without live API calls.
 
 ### System Design Choices
 The application uses a modular structure with dedicated components, services, views, router, and stores. State management is handled by Pinia, ensuring data persistence and reactivity. Authentication is cookie-based with CSRF protection. The application prioritizes user guidance and visual feedback throughout the various modules.
 
 ## Recent Changes (28 Nov 2025)
+
+### Onboarding - Streamlined 3-Step Flow
+- **Reduced from 4 steps to 3 steps** for faster user onboarding
+- **Step 1**: Philosophy (shortened text ~30%, removed second paragraph)
+- **Step 2**: Points A & B (combined from old steps 2+3, simplified fields)
+- **Step 3**: Rules + completion (removed summary card)
+- **All fields are now optional** — no minimum text length requirement
+- **Added "Пропустить" button** on step 2 with `.btn-ghost` style
+- **Fixed oversized button** on step 1 — removed `flex: 1` from standalone `.btn`
+- Removed unused form fields: whyHere, whatToChange, growthVsComfort, whyImportant
+- Removed Gem icon import (no longer used)
+- Updated backend data mapping to match simplified structure
+- Design rationale: Lower friction = higher completion rate
 
 ### Planning Module - 5-Day Workweek View
 - **Redesigned calendar grid**: Changed from 7-column to 5-column layout (Mon-Fri)
