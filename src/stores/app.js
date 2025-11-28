@@ -296,6 +296,14 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
+  function updateSphereReflection(sphereId, reflection) {
+    const sphere = lifeSpheres.value.find(s => s.id === sphereId)
+    if (sphere) {
+      sphere.reflection = { ...sphere.reflection, ...reflection }
+      saveToLocalStorage()
+    }
+  }
+
   function addGoal(goal) {
     goals.value.push({
       id: Date.now().toString(),
@@ -972,6 +980,7 @@ export const useAppStore = defineStore('app', () => {
     
     // Actions
     updateSphere,
+    updateSphereReflection,
     addGoal,
     updateGoal,
     deleteGoal,

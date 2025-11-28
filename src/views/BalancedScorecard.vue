@@ -55,20 +55,35 @@
         <h1>Система сбалансированных показателей</h1>
       </header>
 
-      <div class="summary-grid">
-        <div class="summary-stat-card card">
-          <div class="summary-value">{{ averageScore.toFixed(1) }}</div>
-          <div class="summary-label">Средний балл</div>
+      <div class="summary-stats-row">
+        <div class="summary-stat-compact">
+          <div class="stat-icon-wrapper stat-icon-primary">
+            <TrendingUp :size="20" :stroke-width="2" />
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">{{ averageScore.toFixed(1) }}</div>
+            <div class="stat-label">Средний балл</div>
+          </div>
         </div>
 
-        <div class="summary-stat-card card" v-if="strongestSphere">
-          <div class="summary-value">{{ strongestSphere.icon }}</div>
-          <div class="summary-label">Самая сильная<br/>{{ strongestSphere.name }}</div>
+        <div class="summary-stat-compact" v-if="strongestSphere">
+          <div class="stat-icon-wrapper" :style="{ color: getSphereColor(strongestSphere.id), background: `color-mix(in srgb, ${getSphereColor(strongestSphere.id)} 12%, transparent)` }">
+            <component :is="getSphereIcon(strongestSphere.id)" :size="20" :stroke-width="2" />
+          </div>
+          <div class="stat-info">
+            <div class="stat-value-text">{{ strongestSphere.name }}</div>
+            <div class="stat-label">Самая сильная</div>
+          </div>
         </div>
 
-        <div class="summary-stat-card card" v-if="weakestSphere">
-          <div class="summary-value">{{ weakestSphere.icon }}</div>
-          <div class="summary-label">Зона роста<br/>{{ weakestSphere.name }}</div>
+        <div class="summary-stat-compact" v-if="weakestSphere">
+          <div class="stat-icon-wrapper stat-icon-warning" :style="{ color: getSphereColor(weakestSphere.id), background: `color-mix(in srgb, ${getSphereColor(weakestSphere.id)} 12%, transparent)` }">
+            <component :is="getSphereIcon(weakestSphere.id)" :size="20" :stroke-width="2" />
+          </div>
+          <div class="stat-info">
+            <div class="stat-value-text">{{ weakestSphere.name }}</div>
+            <div class="stat-label">Зона роста</div>
+          </div>
         </div>
       </div>
 
@@ -89,7 +104,8 @@
             class="accordion-item"
             :class="{ 
               expanded: expandedSummarySpheres.includes(sphere.id),
-              'has-content': hasReflectionContent(sphere)
+              'has-content': hasReflectionContent(sphere),
+              'editing': editingSphereId === sphere.id
             }"
             :style="{ '--sphere-color': getSphereColor(sphere.id) }"
           >
@@ -106,34 +122,100 @@
                   <span class="score-badge-neutral">{{ sphere.score }}/10</span>
                 </div>
               </div>
-              <ChevronDown 
-                :size="20" 
-                class="accordion-chevron" 
-                :class="{ rotated: expandedSummarySpheres.includes(sphere.id) }" 
-              />
+              <div class="accordion-right">
+                <button 
+                  v-if="editingSphereId !== sphere.id"
+                  class="btn-edit-reflection"
+                  @click.stop="startEditReflection(sphere)"
+                  title="Редактировать"
+                >
+                  <Pencil :size="16" :stroke-width="2" />
+                </button>
+                <ChevronDown 
+                  :size="20" 
+                  class="accordion-chevron" 
+                  :class="{ rotated: expandedSummarySpheres.includes(sphere.id) }" 
+                />
+              </div>
             </div>
 
             <div class="accordion-content" v-show="expandedSummarySpheres.includes(sphere.id)">
-              <div class="reflection-answers" v-if="hasReflectionContent(sphere)">
-                <div class="answer-item" v-if="sphere.reflection?.why">
-                  <div class="answer-label">Почему такой балл?</div>
-                  <div class="answer-text">{{ sphere.reflection.why }}</div>
+              <!-- Edit Mode -->
+              <div v-if="editingSphereId === sphere.id" class="reflection-edit-form">
+                <div class="question-item">
+                  <label class="question-label">Почему такой балл?</label>
+                  <textarea 
+                    v-model="editingReflection.why"
+                    placeholder="Напишите свой ответ..."
+                    class="reflection-textarea"
+                    rows="2"
+                  ></textarea>
                 </div>
-                <div class="answer-item" v-if="sphere.reflection?.ten">
-                  <div class="answer-label">Что нужно для 10?</div>
-                  <div class="answer-text">{{ sphere.reflection.ten }}</div>
+                <div class="question-item">
+                  <label class="question-label">Что нужно для 10?</label>
+                  <textarea 
+                    v-model="editingReflection.ten"
+                    placeholder="Опишите идеальное состояние..."
+                    class="reflection-textarea"
+                    rows="2"
+                  ></textarea>
                 </div>
-                <div class="answer-item" v-if="sphere.reflection?.prevents">
-                  <div class="answer-label">Что мешает?</div>
-                  <div class="answer-text">{{ sphere.reflection.prevents }}</div>
+                <div class="question-item">
+                  <label class="question-label">Что мешает?</label>
+                  <textarea 
+                    v-model="editingReflection.prevents"
+                    placeholder="Назовите препятствия..."
+                    class="reflection-textarea"
+                    rows="2"
+                  ></textarea>
                 </div>
-                <div class="answer-item" v-if="sphere.reflection?.desired">
-                  <div class="answer-label">Желаемое состояние</div>
-                  <div class="answer-text">{{ sphere.reflection.desired }}</div>
+                <div class="question-item">
+                  <label class="question-label">Желаемое состояние</label>
+                  <textarea 
+                    v-model="editingReflection.desired"
+                    placeholder="Опишите, как вы хотите..."
+                    class="reflection-textarea"
+                    rows="2"
+                  ></textarea>
+                </div>
+                <div class="edit-actions">
+                  <button class="btn btn-secondary btn-sm" @click="cancelEditReflection">
+                    <X :size="16" />
+                    Отмена
+                  </button>
+                  <button class="btn btn-primary btn-sm" @click="saveEditReflection(sphere.id)">
+                    <Check :size="16" />
+                    Сохранить
+                  </button>
                 </div>
               </div>
-              <div class="no-reflection" v-else>
-                <span>Рефлексия не заполнена</span>
+              <!-- View Mode -->
+              <div v-else>
+                <div class="reflection-answers" v-if="hasReflectionContent(sphere)">
+                  <div class="answer-item" v-if="sphere.reflection?.why">
+                    <div class="answer-label">Почему такой балл?</div>
+                    <div class="answer-text">{{ sphere.reflection.why }}</div>
+                  </div>
+                  <div class="answer-item" v-if="sphere.reflection?.ten">
+                    <div class="answer-label">Что нужно для 10?</div>
+                    <div class="answer-text">{{ sphere.reflection.ten }}</div>
+                  </div>
+                  <div class="answer-item" v-if="sphere.reflection?.prevents">
+                    <div class="answer-label">Что мешает?</div>
+                    <div class="answer-text">{{ sphere.reflection.prevents }}</div>
+                  </div>
+                  <div class="answer-item" v-if="sphere.reflection?.desired">
+                    <div class="answer-label">Желаемое состояние</div>
+                    <div class="answer-text">{{ sphere.reflection.desired }}</div>
+                  </div>
+                </div>
+                <div class="no-reflection" v-else>
+                  <span>Рефлексия не заполнена</span>
+                  <button class="btn btn-secondary btn-sm" @click.stop="startEditReflection(sphere)">
+                    <Pencil :size="14" />
+                    Добавить
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -496,7 +578,11 @@ import {
   MessageSquare,
   Target,
   ArrowRight,
-  RotateCcw
+  RotateCcw,
+  TrendingUp,
+  Pencil,
+  Check,
+  X
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -555,6 +641,38 @@ function toggleSummarySphereExpand(sphereId) {
   } else {
     expandedSummarySpheres.value.splice(index, 1)
   }
+}
+
+const editingSphereId = ref(null)
+const editingReflection = ref({
+  why: '',
+  ten: '',
+  prevents: '',
+  desired: ''
+})
+
+function startEditReflection(sphere) {
+  editingSphereId.value = sphere.id
+  editingReflection.value = {
+    why: sphere.reflection?.why || '',
+    ten: sphere.reflection?.ten || '',
+    prevents: sphere.reflection?.prevents || '',
+    desired: sphere.reflection?.desired || ''
+  }
+  if (!expandedSummarySpheres.value.includes(sphere.id)) {
+    expandedSummarySpheres.value.push(sphere.id)
+  }
+}
+
+function cancelEditReflection() {
+  editingSphereId.value = null
+  editingReflection.value = { why: '', ten: '', prevents: '', desired: '' }
+}
+
+function saveEditReflection(sphereId) {
+  store.updateSphereReflection(sphereId, { ...editingReflection.value })
+  editingSphereId.value = null
+  editingReflection.value = { why: '', ten: '', prevents: '', desired: '' }
 }
 
 function hasReflectionContent(sphere) {
@@ -826,34 +944,79 @@ function resetModule() {
   color: var(--text-secondary);
 }
 
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  margin-bottom: 2rem;
+/* Compact Stats Row */
+.summary-stats-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
 }
 
-.summary-stat-card {
-  text-align: center;
-  padding: 1.5rem;
+.summary-stat-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  flex: 1;
+  min-width: 180px;
 }
 
-.summary-icon {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
+.stat-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
 }
 
-.summary-value {
-  font-size: 2.5rem;
+.stat-icon-wrapper.stat-icon-primary {
+  color: var(--primary-color);
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.stat-value {
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--primary-color);
+  line-height: 1.2;
 }
 
-.summary-label {
-  font-size: 0.875rem;
+.stat-value-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stat-label {
+  font-size: 0.75rem;
   color: var(--text-secondary);
-  margin-top: 0.25rem;
-  line-height: 1.3;
+  line-height: 1.2;
+}
+
+@media (max-width: 640px) {
+  .summary-stats-row {
+    flex-direction: column;
+  }
+  
+  .summary-stat-compact {
+    min-width: 100%;
+  }
 }
 
 .wheel-summary {
@@ -1488,6 +1651,103 @@ function resetModule() {
   text-align: center;
   color: var(--text-muted);
   font-style: italic;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.no-reflection span {
+  font-style: italic;
+}
+
+.no-reflection .btn {
+  font-style: normal;
+}
+
+/* Accordion Right Side */
+.accordion-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Edit Reflection Button */
+.btn-edit-reflection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+.accordion-header:hover .btn-edit-reflection {
+  opacity: 1;
+}
+
+.btn-edit-reflection:hover {
+  background: var(--bg-tertiary);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* Reflection Edit Form */
+.reflection-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 1rem;
+}
+
+.reflection-edit-form .question-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.reflection-edit-form .question-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.reflection-edit-form .reflection-textarea {
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  min-height: 60px;
+}
+
+.edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-color);
+  margin-top: 0.5rem;
+}
+
+.edit-actions .btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.accordion-item.editing {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
 .summary-content {
