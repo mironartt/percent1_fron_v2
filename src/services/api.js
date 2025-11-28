@@ -41,7 +41,8 @@ const RATE_LIMIT_EXEMPT = [
   '/api/rest/front/login/',
   '/api/rest/front/logout/',
   '/api/rest/front/registration/',
-  '/api/rest/front/get-user-data/'
+  '/api/rest/front/get-user-data/',
+  '/api/rest/front/get-global-data/'
 ]
 
 /**
@@ -106,10 +107,15 @@ export async function request(method, endpoint, data = null, options = {}) {
     }
   }
   
+  // Определяем credentials в зависимости от того, куда идёт запрос
+  // 'include' - для cross-origin запросов (когда API_BASE_URL указан)
+  // 'same-origin' - для запросов на тот же домен (через proxy)
+  const isCrossOrigin = API_BASE_URL && API_BASE_URL.length > 0
+  
   const config = {
     method,
     headers,
-    credentials: 'same-origin' // Cookie-based auth
+    credentials: isCrossOrigin ? 'include' : 'same-origin' // Cookie-based auth
   }
   
   if (data && method !== 'GET') {
@@ -211,9 +217,12 @@ export async function initCsrf() {
       console.log('[API] Refreshing CSRF token from:', url)
     }
     
+    // Определяем credentials в зависимости от того, куда идёт запрос
+    const isCrossOrigin = API_BASE_URL && API_BASE_URL.length > 0
+    
     await fetch(url, {
       method: 'POST',
-      credentials: 'same-origin',
+      credentials: isCrossOrigin ? 'include' : 'same-origin',
       headers: {
         'Content-Type': 'application/json'
       },
@@ -295,6 +304,14 @@ export async function requestPasswordRecovery(email) {
   return request('POST', '/api/rest/front/password-recovery/', { email })
 }
 
+/**
+ * Получение глобальных данных (ссылки для Telegram авторизации и т.д.)
+ * @returns {Promise<object>} - Глобальные данные
+ */
+export async function getGlobalData() {
+  return request('POST', '/api/rest/front/get-global-data/', {})
+}
+
 // ========================================
 // ONBOARDING API
 // ========================================
@@ -341,6 +358,31 @@ export async function checkAuth() {
 // Алиас для совместимости
 export const getCurrentUser = checkAuth
 
+// ========================================
+// MINI-TASK API
+// ========================================
+
+/**
+ * Получить данные мини-задания пользователя
+ * Возвращает текущий статус, задачи и категории для шага 3
+ * @returns {Promise<object>} - Данные мини-задания
+ */
+export async function getMiniTaskData() {
+  return request('POST', '/api/rest/front/app/onboard/mini-task/get/')
+}
+
+/**
+ * Обновить данные мини-задания
+ * @param {object} data - Данные для обновления
+ * @param {Array} [data.tasks] - Массив задач
+ * @param {number} [data.step_completed] - Завершённый шаг (1-4)
+ * @param {boolean} [data.is_complete] - Мини-задание завершено
+ * @returns {Promise<object>} - Результат обновления
+ */
+export async function updateMiniTaskData(data) {
+  return request('POST', '/api/rest/front/app/onboard/mini-task/update/', data)
+}
+
 // Экспорт API как объекта для удобства
 export const api = {
   request,
@@ -351,11 +393,14 @@ export const api = {
   logout,
   getUserData,
   requestPasswordRecovery,
+  getGlobalData,
   checkAuth,
   getCurrentUser,
   getCsrfToken,
   getOnboardingData,
-  updateOnboardingData
+  updateOnboardingData,
+  getMiniTaskData,
+  updateMiniTaskData
 }
 
 export default api

@@ -1,0 +1,315 @@
+Теперь займемся мини-заданием.
+Оно в общем похоже на прошлый шаг, только больше эндпоинтов и данных.
+
+Оно отображается на главной странице сразу после прохождение онбординга, и блокирует перемещение по элементам навигации (за исключением раздела "настройки") до момента прохождения его.
+Данные по прохождению можно получить аналогично в эндпоинте `/api/rest/front/get-user-data/` в поле `finish_minitask`.
+Если оно пройдено, то соответственно отображать его не нужно, и блокировать интерфейс тоже не нужно.
+
+Начинается оно с клика по "начать" и после на странице с объяснением клика по "Начать мини-задание".
+Тут аналогично, если задание было не завершено, то нужно писать не "Начать мини-задание" а "Продолжить мини-задание".
+
+На `Этап 2 из 4`, странице где юзер добавляет свои идеи ("что у него крутится в голове"), имеется поле ввода, в котором юзер наполняет элементами и после кликает по "Продолжить".
+По клику на "Продолжить", должен отправляться эндпоинт с обновлением инфы о прохождение и указанных пользователем данных.
+
+
+
+Запланировано два эндпоинта:
+- 1. `'/api/rest/front/app/onboard/mini-task/get/'` - получение текущего статуса онбординга по мини-таску и получение данных по доступным категориям для шага 3.
+Пример отдаваемых данных:
+```
+{
+  "status" : "ok",
+  "data" : {
+    "is_complete" : false,
+    "step_completed" : 3,
+    "date_completed" : null,
+    "tasks" : [ {
+      "task_id" : 6,
+      "text" : "какая-то таска 1",
+      "category" : "action",
+      "order" : 0,
+      "is_selected_for_action" : false,
+      "is_completed" : false,
+      "can_select_for_next_action" : true
+    }, {
+      "task_id" : 7,
+      "text" : "какая-то таска 2",
+      "category" : "calendar",
+      "order" : 1,
+      "is_selected_for_action" : false,
+      "is_completed" : false,
+      "can_select_for_next_action" : false
+    }, {
+      "task_id" : 8,
+      "text" : "какая-то таска 3",
+      "category" : "action",
+      "order" : 2,
+      "is_selected_for_action" : false,
+      "is_completed" : false,
+      "can_select_for_next_action" : true
+    }, {
+      "task_id" : 9,
+      "text" : "какая-то таска 4",
+      "category" : "idea",
+      "order" : 3,
+      "is_selected_for_action" : false,
+      "is_completed" : false,
+      "can_select_for_next_action" : false
+    }, {
+      "task_id" : 14,
+      "text" : "какая-то таска 5",
+      "category" : "info",
+      "order" : 6,
+      "is_selected_for_action" : false,
+      "is_completed" : false,
+      "can_select_for_next_action" : false
+    } ],
+    "categories_data" : [ {
+      "category" : "calendar",
+      "title" : "Календарь",
+      "description" : "Дела с жёсткой датой/временем",
+      "can_select_for_next_action" : false
+    }, {
+      "category" : "action",
+      "title" : "Следующие действия",
+      "description" : "Что сделать в ближайшее время",
+      "can_select_for_next_action" : true
+    }, {
+      "category" : "idea",
+      "title" : "Идеи/Когда-нибудь",
+      "description" : "Не срочно, но интересно",
+      "can_select_for_next_action" : false
+    }, {
+      "category" : "info",
+      "title" : "Справка",
+      "description" : "Информация для хранения",
+      "can_select_for_next_action" : false
+    } ]
+  }
+}
+```
+В моем DRF сериализаторе это выглядит так:
+```
+class TasksDataUpdateUserOnboardingMiniTaskRequestSerializer(BaseSerializer):
+    task_id = RestIntegerField(required=False, allow_null=True, help_text="ID таска salist _(указать если таск уже был создан на шаге 2, и сейчас идет обновление на шаге 3)_", example=23)
+    text = RestCharField(required=False, allow_null=True, allow_blank=False, trim_whitespace=True, max_length=10000, help_text="Текст таска _(обязательно указать либо `text` либо `task_id`)_", example="Устал от хаоса, хочу системности и контроля над жизнью...")
+    category = RestChoiceField(choices=OnboardingTask.CATEGORY_CHOICES, required=False, allow_null=True, allow_blank=True, help_text="Категория _(может быть не указана на шаге 2, после должна быть указана)_", example='calendar')
+    order = RestIntegerField(required=True, allow_null=False, help_text="Порядковый номер таска", example=23)
+    is_selected_for_action = RestBooleanField(required=False, default=False, help_text="Выбрано для выполнения _(возможно заполнение на шаге 4)_", example=False)
+    is_completed = RestBooleanField(required=False, allow_null=True, default=False, help_text="Таск выполнен _(возможно заполнение на шаге 4)_", example=False)
+    can_select_for_next_action = RestBooleanField(required=True, help_text="Может ли цель быть выбрана для дальнейших действий _(т.е. то что будет отображаться на шаге 4 для выбора пользователю)_ _(возможно заполнение на шаге 4)_", example=False)
+
+class CategoriesGetUserOnboardingMiniTaskResponseSerializer(BaseSerializer):
+    category = RestCharField(required=True, max_length=10000, help_text="Обозначение категории", example="idea")
+    title = RestCharField(required=True, max_length=10000, help_text="Текст таска _(обязательно указать либо `text` либо `task_id`)_", example="Идеи/Когда-нибудь")
+    can_select_for_next_action = RestBooleanField(required=True, help_text="Может ли цель быть выбрана для дальнейших действий _(т.е. то что будет отображаться на шаге 4 для выбора пользователю)_", example=False)
+
+
+class GetUserOnboardingMiniTaskResponseSerializer(BaseSerializer):
+    tasks = RestListField(child=TasksDataUpdateUserOnboardingMiniTaskRequestSerializer(), required=False, help_text='Данные по таскам', allow_null=True, allow_empty=False, max_length=1000)
+    step_completed = RestIntegerField(required=False, allow_null=True, help_text='Завершённый шаг')
+    is_complete = RestBooleanField(required=False, allow_null=True, help_text='Онбординг завершен _(юзер поставил галку с правилами и нажал "приступить")_')
+    date_completed = RestDateTimeField(
+        required=False, allow_null=True, default=None, example="2025-01-01", input_formats=['%Y-%m-%d %H:%M:%S', '%Y-%m-%d'], format='%Y-%m-%d %H:%M:%S',
+        help_text="Дата завершения онбординга _(если он завершен)_",
+    )
+    categories_data = RestListField(child=CategoriesGetUserOnboardingMiniTaskResponseSerializer(), required=True, help_text='Данные по доступным категориям для целей _(которые отображаются пользователю на шаге 3)_', allow_null=True, allow_empty=False, max_length=4)
+```
+Сейчас доступны категории:
+```
+CATEGORY_CHOICES = [
+    ('calendar', 'Календарь'),
+    ('action', 'Следующие действия'),
+    ('idea', 'Идеи/Когда-нибудь'),
+    ('info', 'Справка'),
+]
+NEXT_ACTION_CATEGORY = 'action'
+```
+
+- 2. `'/api/rest/front/app/onboard/mini-task/update/'` - создание/обновление целей.
+Ожидает на вход:
+```
+// пример 1 (все создание элементов)
+{
+    "tasks": [
+        {
+            "task_id": null,
+            "text": 'какая-то таска 1',
+            "category": null,
+            "order": 0,
+            "is_selected_for_action": false,
+            "is_completed": null,
+        },
+        {
+            "task_id": null,
+            "text": 'какая-то таска 2',
+            "category": null,
+            "order": 1,
+            "is_selected_for_action": false,
+            "is_completed": null,
+        },
+        {
+            "task_id": null,
+            "text": 'какая-то таска 3',
+            "category": null,
+            "order": 2,
+            "is_selected_for_action": false,
+            "is_completed": null,
+        },
+        {
+            "task_id": null,
+            "text": 'какая-то таска 4',
+            "category": null,
+            "order": 3,
+            "is_selected_for_action": false,
+            "is_completed": null,
+        },
+        {
+            "task_id": null,
+            "text": 'какая-то таска 5',
+            "category": null,
+            "order": 6,
+            "is_selected_for_action": false,
+            "is_completed": null,
+        },
+    ],
+    "step_completed": 2,
+    "is_complete": false
+};
+
+// пример 2 (обновление 4 тасков и создание одного) c примером вызова через JS
+// Утилита для получения куки по имени
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) {
+    return decodeURIComponent(parts.pop().split(';').shift());
+  }
+  return null;
+}
+
+// Сначала запросим CSRF токен (сервер установит куку `csrftoken`)
+function initCsrf() {
+  return fetch('http://127.0.0.1:8017/api/rest/front/csrf/', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({}),
+  });
+}
+
+// Основной запрос к API
+function callApi() {
+  const url = 'http://127.0.0.1:8017/api/rest/front/app/onboard/mini-task/update/';
+  const data = {
+    "tasks": [
+        {
+            "task_id": 6,
+            "text": "какая-то таска 1",
+            "category": "action",
+            "order": 0,
+            "is_selected_for_action": false,
+            "is_completed": null,
+        },
+        {
+            "task_id": 7,
+            "text": "какая-то таска 2",
+            "category": "calendar",
+            "order": 1,
+            "is_selected_for_action": false,
+            "is_completed": null,
+        },
+        {
+            "task_id": 8,
+            "text": "какая-то таска 3",
+            "category": "action",
+            "order": 2,
+            "is_selected_for_action": false,
+            "is_completed": null,
+        },
+        {
+            "task_id": 9,
+            "text": "какая-то таска 4",
+            "category": "idea",
+            "order": 3,
+            "is_selected_for_action": false,
+            "is_completed": null,
+        },
+        {
+            "task_id": null,
+            "text": "какая-то таска 5",
+            "category": "info",
+            "order": 6,
+            "is_selected_for_action": false,
+            "is_completed": null,
+        },
+    ],
+    "step_completed": 3,
+    "is_complete": false
+};
+      const headers = {
+    // "Authorization": "Bearer <ваш_токен>",
+    "Content-Type": "application/json"
+};
+
+  // Добавляем CSRF токен в заголовки
+  const csrftoken = getCookie('csrftoken');
+  if (csrftoken) {
+    headers['X-CSRFToken'] = csrftoken;
+  }
+
+  return fetch(url, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: headers,
+body: JSON.stringify(data),
+  })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Response:', data);
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
+}
+
+// Пример использования: сначала инициализируем CSRF, потом вызываем эндпоинт
+initCsrf()
+  .then(() => callApi())
+  .catch(console.error);
+```
+В сериализаторе это выглядит так:
+```
+class TasksDataUpdateUserOnboardingMiniTaskRequestSerializer(BaseSerializer):
+    task_id = RestIntegerField(required=False, allow_null=True, help_text="ID таска salist _(указать если таск уже был создан на шаге 2, и сейчас идет обновление на шаге 3)_", example=23)
+    text = RestCharField(required=False, allow_null=True, allow_blank=False, trim_whitespace=True, max_length=10000, help_text="Текст таска _(обязательно указать либо `text` либо `task_id`)_", example="Устал от хаоса, хочу системности и контроля над жизнью...")
+    category = RestChoiceField(choices=OnboardingTask.CATEGORY_CHOICES, required=False, allow_null=True, allow_blank=True, help_text="Категория _(может быть не указана на шаге 2, после должна быть указана)_", example='calendar')
+    order = RestIntegerField(required=True, allow_null=False, help_text="Порядковый номер таска", example=23)
+    is_selected_for_action = RestBooleanField(required=False, default=False, help_text="Выбрано для выполнения _(возможно заполнение на шаге 4)_", example=False)
+    is_completed = RestBooleanField(required=False, allow_null=True, default=False, help_text="Таск выполнен _(возможно заполнение на шаге 4)_", example=False)
+
+class UpdateUserOnboardingMiniTaskRequestSerializer(BaseSerializer):
+    tasks = RestListField(child=TasksDataUpdateUserOnboardingMiniTaskRequestSerializer(), required=False, help_text='Данные по таскам', allow_null=True, allow_empty=False, max_length=1000)
+    step_completed = RestIntegerField(required=False, allow_null=True, help_text='Завершённый шаг')
+    is_complete = RestBooleanField(required=False, allow_null=True, help_text='Онбординг завершен _(юзер поставил галку с правилами и нажал "приступить")_')
+```
+
+Если будет найдена дублирующийся текст, вызовет исключение (код 400).
+Обязательно должено быть указано хотя бы одно из полей: `text` или `task_id` (или оба - значит обновление), если ни одного -> ошибка, код 400.
+Ожидается что каждый раз будет приходить полный список актуальных целей.
+Если не указан `task_id` -> значит цель новая и она будет создана.
+Если `task_id` указан -> проверить и по необходимости обновить данные в БД.
+Все таски что есть в БД и не найдены в `task_id` запроса -> считаются удаленными и будут удалены.
+
+----
+
+По хорошему, нужно делать генерацию доступных блоков категорий на фронте, на основание данных из бэка `categories_data`.
+Но пока этого делать не будем, а просто оставим хард-код блоков на фронте, т.е. не нужно менять этот момент в шаблоне фронта (оставить его пока как есть, возможно когда будет время доработаю).
+
+Важно: помни про то как делали эндпоинты ранее, если можно использовать компоненты кода повторно - используй их (т.е. старайся не делать дублей кода). Не забывай про csrf.
+Также добавь важные логи в консоль как и ранее по флагу `DEBUG_MODE = true`.
+
+По окончанию работы, проведи детальный отчет о проделанной работе, и также добавь в каталог `notes` файл формата `merge{number}.md` (где number это порядковый номер следующего файла), куда заниси все описанные тобой внесенные правки в детальном формате (также бизнес логику и логику взаимодействия с бэком).
+Если тебе все понятно, то составь план работы, и после того как я ознакомлюсь с ним и скажу что все верно, ты сможешь начать работу над всем этим.

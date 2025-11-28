@@ -1,5 +1,35 @@
 <template>
   <div class="mini-task-container">
+    <!-- Loading State -->
+    <div v-if="loading" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Загрузка данных...</p>
+    </div>
+
+    <!-- Resume Prompt -->
+    <div v-else-if="showResumePrompt" class="resume-prompt">
+      <div class="resume-icon">🔄</div>
+      <h2>Продолжить мини-задание?</h2>
+      <p>У тебя есть незавершённое мини-задание. Хочешь продолжить с того места, где остановился?</p>
+      
+      <div class="resume-info">
+        <span class="resume-step">Завершено этапов: {{ store.miniTask.stepCompleted }} из 4</span>
+        <span class="resume-tasks" v-if="brainDumpItems.length > 0">
+          Записано задач: {{ brainDumpItems.length }}
+        </span>
+      </div>
+
+      <div class="resume-buttons">
+        <button class="btn btn-primary" @click="resumeFromStep(store.miniTask.stepCompleted)" :disabled="saving">
+          Продолжить
+        </button>
+        <button class="btn btn-outline" @click="startFresh" :disabled="saving">
+          {{ saving ? 'Сброс...' : 'Начать заново' }}
+        </button>
+      </div>
+    </div>
+
+    <template v-else>
     <!-- Progress Bar -->
     <div class="progress-section">
       <div class="progress-bar-bg">
@@ -263,19 +293,29 @@
         Готово
       </button>
     </div>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, defineEmits } from 'vue'
 import { useAppStore } from '../stores/app'
+import settings from '../config/settings'
 
+const DEBUG_MODE = settings.DEBUG_MODE
+
+const emit = defineEmits(['complete'])
 const store = useAppStore()
 
 const userName = computed(() => store.user.name)
 
 const currentStep = ref(1)
 const totalSteps = 4
+
+// Loading states
+const loading = ref(false)
+const saving = ref(false)
+const showResumePrompt = ref(false)
 
 // Timer
 const timerSeconds = ref(0)
@@ -287,6 +327,21 @@ const newItem = ref('')
 const itemInput = ref(null)
 const brainDumpItems = ref([])
 let itemIdCounter = 0
+
+// Category mapping: frontend ↔ backend
+const CATEGORY_MAP_TO_BACKEND = {
+  'calendar': 'calendar',
+  'next': 'action',
+  'someday': 'idea',
+  'reference': 'info'
+}
+
+const CATEGORY_MAP_FROM_BACKEND = {
+  'calendar': 'calendar',
+  'action': 'next',
+  'idea': 'someday',
+  'info': 'reference'
+}
 
 // Step 3: Categories
 const categories = [
@@ -452,51 +507,217 @@ function saveProgress() {
 }
 
 async function completeMiniTask() {
-  // Save final data
-  const miniTaskData = {
-    brainDump: brainDumpItems.value,
-    selectedActions: selectedActions.value,
-    completedActions: completedActions.value,
-    completedAt: new Date().toISOString()
-  }
-
-  store.completeMiniTask(miniTaskData)
-
-  // В будущем: await api.post('/mini-task/complete', miniTaskData)
+  saving.value = true
   
-  // Show achievement
-  // Emit event to parent to show achievement modal
+  try {
+    // Save to backend with completion flag
+    const tasks = formatTasksForBackend()
+    const result = await store.completeMiniTaskWithBackend(tasks)
+    
+    if (result.success) {
+      // Update local store
+      store.completeMiniTask({
+        brainDump: brainDumpItems.value,
+        selectedActions: selectedActions.value,
+        completedActions: completedActions.value,
+        completedAt: new Date().toISOString()
+      })
+      
+      // Emit complete event to parent
+      emit('complete')
+    }
+  } catch (error) {
+    if (DEBUG_MODE) {
+      console.error('[MiniTask] Error completing:', error)
+    }
+  } finally {
+    saving.value = false
+  }
 }
 
-// Backend save functions (placeholders)
+// ============================================
+// BACKEND SYNC FUNCTIONS
+// ============================================
+
+// Format tasks for backend API
+function formatTasksForBackend() {
+  return brainDumpItems.value.map((item, index) => ({
+    task_id: item.task_id || null,
+    text: item.text,
+    category: item.category ? CATEGORY_MAP_TO_BACKEND[item.category] : null,
+    order: index,
+    is_selected_for_action: selectedActions.value.includes(item.id),
+    is_completed: completedActions.value.includes(item.id)
+  }))
+}
+
+// Save brain dump tasks to backend (step 2)
 async function saveBrainDump() {
-  // await api.post('/mini-task/brain-dump', { items: brainDumpItems.value })
-  console.log('Saving brain dump:', brainDumpItems.value)
-}
-
-async function saveCategorization() {
-  // await api.post('/mini-task/categorization', { items: brainDumpItems.value })
-  console.log('Saving categorization:', brainDumpItems.value)
-}
-
-async function saveMiniTaskProgress() {
-  // await api.post('/mini-task/progress', { 
-  //   selectedActions: selectedActions.value,
-  //   completedActions: completedActions.value 
-  // })
-  console.log('Saving progress:', completedActions.value)
-}
-
-onMounted(() => {
-  // Load existing data if returning to mini-task
-  if (store.miniTask.data) {
-    brainDumpItems.value = store.miniTask.data.brainDump || []
-    selectedActions.value = store.miniTask.data.selectedActions || []
-    completedActions.value = store.miniTask.data.completedActions || []
+  if (DEBUG_MODE) {
+    console.log('[MiniTask] Saving brain dump:', brainDumpItems.value.length, 'tasks')
   }
   
-  // Focus input on step 2
-  if (currentStep.value === 2) {
+  saving.value = true
+  try {
+    const tasks = formatTasksForBackend()
+    const result = await store.saveMiniTaskTasks(tasks, 2)
+    
+    // Update task_ids from backend response
+    if (result.success && result.data?.tasks) {
+      result.data.tasks.forEach((serverTask, index) => {
+        if (brainDumpItems.value[index] && serverTask.task_id) {
+          brainDumpItems.value[index].task_id = serverTask.task_id
+        }
+      })
+    }
+  } catch (error) {
+    if (DEBUG_MODE) {
+      console.error('[MiniTask] Error saving brain dump:', error)
+    }
+  } finally {
+    saving.value = false
+  }
+}
+
+// Save categorization to backend (step 3)
+async function saveCategorization() {
+  if (DEBUG_MODE) {
+    console.log('[MiniTask] Saving categorization')
+  }
+  
+  saving.value = true
+  try {
+    const tasks = formatTasksForBackend()
+    await store.saveMiniTaskTasks(tasks, 3)
+  } catch (error) {
+    if (DEBUG_MODE) {
+      console.error('[MiniTask] Error saving categorization:', error)
+    }
+  } finally {
+    saving.value = false
+  }
+}
+
+// Save progress (selected/completed actions)
+async function saveMiniTaskProgress() {
+  if (DEBUG_MODE) {
+    console.log('[MiniTask] Saving progress')
+  }
+  
+  try {
+    const tasks = formatTasksForBackend()
+    await store.saveMiniTaskTasks(tasks, currentStep.value)
+  } catch (error) {
+    if (DEBUG_MODE) {
+      console.error('[MiniTask] Error saving progress:', error)
+    }
+  }
+}
+
+// Load data from backend
+async function loadDataFromBackend() {
+  loading.value = true
+  
+  try {
+    const data = await store.loadMiniTaskFromBackend()
+    
+    if (data) {
+      // Load tasks from backend
+      if (data.tasks && data.tasks.length > 0) {
+        brainDumpItems.value = data.tasks.map(task => ({
+          id: ++itemIdCounter,
+          task_id: task.task_id,
+          text: task.text,
+          category: task.category ? CATEGORY_MAP_FROM_BACKEND[task.category] : null
+        }))
+        
+        // Restore selected and completed actions
+        selectedActions.value = data.tasks
+          .filter(t => t.is_selected_for_action)
+          .map(t => brainDumpItems.value.find(item => item.task_id === t.task_id)?.id)
+          .filter(Boolean)
+        
+        completedActions.value = data.tasks
+          .filter(t => t.is_completed)
+          .map(t => brainDumpItems.value.find(item => item.task_id === t.task_id)?.id)
+          .filter(Boolean)
+      }
+      
+      // Check if should show resume prompt or complete
+      if (data.stepCompleted >= 4 || data.completed) {
+        emit('complete')
+      } else if (data.stepCompleted > 0) {
+        showResumePrompt.value = true
+      }
+      
+      if (DEBUG_MODE) {
+        console.log('[MiniTask] Loaded from backend:', {
+          tasksCount: brainDumpItems.value.length,
+          stepCompleted: data.stepCompleted,
+          completed: data.completed
+        })
+      }
+    }
+  } catch (error) {
+    if (DEBUG_MODE) {
+      console.error('[MiniTask] Error loading data:', error)
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+// Resume from specific step
+function resumeFromStep(step) {
+  if (step >= 4) {
+    emit('complete')
+    return
+  }
+  
+  currentStep.value = step + 1
+  showResumePrompt.value = false
+  
+  if (currentStep.value === 2 || currentStep.value === 3) {
+    startTimer()
+  }
+}
+
+// Start fresh (reset and begin from step 1)
+async function startFresh() {
+  saving.value = true
+  
+  try {
+    // Reset backend data
+    await store.saveMiniTaskToBackend({
+      step_completed: 0,
+      is_complete: false,
+      tasks: []
+    })
+    
+    // Reset local state
+    currentStep.value = 1
+    showResumePrompt.value = false
+    brainDumpItems.value = []
+    selectedActions.value = []
+    completedActions.value = []
+    itemIdCounter = 0
+    
+    store.resetMiniTask()
+  } catch (error) {
+    if (DEBUG_MODE) {
+      console.error('[MiniTask] Error resetting:', error)
+    }
+  } finally {
+    saving.value = false
+  }
+}
+
+onMounted(async () => {
+  // Load data from backend
+  await loadDataFromBackend()
+  
+  // If no resume prompt, focus input on step 2
+  if (!showResumePrompt.value && currentStep.value === 2) {
     setTimeout(() => {
       itemInput.value?.focus()
     }, 100)
@@ -515,6 +736,81 @@ onUnmounted(() => {
   max-width: 1000px;
   margin: 0 auto;
   padding: 2rem;
+}
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 1rem;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--bg-tertiary);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Resume Prompt */
+.resume-prompt {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+  text-align: center;
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+}
+
+.resume-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.resume-prompt h2 {
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.resume-prompt > p {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.resume-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.resume-step {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.resume-tasks {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.resume-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
 }
 
 /* Progress Bar */
