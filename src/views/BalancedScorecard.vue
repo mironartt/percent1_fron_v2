@@ -3,8 +3,8 @@
     <!-- Empty State - First Visit -->
     <div v-if="showEmptyState" class="empty-state-section">
       <div class="empty-state-card card">
-        <div class="icon-wrapper lg primary">
-          <ChartPie :size="32" />
+        <div class="hero-icon-circle">
+          <ChartPie :size="48" :stroke-width="1.5" />
         </div>
         <h1>Система сбалансированных показателей</h1>
         <p class="subtitle">
@@ -816,6 +816,18 @@ function resetModule() {
 .empty-state-card .empty-icon {
   font-size: 4rem;
   margin-bottom: 1.5rem;
+}
+
+.hero-icon-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  color: var(--primary-color);
 }
 
 .empty-state-card h1 {
