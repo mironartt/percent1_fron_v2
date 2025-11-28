@@ -3,7 +3,9 @@
     <!-- Empty State - First Visit -->
     <div v-if="showEmptyState" class="empty-state-section">
       <div class="empty-state-card card">
-        <div class="empty-icon">⚖️</div>
+        <div class="icon-wrapper lg primary">
+          <Scale :size="32" />
+        </div>
         <h1>Система сбалансированных показателей</h1>
         <p class="subtitle">
           Оцените баланс всех сфер вашей жизни и определите точки роста
@@ -44,7 +46,8 @@
         </div>
 
         <button class="btn btn-primary btn-lg" @click="startLesson">
-          ✨ Начать оценку
+          <Sparkles :size="18" />
+          Начать оценку
         </button>
       </div>
     </div>
@@ -606,7 +609,9 @@ import {
   Pencil,
   Check,
   X,
-  Lightbulb
+  Lightbulb,
+  Scale,
+  Sparkles
 } from 'lucide-vue-next'
 
 const sphereIcons = {
