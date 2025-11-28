@@ -26,7 +26,20 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite with a pr
 ### System Design Choices
 The application uses a modular structure with dedicated components, services, views, router, and stores. State management is handled by Pinia, ensuring data persistence and reactivity. Authentication is cookie-based with CSRF protection. The application prioritizes user guidance and visual feedback throughout the various modules.
 
-## Recent Changes (27 Nov 2025)
+## Recent Changes (28 Nov 2025)
+
+### Goals Bank Module - Edit Modal
+- Added inline editing modal for validated goals on summary page
+- Modal allows editing: goal text, "why important" field, sphere selection
+- Delete functionality with confirmation dialog
+- Link to full edit page (GoalEdit.vue) for goals transferred to work
+- Edit button (Edit2 icon) added to table row actions
+- Smooth fade-in animation for modal
+- Sphere selector grid with color-coded buttons matching wheel colors
+- Uses store.updateRawIdea() for reactive state updates
+- CSS variables for consistent theming
+
+## Changes (27 Nov 2025)
 
 ### WheelOfLife Component
 - Redesigned to match reference image with curved text labels using SVG `<textPath>`
