@@ -586,6 +586,16 @@ export const useAppStore = defineStore('app', () => {
     saveToLocalStorage()
   }
 
+  function skipMiniTask() {
+    miniTask.value = {
+      completed: true,
+      skipped: true,
+      data: null,
+      completedAt: new Date().toISOString()
+    }
+    saveToLocalStorage()
+  }
+
   // ССП Goals Bank methods
   function addGoalToSSPBank(goal) {
     sspGoalsBank.value.push({
@@ -973,6 +983,7 @@ export const useAppStore = defineStore('app', () => {
     completeOnboarding,
     resetOnboarding,
     completeMiniTask,
+    skipMiniTask,
     addGoalToSSPBank,
     updateSSPGoal,
     deleteSSPGoal,

@@ -6,10 +6,14 @@
   <MiniTaskWelcome 
     v-else-if="shouldShowMiniTask && !showMiniTask" 
     @start="showMiniTask = true"
+    @skip="onMiniTaskSkip"
   />
 
   <!-- Show Mini Task if started -->
-  <MiniTask v-else-if="showMiniTask && !isMiniTaskCompleted" />
+  <MiniTask 
+    v-else-if="showMiniTask && !isMiniTaskCompleted" 
+    @complete="onMiniTaskComplete"
+  />
 
   <!-- Show Dashboard if everything completed -->
   <div v-else class="dashboard">
@@ -196,6 +200,14 @@ const shouldShowMiniTask = computed(() => {
 const isMiniTaskCompleted = computed(() => store.miniTask.completed)
 
 const showMiniTask = ref(false)
+
+function onMiniTaskComplete() {
+  showMiniTask.value = false
+}
+
+function onMiniTaskSkip() {
+  store.skipMiniTask()
+}
 
 function updateTask(task) {
   store.toggleTask(task.id)
