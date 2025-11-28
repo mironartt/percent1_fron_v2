@@ -122,15 +122,6 @@
           <table class="goals-table">
             <thead>
               <tr>
-                <th class="col-checkbox">
-                  <input 
-                    type="checkbox" 
-                    :checked="isAllBankGoalsSelected"
-                    :indeterminate="isSomeBankGoalsSelected && !isAllBankGoalsSelected"
-                    @change="toggleAllBankGoals"
-                    class="table-checkbox"
-                  />
-                </th>
                 <th class="col-status">Статус</th>
                 <th class="col-goal">Цель / Идея</th>
                 <th class="col-why">Почему для меня это важно?</th>
@@ -146,14 +137,6 @@
                   'row-selected': isBankGoalSelected(goal.id)
                 }"
               >
-                <td class="col-checkbox">
-                  <input 
-                    type="checkbox" 
-                    :checked="isBankGoalSelected(goal.id)"
-                    @change="toggleBankGoalSelection(goal.id)"
-                    class="table-checkbox"
-                  />
-                </td>
                 <td class="col-status">
                   <span v-if="isGoalCompleted(goal.id)" class="status-badge completed">
                     Завершена
