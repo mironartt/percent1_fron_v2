@@ -356,7 +356,6 @@
         </button>
       </div>
     </div>
-<<<<<<< HEAD
 
     <!-- Completion Modal -->
     <Transition name="modal">
@@ -396,16 +395,14 @@
         </div>
       </div>
     </Transition>
-=======
     </template>
->>>>>>> 6c767ccc305c9e639cf10c3c6397c5c1ed1e64ec
   </div>
 </template>
 
 <script setup>
-<<<<<<< HEAD
 import { ref, computed, onMounted, onUnmounted, markRaw } from 'vue'
 import { useAppStore } from '../stores/app'
+import settings from '../config/settings'
 import { 
   Brain, FolderOpen, CheckSquare, Trophy, Check, Timer, 
   SkipForward, Lightbulb, ArrowRight, ArrowLeft, Plus, X, GripVertical,
@@ -413,14 +410,8 @@ import {
   ArrowDownToLine, CheckCircle, Inbox, Waves, Rocket, Target, Zap, Info
 } from 'lucide-vue-next'
 
-=======
-import { ref, computed, onMounted, onUnmounted, defineEmits } from 'vue'
-import { useAppStore } from '../stores/app'
-import settings from '../config/settings'
-
 const DEBUG_MODE = settings.DEBUG_MODE
 
->>>>>>> 6c767ccc305c9e639cf10c3c6397c5c1ed1e64ec
 const emit = defineEmits(['complete'])
 const store = useAppStore()
 
@@ -656,22 +647,6 @@ function getConfettiStyle(index) {
 }
 
 async function completeMiniTask() {
-<<<<<<< HEAD
-  const miniTaskData = {
-    brainDump: brainDumpItems.value,
-    selectedActions: selectedActions.value,
-    completedActions: completedActions.value,
-    completedAt: new Date().toISOString()
-  }
-
-  store.completeMiniTask(miniTaskData)
-  showCompletion.value = true
-}
-
-function closeCompletion() {
-  showCompletion.value = false
-  emit('complete')
-=======
   saving.value = true
   
   try {
@@ -688,8 +663,8 @@ function closeCompletion() {
         completedAt: new Date().toISOString()
       })
       
-      // Emit complete event to parent
-      emit('complete')
+      // Show completion modal
+      showCompletion.value = true
     }
   } catch (error) {
     if (DEBUG_MODE) {
@@ -698,7 +673,11 @@ function closeCompletion() {
   } finally {
     saving.value = false
   }
->>>>>>> 6c767ccc305c9e639cf10c3c6397c5c1ed1e64ec
+}
+
+function closeCompletion() {
+  showCompletion.value = false
+  emit('complete')
 }
 
 // ============================================
@@ -719,23 +698,6 @@ function formatTasksForBackend() {
 
 // Save brain dump tasks to backend (step 2)
 async function saveBrainDump() {
-<<<<<<< HEAD
-  console.log('Saving brain dump:', brainDumpItems.value)
-}
-
-async function saveCategorization() {
-  console.log('Saving categorization:', brainDumpItems.value)
-}
-
-onMounted(() => {
-  if (store.miniTask.data) {
-    brainDumpItems.value = store.miniTask.data.brainDump || []
-    selectedActions.value = store.miniTask.data.selectedActions || []
-    completedActions.value = store.miniTask.data.completedActions || []
-  }
-  
-  if (currentStep.value === 2) {
-=======
   if (DEBUG_MODE) {
     console.log('[MiniTask] Saving brain dump:', brainDumpItems.value.length, 'tasks')
   }
@@ -901,7 +863,6 @@ onMounted(async () => {
   
   // If no resume prompt, focus input on step 2
   if (!showResumePrompt.value && currentStep.value === 2) {
->>>>>>> 6c767ccc305c9e639cf10c3c6397c5c1ed1e64ec
     setTimeout(() => {
       itemInput.value?.focus()
     }, 100)
@@ -922,15 +883,6 @@ onUnmounted(() => {
   padding: 2rem;
 }
 
-<<<<<<< HEAD
-/* Stepper Progress */
-.stepper-progress {
-  display: flex;
-  justify-content: center;
-  gap: 0;
-  margin-bottom: 2.5rem;
-  padding: 0 1rem;
-=======
 /* Loading State */
 .loading-state {
   display: flex;
@@ -1009,7 +961,15 @@ onUnmounted(() => {
 /* Progress Bar */
 .progress-section {
   margin-bottom: 3rem;
->>>>>>> 6c767ccc305c9e639cf10c3c6397c5c1ed1e64ec
+}
+
+/* Stepper Progress */
+.stepper-progress {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 2.5rem;
+  padding: 0 1rem;
 }
 
 .stepper-step {
