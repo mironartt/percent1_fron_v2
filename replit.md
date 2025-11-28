@@ -28,6 +28,19 @@ The application uses a modular structure with dedicated components, services, vi
 
 ## Recent Changes (28 Nov 2025)
 
+### Text Overflow Utilities (Global)
+- Added CSS text truncation utilities to `main.css`:
+  - `.truncate-1` — single line with ellipsis (text-overflow: ellipsis)
+  - `.line-clamp-1`, `.line-clamp-2`, `.line-clamp-3` — multi-line truncation with WebKit line-clamp
+  - `.break-words` — word-break: break-word for long unbroken strings
+  - `.break-all` — word-break: break-all for aggressive breaking
+- Applied to all components with long text content:
+  - **GoalEdit.vue**: Goal title limited to 2 lines with tooltip on hover
+  - **Planning.vue**: Goal titles in accordion (1 line), step titles (1 line), task cards (1 line with tooltip)
+  - **GoalsBank.vue**: Goal text in table (2 lines), goal names in rejected/work lists (1 line)
+  - **Goals.vue**: Goal titles (2 lines), step titles (1 line with tooltip)
+- All truncated elements now show full text on hover via `title` attribute
+
 ### Goals Bank Module - Edit Modal
 - Added inline editing modal for validated goals on summary page
 - Modal allows editing: goal text, "why important" field, sphere selection
