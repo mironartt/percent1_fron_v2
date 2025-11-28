@@ -110,7 +110,7 @@ function startMiniTask() {
   justify-content: center;
   width: 88px;
   height: 88px;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   border-radius: 50%;
   color: white;
   margin-bottom: 1.5rem;
@@ -129,7 +129,7 @@ function startMiniTask() {
 .welcome-title {
   font-size: 1.75rem;
   font-weight: 700;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -207,7 +207,7 @@ function startMiniTask() {
   top: 44px;
   width: 2px;
   height: calc(100% - 44px);
-  background: linear-gradient(180deg, var(--border) 0%, var(--border) 100%);
+  background: var(--border-color);
 }
 
 .step-content {
@@ -235,7 +235,7 @@ function startMiniTask() {
   gap: 0.5rem;
   padding: 0.75rem 1.25rem;
   background: var(--bg-secondary);
-  border-radius: var(--radius-full);
+  border-radius: 9999px;
   font-size: 0.9375rem;
   color: var(--text-secondary);
   margin-bottom: 1.5rem;
@@ -255,7 +255,7 @@ function startMiniTask() {
   padding: 1rem 2rem;
   font-size: 1.0625rem;
   font-weight: 600;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   color: white;
   border: none;
   border-radius: var(--radius-lg);

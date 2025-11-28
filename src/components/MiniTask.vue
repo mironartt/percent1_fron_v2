@@ -668,13 +668,13 @@ onUnmounted(() => {
 }
 
 .stepper-step.active .stepper-icon {
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   color: white;
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
 }
 
 .stepper-step.completed .stepper-icon {
-  background: var(--success);
+  background: var(--success-color);
   color: white;
 }
 
@@ -697,12 +697,12 @@ onUnmounted(() => {
   left: 50%;
   width: 100%;
   height: 2px;
-  background: var(--border);
+  background: var(--border-color);
   z-index: 0;
 }
 
 .stepper-step.completed .stepper-line {
-  background: var(--success);
+  background: var(--success-color);
 }
 
 /* Step Content */
@@ -875,7 +875,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary);
+  color: var(--primary-color);
 }
 
 .timer-block.warning .timer-icon-wrapper {
@@ -890,7 +890,7 @@ onUnmounted(() => {
   font-size: 2rem;
   font-weight: 700;
   font-family: 'JetBrains Mono', 'Courier New', monospace;
-  color: var(--primary);
+  color: var(--primary-color);
 }
 
 .timer-block.warning .timer-value {
@@ -907,7 +907,7 @@ onUnmounted(() => {
   gap: 0.375rem;
   padding: 0.5rem 1rem;
   background: var(--bg-primary);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   cursor: pointer;
   font-size: 0.8125rem;
@@ -930,7 +930,7 @@ onUnmounted(() => {
   padding: 0.75rem 1.25rem;
   background: rgba(34, 197, 94, 0.1);
   color: #16a34a;
-  border-radius: var(--radius-full);
+  border-radius: 9999px;
   font-weight: 500;
   font-size: 0.9375rem;
   margin-bottom: 1.5rem;
@@ -947,7 +947,7 @@ onUnmounted(() => {
   padding: 1.25rem 1.5rem;
   background: var(--bg-secondary);
   border-radius: var(--radius-lg);
-  border-left: 3px solid var(--primary);
+  border-left: 3px solid var(--primary-color);
   margin-bottom: 1.5rem;
 }
 
@@ -962,7 +962,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   font-weight: 600;
-  color: var(--primary);
+  color: var(--primary-color);
   margin-bottom: 0.75rem;
 }
 
@@ -981,7 +981,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   font-weight: 600;
-  color: var(--primary);
+  color: var(--primary-color);
   margin-top: 0.75rem;
   margin-bottom: 0;
 }
@@ -997,7 +997,7 @@ onUnmounted(() => {
   flex: 1;
   padding: 0.875rem 1.25rem;
   font-size: 1rem;
-  border: 2px solid var(--border);
+  border: 2px solid var(--border-color);
   border-radius: var(--radius-lg);
   background: var(--bg-primary);
   transition: all 0.2s;
@@ -1005,7 +1005,7 @@ onUnmounted(() => {
 
 .item-input:focus {
   outline: none;
-  border-color: var(--primary);
+  border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
@@ -1015,7 +1015,7 @@ onUnmounted(() => {
   justify-content: center;
   width: 48px;
   height: 48px;
-  background: var(--primary);
+  background: var(--primary-color);
   color: white;
   border: none;
   border-radius: var(--radius-lg);
@@ -1047,7 +1047,7 @@ onUnmounted(() => {
   gap: 0.5rem;
   padding: 0.625rem 0.875rem;
   background: var(--bg-primary);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   cursor: grab;
   transition: all 0.2s;
@@ -1055,7 +1055,7 @@ onUnmounted(() => {
 }
 
 .item-brick:hover {
-  border-color: var(--primary);
+  border-color: var(--primary-color);
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
   transform: translateY(-1px);
 }
@@ -1150,7 +1150,7 @@ onUnmounted(() => {
 
 .category-box {
   background: var(--bg-primary);
-  border: 2px dashed var(--border);
+  border: 2px dashed var(--border-color);
   border-radius: var(--radius-lg);
   padding: 1.25rem;
   min-height: 180px;
@@ -1158,11 +1158,11 @@ onUnmounted(() => {
 }
 
 .category-box:hover {
-  border-color: var(--primary);
+  border-color: var(--primary-color);
 }
 
 .category-box.drag-over {
-  border-color: var(--primary);
+  border-color: var(--primary-color);
   border-style: solid;
   background: rgba(99, 102, 241, 0.05);
 }
@@ -1218,9 +1218,9 @@ onUnmounted(() => {
   min-width: 22px;
   height: 22px;
   padding: 0 6px;
-  background: var(--primary);
+  background: var(--primary-color);
   color: white;
-  border-radius: var(--radius-full);
+  border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 600;
 }
@@ -1280,7 +1280,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   font-weight: 600;
-  color: var(--success);
+  color: var(--success-color);
   margin-bottom: 1rem;
 }
 
@@ -1301,7 +1301,7 @@ onUnmounted(() => {
   gap: 0.75rem;
   padding: 0.875rem 1rem;
   background: var(--bg-primary);
-  border: 2px solid var(--border);
+  border: 2px solid var(--border-color);
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all 0.2s;
@@ -1309,11 +1309,11 @@ onUnmounted(() => {
 }
 
 .action-checkbox:hover {
-  border-color: var(--primary);
+  border-color: var(--primary-color);
 }
 
 .action-checkbox.selected {
-  border-color: var(--success);
+  border-color: var(--success-color);
   background: rgba(34, 197, 94, 0.05);
 }
 
@@ -1332,15 +1332,15 @@ onUnmounted(() => {
   justify-content: center;
   width: 22px;
   height: 22px;
-  border: 2px solid var(--border);
+  border: 2px solid var(--border-color);
   border-radius: 4px;
   flex-shrink: 0;
   transition: all 0.2s;
 }
 
 .action-checkbox.selected .checkbox-icon {
-  background: var(--success);
-  border-color: var(--success);
+  background: var(--success-color);
+  border-color: var(--success-color);
   color: white;
 }
 
@@ -1368,12 +1368,12 @@ onUnmounted(() => {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--border);
+  background: var(--border-color);
   transition: background 0.2s;
 }
 
 .counter-dot.filled {
-  background: var(--success);
+  background: var(--success-color);
 }
 
 /* Buttons */
@@ -1392,7 +1392,7 @@ onUnmounted(() => {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   color: white;
   width: 100%;
 }
@@ -1522,7 +1522,7 @@ onUnmounted(() => {
 .stat-value {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--primary);
+  color: var(--primary-color);
 }
 
 .stat-label {
@@ -1539,7 +1539,7 @@ onUnmounted(() => {
   background: rgba(99, 102, 241, 0.08);
   border-radius: var(--radius-lg);
   margin-bottom: 1.5rem;
-  color: var(--primary);
+  color: var(--primary-color);
 }
 
 .completion-message p {
