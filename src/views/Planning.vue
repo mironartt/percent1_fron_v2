@@ -2363,6 +2363,8 @@ onMounted(() => {
 
 .planner-main {
   min-width: 0;
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
 .header-row {
