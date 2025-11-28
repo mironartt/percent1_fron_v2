@@ -26,7 +26,7 @@
       <!-- Time Estimate -->
       <div class="time-estimate">
         <Clock :size="18" />
-        <span>Займёт около <strong>15 минут</strong></span>
+        <span>Займёт около <strong>5 минут</strong></span>
       </div>
 
       <!-- CTA Button -->
