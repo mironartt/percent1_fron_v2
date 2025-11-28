@@ -568,12 +568,21 @@
             </div>
           </div>
 
-          <!-- Week Calendar (moved above goals) -->
+          <!-- Week Calendar - Workdays (5 days) -->
           <div class="week-calendar-full card">
-            <h3>План на неделю <span class="drag-hint">Перетаскивайте задачи между днями</span></h3>
-            <div class="calendar-grid-full">
+            <div class="calendar-header-row">
+              <h3>План на неделю <span class="drag-hint">Перетаскивайте задачи между днями</span></h3>
+              <button 
+                class="btn btn-sm btn-outline weekend-toggle"
+                @click="showWeekend = !showWeekend"
+              >
+                {{ showWeekend ? 'Скрыть выходные' : 'Выходные' }}
+                <span v-if="weekendTasksCount > 0" class="weekend-badge">{{ weekendTasksCount }}</span>
+              </button>
+            </div>
+            <div class="calendar-grid-5">
               <div 
-                v-for="day in weekDays" 
+                v-for="day in workDays" 
                 :key="day.date"
                 class="calendar-day-full"
                 :class="{ 
@@ -632,7 +641,77 @@
                     </button>
                   </div>
                   <div v-if="getTasksForDay(day.date).length === 0" class="empty-day drop-zone">
-                    Перетащите задачу сюда
+                    Перетащите сюда
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Weekend section (collapsible) -->
+            <div v-if="showWeekend" class="weekend-section">
+              <div class="calendar-grid-2">
+                <div 
+                  v-for="day in weekendDays" 
+                  :key="day.date"
+                  class="calendar-day-full weekend-day"
+                  :class="{ 
+                    today: isToday(day.date),
+                    'drag-over': dragOverDay === day.date
+                  }"
+                  @dragover.prevent="handleDragOver(day.date)"
+                  @dragleave="handleDragLeave"
+                  @drop="handleDrop(day.date)"
+                >
+                  <div class="day-header-full">
+                    <div class="day-header-left">
+                      <span class="day-name">{{ day.label }}</span>
+                      <span class="tasks-count" v-if="getTasksForDay(day.date).length > 0">
+                        {{ getTasksForDay(day.date).length }}
+                      </span>
+                    </div>
+                    <span v-if="getTotalTimeForDay(day.date)" class="day-time-total">{{ getTotalTimeForDay(day.date) }}</span>
+                  </div>
+                  <div class="day-tasks-full">
+                    <div 
+                      v-for="task in getTasksForDay(day.date)" 
+                      :key="task.id"
+                      class="task-card"
+                      :class="[
+                        { completed: task.completed, dragging: draggedTaskId === task.id },
+                        'priority-' + (task.priority || 'optional')
+                      ]"
+                      draggable="true"
+                      @dragstart="handleDragStart(task)"
+                      @dragend="handleDragEnd"
+                    >
+                      <span 
+                        class="sphere-icon-wrapper" 
+                        :style="{ backgroundColor: getSphereColor(getSphereIdFromGoal(task.goalId)) + '20', color: getSphereColor(getSphereIdFromGoal(task.goalId)) }"
+                        :title="getSphereNameOnly(getSphereIdFromGoal(task.goalId))"
+                      >
+                        <component :is="getSphereIcon(getSphereIdFromGoal(task.goalId))" :size="14" />
+                      </span>
+                      <input 
+                        type="checkbox"
+                        :checked="task.completed"
+                        @change="toggleTaskComplete(task.id)"
+                        class="task-checkbox"
+                      />
+                      <div class="task-info">
+                        <span class="task-title" :title="task.stepTitle">{{ task.stepTitle }}</span>
+                      </div>
+                      <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
+                      <button 
+                        class="btn-icon remove-sm"
+                        @click="removeTask(task.id)"
+                        title="Удалить"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div v-if="getTasksForDay(day.date).length === 0" class="empty-day drop-zone">
+                      Перетащите сюда
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1015,10 +1094,19 @@ const weekDays = computed(() => {
       date: date.toISOString().split('T')[0],
       dayNum: date.getDate(),
       shortName: dayNames[i],
-      label: fullNames[i]
+      label: fullNames[i],
+      isWeekend: i >= 5
     })
   }
   return days
+})
+
+const workDays = computed(() => weekDays.value.slice(0, 5))
+const weekendDays = computed(() => weekDays.value.slice(5, 7))
+const showWeekend = ref(false)
+
+const weekendTasksCount = computed(() => {
+  return weekendDays.value.reduce((sum, day) => sum + getTasksForDay(day.date).length, 0)
 })
 
 const isCurrentWeek = computed(() => weekOffset.value === 0)
@@ -2722,6 +2810,54 @@ onMounted(() => {
 
 .week-calendar-full h3 {
   margin-bottom: 1rem;
+}
+
+.calendar-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.calendar-header-row h3 {
+  margin: 0;
+}
+
+.weekend-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.weekend-badge {
+  background: var(--primary-color);
+  color: white;
+  font-size: 0.7rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.calendar-grid-5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.75rem;
+}
+
+.calendar-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.weekend-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border-color);
+}
+
+.weekend-day {
+  background: rgba(99, 102, 241, 0.03);
 }
 
 .calendar-grid-full {
