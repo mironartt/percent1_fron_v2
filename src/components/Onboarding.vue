@@ -29,18 +29,14 @@
           <h1 class="step-title">Жизнь — это игра.<br>Ты — её разработчик</h1>
           <div class="philosophy-text">
             <p>
-              Система 1% — это не курс и не набор советов. Это твой персональный движок развития, 
-              где ты создаёшь правила, выбираешь цели и проходишь уровни.
-            </p>
-            <p>
-              Ты не просто игрок в чужой игре — ты разработчик своего сценария. 
-              Каждый день ты делаешь выбор: развиваться или стоять на месте.
+              Система 1% — твой персональный движок развития. 
+              Каждый день ты делаешь выбор: расти или стоять на месте.
             </p>
             <div class="highlight">
               <span class="icon-wrapper icon-wrapper-sm accent">
                 <Lightbulb :size="16" />
               </span>
-              <p>Улучшаясь на 1% каждый день, за год ты станешь сильнее в 38 раз.</p>
+              <p>+1% каждый день = в 38 раз сильнее за год</p>
             </div>
           </div>
 
@@ -60,7 +56,7 @@
               </span>
               <div>
                 <strong>Измеряемый прогресс</strong>
-                <p>Видишь рост в цифрах и действиях</p>
+                <p>Видишь рост в цифрах</p>
               </div>
             </div>
             <div class="key-idea-item">
@@ -75,7 +71,7 @@
           </div>
 
           <button 
-            class="btn btn-primary btn-large" 
+            class="btn btn-primary" 
             @click="nextStep"
             :disabled="isSaving"
           >
@@ -83,70 +79,10 @@
           </button>
         </div>
 
-        <!-- Step 2: Reflection -->
-        <div v-if="currentStep === 2" class="step-content step-reflection">
-          <h2 class="step-title">Давай разберёмся, зачем ты здесь</h2>
-          <p class="step-subtitle">Честные ответы — основа твоей стратегии</p>
-
-          <div class="form-group">
-            <label class="form-label">
-              <span class="question-number">1.</span>
-              Почему ты пришёл в "Систему 1%"?
-            </label>
-            <span class="form-hint">Что привело тебя сюда? Какая боль или желание?</span>
-            <textarea 
-              v-model="formData.whyHere"
-              class="form-textarea"
-              rows="5"
-              placeholder="Например: Устал от хаоса, хочу системности и контроля над жизнью..."
-            ></textarea>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">
-              <span class="question-number">2.</span>
-              Что ты хочешь изменить в "сценарии своей игры"?
-            </label>
-            <span class="form-hint">Какие аспекты жизни требуют трансформации?</span>
-            <textarea 
-              v-model="formData.whatToChange"
-              class="form-textarea"
-              rows="5"
-              placeholder="Например: Хочу выстроить здоровые отношения, увеличить доход, найти баланс..."
-            ></textarea>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">
-              <span class="question-number">3.</span>
-              Что для тебя сейчас зона роста, а что зона комфорта?
-            </label>
-            <span class="form-hint">Будь честен: где ты растёшь, а где прячешься?</span>
-            <textarea 
-              v-model="formData.growthVsComfort"
-              class="form-textarea"
-              rows="5"
-              placeholder="Зона роста: публичные выступления, новые проекты...
-Зона комфорта: привычная работа, откладывание сложных решений..."
-            ></textarea>
-          </div>
-
-          <div class="step-actions">
-            <button class="btn btn-secondary" @click="prevStep" :disabled="isSaving">Назад</button>
-            <button 
-              class="btn btn-primary" 
-              @click="nextStep"
-              :disabled="!isStep2Valid || isSaving"
-            >
-              {{ isSaving ? 'Сохранение...' : 'Продолжить' }}
-            </button>
-          </div>
-        </div>
-
-        <!-- Step 3: My Start -->
-        <div v-if="currentStep === 3" class="step-content step-my-start">
+        <!-- Step 2: Points A & B -->
+        <div v-if="currentStep === 2" class="step-content step-my-start">
           <h2 class="step-title">Твоя точка старта</h2>
-          <p class="step-subtitle">Определи, откуда начинаешь и куда идёшь</p>
+          <p class="step-subtitle">Откуда начинаешь и куда идёшь (можно заполнить позже)</p>
 
           <div class="journey-visual">
             <div class="point point-a">
@@ -171,14 +107,13 @@
               <span class="icon-wrapper icon-wrapper-xs map-pin">
                 <MapPin :size="14" />
               </span>
-              Точка А: Где я сейчас
+              Где я сейчас
             </label>
-            <span class="form-hint">Опиши своё текущее состояние без прикрас</span>
             <textarea 
               v-model="formData.pointA"
               class="form-textarea"
-              rows="4"
-              placeholder="Например: Работаю на нелюбимой работе, доход 80к, нет времени на себя, здоровье на 5/10..."
+              rows="3"
+              placeholder="Работа, доход, здоровье, отношения..."
             ></textarea>
           </div>
 
@@ -187,47 +122,31 @@
               <span class="icon-wrapper icon-wrapper-xs target">
                 <Target :size="14" />
               </span>
-              Точка Б: Куда хочу прийти
+              Куда хочу прийти
             </label>
-            <span class="form-hint">Конкретная картина желаемого будущего</span>
             <textarea 
               v-model="formData.pointB"
               class="form-textarea"
-              rows="4"
-              placeholder="Например: Работаю на себя, доход 200к+, здоровье 9/10, баланс между работой и жизнью..."
-            ></textarea>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">
-              <span class="icon-wrapper icon-wrapper-xs gem">
-                <Gem :size="14" />
-              </span>
-              Почему это важно для меня
-            </label>
-            <span class="form-hint">В чём глубинный смысл этих изменений?</span>
-            <textarea 
-              v-model="formData.whyImportant"
-              class="form-textarea"
-              rows="4"
-              placeholder="Например: Хочу чувствовать, что живу свою жизнь, а не чужой сценарий. Важна свобода и самореализация..."
+              rows="3"
+              placeholder="Моё желаемое будущее через год..."
             ></textarea>
           </div>
 
           <div class="step-actions">
             <button class="btn btn-secondary" @click="prevStep" :disabled="isSaving">Назад</button>
+            <button class="btn btn-ghost" @click="skipStep" :disabled="isSaving">Пропустить</button>
             <button 
               class="btn btn-primary" 
               @click="nextStep"
-              :disabled="!isStep3Valid || isSaving"
+              :disabled="isSaving"
             >
               {{ isSaving ? 'Сохранение...' : 'Продолжить' }}
             </button>
           </div>
         </div>
 
-        <!-- Step 4: Rules -->
-        <div v-if="currentStep === 4" class="step-content step-rules">
+        <!-- Step 3: Rules -->
+        <div v-if="currentStep === 3" class="step-content step-rules">
           <div class="completion-icon">
             <span class="icon-wrapper icon-wrapper-lg success">
               <CheckCircle2 :size="48" />
@@ -235,30 +154,6 @@
           </div>
           <h2 class="step-title">Почти готово!</h2>
           <p class="step-subtitle">Осталось подтвердить готовность к честной работе</p>
-
-          <div class="summary-card">
-            <h3>Ты заполнил:</h3>
-            <div class="summary-items">
-              <div class="summary-item">
-                <span class="icon-wrapper icon-wrapper-xs success">
-                  <Check :size="12" />
-                </span>
-                <span>Понял философию системы</span>
-              </div>
-              <div class="summary-item">
-                <span class="icon-wrapper icon-wrapper-xs success">
-                  <Check :size="12" />
-                </span>
-                <span>Ответил на вопросы рефлексии</span>
-              </div>
-              <div class="summary-item">
-                <span class="icon-wrapper icon-wrapper-xs success">
-                  <Check :size="12" />
-                </span>
-                <span>Определил точки А и Б</span>
-              </div>
-            </div>
-          </div>
 
           <div class="rules-section">
             <h3>Принципы Системы 1%</h3>
@@ -315,39 +210,27 @@ import { ref, computed, onMounted } from 'vue'
 import { useAppStore } from '../stores/app'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
 import { 
-  Gamepad2, Target, BarChart3, RefreshCcw, MapPin, Gem, 
+  Gamepad2, Target, BarChart3, RefreshCcw, MapPin, 
   CheckCircle2, Check, Rocket, Lightbulb
 } from 'lucide-vue-next'
 
 const store = useAppStore()
 
 const currentStep = ref(1)
-const totalSteps = 4
+const totalSteps = 3
 const isLoading = ref(true)
 const isSaving = ref(false)
 const isResuming = ref(false)
 const lastCompletedStep = ref(0)
 
 const formData = ref({
-  whyHere: '',
-  whatToChange: '',
-  growthVsComfort: '',
   pointA: '',
   pointB: '',
-  whyImportant: '',
   acceptRules: false
 })
 
 const isStep2Valid = computed(() => {
-  return formData.value.whyHere.trim().length > 20 &&
-         formData.value.whatToChange.trim().length > 20 &&
-         formData.value.growthVsComfort.trim().length > 20
-})
-
-const isStep3Valid = computed(() => {
-  return formData.value.pointA.trim().length > 20 &&
-         formData.value.pointB.trim().length > 20 &&
-         formData.value.whyImportant.trim().length > 20
+  return true
 })
 
 const step1ButtonText = computed(() => {
@@ -382,17 +265,13 @@ onMounted(async () => {
     
     if (stepCompleted > 0) {
       isResuming.value = true
-      lastCompletedStep.value = stepCompleted
+      lastCompletedStep.value = Math.min(stepCompleted, totalSteps - 1)
       
-      formData.value.whyHere = onboardingData.reason_joined || ''
-      formData.value.whatToChange = onboardingData.desired_changes || ''
-      formData.value.growthVsComfort = onboardingData.growth_comfort_zones || ''
       formData.value.pointA = onboardingData.current_state || ''
       formData.value.pointB = onboardingData.goal_state || ''
-      formData.value.whyImportant = onboardingData.why_important || ''
       
       if (DEBUG_MODE) {
-        console.log('[Onboarding] Resuming from step:', stepCompleted + 1)
+        console.log('[Onboarding] Resuming from step:', lastCompletedStep.value + 1)
       }
     }
   } catch (error) {
@@ -411,13 +290,8 @@ async function nextStep() {
     let dataToSave = { step_completed: currentStep.value }
     
     if (currentStep.value === 2) {
-      dataToSave.reason_joined = formData.value.whyHere
-      dataToSave.desired_changes = formData.value.whatToChange
-      dataToSave.growth_comfort_zones = formData.value.growthVsComfort
-    } else if (currentStep.value === 3) {
       dataToSave.current_state = formData.value.pointA
       dataToSave.goal_state = formData.value.pointB
-      dataToSave.why_important = formData.value.whyImportant
     }
     
     if (!SKIP_AUTH_CHECK) {
@@ -433,7 +307,7 @@ async function nextStep() {
     isSaving.value = false
     
     if (isResuming.value && currentStep.value === 1) {
-      currentStep.value = lastCompletedStep.value + 1
+      currentStep.value = Math.min(lastCompletedStep.value + 1, totalSteps)
       isResuming.value = false
     } else {
       currentStep.value++
@@ -447,19 +321,21 @@ function prevStep() {
   }
 }
 
+function skipStep() {
+  if (currentStep.value < totalSteps) {
+    currentStep.value++
+  }
+}
+
 async function completeOnboarding() {
   if (!formData.value.acceptRules) return
   
   isSaving.value = true
   
   const backendData = {
-    reason_joined: formData.value.whyHere,
-    desired_changes: formData.value.whatToChange,
-    growth_comfort_zones: formData.value.growthVsComfort,
     current_state: formData.value.pointA,
     goal_state: formData.value.pointB,
-    why_important: formData.value.whyImportant,
-    step_completed: 4,
+    step_completed: 3,
     is_complete: true
   }
   
@@ -474,12 +350,8 @@ async function completeOnboarding() {
   }
   
   const localData = {
-    whyHere: formData.value.whyHere,
-    whatToChange: formData.value.whatToChange,
-    growthVsComfort: formData.value.growthVsComfort,
     pointA: formData.value.pointA,
     pointB: formData.value.pointB,
-    whyImportant: formData.value.whyImportant,
     acceptRules: formData.value.acceptRules,
     completedAt: new Date().toISOString()
   }
@@ -985,7 +857,6 @@ async function completeOnboarding() {
 }
 
 .btn {
-  flex: 1;
   padding: 1rem 2rem;
   font-size: 1.0625rem;
   font-weight: 600;
@@ -993,10 +864,14 @@ async function completeOnboarding() {
   border: none;
   cursor: pointer;
   transition: all 0.2s;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+}
+
+.step-actions .btn {
+  flex: 1;
 }
 
 .btn:disabled {
@@ -1020,7 +895,18 @@ async function completeOnboarding() {
   border: 2px solid var(--border-color);
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  color: var(--text-primary);
   background: var(--bg-tertiary);
 }
 
