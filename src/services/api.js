@@ -41,7 +41,8 @@ const RATE_LIMIT_EXEMPT = [
   '/api/rest/front/login/',
   '/api/rest/front/logout/',
   '/api/rest/front/registration/',
-  '/api/rest/front/get-user-data/'
+  '/api/rest/front/get-user-data/',
+  '/api/rest/front/get-global-data/'
 ]
 
 /**
@@ -295,6 +296,14 @@ export async function requestPasswordRecovery(email) {
   return request('POST', '/api/rest/front/password-recovery/', { email })
 }
 
+/**
+ * Получение глобальных данных (ссылки для Telegram авторизации и т.д.)
+ * @returns {Promise<object>} - Глобальные данные
+ */
+export async function getGlobalData() {
+  return request('POST', '/api/rest/front/get-global-data/', {})
+}
+
 // ========================================
 // ONBOARDING API
 // ========================================
@@ -376,6 +385,7 @@ export const api = {
   logout,
   getUserData,
   requestPasswordRecovery,
+  getGlobalData,
   checkAuth,
   getCurrentUser,
   getCsrfToken,

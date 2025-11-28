@@ -86,6 +86,46 @@ src/
 - Web - для глубокой работы, планирования, аналитики
 - Telegram - для быстрых напоминаний и ежедневных чек-инов
 
+### Авторизация через Telegram (страница логина)
+
+На странице `/auth/login` доступна кнопка "Войти через Telegram" (синяя, фирменный стиль Telegram).
+
+**Схема работы:**
+```
+1. Клик по кнопке "Войти через Telegram"
+   ↓
+2. Запрос к /api/rest/front/get-global-data/ для получения t_auth_link
+   ↓
+3. Редирект на oauth.telegram.org (авторизация в Telegram)
+   ↓
+4. Возврат на страницу логина с #tgAuthResult=... в хеше
+   ↓
+5. JavaScript декодирует base64 данные из хеша
+   ↓
+6. Редирект на Django callback (t_auth_callback_url + query params)
+   ↓
+7. Django авторизует пользователя и редиректит на /app/
+```
+
+**API эндпоинт:** `POST /api/rest/front/get-global-data/`
+
+**Ответ:**
+```json
+{
+  "status": "ok",
+  "data": {
+    "t_auth_link": "https://oauth.telegram.org/auth?bot_id=...&origin=...&request_access=write&return_to=...",
+    "t_auth_callback_url": "https://domain.com/telegram/auth/callback/"
+  }
+}
+```
+
+**Обработка возврата из Telegram:**
+- При загрузке страницы проверяется наличие `#tgAuthResult=` в URL
+- Данные декодируются из base64 → JSON
+- Формируется URL: `t_auth_callback_url + ?id=...&hash=...&first_name=...`
+- Выполняется редирект на Django callback
+
 ### Кнопка "Телеграм бот" в сайдбаре
 
 В левом меню (под именем пользователя) отображается кнопка "Телеграм бот":
