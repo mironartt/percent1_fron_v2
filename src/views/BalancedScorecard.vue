@@ -855,7 +855,7 @@ function completeModule() {
       reflection: s.reflection
     }))
   })
-  router.push('/app/goals')
+  router.push('/app/goals-bank')
 }
 
 function resetModule() {
