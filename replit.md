@@ -28,6 +28,19 @@ The application uses a modular structure with dedicated components, services, vi
 
 ## Recent Changes (28 Nov 2025)
 
+### Planning Module - 5-Day Workweek View
+- **Redesigned calendar grid**: Changed from 7-column to 5-column layout (Mon-Fri)
+- **Collapsible weekend section**: Sat-Sun now in separate section below workdays
+- **Weekend toggle button**: Shows/hides weekend with task count badge
+- New computed properties: `workDays` (Mon-Fri), `weekendDays` (Sat-Sun)
+- `showWeekend` ref controls weekend visibility
+- `weekendTasksCount` shows number of weekend tasks in toggle button
+- **Wider task cards**: 5 columns = ~200px each vs ~140px with 7 columns
+- Preserved drag & drop between all days (including weekends when visible)
+- CSS: `.calendar-grid-5`, `.calendar-grid-2`, `.weekend-section`, `.weekend-toggle`
+- Weekend days styled with subtle purple tint (weekend-day class)
+- Design rationale: Most users work Mon-Fri, weekends are optional planning
+
 ### Text Overflow Utilities (Global)
 - Added CSS text truncation utilities to `main.css`:
   - `.truncate-1` — single line with ellipsis (text-overflow: ellipsis)
