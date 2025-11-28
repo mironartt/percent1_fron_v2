@@ -301,6 +301,12 @@
         </label>
       </div>
 
+      <!-- Info message when no actions selected -->
+      <div v-if="selectedActions.length === 0" class="no-selection-info">
+        <Info :size="18" />
+        <p>Нет задач для выбора? Не страшно! Ты уже проделал отличную работу. Можешь завершить или вернуться назад и добавить задачи.</p>
+      </div>
+
       <div class="selection-counter">
         <div class="counter-dots">
           <span 
@@ -311,16 +317,22 @@
           ></span>
         </div>
         <span>Выбрано: {{ selectedActions.length }} из 3</span>
+        <span v-if="selectedActions.length === 0" class="optional-label">(опционально)</span>
       </div>
 
-      <button 
-        class="btn btn-primary btn-lg btn-complete" 
-        @click="completeMiniTask"
-        :disabled="selectedActions.length === 0"
-      >
-        <Trophy :size="20" />
-        Завершить и получить +1%
-      </button>
+      <div class="step-buttons">
+        <button class="btn btn-ghost" @click="prevStep">
+          <ArrowLeft :size="18" />
+          Назад
+        </button>
+        <button 
+          class="btn btn-primary btn-lg btn-complete" 
+          @click="completeMiniTask"
+        >
+          <Trophy :size="20" />
+          Завершить и получить +1%
+        </button>
+      </div>
     </div>
 
     <!-- Completion Modal -->
@@ -369,9 +381,9 @@ import { ref, computed, onMounted, onUnmounted, markRaw } from 'vue'
 import { useAppStore } from '../stores/app'
 import { 
   Brain, FolderOpen, CheckSquare, Trophy, Check, Timer, 
-  SkipForward, Lightbulb, ArrowRight, Plus, X, GripVertical,
+  SkipForward, Lightbulb, ArrowRight, ArrowLeft, Plus, X, GripVertical,
   FileText, Calendar, Sparkles, BookOpen, AlertCircle,
-  ArrowDownToLine, CheckCircle, Inbox, Waves, Rocket, Target, Zap
+  ArrowDownToLine, CheckCircle, Inbox, Waves, Rocket, Target, Zap, Info
 } from 'lucide-vue-next'
 
 const emit = defineEmits(['complete'])
@@ -487,6 +499,13 @@ function nextStep() {
 
   currentStep.value++
   startTimer()
+}
+
+function prevStep() {
+  if (currentStep.value > 1) {
+    currentStep.value--
+    startTimer()
+  }
 }
 
 function startTimer() {
@@ -1376,6 +1395,46 @@ onUnmounted(() => {
   background: var(--success-color);
 }
 
+.optional-label {
+  font-style: italic;
+  color: var(--text-tertiary);
+  font-size: 0.875rem;
+}
+
+/* No Selection Info */
+.no-selection-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: var(--radius-lg);
+  margin-bottom: 1.5rem;
+  color: #2563eb;
+}
+
+.no-selection-info p {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+/* Step Buttons */
+.step-buttons {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.step-buttons .btn-ghost {
+  flex-shrink: 0;
+}
+
+.step-buttons .btn-complete {
+  flex: 1;
+}
+
 /* Buttons */
 .btn {
   display: inline-flex;
@@ -1418,6 +1477,19 @@ onUnmounted(() => {
 
 .btn-complete:hover:not(:disabled) {
   box-shadow: 0 6px 16px rgba(34, 197, 94, 0.35);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  padding: 0.75rem 1.25rem;
+}
+
+.btn-ghost:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--text-tertiary);
 }
 
 /* Completion Modal */
