@@ -28,6 +28,15 @@ The application uses a modular structure with dedicated components, services, vi
 
 ## Recent Changes (28 Nov 2025)
 
+### Authentication Pages - Lucide Icons
+- **Login.vue** and **Register.vue** updated with Lucide icons replacing emojis
+- Input icons: Mail, Lock, User, Eye/EyeOff in `.input-icon` wrapper
+- Benefits sidebar: Rocket, TrendingUp, Target, Users (Login) / Target, BarChart3, Lightbulb, Users (Register)
+- Success modal: CheckCircle2 icon in large green wrapper
+- Social login buttons: Inline SVG icons for Google and Telegram
+- Added `.icon-wrapper` system with size variants (md, lg) and `.success` color class
+- Consistent design language across all auth pages matching main app styling
+
 ### Onboarding - Streamlined 3-Step Flow
 - **Reduced from 4 steps to 3 steps** for faster user onboarding
 - **Step 1**: Philosophy (shortened text ~30%, removed second paragraph)

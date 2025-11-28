@@ -15,7 +15,9 @@
               <span class="label-text">Email адрес</span>
             </label>
             <div class="input-wrapper">
-              <span class="input-icon">&#x1F4E7;</span>
+              <span class="input-icon">
+                <Mail :size="18" />
+              </span>
               <input
                 id="email"
                 v-model="form.email"
@@ -35,7 +37,9 @@
               <span class="label-text">Пароль</span>
             </label>
             <div class="input-wrapper">
-              <span class="input-icon">&#x1F512;</span>
+              <span class="input-icon">
+                <Lock :size="18" />
+              </span>
               <input
                 id="password"
                 v-model="form.password"
@@ -52,7 +56,8 @@
                 @click="showPassword = !showPassword"
                 :title="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
               >
-                {{ showPassword ? '&#x1F441;' : '&#x1F441;&#x200D;&#x1F5E8;' }}
+                <Eye v-if="showPassword" :size="18" />
+                <EyeOff v-else :size="18" />
               </button>
             </div>
             <span v-if="errors.password" class="form-error">{{ errors.password }}</span>
@@ -91,11 +96,18 @@
 
         <div class="social-login">
           <button type="button" class="btn-social google" disabled>
-            <span class="social-icon">&#x1F535;</span>
+            <svg class="social-icon" viewBox="0 0 24 24" width="18" height="18">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
             <span>Google</span>
           </button>
           <button type="button" class="btn-social telegram" disabled>
-            <span class="social-icon">&#x1F4AC;</span>
+            <svg class="social-icon" viewBox="0 0 24 24" width="18" height="18" fill="#0088cc">
+              <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+            </svg>
             <span>Telegram</span>
           </button>
         </div>
@@ -114,28 +126,36 @@
         </div>
         <div class="benefits-list">
           <div class="benefit-item">
-            <span class="benefit-icon">&#x1F680;</span>
+            <span class="icon-wrapper icon-wrapper-md">
+              <Rocket :size="24" />
+            </span>
             <div>
               <h4>Простая система</h4>
               <p>Начните улучшать жизнь за 5 минут</p>
             </div>
           </div>
           <div class="benefit-item">
-            <span class="benefit-icon">&#x1F4C8;</span>
+            <span class="icon-wrapper icon-wrapper-md">
+              <TrendingUp :size="24" />
+            </span>
             <div>
               <h4>Видимый прогресс</h4>
               <p>Отслеживайте свой рост день за днём</p>
             </div>
           </div>
           <div class="benefit-item">
-            <span class="benefit-icon">&#x1F3AF;</span>
+            <span class="icon-wrapper icon-wrapper-md">
+              <Target :size="24" />
+            </span>
             <div>
               <h4>Достижение целей</h4>
               <p>Управляйте всеми сферами жизни</p>
             </div>
           </div>
           <div class="benefit-item">
-            <span class="benefit-icon">&#x1F4AA;</span>
+            <span class="icon-wrapper icon-wrapper-md">
+              <Users :size="24" />
+            </span>
             <div>
               <h4>Поддержка сообщества</h4>
               <p>Вместе достигать больше</p>
@@ -149,7 +169,10 @@
       <div v-if="showSuccess" class="modal-overlay" @click="closeSuccess">
         <div class="modal" @click.stop>
           <div class="modal-header">
-            <h2>&#x1F389; Успешный вход!</h2>
+            <span class="icon-wrapper icon-wrapper-lg success">
+              <CheckCircle2 :size="48" />
+            </span>
+            <h2>Успешный вход!</h2>
           </div>
           <div class="modal-body">
             <p>Вы успешно вошли в систему. Сейчас вас перенаправит в личный кабинет.</p>
@@ -166,6 +189,10 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import api from '@/services/api.js'
 import { resetAuthCache } from '@/router/index.js'
+import { 
+  Mail, Lock, Eye, EyeOff, Rocket, TrendingUp, 
+  Target, Users, CheckCircle2 
+} from 'lucide-vue-next'
 
 const router = useRouter()
 const route = useRoute()
@@ -349,7 +376,10 @@ function closeSuccess() {
 .input-icon {
   position: absolute;
   left: 0.875rem;
-  font-size: 1.125rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
   pointer-events: none;
 }
 
@@ -594,11 +624,32 @@ function closeSuccess() {
 .benefit-item {
   display: flex;
   gap: 1rem;
+  align-items: flex-start;
 }
 
-.benefit-icon {
-  font-size: 1.75rem;
+.icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
   flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.icon-wrapper-md {
+  width: 48px;
+  height: 48px;
+}
+
+.icon-wrapper-lg {
+  width: 80px;
+  height: 80px;
+}
+
+.icon-wrapper.success {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
 }
 
 .benefit-item h4 {
