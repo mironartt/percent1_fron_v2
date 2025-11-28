@@ -37,7 +37,7 @@
         <div class="card goal-info-card">
           <div class="card-header">
             <div class="goal-title-section">
-              <h2 class="goal-title">{{ goalForm.title || 'Без названия' }}</h2>
+              <h2 class="goal-title line-clamp-2">{{ goalForm.title || 'Без названия' }}</h2>
               <span 
                 class="goal-status-badge"
                 :class="goal.status"

@@ -225,7 +225,7 @@
                       class="scheduled-task"
                       :class="'priority-' + (task.priority || 'optional')"
                     >
-                      <span class="task-title">{{ task.stepTitle }}</span>
+                      <span class="task-title truncate-1" :title="task.stepTitle">{{ task.stepTitle }}</span>
                       <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
                     </div>
                     <div v-if="getTasksForDay(day.date).length === 0" class="no-tasks drop-hint">
@@ -257,7 +257,7 @@
                   <div class="goal-header-left">
                     <span class="expand-icon">{{ expandedGoals[goal.id] ? '▼' : '▶' }}</span>
                     <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
-                    <h4>{{ goal.title }}</h4>
+                    <h4 class="truncate-1" :title="goal.title">{{ goal.title }}</h4>
                   </div>
                   <div class="goal-header-right">
                     <span class="steps-count">{{ getUncompletedSteps(goal).length }} шагов</span>
@@ -281,7 +281,7 @@
                   >
                     <div class="step-info">
                       <span class="drag-handle-lesson">⠿</span>
-                      <span class="step-title">{{ step.title }}</span>
+                      <span class="step-title truncate-1" :title="step.title">{{ step.title }}</span>
                     </div>
                     <div class="step-schedule-controls">
                       <select 
@@ -614,8 +614,8 @@
                       class="task-checkbox"
                     />
                     <div class="task-info">
-                      <span class="task-title">{{ task.stepTitle }}</span>
-                      <span class="task-goal">{{ task.goalTitle }}</span>
+                      <span class="task-title truncate-1" :title="task.stepTitle">{{ task.stepTitle }}</span>
+                      <span class="task-goal truncate-1" :title="task.goalTitle">{{ task.goalTitle }}</span>
                     </div>
                     <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
                     <button 
@@ -658,7 +658,7 @@
                 <div class="goal-header-left">
                   <span class="expand-icon">{{ expandedGoals[goal.id] ? '▼' : '▶' }}</span>
                   <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
-                  <h4>{{ goal.title }}</h4>
+                  <h4 class="truncate-1" :title="goal.title">{{ goal.title }}</h4>
                 </div>
                 <div class="goal-header-right">
                   <span class="steps-count">{{ getUncompletedSteps(goal).length }} шагов</span>
@@ -682,7 +682,7 @@
                   @dragstart="handleStepDragStart($event, goal, step)"
                   @dragend="handleStepDragEnd"
                 >
-                  <span class="step-title">{{ step.title }}</span>
+                  <span class="step-title truncate-1" :title="step.title">{{ step.title }}</span>
                   <div class="step-actions">
                     <select 
                       :value="getScheduledDate(goal.id, step.id)"

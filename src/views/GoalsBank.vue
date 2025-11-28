@@ -167,7 +167,7 @@
                 </td>
                 <td class="col-goal">
                   <div class="goal-cell">
-                    <span class="goal-text">{{ goal.text }}</span>
+                    <span class="goal-text line-clamp-2" :title="goal.text">{{ goal.text }}</span>
                     <span class="goal-sphere-badge-new" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
                       <component :is="getSphereIcon(goal.sphereId)" :size="14" :stroke-width="2" />
                       {{ getSphereNameOnly(goal.sphereId) }}
@@ -246,7 +246,7 @@
           >
             <div class="rejected-goal-header">
               <span class="goal-sphere-badge muted">{{ getSphereName(goal.sphereId) }}</span>
-              <span class="goal-name">{{ goal.text }}</span>
+              <span class="goal-name truncate-1" :title="goal.text">{{ goal.text }}</span>
             </div>
             <div class="rejected-reason" v-if="goal.whyImportant">
               <span class="reason-label">Изначальная причина:</span> {{ goal.whyImportant }}
@@ -263,7 +263,7 @@
               <component :is="getSphereIcon(goal.sphereId)" :size="16" :stroke-width="2" />
               {{ getSphereNameOnly(goal.sphereId) }}
             </span>
-            <span class="goal-title">{{ goal.title }}</span>
+            <span class="goal-title truncate-1" :title="goal.title">{{ goal.title }}</span>
             <span class="goal-progress">{{ goal.progress }}%</span>
             <button 
               class="btn-icon-remove"
