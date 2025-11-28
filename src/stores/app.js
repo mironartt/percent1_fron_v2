@@ -15,7 +15,8 @@ export const useAppStore = defineStore('app', () => {
     last_name: '',
     is_authenticated: false,
     finish_onboarding: false,
-    finish_minitask: false
+    finish_minitask: false,
+    telegram_bot_link: ''
   })
   
   const userLoading = ref(false)
@@ -29,7 +30,8 @@ export const useAppStore = defineStore('app', () => {
         last_name: userData.last_name || '',
         is_authenticated: true,
         finish_onboarding: userData.finish_onboarding ?? false,
-        finish_minitask: userData.finish_minitask ?? false
+        finish_minitask: userData.finish_minitask ?? false,
+        telegram_bot_link: userData.telegram_bot_link || ''
       }
       
       if (DEBUG_MODE) {
@@ -39,7 +41,8 @@ export const useAppStore = defineStore('app', () => {
           name: user.value.first_name,
           isAuthenticated: user.value.is_authenticated,
           finishOnboarding: user.value.finish_onboarding,
-          finishMinitask: user.value.finish_minitask
+          finishMinitask: user.value.finish_minitask,
+          telegramBotLink: user.value.telegram_bot_link ? 'present' : 'none'
         })
       }
     }
@@ -57,7 +60,8 @@ export const useAppStore = defineStore('app', () => {
       last_name: '',
       is_authenticated: false,
       finish_onboarding: false,
-      finish_minitask: false
+      finish_minitask: false,
+      telegram_bot_link: ''
     }
   }
   

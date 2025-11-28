@@ -29,7 +29,20 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite with a pr
 ### System Design Choices
 The application uses a modular structure with dedicated components, services, views, router, and stores. State management is handled by Pinia, ensuring data persistence and reactivity. Authentication is cookie-based with CSRF protection. The application prioritizes user guidance and visual feedback throughout the various modules.
 
-## Recent Changes (27 Nov 2025)
+## Recent Changes (28 Nov 2025)
+
+### Telegram Bot Integration (Sidebar)
+- Added `telegram_bot_link` field to user store (from `/api/rest/front/get-user-data/` endpoint)
+- New "Телеграм бот" button in sidebar footer (below user info, shows only if link exists)
+- Uses Send icon with Telegram blue color (#0088cc)
+- Modal with Telegram branding (blue gradient header icon)
+- Features:
+  - Персональная ссылка с copy-to-clipboard (Check icon feedback)
+  - "Открыть в Telegram" button with ExternalLink icon
+  - Backdrop blur overlay, slide-in animation
+- Button hidden when sidebar collapsed (shows icon with tooltip)
+
+## Previous Changes (27 Nov 2025)
 
 ### WheelOfLife Component
 - Redesigned to match reference image with curved text labels using SVG `<textPath>`

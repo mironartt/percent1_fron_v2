@@ -51,6 +51,17 @@
         <User class="user-avatar" :size="24" :stroke-width="1.5" />
         <span class="user-name">{{ store.displayName }}</span>
       </div>
+      
+      <button 
+        v-if="store.user.telegram_bot_link"
+        class="telegram-btn" 
+        @click="showTelegramModal = true"
+        :title="isCollapsed ? 'Телеграм бот' : ''"
+      >
+        <Send class="icon telegram-icon" :size="20" :stroke-width="1.5" />
+        <span class="nav-label">Телеграм бот</span>
+      </button>
+      
       <router-link to="/app/settings" class="settings-link" :title="isCollapsed ? 'Настройки' : ''">
         <Settings class="icon" :size="20" :stroke-width="1.5" />
         <span class="nav-label">Настройки</span>
@@ -61,6 +72,56 @@
       </router-link>
     </div>
   </aside>
+
+  <Teleport to="body">
+    <div v-if="showTelegramModal" class="modal-overlay" @click.self="showTelegramModal = false">
+      <div class="modal-container">
+        <div class="modal-header">
+          <div class="modal-icon-wrapper">
+            <Send class="modal-icon" :size="24" :stroke-width="1.5" />
+          </div>
+          <h2 class="modal-title">Подключите Telegram-бота</h2>
+          <button class="modal-close" @click="showTelegramModal = false">
+            <X :size="20" :stroke-width="1.5" />
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <p class="modal-description">
+            Telegram-бот поможет вам получать напоминания о задачах, отслеживать прогресс и оставаться в курсе своих целей.
+          </p>
+          
+          <div class="telegram-link-section">
+            <label class="link-label">Ваша персональная ссылка:</label>
+            <div class="link-container">
+              <input 
+                type="text" 
+                class="link-input" 
+                :value="store.user.telegram_bot_link" 
+                readonly 
+                ref="linkInput"
+              />
+              <button class="copy-btn" @click="copyLink" :title="copied ? 'Скопировано!' : 'Скопировать'">
+                <Check v-if="copied" class="copy-icon success" :size="18" :stroke-width="2" />
+                <Copy v-else class="copy-icon" :size="18" :stroke-width="1.5" />
+              </button>
+            </div>
+          </div>
+          
+          <a 
+            :href="store.user.telegram_bot_link" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            class="open-telegram-btn"
+          >
+            <Send :size="18" :stroke-width="1.5" />
+            Открыть в Telegram
+            <ExternalLink :size="14" :stroke-width="1.5" />
+          </a>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
@@ -83,7 +144,12 @@ import {
   Lock,
   ChevronLeft,
   Sun,
-  Moon
+  Moon,
+  Send,
+  X,
+  Copy,
+  Check,
+  ExternalLink
 } from 'lucide-vue-next'
 
 const store = useAppStore()
@@ -91,6 +157,19 @@ const emit = defineEmits(['collapse-change'])
 
 const isCollapsed = ref(false)
 const isDark = ref(false)
+const showTelegramModal = ref(false)
+const copied = ref(false)
+const linkInput = ref(null)
+
+function copyLink() {
+  if (store.user.telegram_bot_link) {
+    navigator.clipboard.writeText(store.user.telegram_bot_link)
+    copied.value = true
+    setTimeout(() => {
+      copied.value = false
+    }, 2000)
+  }
+}
 
 onMounted(() => {
   const savedCollapsed = localStorage.getItem('sidebar-collapsed')
@@ -420,5 +499,224 @@ const menuItems = [
 .logout-link:hover {
   color: var(--danger-color);
   opacity: 0.8;
+}
+
+.telegram-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.sidebar.collapsed .telegram-btn {
+  justify-content: center;
+  padding: 0.75rem;
+}
+
+.telegram-btn:hover {
+  color: var(--text-primary);
+}
+
+.telegram-icon {
+  color: #0088cc;
+}
+
+.telegram-btn:hover .telegram-icon {
+  color: #0099dd;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-container {
+  background: var(--bg-primary);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 440px;
+  overflow: hidden;
+  animation: modalSlideIn 0.2s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+}
+
+.modal-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0088cc, #00aaff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.modal-icon {
+  color: white;
+}
+
+.modal-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  flex: 1;
+}
+
+.modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-description {
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  margin: 0 0 1.5rem 0;
+}
+
+.telegram-link-section {
+  margin-bottom: 1.25rem;
+}
+
+.link-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.link-container {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.link-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-family: monospace;
+  min-width: 0;
+}
+
+.link-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.copy-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.copy-btn:hover {
+  background: var(--bg-secondary);
+  border-color: var(--primary-color);
+}
+
+.copy-icon {
+  color: var(--text-secondary);
+}
+
+.copy-icon.success {
+  color: var(--success-color);
+}
+
+.open-telegram-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.875rem 1.25rem;
+  background: linear-gradient(135deg, #0088cc, #00aaff);
+  color: white;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.open-telegram-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
+}
+
+.open-telegram-btn:active {
+  transform: translateY(0);
 }
 </style>
