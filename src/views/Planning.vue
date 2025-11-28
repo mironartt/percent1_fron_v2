@@ -606,7 +606,13 @@
                     @dragstart="handleDragStart(task)"
                     @dragend="handleDragEnd"
                   >
-                    <div class="drag-handle">⋮⋮</div>
+                    <span 
+                      class="sphere-icon-wrapper" 
+                      :style="{ backgroundColor: getSphereColor(getSphereIdFromGoal(task.goalId)) + '20', color: getSphereColor(getSphereIdFromGoal(task.goalId)) }"
+                      :title="getSphereNameOnly(getSphereIdFromGoal(task.goalId))"
+                    >
+                      <component :is="getSphereIcon(getSphereIdFromGoal(task.goalId))" :size="14" />
+                    </span>
                     <input 
                       type="checkbox"
                       :checked="task.completed"
@@ -615,7 +621,6 @@
                     />
                     <div class="task-info">
                       <span class="task-title" :title="task.stepTitle">{{ task.stepTitle }}</span>
-                      <span class="task-goal" :title="task.goalTitle">{{ task.goalTitle }}</span>
                     </div>
                     <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
                     <button 
@@ -759,7 +764,13 @@ import {
   Sparkles,
   Square,
   ArrowRight,
-  CheckSquare
+  CheckSquare,
+  Wallet,
+  Palette,
+  Users,
+  Heart,
+  Briefcase,
+  HeartHandshake
 } from 'lucide-vue-next'
 
 const store = useAppStore()
@@ -936,6 +947,50 @@ const lifeSpheres = computed(() => store.lifeSpheres)
 function getSphereName(sphereId) {
   const sphere = lifeSpheres.value.find(s => s.id === sphereId)
   return sphere ? `${sphere.icon} ${sphere.name}` : ''
+}
+
+const sphereIcons = {
+  wealth: Wallet,
+  hobbies: Palette,
+  friendship: Users,
+  health: Heart,
+  career: Briefcase,
+  love: HeartHandshake
+}
+
+const sphereColors = {
+  wealth: '#e63946',
+  hobbies: '#f4a261',
+  friendship: '#e9c46a',
+  health: '#2a9d8f',
+  career: '#264653',
+  love: '#9b5de5'
+}
+
+const sphereNames = {
+  wealth: 'Деньги',
+  hobbies: 'Хобби и отдых',
+  friendship: 'Друзья',
+  health: 'Здоровье',
+  career: 'Карьера',
+  love: 'Любовь'
+}
+
+function getSphereIcon(sphereId) {
+  return sphereIcons[sphereId] || Target
+}
+
+function getSphereColor(sphereId) {
+  return sphereColors[sphereId] || '#6366f1'
+}
+
+function getSphereNameOnly(sphereId) {
+  return sphereNames[sphereId] || 'Сфера'
+}
+
+function getSphereIdFromGoal(goalId) {
+  const goal = goals.value.find(g => g.id === goalId)
+  return goal?.sphereId || ''
 }
 
 function getUncompletedSteps(goal) {
@@ -2781,16 +2836,15 @@ onMounted(() => {
   cursor: grabbing;
 }
 
-.drag-handle {
-  color: var(--text-tertiary);
-  font-size: 0.7rem;
-  cursor: grab;
-  padding: 0 0.125rem;
-  user-select: none;
-}
-
-.drag-handle:active {
-  cursor: grabbing;
+.sphere-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  cursor: help;
 }
 
 .calendar-day-full.drag-over {
