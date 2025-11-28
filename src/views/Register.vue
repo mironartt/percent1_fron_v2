@@ -146,15 +146,21 @@
           <span>или</span>
         </div>
 
-        <!-- Social Register -->
-        <div class="social-register">
-          <button type="button" class="btn-social google" disabled>
-            <span class="social-icon">&#x1F535;</span>
-            <span>Google</span>
-          </button>
-          <button type="button" class="btn-social telegram" disabled>
-            <span class="social-icon">&#x1F4AC;</span>
-            <span>Telegram</span>
+        <!-- Social Register - Telegram only -->
+        <div class="social-register single">
+          <button 
+            type="button" 
+            class="btn-social telegram" 
+            :disabled="isTelegramLoading"
+            @click="handleTelegramRegister"
+          >
+            <span v-if="isTelegramLoading" class="social-icon">...</span>
+            <span v-else class="social-icon telegram-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+              </svg>
+            </span>
+            <span>{{ isTelegramLoading ? 'Загрузка...' : 'Регистрация через Telegram' }}</span>
           </button>
         </div>
 
@@ -252,8 +258,109 @@ const showSuccess = ref(false)
 const apiError = ref('')
 const apiErrorDetail = ref('')
 
+// Telegram auth state
+const isTelegramLoading = ref(false)
+const telegramAuthLink = ref('')
+const telegramCallbackUrl = ref('')
+
+/**
+ * Обработка возврата из Telegram OAuth
+ * Проверяет наличие #tgAuthResult= в хеше и редиректит на callback
+ */
+function processTelegramAuthResult() {
+  const hash = window.location.hash
+  
+  if (hash.startsWith('#tgAuthResult=')) {
+    console.log('[Telegram Auth] Found tgAuthResult in hash')
+    
+    try {
+      // Извлекаем и декодируем данные
+      const base64Data = hash.substring('#tgAuthResult='.length)
+      const jsonString = atob(base64Data)
+      const authData = JSON.parse(jsonString)
+      
+      console.log('[Telegram Auth] Decoded auth data:', authData)
+      
+      // Формируем URL для callback с данными в query
+      const params = new URLSearchParams(authData)
+      const callbackUrl = telegramCallbackUrl.value + '?' + params.toString()
+      
+      console.log('[Telegram Auth] Redirecting to:', callbackUrl)
+      
+      // Редиректим на Django callback
+      window.location.href = callbackUrl
+      
+    } catch (error) {
+      console.error('[Telegram Auth] Error processing auth data:', error)
+      apiError.value = 'Ошибка обработки данных авторизации Telegram'
+      // Очищаем хеш
+      window.location.hash = ''
+    }
+  }
+}
+
+/**
+ * Загрузка данных для Telegram авторизации
+ */
+async function loadTelegramAuthData() {
+  try {
+    const result = await api.getGlobalData()
+    
+    if (result.status === 'ok' && result.data) {
+      telegramAuthLink.value = result.data.t_auth_link || ''
+      telegramCallbackUrl.value = result.data.t_auth_callback_url || ''
+      
+      // После загрузки callback URL проверяем хеш
+      if (telegramCallbackUrl.value) {
+        processTelegramAuthResult()
+      }
+    }
+  } catch (error) {
+    console.error('[Telegram Auth] Failed to load global data:', error)
+  }
+}
+
+/**
+ * Обработчик клика по кнопке Telegram
+ */
+async function handleTelegramRegister() {
+  if (isTelegramLoading.value) return
+  
+  isTelegramLoading.value = true
+  apiError.value = ''
+  
+  try {
+    // Если ссылка ещё не загружена - загружаем
+    if (!telegramAuthLink.value) {
+      const result = await api.getGlobalData()
+      
+      if (result.status === 'ok' && result.data) {
+        telegramAuthLink.value = result.data.t_auth_link || ''
+        telegramCallbackUrl.value = result.data.t_auth_callback_url || ''
+      } else {
+        throw new Error('Не удалось получить ссылку для авторизации')
+      }
+    }
+    
+    if (telegramAuthLink.value) {
+      // Переходим на страницу авторизации Telegram
+      window.location.href = telegramAuthLink.value
+    } else {
+      apiError.value = 'Авторизация через Telegram временно недоступна'
+      isTelegramLoading.value = false
+    }
+  } catch (error) {
+    console.error('[Telegram Auth] Error:', error)
+    apiError.value = 'Ошибка при подключении к Telegram'
+    isTelegramLoading.value = false
+  }
+}
+
 onMounted(async () => {
   await api.initCsrf()
+  
+  // Загружаем данные для Telegram авторизации
+  await loadTelegramAuthData()
 })
 
 function validateField(field) {
@@ -629,6 +736,10 @@ function closeSuccess() {
   margin-bottom: 1.5rem;
 }
 
+.social-register.single {
+  grid-template-columns: 1fr;
+}
+
 .btn-social {
   display: flex;
   align-items: center;
@@ -645,7 +756,19 @@ function closeSuccess() {
   transition: all 0.2s ease;
 }
 
+.btn-social.telegram {
+  background: #0088cc;
+  border-color: #0088cc;
+  color: white;
+}
+
+.btn-social.telegram:hover:not(:disabled) {
+  background: #0077b3;
+  border-color: #0077b3;
+}
+
 .btn-social:hover:not(:disabled) {
+  border-color: var(--primary-color);
   background: var(--bg-secondary);
 }
 
@@ -656,6 +779,13 @@ function closeSuccess() {
 
 .social-icon {
   font-size: 1.125rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.telegram-icon svg {
+  fill: currentColor;
 }
 
 .register-footer {
