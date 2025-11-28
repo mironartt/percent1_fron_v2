@@ -225,7 +225,7 @@
                       class="scheduled-task"
                       :class="'priority-' + (task.priority || 'optional')"
                     >
-                      <span class="task-title truncate-1" :title="task.stepTitle">{{ task.stepTitle }}</span>
+                      <span class="task-title" :title="task.stepTitle">{{ task.stepTitle }}</span>
                       <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
                     </div>
                     <div v-if="getTasksForDay(day.date).length === 0" class="no-tasks drop-hint">
@@ -614,8 +614,8 @@
                       class="task-checkbox"
                     />
                     <div class="task-info">
-                      <span class="task-title truncate-1" :title="task.stepTitle">{{ task.stepTitle }}</span>
-                      <span class="task-goal truncate-1" :title="task.goalTitle">{{ task.goalTitle }}</span>
+                      <span class="task-title" :title="task.stepTitle">{{ task.stepTitle }}</span>
+                      <span class="task-goal" :title="task.goalTitle">{{ task.goalTitle }}</span>
                     </div>
                     <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
                     <button 
@@ -2023,15 +2023,15 @@ onMounted(() => {
 
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 0.5rem;
+  grid-template-columns: repeat(7, minmax(120px, 1fr));
+  gap: 0.75rem;
 }
 
 .calendar-day {
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
   padding: 0.75rem;
-  min-height: 100px;
+  min-height: 120px;
 }
 
 .calendar-day.today {
@@ -2079,24 +2079,27 @@ onMounted(() => {
 }
 
 .scheduled-task {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.5rem;
   background: var(--bg-primary);
   color: var(--text-primary);
   border-radius: var(--radius-sm);
   border-left: 3px solid var(--border-color);
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.25rem;
+  align-items: flex-start;
+  gap: 0.35rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
 .scheduled-task .task-title {
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
   flex: 1;
   min-width: 0;
+  line-height: 1.3;
+  word-break: break-word;
 }
 
 .task-time-badge {
@@ -2668,8 +2671,8 @@ onMounted(() => {
 
 .calendar-grid-full {
   display: grid;
-  grid-template-columns: repeat(7, minmax(120px, 1fr));
-  gap: 0.5rem;
+  grid-template-columns: repeat(7, minmax(140px, 1fr));
+  gap: 0.75rem;
 }
 
 .calendar-day-full {
@@ -2729,11 +2732,12 @@ onMounted(() => {
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
-  padding: 0.5rem;
+  padding: 0.6rem 0.75rem;
   background: var(--bg-primary);
-  border-radius: var(--radius-sm);
-  font-size: 0.8rem;
-  border-left: 3px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  border-left: 4px solid var(--border-color);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
 .task-card.priority-critical {
@@ -2821,20 +2825,30 @@ onMounted(() => {
 .task-info {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .task-info .task-title {
-  display: block;
-  font-weight: 500;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
+  font-weight: 500;
+  line-height: 1.3;
+  word-break: break-word;
 }
 
 .task-info .task-goal {
-  display: block;
+  display: inline-flex;
+  align-items: center;
   font-size: 0.7rem;
   color: var(--text-secondary);
+  background: var(--bg-secondary);
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--radius-xs, 2px);
+  max-width: fit-content;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2970,6 +2984,25 @@ onMounted(() => {
   
   .notification-options {
     gap: 0.5rem;
+  }
+  
+  .calendar-grid,
+  .calendar-grid-full {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    overflow-x: auto;
+  }
+  
+  .calendar-day,
+  .calendar-day-full {
+    min-width: 100px;
+    min-height: 100px;
+    padding: 0.5rem;
+  }
+  
+  .scheduled-task .task-title,
+  .task-info .task-title {
+    -webkit-line-clamp: 1;
   }
 }
 
