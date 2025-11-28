@@ -2851,13 +2851,13 @@ onMounted(() => {
 
 .calendar-grid-5 {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.75rem;
 }
 
 .calendar-grid-2 {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
 }
 
@@ -2881,8 +2881,10 @@ onMounted(() => {
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
   min-height: 150px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .calendar-day-full.today {
@@ -2928,6 +2930,7 @@ onMounted(() => {
   flex-direction: column;
   gap: 0.375rem;
   overflow-y: auto;
+  min-width: 0;
 }
 
 .task-card {
@@ -2940,6 +2943,10 @@ onMounted(() => {
   font-size: 0.85rem;
   border-left: 4px solid var(--border-color);
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .task-card.priority-critical {
@@ -3061,9 +3068,11 @@ onMounted(() => {
 .task-info {
   flex: 1;
   min-width: 0;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
+  overflow: hidden;
 }
 
 .task-info .task-step {
