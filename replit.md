@@ -15,7 +15,7 @@ The application employs a guided, multi-step workflow for core modules (SSP, Goa
 The frontend is built with Vue 3 (Composition API, script setup), Vite with a proxy to the Django backend, Vue Router for navigation with authentication guards, and Pinia for state management with localStorage persistence. A custom Django-style configuration system (`settings.js` + `local_settings.js`) is used for environment-specific settings.
 
 ### Feature Specifications
-- **SSP Module**: A 4-step guided flow for life balance assessment, with a redesigned Wheel of Life and color-coded reflection accordions.
+- **SSP Module**: A 4-step guided flow for life balance assessment, with a redesigned Wheel of Life and color-coded reflection accordions. Summary page features compact stat blocks with Lucide icons (replacing emojis) for average score, strongest sphere, and growth zone. Reflection editing is available directly in the summary accordion with inline edit/save/cancel functionality.
 - **Goals Bank Module**: A 3-step workflow for goal validation, filtering, and transfer to actionable goals, including an inline editing modal for validated goals.
 - **Decomposition Module**: Facilitates breaking down goals into actionable steps, with step persistence and ID-based tracking. The AI Coach has been removed from this module.
 - **Planning Module**: Includes 5-day workweek view with collapsible weekends, week navigation, color-coded priority tasks, drag & drop task management, a daily time budget indicator, and weekly statistics. Quick-add functionality and undo for task deletion are supported. The AI Coach has been removed from this module. Task cards combine sphere icons with checkboxes and display both step and goal titles.
