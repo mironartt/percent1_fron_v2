@@ -264,33 +264,56 @@
         <div class="card theory-content">
           <h2>Зачем нужно ССП?</h2>
           
-          <p style="margin-bottom: 1.5rem; line-height: 1.6;">
+          <p class="theory-text">
             Представьте вашу жизнь как колесо. Каждая спица — это важная сфера: здоровье, карьера, отношения, финансы, хобби и личностный рост. Если одна из спиц короче других, колесо катится неровно.
           </p>
 
-          <p style="margin-bottom: 1.5rem; line-height: 1.6;">
+          <p class="theory-text">
             Точно так же работает и ваша жизнь. Дисбаланс в одной сфере влияет на все остальные. Нельзя быть по-настоящему успешным в карьере, если страдает здоровье. Сложно радоваться достижениям, если нет времени на близких.
           </p>
 
-          <div class="idea-block" style="margin-bottom: 2rem;">
-            <div class="idea-icon">💡</div>
-            <div>
+          <div class="idea-block">
+            <div class="idea-icon-wrapper">
+              <Lightbulb :size="24" :stroke-width="2" />
+            </div>
+            <div class="idea-content">
               <h3>Ключевая идея</h3>
               <p>Для роста нужен баланс. Цели работают только тогда, когда опираются на внутреннюю мотивацию и системное равновесие между всеми сферами жизни.</p>
             </div>
           </div>
 
-          <h3 style="margin-bottom: 1.5rem; font-size: 1.1rem; font-weight: 600;">Что вы будете делать?</h3>
-          <ol style="margin-left: 1.5rem; line-height: 1.8; font-size: 0.95rem;">
-            <li><strong>Шаг 1:</strong> Оцените каждую сферу жизни от 0 до 10, переещая секторы колеса.</li>
-            <li><strong>Шаг 2:</strong> Ответьте на вопросы ИИ-коуча о каждой сфере.</li>
-            <li><strong>Шаг 3:</strong> Проведете глубокую рефлексию и дадите себе ответ почему поставили такой балл</li>
-          </ol>
+          <div class="theory-steps-section">
+            <h3>Что вас ждёт:</h3>
+            <div class="theory-steps">
+              <div class="theory-step">
+                <span class="theory-step-num">1</span>
+                <div class="theory-step-content">
+                  <strong>Колесо баланса</strong>
+                  <p>Оцените каждую из 6 сфер жизни от 0 до 10</p>
+                </div>
+              </div>
+              <div class="theory-step">
+                <span class="theory-step-num">2</span>
+                <div class="theory-step-content">
+                  <strong>Глубокая рефлексия</strong>
+                  <p>Ответьте на вопросы о каждой сфере</p>
+                </div>
+              </div>
+              <div class="theory-step">
+                <span class="theory-step-num">3</span>
+                <div class="theory-step-content">
+                  <strong>Итоги и инсайты</strong>
+                  <p>Зафиксируйте результаты и точки роста</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="step-actions">
-          <button class="btn btn-primary btn-lg" @click="nextStep">
-            Перейти к упражнению "Колесо баланса" →
+          <button class="btn btn-primary btn-lg btn-with-icon" @click="nextStep">
+            Перейти к Колесу баланса
+            <ArrowRight :size="18" />
           </button>
         </div>
       </div>
@@ -582,7 +605,8 @@ import {
   TrendingUp,
   Pencil,
   Check,
-  X
+  X,
+  Lightbulb
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -1263,19 +1287,115 @@ function resetModule() {
 }
 
 .theory-content h2 {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   margin-bottom: 1.5rem;
   text-align: center;
+  font-weight: 600;
+}
+
+.theory-text {
+  margin-bottom: 1.25rem;
+  line-height: 1.7;
+  font-size: 0.95rem;
+  color: var(--text-primary);
 }
 
 .idea-block {
   display: flex;
-  gap: 1.5rem;
-  padding: 2rem;
-  background: rgba(99, 102, 241, 0.05);
-  border-radius: var(--radius-lg);
-  border: 2px solid rgba(99, 102, 241, 0.2);
-  margin-bottom: 2rem;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: rgba(99, 102, 241, 0.06);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  margin-bottom: 1.5rem;
+}
+
+.idea-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: rgba(99, 102, 241, 0.12);
+  border-radius: var(--radius-sm);
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.idea-content h3 {
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.idea-content p {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Theory Steps Section */
+.theory-steps-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.theory-steps-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.theory-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.theory-step {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.theory-step-num {
+  width: 28px;
+  height: 28px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.theory-step-content strong {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.125rem;
+  color: var(--text-primary);
+}
+
+.theory-step-content p {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Button with icon */
+.btn-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .idea-icon {
