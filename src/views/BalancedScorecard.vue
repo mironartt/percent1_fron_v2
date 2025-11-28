@@ -344,43 +344,6 @@
           </div>
 
           <div class="wheel-sidebar">
-            <div class="card ai-coach">
-              <div class="coach-header">
-                <span class="coach-icon">💬</span>
-                <h3>ИИ-коуч</h3>
-              </div>
-              
-              <div class="chat-container">
-                <div class="chat-messages">
-                  <div class="message coach-message">
-                    <span class="message-avatar">🤖</span>
-                    <div class="message-content">
-                      <p>Заполните колесо баланса, оценив каждую сферу от 0 до 10. Для этого кликните на сектор и перетащите его край наружу или внутрь.</p>
-                    </div>
-                  </div>
-                  <div v-for="msg in chatMessages" :key="msg.id" class="message" :class="msg.type">
-                    <span v-if="msg.type === 'coach'" class="message-avatar">🤖</span>
-                    <div class="message-content">
-                      <p>{{ msg.text }}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div class="chat-input-area">
-                  <input 
-                    v-model="userMessage"
-                    @keyup.enter="sendMessage"
-                    type="text"
-                    placeholder="Напишите ваш ответ..."
-                    class="chat-input"
-                  />
-                  <button @click="sendMessage" class="btn-send">
-                    Отправить
-                  </button>
-                </div>
-              </div>
-            </div>
-
             <div class="card sphere-details" v-if="selectedSphere">
               <h3>{{ selectedSphere.icon }} {{ selectedSphere.name }}</h3>
               <div class="score-display-large">
@@ -762,10 +725,6 @@ function restartLesson() {
   }
 }
 
-// Chat state
-const chatMessages = ref([])
-const userMessage = ref('')
-
 const wheelCompleted = computed(() => {
   return lifeSpheres.value.every(s => s.score > 0)
 })
@@ -801,39 +760,6 @@ function saveSphereNotes() {
     })
   }
 }
-
-function sendMessage() {
-  if (!userMessage.value.trim()) return
-  
-  // Add user message
-  chatMessages.value.push({
-    id: Date.now(),
-    type: 'user',
-    text: userMessage.value
-  })
-  
-  // Generate coach response based on context
-  const coachResponses = [
-    'Спасибо за ответ! Это очень важная информация.',
-    'Интересно! Расскажите подробнее о вашем подходе к этому.',
-    'Я вижу, что это важно для вас. Как вы можете улучшить эту область?',
-    'Хорошее наблюдение! Что вы хотите изменить в этом?',
-    'Спасибо за честный ответ. Это поможет вам в развитии.'
-  ]
-  
-  const randomResponse = coachResponses[Math.floor(Math.random() * coachResponses.length)]
-  
-  setTimeout(() => {
-    chatMessages.value.push({
-      id: Date.now() + 1,
-      type: 'coach',
-      text: randomResponse
-    })
-  }, 300)
-  
-  userMessage.value = ''
-}
-
 
 function getSphereById(sphereId) {
   return lifeSpheres.value.find(s => s.id === sphereId)
