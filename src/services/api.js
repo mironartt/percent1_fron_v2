@@ -107,10 +107,15 @@ export async function request(method, endpoint, data = null, options = {}) {
     }
   }
   
+  // Определяем credentials в зависимости от того, куда идёт запрос
+  // 'include' - для cross-origin запросов (когда API_BASE_URL указан)
+  // 'same-origin' - для запросов на тот же домен (через proxy)
+  const isCrossOrigin = API_BASE_URL && API_BASE_URL.length > 0
+  
   const config = {
     method,
     headers,
-    credentials: 'same-origin' // Cookie-based auth
+    credentials: isCrossOrigin ? 'include' : 'same-origin' // Cookie-based auth
   }
   
   if (data && method !== 'GET') {
@@ -212,9 +217,12 @@ export async function initCsrf() {
       console.log('[API] Refreshing CSRF token from:', url)
     }
     
+    // Определяем credentials в зависимости от того, куда идёт запрос
+    const isCrossOrigin = API_BASE_URL && API_BASE_URL.length > 0
+    
     await fetch(url, {
       method: 'POST',
-      credentials: 'same-origin',
+      credentials: isCrossOrigin ? 'include' : 'same-origin',
       headers: {
         'Content-Type': 'application/json'
       },
