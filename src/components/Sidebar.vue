@@ -551,7 +551,7 @@ const menuItems = [
   border-radius: 16px;
   box-shadow: var(--shadow-lg);
   width: 100%;
-  max-width: 440px;
+  max-width: 480px;
   overflow: hidden;
   animation: modalSlideIn 0.2s ease-out;
 }

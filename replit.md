@@ -35,12 +35,26 @@ The application uses a modular structure with dedicated components, services, vi
 - Added `telegram_bot_link` field to user store (from `/api/rest/front/get-user-data/` endpoint)
 - New "Телеграм бот" button in sidebar footer (below user info, shows only if link exists)
 - Uses Send icon with Telegram blue color (#0088cc)
-- Modal with Telegram branding (blue gradient header icon)
+- Modal (480px width) with Telegram branding (blue gradient header icon)
 - Features:
   - Персональная ссылка с copy-to-clipboard (Check icon feedback)
   - "Открыть в Telegram" button with ExternalLink icon
   - Backdrop blur overlay, slide-in animation
 - Button hidden when sidebar collapsed (shows icon with tooltip)
+
+### Telegram Auth Modals (TelegramAuthModals.vue)
+- Global component in App.vue that handles GET parameters on all pages
+- Handles three scenarios:
+  - `?telegram_auth_error=token_expired` - Warning modal about expired link (10 min lifetime)
+  - `?telegram_auth_error=token_not_found` - Warning modal about invalid/used link
+  - `?telegram_complete_registration=1` - Success modal with email/password form
+- Features:
+  - Orange warning icon for errors, green success icon for registration
+  - Action buttons: "Войти через Telegram", "Войти", "Регистрация"
+  - Registration form with email, password (min 8 chars), confirm password
+  - Password visibility toggle, validation, "Пропустить" option
+  - Removes GET params from URL on modal close
+  - Watches route.query for param changes
 
 ## Previous Changes (27 Nov 2025)
 
