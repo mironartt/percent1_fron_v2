@@ -219,7 +219,11 @@ const goalForm = ref({
 
 
 function goToGoalsBank() {
-  router.push('/app/goals-bank')
+  if (goal.value && goal.value.sourceId) {
+    router.push(`/app/goals-bank?edit=${goal.value.sourceId}`)
+  } else {
+    router.push('/app/goals-bank')
+  }
 }
 
 function getSphereIconComponent(sphereId) {

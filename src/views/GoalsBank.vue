@@ -967,8 +967,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { 
   Lightbulb, 
@@ -1032,6 +1032,7 @@ function getSphereColor(sphereId) {
 
 const store = useAppStore()
 const router = useRouter()
+const route = useRoute()
 
 const steps = ['Банк идей', 'Проверка', 'Ключевые цели']
 const currentStep = computed(() => store.goalsBank.currentStep)
@@ -1759,6 +1760,17 @@ function goToFullEdit(goalId) {
     router.push(`/app/goal/${transferredGoal.id}`)
   }
 }
+
+onMounted(() => {
+  const editId = route.query.edit
+  if (editId) {
+    const goalToEdit = store.goalsBank.rawIdeas.find(i => i.id === editId)
+    if (goalToEdit) {
+      openEditModal(goalToEdit)
+    }
+    router.replace({ path: route.path, query: {} })
+  }
+})
 </script>
 
 <style scoped>
