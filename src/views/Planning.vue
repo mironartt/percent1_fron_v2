@@ -615,26 +615,31 @@
                     @dragstart="handleDragStart(task)"
                     @dragend="handleDragEnd"
                   >
-                    <span 
-                      class="sphere-icon-wrapper" 
-                      :style="{ backgroundColor: getSphereColor(getSphereIdFromGoal(task.goalId)) + '20', color: getSphereColor(getSphereIdFromGoal(task.goalId)) }"
-                      :title="getSphereNameOnly(getSphereIdFromGoal(task.goalId))"
+                    <button 
+                      class="sphere-toggle-btn" 
+                      :class="{ completed: task.completed }"
+                      :style="{ 
+                        '--sphere-color': getSphereColor(getSphereIdFromGoal(task.goalId)),
+                        '--sphere-bg': getSphereColor(getSphereIdFromGoal(task.goalId)) + '20'
+                      }"
+                      :title="task.completed ? 'Отменить выполнение' : 'Отметить выполненной'"
+                      @click.stop="toggleTaskComplete(task.id)"
                     >
-                      <component :is="getSphereIcon(getSphereIdFromGoal(task.goalId))" :size="14" />
-                    </span>
-                    <input 
-                      type="checkbox"
-                      :checked="task.completed"
-                      @change="toggleTaskComplete(task.id)"
-                      class="task-checkbox"
-                    />
+                      <component 
+                        v-if="!task.completed" 
+                        :is="getSphereIcon(getSphereIdFromGoal(task.goalId))" 
+                        :size="14" 
+                        class="sphere-icon"
+                      />
+                      <Check v-else :size="14" class="check-icon" />
+                    </button>
                     <div class="task-info">
                       <span class="task-title" :title="task.stepTitle">{{ task.stepTitle }}</span>
                     </div>
                     <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
                     <button 
                       class="btn-icon remove-sm"
-                      @click="removeTask(task.id)"
+                      @click.stop="removeTask(task.id)"
                       title="Удалить"
                     >
                       ✕
@@ -684,26 +689,31 @@
                       @dragstart="handleDragStart(task)"
                       @dragend="handleDragEnd"
                     >
-                      <span 
-                        class="sphere-icon-wrapper" 
-                        :style="{ backgroundColor: getSphereColor(getSphereIdFromGoal(task.goalId)) + '20', color: getSphereColor(getSphereIdFromGoal(task.goalId)) }"
-                        :title="getSphereNameOnly(getSphereIdFromGoal(task.goalId))"
+                      <button 
+                        class="sphere-toggle-btn" 
+                        :class="{ completed: task.completed }"
+                        :style="{ 
+                          '--sphere-color': getSphereColor(getSphereIdFromGoal(task.goalId)),
+                          '--sphere-bg': getSphereColor(getSphereIdFromGoal(task.goalId)) + '20'
+                        }"
+                        :title="task.completed ? 'Отменить выполнение' : 'Отметить выполненной'"
+                        @click.stop="toggleTaskComplete(task.id)"
                       >
-                        <component :is="getSphereIcon(getSphereIdFromGoal(task.goalId))" :size="14" />
-                      </span>
-                      <input 
-                        type="checkbox"
-                        :checked="task.completed"
-                        @change="toggleTaskComplete(task.id)"
-                        class="task-checkbox"
-                      />
+                        <component 
+                          v-if="!task.completed" 
+                          :is="getSphereIcon(getSphereIdFromGoal(task.goalId))" 
+                          :size="14" 
+                          class="sphere-icon"
+                        />
+                        <Check v-else :size="14" class="check-icon" />
+                      </button>
                       <div class="task-info">
                         <span class="task-title" :title="task.stepTitle">{{ task.stepTitle }}</span>
                       </div>
                       <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
                       <button 
                         class="btn-icon remove-sm"
-                        @click="removeTask(task.id)"
+                        @click.stop="removeTask(task.id)"
                         title="Удалить"
                       >
                         ✕
@@ -844,6 +854,7 @@ import {
   Square,
   ArrowRight,
   CheckSquare,
+  Check,
   Wallet,
   Palette,
   Users,
@@ -2981,6 +2992,41 @@ onMounted(() => {
   border-radius: 6px;
   flex-shrink: 0;
   cursor: help;
+}
+
+.sphere-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  border: none;
+  cursor: pointer;
+  background: var(--sphere-bg);
+  color: var(--sphere-color);
+  transition: all 0.2s ease;
+}
+
+.sphere-toggle-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.sphere-toggle-btn.completed {
+  background: #10b981;
+  color: white;
+}
+
+.sphere-toggle-btn .sphere-icon,
+.sphere-toggle-btn .check-icon {
+  transition: transform 0.2s ease;
+}
+
+.sphere-toggle-btn:active .sphere-icon,
+.sphere-toggle-btn:active .check-icon {
+  transform: scale(0.9);
 }
 
 .calendar-day-full.drag-over {

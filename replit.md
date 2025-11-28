@@ -41,6 +41,15 @@ The application uses a modular structure with dedicated components, services, vi
 - Weekend days styled with subtle purple tint (weekend-day class)
 - Design rationale: Most users work Mon-Fri, weekends are optional planning
 
+### Task Cards - Combined Sphere Icon + Checkbox
+- **Merged checkbox with sphere icon**: Click sphere icon to toggle task completion
+- Not completed: Shows sphere icon (Wallet, Palette, etc.) in sphere color
+- Completed: Shows green Check icon instead of sphere
+- Removed separate checkbox element — cleaner, more compact cards
+- Hover effect: Scale up with shadow
+- CSS: `.sphere-toggle-btn` with CSS variables `--sphere-color`, `--sphere-bg`
+- Design rationale: Single element for both sphere identification and completion toggle
+
 ### Text Overflow Utilities (Global)
 - Added CSS text truncation utilities to `main.css`:
   - `.truncate-1` — single line with ellipsis (text-overflow: ellipsis)
