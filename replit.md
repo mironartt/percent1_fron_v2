@@ -38,6 +38,17 @@ The application uses a modular structure with dedicated components, services, vi
 - Sphere selector grid with color-coded buttons matching wheel colors
 - Uses store.updateRawIdea() for reactive state updates
 - CSS variables for consistent theming
+- Auto-open modal via query parameter `?edit=<goalId>` for deep linking
+
+### GoalEdit.vue - Separation of Concerns
+- **Removed editing of goal metadata** (title, description, sphere) - now read-only display
+- Added "Редактировать в Банке целей" link for goals from Goals Bank
+- Link passes `?edit=sourceId` query param for direct modal opening
+- **Kept deadline field editable** for planning purposes
+- Steps management fully preserved (add/remove/complete/drag & drop)
+- Removed unused dropdown code (toggleSphereDropdown, selectSphere, sphereDropdownRef)
+- New CSS for read-only goal info card with sphere display
+- **Design rationale**: Goals Bank = WHAT (goal definition), Decomposition = HOW (steps/execution)
 
 ## Changes (27 Nov 2025)
 
