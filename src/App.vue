@@ -8,6 +8,7 @@
         </transition>
       </router-view>
     </main>
+    <TelegramAuthModals />
   </div>
 </template>
 
@@ -15,6 +16,7 @@
 import { computed, ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
+import TelegramAuthModals from './components/TelegramAuthModals.vue'
 
 const route = useRoute()
 const sidebarCollapsed = ref(false)
