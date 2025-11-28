@@ -4,7 +4,7 @@
     <div v-if="showEmptyState" class="empty-state-section">
       <div class="empty-state-card card">
         <div class="icon-wrapper lg primary">
-          <Scale :size="32" />
+          <ChartPie :size="32" />
         </div>
         <h1>Система сбалансированных показателей</h1>
         <p class="subtitle">
@@ -573,7 +573,7 @@ import {
   Check,
   X,
   Lightbulb,
-  Scale,
+  ChartPie,
   Sparkles
 } from 'lucide-vue-next'
 
