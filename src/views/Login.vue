@@ -15,7 +15,9 @@
               <span class="label-text">Email адрес</span>
             </label>
             <div class="input-wrapper">
-              <span class="input-icon">&#x1F4E7;</span>
+              <span class="input-icon">
+                <Mail :size="18" />
+              </span>
               <input
                 id="email"
                 v-model="form.email"
@@ -35,7 +37,9 @@
               <span class="label-text">Пароль</span>
             </label>
             <div class="input-wrapper">
-              <span class="input-icon">&#x1F512;</span>
+              <span class="input-icon">
+                <Lock :size="18" />
+              </span>
               <input
                 id="password"
                 v-model="form.password"
@@ -52,7 +56,8 @@
                 @click="showPassword = !showPassword"
                 :title="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
               >
-                {{ showPassword ? '&#x1F441;' : '&#x1F441;&#x200D;&#x1F5E8;' }}
+                <Eye v-if="showPassword" :size="18" />
+                <EyeOff v-else :size="18" />
               </button>
             </div>
             <span v-if="errors.password" class="form-error">{{ errors.password }}</span>
@@ -89,6 +94,7 @@
           <span>или</span>
         </div>
 
+
         <div class="social-login single">
           <button 
             type="button" 
@@ -103,6 +109,7 @@
               </svg>
             </span>
             <span>{{ isTelegramLoading ? 'Загрузка...' : 'Войти через Telegram' }}</span>
+
           </button>
         </div>
 
@@ -120,28 +127,36 @@
         </div>
         <div class="benefits-list">
           <div class="benefit-item">
-            <span class="benefit-icon">&#x1F680;</span>
+            <span class="icon-wrapper icon-wrapper-md">
+              <Rocket :size="24" />
+            </span>
             <div>
               <h4>Простая система</h4>
               <p>Начните улучшать жизнь за 5 минут</p>
             </div>
           </div>
           <div class="benefit-item">
-            <span class="benefit-icon">&#x1F4C8;</span>
+            <span class="icon-wrapper icon-wrapper-md">
+              <TrendingUp :size="24" />
+            </span>
             <div>
               <h4>Видимый прогресс</h4>
               <p>Отслеживайте свой рост день за днём</p>
             </div>
           </div>
           <div class="benefit-item">
-            <span class="benefit-icon">&#x1F3AF;</span>
+            <span class="icon-wrapper icon-wrapper-md">
+              <Target :size="24" />
+            </span>
             <div>
               <h4>Достижение целей</h4>
               <p>Управляйте всеми сферами жизни</p>
             </div>
           </div>
           <div class="benefit-item">
-            <span class="benefit-icon">&#x1F4AA;</span>
+            <span class="icon-wrapper icon-wrapper-md">
+              <Users :size="24" />
+            </span>
             <div>
               <h4>Поддержка сообщества</h4>
               <p>Вместе достигать больше</p>
@@ -155,7 +170,10 @@
       <div v-if="showSuccess" class="modal-overlay" @click="closeSuccess">
         <div class="modal" @click.stop>
           <div class="modal-header">
-            <h2>&#x1F389; Успешный вход!</h2>
+            <span class="icon-wrapper icon-wrapper-lg success">
+              <CheckCircle2 :size="48" />
+            </span>
+            <h2>Успешный вход!</h2>
           </div>
           <div class="modal-body">
             <p>Вы успешно вошли в систему. Сейчас вас перенаправит в личный кабинет.</p>
@@ -172,6 +190,10 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import api from '@/services/api.js'
 import { resetAuthCache } from '@/router/index.js'
+import { 
+  Mail, Lock, Eye, EyeOff, Rocket, TrendingUp, 
+  Target, Users, CheckCircle2 
+} from 'lucide-vue-next'
 
 const router = useRouter()
 const route = useRoute()
@@ -456,7 +478,10 @@ function closeSuccess() {
 .input-icon {
   position: absolute;
   left: 0.875rem;
-  font-size: 1.125rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
   pointer-events: none;
 }
 
@@ -723,11 +748,32 @@ function closeSuccess() {
 .benefit-item {
   display: flex;
   gap: 1rem;
+  align-items: flex-start;
 }
 
-.benefit-icon {
-  font-size: 1.75rem;
+.icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
   flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.icon-wrapper-md {
+  width: 48px;
+  height: 48px;
+}
+
+.icon-wrapper-lg {
+  width: 80px;
+  height: 80px;
+}
+
+.icon-wrapper.success {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
 }
 
 .benefit-item h4 {

@@ -225,7 +225,7 @@
                       class="scheduled-task"
                       :class="'priority-' + (task.priority || 'optional')"
                     >
-                      <span class="task-title">{{ task.stepTitle }}</span>
+                      <span class="task-title" :title="task.stepTitle">{{ task.stepTitle }}</span>
                       <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
                     </div>
                     <div v-if="getTasksForDay(day.date).length === 0" class="no-tasks drop-hint">
@@ -257,7 +257,7 @@
                   <div class="goal-header-left">
                     <span class="expand-icon">{{ expandedGoals[goal.id] ? '▼' : '▶' }}</span>
                     <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
-                    <h4>{{ goal.title }}</h4>
+                    <h4 class="truncate-1" :title="goal.title">{{ goal.title }}</h4>
                   </div>
                   <div class="goal-header-right">
                     <span class="steps-count">{{ getUncompletedSteps(goal).length }} шагов</span>
@@ -281,7 +281,7 @@
                   >
                     <div class="step-info">
                       <span class="drag-handle-lesson">⠿</span>
-                      <span class="step-title">{{ step.title }}</span>
+                      <span class="step-title truncate-1" :title="step.title">{{ step.title }}</span>
                     </div>
                     <div class="step-schedule-controls">
                       <select 
@@ -568,12 +568,21 @@
             </div>
           </div>
 
-          <!-- Week Calendar (moved above goals) -->
+          <!-- Week Calendar - Workdays (5 days) -->
           <div class="week-calendar-full card">
-            <h3>План на неделю <span class="drag-hint">Перетаскивайте задачи между днями</span></h3>
-            <div class="calendar-grid-full">
+            <div class="calendar-header-row">
+              <h3>План на неделю <span class="drag-hint">Перетаскивайте задачи между днями</span></h3>
+              <button 
+                class="btn btn-sm btn-outline weekend-toggle"
+                @click="showWeekend = !showWeekend"
+              >
+                {{ showWeekend ? 'Скрыть выходные' : 'Выходные' }}
+                <span v-if="weekendTasksCount > 0" class="weekend-badge">{{ weekendTasksCount }}</span>
+              </button>
+            </div>
+            <div class="calendar-grid-5">
               <div 
-                v-for="day in weekDays" 
+                v-for="day in workDays" 
                 :key="day.date"
                 class="calendar-day-full"
                 :class="{ 
@@ -606,28 +615,113 @@
                     @dragstart="handleDragStart(task)"
                     @dragend="handleDragEnd"
                   >
-                    <div class="drag-handle">⋮⋮</div>
-                    <input 
-                      type="checkbox"
-                      :checked="task.completed"
-                      @change="toggleTaskComplete(task.id)"
-                      class="task-checkbox"
-                    />
+                    <button 
+                      class="sphere-toggle-btn" 
+                      :class="{ completed: task.completed }"
+                      :style="{ 
+                        '--sphere-color': getSphereColor(getSphereIdFromGoal(task.goalId)),
+                        '--sphere-bg': getSphereColor(getSphereIdFromGoal(task.goalId)) + '20'
+                      }"
+                      :title="task.completed ? 'Отменить выполнение' : 'Отметить выполненной'"
+                      @click.stop="toggleTaskComplete(task.id)"
+                    >
+                      <component 
+                        v-if="!task.completed" 
+                        :is="getSphereIcon(getSphereIdFromGoal(task.goalId))" 
+                        :size="14" 
+                        class="sphere-icon"
+                      />
+                      <Check v-else :size="14" class="check-icon" />
+                    </button>
                     <div class="task-info">
-                      <span class="task-title">{{ task.stepTitle }}</span>
-                      <span class="task-goal">{{ task.goalTitle }}</span>
+                      <span class="task-step" :title="task.stepTitle">{{ task.stepTitle }}</span>
+                      <span class="task-goal" :title="task.goalTitle">{{ task.goalTitle }}</span>
                     </div>
-                    <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
                     <button 
                       class="btn-icon remove-sm"
-                      @click="removeTask(task.id)"
+                      @click.stop="removeTask(task.id)"
                       title="Удалить"
                     >
                       ✕
                     </button>
                   </div>
                   <div v-if="getTasksForDay(day.date).length === 0" class="empty-day drop-zone">
-                    Перетащите задачу сюда
+                    Перетащите сюда
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Weekend section (collapsible) -->
+            <div v-if="showWeekend" class="weekend-section">
+              <div class="calendar-grid-2">
+                <div 
+                  v-for="day in weekendDays" 
+                  :key="day.date"
+                  class="calendar-day-full weekend-day"
+                  :class="{ 
+                    today: isToday(day.date),
+                    'drag-over': dragOverDay === day.date
+                  }"
+                  @dragover.prevent="handleDragOver(day.date)"
+                  @dragleave="handleDragLeave"
+                  @drop="handleDrop(day.date)"
+                >
+                  <div class="day-header-full">
+                    <div class="day-header-left">
+                      <span class="day-name">{{ day.label }}</span>
+                      <span class="tasks-count" v-if="getTasksForDay(day.date).length > 0">
+                        {{ getTasksForDay(day.date).length }}
+                      </span>
+                    </div>
+                    <span v-if="getTotalTimeForDay(day.date)" class="day-time-total">{{ getTotalTimeForDay(day.date) }}</span>
+                  </div>
+                  <div class="day-tasks-full">
+                    <div 
+                      v-for="task in getTasksForDay(day.date)" 
+                      :key="task.id"
+                      class="task-card"
+                      :class="[
+                        { completed: task.completed, dragging: draggedTaskId === task.id },
+                        'priority-' + (task.priority || 'optional')
+                      ]"
+                      draggable="true"
+                      @dragstart="handleDragStart(task)"
+                      @dragend="handleDragEnd"
+                    >
+                      <button 
+                        class="sphere-toggle-btn" 
+                        :class="{ completed: task.completed }"
+                        :style="{ 
+                          '--sphere-color': getSphereColor(getSphereIdFromGoal(task.goalId)),
+                          '--sphere-bg': getSphereColor(getSphereIdFromGoal(task.goalId)) + '20'
+                        }"
+                        :title="task.completed ? 'Отменить выполнение' : 'Отметить выполненной'"
+                        @click.stop="toggleTaskComplete(task.id)"
+                      >
+                        <component 
+                          v-if="!task.completed" 
+                          :is="getSphereIcon(getSphereIdFromGoal(task.goalId))" 
+                          :size="14" 
+                          class="sphere-icon"
+                        />
+                        <Check v-else :size="14" class="check-icon" />
+                      </button>
+                      <div class="task-info">
+                        <span class="task-step" :title="task.stepTitle">{{ task.stepTitle }}</span>
+                        <span class="task-goal" :title="task.goalTitle">{{ task.goalTitle }}</span>
+                      </div>
+                      <button 
+                        class="btn-icon remove-sm"
+                        @click.stop="removeTask(task.id)"
+                        title="Удалить"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div v-if="getTasksForDay(day.date).length === 0" class="empty-day drop-zone">
+                      Перетащите сюда
+                    </div>
                   </div>
                 </div>
               </div>
@@ -658,7 +752,7 @@
                 <div class="goal-header-left">
                   <span class="expand-icon">{{ expandedGoals[goal.id] ? '▼' : '▶' }}</span>
                   <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
-                  <h4>{{ goal.title }}</h4>
+                  <h4 class="truncate-1" :title="goal.title">{{ goal.title }}</h4>
                 </div>
                 <div class="goal-header-right">
                   <span class="steps-count">{{ getUncompletedSteps(goal).length }} шагов</span>
@@ -682,7 +776,7 @@
                   @dragstart="handleStepDragStart($event, goal, step)"
                   @dragend="handleStepDragEnd"
                 >
-                  <span class="step-title">{{ step.title }}</span>
+                  <span class="step-title truncate-1" :title="step.title">{{ step.title }}</span>
                   <div class="step-actions">
                     <select 
                       :value="getScheduledDate(goal.id, step.id)"
@@ -759,7 +853,14 @@ import {
   Sparkles,
   Square,
   ArrowRight,
-  CheckSquare
+  CheckSquare,
+  Check,
+  Wallet,
+  Palette,
+  Users,
+  Heart,
+  Briefcase,
+  HeartHandshake
 } from 'lucide-vue-next'
 
 const store = useAppStore()
@@ -938,6 +1039,50 @@ function getSphereName(sphereId) {
   return sphere ? `${sphere.icon} ${sphere.name}` : ''
 }
 
+const sphereIcons = {
+  wealth: Wallet,
+  hobbies: Palette,
+  friendship: Users,
+  health: Heart,
+  career: Briefcase,
+  love: HeartHandshake
+}
+
+const sphereColors = {
+  wealth: '#e63946',
+  hobbies: '#f4a261',
+  friendship: '#e9c46a',
+  health: '#2a9d8f',
+  career: '#264653',
+  love: '#9b5de5'
+}
+
+const sphereNames = {
+  wealth: 'Деньги',
+  hobbies: 'Хобби и отдых',
+  friendship: 'Друзья',
+  health: 'Здоровье',
+  career: 'Карьера',
+  love: 'Любовь'
+}
+
+function getSphereIcon(sphereId) {
+  return sphereIcons[sphereId] || Target
+}
+
+function getSphereColor(sphereId) {
+  return sphereColors[sphereId] || '#6366f1'
+}
+
+function getSphereNameOnly(sphereId) {
+  return sphereNames[sphereId] || 'Сфера'
+}
+
+function getSphereIdFromGoal(goalId) {
+  const goal = goals.value.find(g => g.id === goalId)
+  return goal?.sphereId || ''
+}
+
 function getUncompletedSteps(goal) {
   return (goal.steps || []).filter(s => !s.completed)
 }
@@ -960,10 +1105,19 @@ const weekDays = computed(() => {
       date: date.toISOString().split('T')[0],
       dayNum: date.getDate(),
       shortName: dayNames[i],
-      label: fullNames[i]
+      label: fullNames[i],
+      isWeekend: i >= 5
     })
   }
   return days
+})
+
+const workDays = computed(() => weekDays.value.slice(0, 5))
+const weekendDays = computed(() => weekDays.value.slice(5, 7))
+const showWeekend = ref(false)
+
+const weekendTasksCount = computed(() => {
+  return weekendDays.value.reduce((sum, day) => sum + getTasksForDay(day.date).length, 0)
 })
 
 const isCurrentWeek = computed(() => weekOffset.value === 0)
@@ -2023,15 +2177,15 @@ onMounted(() => {
 
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 0.5rem;
+  grid-template-columns: repeat(7, minmax(120px, 1fr));
+  gap: 0.75rem;
 }
 
 .calendar-day {
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
   padding: 0.75rem;
-  min-height: 100px;
+  min-height: 120px;
 }
 
 .calendar-day.today {
@@ -2079,24 +2233,27 @@ onMounted(() => {
 }
 
 .scheduled-task {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.5rem;
   background: var(--bg-primary);
   color: var(--text-primary);
   border-radius: var(--radius-sm);
   border-left: 3px solid var(--border-color);
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.25rem;
+  align-items: flex-start;
+  gap: 0.35rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
 .scheduled-task .task-title {
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
   flex: 1;
   min-width: 0;
+  line-height: 1.3;
+  word-break: break-word;
 }
 
 .task-time-badge {
@@ -2363,6 +2520,8 @@ onMounted(() => {
 
 .planner-main {
   min-width: 0;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .header-row {
@@ -2664,18 +2823,68 @@ onMounted(() => {
   margin-bottom: 1rem;
 }
 
+.calendar-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.calendar-header-row h3 {
+  margin: 0;
+}
+
+.weekend-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.weekend-badge {
+  background: var(--primary-color);
+  color: white;
+  font-size: 0.7rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.calendar-grid-5 {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.calendar-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.weekend-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border-color);
+}
+
+.weekend-day {
+  background: rgba(99, 102, 241, 0.03);
+}
+
 .calendar-grid-full {
   display: grid;
-  grid-template-columns: repeat(7, minmax(120px, 1fr));
-  gap: 0.5rem;
+  grid-template-columns: repeat(7, minmax(140px, 1fr));
+  gap: 0.75rem;
 }
 
 .calendar-day-full {
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
   min-height: 150px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .calendar-day-full.today {
@@ -2721,17 +2930,23 @@ onMounted(() => {
   flex-direction: column;
   gap: 0.375rem;
   overflow-y: auto;
+  min-width: 0;
 }
 
 .task-card {
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
-  padding: 0.5rem;
+  padding: 0.6rem 0.75rem;
   background: var(--bg-primary);
-  border-radius: var(--radius-sm);
-  font-size: 0.8rem;
-  border-left: 3px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  border-left: 4px solid var(--border-color);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .task-card.priority-critical {
@@ -2775,16 +2990,50 @@ onMounted(() => {
   cursor: grabbing;
 }
 
-.drag-handle {
-  color: var(--text-tertiary);
-  font-size: 0.7rem;
-  cursor: grab;
-  padding: 0 0.125rem;
-  user-select: none;
+.sphere-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  cursor: help;
 }
 
-.drag-handle:active {
-  cursor: grabbing;
+.sphere-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  border: none;
+  cursor: pointer;
+  background: var(--sphere-bg);
+  color: var(--sphere-color);
+  transition: all 0.2s ease;
+}
+
+.sphere-toggle-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.sphere-toggle-btn.completed {
+  background: #10b981;
+  color: white;
+}
+
+.sphere-toggle-btn .sphere-icon,
+.sphere-toggle-btn .check-icon {
+  transition: transform 0.2s ease;
+}
+
+.sphere-toggle-btn:active .sphere-icon,
+.sphere-toggle-btn:active .check-icon {
+  transform: scale(0.9);
 }
 
 .calendar-day-full.drag-over {
@@ -2819,23 +3068,34 @@ onMounted(() => {
 .task-info {
   flex: 1;
   min-width: 0;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  overflow: hidden;
 }
 
-.task-info .task-title {
-  display: block;
-  font-weight: 500;
-  white-space: nowrap;
+.task-info .task-step {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
+  font-weight: 600;
+  font-size: 0.9rem;
+  line-height: 1.3;
+  word-break: break-word;
+  color: var(--text-primary);
 }
 
 .task-info .task-goal {
-  display: block;
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: var(--text-secondary);
+  line-height: 1.3;
 }
 
 .btn-icon.remove-sm {
@@ -2968,6 +3228,29 @@ onMounted(() => {
   
   .notification-options {
     gap: 0.5rem;
+  }
+  
+  .calendar-grid,
+  .calendar-grid-full {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    overflow-x: auto;
+  }
+  
+  .calendar-day,
+  .calendar-day-full {
+    min-width: 100px;
+    min-height: 100px;
+    padding: 0.5rem;
+  }
+  
+  .scheduled-task .task-title,
+  .task-info .task-step {
+    font-size: 0.85rem;
+  }
+  
+  .task-info .task-goal {
+    font-size: 0.75rem;
   }
 }
 

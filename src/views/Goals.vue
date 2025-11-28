@@ -172,7 +172,7 @@
                 <span class="goal-sphere-icon" :style="{ borderColor: getSphereColor(goal.sphereId) }">
                   <component :is="getSphereIconComponent(goal.sphereId)" :size="14" />
                 </span>
-                <span class="goal-name">{{ goal.title }}</span>
+                <span class="goal-name truncate-1" :title="goal.title">{{ goal.title }}</span>
                 <span v-if="selectedGoalForPractice?.id === goal.id" class="selected-badge">Выбрана</span>
               </div>
             </div>
@@ -438,7 +438,7 @@
             >
               <div class="goal-header">
                 <div class="goal-title-section">
-                  <h3 class="goal-title">{{ goal.title }}</h3>
+                  <h3 class="goal-title line-clamp-2" :title="goal.title">{{ goal.title }}</h3>
                   <div class="goal-badges">
                     <span 
                       class="goal-status-badge"
@@ -582,7 +582,7 @@
                     v-model="step.completed"
                     @change="updateGoalProgress(selectedGoal)"
                   />
-                  <span :class="{ completed: step.completed }">{{ step.title }}</span>
+                  <span :class="{ completed: step.completed }" class="truncate-1" :title="step.title">{{ step.title }}</span>
                 </label>
               </div>
             </div>

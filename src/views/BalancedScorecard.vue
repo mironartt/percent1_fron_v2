@@ -3,7 +3,9 @@
     <!-- Empty State - First Visit -->
     <div v-if="showEmptyState" class="empty-state-section">
       <div class="empty-state-card card">
-        <div class="empty-icon">⚖️</div>
+        <div class="hero-icon-circle">
+          <ChartPie :size="48" :stroke-width="1.5" />
+        </div>
         <h1>Система сбалансированных показателей</h1>
         <p class="subtitle">
           Оцените баланс всех сфер вашей жизни и определите точки роста
@@ -44,7 +46,8 @@
         </div>
 
         <button class="btn btn-primary btn-lg" @click="startLesson">
-          ✨ Начать оценку
+          <Sparkles :size="18" />
+          Начать оценку
         </button>
       </div>
     </div>
@@ -55,20 +58,35 @@
         <h1>Система сбалансированных показателей</h1>
       </header>
 
-      <div class="summary-grid">
-        <div class="summary-stat-card card">
-          <div class="summary-value">{{ averageScore.toFixed(1) }}</div>
-          <div class="summary-label">Средний балл</div>
+      <div class="summary-stats-row">
+        <div class="summary-stat-compact">
+          <div class="stat-icon-wrapper stat-icon-primary">
+            <TrendingUp :size="20" :stroke-width="2" />
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">{{ averageScore.toFixed(1) }}</div>
+            <div class="stat-label">Средний балл</div>
+          </div>
         </div>
 
-        <div class="summary-stat-card card" v-if="strongestSphere">
-          <div class="summary-value">{{ strongestSphere.icon }}</div>
-          <div class="summary-label">Самая сильная<br/>{{ strongestSphere.name }}</div>
+        <div class="summary-stat-compact" v-if="strongestSphere">
+          <div class="stat-icon-wrapper" :style="{ color: getSphereColor(strongestSphere.id), background: `color-mix(in srgb, ${getSphereColor(strongestSphere.id)} 12%, transparent)` }">
+            <component :is="getSphereIcon(strongestSphere.id)" :size="20" :stroke-width="2" />
+          </div>
+          <div class="stat-info">
+            <div class="stat-value-text">{{ strongestSphere.name }}</div>
+            <div class="stat-label">Самая сильная</div>
+          </div>
         </div>
 
-        <div class="summary-stat-card card" v-if="weakestSphere">
-          <div class="summary-value">{{ weakestSphere.icon }}</div>
-          <div class="summary-label">Зона роста<br/>{{ weakestSphere.name }}</div>
+        <div class="summary-stat-compact" v-if="weakestSphere">
+          <div class="stat-icon-wrapper stat-icon-warning" :style="{ color: getSphereColor(weakestSphere.id), background: `color-mix(in srgb, ${getSphereColor(weakestSphere.id)} 12%, transparent)` }">
+            <component :is="getSphereIcon(weakestSphere.id)" :size="20" :stroke-width="2" />
+          </div>
+          <div class="stat-info">
+            <div class="stat-value-text">{{ weakestSphere.name }}</div>
+            <div class="stat-label">Зона роста</div>
+          </div>
         </div>
       </div>
 
@@ -89,7 +107,8 @@
             class="accordion-item"
             :class="{ 
               expanded: expandedSummarySpheres.includes(sphere.id),
-              'has-content': hasReflectionContent(sphere)
+              'has-content': hasReflectionContent(sphere),
+              'editing': editingSphereId === sphere.id
             }"
             :style="{ '--sphere-color': getSphereColor(sphere.id) }"
           >
@@ -106,34 +125,100 @@
                   <span class="score-badge-neutral">{{ sphere.score }}/10</span>
                 </div>
               </div>
-              <ChevronDown 
-                :size="20" 
-                class="accordion-chevron" 
-                :class="{ rotated: expandedSummarySpheres.includes(sphere.id) }" 
-              />
+              <div class="accordion-right">
+                <button 
+                  v-if="editingSphereId !== sphere.id"
+                  class="btn-edit-reflection"
+                  @click.stop="startEditReflection(sphere)"
+                  title="Редактировать"
+                >
+                  <Pencil :size="16" :stroke-width="2" />
+                </button>
+                <ChevronDown 
+                  :size="20" 
+                  class="accordion-chevron" 
+                  :class="{ rotated: expandedSummarySpheres.includes(sphere.id) }" 
+                />
+              </div>
             </div>
 
             <div class="accordion-content" v-show="expandedSummarySpheres.includes(sphere.id)">
-              <div class="reflection-answers" v-if="hasReflectionContent(sphere)">
-                <div class="answer-item" v-if="sphere.reflection?.why">
-                  <div class="answer-label">Почему такой балл?</div>
-                  <div class="answer-text">{{ sphere.reflection.why }}</div>
+              <!-- Edit Mode -->
+              <div v-if="editingSphereId === sphere.id" class="reflection-edit-form">
+                <div class="question-item">
+                  <label class="question-label">Почему такой балл?</label>
+                  <textarea 
+                    v-model="editingReflection.why"
+                    placeholder="Напишите свой ответ..."
+                    class="reflection-textarea"
+                    rows="2"
+                  ></textarea>
                 </div>
-                <div class="answer-item" v-if="sphere.reflection?.ten">
-                  <div class="answer-label">Что нужно для 10?</div>
-                  <div class="answer-text">{{ sphere.reflection.ten }}</div>
+                <div class="question-item">
+                  <label class="question-label">Что нужно для 10?</label>
+                  <textarea 
+                    v-model="editingReflection.ten"
+                    placeholder="Опишите идеальное состояние..."
+                    class="reflection-textarea"
+                    rows="2"
+                  ></textarea>
                 </div>
-                <div class="answer-item" v-if="sphere.reflection?.prevents">
-                  <div class="answer-label">Что мешает?</div>
-                  <div class="answer-text">{{ sphere.reflection.prevents }}</div>
+                <div class="question-item">
+                  <label class="question-label">Что мешает?</label>
+                  <textarea 
+                    v-model="editingReflection.prevents"
+                    placeholder="Назовите препятствия..."
+                    class="reflection-textarea"
+                    rows="2"
+                  ></textarea>
                 </div>
-                <div class="answer-item" v-if="sphere.reflection?.desired">
-                  <div class="answer-label">Желаемое состояние</div>
-                  <div class="answer-text">{{ sphere.reflection.desired }}</div>
+                <div class="question-item">
+                  <label class="question-label">Желаемое состояние</label>
+                  <textarea 
+                    v-model="editingReflection.desired"
+                    placeholder="Опишите, как вы хотите..."
+                    class="reflection-textarea"
+                    rows="2"
+                  ></textarea>
+                </div>
+                <div class="edit-actions">
+                  <button class="btn btn-secondary btn-sm" @click="cancelEditReflection">
+                    <X :size="16" />
+                    Отмена
+                  </button>
+                  <button class="btn btn-primary btn-sm" @click="saveEditReflection(sphere.id)">
+                    <Check :size="16" />
+                    Сохранить
+                  </button>
                 </div>
               </div>
-              <div class="no-reflection" v-else>
-                <span>Рефлексия не заполнена</span>
+              <!-- View Mode -->
+              <div v-else>
+                <div class="reflection-answers" v-if="hasReflectionContent(sphere)">
+                  <div class="answer-item" v-if="sphere.reflection?.why">
+                    <div class="answer-label">Почему такой балл?</div>
+                    <div class="answer-text">{{ sphere.reflection.why }}</div>
+                  </div>
+                  <div class="answer-item" v-if="sphere.reflection?.ten">
+                    <div class="answer-label">Что нужно для 10?</div>
+                    <div class="answer-text">{{ sphere.reflection.ten }}</div>
+                  </div>
+                  <div class="answer-item" v-if="sphere.reflection?.prevents">
+                    <div class="answer-label">Что мешает?</div>
+                    <div class="answer-text">{{ sphere.reflection.prevents }}</div>
+                  </div>
+                  <div class="answer-item" v-if="sphere.reflection?.desired">
+                    <div class="answer-label">Желаемое состояние</div>
+                    <div class="answer-text">{{ sphere.reflection.desired }}</div>
+                  </div>
+                </div>
+                <div class="no-reflection" v-else>
+                  <span>Рефлексия не заполнена</span>
+                  <button class="btn btn-secondary btn-sm" @click.stop="startEditReflection(sphere)">
+                    <Pencil :size="14" />
+                    Добавить
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -182,33 +267,56 @@
         <div class="card theory-content">
           <h2>Зачем нужно ССП?</h2>
           
-          <p style="margin-bottom: 1.5rem; line-height: 1.6;">
+          <p class="theory-text">
             Представьте вашу жизнь как колесо. Каждая спица — это важная сфера: здоровье, карьера, отношения, финансы, хобби и личностный рост. Если одна из спиц короче других, колесо катится неровно.
           </p>
 
-          <p style="margin-bottom: 1.5rem; line-height: 1.6;">
+          <p class="theory-text">
             Точно так же работает и ваша жизнь. Дисбаланс в одной сфере влияет на все остальные. Нельзя быть по-настоящему успешным в карьере, если страдает здоровье. Сложно радоваться достижениям, если нет времени на близких.
           </p>
 
-          <div class="idea-block" style="margin-bottom: 2rem;">
-            <div class="idea-icon">💡</div>
-            <div>
+          <div class="idea-block">
+            <div class="idea-icon-wrapper">
+              <Lightbulb :size="24" :stroke-width="2" />
+            </div>
+            <div class="idea-content">
               <h3>Ключевая идея</h3>
               <p>Для роста нужен баланс. Цели работают только тогда, когда опираются на внутреннюю мотивацию и системное равновесие между всеми сферами жизни.</p>
             </div>
           </div>
 
-          <h3 style="margin-bottom: 1.5rem; font-size: 1.1rem; font-weight: 600;">Что вы будете делать?</h3>
-          <ol style="margin-left: 1.5rem; line-height: 1.8; font-size: 0.95rem;">
-            <li><strong>Шаг 1:</strong> Оцените каждую сферу жизни от 0 до 10, переещая секторы колеса.</li>
-            <li><strong>Шаг 2:</strong> Ответьте на вопросы ИИ-коуча о каждой сфере.</li>
-            <li><strong>Шаг 3:</strong> Проведете глубокую рефлексию и дадите себе ответ почему поставили такой балл</li>
-          </ol>
+          <div class="theory-steps-section">
+            <h3>Что вас ждёт:</h3>
+            <div class="theory-steps">
+              <div class="theory-step">
+                <span class="theory-step-num">1</span>
+                <div class="theory-step-content">
+                  <strong>Колесо баланса</strong>
+                  <p>Оцените каждую из 6 сфер жизни от 0 до 10</p>
+                </div>
+              </div>
+              <div class="theory-step">
+                <span class="theory-step-num">2</span>
+                <div class="theory-step-content">
+                  <strong>Глубокая рефлексия</strong>
+                  <p>Ответьте на вопросы о каждой сфере</p>
+                </div>
+              </div>
+              <div class="theory-step">
+                <span class="theory-step-num">3</span>
+                <div class="theory-step-content">
+                  <strong>Итоги и инсайты</strong>
+                  <p>Зафиксируйте результаты и точки роста</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="step-actions">
-          <button class="btn btn-primary btn-lg" @click="nextStep">
-            Перейти к упражнению "Колесо баланса" →
+          <button class="btn btn-primary btn-lg btn-with-icon" @click="nextStep">
+            Перейти к Колесу баланса
+            <ArrowRight :size="18" />
           </button>
         </div>
       </div>
@@ -236,43 +344,6 @@
           </div>
 
           <div class="wheel-sidebar">
-            <div class="card ai-coach">
-              <div class="coach-header">
-                <span class="coach-icon">💬</span>
-                <h3>ИИ-коуч</h3>
-              </div>
-              
-              <div class="chat-container">
-                <div class="chat-messages">
-                  <div class="message coach-message">
-                    <span class="message-avatar">🤖</span>
-                    <div class="message-content">
-                      <p>Заполните колесо баланса, оценив каждую сферу от 0 до 10. Для этого кликните на сектор и перетащите его край наружу или внутрь.</p>
-                    </div>
-                  </div>
-                  <div v-for="msg in chatMessages" :key="msg.id" class="message" :class="msg.type">
-                    <span v-if="msg.type === 'coach'" class="message-avatar">🤖</span>
-                    <div class="message-content">
-                      <p>{{ msg.text }}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div class="chat-input-area">
-                  <input 
-                    v-model="userMessage"
-                    @keyup.enter="sendMessage"
-                    type="text"
-                    placeholder="Напишите ваш ответ..."
-                    class="chat-input"
-                  />
-                  <button @click="sendMessage" class="btn-send">
-                    Отправить
-                  </button>
-                </div>
-              </div>
-            </div>
-
             <div class="card sphere-details" v-if="selectedSphere">
               <h3>{{ selectedSphere.icon }} {{ selectedSphere.name }}</h3>
               <div class="score-display-large">
@@ -496,7 +567,14 @@ import {
   MessageSquare,
   Target,
   ArrowRight,
-  RotateCcw
+  RotateCcw,
+  TrendingUp,
+  Pencil,
+  Check,
+  X,
+  Lightbulb,
+  ChartPie,
+  Sparkles
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -557,6 +635,38 @@ function toggleSummarySphereExpand(sphereId) {
   }
 }
 
+const editingSphereId = ref(null)
+const editingReflection = ref({
+  why: '',
+  ten: '',
+  prevents: '',
+  desired: ''
+})
+
+function startEditReflection(sphere) {
+  editingSphereId.value = sphere.id
+  editingReflection.value = {
+    why: sphere.reflection?.why || '',
+    ten: sphere.reflection?.ten || '',
+    prevents: sphere.reflection?.prevents || '',
+    desired: sphere.reflection?.desired || ''
+  }
+  if (!expandedSummarySpheres.value.includes(sphere.id)) {
+    expandedSummarySpheres.value.push(sphere.id)
+  }
+}
+
+function cancelEditReflection() {
+  editingSphereId.value = null
+  editingReflection.value = { why: '', ten: '', prevents: '', desired: '' }
+}
+
+function saveEditReflection(sphereId) {
+  store.updateSphereReflection(sphereId, { ...editingReflection.value })
+  editingSphereId.value = null
+  editingReflection.value = { why: '', ten: '', prevents: '', desired: '' }
+}
+
 function hasReflectionContent(sphere) {
   if (!sphere.reflection) return false
   return sphere.reflection.why || sphere.reflection.ten || 
@@ -615,10 +725,6 @@ function restartLesson() {
   }
 }
 
-// Chat state
-const chatMessages = ref([])
-const userMessage = ref('')
-
 const wheelCompleted = computed(() => {
   return lifeSpheres.value.every(s => s.score > 0)
 })
@@ -655,39 +761,6 @@ function saveSphereNotes() {
   }
 }
 
-function sendMessage() {
-  if (!userMessage.value.trim()) return
-  
-  // Add user message
-  chatMessages.value.push({
-    id: Date.now(),
-    type: 'user',
-    text: userMessage.value
-  })
-  
-  // Generate coach response based on context
-  const coachResponses = [
-    'Спасибо за ответ! Это очень важная информация.',
-    'Интересно! Расскажите подробнее о вашем подходе к этому.',
-    'Я вижу, что это важно для вас. Как вы можете улучшить эту область?',
-    'Хорошее наблюдение! Что вы хотите изменить в этом?',
-    'Спасибо за честный ответ. Это поможет вам в развитии.'
-  ]
-  
-  const randomResponse = coachResponses[Math.floor(Math.random() * coachResponses.length)]
-  
-  setTimeout(() => {
-    chatMessages.value.push({
-      id: Date.now() + 1,
-      type: 'coach',
-      text: randomResponse
-    })
-  }, 300)
-  
-  userMessage.value = ''
-}
-
-
 function getSphereById(sphereId) {
   return lifeSpheres.value.find(s => s.id === sphereId)
 }
@@ -708,7 +781,7 @@ function completeModule() {
       reflection: s.reflection
     }))
   })
-  router.push('/app/goals')
+  router.push('/app/goals-bank')
 }
 
 function resetModule() {
@@ -743,6 +816,18 @@ function resetModule() {
 .empty-state-card .empty-icon {
   font-size: 4rem;
   margin-bottom: 1.5rem;
+}
+
+.hero-icon-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  color: var(--primary-color);
 }
 
 .empty-state-card h1 {
@@ -826,34 +911,79 @@ function resetModule() {
   color: var(--text-secondary);
 }
 
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  margin-bottom: 2rem;
+/* Compact Stats Row */
+.summary-stats-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
 }
 
-.summary-stat-card {
-  text-align: center;
-  padding: 1.5rem;
+.summary-stat-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  flex: 1;
+  min-width: 180px;
 }
 
-.summary-icon {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
+.stat-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
 }
 
-.summary-value {
-  font-size: 2.5rem;
+.stat-icon-wrapper.stat-icon-primary {
+  color: var(--primary-color);
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.stat-value {
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--primary-color);
+  line-height: 1.2;
 }
 
-.summary-label {
-  font-size: 0.875rem;
+.stat-value-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stat-label {
+  font-size: 0.75rem;
   color: var(--text-secondary);
-  margin-top: 0.25rem;
-  line-height: 1.3;
+  line-height: 1.2;
+}
+
+@media (max-width: 640px) {
+  .summary-stats-row {
+    flex-direction: column;
+  }
+  
+  .summary-stat-compact {
+    min-width: 100%;
+  }
 }
 
 .wheel-summary {
@@ -1100,19 +1230,115 @@ function resetModule() {
 }
 
 .theory-content h2 {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   margin-bottom: 1.5rem;
   text-align: center;
+  font-weight: 600;
+}
+
+.theory-text {
+  margin-bottom: 1.25rem;
+  line-height: 1.7;
+  font-size: 0.95rem;
+  color: var(--text-primary);
 }
 
 .idea-block {
   display: flex;
-  gap: 1.5rem;
-  padding: 2rem;
-  background: rgba(99, 102, 241, 0.05);
-  border-radius: var(--radius-lg);
-  border: 2px solid rgba(99, 102, 241, 0.2);
-  margin-bottom: 2rem;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: rgba(99, 102, 241, 0.06);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  margin-bottom: 1.5rem;
+}
+
+.idea-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: rgba(99, 102, 241, 0.12);
+  border-radius: var(--radius-sm);
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.idea-content h3 {
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.idea-content p {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Theory Steps Section */
+.theory-steps-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.theory-steps-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.theory-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.theory-step {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.theory-step-num {
+  width: 28px;
+  height: 28px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.theory-step-content strong {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.125rem;
+  color: var(--text-primary);
+}
+
+.theory-step-content p {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Button with icon */
+.btn-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .idea-icon {
@@ -1488,6 +1714,103 @@ function resetModule() {
   text-align: center;
   color: var(--text-muted);
   font-style: italic;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.no-reflection span {
+  font-style: italic;
+}
+
+.no-reflection .btn {
+  font-style: normal;
+}
+
+/* Accordion Right Side */
+.accordion-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Edit Reflection Button */
+.btn-edit-reflection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+.accordion-header:hover .btn-edit-reflection {
+  opacity: 1;
+}
+
+.btn-edit-reflection:hover {
+  background: var(--bg-tertiary);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* Reflection Edit Form */
+.reflection-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 1rem;
+}
+
+.reflection-edit-form .question-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.reflection-edit-form .question-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.reflection-edit-form .reflection-textarea {
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  min-height: 60px;
+}
+
+.edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-color);
+  margin-top: 0.5rem;
+}
+
+.edit-actions .btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.accordion-item.editing {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
 .summary-content {

@@ -34,85 +34,54 @@
 
     <div v-else class="edit-layout">
       <div class="main-content">
-        <div class="card">
+        <div class="card goal-info-card">
           <div class="card-header">
-            <h2>Редактирование цели</h2>
-            <span 
-              class="goal-status-badge"
-              :class="goal.status"
+            <div class="goal-title-section">
+              <h2 class="goal-title line-clamp-2">{{ goalForm.title || 'Без названия' }}</h2>
+              <span 
+                class="goal-status-badge"
+                :class="goal.status"
+              >
+                {{ getStatusLabel(goal.status) }}
+              </span>
+            </div>
+            <button 
+              v-if="goal.sourceId" 
+              class="btn btn-link edit-in-bank-btn"
+              @click="goToGoalsBank"
             >
-              {{ getStatusLabel(goal.status) }}
-            </span>
+              <ExternalLink :size="14" />
+              Редактировать в Банке целей
+            </button>
           </div>
 
-          <div class="form-section">
-            <div class="form-group">
-              <label class="form-label">Название цели *</label>
-              <input 
-                type="text"
-                :value="goalForm.title"
-                @input="updateField('title', $event.target.value)"
-                class="form-input form-input-lg"
-                placeholder="Например: Выучить английский до B2"
-              />
+          <div class="goal-info-section">
+            <div class="goal-info-row" v-if="goalForm.description">
+              <span class="info-label">Почему важно:</span>
+              <p class="info-value description-value">{{ goalForm.description }}</p>
             </div>
 
-            <div class="form-group">
-              <label class="form-label">Описание и мотивация</label>
-              <textarea 
-                :value="goalForm.description"
-                @input="updateField('description', $event.target.value)"
-                class="form-textarea"
-                rows="4"
-                placeholder="Почему эта цель важна для вас? Что изменится в вашей жизни?"
-              ></textarea>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Сфера жизни</label>
-                <div class="custom-select-wrapper" ref="sphereDropdownRef">
-                  <div 
-                    class="custom-select-trigger"
-                    @click="toggleSphereDropdown"
-                  >
-                    <div class="selected-sphere" v-if="goalForm.sphereId">
-                      <span class="sphere-icon-wrapper" :style="{ '--sphere-color': getSphereColor(goalForm.sphereId) }">
-                        <component :is="getSphereIconComponent(goalForm.sphereId)" :size="16" />
-                      </span>
-                      <span>{{ getSphereName(goalForm.sphereId) }}</span>
-                    </div>
-                    <span v-else class="placeholder-text">Выберите сферу</span>
-                    <ChevronDown :size="16" class="dropdown-arrow" :class="{ open: sphereDropdownOpen }" />
-                  </div>
-                  <div class="custom-select-options" v-show="sphereDropdownOpen">
-                    <div 
-                      v-for="sphere in lifeSpheres" 
-                      :key="sphere.id"
-                      class="custom-select-option"
-                      :class="{ selected: goalForm.sphereId === sphere.id }"
-                      @click="selectSphere(sphere.id)"
-                    >
-                      <span class="sphere-icon-wrapper" :style="{ '--sphere-color': getSphereColor(sphere.id) }">
-                        <component :is="getSphereIconComponent(sphere.id)" :size="16" />
-                      </span>
-                      <span>{{ sphere.name }}</span>
-                    </div>
-                  </div>
+            <div class="goal-info-grid">
+              <div class="goal-info-item" v-if="goalForm.sphereId">
+                <span class="info-label">Сфера:</span>
+                <div class="sphere-display">
+                  <span class="sphere-icon-wrapper" :style="{ '--sphere-color': getSphereColor(goalForm.sphereId) }">
+                    <component :is="getSphereIconComponent(goalForm.sphereId)" :size="16" />
+                  </span>
+                  <span class="sphere-name">{{ getSphereName(goalForm.sphereId) }}</span>
                 </div>
               </div>
 
-              <div class="form-group">
-                <label class="form-label">Дедлайн</label>
+              <div class="goal-info-item">
+                <span class="info-label">Дедлайн:</span>
                 <input 
                   type="date"
                   :value="goalForm.deadline"
                   @input="updateField('deadline', $event.target.value)"
-                  class="form-input"
+                  class="form-input deadline-input"
                 />
               </div>
             </div>
-
           </div>
         </div>
 
@@ -218,11 +187,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { 
-  Trash2, Save, Plus, ArrowLeft, GripVertical, X, ChevronDown,
+  Trash2, Save, Plus, ArrowLeft, GripVertical, X, ExternalLink,
   Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target,
   Square, CheckSquare
 } from 'lucide-vue-next'
@@ -249,16 +218,12 @@ const goalForm = ref({
 })
 
 
-const sphereDropdownRef = ref(null)
-const sphereDropdownOpen = ref(false)
-
-function toggleSphereDropdown() {
-  sphereDropdownOpen.value = !sphereDropdownOpen.value
-}
-
-function selectSphere(sphereId) {
-  goalForm.value.sphereId = sphereId
-  sphereDropdownOpen.value = false
+function goToGoalsBank() {
+  if (goal.value && goal.value.sourceId) {
+    router.push(`/app/goals-bank?edit=${goal.value.sourceId}`)
+  } else {
+    router.push('/app/goals-bank')
+  }
 }
 
 function getSphereIconComponent(sphereId) {
@@ -290,12 +255,6 @@ function getSphereName(sphereId) {
   return sphere ? sphere.name : 'Не указана'
 }
 
-function handleClickOutside(event) {
-  if (sphereDropdownRef.value && !sphereDropdownRef.value.contains(event.target)) {
-    sphereDropdownOpen.value = false
-  }
-}
-
 const totalTimeEstimate = computed(() => {
   const timeMap = {
     '30min': 0.5,
@@ -324,11 +283,6 @@ const dragOverIndex = ref(null)
 
 onMounted(() => {
   loadGoalData()
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
 })
 
 watch(() => route.params.id, () => {
@@ -433,11 +387,6 @@ function recalculateProgress() {
 }
 
 function saveGoal() {
-  if (!goalForm.value.title.trim()) {
-    alert('Введите название цели')
-    return
-  }
-
   const filteredSteps = goalForm.value.steps
     .filter(s => s.title.trim())
     .map((s, index) => ({
@@ -454,11 +403,7 @@ function saveGoal() {
     : 0
 
   const goalData = {
-    title: goalForm.value.title,
-    description: goalForm.value.description,
-    sphereId: goalForm.value.sphereId,
     deadline: goalForm.value.deadline,
-    mvp: goalForm.value.mvp,
     steps: filteredSteps,
     progress: progress
   }
@@ -623,44 +568,95 @@ function formatDate(dateString) {
   color: var(--warning-color);
 }
 
-.form-section {
+/* Goal Info Card - Read Only Display */
+.goal-info-card .card-header {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.goal-title-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.goal-title {
+  font-size: 1.5rem;
+  margin: 0;
+  color: var(--text-primary);
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+.edit-in-bank-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0;
+  font-size: 0.875rem;
+  color: var(--primary-color);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.edit-in-bank-btn:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.goal-info-section {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
-.form-input-lg {
-  font-size: 1.25rem;
-  padding: 1rem;
+.goal-info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
-.form-row {
+.info-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  margin: 0;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.description-value {
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--primary-color);
+}
+
+.goal-info-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
 
-.custom-select-wrapper {
-  position: relative;
-}
-
-.custom-select-trigger {
+.goal-info-item {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  background: var(--bg-primary);
-  cursor: pointer;
-  transition: all 0.2s ease;
+  flex-direction: column;
+  gap: 0.375rem;
 }
 
-.custom-select-trigger:hover {
-  border-color: var(--primary-color);
-}
-
-.selected-sphere {
+.sphere-display {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -670,65 +666,21 @@ function formatDate(dateString) {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: rgba(99, 102, 241, 0.1);
   color: var(--sphere-color, #6366f1);
   border: 1.5px solid var(--sphere-color, var(--border-color));
 }
 
-.placeholder-text {
-  color: var(--text-secondary);
+.sphere-name {
+  font-weight: 500;
+  color: var(--text-primary);
 }
 
-.dropdown-arrow {
-  color: var(--text-secondary);
-  transition: transform 0.2s ease;
-}
-
-.dropdown-arrow.open {
-  transform: rotate(180deg);
-}
-
-.custom-select-options {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  margin-top: 0.25rem;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  z-index: 100;
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.custom-select-option {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.custom-select-option:hover {
-  background: var(--bg-secondary);
-}
-
-.custom-select-option.selected {
-  background: rgba(99, 102, 241, 0.1);
-}
-
-.custom-select-option:first-child {
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-}
-
-.custom-select-option:last-child {
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
+.deadline-input {
+  max-width: 200px;
 }
 
 .steps-count {
