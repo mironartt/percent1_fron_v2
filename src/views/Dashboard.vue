@@ -66,6 +66,8 @@
 
     <div class="main-layout">
       <div class="main-content">
+        <FirstSteps v-if="!allFirstStepsCompleted" />
+        
         <JournalWidget @open="showJournalModal = true" />
 
         <div class="card current-tasks">
@@ -149,6 +151,8 @@
       </div>
 
       <aside class="sidebar-widgets">
+        <MentorWidget />
+        
         <div class="card spheres-widget">
           <div class="card-header">
             <h3 class="card-title">
@@ -215,6 +219,8 @@ import DashboardStage2 from '../components/DashboardStage2.vue'
 import DashboardStage3 from '../components/DashboardStage3.vue'
 import JournalWidget from '../components/JournalWidget.vue'
 import JournalEntry from '../components/JournalEntry.vue'
+import MentorWidget from '../components/MentorWidget.vue'
+import FirstSteps from '../components/FirstSteps.vue'
 import { DEBUG_MODE } from '@/config/settings.js'
 import { 
   Target, 
@@ -244,6 +250,7 @@ const lifeSpheres = computed(() => store.lifeSpheres)
 const dailyTasks = computed(() => store.dailyPlan.tasks)
 const userStage = computed(() => store.userStage)
 const journalStreak = computed(() => store.journalStreak)
+const allFirstStepsCompleted = computed(() => store.allFirstStepsCompleted)
 
 const shouldShowOnboarding = computed(() => {
   const show = store.shouldShowOnboarding

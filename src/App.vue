@@ -18,6 +18,7 @@
       </router-view>
     </main>
     <TelegramAuthModals />
+    <MentorFloatingButton v-if="showMentorButton" />
   </div>
 </template>
 
@@ -26,6 +27,7 @@ import { computed, ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
 import TelegramAuthModals from './components/TelegramAuthModals.vue'
+import MentorFloatingButton from './components/MentorFloatingButton.vue'
 
 const route = useRoute()
 const sidebarCollapsed = ref(false)
@@ -46,6 +48,14 @@ const isAuthPage = computed(() => {
 })
 
 const hasSidebar = computed(() => !isAuthPage.value)
+
+const isDashboard = computed(() => {
+  return route.path === '/app/dashboard' || route.name === 'dashboard'
+})
+
+const showMentorButton = computed(() => {
+  return hasSidebar.value && !isDashboard.value
+})
 
 const appClasses = computed(() => ({
   'has-sidebar': hasSidebar.value,

@@ -287,6 +287,11 @@ export const useAppStore = defineStore('app', () => {
       journal.value.entries.unshift(newEntry)
     }
     
+    // Триггер для первых шагов
+    if (!firstSteps.value.write_journal) {
+      completeFirstStep('write_journal')
+    }
+    
     saveToLocalStorage()
     return newEntry
   }
@@ -337,6 +342,97 @@ export const useAppStore = defineStore('app', () => {
     
     return streak
   })
+
+  // ========================================
+  // FIRST STEPS (Новые мини-задания)
+  // ========================================
+  
+  const firstSteps = ref({
+    ssp: false,
+    add_idea: false,
+    validate_goal: false,
+    select_key_goal: false,
+    plan_task: false,
+    write_journal: false,
+    chat_mentor: false
+  })
+
+  function completeFirstStep(stepId) {
+    if (firstSteps.value.hasOwnProperty(stepId)) {
+      firstSteps.value[stepId] = true
+      saveToLocalStorage()
+      if (DEBUG_MODE) {
+        console.log('[Store] First step completed:', stepId)
+      }
+    }
+  }
+
+  const firstStepsCompleted = computed(() => {
+    return Object.values(firstSteps.value).filter(v => v === true).length
+  })
+
+  const firstStepsTotal = computed(() => {
+    return Object.keys(firstSteps.value).length
+  })
+
+  const allFirstStepsCompleted = computed(() => {
+    return firstStepsCompleted.value === firstStepsTotal.value
+  })
+
+  // ========================================
+  // MENTOR (ИИ-наставник)
+  // ========================================
+
+  const mentor = ref({
+    messages: [],
+    isOpen: false,
+    mode: 'on_request',
+    lastActivity: null
+  })
+
+  function openMentorChat() {
+    mentor.value.isOpen = true
+    if (!firstSteps.value.chat_mentor) {
+      completeFirstStep('chat_mentor')
+    }
+    saveToLocalStorage()
+  }
+
+  function closeMentorChat() {
+    mentor.value.isOpen = false
+    saveToLocalStorage()
+  }
+
+  function addMentorMessage(message) {
+    mentor.value.messages.push({
+      id: Date.now().toString(),
+      ...message,
+      timestamp: new Date().toISOString()
+    })
+    mentor.value.lastActivity = new Date().toISOString()
+    saveToLocalStorage()
+  }
+
+  function sendMentorMessage(content, role = 'user') {
+    addMentorMessage({
+      content,
+      role
+    })
+    
+    if (role === 'user' && !firstSteps.value.chat_mentor) {
+      completeFirstStep('chat_mentor')
+    }
+  }
+
+  function clearMentorMessages() {
+    mentor.value.messages = []
+    saveToLocalStorage()
+  }
+
+  function setMentorMode(mode) {
+    mentor.value.mode = mode
+    saveToLocalStorage()
+  }
 
   // Настройки Telegram
   const telegramSettings = ref({
@@ -519,7 +615,9 @@ export const useAppStore = defineStore('app', () => {
       planningModule: planningModule.value,
       weeklyPlans: weeklyPlans.value,
       telegramSettings: telegramSettings.value,
-      journal: journal.value
+      journal: journal.value,
+      firstSteps: firstSteps.value,
+      mentor: mentor.value
     }))
   }
 
@@ -551,6 +649,8 @@ export const useAppStore = defineStore('app', () => {
         if (parsed.weeklyPlans) weeklyPlans.value = parsed.weeklyPlans
         if (parsed.telegramSettings) telegramSettings.value = { ...telegramSettings.value, ...parsed.telegramSettings }
         if (parsed.journal) journal.value = { ...journal.value, ...parsed.journal }
+        if (parsed.firstSteps) firstSteps.value = { ...firstSteps.value, ...parsed.firstSteps }
+        if (parsed.mentor) mentor.value = { ...mentor.value, ...parsed.mentor }
       } catch (e) {
         console.error('Error loading data:', e)
       }
@@ -1251,6 +1351,12 @@ export const useAppStore = defineStore('app', () => {
       completed: true,
       data: data
     }
+    
+    // Триггер для первых шагов
+    if (!firstSteps.value.ssp) {
+      completeFirstStep('ssp')
+    }
+    
     saveToLocalStorage()
   }
 
@@ -1272,6 +1378,12 @@ export const useAppStore = defineStore('app', () => {
         why3: ''
       }
     })
+    
+    // Триггер для первых шагов
+    if (!firstSteps.value.add_idea) {
+      completeFirstStep('add_idea')
+    }
+    
     saveToLocalStorage()
   }
 
@@ -1296,6 +1408,12 @@ export const useAppStore = defineStore('app', () => {
     if (idea) {
       idea.validated = isValid
       idea.status = isValid ? 'validated' : 'rejected'
+      
+      // Триггер для первых шагов
+      if (!firstSteps.value.validate_goal) {
+        completeFirstStep('validate_goal')
+      }
+      
       saveToLocalStorage()
     }
   }
@@ -1310,6 +1428,12 @@ export const useAppStore = defineStore('app', () => {
       linkedGoals: goal.linkedGoals || [],
       priority: goal.priority || 0
     })
+    
+    // Триггер для первых шагов
+    if (!firstSteps.value.select_key_goal) {
+      completeFirstStep('select_key_goal')
+    }
+    
     saveToLocalStorage()
   }
 
@@ -1523,6 +1647,12 @@ export const useAppStore = defineStore('app', () => {
         completed: false,
         completedAt: null
       })
+      
+      // Триггер для первых шагов
+      if (!firstSteps.value.plan_task) {
+        completeFirstStep('plan_task')
+      }
+      
       saveToLocalStorage()
     }
   }
@@ -1607,6 +1737,22 @@ export const useAppStore = defineStore('app', () => {
     updateJournalAIResponse,
     setJournalAILoading,
     getRecentJournalEntries,
+    
+    // First Steps (новые мини-задания)
+    firstSteps,
+    completeFirstStep,
+    firstStepsCompleted,
+    firstStepsTotal,
+    allFirstStepsCompleted,
+    
+    // Mentor (ИИ-наставник)
+    mentor,
+    openMentorChat,
+    closeMentorChat,
+    addMentorMessage,
+    sendMentorMessage,
+    clearMentorMessages,
+    setMentorMode,
     
     // Actions
     updateSphere,

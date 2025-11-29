@@ -996,7 +996,7 @@ const showEditModal = ref(false)
 const editingGoal = ref(null)
 
 const showEmptyState = computed(() => {
-  return !completedAt.value && rawIdeas.value.length === 0 && !lessonStarted.value && !addingNewGoal.value
+  return false
 })
 
 const showSummary = computed(() => {

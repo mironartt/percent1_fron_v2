@@ -689,8 +689,7 @@ function hasReflectionContent(sphere) {
 }
 
 const showEmptyState = computed(() => {
-  const hasScores = lifeSpheres.value.some(s => s.score > 0)
-  return !sspModuleCompleted.value?.completed && !hasScores && !lessonStarted.value
+  return false
 })
 
 const showSummary = computed(() => {

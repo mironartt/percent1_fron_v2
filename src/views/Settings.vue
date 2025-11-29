@@ -107,6 +107,57 @@
 
       <div class="card">
         <div class="card-header">
+          <h3 class="card-title">
+            <Bot :size="18" :stroke-width="1.5" style="display: inline; vertical-align: middle; margin-right: 6px;" />
+            AI Ментор
+          </h3>
+        </div>
+        <div class="card-body">
+          <div class="setting-item">
+            <div>
+              <div class="setting-title">Режим работы</div>
+              <div class="setting-desc">Как наставник будет взаимодействовать с вами</div>
+            </div>
+            <select class="form-select" v-model="mentorMode" @change="updateMentorMode">
+              <option value="proactive">Проактивный</option>
+              <option value="on_request">По запросу</option>
+              <option value="off">Выключен</option>
+            </select>
+          </div>
+
+          <div class="mode-description">
+            <div v-if="mentorMode === 'proactive'" class="mode-info">
+              <Sparkles :size="16" :stroke-width="1.5" />
+              <span>Наставник сам предлагает советы и подсказки на страницах</span>
+            </div>
+            <div v-else-if="mentorMode === 'on_request'" class="mode-info">
+              <MessageCircle :size="16" :stroke-width="1.5" />
+              <span>Наставник отвечает только когда вы к нему обращаетесь</span>
+            </div>
+            <div v-else class="mode-info muted">
+              <VolumeX :size="16" :stroke-width="1.5" />
+              <span>Наставник полностью отключен</span>
+            </div>
+          </div>
+
+          <div class="setting-item" style="margin-top: 1rem;">
+            <div>
+              <div class="setting-title">Очистить историю чата</div>
+              <div class="setting-desc">Удалить все сообщения с наставником</div>
+            </div>
+            <button 
+              class="btn btn-secondary btn-sm" 
+              @click="clearMentorHistory"
+              :disabled="mentorMessagesCount === 0"
+            >
+              Очистить ({{ mentorMessagesCount }})
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
           <h3 class="card-title">📝 Мой старт (онбординг)</h3>
         </div>
         <div class="card-body">
@@ -197,12 +248,26 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { Bot, Sparkles, MessageCircle, VolumeX } from 'lucide-vue-next'
 
 const router = useRouter()
 const store = useAppStore()
 
 const userName = ref(store.user.name)
 const onboardingData = computed(() => store.onboarding.data)
+
+const mentorMode = ref(store.mentor.mode || 'on_request')
+const mentorMessagesCount = computed(() => store.mentor.messages?.length || 0)
+
+function updateMentorMode() {
+  store.setMentorMode(mentorMode.value)
+}
+
+function clearMentorHistory() {
+  if (confirm('Вы уверены? Вся история сообщений с наставником будет удалена.')) {
+    store.clearMentorMessages()
+  }
+}
 
 function saveUserName() {
   store.user.name = userName.value
@@ -487,6 +552,45 @@ function goToTelegramSettings() {
 .empty-onboarding {
   text-align: center;
   padding: 2rem;
+  color: var(--text-secondary);
+}
+
+.form-select {
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.form-select:focus {
+  border-color: var(--primary-color);
+}
+
+.mode-description {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+}
+
+.mode-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.mode-info svg {
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.mode-info.muted svg {
   color: var(--text-secondary);
 }
 
