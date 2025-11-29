@@ -217,48 +217,6 @@
 
       </div>
 
-      <!-- Ложные цели -->
-      <div class="rejected-goals-summary card" v-if="rejectedGoals.length > 0">
-        <h3>❌ Отклонённые цели</h3>
-        <p class="section-hint">Эти цели не прошли проверку "3 Почему" — сохраните их для рефлексии</p>
-        <div class="rejected-goals-list">
-          <div 
-            v-for="goal in rejectedGoals" 
-            :key="goal.id"
-            class="rejected-goal-item"
-          >
-            <div class="rejected-goal-header">
-              <span class="goal-sphere-badge muted">{{ getSphereName(goal.sphereId) }}</span>
-              <span class="goal-name truncate-1" :title="goal.text">{{ goal.text }}</span>
-            </div>
-            <div class="rejected-reason" v-if="goal.whyImportant">
-              <span class="reason-label">Изначальная причина:</span> {{ goal.whyImportant }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="key-goals-summary card" v-if="transferredGoals.length > 0">
-        <h3>Цели в работе</h3>
-        <div class="key-goals-list">
-          <div v-for="goal in transferredGoals" :key="goal.id" class="key-goal-item">
-            <span class="goal-sphere-icon" :style="{ color: getSphereColor(goal.sphereId) }">
-              <component :is="getSphereIcon(goal.sphereId)" :size="16" :stroke-width="2" />
-              {{ getSphereNameOnly(goal.sphereId) }}
-            </span>
-            <span class="goal-title truncate-1" :title="goal.title">{{ goal.title }}</span>
-            <span class="goal-progress">{{ goal.progress }}%</span>
-            <button 
-              class="btn-icon-remove"
-              @click.stop="removeFromWork(goal.id)"
-              title="Убрать из работы"
-            >
-              <X :size="14" :stroke-width="2" />
-            </button>
-          </div>
-        </div>
-      </div>
-
       <div class="summary-actions">
         <button class="btn btn-primary btn-lg" @click="goToPlanning">
           <Calendar :size="18" :stroke-width="2" /> Запланировать задачу
@@ -1835,65 +1793,6 @@ onMounted(() => {
   margin-top: 0.125rem;
 }
 
-.key-goals-summary {
-  margin-bottom: 2rem;
-}
-
-.key-goals-summary h3 {
-  margin-bottom: 1rem;
-}
-
-.key-goals-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.key-goal-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-}
-
-.key-goal-item .goal-sphere {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  flex-shrink: 0;
-}
-
-.key-goal-item .goal-title {
-  flex: 1;
-  font-weight: 500;
-}
-
-.key-goal-item .goal-progress {
-  font-weight: 600;
-  color: var(--primary-color);
-}
-
-.key-goal-item .btn-icon-remove {
-  width: 24px;
-  height: 24px;
-  border: none;
-  background: transparent;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.key-goal-item .btn-icon-remove:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-}
-
 /* Sphere Distribution */
 .sphere-distribution {
   margin-bottom: 2rem;
@@ -2692,52 +2591,6 @@ onMounted(() => {
 .accordion-expand-leave-from {
   opacity: 1;
   max-height: 500px;
-}
-
-/* Rejected Goals */
-.rejected-goals-summary {
-  margin-bottom: 2rem;
-}
-
-.rejected-goals-summary h3 {
-  margin-bottom: 0.5rem;
-}
-
-.rejected-goals-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.rejected-goal-item {
-  padding: 1rem;
-  background: rgba(239, 68, 68, 0.05);
-  border-left: 3px solid var(--danger-color);
-  border-radius: var(--radius-md);
-}
-
-.rejected-goal-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
-}
-
-.rejected-goal-header .goal-name {
-  color: var(--text-secondary);
-  text-decoration: line-through;
-  text-decoration-color: var(--danger-color);
-}
-
-.rejected-reason {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  font-style: italic;
-}
-
-.reason-label {
-  font-weight: 500;
-  color: var(--text-muted);
 }
 
 /* Step 1: Weak spheres alert */
