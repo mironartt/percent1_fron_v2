@@ -376,16 +376,10 @@
     <div v-else-if="showGoalsList" class="goals-list-mode">
       <header class="page-header">
         <div>
-          <h1>Цели и декомпозиция</h1>
+          <h1>Декомпозиция</h1>
           <p class="subtitle">
             Превратите большие желания в системный план действий
           </p>
-        </div>
-        <div class="header-actions">
-          <button class="btn btn-secondary btn-with-icon" @click="restartLesson">
-            <RotateCcw :size="16" />
-            Пройти урок заново
-          </button>
         </div>
       </header>
 
@@ -703,15 +697,15 @@ const completionReflection = ref({
 const currentStep = computed(() => decompositionModule.value.currentStep)
 
 const showEmptyState = computed(() => {
-  return !decompositionModule.value.lessonStarted && !decompositionModule.value.lessonCompleted
+  return false
 })
 
 const showLesson = computed(() => {
-  return decompositionModule.value.lessonStarted && !decompositionModule.value.lessonCompleted
+  return false
 })
 
 const showGoalsList = computed(() => {
-  return decompositionModule.value.lessonCompleted
+  return true
 })
 
 const goalsFromBank = computed(() => {

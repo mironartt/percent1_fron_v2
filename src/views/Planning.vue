@@ -869,14 +869,13 @@ const router = useRouter()
 const lessonSteps = ['Теория', 'Практика', 'Напоминания']
 
 const lessonStarted = computed(() => store.planningModule.lessonStarted)
-const lessonCompleted = computed(() => store.planningModule.lessonCompleted || DEMO_PLANNING_MODE)
+const lessonCompleted = computed(() => true)
 const currentStep = computed(() => store.planningModule.currentStep)
 
 const weekOffset = ref(0)
 
 const showEmptyState = computed(() => {
-  if (DEMO_PLANNING_MODE) return false
-  return !lessonStarted.value && !lessonCompleted.value
+  return false
 })
 
 const telegramCode = ref('')
