@@ -23,6 +23,12 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite with a pr
 - **Onboarding**: A streamlined 3-step process (Philosophy → Points A/B → Rules) with optional fields and skip functionality. Utilizes Lucide icons and ensures proper navigation upon completion.
 - **AI Curator**: Currently in demo mode without live API calls.
 - **Mini-Task Module**: Implemented with a layered backend sync, preserving local UX while synchronizing task categories and progress. Tasks are hardcoded on the frontend with backend mapping. The system ensures fresh user data is fetched on every navigation to reflect real-time onboarding and mini-task completion status.
+- **Adaptive Dashboard**: A 4-stage progressive system that guides users through the app setup:
+  - Stage 1: Invite to complete SSP (shown when life spheres not rated)
+  - Stage 2: Prompt to create goals (shown after SSP completion)
+  - Stage 3: Encourage weekly planning (shown after goals exist)
+  - Stage 4: Full dashboard with Journal widget and quick actions
+- **Journal/Diary Module**: Daily reflection feature with 4 questions (accomplishments, incomplete tasks, reflection, tomorrow's plans). Includes AI coach responses (currently demo mode), streak tracking, calendar history view, and modal entry form. Accessible via sidebar menu and dashboard widget.
 
 ### System Design Choices
 The application uses a modular structure with dedicated components, services, views, router, and stores. State management by Pinia ensures data persistence and reactivity. The system prioritizes user guidance, visual feedback, and a clean, distraction-free interface, especially after the removal of the AI Coach from several modules. Backend synchronization is designed to provide immediate UI feedback while persisting data reliably.

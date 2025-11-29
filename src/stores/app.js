@@ -237,6 +237,107 @@ export const useAppStore = defineStore('app', () => {
     completedAt: null
   })
 
+  // ========================================
+  // JOURNAL (Дневник)
+  // ========================================
+  
+  const journal = ref({
+    entries: [],
+    todayEntry: null,
+    loading: false
+  })
+
+  // Получить сегодняшнюю дату в формате YYYY-MM-DD
+  function getTodayDateString() {
+    return new Date().toISOString().split('T')[0]
+  }
+
+  // Проверить, есть ли запись на сегодня
+  const hasTodayEntry = computed(() => {
+    const today = getTodayDateString()
+    return journal.value.entries.some(e => e.date === today)
+  })
+
+  // Получить запись на сегодня
+  const todayJournalEntry = computed(() => {
+    const today = getTodayDateString()
+    return journal.value.entries.find(e => e.date === today) || null
+  })
+
+  // Добавить запись в дневник
+  function addJournalEntry(entry) {
+    const today = getTodayDateString()
+    const existingIndex = journal.value.entries.findIndex(e => e.date === today)
+    
+    const newEntry = {
+      id: Date.now().toString(),
+      date: today,
+      createdAt: new Date().toISOString(),
+      whatDone: entry.whatDone || '',
+      whatNotDone: entry.whatNotDone || '',
+      reflection: entry.reflection || '',
+      tomorrowPlans: entry.tomorrowPlans || '',
+      aiResponse: entry.aiResponse || null,
+      aiResponseLoading: false
+    }
+    
+    if (existingIndex !== -1) {
+      journal.value.entries[existingIndex] = newEntry
+    } else {
+      journal.value.entries.unshift(newEntry)
+    }
+    
+    saveToLocalStorage()
+    return newEntry
+  }
+
+  // Обновить AI-ответ для записи
+  function updateJournalAIResponse(entryId, aiResponse) {
+    const entry = journal.value.entries.find(e => e.id === entryId)
+    if (entry) {
+      entry.aiResponse = aiResponse
+      entry.aiResponseLoading = false
+      saveToLocalStorage()
+    }
+  }
+
+  // Установить статус загрузки AI для записи
+  function setJournalAILoading(entryId, loading) {
+    const entry = journal.value.entries.find(e => e.id === entryId)
+    if (entry) {
+      entry.aiResponseLoading = loading
+    }
+  }
+
+  // Получить записи за последние N дней
+  function getRecentJournalEntries(days = 7) {
+    return journal.value.entries.slice(0, days)
+  }
+
+  // Стрик дней (сколько дней подряд есть записи)
+  const journalStreak = computed(() => {
+    if (journal.value.entries.length === 0) return 0
+    
+    let streak = 0
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    for (let i = 0; i < 365; i++) {
+      const checkDate = new Date(today)
+      checkDate.setDate(today.getDate() - i)
+      const dateStr = checkDate.toISOString().split('T')[0]
+      
+      const hasEntry = journal.value.entries.some(e => e.date === dateStr)
+      if (hasEntry) {
+        streak++
+      } else if (i > 0) {
+        break
+      }
+    }
+    
+    return streak
+  })
+
   // Настройки Telegram
   const telegramSettings = ref({
     connected: false,
@@ -290,6 +391,47 @@ export const useAppStore = defineStore('app', () => {
 
   const completedGoals = computed(() => {
     return goals.value.filter(g => g.status === 'completed').length
+  })
+
+  // ========================================
+  // USER STAGE (Адаптивный дашборд)
+  // ========================================
+  // Stage 1: ССП не заполнена (все оценки = 0)
+  // Stage 2: ССП заполнена, но нет целей
+  // Stage 3: Есть цели, но нет задач на неделю
+  // Stage 4: Всё настроено - полный дашборд
+  
+  const isSSPCompleted = computed(() => {
+    return sspModuleCompleted.value.completed || lifeSpheres.value.some(s => s.score > 0)
+  })
+
+  const hasGoals = computed(() => {
+    return goals.value.length > 0
+  })
+
+  const hasWeeklyTasks = computed(() => {
+    const currentPlan = getCurrentWeekPlan()
+    return currentPlan && currentPlan.scheduledTasks && currentPlan.scheduledTasks.length > 0
+  })
+
+  const userStage = computed(() => {
+    // Stage 1: ССП не заполнена
+    if (!isSSPCompleted.value) {
+      return 1
+    }
+    
+    // Stage 2: ССП заполнена, но нет целей
+    if (!hasGoals.value) {
+      return 2
+    }
+    
+    // Stage 3: Есть цели, но нет задач на неделю
+    if (!hasWeeklyTasks.value) {
+      return 3
+    }
+    
+    // Stage 4: Всё настроено
+    return 4
   })
 
   // Actions
@@ -376,7 +518,8 @@ export const useAppStore = defineStore('app', () => {
       decompositionModule: decompositionModule.value,
       planningModule: planningModule.value,
       weeklyPlans: weeklyPlans.value,
-      telegramSettings: telegramSettings.value
+      telegramSettings: telegramSettings.value,
+      journal: journal.value
     }))
   }
 
@@ -407,6 +550,7 @@ export const useAppStore = defineStore('app', () => {
         if (parsed.planningModule) planningModule.value = { ...planningModule.value, ...parsed.planningModule }
         if (parsed.weeklyPlans) weeklyPlans.value = parsed.weeklyPlans
         if (parsed.telegramSettings) telegramSettings.value = { ...telegramSettings.value, ...parsed.telegramSettings }
+        if (parsed.journal) journal.value = { ...journal.value, ...parsed.journal }
       } catch (e) {
         console.error('Error loading data:', e)
       }
@@ -1447,6 +1591,22 @@ export const useAppStore = defineStore('app', () => {
     completedGoals,
     shouldShowOnboarding,
     shouldShowMiniTask,
+    
+    // User Stage (Adaptive Dashboard)
+    userStage,
+    isSSPCompleted,
+    hasGoals,
+    hasWeeklyTasks,
+    
+    // Journal
+    journal,
+    hasTodayEntry,
+    todayJournalEntry,
+    journalStreak,
+    addJournalEntry,
+    updateJournalAIResponse,
+    setJournalAILoading,
+    getRecentJournalEntries,
     
     // Actions
     updateSphere,

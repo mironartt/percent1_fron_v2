@@ -17,6 +17,7 @@ const Planner = () => import('@/views/Planner.vue')
 const Planning = () => import('@/views/Planning.vue')
 const Settings = () => import('@/views/Settings.vue')
 const Club = () => import('@/views/Club.vue')
+const JournalHistory = () => import('@/views/JournalHistory.vue')
 
 const router = createRouter({
   history: createWebHistory(),
@@ -129,6 +130,12 @@ const router = createRouter({
       name: 'club',
       component: Club,
       meta: { title: 'Клуб 1%', requiresAuth: true }
+    },
+    {
+      path: '/app/journal',
+      name: 'journal',
+      component: JournalHistory,
+      meta: { title: 'Дневник', requiresAuth: true }
     },
     
     // Редиректы для обратной совместимости со старыми URL

@@ -1,40 +1,52 @@
 <template>
-  <!-- Show Onboarding if needed -->
   <Onboarding v-if="shouldShowOnboarding" />
 
-  <!-- Show Mini Task Welcome if onboarding done but mini task not started -->
   <MiniTaskWelcome 
     v-else-if="shouldShowMiniTask && !showMiniTask" 
     @start="showMiniTask = true"
     @skip="onMiniTaskSkip"
   />
 
-  <!-- Show Mini Task if started -->
   <MiniTask 
     v-else-if="showMiniTask && !isMiniTaskCompleted" 
     @complete="onMiniTaskComplete"
   />
 
-  <!-- Show Dashboard if everything completed -->
+  <DashboardStage1 v-else-if="userStage === 1" />
+
+  <DashboardStage2 v-else-if="userStage === 2" />
+
+  <DashboardStage3 v-else-if="userStage === 3" />
+
   <div v-else class="dashboard">
     <header class="page-header">
       <div>
-        <h1>Привет, {{ userName }} 👋</h1>
+        <h1>Привет, {{ userName }}</h1>
         <p class="subtitle">Ваша система управления жизнью и достижения целей</p>
+      </div>
+      <div class="header-stats">
+        <div class="stat-badge" v-if="journalStreak > 0">
+          <Flame :size="16" :stroke-width="1.5" />
+          <span>{{ journalStreak }} {{ pluralize(journalStreak, 'день', 'дня', 'дней') }}</span>
+        </div>
       </div>
     </header>
 
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon">🎯</div>
+        <div class="stat-icon-wrapper primary">
+          <Target :size="24" :stroke-width="1.5" />
+        </div>
         <div class="stat-content">
           <div class="stat-value">{{ averageScore }}/10</div>
-          <div class="stat-label">Общий баланс жизни</div>
+          <div class="stat-label">Общий баланс</div>
         </div>
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon">🚀</div>
+        <div class="stat-icon-wrapper success">
+          <TrendingUp :size="24" :stroke-width="1.5" />
+        </div>
         <div class="stat-content">
           <div class="stat-value">{{ activeGoals }}</div>
           <div class="stat-label">Активных целей</div>
@@ -42,126 +54,154 @@
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon">✅</div>
+        <div class="stat-icon-wrapper warning">
+          <CheckCircle :size="24" :stroke-width="1.5" />
+        </div>
         <div class="stat-content">
           <div class="stat-value">{{ completedGoals }}</div>
-          <div class="stat-label">Достигнутых целей</div>
+          <div class="stat-label">Достигнуто</div>
         </div>
       </div>
     </div>
 
-    <div class="content-grid">
-      <div class="card quick-actions">
-        <div class="card-header">
-          <h3 class="card-title">Быстрые действия</h3>
+    <div class="main-layout">
+      <div class="main-content">
+        <JournalWidget @open="showJournalModal = true" />
+
+        <div class="card current-tasks">
+          <div class="card-header">
+            <h3 class="card-title">
+              <ListTodo :size="18" :stroke-width="1.5" />
+              Задачи на сегодня
+            </h3>
+            <router-link to="/app/planning" class="view-all-btn">
+              <Calendar :size="16" :stroke-width="1.5" />
+              Планировщик
+            </router-link>
+          </div>
+          <div class="card-body">
+            <div v-if="dailyTasks.length === 0" class="empty-state-mini">
+              <p>Нет задач на сегодня</p>
+              <router-link to="/app/planning" class="btn btn-sm btn-primary">
+                Добавить задачи
+              </router-link>
+            </div>
+            <div v-else class="tasks-list">
+              <label 
+                v-for="task in dailyTasks.slice(0, 5)" 
+                :key="task.id"
+                class="task-item"
+              >
+                <input 
+                  type="checkbox"
+                  v-model="task.completed"
+                  @change="updateTask(task)"
+                />
+                <span :class="{ completed: task.completed }">{{ task.title }}</span>
+              </label>
+              <router-link 
+                v-if="dailyTasks.length > 5"
+                to="/app/planning" 
+                class="view-all-link"
+              >
+                Показать все ({{ dailyTasks.length }})
+              </router-link>
+            </div>
+          </div>
         </div>
-        <div class="card-body">
-          <router-link to="/app/ssp" class="action-link">
-            <span class="action-icon">🎯</span>
-            <div class="action-content">
-              <div class="action-title">Оценить сферы жизни</div>
-              <div class="action-desc">Проведите саморефлексию и оцените баланс</div>
-            </div>
-          </router-link>
 
-          <router-link to="/app/goals" class="action-link">
-            <span class="action-icon">🚀</span>
-            <div class="action-content">
-              <div class="action-title">Создать новую цель</div>
-              <div class="action-desc">Поставьте цель и декомпозируйте её</div>
-            </div>
-          </router-link>
+        <div class="card quick-actions">
+          <div class="card-header">
+            <h3 class="card-title">
+              <Zap :size="18" :stroke-width="1.5" />
+              Быстрые действия
+            </h3>
+          </div>
+          <div class="card-body">
+            <router-link to="/app/ssp" class="action-link">
+              <ChartPie :size="20" :stroke-width="1.5" class="action-icon" />
+              <div class="action-content">
+                <div class="action-title">Обновить ССП</div>
+                <div class="action-desc">Переоценить сферы жизни</div>
+              </div>
+              <ChevronRight :size="18" :stroke-width="1.5" class="arrow" />
+            </router-link>
 
-          <router-link to="/app/planner" class="action-link">
-            <span class="action-icon">📅</span>
-            <div class="action-content">
-              <div class="action-title">Спланировать день</div>
-              <div class="action-desc">Определите приоритеты на сегодня</div>
-            </div>
-          </router-link>
+            <router-link to="/app/goals/new" class="action-link">
+              <Plus :size="20" :stroke-width="1.5" class="action-icon" />
+              <div class="action-content">
+                <div class="action-title">Новая цель</div>
+                <div class="action-desc">Создать и декомпозировать</div>
+              </div>
+              <ChevronRight :size="18" :stroke-width="1.5" class="arrow" />
+            </router-link>
+
+            <router-link to="/app/journal" class="action-link">
+              <BookOpen :size="20" :stroke-width="1.5" class="action-icon" />
+              <div class="action-content">
+                <div class="action-title">История дневника</div>
+                <div class="action-desc">Все ваши записи</div>
+              </div>
+              <ChevronRight :size="18" :stroke-width="1.5" class="arrow" />
+            </router-link>
+          </div>
         </div>
       </div>
 
-      <div class="card current-tasks">
-        <div class="card-header">
-          <h3 class="card-title">Текущие задачи</h3>
-        </div>
-        <div class="card-body">
-          <div v-if="dailyTasks.length === 0" class="empty-state-mini">
-            <p>Нет задач на сегодня</p>
-            <router-link to="/app/planner" class="btn btn-sm btn-primary" style="margin-top: 1rem;">
-              Добавить задачи
-            </router-link>
+      <aside class="sidebar-widgets">
+        <div class="card spheres-widget">
+          <div class="card-header">
+            <h3 class="card-title">
+              <ChartPie :size="18" :stroke-width="1.5" />
+              Сферы жизни
+            </h3>
           </div>
-          <div v-else class="tasks-preview">
-            <label 
-              v-for="task in dailyTasks.slice(0, 5)" 
-              :key="task.id"
-              class="task-preview-item"
-            >
-              <input 
-                type="checkbox"
-                v-model="task.completed"
-                @change="updateTask(task)"
-              />
-              <span :class="{ completed: task.completed }">{{ task.title }}</span>
-            </label>
-            <router-link 
-              v-if="dailyTasks.length > 5"
-              to="/app/planner" 
-              class="view-all-link"
-            >
-              Показать все ({{ dailyTasks.length }})
-            </router-link>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="content-grid">
-      <div class="card insights">
-        <div class="card-header">
-          <h3 class="card-title">Сферы жизни</h3>
-        </div>
-        <div class="card-body">
-          <div class="spheres-preview">
-            <div 
-              v-for="sphere in lifeSpheres" 
-              :key="sphere.id"
-              class="sphere-preview-item"
-            >
-              <div class="sphere-preview-header">
+          <div class="card-body">
+            <div class="spheres-list">
+              <div 
+                v-for="sphere in lifeSpheres" 
+                :key="sphere.id"
+                class="sphere-item"
+              >
                 <span class="sphere-icon">{{ sphere.icon }}</span>
                 <span class="sphere-name">{{ sphere.name }}</span>
-              </div>
-              <div class="sphere-score">
-                <div class="score-bar">
+                <div class="sphere-bar">
                   <div 
-                    class="score-fill" 
+                    class="sphere-fill" 
                     :style="{ width: `${(sphere.score / 10) * 100}%` }"
                   ></div>
                 </div>
-                <span class="score-value">{{ sphere.score }}/10</span>
+                <span class="sphere-score">{{ sphere.score }}</span>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="card motivation">
-        <div class="motivation-content">
-          <div class="motivation-icon">💡</div>
-          <div>
-            <h3 class="motivation-title">Эффект 1%</h3>
-            <p class="motivation-text">
-              Улучшая каждый день хотя бы на 1%, за год ты станешь сильнее почти в 38 раз.
-              Это эффект сложных процентов, применённый к жизни.
-            </p>
+        <div class="card motivation-card">
+          <div class="motivation-content">
+            <Lightbulb :size="28" :stroke-width="1.5" class="motivation-icon" />
+            <div>
+              <h4 class="motivation-title">Эффект 1%</h4>
+              <p class="motivation-text">
+                Улучшая каждый день на 1%, за год вы станете сильнее в 37 раз.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      </aside>
     </div>
   </div>
+
+  <Teleport to="body">
+    <div v-if="showJournalModal" class="modal-overlay" @click.self="showJournalModal = false">
+      <div class="modal-container">
+        <button class="modal-close" @click="showJournalModal = false">
+          <X :size="20" :stroke-width="1.5" />
+        </button>
+        <JournalEntry @saved="showJournalModal = false" />
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
@@ -170,9 +210,31 @@ import { useAppStore } from '../stores/app'
 import Onboarding from '../components/Onboarding.vue'
 import MiniTaskWelcome from '../components/MiniTaskWelcome.vue'
 import MiniTask from '../components/MiniTask.vue'
+import DashboardStage1 from '../components/DashboardStage1.vue'
+import DashboardStage2 from '../components/DashboardStage2.vue'
+import DashboardStage3 from '../components/DashboardStage3.vue'
+import JournalWidget from '../components/JournalWidget.vue'
+import JournalEntry from '../components/JournalEntry.vue'
 import { DEBUG_MODE } from '@/config/settings.js'
+import { 
+  Target, 
+  TrendingUp, 
+  CheckCircle, 
+  ListTodo, 
+  Calendar, 
+  Zap,
+  ChartPie,
+  Plus,
+  BookOpen,
+  ChevronRight,
+  Lightbulb,
+  Flame,
+  X
+} from 'lucide-vue-next'
 
 const store = useAppStore()
+const showJournalModal = ref(false)
+const showMiniTask = ref(false)
 
 const userName = computed(() => store.displayName)
 const averageScore = computed(() => store.averageScore)
@@ -180,6 +242,8 @@ const activeGoals = computed(() => store.activeGoals)
 const completedGoals = computed(() => store.completedGoals)
 const lifeSpheres = computed(() => store.lifeSpheres)
 const dailyTasks = computed(() => store.dailyPlan.tasks)
+const userStage = computed(() => store.userStage)
+const journalStreak = computed(() => store.journalStreak)
 
 const shouldShowOnboarding = computed(() => {
   const show = store.shouldShowOnboarding
@@ -199,8 +263,6 @@ const shouldShowMiniTask = computed(() => {
 
 const isMiniTaskCompleted = computed(() => store.miniTask.completed)
 
-const showMiniTask = ref(false)
-
 function onMiniTaskComplete() {
   showMiniTask.value = false
 }
@@ -212,6 +274,14 @@ function onMiniTaskSkip() {
 function updateTask(task) {
   store.toggleTask(task.id)
 }
+
+function pluralize(n, one, few, many) {
+  const mod10 = n % 10
+  const mod100 = n % 100
+  if (mod10 === 1 && mod100 !== 11) return one
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few
+  return many
+}
 </script>
 
 <style scoped>
@@ -221,22 +291,43 @@ function updateTask(task) {
 }
 
 .page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
   margin-bottom: 2rem;
 }
 
 .page-header h1 {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
+  font-size: 1.75rem;
+  margin-bottom: 0.25rem;
 }
 
 .subtitle {
   color: var(--text-secondary);
+  margin: 0;
+}
+
+.header-stats {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.stat-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.15));
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--warning-color);
 }
 
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
+  gap: 1.25rem;
   margin-bottom: 2rem;
 }
 
@@ -244,32 +335,75 @@ function updateTask(task) {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  padding: 1.5rem;
+  padding: 1.25rem;
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-.stat-icon {
-  font-size: 2rem;
+.stat-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-icon-wrapper.primary {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+  color: var(--primary-color);
+}
+
+.stat-icon-wrapper.success {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+}
+
+.stat-icon-wrapper.warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning-color);
 }
 
 .stat-value {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: var(--primary-color);
+  color: var(--text-primary);
 }
 
 .stat-label {
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 
-.content-grid {
+.main-layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 340px;
   gap: 1.5rem;
-  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .main-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+.main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .card {
@@ -280,29 +414,110 @@ function updateTask(task) {
 }
 
 .card-header {
-  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--border-color);
 }
 
 .card-title {
-  font-size: 1.125rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
   font-weight: 600;
+  margin: 0;
+}
+
+.card-title svg {
+  color: var(--primary-color);
+}
+
+.view-all-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.view-all-btn:hover {
+  color: var(--primary-color);
 }
 
 .card-body {
-  padding: 1.5rem;
+  padding: 1.25rem;
+}
+
+.empty-state-mini {
+  text-align: center;
+  padding: 1.5rem 1rem;
+  color: var(--text-secondary);
+}
+
+.empty-state-mini p {
+  margin: 0 0 1rem 0;
+}
+
+.tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.5rem;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s;
+}
+
+.task-item:hover {
+  background: var(--bg-secondary);
+}
+
+.task-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.task-item span {
+  font-size: 0.9375rem;
+}
+
+.task-item span.completed {
+  text-decoration: line-through;
+  color: var(--text-tertiary);
+}
+
+.view-all-link {
+  display: block;
+  text-align: center;
+  padding: 0.75rem 0.5rem;
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.875rem;
 }
 
 .action-link {
   display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1rem;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem;
   border-radius: var(--radius-md);
   color: var(--text-primary);
   text-decoration: none;
   transition: all 0.2s ease;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .action-link:last-child {
@@ -313,155 +528,162 @@ function updateTask(task) {
   background: var(--bg-secondary);
 }
 
+.action-link:hover .arrow {
+  transform: translateX(4px);
+  color: var(--primary-color);
+}
+
 .action-icon {
-  font-size: 1.5rem;
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.action-content {
+  flex: 1;
 }
 
 .action-title {
   font-weight: 600;
-  margin-bottom: 0.25rem;
+  font-size: 0.9375rem;
+  margin-bottom: 0.125rem;
 }
 
 .action-desc {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: var(--text-secondary);
 }
 
-.empty-state-mini {
-  text-align: center;
-  padding: 1rem;
-  color: var(--text-secondary);
-}
-
-.tasks-preview {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.task-preview-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem;
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-}
-
-.task-preview-item:hover {
-  background: var(--bg-secondary);
-}
-
-.task-preview-item input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--primary-color);
-}
-
-.task-preview-item span.completed {
-  text-decoration: line-through;
+.arrow {
   color: var(--text-tertiary);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
-.view-all-link {
-  display: block;
-  text-align: center;
-  padding: 0.5rem;
-  color: var(--primary-color);
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.875rem;
-}
-
-.spheres-preview {
+.sidebar-widgets {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
-.sphere-preview-item {
+.spheres-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
-.sphere-preview-header {
-  display: flex;
+.sphere-item {
+  display: grid;
+  grid-template-columns: 24px 1fr 70px 24px;
   align-items: center;
   gap: 0.5rem;
 }
 
 .sphere-icon {
-  font-size: 1.125rem;
+  font-size: 1rem;
 }
 
 .sphere-name {
-  font-weight: 500;
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.sphere-score {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.score-bar {
-  flex: 1;
-  height: 8px;
+.sphere-bar {
+  height: 6px;
   background: var(--bg-tertiary);
-  border-radius: 4px;
+  border-radius: 3px;
   overflow: hidden;
 }
 
-.score-fill {
+.sphere-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-  border-radius: 4px;
+  border-radius: 3px;
   transition: width 0.3s ease;
 }
 
-.score-value {
-  font-size: 0.875rem;
+.sphere-score {
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text-secondary);
-  min-width: 40px;
+  text-align: right;
 }
 
-.motivation {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  color: white;
+.motivation-card {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
+  border-color: rgba(99, 102, 241, 0.15);
 }
 
 .motivation-content {
   display: flex;
-  gap: 1.5rem;
-  padding: 1.5rem;
+  gap: 1rem;
+  padding: 1.25rem;
   align-items: flex-start;
 }
 
 .motivation-icon {
-  font-size: 2.5rem;
+  color: var(--primary-color);
+  flex-shrink: 0;
 }
 
 .motivation-title {
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  margin: 0 0 0.375rem 0;
 }
 
 .motivation-text {
-  opacity: 0.9;
-  line-height: 1.6;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
 }
 
-@media (max-width: 900px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
 
-  .content-grid {
-    grid-template-columns: 1fr;
-  }
+.modal-container {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  z-index: 10;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 </style>
