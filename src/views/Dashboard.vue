@@ -12,12 +12,6 @@
     @complete="onMiniTaskComplete"
   />
 
-  <DashboardStage1 v-else-if="userStage === 1" />
-
-  <DashboardStage2 v-else-if="userStage === 2" />
-
-  <DashboardStage3 v-else-if="userStage === 3" />
-
   <div v-else class="dashboard">
     <header class="page-header">
       <div>
@@ -214,9 +208,6 @@ import { useAppStore } from '../stores/app'
 import Onboarding from '../components/Onboarding.vue'
 import MiniTaskWelcome from '../components/MiniTaskWelcome.vue'
 import MiniTask from '../components/MiniTask.vue'
-import DashboardStage1 from '../components/DashboardStage1.vue'
-import DashboardStage2 from '../components/DashboardStage2.vue'
-import DashboardStage3 from '../components/DashboardStage3.vue'
 import JournalWidget from '../components/JournalWidget.vue'
 import JournalEntry from '../components/JournalEntry.vue'
 import MentorWidget from '../components/MentorWidget.vue'
@@ -248,7 +239,6 @@ const activeGoals = computed(() => store.activeGoals)
 const completedGoals = computed(() => store.completedGoals)
 const lifeSpheres = computed(() => store.lifeSpheres)
 const dailyTasks = computed(() => store.dailyPlan.tasks)
-const userStage = computed(() => store.userStage)
 const journalStreak = computed(() => store.journalStreak)
 const allFirstStepsCompleted = computed(() => store.allFirstStepsCompleted)
 
