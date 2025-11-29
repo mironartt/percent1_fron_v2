@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { DEBUG_MODE, FORCE_SHOW_ONBOARDING, FORCE_SHOW_MINITASK } from '@/config/settings.js'
 import { getOnboardingData, updateOnboardingData, getMiniTaskData, updateMiniTaskData, getSSPData, updateSSPData } from '@/services/api.js'
+import { useToastStore } from '@/stores/toast'
 
 export const useAppStore = defineStore('app', () => {
   // ========================================
@@ -357,12 +358,41 @@ export const useAppStore = defineStore('app', () => {
     chat_mentor: false
   })
 
+  const mentorStepMessages = {
+    ssp: 'Отлично! Ты оценил баланс жизни. Это первый шаг к пониманию, где нужны улучшения. Теперь попробуй добавить идею в Банк целей!',
+    add_idea: 'Супер! Идея записана. Теперь важно проверить её — действительно ли это твоя цель, а не навязанная извне?',
+    validate_goal: 'Прекрасно! Цель проверена. Теперь выбери ключевую цель, на которой сфокусируешься.',
+    select_key_goal: 'Ключевая цель выбрана! Теперь запланируй конкретную задачу на эту неделю.',
+    plan_task: 'Задача в плане! Напиши в дневник — это поможет осмыслить день и настроиться на следующий.',
+    write_journal: 'Дневник заполнен! Если есть вопросы или нужен совет — я всегда готов помочь.',
+    chat_mentor: 'Рад общению! Помни: я здесь, чтобы помогать тебе расти на 1% каждый день.'
+  }
+
   function completeFirstStep(stepId) {
-    if (firstSteps.value.hasOwnProperty(stepId)) {
+    if (firstSteps.value.hasOwnProperty(stepId) && !firstSteps.value[stepId]) {
       firstSteps.value[stepId] = true
       saveToLocalStorage()
+      
       if (DEBUG_MODE) {
         console.log('[Store] First step completed:', stepId)
+      }
+      
+      try {
+        const toastStore = useToastStore()
+        toastStore.showFirstStepToast(stepId, firstSteps.value)
+      } catch (e) {
+        if (DEBUG_MODE) {
+          console.warn('[Store] Could not show toast:', e)
+        }
+      }
+      
+      if (mentorStepMessages[stepId]) {
+        setTimeout(() => {
+          addMentorMessage({
+            content: mentorStepMessages[stepId],
+            role: 'assistant'
+          })
+        }, 1000)
       }
     }
   }

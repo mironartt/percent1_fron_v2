@@ -19,6 +19,7 @@
     </main>
     <TelegramAuthModals />
     <MentorFloatingButton v-if="showMentorButton" />
+    <ToastNotification />
   </div>
 </template>
 
@@ -28,6 +29,7 @@ import { useRoute } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
 import TelegramAuthModals from './components/TelegramAuthModals.vue'
 import MentorFloatingButton from './components/MentorFloatingButton.vue'
+import ToastNotification from './components/ToastNotification.vue'
 
 const route = useRoute()
 const sidebarCollapsed = ref(false)
