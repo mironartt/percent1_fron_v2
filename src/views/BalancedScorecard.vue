@@ -550,9 +550,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { DEBUG_MODE } from '@/config/settings.js'
 import WheelOfLife from '../components/WheelOfLife.vue'
 import { 
   Wallet, 
@@ -605,6 +606,7 @@ function getSphereColor(sphereId) {
 
 const store = useAppStore()
 const router = useRouter()
+const route = useRoute()
 
 const steps = ['Теория', 'ССП', 'Рефлексия', 'Итог']
 const currentStep = ref(1)
@@ -790,6 +792,43 @@ function resetModule() {
   expandedSpheres.value = []
   expandedSummarySpheres.value = []
 }
+
+function handleStepFromQuery() {
+  const stepParam = route.query.spp_step
+  
+  if (stepParam === undefined || stepParam === null) {
+    return
+  }
+  
+  const step = parseInt(stepParam, 10)
+  
+  if (isNaN(step) || step < 0 || step > 4) {
+    if (DEBUG_MODE) {
+      console.log('[SSP] Invalid spp_step parameter:', stepParam)
+    }
+    return
+  }
+  
+  if (DEBUG_MODE) {
+    console.log('[SSP] Handling spp_step parameter:', step)
+  }
+  
+  if (step === 0) {
+    lessonStarted.value = false
+    currentStep.value = 1
+  } else {
+    lessonStarted.value = true
+    currentStep.value = step
+  }
+}
+
+onMounted(() => {
+  handleStepFromQuery()
+})
+
+watch(() => route.query.spp_step, () => {
+  handleStepFromQuery()
+})
 </script>
 
 <style scoped>
