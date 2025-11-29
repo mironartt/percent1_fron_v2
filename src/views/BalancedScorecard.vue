@@ -492,7 +492,7 @@
           <h1>Модуль завершён!</h1>
           <div class="completion-score">
             <span class="score-label">Ваш баланс</span>
-            <span class="score-value">{{ averageScore.toFixed(1) }}/10</span>
+            <span class="score-value">{{ backendAverageScore.toFixed(1) }}/10</span>
           </div>
         </div>
 
@@ -502,15 +502,15 @@
             <div class="metric-icon">
               <Circle :size="24" :stroke-width="2" />
             </div>
-            <div class="metric-value">6</div>
+            <div class="metric-value">{{ backendCategoriesCount }}</div>
             <div class="metric-label">сфер оценено</div>
           </div>
           <div class="metric-card">
             <div class="metric-icon">
               <MessageSquare :size="24" :stroke-width="2" />
             </div>
-            <div class="metric-value">24</div>
-            <div class="metric-label">вопроса рефлексии</div>
+            <div class="metric-value">{{ reflectionQuestionsData.answered }}/{{ reflectionQuestionsData.total }}</div>
+            <div class="metric-label">вопросов рефлексии</div>
           </div>
           <div class="metric-card">
             <div class="metric-icon">
@@ -550,9 +550,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { DEBUG_MODE } from '@/config/settings.js'
 import WheelOfLife from '../components/WheelOfLife.vue'
 import { 
   Wallet, 
@@ -605,6 +606,7 @@ function getSphereColor(sphereId) {
 
 const store = useAppStore()
 const router = useRouter()
+const route = useRoute()
 
 const steps = ['Теория', 'ССП', 'Рефлексия', 'Итог']
 const currentStep = ref(1)
@@ -616,6 +618,10 @@ const sspModuleCompleted = computed(() => store.sspModuleCompleted)
 const lessonStarted = ref(false)
 const expandedSpheres = ref([])
 const expandedSummarySpheres = ref([])
+
+// Backend loading state
+const isLoading = ref(false)
+const backendError = ref(null)
 
 function toggleSphereExpand(sphereId) {
   const index = expandedSpheres.value.indexOf(sphereId)
@@ -661,10 +667,19 @@ function cancelEditReflection() {
   editingReflection.value = { why: '', ten: '', prevents: '', desired: '' }
 }
 
-function saveEditReflection(sphereId) {
+async function saveEditReflection(sphereId) {
   store.updateSphereReflection(sphereId, { ...editingReflection.value })
   editingSphereId.value = null
   editingReflection.value = { why: '', ten: '', prevents: '', desired: '' }
+  
+  // Сохраняем рефлексию на бэкенд
+  if (DEBUG_MODE) {
+    console.log('[SSP] Saving edited reflection for sphere:', sphereId)
+  }
+  const result = await store.saveSSPReflectionToBackend(sphereId)
+  if (!result.success && DEBUG_MODE) {
+    console.warn('[SSP] Failed to save edited reflection:', result.error)
+  }
 }
 
 function hasReflectionContent(sphere) {
@@ -699,6 +714,36 @@ const weakestSphere = computed(() => {
   , null)
 })
 
+const reflectionQuestionsData = computed(() => {
+  const backendData = store.sspBackendData
+  const totalData = backendData?.totalData
+  if (totalData && typeof totalData.reflection_questions_answers === 'number') {
+    return {
+      answered: totalData.reflection_questions_answers,
+      total: totalData.reflection_questions_total || 24
+    }
+  }
+  return { answered: 0, total: 24 }
+})
+
+const backendAverageScore = computed(() => {
+  const backendData = store.sspBackendData
+  const totalData = backendData?.totalData
+  if (totalData && typeof totalData.user_rating === 'number') {
+    return totalData.user_rating
+  }
+  return averageScore.value
+})
+
+const backendCategoriesCount = computed(() => {
+  const backendData = store.sspBackendData
+  const totalData = backendData?.totalData
+  if (totalData && typeof totalData.categories_with_rating === 'number') {
+    return totalData.categories_with_rating
+  }
+  return lifeSpheres.value.filter(s => s.score > 0).length
+})
+
 const formatCompletedDate = computed(() => {
   if (!sspModuleCompleted.value?.completedAt) return ''
   const date = new Date(sspModuleCompleted.value.completedAt)
@@ -730,8 +775,30 @@ const wheelCompleted = computed(() => {
 })
 
 
-function nextStep() {
+async function nextStep() {
   if (currentStep.value < 4) {
+    // Сохраняем оценки при переходе с шага 2 (ССП) на шаг 3
+    if (currentStep.value === 2) {
+      if (DEBUG_MODE) {
+        console.log('[SSP] Saving ratings to backend before step 3...')
+      }
+      const result = await store.saveSSPRatingsToBackend()
+      if (!result.success && DEBUG_MODE) {
+        console.warn('[SSP] Failed to save ratings:', result.error)
+      }
+    }
+    
+    // Сохраняем все рефлексии при переходе с шага 3 на шаг 4
+    if (currentStep.value === 3) {
+      if (DEBUG_MODE) {
+        console.log('[SSP] Saving all reflections to backend before step 4...')
+      }
+      const result = await store.saveAllSSPReflectionsToBackend()
+      if (!result.success && DEBUG_MODE) {
+        console.warn('[SSP] Failed to save reflections:', result.error)
+      }
+    }
+    
     currentStep.value++
   }
 }
@@ -765,13 +832,32 @@ function getSphereById(sphereId) {
   return lifeSpheres.value.find(s => s.id === sphereId)
 }
 
-function saveReflection(sphereId) {
+async function saveReflection(sphereId) {
   store.updateSphere(sphereId, {
     reflection: lifeSpheres.value.find(s => s.id === sphereId)?.reflection
   })
+  
+  // Сохраняем рефлексию на бэкенд
+  if (DEBUG_MODE) {
+    console.log('[SSP] Saving reflection for sphere:', sphereId)
+  }
+  const result = await store.saveSSPReflectionToBackend(sphereId)
+  if (!result.success && DEBUG_MODE) {
+    console.warn('[SSP] Failed to save reflection:', result.error)
+  }
 }
 
-function completeModule() {
+async function completeModule() {
+  // Сохраняем все данные на бэкенд перед завершением
+  if (DEBUG_MODE) {
+    console.log('[SSP] Saving all SSP data to backend before completion...')
+  }
+  
+  const result = await store.saveAllSSPReflectionsToBackend()
+  if (!result.success && DEBUG_MODE) {
+    console.warn('[SSP] Failed to save SSP data on completion:', result.error)
+  }
+  
   store.completeSSPModule({
     completedAt: new Date().toISOString(),
     wheelData: lifeSpheres.value.map(s => ({
@@ -785,11 +871,150 @@ function completeModule() {
 }
 
 function resetModule() {
+  // Сбрасываем флаг завершения модуля через store (с сохранением в localStorage)
+  store.resetSSPModule()
+  
+  // Сбрасываем локальное состояние
   currentStep.value = 1
   lessonStarted.value = false
   expandedSpheres.value = []
   expandedSummarySpheres.value = []
+  
+  if (DEBUG_MODE) {
+    console.log('[SSP] Module reset, starting from beginning')
+  }
 }
+
+function handleStepFromQuery() {
+  const stepParam = route.query.spp_step
+  
+  if (stepParam === undefined || stepParam === null) {
+    return
+  }
+  
+  const step = parseInt(stepParam, 10)
+  
+  if (isNaN(step) || step < 0 || step > 4) {
+    if (DEBUG_MODE) {
+      console.log('[SSP] Invalid spp_step parameter:', stepParam)
+    }
+    return
+  }
+  
+  if (DEBUG_MODE) {
+    console.log('[SSP] Handling spp_step parameter:', step)
+  }
+  
+  if (step === 0) {
+    lessonStarted.value = false
+    currentStep.value = 1
+  } else {
+    lessonStarted.value = true
+    currentStep.value = step
+  }
+}
+
+onMounted(async () => {
+  // Загружаем данные ССП с бэкенда
+  isLoading.value = true
+  backendError.value = null
+  
+  try {
+    if (DEBUG_MODE) {
+      console.log('[SSP] Loading SSP data from backend on mount...')
+    }
+    const result = await store.loadSSPFromBackend()
+    
+    if (result && result.totalData) {
+      if (DEBUG_MODE) {
+        console.log('[SSP] SSP data loaded successfully:', {
+          categoriesWithRating: result.totalData.categories_with_rating,
+          userRating: result.totalData.user_rating,
+          reflectionAnswers: result.totalData.reflection_questions_answers,
+          reflectionTotal: result.totalData.reflection_questions_total
+        })
+      }
+      
+      const totalData = result.totalData
+      
+      // Проверка "нет данных" - только если нет оценок категорий
+      // user_rating может быть 0 легитимно (пользователь поставил 0), поэтому не используем его
+      const hasNoData = totalData.categories_with_rating === 0
+      
+      // Проверяем, завершён ли модуль (есть в localStorage или все данные заполнены)
+      const isModuleCompleted = store.sspModuleCompleted.completed || 
+                                (totalData.categories_with_rating >= 6 && 
+                                 totalData.reflection_questions_answers >= totalData.reflection_questions_total)
+      
+      if (hasNoData && !isModuleCompleted) {
+        // Нет данных - показываем экран 0 (приветствие)
+        if (DEBUG_MODE) {
+          console.log('[SSP] No data found, showing welcome screen (step 0)')
+        }
+        lessonStarted.value = false
+        currentStep.value = 1
+      } else if (isModuleCompleted) {
+        // Модуль завершён - показываем итоговый экран
+        if (DEBUG_MODE) {
+          console.log('[SSP] Module completed, showing summary screen (step 4)')
+        }
+        lessonStarted.value = true
+        currentStep.value = 4
+      } else {
+        // Есть частичные данные - определяем текущий шаг
+        if (DEBUG_MODE) {
+          console.log('[SSP] Partial data found, determining current step')
+        }
+        lessonStarted.value = true
+        
+        if (totalData.reflection_questions_answers > 0) {
+          // Есть ответы на рефлексию - шаг 3 или 4
+          currentStep.value = 3
+        } else if (totalData.categories_with_rating > 0) {
+          // Есть оценки - шаг 2
+          currentStep.value = 2
+        } else {
+          // Начинаем с теории
+          currentStep.value = 1
+        }
+      }
+    } else {
+      // Нет данных с бэкенда - показываем приветствие
+      if (DEBUG_MODE) {
+        console.log('[SSP] No backend data, checking localStorage...')
+      }
+      
+      // Проверяем localStorage на случай если бэкенд недоступен
+      if (store.sspModuleCompleted.completed) {
+        lessonStarted.value = true
+        currentStep.value = 4
+      } else {
+        lessonStarted.value = false
+        currentStep.value = 1
+      }
+    }
+  } catch (error) {
+    if (DEBUG_MODE) {
+      console.error('[SSP] Error loading SSP data:', error)
+    }
+    backendError.value = 'Ошибка загрузки данных'
+    
+    // При ошибке проверяем localStorage
+    if (store.sspModuleCompleted.completed) {
+      lessonStarted.value = true
+      currentStep.value = 4
+    }
+  } finally {
+    isLoading.value = false
+  }
+  
+  // Обрабатываем GET параметр (может перезаписать автоопределение шага)
+  handleStepFromQuery()
+})
+
+watch(() => route.query.spp_step, () => {
+  handleStepFromQuery()
+})
 </script>
 
 <style scoped>

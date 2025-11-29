@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { DEBUG_MODE, FORCE_SHOW_ONBOARDING, FORCE_SHOW_MINITASK } from '@/config/settings.js'
-import { getOnboardingData, updateOnboardingData, getMiniTaskData, updateMiniTaskData } from '@/services/api.js'
+import { getOnboardingData, updateOnboardingData, getMiniTaskData, updateMiniTaskData, getSSPData, updateSSPData } from '@/services/api.js'
 
 export const useAppStore = defineStore('app', () => {
   // ========================================
@@ -530,6 +530,16 @@ export const useAppStore = defineStore('app', () => {
   }
 
   const shouldShowOnboarding = computed(() => {
+    if (!user.value.is_authenticated) {
+      return false
+    }
+    
+    const isCompleted = user.value.finish_onboarding || onboarding.value.completed
+    
+    if (isCompleted) {
+      return false
+    }
+    
     if (FORCE_SHOW_ONBOARDING) {
       if (DEBUG_MODE) {
         console.log('[Store] Onboarding forced to show (FORCE_SHOW_ONBOARDING=true)')
@@ -537,11 +547,7 @@ export const useAppStore = defineStore('app', () => {
       return true
     }
     
-    if (!user.value.is_authenticated) {
-      return false
-    }
-    
-    return !user.value.finish_onboarding && !onboarding.value.completed
+    return true
   })
 
   const shouldShowMiniTask = computed(() => {
@@ -785,6 +791,287 @@ export const useAppStore = defineStore('app', () => {
       completedAt: new Date().toISOString()
     }
     saveToLocalStorage()
+  }
+
+  // ========================================
+  // SSP BACKEND METHODS
+  // ========================================
+
+  /**
+   * Маппинг ID категорий: frontend → backend
+   */
+  const CATEGORY_MAP_TO_BACKEND = {
+    'wealth': 'welfare',
+    'hobbies': 'hobby',
+    'friendship': 'environment',
+    'health': 'health_sport',
+    'career': 'work',
+    'love': 'family'
+  }
+
+  /**
+   * Маппинг ID категорий: backend → frontend
+   */
+  const CATEGORY_MAP_TO_FRONTEND = {
+    'welfare': 'wealth',
+    'hobby': 'hobbies',
+    'environment': 'friendship',
+    'health_sport': 'health',
+    'work': 'career',
+    'family': 'love'
+  }
+
+  /**
+   * SSP данные с бэкенда
+   */
+  const sspBackendData = ref({
+    loading: false,
+    loaded: false,
+    maxRating: 10,
+    baseCategoriesInfo: [],
+    circleData: [],
+    categoriesReflectionData: [],
+    totalData: null
+  })
+
+  /**
+   * Загрузить данные ССП с бэкенда
+   */
+  async function loadSSPFromBackend() {
+    if (DEBUG_MODE) {
+      console.log('[Store] Loading SSP data from backend...')
+    }
+    
+    sspBackendData.value.loading = true
+    
+    try {
+      const result = await getSSPData()
+      
+      if (result.status === 'ok' && result.data) {
+        const data = result.data
+        
+        sspBackendData.value = {
+          loading: false,
+          loaded: true,
+          maxRating: data.max_rating || 10,
+          baseCategoriesInfo: data.base_categories_info || [],
+          circleData: data.circle_data || [],
+          categoriesReflectionData: data.categories_reflection_data || [],
+          totalData: data.total_data || null
+        }
+        
+        // Синхронизируем локальные lifeSpheres с данными бэкенда
+        syncLifeSpheresFromBackend(data)
+        
+        if (DEBUG_MODE) {
+          console.log('[Store] SSP data loaded:', {
+            categoriesCount: sspBackendData.value.circleData.length,
+            reflectionsCount: sspBackendData.value.categoriesReflectionData.length,
+            totalData: sspBackendData.value.totalData
+          })
+        }
+        
+        return sspBackendData.value
+      } else {
+        if (DEBUG_MODE) {
+          console.warn('[Store] Failed to load SSP data:', result)
+        }
+        sspBackendData.value.loading = false
+        return null
+      }
+    } catch (error) {
+      if (DEBUG_MODE) {
+        console.error('[Store] Error loading SSP data:', error)
+      }
+      sspBackendData.value.loading = false
+      return null
+    }
+  }
+
+  /**
+   * Синхронизировать локальные lifeSpheres с данными бэкенда
+   */
+  function syncLifeSpheresFromBackend(backendData) {
+    // Обновляем оценки из circle_data
+    if (backendData.circle_data && backendData.circle_data.length > 0) {
+      backendData.circle_data.forEach(item => {
+        const frontendId = CATEGORY_MAP_TO_FRONTEND[item.category]
+        if (frontendId) {
+          const sphere = lifeSpheres.value.find(s => s.id === frontendId)
+          if (sphere && item.rating !== null && item.rating !== undefined) {
+            sphere.score = item.rating
+          }
+        }
+      })
+    }
+    
+    // Обновляем рефлексии из categories_reflection_data
+    if (backendData.categories_reflection_data && backendData.categories_reflection_data.length > 0) {
+      backendData.categories_reflection_data.forEach(item => {
+        const frontendId = CATEGORY_MAP_TO_FRONTEND[item.category]
+        if (frontendId) {
+          const sphere = lifeSpheres.value.find(s => s.id === frontendId)
+          if (sphere) {
+            // Обновляем оценку если есть
+            if (item.rating !== null && item.rating !== undefined) {
+              sphere.score = item.rating
+            }
+            // Обновляем рефлексию
+            sphere.reflection = {
+              why: item.rating_reason || '',
+              ten: item.what_mean_max_rating || '',
+              prevents: item.max_rating_difficulties || '',
+              desired: item.what_want || ''
+            }
+          }
+        }
+      })
+    }
+    
+    // Обновляем статус завершения модуля
+    if (backendData.total_data) {
+      const allRated = backendData.total_data.categories_with_rating >= 6
+      const allReflected = backendData.total_data.reflection_questions_answers >= 24
+      
+      if (allRated && allReflected) {
+        sspModuleCompleted.value = {
+          completed: true,
+          data: {
+            completedAt: new Date().toISOString(),
+            totalData: backendData.total_data
+          }
+        }
+      }
+    }
+    
+    saveToLocalStorage()
+  }
+
+  /**
+   * Сохранить данные ССП на бэкенд
+   * @param {Array} categoriesData - Массив данных категорий в формате бэкенда
+   */
+  async function saveSSPToBackend(categoriesData) {
+    if (DEBUG_MODE) {
+      console.log('[Store] Saving SSP data to backend:', categoriesData)
+    }
+    
+    try {
+      const result = await updateSSPData({
+        categories_reflection_data: categoriesData
+      })
+      
+      if (result.status === 'ok') {
+        const data = result.data
+        
+        if (DEBUG_MODE) {
+          console.log('[Store] SSP data saved successfully, response:', data)
+        }
+        
+        // Обновляем sspBackendData из ответа (теперь update возвращает те же данные что и get)
+        if (data) {
+          sspBackendData.value = {
+            loading: false,
+            loaded: true,
+            maxRating: data.max_rating || 10,
+            circleData: data.circle_data || [],
+            categoriesReflectionData: data.categories_reflection_data || [],
+            totalData: data.total_data || {
+              categories_with_rating: 0,
+              user_rating: 0,
+              reflection_questions_answers: 0,
+              reflection_questions_total: 24
+            }
+          }
+          
+          if (DEBUG_MODE) {
+            console.log('[Store] SSP backend data updated from save response:', {
+              categoriesCount: sspBackendData.value.circleData.length,
+              reflectionsCount: sspBackendData.value.categoriesReflectionData.length,
+              totalData: sspBackendData.value.totalData
+            })
+          }
+        }
+        
+        return { success: true, data: data }
+      } else {
+        if (DEBUG_MODE) {
+          console.warn('[Store] Failed to save SSP data:', result)
+        }
+        return { success: false, error: result.error_data }
+      }
+    } catch (error) {
+      if (DEBUG_MODE) {
+        console.error('[Store] Error saving SSP data:', error)
+      }
+      return { success: false, error }
+    }
+  }
+
+  /**
+   * Сохранить оценки сфер на бэкенд (шаг 2 - ССП)
+   */
+  async function saveSSPRatingsToBackend() {
+    const categoriesData = lifeSpheres.value.map(sphere => {
+      const backendCategory = CATEGORY_MAP_TO_BACKEND[sphere.id]
+      return {
+        category: backendCategory,
+        rating: sphere.score
+      }
+    })
+    
+    return saveSSPToBackend(categoriesData)
+  }
+
+  /**
+   * Сохранить рефлексию сферы на бэкенд (шаг 3 - Рефлексия)
+   * @param {string} sphereId - ID сферы (frontend)
+   */
+  async function saveSSPReflectionToBackend(sphereId) {
+    const sphere = lifeSpheres.value.find(s => s.id === sphereId)
+    if (!sphere) return { success: false, error: 'Sphere not found' }
+    
+    const backendCategory = CATEGORY_MAP_TO_BACKEND[sphereId]
+    const categoryData = {
+      category: backendCategory,
+      rating: sphere.score,
+      rating_reason: sphere.reflection?.why || '',
+      what_mean_max_rating: sphere.reflection?.ten || '',
+      max_rating_difficulties: sphere.reflection?.prevents || '',
+      what_want: sphere.reflection?.desired || ''
+    }
+    
+    return saveSSPToBackend([categoryData])
+  }
+
+  /**
+   * Сохранить все рефлексии на бэкенд
+   */
+  async function saveAllSSPReflectionsToBackend() {
+    const categoriesData = lifeSpheres.value.map(sphere => {
+      const backendCategory = CATEGORY_MAP_TO_BACKEND[sphere.id]
+      return {
+        category: backendCategory,
+        rating: sphere.score,
+        rating_reason: sphere.reflection?.why || '',
+        what_mean_max_rating: sphere.reflection?.ten || '',
+        max_rating_difficulties: sphere.reflection?.prevents || '',
+        what_want: sphere.reflection?.desired || ''
+      }
+    })
+    
+    return saveSSPToBackend(categoriesData)
+  }
+
+  /**
+   * Геттер для маппинга категорий
+   */
+  function getCategoryBackendId(frontendId) {
+    return CATEGORY_MAP_TO_BACKEND[frontendId] || frontendId
+  }
+
+  function getCategoryFrontendId(backendId) {
+    return CATEGORY_MAP_TO_FRONTEND[backendId] || backendId
   }
 
   // ССП Goals Bank methods
@@ -1214,6 +1501,17 @@ export const useAppStore = defineStore('app', () => {
     completeMiniTaskWithBackend,
     completeMiniTask,
     resetMiniTask,
+    
+    // SSP backend methods
+    sspBackendData,
+    loadSSPFromBackend,
+    saveSSPToBackend,
+    saveSSPRatingsToBackend,
+    saveSSPReflectionToBackend,
+    saveAllSSPReflectionsToBackend,
+    syncLifeSpheresFromBackend,
+    getCategoryBackendId,
+    getCategoryFrontendId,
     
     // Planning Module
     planningModule,

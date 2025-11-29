@@ -1,176 +1,34 @@
 # OnePercent MVP
 
 ## Overview
-The OnePercent MVP is a Vue 3 + Vite application for personal life management and goal tracking, inspired by the "1% improvement" philosophy. It features a Balanced Scorecard (SSP) module for life balance assessment and a Goals Bank for structured goal setting. The project aims to provide a guided, multi-step workflow for personal development, leveraging interactive UI components and an AI coach for user engagement, integrating with a Django REST API backend for authentication.
+The OnePercent MVP is a Vue 3 + Vite application for personal life management and goal tracking, inspired by the "1% improvement" philosophy. It features a Balanced Scorecard (SSP) module for life balance assessment and a Goals Bank for structured goal setting. The project aims to provide a guided, multi-step workflow for personal development, leveraging interactive UI components and an AI coach for user engagement, integrating with a Django REST API backend for authentication. The business vision is to empower users with tools for self-improvement, fostering consistent growth and offering a market-leading platform for personal development.
 
 ## User Preferences
 I prefer simple language and iterative development. Ask before making major changes. I prefer detailed explanations. Do not make changes to the folder `Z`. Do not make changes to the file `Y`.
 
-## Checkpoints
-- **base_norm** (27 Nov 2025): Stable state with complete Mini-Task backend integration. All modules working: SSP, Goals Bank, Decomposition, Planning, Onboarding, MiniTask. Layered backend sync architecture with preserved local UX. If user says "вернись к base_norm" — rollback to this commit.
-
 ## System Architecture
 
 ### UI/UX Decisions
-The application employs a guided, multi-step workflow for core modules (SSP, Goals Bank, Decomposition, Planning) with a 3-state design: empty, lesson, and summary. Key visual components include an interactive "Wheel of Life" and progress bars. The UI features a collapsible sidebar, dark/light theme, responsive design, and a consistent color priority system (red, orange, blue, gray). Lucide Vue Next provides minimalist line icons.
+The application employs a guided, multi-step workflow for core modules (SSP, Goals Bank, Decomposition, Planning) with a 3-state design: empty, lesson, and summary. Key visual components include an interactive "Wheel of Life" with curved text labels and progress bars. The UI features a collapsible sidebar, dark/light theme, responsive design, and a consistent color priority system (red, orange, blue, gray). Lucide Vue Next provides minimalist line icons, replacing emojis for a cleaner aesthetic.
 
 ### Technical Implementations
-The frontend is built with Vue 3 (Composition API, script setup), Vite with a proxy to the Django backend, Vue Router for navigation with authentication guards, and Pinia for state management with localStorage persistence. A custom Django-style configuration system (`settings.js` + `local_settings.js`) is used for environment-specific settings.
+The frontend is built with Vue 3 (Composition API, script setup), Vite with a proxy to the Django backend, Vue Router for navigation with authentication guards, and Pinia for state management with localStorage persistence. A custom Django-style configuration system (`settings.js` + `local_settings.js`) is used for environment-specific settings. Authentication is cookie-based with CSRF protection.
 
 ### Feature Specifications
-- **SSP Module**: A 4-step guided flow for life balance assessment, with a redesigned Wheel of Life and color-coded reflection accordions. Summary page features compact stat blocks with Lucide icons (replacing emojis) for average score, strongest sphere, and growth zone. Reflection editing is available directly in the summary accordion with inline edit/save/cancel functionality.
-- **Goals Bank Module**: A 3-step workflow for goal validation, filtering, and transfer to actionable goals, including an inline editing modal for validated goals.
-- **Decomposition Module**: Facilitates breaking down goals into actionable steps, with step persistence and ID-based tracking. The AI Coach has been removed from this module.
-- **Planning Module**: Includes 5-day workweek view with collapsible weekends, week navigation, color-coded priority tasks, drag & drop task management, a daily time budget indicator, and weekly statistics. Quick-add functionality and undo for task deletion are supported. The AI Coach has been removed from this module. Task cards combine sphere icons with checkboxes and display both step and goal titles.
-- **Authentication**: Integrates with the Django backend for user login, registration, and logout, featuring bidirectional redirects and auth guards. Authentication pages use Lucide icons.
-- **Onboarding**: A streamlined 3-step onboarding process (Philosophy → Points A/B → Rules) with optional fields and skip functionality. Lucide icons are used for visual elements.
+- **SSP Module**: A 4-step guided flow for life balance assessment, featuring a redesigned Wheel of Life and color-coded reflection accordions with inline editing. Backend integration allows for loading and saving SSP data, including ratings and reflections, with auto-save triggers on step transitions and edits.
+- **Goals Bank Module**: A 3-step workflow for goal validation, filtering, and transfer, including an inline editing modal for validated goals. Stat cards and action buttons utilize Lucide icons and color-coded badges.
+- **Decomposition Module**: Facilitates breaking down goals into actionable steps, with step persistence and ID-based tracking. The AI Coach has been removed from this module, resulting in a single-column, focused interface.
+- **Planning Module**: Includes a 5-day workweek view with collapsible weekends, week navigation, color-coded priority tasks, drag & drop task management, and weekly statistics. Quick-add functionality and undo for task deletion are supported. The AI Coach has been removed.
+- **Authentication**: Integrates with the Django backend for user login, registration, and logout. Supports Telegram authentication with dedicated modals for error handling and new user registration flow (email/password setup).
+- **Onboarding**: A streamlined 3-step process (Philosophy → Points A/B → Rules) with optional fields and skip functionality. Utilizes Lucide icons and ensures proper navigation upon completion.
 - **AI Curator**: Currently in demo mode without live API calls.
+- **Mini-Task Module**: Implemented with a layered backend sync, preserving local UX while synchronizing task categories and progress. Tasks are hardcoded on the frontend with backend mapping. The system ensures fresh user data is fetched on every navigation to reflect real-time onboarding and mini-task completion status.
 
 ### System Design Choices
-
-The application uses a modular structure with dedicated components, services, views, router, and stores. State management is handled by Pinia, ensuring data persistence and reactivity. Authentication is cookie-based with CSRF protection. The application prioritizes user guidance and visual feedback throughout the various modules.
-
-## Recent Changes (28 Nov 2025)
-
-### Telegram Bot Integration (Sidebar)
-- Added `telegram_bot_link` field to user store (from `/api/rest/front/get-user-data/` endpoint)
-- New "Телеграм бот" button in sidebar footer (below user info, shows only if link exists)
-- Uses Send icon with Telegram blue color (#0088cc)
-- Modal (480px width) with Telegram branding (blue gradient header icon)
-- Features:
-  - Персональная ссылка с copy-to-clipboard (Check icon feedback)
-  - "Открыть в Telegram" button with ExternalLink icon
-  - Backdrop blur overlay, slide-in animation
-- Button hidden when sidebar collapsed (shows icon with tooltip)
-
-### Telegram Auth Modals (TelegramAuthModals.vue)
-- Global component in App.vue that handles GET parameters on all pages
-- Handles three scenarios:
-  - `?telegram_auth_error=token_expired` - Warning modal about expired link (10 min lifetime)
-  - `?telegram_auth_error=token_not_found` - Warning modal about invalid/used link
-  - `?telegram_complete_registration=1` - Success modal with email/password form
-- Features:
-  - Orange warning icon for errors, green success icon for registration
-  - Action buttons: "Войти через Telegram", "Войти", "Регистрация"
-  - Registration form with email, password (min 8 chars), confirm password
-  - Password visibility toggle, validation, "Пропустить" option
-  - Removes GET params from URL on modal close
-  - Watches route.query for param changes
-
-## Previous Changes (27 Nov 2025)
-
-### WheelOfLife Component
-- Redesigned to match reference image with curved text labels using SVG `<textPath>`
-- Labels positioned in outer ring (between grid and wheel boundary)
-- Auto-flip text for bottom sectors for left-to-right readability
-- Increased font size to 14px with letter-spacing: 2px
-
-### Reflection Accordion (SSP Module)
-- Replaced emoji icons with Lucide icons (Wallet, Palette, Users, Heart, Briefcase, HeartHandshake)
-- Added color-coded left border matching wheel colors for each sphere
-- Neutral score badge styling (gray background instead of green)
-- ChevronDown icon replacing text arrow
-- Hover effects with background and shadow transitions
-- Icon wrapper with semi-transparent color-matched background
-- Applied consistent design to both Summary and Step 3 (Рефлексия) accordions
-
-### Goals Bank Module (Summary Page)
-- Added Lucide icons to stat cards (Lightbulb, CheckCircle, XCircle, PlayCircle) with color-coded backgrounds
-- Replaced sphere emojis with Lucide icons matching SSP module (Wallet, Palette, Users, Heart, Briefcase, HeartHandshake)
-- Color-coded sphere badges using CSS custom properties for sphere-specific colors
-- Action buttons now use Lucide icons (Plus, Check, X, RotateCcw) instead of text/emoji
-- Updated "Цели в работе" section with sphere icons
-- Added styling for empty "Почему важно" cells
-- Helper functions: getSphereIcon(), getSphereColor(), getSphereNameOnly()
-
-### Decomposition Module (Goals.vue) - Complete Cleanup
-- **Removed AI Coach completely** from both lesson mode and goals list mode
-- Removed all chat-related HTML, CSS, and JavaScript (~200+ lines of code)
-- Removed unused Bot, User imports
-- "Пройти урок заново" button: 📚 emoji replaced with RotateCcw icon
-- "Из Банка целей" badge: 🏦 emoji replaced with Landmark icon
-- Edit/Delete buttons: ✏️/🗑️ emojis replaced with Edit2/Trash2 Lucide icons with hover effects
-- Sphere display: Emoji icons replaced with Lucide icons (Wallet, Palette, Users, Heart, Briefcase, HeartHandshake) with colored borders
-- Modal close button: ✕ text replaced with X Lucide icon
-- **Single-column layout** - removed step-2-layout and goals-layout sidebar grid
-- Clean, focused interface without chat distractions
-
-### Goal Edit Page (GoalEdit.vue) - Redesign
-- **Removed AI coach sidebar** - cleaner, distraction-free editing experience
-- **Moved action buttons to header** - "Сохранить", "Отмена", "Удалить" all in one row
-- **Single-column layout** - form takes full width (max 900px), no sidebar
-- Navigation: ArrowLeft icon in header
-- Actions: Save, Trash2, Plus Lucide icons with hover effects
-- Step completion checkboxes with Lucide icons (Square/CheckSquare)
-- Completed steps show with green left border, strikethrough text, muted colors
-- Added comment field for each step (textarea with placeholder)
-- Step management: X icon, GripVertical drag handle
-- Custom dropdown for sphere selection with Lucide icons
-- **Date info relocated** - "Создана: дата" now at bottom of steps card
-
-### Onboarding Component (Onboarding.vue)
-- Philosophy icon: Gamepad2 icon in large purple circular wrapper
-- Key ideas section: Target, BarChart3, RefreshCcw icons in colored wrappers
-- Highlight block: Lightbulb icon in amber wrapper
-- Step 3 journey visual: MapPin and Target icons for points A and B
-- Form labels: MapPin, Target, Gem icons in small wrappers
-- Completion section: CheckCircle2 icon in large green wrapper
-- Summary checkmarks: Check icons in small green wrappers
-- Final button: Rocket icon with text
-- CSS icon-wrapper system with size variants (xs, sm, md, lg) and color classes
-- Arrow line using CSS gradients instead of text arrow
-
-### Planning Module (Planning.vue) - Cleanup
-- Removed all 4 GuidancePanel components with AI coach from lesson steps and planner mode
-- Removed planningCoachResponses array and related tips arrays (theoryTips, practiceTips, telegramTips, plannerTips)
-- Removed unused imports (GuidancePanel, ChevronLeft, ChevronRight from Lucide)
-- Clean, focused planning interface without AI coach distractions
-
-
-### Mini-Task Backend Integration (27 Nov 2025) - FINAL
-**Architecture: Layered Backend Sync (local state preserved)**
-
-- **Categories**: HARDCODED in component with icons (not from backend)
-  - `categories` array with id, name, icon, color
-  - Icons preserved: 🗓️ Календарь, ✅ Следующие действия, 💡 Идеи, 📚 Справка
-  - Category mapping: frontend (calendar, next, someday, reference) ↔ backend (calendar, action, idea, info)
-
-- **Local State**: Component manages its own arrays
-  - `brainDumpItems` - reactive ref for all items
-  - `selectedActions`, `completedActions` - reactive refs
-  - Drag/drop works on local arrays, then syncs to backend
-
-- **Backend Sync Functions**:
-  - `formatTasksForBackend()` - serializes local items with category mapping
-  - `loadDataFromBackend()` - hydrates local state from backend response
-  - `saveBrainDump()`, `saveCategorization()`, `saveMiniTaskProgress()` - auto-save to backend
-  - `startFresh()` - resets backend first, then local state
-
-- **Resume Flow**:
-  - Loading state with spinner during backend fetch
-  - Resume prompt shows step count and task count
-  - `resumeFromStep()` handles step >= 4 as complete (blocks step 5)
-  - "Продолжить" vs "Начать заново" options
-
-- **API Endpoints**:
-  - GET: `/api/rest/front/app/onboard/mini-task/get/`
-  - POST: `/api/rest/front/app/onboard/mini-task/update/`
-
-- **Store Methods** (app.js):
-  - `loadMiniTaskFromBackend()`, `saveMiniTaskToBackend()`
-  - `saveMiniTaskTasks()`, `updateMiniTaskStep()`
-  - `completeMiniTaskWithBackend()`, `resetMiniTask()`
-
-- **Router Navigation Blocking**: Allows dashboard/settings, blocks other routes until mini-task complete
-
-### Fresh User Data on Every Navigation (27 Nov 2025)
-- **Removed auth caching**: Previously cached for 30 seconds (AUTH_CHECK_CACHE_TIME)
-- **Always fetches fresh data**: Every navigation to requiresAuth/guestOnly routes calls `/api/rest/front/get-user-data/`
-- **Store automatically updated**: `store.setUser(userData)` called on each navigation
-- **Fields synced**: id, email, first_name, last_name, finish_onboarding, finish_minitask
-- **Purpose**: Backend can update user flags (onboarding/minitask completion) and frontend will reflect changes immediately
+The application uses a modular structure with dedicated components, services, views, router, and stores. State management by Pinia ensures data persistence and reactivity. The system prioritizes user guidance, visual feedback, and a clean, distraction-free interface, especially after the removal of the AI Coach from several modules. Backend synchronization is designed to provide immediate UI feedback while persisting data reliably.
 
 ## External Dependencies
-- **Django REST API Backend**: Provides authentication, user data, onboarding, and goal management services.
-- **Lucide Vue Next**: Used for minimalist line icons across the UI.
-- **Vite**: Frontend build tool with proxy capabilities for seamless backend integration.
+- **Django REST API Backend**: Provides user authentication, profile management, SSP data, goals bank, decomposition, planning, onboarding, and mini-task services.
+- **Lucide Vue Next**: Used for a comprehensive set of minimalist line icons throughout the UI.
+- **Vite**: Serves as the frontend build tool, offering fast development and a proxy for seamless communication with the Django backend.
+- **Telegram OAuth**: Integrated for user registration and login via Telegram.

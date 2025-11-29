@@ -1,0 +1,337 @@
+Теперь займемся внедрением бэка в блок ССП.
+
+Выше мы уже выяснили какие шаги (экраны) есть:
+- 1. "привествие" - на нем отображена общая инфа о данном блоке (там текст: `Система сбалансированных показателей .... Оцените баланс всех сфер вашей жизни и определите точки роста `)
+- 2. и четырех экранов шагов, в них даше на верху страницы пишется:
+-- 1. теория
+-- 2. ссп
+-- 3. рефлексия
+-- 4. итог
+
+Теперь к ним нужно подключить бэк, с сохранием, получением и отоборажением данных.
+
+Запланировано два эндпоинта:
+- 1. `'/api/rest/front/app/ssp/get/'` - получение данных по всему блоку ССП. По ним можно отрисовать все экраны.
+Пример отдаваемых данных:
+```
+{
+  "status" : "ok",
+  "data" : {
+    "max_rating" : 10,
+    "base_categories_info" : [ {
+      "category" : "welfare",
+      "category_title" : "Благосостояние"
+    }, {
+      "category" : "hobby",
+      "category_title" : "Хобби и отдых"
+    }, {
+      "category" : "environment",
+      "category_title" : "Дружба и окружение"
+    }, {
+      "category" : "health_sport",
+      "category_title" : "Здоровье и спорт"
+    }, {
+      "category" : "work",
+      "category_title" : "Работа и карьера"
+    }, {
+      "category" : "family",
+      "category_title" : "Любовь, семья, отношения"
+    } ],
+    "circle_data" : [ {
+      "category" : "environment",
+      "rating" : 7
+    }, {
+      "category" : "hobby",
+      "rating" : 5
+    }, {
+      "category" : "welfare",
+      "rating" : 6
+    }, {
+      "category" : "work",
+      "rating" : 7
+    }, {
+      "category" : "family",
+      "rating" : 9
+    }, {
+      "category" : "health_sport",
+      "rating" : 8
+    } ],
+    "categories_reflection_data" : [ {
+      "category" : "environment",
+      "category_title" : "Дружба и окружение",
+      "rating" : 7,
+      "rating_reason" : "Есть хорошие друзья, но кругозор мог бы быть шире и общение глубже",
+      "what_mean_max_rating" : "Десятка - это круг добрых, поддерживающих друзей с которыми хочется общаться всегда",
+      "max_rating_difficulties" : "Трудность в завязывании новых знакомств, некоторые отношения поверхностные, разные интересы",
+      "what_want" : "Хочу расширить круг общения и развивать более глубокие и значимые дружеские отношения"
+    }, {
+      "category" : "hobby",
+      "category_title" : "Хобби и отдых",
+      "rating" : 5,
+      "rating_reason" : "Когда-то занимался увлечениями, но в последнее время мало времени на них уделяю",
+      "what_mean_max_rating" : "Идеал - иметь достаточно времени и энергии для любимых дел, приносящих радость",
+      "max_rating_difficulties" : "Усталость после работы, отсутствие мотивации, недостаток единомышленников",
+      "what_want" : "Хочу возродить свои хобби и найти время для творчества и развлечений"
+    }, {
+      "category" : "welfare",
+      "category_title" : "Благосостояние",
+      "rating" : 6,
+      "rating_reason" : "Финансовое положение среднее, есть сбережения но хочется большего",
+      "what_mean_max_rating" : "Максимальное благосостояние - это финансовая независимость и отсутствие денежных забот",
+      "max_rating_difficulties" : "Неопределенность доходов, непредвиденные расходы, недостаточные знания инвестирования",
+      "what_want" : "Хочу увеличить доход и создать подушку безопасности для будущего"
+    }, {
+      "category" : "work",
+      "category_title" : "Работа и карьера",
+      "rating" : 7,
+      "rating_reason" : "Работа интересная, но зарплата не совсем устраивает и много стресса",
+      "what_mean_max_rating" : "Десятка - это любимая работа с хорошей зарплатой, интересными проектами и уважением коллег",
+      "max_rating_difficulties" : "Конкуренция на рынке, необходимость постоянного развития навыков, высокие требования",
+      "what_want" : "Мечтаю о повышении и проектах, которые действительно вдохновляют меня"
+    }, {
+      "category" : "family",
+      "category_title" : "Любовь, семья, отношения",
+      "rating" : 9,
+      "rating_reason" : "Отношения в семье крепкие и доверительные, часто вместе проводим время",
+      "what_mean_max_rating" : "Максимум - это взаимопонимание, поддержка друг друга и частое общение без конфликтов",
+      "max_rating_difficulties" : "Иногда возникают непонимания из-за разных взглядов на жизнь",
+      "what_want" : "Хочу еще больше ценить время с семьей и быть более внимательным слушателем"
+    }, {
+      "category" : "health_sport",
+      "category_title" : "Здоровье и спорт",
+      "rating" : 8,
+      "rating_reason" : "Регулярно занимаюсь спортом и слежу за здоровьем, но иногда пропускаю тренировки из-за работы",
+      "what_mean_max_rating" : "Идеальное здоровье - это энергия каждый день, отсутствие болезней и легкость в теле",
+      "max_rating_difficulties" : "Недостаток времени на тренировки и нерегулярный график работы",
+      "what_want" : "Хочу стать более дисциплинированным и найти баланс между работой и фитнесом"
+    } ],
+    "total_data" : {
+      "user_rating" : 7.0,
+      "max_rating" : 10,
+      "categories_with_rating" : 6,
+      "reflection_questions_total" : 24,
+      "reflection_questions_answers" : 24,
+      "balance_circles" : 1
+    }
+  }
+}
+```
+В моем DRF сериализаторе это выглядит так:
+```
+class CategoriesDataSSPDataResponseSerializer(BaseSerializer):
+    category = RestChoiceField(required=False, choices=SSPReflection.CATEGORY_CHOICES, help_text='Обозначение категории', example='health_sport')
+    category_title = RestCharField(required=False, help_text='Название категории', max_length=100, example='Информация')
+
+class CircleSSPDataResponseSerializer(BaseSerializer):
+    category = RestChoiceField(required=False, choices=SSPReflection.CATEGORY_CHOICES, help_text='Обозначение категории', example='health_sport')
+    rating = RestIntegerField(required=False, allow_null=True, help_text='Максимальная оценка для категории', example=6, min_value=0, max_value=10)
+
+class CategoriesReflectionDataSSPDataResponseSerializer(BaseSerializer):
+    category = RestChoiceField(required=False, choices=SSPReflection.CATEGORY_CHOICES, help_text='Обозначение категории', example='health_sport')
+    category_title = RestCharField(required=False, help_text='Название категории', max_length=100)
+    rating = RestIntegerField(required=False, allow_null=True, help_text='Оценка пользователя _(выставленная на шаге 2 блока СПП)_', example=10, min_value=0, max_value=10)
+    rating_reason = RestCharField(required=False, allow_null=True, allow_blank=True, help_text='Почему я поставил именно эту оценку?', max_length=10000)
+    what_mean_max_rating = RestCharField(required=False, allow_null=True, allow_blank=True, help_text='Что для меня "10" в этой сфере?', max_length=10000)
+    max_rating_difficulties = RestCharField(required=False, allow_null=True, allow_blank=True, help_text='Что мешает дойти до "10"?', max_length=10000)
+    what_want = RestCharField(required=False, allow_null=True, allow_blank=True, help_text='Как я хочу, чтобы было?', max_length=10000)
+
+class TotalSSPDataResponseSerializer(BaseSerializer):
+    user_rating = RestFloatField(required=True, help_text='Итоговая оценка пользователя', example=4.3, min_value=0.0, max_value=10.0)
+    max_rating = RestIntegerField(required=False, allow_null=True, help_text='Максимальная оценка', example=10, min_value=0, max_value=10)
+    categories_with_rating = RestIntegerField(required=False, allow_null=True, help_text='Сфер оценено', example=5, min_value=0, max_value=6)
+    reflection_questions_total = RestIntegerField(required=False, allow_null=True, help_text='Вопросов рефлексии', example=10, min_value=0, max_value=24)
+    reflection_questions_answers = RestIntegerField(required=False, allow_null=True, help_text='Ответов по вопросам рефлексии', example=10, min_value=0, max_value=24)
+    balance_circles = RestIntegerField(required=False, allow_null=True, help_text='Колесо баланса', example=10, min_value=0, max_value=10)
+
+class SSPDataResponseSerializer(BaseSerializer):
+    max_rating = RestIntegerField(required=False, help_text='Максимальная оценка для категории', example=10, min_value=0, max_value=10)
+    base_categories_info = RestListField(child=CategoriesDataSSPDataResponseSerializer(), required=True, allow_empty=True, max_length=6, help_text='Общие данные по возможным категориям _(инфо-поле)_', example_count=6)
+    circle_data = RestListField(child=CircleSSPDataResponseSerializer(), required=True, allow_empty=True, max_length=6, help_text='Данные по выставленным оценкам по категориям пользователем _(можно использовать на шаге 2 блока ССП)_', example_count=6)
+    categories_reflection_data = RestListField(child=CategoriesReflectionDataSSPDataResponseSerializer(), required=True, allow_empty=True, max_length=6, help_text='Данные рефлексии по категориям _(используется на шаге 3 блока ССП)_', example_count=6)
+    total_data = TotalSSPDataResponseSerializer(help_text='Финальные результаты пользователя по блоку ССП _(отображаются на шаге 4 блока ССП)_')
+
+class GetSSPDataResponseSerializer(BaseSerializer):
+    """Основной сериализатор ответа для ССП блока"""
+    status = RestChoiceField(required=False, choices=['ok', 'error'], help_text='str: Статус ответа ("ok" или "error")')
+    data = SSPDataResponseSerializer(required=False, help_text="Блок с данными ответа по эндпоинту")
+```
+Сейчас доступны категории:
+```
+CATEGORY_CHOICES = [
+    ('welfare', 'Благосостояние'),
+    ('hobby', 'Хобби и отдых'),
+    ('environment', 'Дружба и окружение'),
+    ('health_sport', 'Здоровье и спорт'),
+    ('work', 'Работа и карьера'),
+    ('family', 'Любовь, семья, отношения'),
+]
+MAX_RATING = 10
+```
+Если у пользователя нет данных по блоку ССП пример пустого ответа будет выглядеть так:
+```
+{
+  "max_rating" : 10,
+  "base_categories_info" : [ {
+    "category" : "welfare",
+    "category_title" : "Благосостояние"
+  }, {
+    "category" : "hobby",
+    "category_title" : "Хобби и отдых"
+  }, {
+    "category" : "environment",
+    "category_title" : "Дружба и окружение"
+  }, {
+    "category" : "health_sport",
+    "category_title" : "Здоровье и спорт"
+  }, {
+    "category" : "work",
+    "category_title" : "Работа и карьера"
+  }, {
+    "category" : "family",
+    "category_title" : "Любовь, семья, отношения"
+  } ],
+  "circle_data" : [ ],
+  "categories_reflection_data" : [ ],
+  "total_data" : {
+    "user_rating" : 0,
+    "max_rating" : 10,
+    "categories_with_rating" : 0,
+    "reflection_questions_total" : 24,
+    "reflection_questions_answers" : 0,
+    "balance_circles" : 1
+  }
+}
+```
+
+- 2. `'/api/rest/front/app/ssp/update/'` - создание/обновление данных.
+Ожидает на вход:
+```
+// Утилита для получения куки по имени
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+        return decodeURIComponent(parts.pop().split(';').shift());
+    }
+    return null;
+}
+
+// Сначала запросим CSRF токен (сервер установит куку `csrftoken`)
+function initCsrf() {
+    return fetch('http://127.0.0.1:8017/api/rest/front/csrf/', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({})
+    });
+}
+
+// Основной запрос к API
+function callApi() {
+    const url = 'http://127.0.0.1:8017/api/rest/front/app/ssp/update/';
+    const data = {
+        "categories_reflection_data": [
+            {
+                "category": "health_sport",
+                "rating": 8,
+                "rating_reason": "Регулярно занимаюсь спортом и слежу за здоровьем, но иногда пропускаю тренировки из-за работы",
+                "what_mean_max_rating": "Идеальное здоровье - это энергия каждый день, отсутствие болезней и легкость в теле",
+                "max_rating_difficulties": "Недостаток времени на тренировки и нерегулярный график работы",
+                "what_want": "Хочу стать более дисциплинированным и найти баланс между работой и фитнесом"
+            },
+            {
+                "category": "family",
+                "rating": 9,
+                "rating_reason": "Отношения в семье крепкие и доверительные, часто вместе проводим время",
+                "what_mean_max_rating": "Максимум - это взаимопонимание, поддержка друг друга и частое общение без конфликтов",
+                "max_rating_difficulties": "Иногда возникают непонимания из-за разных взглядов на жизнь",
+                "what_want": "Хочу еще больше ценить время с семьей и быть более внимательным слушателем"
+            },
+            {
+                "category": "work",
+                "rating": 7,
+                "rating_reason": "Работа интересная, но зарплата не совсем устраивает и много стресса",
+                "what_mean_max_rating": "Десятка - это любимая работа с хорошей зарплатой, интересными проектами и уважением коллег",
+                "max_rating_difficulties": "Конкуренция на рынке, необходимость постоянного развития навыков, высокие требования",
+                "what_want": "Мечтаю о повышении и проектах, которые действительно вдохновляют меня"
+            },
+            {
+                "category": "welfare",
+                "rating": 6,
+                "rating_reason": "Финансовое положение среднее, есть сбережения но хочется большего",
+                "what_mean_max_rating": "Максимальное благосостояние - это финансовая независимость и отсутствие денежных забот",
+                "max_rating_difficulties": "Неопределенность доходов, непредвиденные расходы, недостаточные знания инвестирования",
+                "what_want": "Хочу увеличить доход и создать подушку безопасности для будущего"
+            },
+            {
+                "category": "hobby",
+                "rating": 5,
+                "rating_reason": "Когда-то занимался увлечениями, но в последнее время мало времени на них уделяю",
+                "what_mean_max_rating": "Идеал - иметь достаточно времени и энергии для любимых дел, приносящих радость",
+                "max_rating_difficulties": "Усталость после работы, отсутствие мотивации, недостаток единомышленников",
+                "what_want": "Хочу возродить свои хобби и найти время для творчества и развлечений"
+            },
+            {
+                "category": "environment",
+                "rating": 7,
+                "rating_reason": "Есть хорошие друзья, но кругозор мог бы быть шире и общение глубже",
+                "what_mean_max_rating": "Десятка - это круг добрых, поддерживающих друзей с которыми хочется общаться всегда",
+                "max_rating_difficulties": "Трудность в завязывании новых знакомств, некоторые отношения поверхностные, разные интересы",
+                "what_want": "Хочу расширить круг общения и развивать более глубокие и значимые дружеские отношения"
+            }
+        ]
+    };
+    const headers = {
+        "Content-Type": "application/json"
+    };
+
+    // Добавляем CSRF токен в заголовки
+    const csrftoken = getCookie('csrftoken');
+    if (csrftoken) {
+        headers['X-CSRFToken'] = csrftoken;
+    }
+
+    return fetch(url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: headers,
+            body: JSON.stringify(data),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Response:', data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// Использование: сначала инициализируем CSRF, потом вызываем эндпоинт
+initCsrf()
+    .then(() => callApi())
+    .catch(console.error);
+```
+В примере я обновляю сразу все поля у всех категорий, но можно и по одному или нескольким полям, и для одной или нескольких категорий (главное чтобы передавалось поле `category`). Чтобы стереть значение, нужно передать пустую строку `''`, если передать `null`, то значение не обновится.
+
+В сериализаторе это выглядит так:
+```
+class CategoriesDataUpdateSSPDataRequestSerializer(BaseSerializer):
+    category = RestChoiceField(required=True, choices=SSPReflection.CATEGORY_CHOICES, help_text='Обозначение категории', example='health_sport')
+    rating = RestIntegerField(required=False, allow_null=True, help_text='Оценка пользователя _(выставленная на шаге 2 блока СПП)_', example=10, min_value=0, max_value=10)
+    rating_reason = RestCharField(required=False, allow_null=True, allow_blank=True, help_text='Почему я поставил именно эту оценку?', max_length=10000, example='Почему я поставил именно эту оценку?')
+    what_mean_max_rating = RestCharField(required=False, allow_null=True, allow_blank=True, help_text='Что для меня "10" в этой сфере?', max_length=10000, example='Что для меня "10" в этой сфере?')
+    max_rating_difficulties = RestCharField(required=False, allow_null=True, allow_blank=True, help_text='Что мешает дойти до "10"?', max_length=10000, example='Что мешает дойти до "10"?')
+    what_want = RestCharField(required=False, allow_null=True, allow_blank=True, help_text='Как я хочу, чтобы было?', max_length=10000, example='Как я хочу, чтобы было?')
+
+class UpdateSSPDataRequestSerializer(BaseSerializer):
+    """
+    Блок ССП - заполнение данных
+    """
+    categories_reflection_data = RestListField(child=CategoriesDataUpdateSSPDataRequestSerializer(), required=True, allow_empty=False, max_length=6, help_text='Данные для обновления по блоку ССП', example_count=6)
+```
+Дополнительных валидаций, кроме тех что указаны в полях сериализаторов нет.
+
+Если все понятно, то можешь начинать работу.
+Также внеси описание логики и деталей в `README.md`.

@@ -206,7 +206,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
 import { 
@@ -214,6 +215,7 @@ import {
   CheckCircle2, Check, Rocket, Lightbulb
 } from 'lucide-vue-next'
 
+const router = useRouter()
 const store = useAppStore()
 
 const currentStep = ref(1)
@@ -361,8 +363,11 @@ async function completeOnboarding() {
   isSaving.value = false
   
   if (DEBUG_MODE) {
-    console.log('[Onboarding] Completed successfully')
+    console.log('[Onboarding] Completed successfully, navigating to dashboard...')
   }
+  
+  await nextTick()
+  router.push('/app/')
 }
 </script>
 

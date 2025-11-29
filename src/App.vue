@@ -2,10 +2,19 @@
   <div id="app" :class="appClasses">
     <Sidebar v-if="hasSidebar" @collapse-change="onCollapseChange" />
     <main class="main-content">
-      <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
-          <component :is="Component" />
-        </transition>
+      <router-view v-slot="{ Component, route }">
+        <Suspense>
+          <template #default>
+            <div class="page-wrapper">
+              <component :is="Component" :key="route.path" />
+            </div>
+          </template>
+          <template #fallback>
+            <div class="page-loading">
+              <div class="loading-spinner"></div>
+            </div>
+          </template>
+        </Suspense>
       </router-view>
     </main>
     <TelegramAuthModals />
@@ -72,6 +81,34 @@ const appClasses = computed(() => ({
   #app.has-sidebar.sidebar-collapsed .main-content {
     margin-left: 0;
     padding: 1rem;
+  }
+}
+
+.page-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.page-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  width: 100%;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border-color, #e5e5e5);
+  border-top-color: var(--primary-color, #3b82f6);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 </style>
