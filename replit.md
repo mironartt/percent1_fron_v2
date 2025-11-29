@@ -30,7 +30,18 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite with a pr
 
 The application uses a modular structure with dedicated components, services, views, router, and stores. State management is handled by Pinia, ensuring data persistence and reactivity. Authentication is cookie-based with CSRF protection. The application prioritizes user guidance and visual feedback throughout the various modules.
 
-## Recent Changes (28 Nov 2025)
+## Recent Changes (29 Nov 2025)
+
+### Onboarding Completion Flow Fix
+- **Fixed bug**: After clicking "Приступить", data saved but page didn't transition
+- **Root cause**: `shouldShowOnboarding` computed ignored actual completion when `FORCE_SHOW_ONBOARDING=true`
+- **Store fix** (`app.js`): Now checks actual completion state BEFORE FORCE flags
+  - If `user.finish_onboarding` OR `onboarding.completed` is true → always returns false
+  - FORCE flag only applies when not actually completed
+- **Component fix** (`Onboarding.vue`): Added explicit navigation after completion
+  - Import `useRouter` and `nextTick`
+  - Call `router.push('/app/')` after `store.completeOnboarding()`
+  - Ensures proper transition even if reactivity is delayed
 
 ### Registration Page Telegram Auth (Register.vue)
 - Removed Google auth button completely

@@ -530,6 +530,16 @@ export const useAppStore = defineStore('app', () => {
   }
 
   const shouldShowOnboarding = computed(() => {
+    if (!user.value.is_authenticated) {
+      return false
+    }
+    
+    const isCompleted = user.value.finish_onboarding || onboarding.value.completed
+    
+    if (isCompleted) {
+      return false
+    }
+    
     if (FORCE_SHOW_ONBOARDING) {
       if (DEBUG_MODE) {
         console.log('[Store] Onboarding forced to show (FORCE_SHOW_ONBOARDING=true)')
@@ -537,11 +547,7 @@ export const useAppStore = defineStore('app', () => {
       return true
     }
     
-    if (!user.value.is_authenticated) {
-      return false
-    }
-    
-    return !user.value.finish_onboarding && !onboarding.value.completed
+    return true
   })
 
   const shouldShowMiniTask = computed(() => {
