@@ -35,7 +35,7 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite with a pr
   5. Plan a task
   6. Write in journal
   7. Chat with mentor
-  Auto-completion triggers when user performs corresponding actions.
+  Auto-completion triggers when user performs corresponding actions. Toast notifications with CTA appear on step completion, suggesting next step. AI Mentor adds personalized encouragement message when each step is completed.
 - **Learning Center**: New page (/app/learning) containing all tutorial content moved from modules:
   - Philosophy of 1% improvements
   - Balanced Scorecard guide
