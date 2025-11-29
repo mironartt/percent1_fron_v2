@@ -260,11 +260,11 @@
       </div>
 
       <div class="summary-actions">
-        <button class="btn btn-primary btn-lg" @click="goToDecomposition">
-          &#x1F4CB; Перейти к декомпозиции
+        <button class="btn btn-primary btn-lg" @click="goToPlanning">
+          <Calendar :size="18" :stroke-width="2" /> Запланировать задачу
         </button>
         <button class="btn btn-secondary" @click="addNewGoal">
-          &#x2795; Добавить новую цель
+          <Plus :size="16" :stroke-width="2" /> Добавить новую цель
         </button>
       </div>
     </div>
@@ -751,22 +751,22 @@
             <div class="preview-step">
               <span class="preview-icon step-1">1</span>
               <div>
-                <strong>Цели перейдут в Декомпозицию</strong>
-                <p>{{ selectedGoalsCount }} {{ selectedGoalsCount === 1 ? 'цель будет добавлена' : 'цели будут добавлены' }} в раздел "Декомпозиция"</p>
+                <strong>Цели сохранятся</strong>
+                <p>{{ selectedGoalsCount }} {{ selectedGoalsCount === 1 ? 'цель будет добавлена' : 'цели будут добавлены' }} в систему</p>
               </div>
             </div>
             <div class="preview-step">
               <span class="preview-icon step-2">2</span>
               <div>
-                <strong>Разбейте на шаги</strong>
-                <p>Вы сможете создать пошаговый план достижения каждой цели</p>
+                <strong>Запланируйте первую задачу</strong>
+                <p>Вы перейдете в Планирование недели</p>
               </div>
             </div>
             <div class="preview-step">
               <span class="preview-icon step-3">3</span>
               <div>
-                <strong>Отслеживайте прогресс</strong>
-                <p>Ежедневно отмечайте выполненные шаги и двигайтесь к результату</p>
+                <strong>Выполняйте и отмечайте</strong>
+                <p>Ежедневно выполняйте задачи и следите за прогрессом</p>
               </div>
             </div>
           </div>
@@ -943,7 +943,8 @@ import {
   ArrowRight,
   ListChecks,
   Edit2,
-  ExternalLink
+  ExternalLink,
+  Calendar
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -1029,6 +1030,10 @@ function startLesson() {
 
 function goToDecomposition() {
   router.push('/app/goals')
+}
+
+function goToPlanning() {
+  router.push('/app/planning')
 }
 
 function addNewGoal() {
@@ -1519,7 +1524,7 @@ function completeGoalsBankHandler() {
     addingNewGoal.value = false
     router.push('/app/goals-bank')
   } else {
-    router.push('/app/goals')
+    router.push('/app/planning')
   }
 }
 

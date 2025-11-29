@@ -499,6 +499,13 @@
                 <div class="steps-count">
                   {{ getCompletedSteps(goal) }} / {{ goal.steps.length }} шагов выполнено
                 </div>
+                <button 
+                  class="btn btn-sm btn-primary btn-with-icon"
+                  @click.stop="goToPlanning"
+                >
+                  <Clock :size="14" />
+                  Запланировать
+                </button>
               </div>
             </div>
           </div>
@@ -926,6 +933,10 @@ function toggleSummaryGoalExpand(goalId) {
 
 function goToGoalsBank() {
   router.push('/app/goals-bank')
+}
+
+function goToPlanning() {
+  router.push('/app/planning')
 }
 
 function openGoalDetail(goal) {
