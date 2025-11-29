@@ -359,6 +359,35 @@ export async function checkAuth() {
 export const getCurrentUser = checkAuth
 
 // ========================================
+// SSP (Сбалансированная Система Показателей) API
+// ========================================
+
+/**
+ * Получить данные блока ССП
+ * Возвращает все данные: оценки, рефлексии, итоговую статистику
+ * @returns {Promise<object>} - Данные ССП
+ */
+export async function getSSPData() {
+  return request('POST', '/api/rest/front/app/ssp/get/')
+}
+
+/**
+ * Обновить данные блока ССП
+ * @param {object} data - Данные для обновления
+ * @param {Array} data.categories_reflection_data - Массив данных по категориям
+ * @param {string} data.categories_reflection_data[].category - ID категории (welfare, hobby, environment, health_sport, work, family)
+ * @param {number} [data.categories_reflection_data[].rating] - Оценка (0-10)
+ * @param {string} [data.categories_reflection_data[].rating_reason] - Почему такая оценка?
+ * @param {string} [data.categories_reflection_data[].what_mean_max_rating] - Что для меня "10"?
+ * @param {string} [data.categories_reflection_data[].max_rating_difficulties] - Что мешает дойти до "10"?
+ * @param {string} [data.categories_reflection_data[].what_want] - Как я хочу, чтобы было?
+ * @returns {Promise<object>} - Результат обновления
+ */
+export async function updateSSPData(data) {
+  return request('POST', '/api/rest/front/app/ssp/update/', data)
+}
+
+// ========================================
 // MINI-TASK API
 // ========================================
 
@@ -399,6 +428,8 @@ export const api = {
   getCsrfToken,
   getOnboardingData,
   updateOnboardingData,
+  getSSPData,
+  updateSSPData,
   getMiniTaskData,
   updateMiniTaskData
 }

@@ -619,6 +619,10 @@ const lessonStarted = ref(false)
 const expandedSpheres = ref([])
 const expandedSummarySpheres = ref([])
 
+// Backend loading state
+const isLoading = ref(false)
+const backendError = ref(null)
+
 function toggleSphereExpand(sphereId) {
   const index = expandedSpheres.value.indexOf(sphereId)
   if (index === -1) {
@@ -663,10 +667,19 @@ function cancelEditReflection() {
   editingReflection.value = { why: '', ten: '', prevents: '', desired: '' }
 }
 
-function saveEditReflection(sphereId) {
+async function saveEditReflection(sphereId) {
   store.updateSphereReflection(sphereId, { ...editingReflection.value })
   editingSphereId.value = null
   editingReflection.value = { why: '', ten: '', prevents: '', desired: '' }
+  
+  // Сохраняем рефлексию на бэкенд
+  if (DEBUG_MODE) {
+    console.log('[SSP] Saving edited reflection for sphere:', sphereId)
+  }
+  const result = await store.saveSSPReflectionToBackend(sphereId)
+  if (!result.success && DEBUG_MODE) {
+    console.warn('[SSP] Failed to save edited reflection:', result.error)
+  }
 }
 
 function hasReflectionContent(sphere) {
@@ -732,8 +745,30 @@ const wheelCompleted = computed(() => {
 })
 
 
-function nextStep() {
+async function nextStep() {
   if (currentStep.value < 4) {
+    // Сохраняем оценки при переходе с шага 2 (ССП) на шаг 3
+    if (currentStep.value === 2) {
+      if (DEBUG_MODE) {
+        console.log('[SSP] Saving ratings to backend before step 3...')
+      }
+      const result = await store.saveSSPRatingsToBackend()
+      if (!result.success && DEBUG_MODE) {
+        console.warn('[SSP] Failed to save ratings:', result.error)
+      }
+    }
+    
+    // Сохраняем все рефлексии при переходе с шага 3 на шаг 4
+    if (currentStep.value === 3) {
+      if (DEBUG_MODE) {
+        console.log('[SSP] Saving all reflections to backend before step 4...')
+      }
+      const result = await store.saveAllSSPReflectionsToBackend()
+      if (!result.success && DEBUG_MODE) {
+        console.warn('[SSP] Failed to save reflections:', result.error)
+      }
+    }
+    
     currentStep.value++
   }
 }
@@ -767,13 +802,32 @@ function getSphereById(sphereId) {
   return lifeSpheres.value.find(s => s.id === sphereId)
 }
 
-function saveReflection(sphereId) {
+async function saveReflection(sphereId) {
   store.updateSphere(sphereId, {
     reflection: lifeSpheres.value.find(s => s.id === sphereId)?.reflection
   })
+  
+  // Сохраняем рефлексию на бэкенд
+  if (DEBUG_MODE) {
+    console.log('[SSP] Saving reflection for sphere:', sphereId)
+  }
+  const result = await store.saveSSPReflectionToBackend(sphereId)
+  if (!result.success && DEBUG_MODE) {
+    console.warn('[SSP] Failed to save reflection:', result.error)
+  }
 }
 
-function completeModule() {
+async function completeModule() {
+  // Сохраняем все данные на бэкенд перед завершением
+  if (DEBUG_MODE) {
+    console.log('[SSP] Saving all SSP data to backend before completion...')
+  }
+  
+  const result = await store.saveAllSSPReflectionsToBackend()
+  if (!result.success && DEBUG_MODE) {
+    console.warn('[SSP] Failed to save SSP data on completion:', result.error)
+  }
+  
   store.completeSSPModule({
     completedAt: new Date().toISOString(),
     wheelData: lifeSpheres.value.map(s => ({
@@ -822,7 +876,59 @@ function handleStepFromQuery() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // Загружаем данные ССП с бэкенда
+  isLoading.value = true
+  backendError.value = null
+  
+  try {
+    if (DEBUG_MODE) {
+      console.log('[SSP] Loading SSP data from backend on mount...')
+    }
+    const result = await store.loadSSPFromBackend()
+    
+    if (result) {
+      if (DEBUG_MODE) {
+        console.log('[SSP] SSP data loaded successfully:', {
+          circleData: result.circleData?.length || 0,
+          reflectionsData: result.categoriesReflectionData?.length || 0
+        })
+      }
+      
+      // Если есть данные, определяем на каком шаге пользователь
+      if (result.circleData && result.circleData.length > 0) {
+        // У пользователя есть оценки - начинаем урок
+        const hasRatings = result.circleData.some(item => item.rating !== null && item.rating !== undefined)
+        if (hasRatings && !lessonStarted.value) {
+          lessonStarted.value = true
+          
+          // Определяем шаг на основе данных
+          const hasReflections = result.categoriesReflectionData && 
+            result.categoriesReflectionData.some(item => 
+              item.rating_reason || item.what_mean_max_rating || 
+              item.max_rating_difficulties || item.what_want
+            )
+          
+          if (hasReflections) {
+            // Есть рефлексии - можно показать шаг 3 или 4
+            currentStep.value = 3
+          } else {
+            // Только оценки - шаг 2
+            currentStep.value = 2
+          }
+        }
+      }
+    }
+  } catch (error) {
+    if (DEBUG_MODE) {
+      console.error('[SSP] Error loading SSP data:', error)
+    }
+    backendError.value = 'Ошибка загрузки данных'
+  } finally {
+    isLoading.value = false
+  }
+  
+  // Обрабатываем GET параметр (может перезаписать автоопределение шага)
   handleStepFromQuery()
 })
 
