@@ -45,23 +45,28 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite with a pr
   - Journal benefits
   - Working with AI Mentor
   Lessons can be marked as completed with progress tracking.
-- **Adaptive Dashboard**: A 4-stage progressive system that guides users through the app setup:
-  - Stage 1: Invite to complete SSP (shown when life spheres not rated)
-  - Stage 2: Prompt to create goals (shown after SSP completion)
-  - Stage 3: Encourage weekly planning (shown after goals exist)
-  - Stage 4: Full dashboard with Journal widget, First Steps checklist, Mentor widget, and quick actions
+- **Dashboard**: Full-featured dashboard shown immediately after onboarding, featuring:
+  - First Steps widget (7-step checklist guiding user progression)
+  - AI Mentor widget (central value - chat with personalized coach)
+  - Journal widget for daily reflections
+  - Stats (balance score, active goals, completed goals)
+  - Today's tasks list
+  - Quick actions (update SSP, new goal, journal history)
 - **Journal/Diary Module**: Daily reflection feature with 4 questions (accomplishments, incomplete tasks, reflection, tomorrow's plans). Includes AI coach responses (currently demo mode), streak tracking, calendar history view, and modal entry form. Accessible via sidebar menu and dashboard widget.
 
 ### System Design Choices
 The application uses a modular structure with dedicated components, services, views, router, and stores. State management by Pinia ensures data persistence and reactivity. The system prioritizes user guidance, visual feedback, and a clean, distraction-free interface. The AI Mentor is positioned as the central value proposition. Backend synchronization is designed to provide immediate UI feedback while persisting data reliably.
 
 ## Recent Changes (November 2025)
+- Simplified Dashboard: removed 4-stage system, now shows full dashboard with all widgets immediately after onboarding
+- First Steps widget guides users (instead of intermediate dashboard stages)
 - Added AI Mentor system with dashboard widget and floating button
 - Created 7-step First Steps checklist to replace complex mini-tasks
 - Added Learning Center page with all tutorial content
 - Removed empty state lessons from SSP and Goals Bank modules
 - Added mentor settings section in Settings page
 - Added auto-completion triggers for first steps in store actions
+- Deleted DashboardStage1/2/3.vue components (no longer needed)
 
 ## External Dependencies
 - **Django REST API Backend**: Provides user authentication, profile management, SSP data, goals bank, decomposition, planning, onboarding, and mini-task services.
