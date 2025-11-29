@@ -37,7 +37,7 @@
 
       <div class="time-estimate">
         <Clock :size="16" :stroke-width="1.5" />
-        <span>Займёт около 15-20 минут</span>
+        <span>Займёт около 5-10 минут</span>
       </div>
 
       <router-link to="/app/ssp" class="btn btn-primary btn-lg">
