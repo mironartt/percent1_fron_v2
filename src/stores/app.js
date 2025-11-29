@@ -1519,6 +1519,10 @@ export const useAppStore = defineStore('app', () => {
       })
     })
     
+    if (selectedGoals.length > 0 && !firstSteps.value.select_key_goal) {
+      completeFirstStep('select_key_goal')
+    }
+    
     saveToLocalStorage()
   }
 
