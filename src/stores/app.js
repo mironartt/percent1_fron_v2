@@ -962,10 +962,38 @@ export const useAppStore = defineStore('app', () => {
       })
       
       if (result.status === 'ok') {
+        const data = result.data
+        
         if (DEBUG_MODE) {
-          console.log('[Store] SSP data saved successfully')
+          console.log('[Store] SSP data saved successfully, response:', data)
         }
-        return { success: true, data: result.data }
+        
+        // Обновляем sspBackendData из ответа (теперь update возвращает те же данные что и get)
+        if (data) {
+          sspBackendData.value = {
+            loading: false,
+            loaded: true,
+            maxRating: data.max_rating || 10,
+            circleData: data.circle_data || [],
+            categoriesReflectionData: data.categories_reflection_data || [],
+            totalData: data.total_data || {
+              categories_with_rating: 0,
+              user_rating: 0,
+              reflection_questions_answers: 0,
+              reflection_questions_total: 24
+            }
+          }
+          
+          if (DEBUG_MODE) {
+            console.log('[Store] SSP backend data updated from save response:', {
+              categoriesCount: sspBackendData.value.circleData.length,
+              reflectionsCount: sspBackendData.value.categoriesReflectionData.length,
+              totalData: sspBackendData.value.totalData
+            })
+          }
+        }
+        
+        return { success: true, data: data }
       } else {
         if (DEBUG_MODE) {
           console.warn('[Store] Failed to save SSP data:', result)

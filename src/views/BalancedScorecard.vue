@@ -492,7 +492,7 @@
           <h1>Модуль завершён!</h1>
           <div class="completion-score">
             <span class="score-label">Ваш баланс</span>
-            <span class="score-value">{{ averageScore.toFixed(1) }}/10</span>
+            <span class="score-value">{{ backendAverageScore.toFixed(1) }}/10</span>
           </div>
         </div>
 
@@ -502,7 +502,7 @@
             <div class="metric-icon">
               <Circle :size="24" :stroke-width="2" />
             </div>
-            <div class="metric-value">6</div>
+            <div class="metric-value">{{ backendCategoriesCount }}</div>
             <div class="metric-label">сфер оценено</div>
           </div>
           <div class="metric-card">
@@ -510,7 +510,7 @@
               <MessageSquare :size="24" :stroke-width="2" />
             </div>
             <div class="metric-value">{{ reflectionQuestionsData.answered }}/{{ reflectionQuestionsData.total }}</div>
-            <div class="metric-label">вопроса рефлексии</div>
+            <div class="metric-label">вопросов рефлексии</div>
           </div>
           <div class="metric-card">
             <div class="metric-icon">
@@ -716,13 +716,32 @@ const weakestSphere = computed(() => {
 
 const reflectionQuestionsData = computed(() => {
   const backendData = store.sspBackendData
-  if (backendData && backendData.totalData) {
+  const totalData = backendData?.totalData
+  if (totalData && typeof totalData.reflection_questions_answers === 'number') {
     return {
-      answered: backendData.totalData.reflection_questions_answers || 0,
-      total: backendData.totalData.reflection_questions_total || 24
+      answered: totalData.reflection_questions_answers,
+      total: totalData.reflection_questions_total || 24
     }
   }
   return { answered: 0, total: 24 }
+})
+
+const backendAverageScore = computed(() => {
+  const backendData = store.sspBackendData
+  const totalData = backendData?.totalData
+  if (totalData && typeof totalData.user_rating === 'number') {
+    return totalData.user_rating
+  }
+  return averageScore.value
+})
+
+const backendCategoriesCount = computed(() => {
+  const backendData = store.sspBackendData
+  const totalData = backendData?.totalData
+  if (totalData && typeof totalData.categories_with_rating === 'number') {
+    return totalData.categories_with_rating
+  }
+  return lifeSpheres.value.filter(s => s.score > 0).length
 })
 
 const formatCompletedDate = computed(() => {
