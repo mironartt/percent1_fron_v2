@@ -73,7 +73,7 @@ export const useToastStore = defineStore('toast', () => {
       createdAt: Date.now()
     }
 
-    toasts.value.push(toast)
+    toasts.value.unshift(toast)
 
     setTimeout(() => {
       removeToast(toast.id)
@@ -96,7 +96,7 @@ export const useToastStore = defineStore('toast', () => {
       createdAt: Date.now()
     }
 
-    toasts.value.push(toast)
+    toasts.value.unshift(toast)
 
     if (toast.duration > 0) {
       setTimeout(() => {

@@ -91,11 +91,11 @@ function dismissToast(id) {
 <style scoped>
 .toast-container {
   position: fixed;
-  bottom: 24px;
+  top: 24px;
   right: 24px;
   z-index: 9999;
   display: flex;
-  flex-direction: column-reverse;
+  flex-direction: column;
   gap: 12px;
   max-width: 380px;
 }
@@ -223,22 +223,22 @@ function dismissToast(id) {
 
 @keyframes slideIn {
   from {
-    transform: translateX(100%);
+    transform: translateY(-20px);
     opacity: 0;
   }
   to {
-    transform: translateX(0);
+    transform: translateY(0);
     opacity: 1;
   }
 }
 
 @keyframes slideOut {
   from {
-    transform: translateX(0);
+    transform: translateY(0);
     opacity: 1;
   }
   to {
-    transform: translateX(100%);
+    transform: translateY(-20px);
     opacity: 0;
   }
 }
@@ -247,7 +247,7 @@ function dismissToast(id) {
   .toast-container {
     left: 16px;
     right: 16px;
-    bottom: 16px;
+    top: 16px;
     max-width: none;
   }
 }
