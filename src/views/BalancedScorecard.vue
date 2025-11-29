@@ -509,7 +509,7 @@
             <div class="metric-icon">
               <MessageSquare :size="24" :stroke-width="2" />
             </div>
-            <div class="metric-value">24</div>
+            <div class="metric-value">{{ reflectionQuestionsData.answered }}/{{ reflectionQuestionsData.total }}</div>
             <div class="metric-label">вопроса рефлексии</div>
           </div>
           <div class="metric-card">
@@ -714,6 +714,17 @@ const weakestSphere = computed(() => {
   , null)
 })
 
+const reflectionQuestionsData = computed(() => {
+  const backendData = store.sspBackendData
+  if (backendData && backendData.totalData) {
+    return {
+      answered: backendData.totalData.reflection_questions_answers || 0,
+      total: backendData.totalData.reflection_questions_total || 24
+    }
+  }
+  return { answered: 0, total: 24 }
+})
+
 const formatCompletedDate = computed(() => {
   if (!sspModuleCompleted.value?.completedAt) return ''
   const date = new Date(sspModuleCompleted.value.completedAt)
@@ -841,10 +852,18 @@ async function completeModule() {
 }
 
 function resetModule() {
+  // Сбрасываем флаг завершения модуля через store (с сохранением в localStorage)
+  store.resetSSPModule()
+  
+  // Сбрасываем локальное состояние
   currentStep.value = 1
   lessonStarted.value = false
   expandedSpheres.value = []
   expandedSummarySpheres.value = []
+  
+  if (DEBUG_MODE) {
+    console.log('[SSP] Module reset, starting from beginning')
+  }
 }
 
 function handleStepFromQuery() {
@@ -887,36 +906,72 @@ onMounted(async () => {
     }
     const result = await store.loadSSPFromBackend()
     
-    if (result) {
+    if (result && result.totalData) {
       if (DEBUG_MODE) {
         console.log('[SSP] SSP data loaded successfully:', {
-          circleData: result.circleData?.length || 0,
-          reflectionsData: result.categoriesReflectionData?.length || 0
+          categoriesWithRating: result.totalData.categories_with_rating,
+          userRating: result.totalData.user_rating,
+          reflectionAnswers: result.totalData.reflection_questions_answers,
+          reflectionTotal: result.totalData.reflection_questions_total
         })
       }
       
-      // Если есть данные, определяем на каком шаге пользователь
-      if (result.circleData && result.circleData.length > 0) {
-        // У пользователя есть оценки - начинаем урок
-        const hasRatings = result.circleData.some(item => item.rating !== null && item.rating !== undefined)
-        if (hasRatings && !lessonStarted.value) {
-          lessonStarted.value = true
-          
-          // Определяем шаг на основе данных
-          const hasReflections = result.categoriesReflectionData && 
-            result.categoriesReflectionData.some(item => 
-              item.rating_reason || item.what_mean_max_rating || 
-              item.max_rating_difficulties || item.what_want
-            )
-          
-          if (hasReflections) {
-            // Есть рефлексии - можно показать шаг 3 или 4
-            currentStep.value = 3
-          } else {
-            // Только оценки - шаг 2
-            currentStep.value = 2
-          }
+      const totalData = result.totalData
+      
+      // Проверка "нет данных" - только если нет оценок категорий
+      // user_rating может быть 0 легитимно (пользователь поставил 0), поэтому не используем его
+      const hasNoData = totalData.categories_with_rating === 0
+      
+      // Проверяем, завершён ли модуль (есть в localStorage или все данные заполнены)
+      const isModuleCompleted = store.sspModuleCompleted.completed || 
+                                (totalData.categories_with_rating >= 6 && 
+                                 totalData.reflection_questions_answers >= totalData.reflection_questions_total)
+      
+      if (hasNoData && !isModuleCompleted) {
+        // Нет данных - показываем экран 0 (приветствие)
+        if (DEBUG_MODE) {
+          console.log('[SSP] No data found, showing welcome screen (step 0)')
         }
+        lessonStarted.value = false
+        currentStep.value = 1
+      } else if (isModuleCompleted) {
+        // Модуль завершён - показываем итоговый экран
+        if (DEBUG_MODE) {
+          console.log('[SSP] Module completed, showing summary screen (step 4)')
+        }
+        lessonStarted.value = true
+        currentStep.value = 4
+      } else {
+        // Есть частичные данные - определяем текущий шаг
+        if (DEBUG_MODE) {
+          console.log('[SSP] Partial data found, determining current step')
+        }
+        lessonStarted.value = true
+        
+        if (totalData.reflection_questions_answers > 0) {
+          // Есть ответы на рефлексию - шаг 3 или 4
+          currentStep.value = 3
+        } else if (totalData.categories_with_rating > 0) {
+          // Есть оценки - шаг 2
+          currentStep.value = 2
+        } else {
+          // Начинаем с теории
+          currentStep.value = 1
+        }
+      }
+    } else {
+      // Нет данных с бэкенда - показываем приветствие
+      if (DEBUG_MODE) {
+        console.log('[SSP] No backend data, checking localStorage...')
+      }
+      
+      // Проверяем localStorage на случай если бэкенд недоступен
+      if (store.sspModuleCompleted.completed) {
+        lessonStarted.value = true
+        currentStep.value = 4
+      } else {
+        lessonStarted.value = false
+        currentStep.value = 1
       }
     }
   } catch (error) {
@@ -924,6 +979,12 @@ onMounted(async () => {
       console.error('[SSP] Error loading SSP data:', error)
     }
     backendError.value = 'Ошибка загрузки данных'
+    
+    // При ошибке проверяем localStorage
+    if (store.sspModuleCompleted.completed) {
+      lessonStarted.value = true
+      currentStep.value = 4
+    }
   } finally {
     isLoading.value = false
   }

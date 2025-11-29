@@ -333,11 +333,38 @@ const BACKEND_TO_SPHERE = {
 | Сохранение рефлексии | `saveSSPReflectionToBackend(sphereId)` |
 | Завершение модуля | `saveAllSSPReflectionsToBackend()` |
 
-**Resume Flow:**
-1. При загрузке страницы → `loadSSPFromBackend()`
-2. Если есть оценки → `lessonStarted = true`, `currentStep = 2`
-3. Если есть рефлексии → `currentStep = 3`
-4. GET-параметр `spp_step` может перезаписать шаг
+**Resume Flow (логика навигации при открытии `/app/ssp`):**
+
+```
+loadSSPFromBackend() → проверка totalData
+                ↓
+┌───────────────────────────────────────────────────────────┐
+│ Проверка: categories_with_rating=0 ИЛИ user_rating=0     │
+│           ИЛИ reflection_questions_answers=0              │
+└───────────────────────────────────────────────────────────┘
+                ↓                          ↓
+          [НЕТ ДАННЫХ]              [ЕСТЬ ДАННЫЕ]
+                ↓                          ↓
+          step 0 (приветствие)    проверка sspModuleCompleted
+                                           ↓
+                              ┌────────────┴────────────┐
+                        [ЗАВЕРШЁН]                [НЕ ЗАВЕРШЁН]
+                              ↓                          ↓
+                        step 4 (итог)           определение шага:
+                                                - reflection_answers > 0 → step 3
+                                                - categories_with_rating > 0 → step 2
+                                                - иначе → step 1
+```
+
+**Отображение рефлексии на шаге 4:**
+- Формат: `{reflection_questions_answers}/{reflection_questions_total}` (например: `6/24`)
+- Данные берутся из `totalData` ответа бэкенда
+
+**Кнопка "Пройти заново":**
+- Сбрасывает флаг `sspModuleCompleted.completed` в localStorage
+- Возвращает на шаг 1 (теория)
+
+**GET-параметр `spp_step`** может перезаписать автоопределение шага
 
 ### Mini-Task Backend Integration
 
