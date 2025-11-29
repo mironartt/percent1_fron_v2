@@ -32,6 +32,14 @@ The application uses a modular structure with dedicated components, services, vi
 
 ## Recent Changes (28 Nov 2025)
 
+### Registration Page Telegram Auth (Register.vue)
+- Removed Google auth button completely
+- Updated Telegram button to be active (was disabled)
+- Single button layout with `.social-register.single` class
+- Connected to `handleTelegramRegister()` function
+- Button text: "Зарегистрироваться через Telegram"
+- Same OAuth flow as Login page: fetch global data → redirect to Telegram → handle callback
+
 ### Telegram Bot Integration (Sidebar)
 - Added `telegram_bot_link` field to user store (from `/api/rest/front/get-user-data/` endpoint)
 - New "Телеграм бот" button in sidebar footer (below user info, shows only if link exists)
