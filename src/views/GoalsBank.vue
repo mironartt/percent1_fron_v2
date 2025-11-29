@@ -660,46 +660,6 @@
             </div>
           </div>
 
-          <!-- AI Coach Sidebar -->
-          <div class="step-2-sidebar">
-            <div class="card ai-coach">
-              <div class="coach-header">
-                <span class="coach-icon"><MessageSquare :size="18" :stroke-width="2" /></span>
-                <h3>ИИ-коуч</h3>
-              </div>
-              
-              <div class="chat-container">
-                <div class="chat-messages" ref="chatMessagesContainer">
-                  <div class="message coach-message">
-                    <span class="message-avatar"><Sparkles :size="16" :stroke-width="2" /></span>
-                    <div class="message-content">
-                      <p>Привет! Я помогу тебе проверить цели. Ответь на 3 вопроса для каждой цели, чтобы понять — она истинная или ложная.</p>
-                    </div>
-                  </div>
-                  <div v-for="msg in goalsChatMessages" :key="msg.id" class="message" :class="msg.type + '-message'">
-                    <span v-if="msg.type === 'coach'" class="message-avatar"><Sparkles :size="16" :stroke-width="2" /></span>
-                    <div class="message-content">
-                      <p>{{ msg.text }}</p>
-                    </div>
-                    <span v-if="msg.type === 'user'" class="message-avatar user"><Users :size="16" :stroke-width="2" /></span>
-                  </div>
-                </div>
-                
-                <div class="chat-input-area">
-                  <input 
-                    v-model="goalsUserMessage"
-                    @keyup.enter="sendGoalsMessage"
-                    type="text"
-                    placeholder="Напишите ваш вопрос..."
-                    class="chat-input"
-                  />
-                  <button @click="sendGoalsMessage" class="btn-send" :disabled="!goalsUserMessage.trim()">
-                    →
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -977,7 +937,6 @@ import {
   UserX,
   Target,
   Clock,
-  MessageSquare,
   ClipboardList,
   Square,
   CheckSquare,
@@ -1377,53 +1336,6 @@ function toggleGoalExpansion(goalId) {
   } else {
     expandedGoalId.value = goalId
   }
-}
-
-const goalsChatMessages = ref([])
-const goalsUserMessage = ref('')
-const chatMessagesContainer = ref(null)
-
-async function sendGoalsMessage() {
-  if (!goalsUserMessage.value.trim()) return
-  
-  const userMsg = {
-    id: Date.now(),
-    type: 'user',
-    text: goalsUserMessage.value.trim()
-  }
-  goalsChatMessages.value.push(userMsg)
-  const question = goalsUserMessage.value.trim()
-  goalsUserMessage.value = ''
-  
-  // Scroll to bottom
-  setTimeout(() => {
-    if (chatMessagesContainer.value) {
-      chatMessagesContainer.value.scrollTop = chatMessagesContainer.value.scrollHeight
-    }
-  }, 50)
-  
-  // Demo response (in production would call AI API)
-  setTimeout(() => {
-    const responses = [
-      'Отличный вопрос! Подумай: если бы ты достиг этой цели, что бы изменилось в твоей жизни?',
-      'Попробуй спросить себя: это действительно твоя цель или ты взял её у кого-то другого?',
-      'Хороший способ проверить цель — представить, что прошёл год. Ты всё ещё хочешь этого?',
-      'Истинная цель обычно вызывает энергию и желание действовать. Что ты чувствуешь, думая об этой цели?',
-      'Если эта цель связана со слабой сферой из твоего колеса баланса — это хороший знак!'
-    ]
-    const coachMsg = {
-      id: Date.now() + 1,
-      type: 'coach',
-      text: responses[Math.floor(Math.random() * responses.length)]
-    }
-    goalsChatMessages.value.push(coachMsg)
-    
-    setTimeout(() => {
-      if (chatMessagesContainer.value) {
-        chatMessagesContainer.value.scrollTop = chatMessagesContainer.value.scrollHeight
-      }
-    }, 50)
-  }, 800)
 }
 
 const sortedSpheres = computed(() => {
@@ -3222,162 +3134,16 @@ onMounted(() => {
   opacity: 0;
 }
 
-/* Step 2 Layout with AI Coach Sidebar */
+/* Step 2 Layout */
 .step-2-layout {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 2rem;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .step-2-main {
   min-width: 0;
-}
-
-.step-2-sidebar {
-  position: sticky;
-  top: 2rem;
-}
-
-@media (max-width: 1024px) {
-  .step-2-layout {
-    grid-template-columns: 1fr;
-  }
-  
-  .step-2-sidebar {
-    position: static;
-    order: -1;
-  }
-}
-
-/* AI Coach Styles */
-.ai-coach {
-  background: #ffffff;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 1rem;
-}
-
-.coach-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.coach-icon {
-  font-size: 1.25rem;
-}
-
-.coach-header h3 {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.chat-container {
-  display: flex;
-  flex-direction: column;
-  height: 300px;
-}
-
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-  padding-right: 0.5rem;
-}
-
-.message {
-  display: flex;
-  gap: 0.5rem;
-  align-items: flex-start;
-}
-
-.message-avatar {
-  flex-shrink: 0;
-  font-size: 1rem;
-}
-
-.message-avatar.user {
-  order: 1;
-}
-
-.message-content {
-  flex: 1;
-  display: flex;
-  gap: 0.5rem;
-  align-items: flex-start;
-}
-
-.message-content p {
-  margin: 0;
-  padding: 0.6rem 0.85rem;
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-  line-height: 1.4;
-}
-
-.coach-message .message-content p {
-  background: var(--bg-tertiary);
-}
-
-.user-message {
-  flex-direction: row-reverse;
-}
-
-.user-message .message-content {
-  flex-direction: row-reverse;
-}
-
-.user-message .message-content p {
-  background: var(--primary-color);
-  color: white;
-}
-
-.chat-input-area {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.chat-input {
-  flex: 1;
-  padding: 0.6rem 0.85rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-}
-
-.chat-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-}
-
-.chat-input-area .btn-send {
-  padding: 0.6rem 1rem;
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background 0.2s ease;
-}
-
-.chat-input-area .btn-send:hover:not(:disabled) {
-  background: var(--primary-hover);
-}
-
-.chat-input-area .btn-send:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  width: 100%;
 }
 
 /* Validation Progress Bar */
