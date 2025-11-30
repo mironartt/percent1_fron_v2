@@ -20,6 +20,10 @@
         Назад
       </button>
       <div class="header-actions">
+        <button class="btn btn-ghost btn-with-icon btn-planning" @click="goToPlanning" title="Запланировать шаги">
+          <CalendarDays :size="16" />
+          <span class="btn-planning-text">Планировщик</span>
+        </button>
         <button class="btn btn-primary btn-with-icon" @click="saveAndGoToBank">
           <Save :size="16" />
           Сохранить
@@ -48,42 +52,38 @@
     <div v-else class="edit-layout">
       <div class="main-content">
         <div class="card goal-info-card">
-          <div class="card-header">
-            <div class="goal-title-section">
-              <h2 class="goal-title line-clamp-2">{{ goalForm.title || 'Без названия' }}</h2>
+          <div class="card-header-optimized">
+            <div class="goal-title-wrapper">
+              <h2 class="goal-title-truncate" :title="goalForm.title">{{ goalForm.title || 'Без названия' }}</h2>
+              <button 
+                v-if="goal.sourceId" 
+                class="btn btn-link edit-in-bank-btn"
+                @click="openEditModal"
+              >
+                <Edit2 :size="14" />
+                Редактировать цель
+              </button>
+            </div>
+            <div class="goal-meta-right">
               <span 
                 class="goal-status-badge"
                 :class="goal.status"
               >
                 {{ getStatusLabel(goal.status) }}
               </span>
+              <div class="sphere-display-compact" v-if="goalForm.sphereId">
+                <span class="sphere-icon-wrapper" :style="{ '--sphere-color': getSphereColor(goalForm.sphereId) }">
+                  <component :is="getSphereIconComponent(goalForm.sphereId)" :size="14" />
+                </span>
+                <span class="sphere-name-sm">{{ getSphereName(goalForm.sphereId) }}</span>
+              </div>
             </div>
-            <button 
-              v-if="goal.sourceId" 
-              class="btn btn-link edit-in-bank-btn"
-              @click="openEditModal"
-            >
-              <Edit2 :size="14" />
-              Редактировать цель
-            </button>
           </div>
 
-          <div class="goal-info-section">
-            <div class="goal-info-row" v-if="goalForm.description">
+          <div class="goal-info-section" v-if="goalForm.description">
+            <div class="goal-info-row">
               <span class="info-label">Почему важно:</span>
               <p class="info-value description-value">{{ goalForm.description }}</p>
-            </div>
-
-            <div class="goal-info-grid">
-              <div class="goal-info-item" v-if="goalForm.sphereId">
-                <span class="info-label">Сфера:</span>
-                <div class="sphere-display">
-                  <span class="sphere-icon-wrapper" :style="{ '--sphere-color': getSphereColor(goalForm.sphereId) }">
-                    <component :is="getSphereIconComponent(goalForm.sphereId)" :size="16" />
-                  </span>
-                  <span class="sphere-name">{{ getSphereName(goalForm.sphereId) }}</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -157,8 +157,10 @@
                 dragging: isDragEnabled && dragIndex === getOriginalIndex(step),
                 'drag-over': isDragEnabled && dragOverIndex === getOriginalIndex(step) && dragIndex !== getOriginalIndex(step),
                 'step-completed': step.completed,
-                'drag-disabled': !isDragEnabled
+                'drag-disabled': !isDragEnabled,
+                ['priority-' + step.priority]: step.priority && !step.completed
               }"
+              :style="step.priority && !step.completed ? { '--priority-color': getPriorityColor(step.priority) } : {}"
               :draggable="isDragEnabled"
               @dragstart="isDragEnabled && handleDragStart(getOriginalIndex(step), $event)"
               @dragend="isDragEnabled && handleDragEnd()"
@@ -278,11 +280,11 @@
               </div>
               
               <button 
-                class="btn-icon delete"
+                class="btn-icon btn-icon-danger"
                 @click="removeStep(getOriginalIndex(step))"
                 title="Удалить шаг"
               >
-                <X :size="16" />
+                <X :size="16" :stroke-width="2" />
               </button>
             </div>
             
@@ -315,7 +317,7 @@
 
     </div>
 
-    <!-- Модальное окно редактирования цели (как в GoalsBank) -->
+    <!-- Модальное окно редактирования цели (унифицировано с GoalsBank) -->
     <transition name="modal-fade">
       <div v-if="showEditModal" class="modal-overlay" @click.self="closeEditModal">
         <div class="edit-modal edit-modal-extended">
@@ -324,8 +326,8 @@
               <Edit2 :size="20" :stroke-width="2" class="modal-header-icon" />
               Редактирование цели
             </h3>
-            <button class="btn-close" @click="closeEditModal">
-              <X :size="18" />
+            <button class="modal-close" @click="closeEditModal">
+              <X :size="20" :stroke-width="2" />
             </button>
           </div>
           
@@ -342,23 +344,27 @@
             
             <div class="form-group">
               <label class="form-label">Сфера жизни</label>
-              <div class="sphere-selector">
+              <div class="sphere-select-grid">
                 <button 
                   v-for="sphere in lifeSpheres"
                   :key="sphere.id"
-                  class="sphere-btn"
+                  class="sphere-select-btn"
                   :class="{ active: editingGoal.sphereId === sphere.id }"
                   :style="{ '--sphere-color': getSphereColor(sphere.id) }"
                   @click="editingGoal.sphereId = sphere.id"
                 >
                   <component :is="getSphereIconComponent(sphere.id)" :size="18" :stroke-width="2" />
-                  <span>{{ sphere.name }}</span>
+                  <span>{{ getSphereNameOnly(sphere.id) }}</span>
                 </button>
               </div>
             </div>
             
+            <div class="why-section-divider">
+              <span>Правило "3 Почему"</span>
+            </div>
+            
             <div class="form-group">
-              <label class="form-label">Почему эта цель мне важна?</label>
+              <label class="form-label">1. Почему эта цель мне важна?</label>
               <textarea 
                 v-model="editingGoal.whyImportant"
                 class="form-textarea"
@@ -368,7 +374,7 @@
             </div>
             
             <div class="form-group">
-              <label class="form-label">Почему именно это даст мне то, что я хочу?</label>
+              <label class="form-label">2. Почему именно это даст мне то, что я хочу?</label>
               <textarea 
                 v-model="editingGoal.why2"
                 class="form-textarea"
@@ -378,7 +384,7 @@
             </div>
             
             <div class="form-group">
-              <label class="form-label">Почему это действительно про меня?</label>
+              <label class="form-label">3. Почему это действительно про меня?</label>
               <textarea 
                 v-model="editingGoal.why3"
                 class="form-textarea"
@@ -386,16 +392,49 @@
                 rows="3"
               ></textarea>
             </div>
+            
+            <div class="validation-section">
+              <div class="validation-label">Оценка цели:</div>
+              <div class="validation-buttons">
+                <button 
+                  class="btn btn-validation btn-true-goal"
+                  :class="{ active: editingGoal.status === 'validated' }"
+                  @click="editingGoal.status = 'validated'"
+                >
+                  <CheckCircle :size="18" :stroke-width="2" />
+                  Это истинная цель
+                </button>
+                <button 
+                  class="btn btn-validation btn-false-goal"
+                  :class="{ active: editingGoal.status === 'rejected' }"
+                  @click="editingGoal.status = 'rejected'"
+                >
+                  <XCircle :size="18" :stroke-width="2" />
+                  Это ложная цель
+                </button>
+              </div>
+            </div>
           </div>
           
           <div class="modal-footer">
-            <button class="btn btn-secondary" @click="closeEditModal">
-              Отмена
-            </button>
-            <button class="btn btn-primary btn-with-icon" @click="saveEditModal">
-              <Save :size="16" />
-              Сохранить
-            </button>
+            <div class="modal-footer-left">
+              <button 
+                class="btn btn-danger-outline" 
+                @click="deleteGoalFromModal"
+              >
+                <Trash2 :size="16" :stroke-width="2" />
+                Удалить
+              </button>
+            </div>
+            <div class="modal-footer-right">
+              <button class="btn btn-secondary" @click="closeEditModal">
+                Отмена
+              </button>
+              <button class="btn btn-primary" @click="saveEditModal">
+                <Check :size="16" :stroke-width="2" />
+                Сохранить
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -410,7 +449,8 @@ import { useAppStore } from '../stores/app'
 import { 
   Trash2, Save, Plus, ArrowLeft, GripVertical, X, Edit2,
   Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target,
-  Square, CheckSquare, Search, Calendar, CheckCircle2, AlertCircle
+  Square, CheckSquare, Search, Calendar, CheckCircle2, AlertCircle,
+  CheckCircle, XCircle, Check, CalendarDays
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -557,6 +597,24 @@ function closeEditModal() {
   editingGoal.value = null
 }
 
+function deleteGoalFromModal() {
+  if (editingGoal.value && confirm('Удалить эту цель?')) {
+    store.deleteRawIdea(editingGoal.value.id)
+    store.deleteGoal(goal.value.id)
+    closeEditModal()
+    router.push('/app/goals-bank')
+  }
+}
+
+function getSphereNameOnly(sphereId) {
+  const sphere = lifeSpheres.value.find(s => s.id === sphereId)
+  return sphere ? sphere.name : ''
+}
+
+function goToPlanning() {
+  router.push('/app/planning')
+}
+
 function saveEditModal() {
   if (!editingGoal.value) return
   
@@ -615,6 +673,16 @@ function getSphereColor(sphereId) {
 function getSphereName(sphereId) {
   const sphere = lifeSpheres.value.find(s => s.id === sphereId)
   return sphere ? sphere.name : 'Не указана'
+}
+
+function getPriorityColor(priority) {
+  const colors = {
+    'critical': '#ef4444',
+    'desirable': '#f97316',
+    'attention': '#3b82f6',
+    'optional': '#9ca3af'
+  }
+  return colors[priority] || '#9ca3af'
 }
 
 const dragIndex = ref(null)
@@ -1068,6 +1136,61 @@ function formatDate(dateString) {
   gap: 0.75rem;
 }
 
+.card-header-optimized {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 1rem;
+}
+
+.goal-title-wrapper {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.goal-title-truncate {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.goal-meta-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  min-width: 120px;
+  max-width: 160px;
+}
+
+.sphere-display-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  max-width: 100%;
+}
+
+.sphere-name-sm {
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .goal-title-section {
   display: flex;
   align-items: flex-start;
@@ -1278,11 +1401,32 @@ function formatDate(dateString) {
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
   transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.step-card.priority-critical:not(.step-completed) {
+  border-left-color: #ef4444;
+  background: rgba(239, 68, 68, 0.06);
+}
+
+.step-card.priority-desirable:not(.step-completed) {
+  border-left-color: #f97316;
+  background: rgba(249, 115, 22, 0.06);
+}
+
+.step-card.priority-attention:not(.step-completed) {
+  border-left-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.06);
+}
+
+.step-card.priority-optional:not(.step-completed) {
+  border-left-color: #9ca3af;
+  background: rgba(156, 163, 175, 0.06);
 }
 
 .step-card.step-completed {
   background: rgba(16, 185, 129, 0.08);
-  border-left: 3px solid var(--success-color);
+  border-left-color: var(--success-color);
 }
 
 .step-checkbox-wrapper {
@@ -1518,9 +1662,30 @@ function formatDate(dateString) {
   margin-top: 0.25rem;
 }
 
-.btn-icon.delete {
+.btn-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.15s ease;
   flex-shrink: 0;
   margin-top: 0.25rem;
+}
+
+.btn-icon-danger {
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+.btn-icon-danger:hover {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: white;
 }
 
 /* Кнопка загрузить ещё */
@@ -1701,10 +1866,159 @@ function formatDate(dateString) {
 
 .modal-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   gap: 0.75rem;
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--border-color);
+}
+
+.modal-footer-left {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.modal-footer-right {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.sphere-select-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.sphere-select-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.sphere-select-btn:hover {
+  border-color: var(--sphere-color);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.sphere-select-btn.active {
+  border-color: var(--sphere-color);
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--sphere-color);
+}
+
+.why-section-divider {
+  display: flex;
+  align-items: center;
+  margin: 1.5rem 0 1rem;
+}
+
+.why-section-divider::before,
+.why-section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
+
+.why-section-divider span {
+  padding: 0 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.validation-section {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.validation-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.validation-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btn-validation {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-true-goal {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
+.btn-true-goal:hover,
+.btn-true-goal.active {
+  background: #10b981;
+  border-color: #10b981;
+  color: white;
+}
+
+.btn-false-goal {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.btn-false-goal:hover,
+.btn-false-goal.active {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: white;
+}
+
+.btn-planning {
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-planning:hover {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  background: rgba(99, 102, 241, 0.05);
 }
 
 .modal-fade-enter-active,
@@ -1734,6 +2048,10 @@ function formatDate(dateString) {
     min-width: 100px;
   }
 
+  .btn-planning-text {
+    display: none;
+  }
+
   .filter-row {
     flex-direction: column;
     align-items: stretch;
@@ -1760,8 +2078,56 @@ function formatDate(dateString) {
     gap: 0.5rem;
   }
   
-  .sphere-selector {
+  .sphere-selector,
+  .sphere-select-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .card-header-optimized {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .goal-title-wrapper {
+    width: 100%;
+  }
+
+  .goal-title-truncate {
+    white-space: normal;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+  }
+
+  .goal-meta-right {
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .validation-buttons {
+    flex-direction: column;
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+  }
+
+  .modal-footer-left,
+  .modal-footer-right {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .modal-footer-right {
+    flex-direction: row;
+  }
+
+  .modal-footer-left .btn,
+  .modal-footer-right .btn {
+    flex: 1;
   }
 }
 </style>
