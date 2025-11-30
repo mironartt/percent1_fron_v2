@@ -140,6 +140,25 @@
                 <X :size="14" />
                 Сбросить
               </button>
+              
+              <div class="sort-controls">
+                <select v-model="sortBy" class="filter-select sort-select">
+                  <option value="order">По порядку</option>
+                  <option value="priority">По приоритету</option>
+                  <option value="status">По статусу</option>
+                  <option value="time">По времени</option>
+                  <option value="date">По дате</option>
+                </select>
+                <button 
+                  class="btn-icon sort-direction-btn"
+                  @click="toggleSortDirection"
+                  :title="sortDirection === 'asc' ? 'По возрастанию' : 'По убыванию'"
+                >
+                  <ChevronsUpDown :size="16" v-if="sortBy === 'order'" />
+                  <ChevronUp :size="16" v-else-if="sortDirection === 'asc'" />
+                  <ChevronDown :size="16" v-else />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -447,7 +466,7 @@ import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { 
-  Trash2, Save, Plus, ArrowLeft, GripVertical, X, Edit2,
+  Trash2, Save, Plus, ArrowLeft, GripVertical, X, Edit2, ChevronUp, ChevronDown, ChevronsUpDown,
   Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target,
   Square, CheckSquare, Search, Calendar, CheckCircle2, AlertCircle,
   CheckCircle, XCircle, Check, CalendarDays
@@ -493,6 +512,8 @@ const editingGoal = ref(null)
 const searchQuery = ref('')
 const filterStatus = ref('')
 const filterPriority = ref('')
+const sortBy = ref('order')
+const sortDirection = ref('asc')
 
 // Пагинация
 const stepsDisplayLimit = ref(10)
@@ -505,6 +526,8 @@ const hasActiveFilters = computed(() => {
 const isDragEnabled = computed(() => {
   // Отключить если фильтры активны ИЛИ показаны не все шаги
   if (hasActiveFilters.value) return false
+  // Отключить если сортировка не по порядку
+  if (sortBy.value !== 'order') return false
   // Отключить если пагинация обрезает список
   if (filteredSteps.value.length > stepsDisplayLimit.value) return false
   // Отключить если отфильтрованный список не равен полному
@@ -522,7 +545,52 @@ function clearFilters() {
   filterPriority.value = ''
 }
 
-// Фильтрованные шаги
+function toggleSortDirection() {
+  sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+}
+
+function sortSteps(steps) {
+  if (sortBy.value === 'order') {
+    return steps
+  }
+  
+  const sorted = [...steps]
+  const dir = sortDirection.value === 'asc' ? 1 : -1
+  
+  sorted.sort((a, b) => {
+    switch (sortBy.value) {
+      case 'priority': {
+        const priorityOrder = { 'critical': 1, 'desirable': 2, 'attention': 3, 'optional': 4, '': 5 }
+        const aVal = priorityOrder[a.priority || ''] || 5
+        const bVal = priorityOrder[b.priority || ''] || 5
+        return (aVal - bVal) * dir
+      }
+      case 'status': {
+        const statusOrder = { 'in_progress': 1, 'pending': 2, 'completed': 3 }
+        const aVal = statusOrder[a.status || 'pending'] || 2
+        const bVal = statusOrder[b.status || 'pending'] || 2
+        return (aVal - bVal) * dir
+      }
+      case 'time': {
+        const timeOrder = { '15': 1, '30': 2, '60': 3, '120': 4, '180': 5, '240': 6, '': 7 }
+        const aVal = timeOrder[a.timeEstimate || ''] || 7
+        const bVal = timeOrder[b.timeEstimate || ''] || 7
+        return (aVal - bVal) * dir
+      }
+      case 'date': {
+        const aDate = a.scheduledDate ? new Date(a.scheduledDate).getTime() : (dir === 1 ? Infinity : -Infinity)
+        const bDate = b.scheduledDate ? new Date(b.scheduledDate).getTime() : (dir === 1 ? Infinity : -Infinity)
+        return (aDate - bDate) * dir
+      }
+      default:
+        return 0
+    }
+  })
+  
+  return sorted
+}
+
+// Фильтрованные и отсортированные шаги
 const filteredSteps = computed(() => {
   let steps = goalForm.value.steps
   
@@ -545,6 +613,9 @@ const filteredSteps = computed(() => {
   if (filterPriority.value) {
     steps = steps.filter(s => s.priority === filterPriority.value)
   }
+  
+  // Применить сортировку
+  steps = sortSteps(steps)
   
   return steps
 })
@@ -739,7 +810,7 @@ function loadGoalData() {
 }
 
 function addStep() {
-  goalForm.value.steps.push({ 
+  const newStep = { 
     id: Date.now().toString(),
     title: '', 
     completed: false,
@@ -747,9 +818,15 @@ function addStep() {
     timeEstimate: '',
     priority: '',
     scheduledDate: '',
-    status: 'pending'
-  })
-  autoSave()
+    status: 'pending',
+    isNew: true
+  }
+  goalForm.value.steps.push(newStep)
+  
+  // Увеличить лимит пагинации чтобы новый шаг был виден
+  stepsDisplayLimit.value = goalForm.value.steps.length
+  
+  // НЕ сохраняем пустой шаг — сохранение произойдёт когда пользователь введёт название
 }
 
 function handleDragStart(index, event) {
@@ -858,16 +935,19 @@ function autoSave() {
 }
 
 function getStepsHash() {
-  return JSON.stringify(goalForm.value.steps.map(s => ({
-    id: s.id,
-    title: s.title,
-    completed: s.completed,
-    comment: s.comment,
-    timeEstimate: s.timeEstimate,
-    priority: s.priority,
-    scheduledDate: s.scheduledDate,
-    status: s.status
-  })))
+  // Исключаем пустые шаги из хэша
+  return JSON.stringify(goalForm.value.steps
+    .filter(s => s.title && s.title.trim())
+    .map(s => ({
+      id: s.id,
+      title: s.title,
+      completed: s.completed,
+      comment: s.comment,
+      timeEstimate: s.timeEstimate,
+      priority: s.priority,
+      scheduledDate: s.scheduledDate,
+      status: s.status
+    })))
 }
 
 function doSave(showNotification = true) {
@@ -1396,6 +1476,32 @@ function formatDate(dateString) {
 .filter-select:focus {
   outline: none;
   border-color: var(--primary-color);
+}
+
+.sort-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+}
+
+.sort-select {
+  min-width: 120px;
+}
+
+.sort-direction-btn {
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sort-direction-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .drag-disabled-hint {
