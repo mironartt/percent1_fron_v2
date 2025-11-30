@@ -909,7 +909,7 @@
                 <button 
                   class="btn btn-validation btn-true-goal"
                   :class="{ active: editingGoal.status === 'validated' }"
-                  @click="validateGoalFromModal(true)"
+                  @click="selectValidationStatus(true)"
                 >
                   <CheckCircle :size="18" :stroke-width="2" />
                   Это истинная цель
@@ -917,7 +917,7 @@
                 <button 
                   class="btn btn-validation btn-false-goal"
                   :class="{ active: editingGoal.status === 'rejected' }"
-                  @click="validateGoalFromModal(false)"
+                  @click="selectValidationStatus(false)"
                 >
                   <XCircle :size="18" :stroke-width="2" />
                   Это ложная цель
@@ -1754,6 +1754,7 @@ function saveGoalEdit() {
     text: editingGoal.value.text,
     whyImportant: editingGoal.value.whyImportant,
     sphereId: editingGoal.value.sphereId,
+    status: editingGoal.value.status,
     threeWhys: {
       why1: editingGoal.value.whyImportant,
       why2: editingGoal.value.why2,
@@ -1764,23 +1765,9 @@ function saveGoalEdit() {
   closeEditModal()
 }
 
-function validateGoalFromModal(isTrue) {
+function selectValidationStatus(isTrue) {
   if (!editingGoal.value) return
-  
-  const newStatus = isTrue ? 'validated' : 'rejected'
-  store.updateRawIdea(editingGoal.value.id, {
-    text: editingGoal.value.text,
-    whyImportant: editingGoal.value.whyImportant,
-    sphereId: editingGoal.value.sphereId,
-    status: newStatus,
-    threeWhys: {
-      why1: editingGoal.value.whyImportant,
-      why2: editingGoal.value.why2,
-      why3: editingGoal.value.why3
-    }
-  })
-  
-  closeEditModal()
+  editingGoal.value.status = isTrue ? 'validated' : 'rejected'
 }
 
 function removeGoalFromWork() {
@@ -2551,8 +2538,9 @@ onMounted(() => {
 }
 
 /* Table wrapper with fixed height for pagination */
+/* 6 goals should fit without scroll, scroll appears only for 7+ */
 .goals-table-wrapper.has-scroll {
-  max-height: calc(6 * 72px + 50px);
+  max-height: calc(6 * 80px + 60px);
   overflow-y: auto;
 }
 
@@ -4875,10 +4863,16 @@ onMounted(() => {
   color: #22c55e;
 }
 
-.btn-true-goal:hover,
+.btn-true-goal:hover {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: #22c55e;
+}
+
 .btn-true-goal.active {
   background: #22c55e;
   color: white;
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.4);
 }
 
 .btn-false-goal {
@@ -4887,10 +4881,16 @@ onMounted(() => {
   color: #ef4444;
 }
 
-.btn-false-goal:hover,
+.btn-false-goal:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+}
+
 .btn-false-goal.active {
   background: #ef4444;
   color: white;
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
 }
 
 .modal-header {
