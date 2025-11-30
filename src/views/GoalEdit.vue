@@ -196,7 +196,7 @@
                 <div 
                   class="step-drag-handle" 
                   :class="{ disabled: !isDragEnabled }"
-                  :title="isDragEnabled ? 'Перетащите для изменения порядка' : 'Сбросьте фильтры для перетаскивания'"
+                  :title="isDragEnabled ? 'Перетащите для изменения порядка' : 'Перетаскивание отключено (активны фильтры или сортировка)'"
                 >
                   <GripVertical :size="16" />
                 </div>
@@ -670,17 +670,18 @@ const hasActiveFilters = computed(() => {
   return searchQuery.value || filterStatus.value || filterPriority.value
 })
 
-// Drag & drop отключен при активных фильтрах или пагинации
+// Drag & drop отключен при активных фильтрах или сортировке
 const isDragEnabled = computed(() => {
   // Отключить если фильтры активны
   if (hasActiveFilters.value) return false
   // Отключить если сортировка не по порядку
   if (sortBy.value !== 'order') return false
   // Отключить если пагинация обрезает список существующих шагов
-  if (existingSteps.value.length > stepsDisplayLimit.value) return false
+  const existingLen = existingSteps.value?.length || 0
+  if (existingLen > stepsDisplayLimit.value) return false
   // Отключить если отфильтрованный список не равен списку существующих шагов
-  // (значит пользовательские фильтры скрыли часть шагов)
-  if (filteredSteps.value.length !== existingSteps.value.length) return false
+  const filteredLen = filteredSteps.value?.length || 0
+  if (filteredLen !== existingLen) return false
   return true
 })
 
@@ -970,6 +971,9 @@ function loadGoalData() {
     recalculateProgress()
     // Инициализировать hash для отслеживания изменений
     lastSavedHash = getStepsHash()
+    // Установить лимит пагинации равным количеству шагов (до 50) чтобы drag & drop работал
+    const stepsCount = goalForm.value.steps.filter(s => !s.isNew).length
+    stepsDisplayLimit.value = Math.max(10, Math.min(stepsCount, 50))
     // Корректировать высоту многострочных комментариев
     adjustAllCommentHeights()
   }
