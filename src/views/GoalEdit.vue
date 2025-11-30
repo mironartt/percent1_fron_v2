@@ -167,7 +167,12 @@
             Перетаскивание шагов отключено при активных фильтрах
           </div>
 
-          <div class="steps-section" :class="{ 'has-scroll': paginatedSteps.length > 6 }">
+          <div 
+            ref="stepsContainer"
+            class="steps-section" 
+            :class="{ 'has-scroll': paginatedSteps.length > 6 }"
+            @dragover="handleContainerDragOver"
+          >
             <div 
               v-for="(step, displayIndex) in paginatedSteps" 
               :key="step.id || displayIndex"
@@ -186,30 +191,41 @@
               @dragover="isDragEnabled && handleDragOver(getOriginalIndex(step), $event)"
               @drop="isDragEnabled && handleDrop(getOriginalIndex(step), $event)"
             >
-              <div 
-                class="step-drag-handle" 
-                :class="{ disabled: !isDragEnabled }"
-                :title="isDragEnabled ? 'Перетащите для изменения порядка' : 'Сбросьте фильтры для перетаскивания'"
-              >
-                <GripVertical :size="16" />
-              </div>
-              
-              <div class="step-checkbox-wrapper">
-                <input 
-                  type="checkbox"
-                  :checked="step.completed"
-                  @change="toggleStepCompletion(getOriginalIndex(step))"
-                  class="step-checkbox"
-                  :id="`step-checkbox-${step.id}`"
-                />
-                <label 
-                  :for="`step-checkbox-${step.id}`" 
-                  class="step-checkbox-label"
-                  :title="step.completed ? 'Отметить как невыполненный' : 'Отметить как выполненный'"
+              <!-- Левая колонка: drag-handle, checkbox, delete -->
+              <div class="step-actions-column">
+                <div 
+                  class="step-drag-handle" 
+                  :class="{ disabled: !isDragEnabled }"
+                  :title="isDragEnabled ? 'Перетащите для изменения порядка' : 'Сбросьте фильтры для перетаскивания'"
                 >
-                  <CheckSquare v-if="step.completed" :size="20" class="check-icon checked" />
-                  <Square v-else :size="20" class="check-icon" />
-                </label>
+                  <GripVertical :size="16" />
+                </div>
+                
+                <div class="step-checkbox-wrapper">
+                  <input 
+                    type="checkbox"
+                    :checked="step.completed"
+                    @change="toggleStepCompletion(getOriginalIndex(step))"
+                    class="step-checkbox"
+                    :id="`step-checkbox-${step.id}`"
+                  />
+                  <label 
+                    :for="`step-checkbox-${step.id}`" 
+                    class="step-checkbox-label"
+                    :title="step.completed ? 'Отметить как невыполненный' : 'Отметить как выполненный'"
+                  >
+                    <CheckSquare v-if="step.completed" :size="20" class="check-icon checked" />
+                    <Square v-else :size="20" class="check-icon" />
+                  </label>
+                </div>
+                
+                <button 
+                  class="btn-icon btn-icon-danger step-delete-btn"
+                  @click="removeStep(getOriginalIndex(step))"
+                  title="Удалить шаг"
+                >
+                  <X :size="14" :stroke-width="2" />
+                </button>
               </div>
 
               <span class="step-number-badge">{{ getOriginalIndex(step) + 1 }}</span>
@@ -297,14 +313,6 @@
                   ></textarea>
                 </div>
               </div>
-              
-              <button 
-                class="btn-icon btn-icon-danger"
-                @click="removeStep(getOriginalIndex(step))"
-                title="Удалить шаг"
-              >
-                <X :size="16" :stroke-width="2" />
-              </button>
             </div>
             
             <!-- Кнопка загрузить ещё -->
@@ -313,6 +321,146 @@
                 Загрузить ещё {{ remainingStepsCount }} шагов
               </button>
             </div>
+
+            <!-- Новые шаги (добавленные кнопкой, ещё не сохранённые) -->
+            <template v-if="newSteps.length > 0">
+              <div v-if="hasActiveFiltersOrSort" class="new-steps-warning">
+                Новые шаги не отображаются в фильтрованном списке. Сбросьте фильтры чтобы увидеть их.
+              </div>
+              <div v-else class="new-steps-section">
+                <div class="new-steps-divider">
+                  <span>Новые шаги</span>
+                </div>
+                <div 
+                  v-for="(step, newIndex) in newSteps" 
+                  :key="step.id"
+                  class="step-card new-step-card"
+                  :class="{ 
+                    'step-completed': step.completed,
+                    ['priority-' + step.priority]: step.priority && !step.completed
+                  }"
+                  :style="step.priority && !step.completed ? { '--priority-color': getPriorityColor(step.priority) } : {}"
+                >
+                  <!-- Левая колонка: drag-handle, checkbox, delete -->
+                  <div class="step-actions-column">
+                    <div class="step-drag-handle disabled" title="Сохраните шаг для возможности перетаскивания">
+                      <GripVertical :size="16" />
+                    </div>
+                    
+                    <div class="step-checkbox-wrapper">
+                      <input 
+                        type="checkbox"
+                        :checked="step.completed"
+                        @change="toggleStepCompletion(getOriginalIndex(step))"
+                        class="step-checkbox"
+                        :id="`new-step-checkbox-${step.id}`"
+                      />
+                      <label 
+                        :for="`new-step-checkbox-${step.id}`" 
+                        class="step-checkbox-label"
+                        :title="step.completed ? 'Отметить как невыполненный' : 'Отметить как выполненный'"
+                      >
+                        <CheckSquare v-if="step.completed" :size="20" class="check-icon checked" />
+                        <Square v-else :size="20" class="check-icon" />
+                      </label>
+                    </div>
+                    
+                    <button 
+                      class="btn-icon btn-icon-danger step-delete-btn"
+                      @click="removeStep(getOriginalIndex(step))"
+                      title="Удалить шаг"
+                    >
+                      <X :size="14" :stroke-width="2" />
+                    </button>
+                  </div>
+
+                  <span class="step-number-badge new-badge">Новый</span>
+                  
+                  <div class="step-main">
+                    <input 
+                      type="text"
+                      :value="step.title"
+                      @input="updateStep(getOriginalIndex(step), 'title', $event.target.value)"
+                      @blur="autoSave"
+                      class="step-input"
+                      :class="{ 'completed-text': step.completed }"
+                      :placeholder="`Введите название нового шага`"
+                    />
+                    
+                    <!-- Параметры шага -->
+                    <div class="step-params">
+                      <!-- Приоритет -->
+                      <select 
+                        :value="step.priority || ''"
+                        @change="updateStepAndSave(getOriginalIndex(step), 'priority', $event.target.value)"
+                        class="step-param-select priority-select-sm"
+                        :class="'priority-' + (step.priority || 'none')"
+                        title="Приоритет"
+                      >
+                        <option value="">Приоритет</option>
+                        <option value="critical">Критично</option>
+                        <option value="desirable">Важно</option>
+                        <option value="attention">Внимание</option>
+                        <option value="optional">Опционально</option>
+                      </select>
+                      
+                      <!-- Время -->
+                      <select 
+                        :value="step.timeEstimate || ''"
+                        @change="updateStepAndSave(getOriginalIndex(step), 'timeEstimate', $event.target.value)"
+                        class="step-param-select time-select-sm"
+                        title="Время на выполнение"
+                      >
+                        <option value="">Время</option>
+                        <option value="15">15 мин</option>
+                        <option value="30">30 мин</option>
+                        <option value="60">1 час</option>
+                        <option value="120">2 часа</option>
+                        <option value="180">3 часа</option>
+                        <option value="240">4 часа</option>
+                      </select>
+                      
+                      <!-- Дата -->
+                      <div class="date-picker-wrapper">
+                        <input 
+                          type="date"
+                          :value="step.scheduledDate || ''"
+                          @change="updateStepAndSave(getOriginalIndex(step), 'scheduledDate', $event.target.value)"
+                          class="step-param-select date-input-sm"
+                          title="Запланировать на дату"
+                        />
+                        <Calendar :size="14" class="date-icon" />
+                      </div>
+                      
+                      <!-- Статус -->
+                      <select 
+                        :value="step.status || (step.completed ? 'completed' : 'pending')"
+                        @change="updateStepStatus(getOriginalIndex(step), $event.target.value)"
+                        class="step-param-select status-select-sm"
+                        :class="'status-' + (step.status || (step.completed ? 'completed' : 'pending'))"
+                        title="Статус шага"
+                      >
+                        <option value="pending">Ожидает</option>
+                        <option value="in_progress">В работе</option>
+                        <option value="completed">Выполнен</option>
+                      </select>
+                    </div>
+                    
+                    <!-- Комментарий -->
+                    <div class="step-comment-section">
+                      <textarea 
+                        :value="step.comment || ''"
+                        @input="handleCommentInput(getOriginalIndex(step), $event)"
+                        @blur="autoSave"
+                        class="step-comment-input"
+                        :placeholder="'Комментарий к шагу (необязательно)'"
+                        rows="1"
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
 
             <button class="btn btn-secondary add-step-btn btn-with-icon" @click="addStep">
               <Plus :size="16" />
@@ -590,9 +738,19 @@ function sortSteps(steps) {
   return sorted
 }
 
-// Фильтрованные и отсортированные шаги
+// Новые шаги (добавленные кнопкой "Добавить шаг", ещё не сохранённые)
+const newSteps = computed(() => {
+  return goalForm.value.steps.filter(s => s.isNew)
+})
+
+// Существующие шаги (без новых)
+const existingSteps = computed(() => {
+  return goalForm.value.steps.filter(s => !s.isNew)
+})
+
+// Фильтрованные и отсортированные шаги (только существующие)
 const filteredSteps = computed(() => {
-  let steps = goalForm.value.steps
+  let steps = existingSteps.value
   
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
@@ -620,9 +778,14 @@ const filteredSteps = computed(() => {
   return steps
 })
 
-// Пагинированные шаги
+// Пагинированные шаги (без новых)
 const paginatedSteps = computed(() => {
   return filteredSteps.value.slice(0, stepsDisplayLimit.value)
+})
+
+// Проверка есть ли активные фильтры или сортировка
+const hasActiveFiltersOrSort = computed(() => {
+  return searchQuery.value || filterStatus.value || filterPriority.value || sortBy.value !== 'order'
 })
 
 const hasMoreSteps = computed(() => {
@@ -759,6 +922,8 @@ function getPriorityColor(priority) {
 
 const dragIndex = ref(null)
 const dragOverIndex = ref(null)
+const stepsContainer = ref(null)
+let autoScrollInterval = null
 
 onMounted(() => {
   loadGoalData()
@@ -823,9 +988,7 @@ function addStep() {
   }
   goalForm.value.steps.push(newStep)
   
-  // Увеличить лимит пагинации чтобы новый шаг был виден
-  stepsDisplayLimit.value = goalForm.value.steps.length
-  
+  // НЕ изменяем stepsDisplayLimit — новые шаги отображаются отдельно внизу
   // НЕ сохраняем пустой шаг — сохранение произойдёт когда пользователь введёт название
 }
 
@@ -838,12 +1001,52 @@ function handleDragStart(index, event) {
 function handleDragEnd() {
   dragIndex.value = null
   dragOverIndex.value = null
+  stopAutoScroll()
 }
 
 function handleDragOver(index, event) {
   event.preventDefault()
   event.dataTransfer.dropEffect = 'move'
   dragOverIndex.value = index
+}
+
+// Автоскролл при перетаскивании за пределы видимой области
+function handleContainerDragOver(event) {
+  if (!stepsContainer.value || dragIndex.value === null) return
+  
+  const container = stepsContainer.value
+  const rect = container.getBoundingClientRect()
+  const mouseY = event.clientY
+  const scrollZoneHeight = 60 // пикселей от края для активации скролла
+  const scrollSpeed = 5 // скорость скролла
+  
+  // Проверяем, находится ли курсор в зоне скролла
+  if (mouseY < rect.top + scrollZoneHeight) {
+    // Скролл вверх
+    startAutoScroll(-scrollSpeed)
+  } else if (mouseY > rect.bottom - scrollZoneHeight) {
+    // Скролл вниз
+    startAutoScroll(scrollSpeed)
+  } else {
+    stopAutoScroll()
+  }
+}
+
+function startAutoScroll(speed) {
+  if (autoScrollInterval) return
+  
+  autoScrollInterval = setInterval(() => {
+    if (stepsContainer.value) {
+      stepsContainer.value.scrollTop += speed
+    }
+  }, 16) // ~60fps
+}
+
+function stopAutoScroll() {
+  if (autoScrollInterval) {
+    clearInterval(autoScrollInterval)
+    autoScrollInterval = null
+  }
 }
 
 function handleDrop(index, event) {
@@ -985,6 +1188,13 @@ function doSave(showNotification = true) {
     store.updateGoal(goal.value.id, {
       steps: stepsToSave,
       progress: progress
+    })
+    
+    // Убрать флаг isNew у сохранённых шагов
+    goalForm.value.steps.forEach(s => {
+      if (s.isNew && s.title.trim()) {
+        delete s.isNew
+      }
     })
     
     lastSavedHash = currentHash
@@ -1635,6 +1845,81 @@ function formatDate(dateString) {
 .step-card.drag-over {
   border: 2px dashed var(--primary-color);
   background: rgba(99, 102, 241, 0.05);
+}
+
+/* Левая колонка с действиями (drag, checkbox, delete) */
+.step-actions-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.step-delete-btn {
+  padding: 0.25rem;
+  width: 24px;
+  height: 24px;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.step-card:hover .step-delete-btn {
+  opacity: 1;
+}
+
+.step-delete-btn:hover {
+  opacity: 1;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Новые шаги (добавленные кнопкой) */
+.new-steps-section {
+  margin-top: 1rem;
+}
+
+.new-steps-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.new-steps-divider::before,
+.new-steps-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
+
+.new-steps-warning {
+  padding: 0.75rem 1rem;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--warning-color);
+  font-size: 0.875rem;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.new-step-card {
+  border-style: dashed;
+  border-color: var(--primary-color);
+  background: rgba(99, 102, 241, 0.02);
+}
+
+.step-number-badge.new-badge {
+  background: var(--primary-color);
+  color: white;
+  font-size: 0.625rem;
+  padding: 0.125rem 0.375rem;
+  min-width: auto;
 }
 
 .step-main {

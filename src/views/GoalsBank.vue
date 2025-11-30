@@ -2792,6 +2792,13 @@ onMounted(() => {
   font-size: 0.9375rem;
   color: var(--text-secondary);
   line-height: 1.5;
+  /* Ограничение до 3 строк с многоточием */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: calc(1.5em * 3);
 }
 
 .table-actions {
@@ -4641,6 +4648,14 @@ onMounted(() => {
   font-size: 0.9rem;
   color: var(--text-secondary);
   font-style: italic;
+  /* Ограничение до 3 строк с многоточием */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+  max-height: calc(1.4em * 3);
 }
 
 .selection-counter {

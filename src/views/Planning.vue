@@ -829,7 +829,76 @@
                     <span class="goal-progress">{{ goal.progress || 0 }}%</span>
                   </div>
                 </div>
-                <div class="steps-list" v-show="expandedGoals[goal.id]" :class="{ 'has-scroll': getUncompletedSteps(goal).length > 6 }">
+                <!-- Step filters panel -->
+                <div class="step-filters-panel" v-show="expandedGoals[goal.id]">
+                  <div class="step-filters-row">
+                    <div class="step-search-wrapper">
+                      <Search class="search-icon" :size="14" />
+                      <input 
+                        type="text"
+                        :value="getStepFilters(goal.id).search"
+                        @input="updateStepFilter(goal.id, 'search', $event.target.value)"
+                        placeholder="Поиск шагов..."
+                        class="step-search-input"
+                      />
+                    </div>
+                    <select 
+                      :value="getStepFilters(goal.id).status"
+                      @change="updateStepFilter(goal.id, 'status', $event.target.value)"
+                      class="step-filter-select"
+                    >
+                      <option value="">Все статусы</option>
+                      <option value="scheduled">Запланированные</option>
+                      <option value="unscheduled">Незапланированные</option>
+                    </select>
+                    <select 
+                      :value="getStepFilters(goal.id).priority"
+                      @change="updateStepFilter(goal.id, 'priority', $event.target.value)"
+                      class="step-filter-select"
+                    >
+                      <option value="">Все приоритеты</option>
+                      <option value="critical">Критично</option>
+                      <option value="desirable">Важно</option>
+                      <option value="attention">Внимание</option>
+                      <option value="optional">Опционально</option>
+                      <option value="none">Без приоритета</option>
+                    </select>
+                    <div class="step-sort-wrapper">
+                      <select 
+                        :value="getStepFilters(goal.id).sortBy"
+                        @change="updateStepFilter(goal.id, 'sortBy', $event.target.value)"
+                        class="step-filter-select"
+                      >
+                        <option value="order">По порядку</option>
+                        <option value="priority">По приоритету</option>
+                        <option value="date">По дате</option>
+                        <option value="status">По статусу</option>
+                      </select>
+                      <button 
+                        v-if="getStepFilters(goal.id).sortBy !== 'order'"
+                        class="btn-sort-dir"
+                        @click.stop="toggleStepSortDirection(goal.id)"
+                        :title="getStepFilters(goal.id).sortDir === 'asc' ? 'По возрастанию' : 'По убыванию'"
+                      >
+                        {{ getStepFilters(goal.id).sortDir === 'asc' ? '↑' : '↓' }}
+                      </button>
+                    </div>
+                    <button 
+                      v-if="hasActiveStepFilters(goal.id)"
+                      class="btn btn-xs btn-ghost clear-step-filters"
+                      @click.stop="clearStepFilters(goal.id)"
+                    >
+                      Сбросить
+                    </button>
+                  </div>
+                  <div class="step-filter-stats" v-if="hasActiveStepFilters(goal.id)">
+                    <span class="filter-count">
+                      Показано: {{ getFilteredSteps(goal).length }} из {{ getUncompletedSteps(goal).length }}
+                    </span>
+                  </div>
+                </div>
+                
+                <div class="steps-list" v-show="expandedGoals[goal.id]" :class="{ 'has-scroll': getFilteredSteps(goal).length > 5 }">
                   <div 
                     v-for="step in getVisibleSteps(goal)" 
                     :key="step.id"
@@ -975,6 +1044,121 @@ const filterThisWeek = ref(false)
 // Pagination state
 const goalsDisplayLimit = ref(10)
 const stepsDisplayLimits = ref({})
+
+// Step filters per goal (each goal can have its own filters)
+const stepsFilters = ref({})
+// { [goalId]: { search: '', priority: '', status: '', sortBy: 'order', sortDir: 'asc' } }
+
+function getStepFilters(goalId) {
+  if (!stepsFilters.value[goalId]) {
+    stepsFilters.value[goalId] = {
+      search: '',
+      priority: '',
+      status: '',
+      sortBy: 'order',
+      sortDir: 'asc'
+    }
+  }
+  return stepsFilters.value[goalId]
+}
+
+function updateStepFilter(goalId, field, value) {
+  const filters = getStepFilters(goalId)
+  filters[field] = value
+  // Reset pagination when filters change
+  stepsDisplayLimits.value[goalId] = 6
+}
+
+function clearStepFilters(goalId) {
+  stepsFilters.value[goalId] = {
+    search: '',
+    priority: '',
+    status: '',
+    sortBy: 'order',
+    sortDir: 'asc'
+  }
+  stepsDisplayLimits.value[goalId] = 6
+}
+
+function hasActiveStepFilters(goalId) {
+  const filters = getStepFilters(goalId)
+  return filters.search || filters.priority || filters.status || filters.sortBy !== 'order'
+}
+
+function toggleStepSortDirection(goalId) {
+  const filters = getStepFilters(goalId)
+  filters.sortDir = filters.sortDir === 'asc' ? 'desc' : 'asc'
+}
+
+// Get filtered and sorted steps for a goal
+function getFilteredSteps(goal) {
+  let steps = getUncompletedSteps(goal)
+  const filters = getStepFilters(goal.id)
+  
+  // Apply search filter
+  if (filters.search) {
+    const query = filters.search.toLowerCase()
+    steps = steps.filter(s => s.title?.toLowerCase().includes(query))
+  }
+  
+  // Apply priority filter
+  if (filters.priority) {
+    const scheduled = scheduledTasks.value.find(t => t.goalId === goal.id)
+    if (filters.priority === 'none') {
+      // Steps without priority
+      steps = steps.filter(s => {
+        const task = scheduledTasks.value.find(t => t.goalId === goal.id && t.stepId === s.id)
+        return !task?.priority
+      })
+    } else {
+      steps = steps.filter(s => {
+        const task = scheduledTasks.value.find(t => t.goalId === goal.id && t.stepId === s.id)
+        return task?.priority === filters.priority
+      })
+    }
+  }
+  
+  // Apply status filter
+  if (filters.status) {
+    if (filters.status === 'scheduled') {
+      steps = steps.filter(s => isStepScheduled(goal.id, s.id))
+    } else if (filters.status === 'unscheduled') {
+      steps = steps.filter(s => !isStepScheduled(goal.id, s.id))
+    }
+  }
+  
+  // Apply sorting
+  if (filters.sortBy !== 'order') {
+    const dir = filters.sortDir === 'asc' ? 1 : -1
+    steps = [...steps].sort((a, b) => {
+      switch (filters.sortBy) {
+        case 'priority': {
+          const priorityOrder = { 'critical': 1, 'desirable': 2, 'attention': 3, 'optional': 4, '': 5 }
+          const aPriority = getScheduledPriority(goal.id, a.id) || ''
+          const bPriority = getScheduledPriority(goal.id, b.id) || ''
+          return (priorityOrder[aPriority] - priorityOrder[bPriority]) * dir
+        }
+        case 'date': {
+          const aDate = getScheduledDate(goal.id, a.id) || ''
+          const bDate = getScheduledDate(goal.id, b.id) || ''
+          if (!aDate && !bDate) return 0
+          if (!aDate) return dir
+          if (!bDate) return -dir
+          return aDate.localeCompare(bDate) * dir
+        }
+        case 'status': {
+          const aScheduled = isStepScheduled(goal.id, a.id) ? 1 : 0
+          const bScheduled = isStepScheduled(goal.id, b.id) ? 1 : 0
+          return (bScheduled - aScheduled) * dir
+        }
+        default:
+          return 0
+      }
+    })
+  }
+  
+  return steps
+}
 
 const showEmptyState = computed(() => {
   return false
@@ -1187,19 +1371,19 @@ function loadMoreGoals() {
 
 // Get visible steps for a goal (with pagination)
 function getVisibleSteps(goal) {
-  const steps = getUncompletedSteps(goal)
+  const steps = getFilteredSteps(goal)
   const limit = stepsDisplayLimits.value[goal.id] || 6
   return steps.slice(0, limit)
 }
 
 function hasMoreSteps(goal) {
-  const steps = getUncompletedSteps(goal)
+  const steps = getFilteredSteps(goal)
   const limit = stepsDisplayLimits.value[goal.id] || 6
   return steps.length > limit
 }
 
 function remainingStepsCount(goal) {
-  const steps = getUncompletedSteps(goal)
+  const steps = getFilteredSteps(goal)
   const limit = stepsDisplayLimits.value[goal.id] || 6
   return steps.length - limit
 }
@@ -2973,9 +3157,9 @@ onMounted(() => {
   overflow-y: auto;
 }
 
-/* Steps list with scroll */
+/* Steps list with scroll (5 шагов видимых) */
 .steps-list.has-scroll {
-  max-height: calc(6 * 44px + 50px);
+  max-height: calc(5 * 44px + 50px);
   overflow-y: auto;
 }
 
@@ -2999,6 +3183,94 @@ onMounted(() => {
   padding: 0.2rem 0.5rem;
   border-radius: var(--radius-sm);
   white-space: nowrap;
+}
+
+/* Step filters panel */
+.step-filters-panel {
+  padding: 0.75rem 1.25rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.step-filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.step-search-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 120px;
+  max-width: 180px;
+}
+
+.step-search-wrapper .search-icon {
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+}
+
+.step-search-input {
+  width: 100%;
+  padding: 0.35rem 0.5rem 0.35rem 1.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  background: var(--bg-primary);
+}
+
+.step-filter-select {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  background: var(--bg-primary);
+  cursor: pointer;
+  min-width: 110px;
+}
+
+.step-sort-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.btn-sort-dir {
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-sort-dir:hover {
+  background: var(--bg-secondary);
+}
+
+.clear-step-filters {
+  font-size: 0.7rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.step-filter-stats {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.step-filter-stats .filter-count {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
 }
 
 .empty-goals {

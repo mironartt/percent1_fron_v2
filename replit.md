@@ -79,6 +79,13 @@ The application uses a modular structure with dedicated components, services, vi
   - Implemented URL parameter sync for filter state persistence
   - Fixed "Перейти к декомпозиции" button navigation to /app/goals-bank
   - Added similar URL parameter support to Goals Bank module
+  - **Step-level filters and sorting per goal card**: Each expanded goal shows filter panel with:
+    - Text search for steps
+    - Status filter (scheduled/unscheduled)
+    - Priority filter (critical/desirable/attention/optional/none)
+    - Sorting by order, priority, date, status with asc/desc toggle
+    - "Показано X из Y" counter when filters active
+  - Steps list scroll threshold changed from 6 to 5 visible steps (`max-height: calc(5 * 44px + 50px)`)
 - **Goal Details Page (GoalEdit.vue) - Late November 2025**:
   - Full step management with drag & drop reordering (disabled when filters/pagination active)
   - Step parameters: priority (4 levels), time estimate, scheduled date (calendar picker), status
