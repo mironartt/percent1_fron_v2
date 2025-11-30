@@ -96,6 +96,9 @@ The application uses a modular structure with dedicated components, services, vi
   - **Quick navigation**: "Planner" button in header for seamless transition to Planning module
   - **Edit button alignment**: "Редактировать цель" button aligned to left edge via flex-start
   - **Multiline comments on load**: adjustAllCommentHeights() auto-adjusts textarea height for saved comments (up to 7 lines, then scroll)
+  - **Step sorting**: Dropdown for sorting by order, priority, status, time estimate, scheduled date with asc/desc toggle; drag & drop disabled during non-default sorts
+  - **Pagination expansion**: New steps appear immediately by increasing stepsDisplayLimit to full list length
+  - **Empty step filtering**: Steps without titles are excluded from save operations and hash calculations
 
 ## External Dependencies
 - **Django REST API Backend**: Provides user authentication, profile management, SSP data, goals bank, decomposition, planning, onboarding, and mini-task services.
