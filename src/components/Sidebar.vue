@@ -224,7 +224,6 @@ const menuItems = [
   { path: '/app/who', icon: Compass, label: 'Кто ты', locked: true, showLock: false },
   { path: '/app/ssp', icon: Target, label: 'ССП', locked: false, showLock: false },
   { path: '/app/goals-bank', icon: Landmark, label: 'Банк целей', locked: false, showLock: false },
-  { path: '/app/goals', icon: Trophy, label: 'Декомпозиция', locked: false, showLock: false },
   { path: '/app/planning', icon: Calendar, label: 'Планирование', locked: false, showLock: false },
   { path: '/app/journal', icon: BookOpen, label: 'Дневник', locked: false, showLock: false },
   { path: '/app/learning', icon: GraduationCap, label: 'Обучение', locked: false, showLock: false },

@@ -733,93 +733,251 @@
             <div class="goals-header">
               <h3>Цели и шаги</h3>
               <button 
-                v-if="goalsWithSteps.length > 0"
+                v-if="filteredGoalsWithSteps.length > 0"
                 class="btn btn-sm btn-outline toggle-all-btn"
                 @click="toggleAllGoals"
               >
                 {{ allGoalsExpanded ? 'Свернуть все' : 'Развернуть все' }}
               </button>
             </div>
+            
+            <!-- Filters Section -->
+            <div class="goals-filters card">
+              <div class="filter-row">
+                <div class="filter-group search-group">
+                  <div class="search-input-wrapper">
+                    <Search :size="16" class="search-icon" />
+                    <input 
+                      v-model="searchQuery"
+                      type="text"
+                      class="search-input"
+                      placeholder="Поиск по целям и шагам..."
+                    />
+                  </div>
+                </div>
+                <div class="filter-group">
+                  <select v-model="filterSphere" class="filter-select">
+                    <option value="">Все сферы</option>
+                    <option v-for="sphere in lifeSpheres" :key="sphere.id" :value="sphere.id">
+                      {{ sphere.icon }} {{ sphere.name }}
+                    </option>
+                  </select>
+                </div>
+                <div class="filter-group">
+                  <select v-model="filterStatus" class="filter-select">
+                    <option value="">Все статусы</option>
+                    <option value="scheduled">Запланированы</option>
+                    <option value="unscheduled">Не запланированы</option>
+                    <option value="partial">Частично запланированы</option>
+                    <option value="full">Полностью запланированы</option>
+                  </select>
+                </div>
+                <button 
+                  class="btn btn-sm"
+                  :class="{ 'btn-primary': filterThisWeek, 'btn-outline': !filterThisWeek }"
+                  @click="filterThisWeek = !filterThisWeek"
+                  title="Показать цели с шагами на текущей неделе"
+                >
+                  <Calendar :size="14" />
+                  Эта неделя
+                </button>
+                <button 
+                  v-if="searchQuery || filterSphere || filterStatus || filterThisWeek" 
+                  class="btn btn-sm btn-ghost"
+                  @click="clearFilters"
+                >
+                  ✕ Сбросить
+                </button>
+              </div>
+              <div class="filter-stats" v-if="goalsWithSteps.length > 0">
+                <span class="filter-count">
+                  Показано: {{ paginatedGoals.length }} из {{ filteredGoalsWithSteps.length }}
+                  <template v-if="filteredGoalsWithSteps.length !== goalsWithSteps.length">
+                    (всего {{ goalsWithSteps.length }})
+                  </template>
+                </span>
+              </div>
+            </div>
+            
             <div v-if="goalsWithSteps.length === 0" class="empty-goals card">
               <p>У вас пока нет целей с шагами.</p>
               <button class="btn btn-primary" @click="goToDecomposition">
                 Перейти к декомпозиции
               </button>
             </div>
+            
+            <div v-else-if="filteredGoalsWithSteps.length === 0" class="empty-goals card">
+              <p>Нет целей, соответствующих фильтрам.</p>
+              <button class="btn btn-outline" @click="clearFilters">
+                Сбросить фильтры
+              </button>
+            </div>
 
-            <div v-for="goal in goalsWithSteps" :key="goal.id" class="goal-card card" :class="{ collapsed: !expandedGoals[goal.id] }">
-              <div class="goal-header-accordion" @click="toggleGoal(goal.id)">
-                <div class="goal-header-left">
-                  <span class="expand-icon">{{ expandedGoals[goal.id] ? '▼' : '▶' }}</span>
-                  <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
-                  <h4 class="truncate-1" :title="goal.title">{{ goal.title }}</h4>
+            <div class="goals-list-wrapper" :class="{ 'has-scroll': paginatedGoals.length > 10 }">
+              <div v-for="goal in paginatedGoals" :key="goal.id" class="goal-card card" :class="{ collapsed: !expandedGoals[goal.id] }">
+                <div class="goal-header-accordion" @click="toggleGoal(goal.id)">
+                  <div class="goal-header-left">
+                    <span class="expand-icon">{{ expandedGoals[goal.id] ? '▼' : '▶' }}</span>
+                    <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
+                    <h4 class="truncate-1" :title="goal.title">{{ goal.title }}</h4>
+                  </div>
+                  <div class="goal-header-right">
+                    <span class="steps-count">{{ getUncompletedSteps(goal).length }} шагов</span>
+                    <span class="scheduled-count" v-if="getScheduledStepsCount(goal) > 0">
+                      ✓ {{ getScheduledStepsCount(goal) }} запланировано
+                    </span>
+                    <span class="goal-progress">{{ goal.progress || 0 }}%</span>
+                  </div>
                 </div>
-                <div class="goal-header-right">
-                  <span class="steps-count">{{ getUncompletedSteps(goal).length }} шагов</span>
-                  <span class="scheduled-count" v-if="getScheduledStepsCount(goal) > 0">
-                    ✓ {{ getScheduledStepsCount(goal) }} запланировано
-                  </span>
-                  <span class="goal-progress">{{ goal.progress || 0 }}%</span>
-                </div>
-              </div>
-              <div class="steps-list" v-show="expandedGoals[goal.id]">
-                <div 
-                  v-for="step in getUncompletedSteps(goal)" 
-                  :key="step.id"
-                  class="step-item"
-                  :class="{ 
-                    scheduled: isStepScheduled(goal.id, step.id),
-                    ['priority-' + getScheduledPriority(goal.id, step.id)]: isStepScheduled(goal.id, step.id),
-                    dragging: draggedStep && draggedStep.stepId === step.id
-                  }"
-                  draggable="true"
-                  @dragstart="handleStepDragStart($event, goal, step)"
-                  @dragend="handleStepDragEnd"
-                >
-                  <span class="step-title truncate-1" :title="step.title">{{ step.title }}</span>
-                  <div class="step-actions">
+                <!-- Step filters panel -->
+                <div class="step-filters-panel" v-show="expandedGoals[goal.id]">
+                  <div class="step-filters-row">
+                    <div class="step-search-wrapper">
+                      <Search class="search-icon" :size="14" />
+                      <input 
+                        type="text"
+                        :value="getStepFilters(goal.id).search"
+                        @input="updateStepFilter(goal.id, 'search', $event.target.value)"
+                        placeholder="Поиск шагов..."
+                        class="step-search-input"
+                      />
+                    </div>
                     <select 
-                      :value="getScheduledDate(goal.id, step.id)"
-                      @change="scheduleStep(goal.id, step, $event.target.value)"
-                      class="day-select-sm"
+                      :value="getStepFilters(goal.id).status"
+                      @change="updateStepFilter(goal.id, 'status', $event.target.value)"
+                      class="step-filter-select"
                     >
-                      <option value="">День</option>
-                      <option 
-                        v-for="day in weekDays" 
-                        :key="day.date"
-                        :value="day.date"
-                      >
-                        {{ day.shortName }}
-                      </option>
+                      <option value="">Все статусы</option>
+                      <option value="scheduled">Запланированные</option>
+                      <option value="unscheduled">Незапланированные</option>
                     </select>
                     <select 
-                      :value="getScheduledTimeEstimate(goal.id, step.id)"
-                      @change="updateScheduledStep(goal.id, step.id, 'timeEstimate', $event.target.value)"
-                      class="time-select-sm"
-                      title="Время"
+                      :value="getStepFilters(goal.id).priority"
+                      @change="updateStepFilter(goal.id, 'priority', $event.target.value)"
+                      class="step-filter-select"
                     >
-                      <option value="">⏱</option>
-                      <option value="30min">30м</option>
-                      <option value="1h">1ч</option>
-                      <option value="2h">2ч</option>
-                      <option value="4h">4ч</option>
-                    </select>
-                    <select 
-                      :value="getScheduledPriority(goal.id, step.id)"
-                      @change="updateScheduledStep(goal.id, step.id, 'priority', $event.target.value)"
-                      class="priority-select-sm"
-                      :class="'priority-' + (getScheduledPriority(goal.id, step.id) || 'none')"
-                      title="Приоритет"
-                    >
-                      <option value="">—</option>
+                      <option value="">Все приоритеты</option>
                       <option value="critical">Критично</option>
                       <option value="desirable">Важно</option>
                       <option value="attention">Внимание</option>
                       <option value="optional">Опционально</option>
+                      <option value="none">Без приоритета</option>
                     </select>
+                    <div class="step-sort-wrapper">
+                      <select 
+                        :value="getStepFilters(goal.id).sortBy"
+                        @change="updateStepFilter(goal.id, 'sortBy', $event.target.value)"
+                        class="step-filter-select"
+                      >
+                        <option value="order">По порядку</option>
+                        <option value="priority">По приоритету</option>
+                        <option value="date">По дате</option>
+                        <option value="status">По статусу</option>
+                      </select>
+                      <button 
+                        v-if="getStepFilters(goal.id).sortBy !== 'order'"
+                        class="btn-sort-dir"
+                        @click.stop="toggleStepSortDirection(goal.id)"
+                        :title="getStepFilters(goal.id).sortDir === 'asc' ? 'По возрастанию' : 'По убыванию'"
+                      >
+                        {{ getStepFilters(goal.id).sortDir === 'asc' ? '↑' : '↓' }}
+                      </button>
+                    </div>
+                    <button 
+                      v-if="hasActiveStepFilters(goal.id)"
+                      class="btn btn-xs btn-ghost clear-step-filters"
+                      @click.stop="clearStepFilters(goal.id)"
+                    >
+                      Сбросить
+                    </button>
+                  </div>
+                  <div class="step-filter-stats" v-if="hasActiveStepFilters(goal.id)">
+                    <span class="filter-count">
+                      Показано: {{ getFilteredSteps(goal).length }} из {{ getUncompletedSteps(goal).length }}
+                    </span>
                   </div>
                 </div>
+                
+                <div class="steps-list" v-show="expandedGoals[goal.id]" :class="{ 'has-scroll': getFilteredSteps(goal).length > 5 }">
+                  <div 
+                    v-for="step in getVisibleSteps(goal)" 
+                    :key="step.id"
+                    class="step-item"
+                    :class="{ 
+                      scheduled: isStepScheduled(goal.id, step.id),
+                      ['priority-' + getScheduledPriority(goal.id, step.id)]: isStepScheduled(goal.id, step.id),
+                      dragging: draggedStep && draggedStep.stepId === step.id
+                    }"
+                    draggable="true"
+                    @dragstart="handleStepDragStart($event, goal, step)"
+                    @dragend="handleStepDragEnd"
+                  >
+                    <span class="step-title truncate-1" :title="step.title">{{ step.title }}</span>
+                    <div class="step-actions">
+                      <span class="step-date-display" v-if="isStepScheduled(goal.id, step.id)">
+                        {{ formatStepDate(goal.id, step.id) }}
+                      </span>
+                      <select 
+                        :value="getScheduledDate(goal.id, step.id)"
+                        @change="scheduleStep(goal.id, step, $event.target.value)"
+                        class="day-select-sm"
+                      >
+                        <option value="">День</option>
+                        <option 
+                          v-for="day in weekDays" 
+                          :key="day.date"
+                          :value="day.date"
+                        >
+                          {{ day.shortName }}
+                        </option>
+                      </select>
+                      <select 
+                        :value="getScheduledTimeEstimate(goal.id, step.id)"
+                        @change="updateScheduledStep(goal.id, step.id, 'timeEstimate', $event.target.value)"
+                        class="time-select-sm"
+                        title="Время"
+                      >
+                        <option value="">⏱</option>
+                        <option value="30min">30м</option>
+                        <option value="1h">1ч</option>
+                        <option value="2h">2ч</option>
+                        <option value="4h">4ч</option>
+                      </select>
+                      <select 
+                        :value="getScheduledPriority(goal.id, step.id)"
+                        @change="updateScheduledStep(goal.id, step.id, 'priority', $event.target.value)"
+                        class="priority-select-sm"
+                        :class="'priority-' + (getScheduledPriority(goal.id, step.id) || 'none')"
+                        title="Приоритет"
+                      >
+                        <option value="">—</option>
+                        <option value="critical">Критично</option>
+                        <option value="desirable">Важно</option>
+                        <option value="attention">Внимание</option>
+                        <option value="optional">Опционально</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <!-- Load more steps button -->
+                  <button 
+                    v-if="hasMoreSteps(goal)"
+                    class="btn btn-sm btn-outline load-more-steps"
+                    @click.stop="loadMoreSteps(goal.id)"
+                  >
+                    Ещё {{ remainingStepsCount(goal) }} шагов
+                  </button>
+                </div>
               </div>
+              
+              <!-- Load more goals button -->
+              <button 
+                v-if="hasMoreGoals"
+                class="btn btn-outline load-more-goals"
+                @click="loadMoreGoals"
+              >
+                Загрузить ещё {{ remainingGoalsCount }} целей
+              </button>
             </div>
           </div>
         </div>
@@ -837,8 +995,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { DEMO_PLANNING_MODE } from '../config/settings.js'
 import { 
@@ -860,11 +1018,14 @@ import {
   Users,
   Heart,
   Briefcase,
-  HeartHandshake
+  HeartHandshake,
+  Search,
+  Filter
 } from 'lucide-vue-next'
 
 const store = useAppStore()
 const router = useRouter()
+const route = useRoute()
 
 const lessonSteps = ['Теория', 'Практика', 'Напоминания']
 
@@ -873,6 +1034,131 @@ const lessonCompleted = computed(() => true)
 const currentStep = computed(() => store.planningModule.currentStep)
 
 const weekOffset = ref(0)
+
+// Filter state
+const searchQuery = ref('')
+const filterSphere = ref('')
+const filterStatus = ref('')
+const filterThisWeek = ref(false)
+
+// Pagination state
+const goalsDisplayLimit = ref(10)
+const stepsDisplayLimits = ref({})
+
+// Step filters per goal (each goal can have its own filters)
+const stepsFilters = ref({})
+// { [goalId]: { search: '', priority: '', status: '', sortBy: 'order', sortDir: 'asc' } }
+
+function getStepFilters(goalId) {
+  if (!stepsFilters.value[goalId]) {
+    stepsFilters.value[goalId] = {
+      search: '',
+      priority: '',
+      status: '',
+      sortBy: 'order',
+      sortDir: 'asc'
+    }
+  }
+  return stepsFilters.value[goalId]
+}
+
+function updateStepFilter(goalId, field, value) {
+  const filters = getStepFilters(goalId)
+  filters[field] = value
+  // Reset pagination when filters change
+  stepsDisplayLimits.value[goalId] = 6
+}
+
+function clearStepFilters(goalId) {
+  stepsFilters.value[goalId] = {
+    search: '',
+    priority: '',
+    status: '',
+    sortBy: 'order',
+    sortDir: 'asc'
+  }
+  stepsDisplayLimits.value[goalId] = 6
+}
+
+function hasActiveStepFilters(goalId) {
+  const filters = getStepFilters(goalId)
+  return filters.search || filters.priority || filters.status || filters.sortBy !== 'order'
+}
+
+function toggleStepSortDirection(goalId) {
+  const filters = getStepFilters(goalId)
+  filters.sortDir = filters.sortDir === 'asc' ? 'desc' : 'asc'
+}
+
+// Get filtered and sorted steps for a goal
+function getFilteredSteps(goal) {
+  let steps = getUncompletedSteps(goal)
+  const filters = getStepFilters(goal.id)
+  
+  // Apply search filter
+  if (filters.search) {
+    const query = filters.search.toLowerCase()
+    steps = steps.filter(s => s.title?.toLowerCase().includes(query))
+  }
+  
+  // Apply priority filter
+  if (filters.priority) {
+    const scheduled = scheduledTasks.value.find(t => t.goalId === goal.id)
+    if (filters.priority === 'none') {
+      // Steps without priority
+      steps = steps.filter(s => {
+        const task = scheduledTasks.value.find(t => t.goalId === goal.id && t.stepId === s.id)
+        return !task?.priority
+      })
+    } else {
+      steps = steps.filter(s => {
+        const task = scheduledTasks.value.find(t => t.goalId === goal.id && t.stepId === s.id)
+        return task?.priority === filters.priority
+      })
+    }
+  }
+  
+  // Apply status filter
+  if (filters.status) {
+    if (filters.status === 'scheduled') {
+      steps = steps.filter(s => isStepScheduled(goal.id, s.id))
+    } else if (filters.status === 'unscheduled') {
+      steps = steps.filter(s => !isStepScheduled(goal.id, s.id))
+    }
+  }
+  
+  // Apply sorting
+  if (filters.sortBy !== 'order') {
+    const dir = filters.sortDir === 'asc' ? 1 : -1
+    steps = [...steps].sort((a, b) => {
+      switch (filters.sortBy) {
+        case 'priority': {
+          const priorityOrder = { 'critical': 1, 'desirable': 2, 'attention': 3, 'optional': 4, '': 5 }
+          const aPriority = getScheduledPriority(goal.id, a.id) || ''
+          const bPriority = getScheduledPriority(goal.id, b.id) || ''
+          return (priorityOrder[aPriority] - priorityOrder[bPriority]) * dir
+        }
+        case 'date': {
+          const aDate = getScheduledDate(goal.id, a.id) || ''
+          const bDate = getScheduledDate(goal.id, b.id) || ''
+          if (!aDate && !bDate) return 0
+          if (!aDate) return dir
+          if (!bDate) return -dir
+          return aDate.localeCompare(bDate) * dir
+        }
+        case 'status': {
+          const aScheduled = isStepScheduled(goal.id, a.id) ? 1 : 0
+          const bScheduled = isStepScheduled(goal.id, b.id) ? 1 : 0
+          return (bScheduled - aScheduled) * dir
+        }
+        default:
+          return 0
+      }
+    })
+  }
+  
+  return steps
+}
 
 const showEmptyState = computed(() => {
   return false
@@ -1008,6 +1294,181 @@ const goalsWithSteps = computed(() => {
   }
   return filtered
 })
+
+// Filtered goals based on search, sphere, status, and week filters
+const filteredGoalsWithSteps = computed(() => {
+  return goalsWithSteps.value.filter(goal => {
+    // Text search filter
+    if (searchQuery.value) {
+      const query = searchQuery.value.toLowerCase()
+      const matchesTitle = goal.title?.toLowerCase().includes(query)
+      const matchesSteps = goal.steps?.some(s => s.title?.toLowerCase().includes(query))
+      if (!matchesTitle && !matchesSteps) {
+        return false
+      }
+    }
+    
+    // Sphere filter
+    if (filterSphere.value && goal.sphereId !== filterSphere.value) {
+      return false
+    }
+    
+    // Status filter (based on goal progress or scheduled status)
+    if (filterStatus.value) {
+      const scheduledCount = getScheduledStepsCount(goal)
+      const totalSteps = getUncompletedSteps(goal).length
+      
+      if (filterStatus.value === 'scheduled' && scheduledCount === 0) {
+        return false
+      }
+      if (filterStatus.value === 'unscheduled' && scheduledCount > 0) {
+        return false
+      }
+      if (filterStatus.value === 'partial' && (scheduledCount === 0 || scheduledCount >= totalSteps)) {
+        return false
+      }
+      if (filterStatus.value === 'full' && scheduledCount < totalSteps) {
+        return false
+      }
+    }
+    
+    // Week filter - goals with steps that intersect with current week
+    if (filterThisWeek.value) {
+      const weekStart = weekDays.value[0]?.date
+      const weekEnd = weekDays.value[6]?.date
+      if (!weekStart || !weekEnd) return true
+      
+      const hasStepsThisWeek = scheduledTasks.value.some(task => {
+        if (task.goalId !== goal.id) return false
+        return task.scheduledDate >= weekStart && task.scheduledDate <= weekEnd
+      })
+      
+      if (!hasStepsThisWeek) {
+        return false
+      }
+    }
+    
+    return true
+  })
+})
+
+// Paginated goals (first N goals)
+const paginatedGoals = computed(() => {
+  return filteredGoalsWithSteps.value.slice(0, goalsDisplayLimit.value)
+})
+
+const hasMoreGoals = computed(() => {
+  return filteredGoalsWithSteps.value.length > goalsDisplayLimit.value
+})
+
+const remainingGoalsCount = computed(() => {
+  return filteredGoalsWithSteps.value.length - goalsDisplayLimit.value
+})
+
+function loadMoreGoals() {
+  goalsDisplayLimit.value += 10
+}
+
+// Get visible steps for a goal (with pagination)
+function getVisibleSteps(goal) {
+  const steps = getFilteredSteps(goal)
+  const limit = stepsDisplayLimits.value[goal.id] || 6
+  return steps.slice(0, limit)
+}
+
+function hasMoreSteps(goal) {
+  const steps = getFilteredSteps(goal)
+  const limit = stepsDisplayLimits.value[goal.id] || 6
+  return steps.length > limit
+}
+
+function remainingStepsCount(goal) {
+  const steps = getFilteredSteps(goal)
+  const limit = stepsDisplayLimits.value[goal.id] || 6
+  return steps.length - limit
+}
+
+function loadMoreSteps(goalId) {
+  const currentLimit = stepsDisplayLimits.value[goalId] || 6
+  stepsDisplayLimits.value[goalId] = currentLimit + 6
+}
+
+// Clear all filters
+function clearFilters() {
+  searchQuery.value = ''
+  filterSphere.value = ''
+  filterStatus.value = ''
+  filterThisWeek.value = false
+  resetPagination()
+  updateUrlParams()
+}
+
+// Reset pagination when filters change
+function resetPagination() {
+  goalsDisplayLimit.value = 10
+  stepsDisplayLimits.value = {}
+}
+
+// URL parameter sync
+function updateUrlParams() {
+  const newQuery = { ...route.query }
+  
+  // Update filter params
+  if (searchQuery.value) {
+    newQuery.search = searchQuery.value
+  } else {
+    delete newQuery.search
+  }
+  
+  if (filterSphere.value) {
+    newQuery.sphere = filterSphere.value
+  } else {
+    delete newQuery.sphere
+  }
+  
+  if (filterStatus.value) {
+    newQuery.status = filterStatus.value
+  } else {
+    delete newQuery.status
+  }
+  
+  if (filterThisWeek.value) {
+    newQuery.week = '1'
+  } else {
+    delete newQuery.week
+  }
+  
+  // Check if query actually changed to avoid redundant navigation
+  const currentQuery = JSON.stringify(route.query)
+  const updatedQuery = JSON.stringify(newQuery)
+  if (currentQuery !== updatedQuery) {
+    router.replace({ path: route.path, query: newQuery })
+  }
+}
+
+function loadFiltersFromUrl() {
+  if (route.query.search) searchQuery.value = route.query.search
+  if (route.query.sphere) filterSphere.value = route.query.sphere
+  if (route.query.status) filterStatus.value = route.query.status
+  if (route.query.week === '1') filterThisWeek.value = true
+}
+
+// Watch filters and update URL (with debounce effect via check in updateUrlParams)
+watch([searchQuery, filterSphere, filterStatus, filterThisWeek], () => {
+  updateUrlParams()
+  resetPagination()
+})
+
+// Format date for step display
+function formatStepDate(goalId, stepId) {
+  const date = getScheduledDate(goalId, stepId)
+  if (!date) return ''
+  
+  const dateObj = new Date(date)
+  const day = dateObj.getDate()
+  const month = dateObj.toLocaleDateString('ru-RU', { month: 'short' })
+  return `${day} ${month}`
+}
 
 const expandedGoals = ref({})
 
@@ -1416,7 +1877,7 @@ function restartLesson() {
 }
 
 function goToDecomposition() {
-  router.push('/goals')
+  router.push('/app/goals-bank')
 }
 
 function setupDemoData() {
@@ -1502,6 +1963,7 @@ onMounted(() => {
   })
   ensureWeekPlan()
   setupDemoData()
+  loadFiltersFromUrl()
 })
 </script>
 
@@ -2606,6 +3068,209 @@ onMounted(() => {
 
 .goals-section .goals-header h3 {
   margin: 0;
+}
+
+/* Goals filters */
+.goals-filters {
+  margin-bottom: 1rem;
+  padding: 1rem;
+}
+
+.goals-filters .filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.goals-filters .filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.goals-filters .search-group {
+  flex: 1;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.goals-filters .search-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.goals-filters .search-input-wrapper .search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+.goals-filters .search-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  background: var(--bg-primary);
+}
+
+.goals-filters .search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+.goals-filters .filter-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  background: var(--bg-primary);
+  cursor: pointer;
+  min-width: 140px;
+}
+
+.goals-filters .filter-stats {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.goals-filters .filter-count {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* Goals list wrapper with scroll */
+.goals-list-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.goals-list-wrapper.has-scroll {
+  max-height: calc(10 * 80px + 60px);
+  overflow-y: auto;
+}
+
+/* Steps list with scroll (5 шагов видимых) */
+.steps-list.has-scroll {
+  max-height: calc(5 * 44px + 50px);
+  overflow-y: auto;
+}
+
+/* Load more buttons */
+.load-more-steps {
+  margin-top: 0.5rem;
+  align-self: center;
+}
+
+.load-more-goals {
+  margin-top: 1rem;
+  align-self: center;
+  width: 100%;
+}
+
+/* Step date display */
+.step-date-display {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+/* Step filters panel */
+.step-filters-panel {
+  padding: 0.75rem 1.25rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.step-filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.step-search-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 120px;
+  max-width: 180px;
+}
+
+.step-search-wrapper .search-icon {
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+}
+
+.step-search-input {
+  width: 100%;
+  padding: 0.35rem 0.5rem 0.35rem 1.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  background: var(--bg-primary);
+}
+
+.step-filter-select {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  background: var(--bg-primary);
+  cursor: pointer;
+  min-width: 110px;
+}
+
+.step-sort-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.btn-sort-dir {
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-sort-dir:hover {
+  background: var(--bg-secondary);
+}
+
+.clear-step-filters {
+  font-size: 0.7rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.step-filter-stats {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.step-filter-stats .filter-count {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
 }
 
 .empty-goals {

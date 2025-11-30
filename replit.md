@@ -19,6 +19,11 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite with a pr
 - **Goals Bank Module**: A 3-step workflow for goal validation, filtering, and transfer, including an inline editing modal for validated goals. Stat cards and action buttons utilize Lucide icons and color-coded badges. Empty state lesson removed - shows working interface directly.
 - **Decomposition Module**: Facilitates breaking down goals into actionable steps, with step persistence and ID-based tracking. The AI Coach has been removed from this module, resulting in a single-column, focused interface.
 - **Planning Module**: Includes a 5-day workweek view with collapsible weekends, week navigation, color-coded priority tasks, drag & drop task management, and weekly statistics. Quick-add functionality and undo for task deletion are supported. The AI Coach has been removed.
+  - **Filters**: Text search (goal/step titles), sphere dropdown, status filter (scheduled/unscheduled/partial/full), week filter (show only goals with steps in current week), clear all button
+  - **Pagination**: 10 goals per page with "load more" button, 6 steps per goal with individual "load more" buttons
+  - **Step Date Display**: Each scheduled step shows weekday + date (e.g., "Пн 15 дек")
+  - **URL Parameters**: Filters sync to URL query params (?search=...&sphere=...&status=...&week=1) and restore on page load
+  - **Empty State**: "Перейти к декомпозиции" button navigates to /app/goals-bank
 - **Authentication**: Integrates with the Django backend for user login, registration, and logout. Supports Telegram authentication with dedicated modals for error handling and new user registration flow (email/password setup).
 - **Onboarding**: A streamlined 3-step process (Philosophy → Points A/B → Rules) with optional fields and skip functionality. Utilizes Lucide icons and ensures proper navigation upon completion.
 - **AI Mentor**: Central product value - a personalized coach that guides users through all modules with contextual help and analysis. Features:
@@ -67,6 +72,40 @@ The application uses a modular structure with dedicated components, services, vi
 - Added mentor settings section in Settings page
 - Added auto-completion triggers for first steps in store actions
 - Deleted DashboardStage1/2/3.vue components (no longer needed)
+- **Planning Module Enhancements (Late November 2025)**:
+  - Added comprehensive filters: text search, sphere, status, week-related goals
+  - Implemented pagination (10 goals with load more, 6 steps per goal with load more)
+  - Added step date display alongside weekday in goal cards
+  - Implemented URL parameter sync for filter state persistence
+  - Fixed "Перейти к декомпозиции" button navigation to /app/goals-bank
+  - Added similar URL parameter support to Goals Bank module
+  - **Step-level filters and sorting per goal card**: Each expanded goal shows filter panel with:
+    - Text search for steps
+    - Status filter (scheduled/unscheduled)
+    - Priority filter (critical/desirable/attention/optional/none)
+    - Sorting by order, priority, date, status with asc/desc toggle
+    - "Показано X из Y" counter when filters active
+  - Steps list scroll threshold changed from 6 to 5 visible steps (`max-height: calc(5 * 44px + 50px)`)
+- **Goal Details Page (GoalEdit.vue) - Late November 2025**:
+  - Full step management with drag & drop reordering (disabled when filters/pagination active)
+  - Step parameters: priority (4 levels), time estimate, scheduled date (calendar picker), status
+  - Step filtering: text search, status, priority filters with visual feedback
+  - Pagination: 10 steps per page with "load more" button
+  - Auto-save with debounce (500ms) and hash-based change detection to prevent duplicate toasts
+  - Modal editing for goal details (3 Whys system), deadline field removed
+  - Auto-resizing comment textarea (max 7 lines with scroll)
+  - Navigation preserves Goals Bank filters via localStorage
+  - **Priority highlighting**: Steps show colored left border and background matching Planning page (red/orange/blue/gray)
+  - **Completed steps override**: CSS uses `:not(.step-completed)` to ensure completed steps show green instead of priority colors
+  - **Optimized header**: Status badge and sphere category stack in top-right; goal title truncates with ellipsis
+  - **Delete button**: Styled as icon-only btn-icon-danger matching GoalsBank "remove from work" action
+  - **Unified modal**: Includes "3 Whys" divider, validation section, footer with "Delete" in left and "Cancel/Save" in right
+  - **Quick navigation**: "Planner" button in header for seamless transition to Planning module
+  - **Edit button alignment**: "Редактировать цель" button aligned to left edge via flex-start
+  - **Multiline comments on load**: adjustAllCommentHeights() auto-adjusts textarea height for saved comments (up to 7 lines, then scroll)
+  - **Step sorting**: Dropdown for sorting by order, priority, status, time estimate, scheduled date with asc/desc toggle; drag & drop disabled during non-default sorts
+  - **Pagination expansion**: New steps appear immediately by increasing stepsDisplayLimit to full list length
+  - **Empty step filtering**: Steps without titles are excluded from save operations and hash calculations
 
 ## External Dependencies
 - **Django REST API Backend**: Provides user authentication, profile management, SSP data, goals bank, decomposition, planning, onboarding, and mini-task services.
