@@ -1416,7 +1416,7 @@ function restartLesson() {
 }
 
 function goToDecomposition() {
-  router.push('/goals')
+  router.push('/app/goals-bank')
 }
 
 function setupDemoData() {
