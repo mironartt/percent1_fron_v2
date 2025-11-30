@@ -672,14 +672,15 @@ const hasActiveFilters = computed(() => {
 
 // Drag & drop отключен при активных фильтрах или пагинации
 const isDragEnabled = computed(() => {
-  // Отключить если фильтры активны ИЛИ показаны не все шаги
+  // Отключить если фильтры активны
   if (hasActiveFilters.value) return false
   // Отключить если сортировка не по порядку
   if (sortBy.value !== 'order') return false
-  // Отключить если пагинация обрезает список
-  if (filteredSteps.value.length > stepsDisplayLimit.value) return false
-  // Отключить если отфильтрованный список не равен полному
-  if (filteredSteps.value.length !== goalForm.value.steps.length) return false
+  // Отключить если пагинация обрезает список существующих шагов
+  if (existingSteps.value.length > stepsDisplayLimit.value) return false
+  // Отключить если отфильтрованный список не равен списку существующих шагов
+  // (значит пользовательские фильтры скрыли часть шагов)
+  if (filteredSteps.value.length !== existingSteps.value.length) return false
   return true
 })
 
