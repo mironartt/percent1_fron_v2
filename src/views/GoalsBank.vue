@@ -2540,7 +2540,7 @@ onMounted(() => {
 /* Table wrapper with fixed height for pagination */
 /* 6 goals should fit without scroll, scroll appears only for 7+ */
 .goals-table-wrapper.has-scroll {
-  max-height: calc(6 * 80px + 60px);
+  max-height: calc(7 * 80px + 60px);
   overflow-y: auto;
 }
 
