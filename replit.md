@@ -94,6 +94,8 @@ The application uses a modular structure with dedicated components, services, vi
   - **Delete button**: Styled as icon-only btn-icon-danger matching GoalsBank "remove from work" action
   - **Unified modal**: Includes "3 Whys" divider, validation section, footer with "Delete" in left and "Cancel/Save" in right
   - **Quick navigation**: "Planner" button in header for seamless transition to Planning module
+  - **Edit button alignment**: "Редактировать цель" button aligned to left edge via flex-start
+  - **Multiline comments on load**: adjustAllCommentHeights() auto-adjusts textarea height for saved comments (up to 7 lines, then scroll)
 
 ## External Dependencies
 - **Django REST API Backend**: Provides user authentication, profile management, SSP data, goals bank, decomposition, planning, onboarding, and mini-task services.

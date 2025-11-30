@@ -564,6 +564,7 @@ const remainingStepsCount = computed(() => {
 
 function loadMoreSteps() {
   stepsDisplayLimit.value += 10
+  adjustAllCommentHeights()
 }
 
 // Получить оригинальный индекс шага в goalForm.steps
@@ -696,6 +697,29 @@ watch(() => route.params.id, () => {
   loadGoalData()
 })
 
+const commentTextareas = ref([])
+
+function adjustAllCommentHeights() {
+  nextTick(() => {
+    const textareas = document.querySelectorAll('.step-comment-input')
+    textareas.forEach(textarea => {
+      if (textarea.value && textarea.value.includes('\n')) {
+        textarea.style.height = 'auto'
+        const lineHeight = parseInt(getComputedStyle(textarea).lineHeight) || 20
+        const maxHeight = lineHeight * 7 + 16
+        const newHeight = Math.min(textarea.scrollHeight, maxHeight)
+        textarea.style.height = newHeight + 'px'
+        
+        if (textarea.scrollHeight > maxHeight) {
+          textarea.style.overflowY = 'auto'
+        } else {
+          textarea.style.overflowY = 'hidden'
+        }
+      }
+    })
+  })
+}
+
 function loadGoalData() {
   if (goal.value) {
     goalForm.value = {
@@ -709,6 +733,8 @@ function loadGoalData() {
     recalculateProgress()
     // Инициализировать hash для отслеживания изменений
     lastSavedHash = getStepsHash()
+    // Корректировать высоту многострочных комментариев
+    adjustAllCommentHeights()
   }
 }
 
@@ -1151,6 +1177,7 @@ function formatDate(dateString) {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 0.5rem;
 }
 
