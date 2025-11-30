@@ -972,7 +972,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { 
@@ -1232,7 +1232,51 @@ function clearFilters() {
   filterStatus.value = ''
   searchQuery.value = ''
   resetPagination()
+  updateUrlParams()
 }
+
+// URL parameter sync
+function updateUrlParams() {
+  const newQuery = { ...route.query }
+  
+  // Update filter params
+  if (searchQuery.value) {
+    newQuery.search = searchQuery.value
+  } else {
+    delete newQuery.search
+  }
+  
+  if (filterSphere.value) {
+    newQuery.sphere = filterSphere.value
+  } else {
+    delete newQuery.sphere
+  }
+  
+  if (filterStatus.value) {
+    newQuery.status = filterStatus.value
+  } else {
+    delete newQuery.status
+  }
+  
+  // Check if query actually changed to avoid redundant navigation
+  const currentQuery = JSON.stringify(route.query)
+  const updatedQuery = JSON.stringify(newQuery)
+  if (currentQuery !== updatedQuery) {
+    router.replace({ path: route.path, query: newQuery })
+  }
+}
+
+function loadFiltersFromUrl() {
+  if (route.query.search) searchQuery.value = route.query.search
+  if (route.query.sphere) filterSphere.value = route.query.sphere
+  if (route.query.status) filterStatus.value = route.query.status
+}
+
+// Watch filters and update URL (with debounce effect via check in updateUrlParams)
+watch([searchQuery, filterSphere, filterStatus], () => {
+  updateUrlParams()
+  resetPagination()
+})
 
 const isBankGoalSelected = (goalId) => selectedBankGoals.value.includes(goalId)
 
@@ -1815,13 +1859,16 @@ function goToFullEdit(goalId) {
 }
 
 onMounted(() => {
+  // Load filters from URL
+  loadFiltersFromUrl()
+  
+  // Handle edit query parameter
   const editId = route.query.edit
   if (editId) {
     const goalToEdit = store.goalsBank.rawIdeas.find(i => i.id === editId)
     if (goalToEdit) {
       openEditModal(goalToEdit)
     }
-    router.replace({ path: route.path, query: {} })
   }
 })
 </script>
