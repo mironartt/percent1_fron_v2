@@ -82,15 +82,26 @@
         </div>
       </div>
 
-      <!-- Единая таблица истинных целей -->
-      <div class="goals-table-section card" v-if="validatedGoals.length > 0">
+      <!-- Единая таблица целей -->
+      <div class="goals-table-section card" v-if="rawIdeas.length > 0">
         <div class="table-header">
           <h3>Банк идей и целей</h3>
-          <p class="section-hint">Ваши истинные цели, прошедшие проверку</p>
+          <p class="section-hint">Все ваши цели и идеи</p>
         </div>
         
         <!-- Фильтры -->
         <div class="goals-filters">
+          <div class="filter-group search-group">
+            <div class="search-input-wrapper">
+              <Search :size="16" :stroke-width="2" class="search-icon" />
+              <input 
+                v-model="searchQuery"
+                type="text"
+                class="search-input"
+                placeholder="Поиск по названию и содержанию..."
+              />
+            </div>
+          </div>
           <div class="filter-group">
             <label class="filter-label">Сфера:</label>
             <select v-model="filterSphere" class="filter-select">
@@ -104,13 +115,16 @@
             <label class="filter-label">Статус:</label>
             <select v-model="filterStatus" class="filter-select">
               <option value="">Все статусы</option>
-              <option value="available">Доступные</option>
+              <option value="validated">Истинные</option>
+              <option value="rejected">Отклонённые</option>
+              <option value="raw">Не оценённые</option>
               <option value="in-work">В работе</option>
               <option value="completed">Завершённые</option>
+              <option value="available">Доступные</option>
             </select>
           </div>
           <button 
-            v-if="filterSphere || filterStatus" 
+            v-if="filterSphere || filterStatus || searchQuery" 
             class="btn btn-sm btn-ghost"
             @click="clearFilters"
           >
@@ -118,7 +132,7 @@
           </button>
         </div>
 
-        <div class="goals-table-wrapper">
+        <div class="goals-table-wrapper" :class="{ 'has-scroll': filteredGoals.length > 6 }">
           <table class="goals-table">
             <thead>
               <tr>
@@ -130,11 +144,13 @@
             </thead>
             <tbody>
               <tr 
-                v-for="goal in filteredValidatedGoals" 
+                v-for="goal in paginatedGoals" 
                 :key="goal.id"
                 :class="{ 
                   'in-work': isGoalTransferred(goal.id),
-                  'row-selected': isBankGoalSelected(goal.id)
+                  'row-selected': isBankGoalSelected(goal.id),
+                  'row-rejected': goal.status === 'rejected',
+                  'row-raw': !goal.status || goal.status === 'raw'
                 }"
               >
                 <td class="col-status">
@@ -144,8 +160,14 @@
                   <span v-else-if="isGoalTransferred(goal.id)" class="status-badge in-work">
                     В работе
                   </span>
-                  <span v-else class="status-badge available">
-                    Доступна
+                  <span v-else-if="goal.status === 'validated'" class="status-badge validated">
+                    Истинная
+                  </span>
+                  <span v-else-if="goal.status === 'rejected'" class="status-badge rejected">
+                    Отклонена
+                  </span>
+                  <span v-else class="status-badge raw">
+                    Не оценена
                   </span>
                 </td>
                 <td class="col-goal">
@@ -173,7 +195,15 @@
                       <Edit2 :size="16" :stroke-width="2" />
                     </button>
                     <button 
-                      v-if="!isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
+                      v-if="goal.status === 'validated' && (isGoalTransferred(goal.id) || !isGoalTransferred(goal.id))"
+                      class="btn-icon btn-icon-decompose"
+                      @click.stop="goToDecompose(goal.id)"
+                      title="Декомпозировать"
+                    >
+                      <GitBranch :size="16" :stroke-width="2" />
+                    </button>
+                    <button 
+                      v-if="goal.status === 'validated' && !isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
                       class="btn-icon btn-icon-primary"
                       @click.stop="takeGoalToWork(goal)"
                       title="Взять в работу"
@@ -211,7 +241,23 @@
           </table>
         </div>
         
-        <div v-if="filteredValidatedGoals.length === 0" class="empty-filter-result">
+        <!-- Load More Button -->
+        <div v-if="hasMoreGoals" class="load-more-section">
+          <button class="btn btn-secondary btn-load-more" @click="loadMoreGoals">
+            <ChevronDown :size="16" :stroke-width="2" />
+            Загрузить ещё ({{ remainingGoalsCount }})
+          </button>
+        </div>
+        
+        <!-- Collapse Button (when expanded) -->
+        <div v-if="displayLimit > 6 && filteredGoals.length > 6" class="collapse-section">
+          <button class="btn btn-ghost btn-collapse" @click="resetPagination">
+            <ChevronUp :size="16" :stroke-width="2" />
+            Свернуть
+          </button>
+        </div>
+        
+        <div v-if="filteredGoals.length === 0" class="empty-filter-result">
           Нет целей, соответствующих выбранным фильтрам
         </div>
 
@@ -784,7 +830,7 @@
     <!-- Edit Goal Modal -->
     <Transition name="modal-fade">
       <div v-if="showEditModal" class="modal-overlay" @click.self="closeEditModal">
-        <div class="edit-modal">
+        <div class="edit-modal edit-modal-extended">
           <div class="modal-header">
             <h3>
               <Edit2 :size="20" :stroke-width="2" class="modal-header-icon" />
@@ -807,16 +853,6 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label">Почему это важно?</label>
-              <textarea 
-                v-model="editingGoal.whyImportant"
-                class="form-textarea"
-                placeholder="Опишите, почему эта цель важна для вас"
-                rows="4"
-              ></textarea>
-            </div>
-
-            <div class="form-group">
               <label class="form-label">Сфера жизни</label>
               <div class="sphere-select-grid">
                 <button
@@ -832,11 +868,79 @@
                 </button>
               </div>
             </div>
+
+            <div class="why-section-divider">
+              <span>Правило "3 Почему"</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">1. Почему эта цель мне важна?</label>
+              <textarea 
+                v-model="editingGoal.whyImportant"
+                class="form-textarea"
+                placeholder="Опишите, почему эта цель важна для вас"
+                rows="3"
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">2. Почему именно это даст мне то, что я хочу?</label>
+              <textarea 
+                v-model="editingGoal.why2"
+                class="form-textarea"
+                placeholder="Объясните, как достижение этой цели приведёт вас к желаемому результату"
+                rows="3"
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">3. Почему это действительно про меня?</label>
+              <textarea 
+                v-model="editingGoal.why3"
+                class="form-textarea"
+                placeholder="Подтвердите, что эта цель соответствует вашим ценностям и личности"
+                rows="3"
+              ></textarea>
+            </div>
+
+            <div class="validation-section">
+              <div class="validation-label">Оценка цели:</div>
+              <div class="validation-buttons">
+                <button 
+                  class="btn btn-validation btn-true-goal"
+                  :class="{ active: editingGoal.status === 'validated' }"
+                  @click="validateGoalFromModal(true)"
+                >
+                  <CheckCircle :size="18" :stroke-width="2" />
+                  Это истинная цель
+                </button>
+                <button 
+                  class="btn btn-validation btn-false-goal"
+                  :class="{ active: editingGoal.status === 'rejected' }"
+                  @click="validateGoalFromModal(false)"
+                >
+                  <XCircle :size="18" :stroke-width="2" />
+                  Это ложная цель
+                </button>
+              </div>
+            </div>
           </div>
 
           <div class="modal-footer">
             <div class="modal-footer-left">
-              <button class="btn btn-danger-outline" @click="deleteGoalFromModal">
+              <button 
+                v-if="isGoalTransferred(editingGoal?.id)"
+                class="btn btn-danger-outline" 
+                @click="removeGoalFromWork"
+              >
+                <X :size="16" :stroke-width="2" />
+                Убрать из работы
+              </button>
+              <button 
+                v-else
+                class="btn btn-danger-outline" 
+                @click="deleteGoalFromModal"
+              >
                 <Trash2 :size="16" :stroke-width="2" />
                 Удалить
               </button>
@@ -852,13 +956,13 @@
             </div>
           </div>
 
-          <div class="modal-advanced" v-if="editingGoal && isGoalTransferred(editingGoal.id)">
+          <div class="modal-advanced" v-if="editingGoal && editingGoal.status === 'validated'">
             <div class="advanced-divider">
               <span>Нужна декомпозиция на шаги?</span>
             </div>
-            <button class="btn btn-link" @click="goToFullEdit(editingGoal.id)">
-              <ExternalLink :size="16" :stroke-width="2" />
-              Перейти к полному редактированию
+            <button class="btn btn-link" @click="goToDecompose(editingGoal.id)">
+              <GitBranch :size="16" :stroke-width="2" />
+              Перейти к декомпозиции
             </button>
           </div>
         </div>
@@ -902,7 +1006,10 @@ import {
   ListChecks,
   Edit2,
   ExternalLink,
-  Calendar
+  Calendar,
+  Search,
+  GitBranch,
+  ChevronUp
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -949,6 +1056,8 @@ const lessonStarted = ref(false)
 const addingNewGoal = ref(false)
 const filterSphere = ref('')
 const filterStatus = ref('')
+const searchQuery = ref('')
+const displayLimit = ref(6)
 const selectedBankGoals = ref([])
 
 const showEditModal = ref(false)
@@ -1051,17 +1160,30 @@ function isGoalCompleted(goalId) {
   return getTransferredGoalStatus(goalId) === 'completed'
 }
 
-const filteredValidatedGoals = computed(() => {
-  return validatedGoals.value.filter(goal => {
+const filteredGoals = computed(() => {
+  return rawIdeas.value.filter(goal => {
     if (filterSphere.value && goal.sphereId !== filterSphere.value) {
       return false
+    }
+    
+    if (searchQuery.value) {
+      const query = searchQuery.value.toLowerCase()
+      const matchesText = goal.text?.toLowerCase().includes(query)
+      const matchesWhy = goal.whyImportant?.toLowerCase().includes(query)
+      const matchesWhy1 = goal.threeWhys?.why1?.toLowerCase().includes(query)
+      const matchesWhy2 = goal.threeWhys?.why2?.toLowerCase().includes(query)
+      const matchesWhy3 = goal.threeWhys?.why3?.toLowerCase().includes(query)
+      if (!matchesText && !matchesWhy && !matchesWhy1 && !matchesWhy2 && !matchesWhy3) {
+        return false
+      }
     }
     
     if (filterStatus.value) {
       const transferred = isGoalTransferred(goal.id)
       const completed = isGoalCompleted(goal.id)
+      const status = goal.status || 'raw'
       
-      if (filterStatus.value === 'available' && (transferred || completed)) {
+      if (filterStatus.value === 'available' && (transferred || completed || status !== 'validated')) {
         return false
       }
       if (filterStatus.value === 'in-work' && (!transferred || completed)) {
@@ -1070,22 +1192,53 @@ const filteredValidatedGoals = computed(() => {
       if (filterStatus.value === 'completed' && !completed) {
         return false
       }
+      if (filterStatus.value === 'validated' && status !== 'validated') {
+        return false
+      }
+      if (filterStatus.value === 'rejected' && status !== 'rejected') {
+        return false
+      }
+      if (filterStatus.value === 'raw' && status !== 'raw') {
+        return false
+      }
     }
     
     return true
   })
 })
 
+const paginatedGoals = computed(() => {
+  return filteredGoals.value.slice(0, displayLimit.value)
+})
+
+const hasMoreGoals = computed(() => {
+  return filteredGoals.value.length > displayLimit.value
+})
+
+const remainingGoalsCount = computed(() => {
+  return filteredGoals.value.length - displayLimit.value
+})
+
+function loadMoreGoals() {
+  displayLimit.value += 6
+}
+
+function resetPagination() {
+  displayLimit.value = 6
+}
+
 function clearFilters() {
   filterSphere.value = ''
   filterStatus.value = ''
+  searchQuery.value = ''
+  resetPagination()
 }
 
 const isBankGoalSelected = (goalId) => selectedBankGoals.value.includes(goalId)
 
 const isAllBankGoalsSelected = computed(() => {
-  if (filteredValidatedGoals.value.length === 0) return false
-  return filteredValidatedGoals.value.every(g => selectedBankGoals.value.includes(g.id))
+  if (filteredGoals.value.length === 0) return false
+  return filteredGoals.value.every(g => selectedBankGoals.value.includes(g.id))
 })
 
 const isSomeBankGoalsSelected = computed(() => selectedBankGoals.value.length > 0)
@@ -1103,7 +1256,7 @@ function toggleAllBankGoals() {
   if (isAllBankGoalsSelected.value) {
     selectedBankGoals.value = []
   } else {
-    selectedBankGoals.value = filteredValidatedGoals.value.map(g => g.id)
+    selectedBankGoals.value = filteredGoals.value.map(g => g.id)
   }
 }
 
@@ -1580,8 +1733,11 @@ function openEditModal(goal) {
   editingGoal.value = {
     id: goal.id,
     text: goal.text,
-    whyImportant: goal.whyImportant || '',
-    sphereId: goal.sphereId
+    whyImportant: goal.whyImportant || goal.threeWhys?.why1 || '',
+    why2: goal.threeWhys?.why2 || '',
+    why3: goal.threeWhys?.why3 || '',
+    sphereId: goal.sphereId,
+    status: goal.status || 'raw'
   }
   showEditModal.value = true
 }
@@ -1597,10 +1753,62 @@ function saveGoalEdit() {
   store.updateRawIdea(editingGoal.value.id, {
     text: editingGoal.value.text,
     whyImportant: editingGoal.value.whyImportant,
-    sphereId: editingGoal.value.sphereId
+    sphereId: editingGoal.value.sphereId,
+    threeWhys: {
+      why1: editingGoal.value.whyImportant,
+      why2: editingGoal.value.why2,
+      why3: editingGoal.value.why3
+    }
   })
   
   closeEditModal()
+}
+
+function validateGoalFromModal(isTrue) {
+  if (!editingGoal.value) return
+  
+  const newStatus = isTrue ? 'validated' : 'rejected'
+  store.updateRawIdea(editingGoal.value.id, {
+    text: editingGoal.value.text,
+    whyImportant: editingGoal.value.whyImportant,
+    sphereId: editingGoal.value.sphereId,
+    status: newStatus,
+    threeWhys: {
+      why1: editingGoal.value.whyImportant,
+      why2: editingGoal.value.why2,
+      why3: editingGoal.value.why3
+    }
+  })
+  
+  closeEditModal()
+}
+
+function removeGoalFromWork() {
+  if (!editingGoal.value) return
+  
+  if (confirm('Убрать эту цель из работы?')) {
+    const transferredGoal = store.goals.find(g => g.sourceId === editingGoal.value.id && g.source === 'goals-bank')
+    if (transferredGoal) {
+      store.deleteGoal(transferredGoal.id)
+    }
+    closeEditModal()
+  }
+}
+
+function goToDecompose(goalId) {
+  const transferredGoal = store.goals.find(g => g.sourceId === goalId && g.source === 'goals-bank')
+  if (transferredGoal) {
+    router.push(`/app/goals/${transferredGoal.id}`)
+  } else {
+    const rawGoal = rawIdeas.value.find(g => g.id === goalId)
+    if (rawGoal && rawGoal.status === 'validated') {
+      takeGoalToWork(rawGoal)
+      const newGoal = store.goals.find(g => g.sourceId === goalId && g.source === 'goals-bank')
+      if (newGoal) {
+        router.push(`/app/goals/${newGoal.id}`)
+      }
+    }
+  }
 }
 
 function deleteGoalFromModal() {
@@ -1912,6 +2120,44 @@ onMounted(() => {
   gap: 0.5rem;
 }
 
+.filter-group.search-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.search-input::placeholder {
+  color: var(--text-tertiary);
+}
+
 .filter-label {
   font-size: 0.875rem;
   color: var(--text-secondary);
@@ -2108,6 +2354,47 @@ onMounted(() => {
   font-size: 0.8125rem;
 }
 
+.status-badge.validated {
+  background: #22c55e;
+  color: white;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+}
+
+.status-badge.rejected {
+  background: #ef4444;
+  color: white;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+}
+
+.status-badge.raw {
+  background: #f59e0b;
+  color: white;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+}
+
+/* Row status styles */
+.goals-table tbody tr.row-rejected {
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.goals-table tbody tr.row-raw {
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.goals-table tbody tr.row-rejected:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.goals-table tbody tr.row-raw:hover {
+  background: rgba(245, 158, 11, 0.1);
+}
+
 /* Sphere badge with Lucide icons */
 .goal-sphere-badge-new {
   display: inline-flex;
@@ -2234,6 +2521,39 @@ onMounted(() => {
   border-color: #6b7280;
   color: white;
   transform: scale(1.05);
+}
+
+.btn-icon-decompose {
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+.btn-icon-decompose:hover {
+  background: #8b5cf6;
+  border-color: #8b5cf6;
+  color: white;
+  transform: scale(1.05);
+}
+
+/* Pagination */
+.load-more-section,
+.collapse-section {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0;
+}
+
+.btn-load-more,
+.btn-collapse {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Table wrapper with fixed height for pagination */
+.goals-table-wrapper.has-scroll {
+  max-height: calc(6 * 72px + 50px);
+  overflow-y: auto;
 }
 
 .action-done {
@@ -4488,6 +4808,89 @@ onMounted(() => {
   max-width: 520px;
   max-height: 90vh;
   overflow-y: auto;
+}
+
+.edit-modal.edit-modal-extended {
+  max-width: 600px;
+}
+
+.why-section-divider {
+  display: flex;
+  align-items: center;
+  margin: 1.5rem 0 1rem;
+  gap: 1rem;
+}
+
+.why-section-divider::before,
+.why-section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
+
+.why-section-divider span {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  white-space: nowrap;
+}
+
+.validation-section {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.validation-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.validation-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btn-validation {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-true-goal {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1.5px solid #22c55e;
+  color: #22c55e;
+}
+
+.btn-true-goal:hover,
+.btn-true-goal.active {
+  background: #22c55e;
+  color: white;
+}
+
+.btn-false-goal {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1.5px solid #ef4444;
+  color: #ef4444;
+}
+
+.btn-false-goal:hover,
+.btn-false-goal.active {
+  background: #ef4444;
+  color: white;
 }
 
 .modal-header {
