@@ -19,6 +19,11 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite with a pr
 - **Goals Bank Module**: A 3-step workflow for goal validation, filtering, and transfer, including an inline editing modal for validated goals. Stat cards and action buttons utilize Lucide icons and color-coded badges. Empty state lesson removed - shows working interface directly.
 - **Decomposition Module**: Facilitates breaking down goals into actionable steps, with step persistence and ID-based tracking. The AI Coach has been removed from this module, resulting in a single-column, focused interface.
 - **Planning Module**: Includes a 5-day workweek view with collapsible weekends, week navigation, color-coded priority tasks, drag & drop task management, and weekly statistics. Quick-add functionality and undo for task deletion are supported. The AI Coach has been removed.
+  - **Filters**: Text search (goal/step titles), sphere dropdown, status filter (scheduled/unscheduled/partial/full), week filter (show only goals with steps in current week), clear all button
+  - **Pagination**: 10 goals per page with "load more" button, 6 steps per goal with individual "load more" buttons
+  - **Step Date Display**: Each scheduled step shows weekday + date (e.g., "Пн 15 дек")
+  - **URL Parameters**: Filters sync to URL query params (?search=...&sphere=...&status=...&week=1) and restore on page load
+  - **Empty State**: "Перейти к декомпозиции" button navigates to /app/goals-bank
 - **Authentication**: Integrates with the Django backend for user login, registration, and logout. Supports Telegram authentication with dedicated modals for error handling and new user registration flow (email/password setup).
 - **Onboarding**: A streamlined 3-step process (Philosophy → Points A/B → Rules) with optional fields and skip functionality. Utilizes Lucide icons and ensures proper navigation upon completion.
 - **AI Mentor**: Central product value - a personalized coach that guides users through all modules with contextual help and analysis. Features:
@@ -67,6 +72,13 @@ The application uses a modular structure with dedicated components, services, vi
 - Added mentor settings section in Settings page
 - Added auto-completion triggers for first steps in store actions
 - Deleted DashboardStage1/2/3.vue components (no longer needed)
+- **Planning Module Enhancements (Late November 2025)**:
+  - Added comprehensive filters: text search, sphere, status, week-related goals
+  - Implemented pagination (10 goals with load more, 6 steps per goal with load more)
+  - Added step date display alongside weekday in goal cards
+  - Implemented URL parameter sync for filter state persistence
+  - Fixed "Перейти к декомпозиции" button navigation to /app/goals-bank
+  - Added similar URL parameter support to Goals Bank module
 
 ## External Dependencies
 - **Django REST API Backend**: Provides user authentication, profile management, SSP data, goals bank, decomposition, planning, onboarding, and mini-task services.
