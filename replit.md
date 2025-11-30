@@ -88,6 +88,12 @@ The application uses a modular structure with dedicated components, services, vi
   - Modal editing for goal details (3 Whys system), deadline field removed
   - Auto-resizing comment textarea (max 7 lines with scroll)
   - Navigation preserves Goals Bank filters via localStorage
+  - **Priority highlighting**: Steps show colored left border and background matching Planning page (red/orange/blue/gray)
+  - **Completed steps override**: CSS uses `:not(.step-completed)` to ensure completed steps show green instead of priority colors
+  - **Optimized header**: Status badge and sphere category stack in top-right; goal title truncates with ellipsis
+  - **Delete button**: Styled as icon-only btn-icon-danger matching GoalsBank "remove from work" action
+  - **Unified modal**: Includes "3 Whys" divider, validation section, footer with "Delete" in left and "Cancel/Save" in right
+  - **Quick navigation**: "Planner" button in header for seamless transition to Planning module
 
 ## External Dependencies
 - **Django REST API Backend**: Provides user authentication, profile management, SSP data, goals bank, decomposition, planning, onboarding, and mini-task services.
