@@ -79,6 +79,15 @@ The application uses a modular structure with dedicated components, services, vi
   - Implemented URL parameter sync for filter state persistence
   - Fixed "Перейти к декомпозиции" button navigation to /app/goals-bank
   - Added similar URL parameter support to Goals Bank module
+- **Goal Details Page (GoalEdit.vue) - Late November 2025**:
+  - Full step management with drag & drop reordering (disabled when filters/pagination active)
+  - Step parameters: priority (4 levels), time estimate, scheduled date (calendar picker), status
+  - Step filtering: text search, status, priority filters with visual feedback
+  - Pagination: 10 steps per page with "load more" button
+  - Auto-save with debounce (500ms) and hash-based change detection to prevent duplicate toasts
+  - Modal editing for goal details (3 Whys system), deadline field removed
+  - Auto-resizing comment textarea (max 7 lines with scroll)
+  - Navigation preserves Goals Bank filters via localStorage
 
 ## External Dependencies
 - **Django REST API Backend**: Provides user authentication, profile management, SSP data, goals bank, decomposition, planning, onboarding, and mini-task services.
