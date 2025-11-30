@@ -1826,7 +1826,18 @@ function removeGoalFromWork() {
   }
 }
 
+function saveFiltersToStorage() {
+  const filters = {}
+  if (searchQuery.value) filters.search = searchQuery.value
+  if (filterSphere.value) filters.sphere = filterSphere.value
+  if (filterStatus.value) filters.status = filterStatus.value
+  localStorage.setItem('goalsBankFilters', JSON.stringify(filters))
+}
+
 function goToDecompose(goalId) {
+  // Сохранить текущие фильтры перед переходом
+  saveFiltersToStorage()
+  
   const transferredGoal = store.goals.find(g => g.sourceId === goalId && g.source === 'goals-bank')
   if (transferredGoal) {
     router.push(`/app/goals/${transferredGoal.id}`)

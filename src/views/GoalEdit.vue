@@ -1,17 +1,28 @@
 <template>
   <div class="goal-edit-container">
+    <!-- Toast уведомления -->
+    <transition-group name="toast-slide" tag="div" class="toast-container">
+      <div 
+        v-for="toast in toasts" 
+        :key="toast.id" 
+        class="toast"
+        :class="toast.type"
+      >
+        <CheckCircle2 v-if="toast.type === 'success'" :size="16" />
+        <AlertCircle v-else-if="toast.type === 'error'" :size="16" />
+        <span>{{ toast.message }}</span>
+      </div>
+    </transition-group>
+
     <header class="page-header">
       <button class="btn btn-secondary btn-back" @click="goBack">
         <ArrowLeft :size="16" />
-        Назад к списку
+        Назад
       </button>
       <div class="header-actions">
-        <button class="btn btn-primary btn-with-icon" @click="saveGoal">
+        <button class="btn btn-primary btn-with-icon" @click="saveAndGoToBank">
           <Save :size="16" />
           Сохранить
-        </button>
-        <button class="btn btn-secondary" @click="goBack">
-          Отмена
         </button>
         <button 
           class="btn btn-danger-outline btn-with-icon"
@@ -24,7 +35,9 @@
     </header>
 
     <div v-if="!goal" class="empty-state card">
-      <div class="empty-icon">❓</div>
+      <div class="empty-icon">
+        <AlertCircle :size="48" />
+      </div>
       <h3>Цель не найдена</h3>
       <p>Возможно, она была удалена или указан неверный адрес</p>
       <button class="btn btn-primary" @click="goBack">
@@ -48,10 +61,10 @@
             <button 
               v-if="goal.sourceId" 
               class="btn btn-link edit-in-bank-btn"
-              @click="goToGoalsBank"
+              @click="openEditModal"
             >
-              <ExternalLink :size="14" />
-              Редактировать в Банке целей
+              <Edit2 :size="14" />
+              Редактировать цель
             </button>
           </div>
 
@@ -71,16 +84,6 @@
                   <span class="sphere-name">{{ getSphereName(goalForm.sphereId) }}</span>
                 </div>
               </div>
-
-              <div class="goal-info-item">
-                <span class="info-label">Дедлайн:</span>
-                <input 
-                  type="date"
-                  :value="goalForm.deadline"
-                  @input="updateField('deadline', $event.target.value)"
-                  class="form-input deadline-input"
-                />
-              </div>
             </div>
           </div>
         </div>
@@ -95,23 +98,78 @@
             Разбейте цель на конкретные действия. Каждый шаг должен быть понятным и выполнимым за 1-4 часа.
           </div>
 
-          <div class="steps-section">
+          <!-- Фильтры шагов -->
+          <div class="steps-filters">
+            <div class="filter-row">
+              <div class="search-input-wrapper">
+                <Search :size="16" class="search-icon" />
+                <input 
+                  v-model="searchQuery"
+                  type="text"
+                  class="search-input"
+                  placeholder="Поиск по шагам..."
+                />
+                <button 
+                  v-if="searchQuery" 
+                  class="search-clear"
+                  @click="searchQuery = ''"
+                >
+                  <X :size="14" />
+                </button>
+              </div>
+              
+              <select v-model="filterStatus" class="filter-select">
+                <option value="">Все статусы</option>
+                <option value="pending">Не выполнены</option>
+                <option value="completed">Выполнены</option>
+              </select>
+              
+              <select v-model="filterPriority" class="filter-select">
+                <option value="">Все приоритеты</option>
+                <option value="critical">Критично</option>
+                <option value="desirable">Важно</option>
+                <option value="attention">Внимание</option>
+                <option value="optional">Опционально</option>
+              </select>
+              
+              <button 
+                v-if="hasActiveFilters"
+                class="btn btn-sm btn-secondary"
+                @click="clearFilters"
+              >
+                <X :size="14" />
+                Сбросить
+              </button>
+            </div>
+          </div>
+
+          <!-- Подсказка о drag/drop -->
+          <div v-if="hasActiveFilters" class="drag-disabled-hint">
+            Перетаскивание шагов отключено при активных фильтрах
+          </div>
+
+          <div class="steps-section" :class="{ 'has-scroll': paginatedSteps.length > 6 }">
             <div 
-              v-for="(step, index) in goalForm.steps" 
-              :key="step.id || index"
+              v-for="(step, displayIndex) in paginatedSteps" 
+              :key="step.id || displayIndex"
               class="step-card"
               :class="{ 
-                dragging: dragIndex === index,
-                'drag-over': dragOverIndex === index && dragIndex !== index,
-                'step-completed': step.completed
+                dragging: isDragEnabled && dragIndex === getOriginalIndex(step),
+                'drag-over': isDragEnabled && dragOverIndex === getOriginalIndex(step) && dragIndex !== getOriginalIndex(step),
+                'step-completed': step.completed,
+                'drag-disabled': !isDragEnabled
               }"
-              draggable="true"
-              @dragstart="handleDragStart(index, $event)"
-              @dragend="handleDragEnd"
-              @dragover="handleDragOver(index, $event)"
-              @drop="handleDrop(index, $event)"
+              :draggable="isDragEnabled"
+              @dragstart="isDragEnabled && handleDragStart(getOriginalIndex(step), $event)"
+              @dragend="isDragEnabled && handleDragEnd()"
+              @dragover="isDragEnabled && handleDragOver(getOriginalIndex(step), $event)"
+              @drop="isDragEnabled && handleDrop(getOriginalIndex(step), $event)"
             >
-              <div class="step-drag-handle" title="Перетащите для изменения порядка">
+              <div 
+                class="step-drag-handle" 
+                :class="{ disabled: !isDragEnabled }"
+                :title="isDragEnabled ? 'Перетащите для изменения порядка' : 'Сбросьте фильтры для перетаскивания'"
+              >
                 <GripVertical :size="16" />
               </div>
               
@@ -119,12 +177,12 @@
                 <input 
                   type="checkbox"
                   :checked="step.completed"
-                  @change="toggleStepCompletion(index)"
+                  @change="toggleStepCompletion(getOriginalIndex(step))"
                   class="step-checkbox"
-                  :id="`step-checkbox-${index}`"
+                  :id="`step-checkbox-${step.id}`"
                 />
                 <label 
-                  :for="`step-checkbox-${index}`" 
+                  :for="`step-checkbox-${step.id}`" 
                   class="step-checkbox-label"
                   :title="step.completed ? 'Отметить как невыполненный' : 'Отметить как выполненный'"
                 >
@@ -133,32 +191,105 @@
                 </label>
               </div>
 
-              <span class="step-number-badge">{{ index + 1 }}</span>
+              <span class="step-number-badge">{{ getOriginalIndex(step) + 1 }}</span>
+              
               <div class="step-main">
                 <input 
                   type="text"
                   :value="step.title"
-                  @input="updateStep(index, 'title', $event.target.value)"
+                  @input="updateStep(getOriginalIndex(step), 'title', $event.target.value)"
+                  @blur="autoSave"
                   class="step-input"
                   :class="{ 'completed-text': step.completed }"
-                  :placeholder="`Шаг ${index + 1}: что конкретно нужно сделать?`"
+                  :placeholder="`Шаг ${getOriginalIndex(step) + 1}: что конкретно нужно сделать?`"
                 />
+                
+                <!-- Параметры шага -->
+                <div class="step-params">
+                  <!-- Приоритет -->
+                  <select 
+                    :value="step.priority || ''"
+                    @change="updateStepAndSave(getOriginalIndex(step), 'priority', $event.target.value)"
+                    class="step-param-select priority-select-sm"
+                    :class="'priority-' + (step.priority || 'none')"
+                    title="Приоритет"
+                  >
+                    <option value="">Приоритет</option>
+                    <option value="critical">Критично</option>
+                    <option value="desirable">Важно</option>
+                    <option value="attention">Внимание</option>
+                    <option value="optional">Опционально</option>
+                  </select>
+                  
+                  <!-- Время -->
+                  <select 
+                    :value="step.timeEstimate || ''"
+                    @change="updateStepAndSave(getOriginalIndex(step), 'timeEstimate', $event.target.value)"
+                    class="step-param-select time-select-sm"
+                    title="Время на выполнение"
+                  >
+                    <option value="">Время</option>
+                    <option value="15">15 мин</option>
+                    <option value="30">30 мин</option>
+                    <option value="60">1 час</option>
+                    <option value="120">2 часа</option>
+                    <option value="180">3 часа</option>
+                    <option value="240">4 часа</option>
+                  </select>
+                  
+                  <!-- Дата -->
+                  <div class="date-picker-wrapper">
+                    <input 
+                      type="date"
+                      :value="step.scheduledDate || ''"
+                      @change="updateStepAndSave(getOriginalIndex(step), 'scheduledDate', $event.target.value)"
+                      class="step-param-select date-input-sm"
+                      title="Запланировать на дату"
+                    />
+                    <Calendar :size="14" class="date-icon" />
+                  </div>
+                  
+                  <!-- Статус -->
+                  <select 
+                    :value="step.status || (step.completed ? 'completed' : 'pending')"
+                    @change="updateStepStatus(getOriginalIndex(step), $event.target.value)"
+                    class="step-param-select status-select-sm"
+                    :class="'status-' + (step.status || (step.completed ? 'completed' : 'pending'))"
+                    title="Статус шага"
+                  >
+                    <option value="pending">Ожидает</option>
+                    <option value="in_progress">В работе</option>
+                    <option value="completed">Выполнен</option>
+                  </select>
+                </div>
+                
+                <!-- Комментарий -->
                 <div class="step-comment-section">
                   <textarea 
+                    ref="commentTextareas"
                     :value="step.comment || ''"
-                    @input="updateStep(index, 'comment', $event.target.value)"
+                    @input="handleCommentInput(getOriginalIndex(step), $event)"
+                    @blur="autoSave"
                     class="step-comment-input"
                     :placeholder="'Комментарий к шагу (необязательно)'"
                     rows="1"
                   ></textarea>
                 </div>
               </div>
+              
               <button 
                 class="btn-icon delete"
-                @click="removeStep(index)"
+                @click="removeStep(getOriginalIndex(step))"
                 title="Удалить шаг"
               >
                 <X :size="16" />
+              </button>
+            </div>
+            
+            <!-- Кнопка загрузить ещё -->
+            <div v-if="hasMoreSteps" class="load-more-steps">
+              <button class="btn btn-secondary btn-sm" @click="loadMoreSteps">
+                Загрузить ещё {{ remainingStepsCount }} шагов
               </button>
             </div>
 
@@ -183,17 +314,103 @@
       </div>
 
     </div>
+
+    <!-- Модальное окно редактирования цели (как в GoalsBank) -->
+    <transition name="modal-fade">
+      <div v-if="showEditModal" class="modal-overlay" @click.self="closeEditModal">
+        <div class="edit-modal edit-modal-extended">
+          <div class="modal-header">
+            <h3>
+              <Edit2 :size="20" :stroke-width="2" class="modal-header-icon" />
+              Редактирование цели
+            </h3>
+            <button class="btn-close" @click="closeEditModal">
+              <X :size="18" />
+            </button>
+          </div>
+          
+          <div class="modal-body" v-if="editingGoal">
+            <div class="form-group">
+              <label class="form-label">Название цели</label>
+              <input 
+                v-model="editingGoal.text"
+                type="text"
+                class="form-input"
+                placeholder="Введите название цели"
+              />
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Сфера жизни</label>
+              <div class="sphere-selector">
+                <button 
+                  v-for="sphere in lifeSpheres"
+                  :key="sphere.id"
+                  class="sphere-btn"
+                  :class="{ active: editingGoal.sphereId === sphere.id }"
+                  :style="{ '--sphere-color': getSphereColor(sphere.id) }"
+                  @click="editingGoal.sphereId = sphere.id"
+                >
+                  <component :is="getSphereIconComponent(sphere.id)" :size="18" :stroke-width="2" />
+                  <span>{{ sphere.name }}</span>
+                </button>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Почему эта цель мне важна?</label>
+              <textarea 
+                v-model="editingGoal.whyImportant"
+                class="form-textarea"
+                placeholder="Опишите, почему эта цель важна для вас"
+                rows="3"
+              ></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Почему именно это даст мне то, что я хочу?</label>
+              <textarea 
+                v-model="editingGoal.why2"
+                class="form-textarea"
+                placeholder="Объясните, как достижение этой цели приведёт вас к желаемому результату"
+                rows="3"
+              ></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Почему это действительно про меня?</label>
+              <textarea 
+                v-model="editingGoal.why3"
+                class="form-textarea"
+                placeholder="Подтвердите, что эта цель соответствует вашим ценностям и личности"
+                rows="3"
+              ></textarea>
+            </div>
+          </div>
+          
+          <div class="modal-footer">
+            <button class="btn btn-secondary" @click="closeEditModal">
+              Отмена
+            </button>
+            <button class="btn btn-primary btn-with-icon" @click="saveEditModal">
+              <Save :size="16" />
+              Сохранить
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { 
-  Trash2, Save, Plus, ArrowLeft, GripVertical, X, ExternalLink,
+  Trash2, Save, Plus, ArrowLeft, GripVertical, X, Edit2,
   Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target,
-  Square, CheckSquare
+  Square, CheckSquare, Search, Calendar, CheckCircle2, AlertCircle
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -211,19 +428,164 @@ const goalForm = ref({
   title: '',
   description: '',
   sphereId: '',
-  deadline: '',
   mvp: '',
   steps: [],
   progress: 0
 })
 
+// Toast уведомления
+const toasts = ref([])
+let toastId = 0
 
-function goToGoalsBank() {
-  if (goal.value && goal.value.sourceId) {
-    router.push(`/app/goals-bank?edit=${goal.value.sourceId}`)
-  } else {
-    router.push('/app/goals-bank')
+function showToast(message, type = 'success') {
+  const id = ++toastId
+  toasts.value.push({ id, message, type })
+  setTimeout(() => {
+    toasts.value = toasts.value.filter(t => t.id !== id)
+  }, 3000)
+}
+
+// Модальное окно редактирования
+const showEditModal = ref(false)
+const editingGoal = ref(null)
+
+// Фильтры
+const searchQuery = ref('')
+const filterStatus = ref('')
+const filterPriority = ref('')
+
+// Пагинация
+const stepsDisplayLimit = ref(10)
+
+const hasActiveFilters = computed(() => {
+  return searchQuery.value || filterStatus.value || filterPriority.value
+})
+
+// Drag & drop отключен при активных фильтрах или пагинации
+const isDragEnabled = computed(() => {
+  // Отключить если фильтры активны ИЛИ показаны не все шаги
+  if (hasActiveFilters.value) return false
+  // Отключить если пагинация обрезает список
+  if (filteredSteps.value.length > stepsDisplayLimit.value) return false
+  // Отключить если отфильтрованный список не равен полному
+  if (filteredSteps.value.length !== goalForm.value.steps.length) return false
+  return true
+})
+
+// Флаг сохранения и отслеживание изменений
+const isSaving = ref(false)
+let lastSavedHash = ''
+
+function clearFilters() {
+  searchQuery.value = ''
+  filterStatus.value = ''
+  filterPriority.value = ''
+}
+
+// Фильтрованные шаги
+const filteredSteps = computed(() => {
+  let steps = goalForm.value.steps
+  
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    steps = steps.filter(s => 
+      s.title?.toLowerCase().includes(query) || 
+      s.comment?.toLowerCase().includes(query)
+    )
   }
+  
+  if (filterStatus.value) {
+    if (filterStatus.value === 'completed') {
+      steps = steps.filter(s => s.completed || s.status === 'completed')
+    } else if (filterStatus.value === 'pending') {
+      steps = steps.filter(s => !s.completed && s.status !== 'completed')
+    }
+  }
+  
+  if (filterPriority.value) {
+    steps = steps.filter(s => s.priority === filterPriority.value)
+  }
+  
+  return steps
+})
+
+// Пагинированные шаги
+const paginatedSteps = computed(() => {
+  return filteredSteps.value.slice(0, stepsDisplayLimit.value)
+})
+
+const hasMoreSteps = computed(() => {
+  return filteredSteps.value.length > stepsDisplayLimit.value
+})
+
+const remainingStepsCount = computed(() => {
+  return filteredSteps.value.length - stepsDisplayLimit.value
+})
+
+function loadMoreSteps() {
+  stepsDisplayLimit.value += 10
+}
+
+// Получить оригинальный индекс шага в goalForm.steps
+function getOriginalIndex(step) {
+  return goalForm.value.steps.findIndex(s => s.id === step.id)
+}
+
+// Сброс пагинации при изменении фильтров
+watch([searchQuery, filterStatus, filterPriority], () => {
+  stepsDisplayLimit.value = 10
+})
+
+function openEditModal() {
+  // Найти данные из rawIdeas (банка целей)
+  const rawIdea = store.goalsBank?.rawIdeas?.find(r => r.id === goal.value.sourceId)
+  
+  editingGoal.value = {
+    id: goal.value.sourceId,
+    text: goal.value.title,
+    sphereId: goal.value.sphereId,
+    whyImportant: rawIdea?.whyImportant || rawIdea?.threeWhys?.why1 || goal.value.description || '',
+    why2: rawIdea?.threeWhys?.why2 || '',
+    why3: rawIdea?.threeWhys?.why3 || '',
+    status: rawIdea?.status || 'validated'
+  }
+  showEditModal.value = true
+}
+
+function closeEditModal() {
+  showEditModal.value = false
+  editingGoal.value = null
+}
+
+function saveEditModal() {
+  if (!editingGoal.value) return
+  
+  // Обновить в банке целей
+  store.updateRawIdea(editingGoal.value.id, {
+    text: editingGoal.value.text,
+    whyImportant: editingGoal.value.whyImportant,
+    sphereId: editingGoal.value.sphereId,
+    threeWhys: {
+      why1: editingGoal.value.whyImportant,
+      why2: editingGoal.value.why2,
+      why3: editingGoal.value.why3
+    }
+  })
+  
+  // Обновить текущую цель
+  store.updateGoal(goal.value.id, {
+    title: editingGoal.value.text,
+    sphereId: editingGoal.value.sphereId,
+    description: editingGoal.value.whyImportant
+  })
+  
+  // Обновить локальную форму
+  goalForm.value.title = editingGoal.value.text
+  goalForm.value.sphereId = editingGoal.value.sphereId
+  goalForm.value.description = editingGoal.value.whyImportant
+  
+  closeEditModal()
+  showToast('Цель успешно обновлена')
 }
 
 function getSphereIconComponent(sphereId) {
@@ -255,29 +617,6 @@ function getSphereName(sphereId) {
   return sphere ? sphere.name : 'Не указана'
 }
 
-const totalTimeEstimate = computed(() => {
-  const timeMap = {
-    '30min': 0.5,
-    '1h': 1,
-    '2h': 2,
-    '4h': 4
-  }
-  let total = 0
-  goalForm.value.steps.forEach(step => {
-    if (step.timeEstimate && timeMap[step.timeEstimate]) {
-      total += timeMap[step.timeEstimate]
-    }
-  })
-  if (total === 0) return 'Не указано'
-  if (total < 1) return `${total * 60} мин`
-  if (total === 1) return '1 час'
-  return `${total} ч`
-})
-
-const highPriorityCount = computed(() => {
-  return goalForm.value.steps.filter(s => s.priority === 'high').length
-})
-
 const dragIndex = ref(null)
 const dragOverIndex = ref(null)
 
@@ -295,17 +634,14 @@ function loadGoalData() {
       title: goal.value.title || '',
       description: goal.value.description || '',
       sphereId: goal.value.sphereId || '',
-      deadline: goal.value.deadline || '',
       mvp: goal.value.mvp || '',
       steps: goal.value.steps ? goal.value.steps.map(s => ({ ...s })) : [],
       progress: goal.value.progress || 0
     }
     recalculateProgress()
+    // Инициализировать hash для отслеживания изменений
+    lastSavedHash = getStepsHash()
   }
-}
-
-function updateField(field, value) {
-  goalForm.value[field] = value
 }
 
 function addStep() {
@@ -315,8 +651,11 @@ function addStep() {
     completed: false,
     comment: '',
     timeEstimate: '',
-    priority: ''
+    priority: '',
+    scheduledDate: '',
+    status: 'pending'
   })
+  autoSave()
 }
 
 function handleDragStart(index, event) {
@@ -344,37 +683,63 @@ function handleDrop(index, event) {
     const [movedStep] = steps.splice(fromIndex, 1)
     steps.splice(index, 0, movedStep)
     goalForm.value.steps = steps
+    autoSave()
   }
   dragIndex.value = null
   dragOverIndex.value = null
 }
 
-function getPriorityLabel(priority) {
-  const labels = {
-    high: '🔴 Высокий',
-    medium: '🟡 Средний',
-    low: '🟢 Низкий'
-  }
-  return labels[priority] || ''
-}
-
 function removeStep(index) {
   goalForm.value.steps.splice(index, 1)
   recalculateProgress()
+  autoSave()
 }
 
 function updateStep(index, field, value) {
   goalForm.value.steps[index][field] = value
 }
 
+function updateStepAndSave(index, field, value) {
+  goalForm.value.steps[index][field] = value
+  autoSave()
+}
+
+function updateStepStatus(index, status) {
+  goalForm.value.steps[index].status = status
+  goalForm.value.steps[index].completed = status === 'completed'
+  recalculateProgress()
+  autoSave()
+}
+
 function toggleStepCompletion(index) {
   const step = goalForm.value.steps[index]
   if (!step.title.trim()) {
-    alert('Сначала введите название шага')
+    showToast('Сначала введите название шага', 'error')
     return
   }
   step.completed = !step.completed
+  step.status = step.completed ? 'completed' : 'pending'
   recalculateProgress()
+  autoSave()
+}
+
+// Обработка комментария с авто-расширением
+function handleCommentInput(index, event) {
+  const textarea = event.target
+  updateStep(index, 'comment', textarea.value)
+  
+  // Авто-расширение (макс 7 строк)
+  textarea.style.height = 'auto'
+  const lineHeight = parseInt(getComputedStyle(textarea).lineHeight) || 20
+  const maxHeight = lineHeight * 7 + 16 // 7 строк + padding
+  const newHeight = Math.min(textarea.scrollHeight, maxHeight)
+  textarea.style.height = newHeight + 'px'
+  
+  if (textarea.scrollHeight > maxHeight) {
+    textarea.style.overflowY = 'auto'
+  } else {
+    textarea.style.overflowY = 'hidden'
+  }
 }
 
 function recalculateProgress() {
@@ -386,40 +751,136 @@ function recalculateProgress() {
   }
 }
 
-function saveGoal() {
-  const filteredSteps = goalForm.value.steps
-    .filter(s => s.title.trim())
-    .map((s, index) => ({
-      id: s.id || `step_${Date.now()}_${index}`,
-      title: s.title,
-      completed: s.completed || false,
-      comment: s.comment || '',
-      timeEstimate: s.timeEstimate || '',
-      priority: s.priority || ''
-    }))
+// Автосохранение с debounce
+let saveTimeout = null
+let pendingSave = false
 
-  const progress = filteredSteps.length > 0
-    ? Math.round((filteredSteps.filter(s => s.completed).length / filteredSteps.length) * 100)
-    : 0
+function autoSave() {
+  if (saveTimeout) clearTimeout(saveTimeout)
+  pendingSave = true
+  saveTimeout = setTimeout(() => {
+    doSave()
+  }, 500)
+}
 
-  const goalData = {
-    deadline: goalForm.value.deadline,
-    steps: filteredSteps,
-    progress: progress
+function getStepsHash() {
+  return JSON.stringify(goalForm.value.steps.map(s => ({
+    id: s.id,
+    title: s.title,
+    completed: s.completed,
+    comment: s.comment,
+    timeEstimate: s.timeEstimate,
+    priority: s.priority,
+    scheduledDate: s.scheduledDate,
+    status: s.status
+  })))
+}
+
+function doSave(showNotification = true) {
+  if (!goal.value) return
+  
+  const currentHash = getStepsHash()
+  
+  // Не сохранять если нет изменений
+  if (currentHash === lastSavedHash) {
+    pendingSave = false
+    return
   }
+  
+  isSaving.value = true
+  pendingSave = false
+  
+  try {
+    const stepsToSave = goalForm.value.steps
+      .filter(s => s.title.trim())
+      .map((s, index) => ({
+        id: s.id || `step_${Date.now()}_${index}`,
+        title: s.title,
+        completed: s.completed || false,
+        comment: s.comment || '',
+        timeEstimate: s.timeEstimate || '',
+        priority: s.priority || '',
+        scheduledDate: s.scheduledDate || '',
+        status: s.status || (s.completed ? 'completed' : 'pending')
+      }))
 
-  store.updateGoal(goal.value.id, goalData)
-  router.push('/app/goals')
+    const progress = stepsToSave.length > 0
+      ? Math.round((stepsToSave.filter(s => s.completed).length / stepsToSave.length) * 100)
+      : 0
+
+    store.updateGoal(goal.value.id, {
+      steps: stepsToSave,
+      progress: progress
+    })
+    
+    lastSavedHash = currentHash
+    
+    if (showNotification) {
+      showToast('Изменения сохранены')
+    }
+  } catch (e) {
+    showToast('Ошибка сохранения', 'error')
+  } finally {
+    isSaving.value = false
+  }
+}
+
+// Синхронное сохранение (flush pending) - всегда сохраняет текущее состояние
+function flushSave(showNotification = true) {
+  if (saveTimeout) {
+    clearTimeout(saveTimeout)
+    saveTimeout = null
+  }
+  pendingSave = false
+  // Всегда вызываем doSave для гарантии сохранения последнего состояния
+  doSave(showNotification)
+}
+
+function saveGoalData() {
+  flushSave(true)
+}
+
+function saveAndGoToBank() {
+  // Сначала сохраняем синхронно (без toast, покажем свой)
+  flushSave(false)
+  showToast('Цель сохранена')
+  
+  // Получить фильтры из localStorage
+  const savedFilters = localStorage.getItem('goalsBankFilters')
+  let query = {}
+  
+  if (savedFilters) {
+    try {
+      query = JSON.parse(savedFilters)
+    } catch (e) {
+      // ignore
+    }
+  }
+  
+  // Переходим сразу без задержки
+  router.push({ path: '/app/goals-bank', query })
 }
 
 function goBack() {
-  router.push('/app/goals')
+  // Сохранить текущие фильтры банка целей
+  const savedFilters = localStorage.getItem('goalsBankFilters')
+  let query = {}
+  
+  if (savedFilters) {
+    try {
+      query = JSON.parse(savedFilters)
+    } catch (e) {
+      // ignore
+    }
+  }
+  
+  router.push({ path: '/app/goals-bank', query })
 }
 
 function deleteGoalConfirm() {
   if (confirm(`Удалить цель "${goal.value.title}"?`)) {
     store.deleteGoal(goal.value.id)
-    router.push('/app/goals')
+    router.push('/app/goals-bank')
   }
 }
 
@@ -448,6 +909,58 @@ function formatDate(dateString) {
 .goal-edit-container {
   max-width: 1400px;
   margin: 0 auto;
+  position: relative;
+}
+
+/* Toast уведомления */
+.toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+}
+
+.toast.success {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: var(--success-color);
+  color: var(--success-color);
+}
+
+.toast.error {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--danger-color);
+  color: var(--danger-color);
+}
+
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-slide-enter-from {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+.toast-slide-leave-to {
+  opacity: 0;
+  transform: translateX(100%);
 }
 
 .page-header {
@@ -471,16 +984,6 @@ function formatDate(dateString) {
   gap: 1rem;
 }
 
-.btn-success {
-  background: var(--success-color);
-  color: white;
-  border: none;
-}
-
-.btn-success:hover {
-  background: #059669;
-}
-
 .btn-danger-outline {
   background: transparent;
   border: 1px solid var(--danger-color);
@@ -498,7 +1001,7 @@ function formatDate(dateString) {
 }
 
 .empty-icon {
-  font-size: 4rem;
+  color: var(--text-secondary);
   margin-bottom: 1rem;
 }
 
@@ -534,11 +1037,6 @@ function formatDate(dateString) {
   border-bottom: 1px solid var(--border-color);
 }
 
-.card-header h2 {
-  font-size: 1.5rem;
-  margin: 0;
-}
-
 .card-header h3 {
   font-size: 1.25rem;
   margin: 0;
@@ -563,12 +1061,7 @@ function formatDate(dateString) {
   color: var(--primary-color);
 }
 
-.goal-status-badge.paused {
-  background: rgba(245, 158, 11, 0.1);
-  color: var(--warning-color);
-}
-
-/* Goal Info Card - Read Only Display */
+/* Goal Info Card */
 .goal-info-card .card-header {
   flex-direction: column;
   align-items: flex-start;
@@ -589,8 +1082,6 @@ function formatDate(dateString) {
   margin: 0;
   color: var(--text-primary);
   word-break: break-word;
-  overflow-wrap: break-word;
-  max-width: 100%;
 }
 
 .edit-in-bank-btn {
@@ -603,11 +1094,9 @@ function formatDate(dateString) {
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: opacity 0.2s ease;
 }
 
 .edit-in-bank-btn:hover {
-  opacity: 0.8;
   text-decoration: underline;
 }
 
@@ -646,7 +1135,7 @@ function formatDate(dateString) {
 
 .goal-info-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 1rem;
 }
 
@@ -679,10 +1168,6 @@ function formatDate(dateString) {
   color: var(--text-primary);
 }
 
-.deadline-input {
-  max-width: 200px;
-}
-
 .steps-count {
   font-size: 0.875rem;
   color: var(--text-secondary);
@@ -690,10 +1175,87 @@ function formatDate(dateString) {
 }
 
 .decomposition-hint {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   padding: 1rem;
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
+}
+
+/* Фильтры шагов */
+.steps-filters {
+  margin-bottom: 1rem;
+}
+
+.filter-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.search-input-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.search-input-wrapper .search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.5rem 2rem 0.5rem 2.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  background: var(--bg-primary);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.search-clear {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.filter-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  background: var(--bg-primary);
+  min-width: 130px;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.drag-disabled-hint {
+  padding: 0.5rem 0.75rem;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  color: #b45309;
+  margin-bottom: 0.75rem;
 }
 
 .steps-section {
@@ -702,10 +1264,16 @@ function formatDate(dateString) {
   gap: 0.75rem;
 }
 
+.steps-section.has-scroll {
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
 .step-card {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  align-items: flex-start;
+  gap: 0.75rem;
   padding: 1rem;
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
@@ -721,6 +1289,7 @@ function formatDate(dateString) {
   flex-shrink: 0;
   display: flex;
   align-items: center;
+  margin-top: 0.25rem;
 }
 
 .step-checkbox {
@@ -760,67 +1329,25 @@ function formatDate(dateString) {
   opacity: 0.7;
 }
 
-.step-comment-section {
-  margin-top: 0.25rem;
-}
-
-.step-comment-input {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  font-size: 0.875rem;
-  background: transparent;
-  color: var(--text-secondary);
-  resize: none;
-  transition: all 0.2s ease;
-  min-height: 32px;
-}
-
-.step-comment-input:focus {
-  outline: none;
-  border-color: var(--border-color);
-  background: var(--bg-primary);
-}
-
-.step-comment-input::placeholder {
-  color: var(--text-muted);
-  font-style: italic;
-}
-
-.step-input {
-  flex: 1;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 1rem;
-  background: var(--bg-primary);
-  transition: all 0.2s ease;
-}
-
-.step-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-.step-input.completed {
-  text-decoration: line-through;
-  color: var(--text-secondary);
-}
-
 .step-drag-handle {
   cursor: grab;
   color: var(--text-secondary);
-  font-size: 1.125rem;
-  letter-spacing: -2px;
   padding: 0.25rem;
-  user-select: none;
   flex-shrink: 0;
+  margin-top: 0.25rem;
 }
 
-.step-drag-handle:active {
+.step-drag-handle.disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.step-drag-handle:active:not(.disabled) {
   cursor: grabbing;
+}
+
+.step-card.drag-disabled {
+  cursor: default;
 }
 
 .step-card.dragging {
@@ -841,117 +1368,170 @@ function formatDate(dateString) {
   min-width: 0;
 }
 
-.step-meta {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.step-time,
-.step-priority {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.meta-label {
-  font-size: 0.875rem;
-}
-
-.step-select {
-  padding: 0.375rem 0.5rem;
+.step-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  font-size: 0.8125rem;
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
   background: var(--bg-primary);
-  cursor: pointer;
-  min-width: 90px;
 }
 
-.step-select:focus {
+.step-input:focus {
   outline: none;
   border-color: var(--primary-color);
 }
 
-.priority-indicator {
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.75rem;
-  font-weight: 600;
+/* Параметры шага */
+.step-params {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
-.priority-indicator.high {
+.step-param-select {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  background: var(--bg-primary);
+  cursor: pointer;
+}
+
+.step-param-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.priority-select-sm {
+  min-width: 90px;
+}
+
+.priority-select-sm.priority-critical {
+  border-color: var(--danger-color);
   background: rgba(239, 68, 68, 0.1);
   color: var(--danger-color);
 }
 
-.priority-indicator.medium {
+.priority-select-sm.priority-desirable {
+  border-color: var(--warning-color);
   background: rgba(245, 158, 11, 0.1);
-  color: var(--warning-color);
+  color: #b45309;
 }
 
-.priority-indicator.low {
+.priority-select-sm.priority-attention {
+  border-color: var(--info-color);
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--info-color);
+}
+
+.priority-select-sm.priority-optional {
+  border-color: var(--text-tertiary);
+  background: rgba(156, 163, 175, 0.1);
+}
+
+.time-select-sm {
+  min-width: 80px;
+}
+
+.date-picker-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.date-input-sm {
+  min-width: 120px;
+  padding-right: 1.75rem;
+}
+
+.date-icon {
+  position: absolute;
+  right: 0.5rem;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.status-select-sm {
+  min-width: 90px;
+}
+
+.status-select-sm.status-completed {
+  border-color: var(--success-color);
   background: rgba(16, 185, 129, 0.1);
   color: var(--success-color);
 }
 
-.steps-summary {
-  display: flex;
-  gap: 2rem;
-  padding: 1rem;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  margin-top: 1rem;
+.status-select-sm.status-in_progress {
+  border-color: var(--info-color);
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--info-color);
 }
 
-.summary-item {
-  display: flex;
-  gap: 0.5rem;
+.status-select-sm.status-pending {
+  border-color: var(--text-tertiary);
+  background: rgba(156, 163, 175, 0.1);
+}
+
+/* Комментарий */
+.step-comment-section {
+  margin-top: 0.25rem;
+}
+
+.step-comment-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
   font-size: 0.875rem;
-}
-
-.summary-label {
+  background: transparent;
   color: var(--text-secondary);
+  resize: none;
+  min-height: 32px;
+  overflow-y: hidden;
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
 
-.summary-value {
+.step-comment-input:focus {
+  outline: none;
+  border-color: var(--border-color);
+  background: var(--bg-primary);
+}
+
+.step-comment-input::placeholder {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.step-number-badge {
+  width: 28px;
+  height: 28px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
   font-weight: 600;
-  color: var(--primary-color);
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
+.btn-icon.delete {
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
+/* Кнопка загрузить ещё */
+.load-more-steps {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0;
 }
 
 .add-step-btn {
   margin-top: 0.5rem;
-}
-
-.progress-card {
-  background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
-}
-
-.progress-percentage {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary-color);
-}
-
-.progress-bar-large {
-  height: 16px;
-  background: var(--bg-tertiary);
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 1rem;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-  transition: width 0.3s ease;
-}
-
-.progress-hint {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin: 0;
 }
 
 .btn-with-icon {
@@ -979,20 +1559,163 @@ function formatDate(dateString) {
   color: var(--text-muted);
 }
 
-.step-number-badge {
-  width: 28px;
-  height: 28px;
-  background: var(--primary-color);
-  color: white;
-  border-radius: 50%;
+/* Модальное окно */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.875rem;
-  font-weight: 600;
-  flex-shrink: 0;
+  z-index: 1000;
+  padding: 1rem;
 }
 
+.edit-modal {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.edit-modal.edit-modal-extended {
+  max-width: 600px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.modal-header-icon {
+  color: var(--primary-color);
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+}
+
+.btn-close:hover {
+  background: var(--bg-secondary);
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
+  background: var(--bg-primary);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
+  background: var(--bg-primary);
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.sphere-selector {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.sphere-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.sphere-btn:hover {
+  border-color: var(--sphere-color);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.sphere-btn.active {
+  border-color: var(--sphere-color);
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--sphere-color);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
 
 @media (max-width: 768px) {
   .page-header {
@@ -1011,13 +1734,34 @@ function formatDate(dateString) {
     min-width: 100px;
   }
 
-  .form-row {
-    grid-template-columns: 1fr;
+  .filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-input-wrapper {
+    max-width: none;
+  }
+  
+  .filter-select {
+    width: 100%;
+  }
+
+  .step-params {
+    flex-direction: column;
+  }
+  
+  .step-param-select {
+    width: 100%;
   }
 
   .goal-meta-info {
     flex-direction: column;
     gap: 0.5rem;
+  }
+  
+  .sphere-selector {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>
