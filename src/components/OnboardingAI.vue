@@ -37,28 +37,9 @@
             </span>
           </div>
           <h1 class="step-title">Добро пожаловать в OnePercent</h1>
-          <p class="step-subtitle">Ответьте на несколько вопросов, чтобы мы могли создать персональный план развития</p>
+          <p class="step-subtitle">Мы поможем вам улучшить жизнь на 1% каждый день</p>
 
           <div class="survey-questions">
-            <div class="survey-question">
-              <label class="question-label">
-                <Target :size="18" />
-                Какая главная цель привела вас сюда?
-              </label>
-              <div class="options-grid">
-                <button 
-                  v-for="goal in goalOptions" 
-                  :key="goal.id"
-                  class="option-btn"
-                  :class="{ selected: surveyData.mainGoal === goal.id }"
-                  @click="surveyData.mainGoal = goal.id"
-                >
-                  <component :is="goal.icon" :size="20" />
-                  {{ goal.label }}
-                </button>
-              </div>
-            </div>
-
             <div class="survey-question">
               <label class="question-label">
                 <Clock :size="18" />
@@ -325,16 +306,8 @@ const isLoading = ref(false)
 const isAnalyzing = ref(false)
 
 const surveyData = ref({
-  mainGoal: null,
   timeCommitment: null
 })
-
-const goalOptions = [
-  { id: 'balance', label: 'Баланс в жизни', icon: Palette },
-  { id: 'career', label: 'Карьера и доход', icon: Briefcase },
-  { id: 'health', label: 'Здоровье и энергия', icon: Dumbbell },
-  { id: 'relationships', label: 'Отношения', icon: Heart }
-]
 
 const timeOptions = [
   { id: '15min', label: '15 мин/день' },
@@ -397,7 +370,7 @@ function getSphereName(id) {
 }
 
 const isStep1Valid = computed(() => {
-  return surveyData.value.mainGoal && surveyData.value.timeCommitment
+  return surveyData.value.timeCommitment !== null
 })
 
 const isStep2Valid = computed(() => {
