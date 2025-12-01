@@ -57,13 +57,14 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite with a pr
   - Journal benefits
   - Working with AI Mentor
   Lessons can be marked as completed with progress tracking.
-- **Dashboard**: Full-featured dashboard shown immediately after onboarding, featuring:
-  - First Steps widget (7-step checklist guiding user progression)
-  - AI Mentor widget (central value - chat with personalized coach)
-  - Journal widget for daily reflections
-  - Stats (balance score, active goals, completed goals)
-  - Today's tasks list
-  - Quick actions (update SSP, new goal, journal history)
+- **Dashboard ("День пользователя")**: Redesigned for daily retention, featuring:
+  - **Context-aware header**: Time-based greeting (morning/afternoon/evening) with personalized messages
+  - **Focus of the Day**: Limited to 1-3 micro-actions (first 3 from daily tasks, future: user-selected)
+  - **Habit tracker**: Compact cards for Journal (with streak) and Balance score
+  - **Evening reflection**: Appears after 18:00 prompting day summary
+  - **AI Mentor CTA**: Prominent call-to-action with contextual hints
+  - **Quick navigation**: Links to Goals Bank, Planning, Journal
+  - Removed clutter: FirstSteps widget, stats grid, spheres widget, quick actions
 - **Journal/Diary Module**: Daily reflection feature with 4 questions (accomplishments, incomplete tasks, reflection, tomorrow's plans). Includes AI coach responses (currently demo mode), streak tracking, calendar history view, and modal entry form. Accessible via sidebar menu and dashboard widget.
 
 ### System Design Choices
@@ -132,6 +133,16 @@ The application uses a modular structure with dedicated components, services, vi
   - Width increased to 460px
   - Textarea input with 3 lines minimum (Enter to send, Shift+Enter for newline)
   - Dashboard content adapts when panel collapsed/expanded
+- **Dashboard "День пользователя" Redesign (December 2025)**:
+  - Complete redesign based on retention research
+  - Time-aware greeting with contextual messages (morning/afternoon/evening)
+  - Focus of the Day: shows only 1-3 tasks (not unlimited list)
+  - Minimal habit tracker: Journal + Balance cards
+  - Evening reflection block appears after 18:00
+  - AI Mentor CTA with contextual hints
+  - Removed clutter: stats grid, spheres widget, FirstSteps, quick actions
+  - Quick navigation links to key modules
+  - Future improvement: user-selected focus tasks (currently auto first 3)
 
 ## External Dependencies
 - **Django REST API Backend**: Provides user authentication, profile management, SSP data, goals bank, decomposition, planning, onboarding, and mini-task services.
