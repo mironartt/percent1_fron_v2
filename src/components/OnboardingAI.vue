@@ -1,6 +1,6 @@
 <template>
   <div class="onboarding-overlay">
-    <div class="onboarding-container" :class="{ 'wide': currentStep >= 3 }">
+    <div class="onboarding-container" :class="{ 'wide': currentStep >= 2 }">
       <div v-if="isLoading" class="loading-state">
         <div class="loading-spinner"></div>
         <p>Загрузка...</p>
@@ -567,13 +567,11 @@ async function completeOnboarding() {
 .onboarding-container {
   width: 100%;
   max-width: 600px;
-  max-height: calc(100vh - 4rem);
   background: var(--card-bg);
   border-radius: 24px;
   padding: 2.5rem;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
   transition: max-width 0.3s ease;
-  overflow-y: auto;
 }
 
 .onboarding-container.wide {
@@ -604,12 +602,6 @@ async function completeOnboarding() {
 
 .progress-section {
   margin-bottom: 2rem;
-  position: sticky;
-  top: 0;
-  background: var(--card-bg);
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-  z-index: 10;
 }
 
 .progress-steps {
@@ -680,10 +672,6 @@ async function completeOnboarding() {
 
 .step-content {
   animation: fadeIn 0.3s ease;
-}
-
-.step-content.step-diagnosis {
-  padding-top: 1rem;
 }
 
 @keyframes fadeIn {
@@ -858,15 +846,21 @@ async function completeOnboarding() {
 }
 
 .spheres-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .spheres-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 .sphere-rating-card {
   background: var(--bg-color);
-  border-radius: 16px;
-  padding: 1.25rem;
+  border-radius: 12px;
+  padding: 1rem;
   border: 1px solid var(--border-color);
 }
 
