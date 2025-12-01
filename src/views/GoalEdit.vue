@@ -285,19 +285,6 @@
                     />
                     <Calendar :size="14" class="date-icon" />
                   </div>
-                  
-                  <!-- Статус -->
-                  <select 
-                    :value="step.status || (step.completed ? 'completed' : 'pending')"
-                    @change="updateStepStatus(getOriginalIndex(step), $event.target.value)"
-                    class="step-param-select status-select-sm"
-                    :class="'status-' + (step.status || (step.completed ? 'completed' : 'pending'))"
-                    title="Статус шага"
-                  >
-                    <option value="pending">Ожидает</option>
-                    <option value="in_progress">В работе</option>
-                    <option value="completed">Выполнен</option>
-                  </select>
                 </div>
                 
                 <!-- Комментарий -->
@@ -431,19 +418,6 @@
                         />
                         <Calendar :size="14" class="date-icon" />
                       </div>
-                      
-                      <!-- Статус -->
-                      <select 
-                        :value="step.status || (step.completed ? 'completed' : 'pending')"
-                        @change="updateStepStatus(getOriginalIndex(step), $event.target.value)"
-                        class="step-param-select status-select-sm"
-                        :class="'status-' + (step.status || (step.completed ? 'completed' : 'pending'))"
-                        title="Статус шага"
-                      >
-                        <option value="pending">Ожидает</option>
-                        <option value="in_progress">В работе</option>
-                        <option value="completed">Выполнен</option>
-                      </select>
                     </div>
                     
                     <!-- Комментарий -->
@@ -1080,13 +1054,6 @@ function updateStep(index, field, value) {
 
 function updateStepAndSave(index, field, value) {
   goalForm.value.steps[index][field] = value
-  autoSave()
-}
-
-function updateStepStatus(index, status) {
-  goalForm.value.steps[index].status = status
-  goalForm.value.steps[index].completed = status === 'completed'
-  recalculateProgress()
   autoSave()
 }
 
@@ -2017,27 +1984,6 @@ function formatDate(dateString) {
   right: 0.5rem;
   color: var(--text-secondary);
   pointer-events: none;
-}
-
-.status-select-sm {
-  min-width: 90px;
-}
-
-.status-select-sm.status-completed {
-  border-color: var(--success-color);
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success-color);
-}
-
-.status-select-sm.status-in_progress {
-  border-color: var(--info-color);
-  background: rgba(59, 130, 246, 0.1);
-  color: var(--info-color);
-}
-
-.status-select-sm.status-pending {
-  border-color: var(--text-tertiary);
-  background: rgba(156, 163, 175, 0.1);
 }
 
 /* Комментарий */

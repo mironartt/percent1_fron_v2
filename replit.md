@@ -106,6 +106,13 @@ The application uses a modular structure with dedicated components, services, vi
   - **Step sorting**: Dropdown for sorting by order, priority, status, time estimate, scheduled date with asc/desc toggle; drag & drop disabled during non-default sorts
   - **Pagination expansion**: New steps appear immediately by increasing stepsDisplayLimit to full list length
   - **Empty step filtering**: Steps without titles are excluded from save operations and hash calculations
+  - **Removed step status dropdown**: Status dropdown (pending/in progress/completed) removed from step cards - completion is now managed only via checkbox
+- **SSP Module Initialization Fix (December 2025)**:
+  - Fixed initial step determination logic based on API response
+  - Three scenarios handled:
+    1. No data (categories=0, user_rating=0, reflections=0) → welcome screen (step 1, lessonStarted=false)
+    2. Completed: `(user_rating > 0 OR reflection_questions_answers > 0) AND categories_with_rating == 6` → final screen (step 4)
+    3. Partial data → starts from step 2 (after theory)
 
 ## External Dependencies
 - **Django REST API Backend**: Provides user authentication, profile management, SSP data, goals bank, decomposition, planning, onboarding, and mini-task services.

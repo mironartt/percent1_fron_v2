@@ -936,46 +936,47 @@ onMounted(async () => {
       
       const totalData = result.totalData
       
-      // Проверка "нет данных" - только если нет оценок категорий
-      // user_rating может быть 0 легитимно (пользователь поставил 0), поэтому не используем его
-      const hasNoData = totalData.categories_with_rating === 0
+      // Проверка: у пользователя вообще нет данных (первый визит)
+      const hasNoData = totalData.categories_with_rating === 0 && 
+                        totalData.user_rating === 0 && 
+                        totalData.reflection_questions_answers === 0
       
-      // Проверяем, завершён ли модуль (есть в localStorage или все данные заполнены)
-      const isModuleCompleted = store.sspModuleCompleted.completed || 
-                                (totalData.categories_with_rating >= 6 && 
-                                 totalData.reflection_questions_answers >= totalData.reflection_questions_total)
+      // Условие: пользователь уже первоначально прошёл ССП
+      // (user_rating > 0 OR reflection_questions_answers > 0) AND categories_with_rating == 6
+      const hasUserData = totalData.user_rating > 0 || totalData.reflection_questions_answers > 0
+      const allCategoriesRated = totalData.categories_with_rating === 6
+      const isSSPInitiallyCompleted = hasUserData && allCategoriesRated
       
-      if (hasNoData && !isModuleCompleted) {
-        // Нет данных - показываем экран 0 (приветствие)
+      if (DEBUG_MODE) {
+        console.log('[SSP] Checking initial completion:', {
+          hasNoData,
+          hasUserData,
+          allCategoriesRated,
+          isSSPInitiallyCompleted
+        })
+      }
+      
+      if (hasNoData) {
+        // Первый визит - показываем приветственный экран (step 0/1)
         if (DEBUG_MODE) {
-          console.log('[SSP] No data found, showing welcome screen (step 0)')
+          console.log('[SSP] First visit, no data found, showing welcome screen')
         }
         lessonStarted.value = false
         currentStep.value = 1
-      } else if (isModuleCompleted) {
-        // Модуль завершён - показываем итоговый экран
+      } else if (isSSPInitiallyCompleted) {
+        // Пользователь уже прошёл ССП - показываем финальный экран (колесо + рефлексия)
         if (DEBUG_MODE) {
-          console.log('[SSP] Module completed, showing summary screen (step 4)')
+          console.log('[SSP] User already completed SSP initially, showing summary screen (step 4)')
         }
         lessonStarted.value = true
         currentStep.value = 4
       } else {
-        // Есть частичные данные - определяем текущий шаг
+        // Есть частичные данные - открываем со 2-го шага (после теории)
         if (DEBUG_MODE) {
-          console.log('[SSP] Partial data found, determining current step')
+          console.log('[SSP] Partial data found, starting from step 2 (after theory)')
         }
         lessonStarted.value = true
-        
-        if (totalData.reflection_questions_answers > 0) {
-          // Есть ответы на рефлексию - шаг 3 или 4
-          currentStep.value = 3
-        } else if (totalData.categories_with_rating > 0) {
-          // Есть оценки - шаг 2
-          currentStep.value = 2
-        } else {
-          // Начинаем с теории
-          currentStep.value = 1
-        }
+        currentStep.value = 2
       }
     } else {
       // Нет данных с бэкенда - показываем приветствие
