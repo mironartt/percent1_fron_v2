@@ -968,6 +968,118 @@
         </div>
       </div>
     </Transition>
+
+    <!-- Add New Goal Modal -->
+    <Transition name="modal-fade">
+      <div v-if="showAddModal" class="modal-overlay" @click.self="closeAddModal">
+        <div class="edit-modal edit-modal-extended">
+          <div class="modal-header">
+            <h3>
+              <Plus :size="20" :stroke-width="2" class="modal-header-icon" />
+              Добавление новой цели
+            </h3>
+            <button class="modal-close" @click="closeAddModal">
+              <X :size="20" :stroke-width="2" />
+            </button>
+          </div>
+
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">Название цели</label>
+              <input 
+                v-model="newGoal.text"
+                type="text"
+                class="form-input"
+                placeholder="Введите название цели"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Сфера жизни</label>
+              <div class="sphere-select-grid">
+                <button
+                  v-for="sphere in lifeSpheres"
+                  :key="sphere.id"
+                  class="sphere-select-btn"
+                  :class="{ active: newGoal.sphereId === sphere.id }"
+                  :style="{ '--sphere-color': getSphereColor(sphere.id) }"
+                  @click="newGoal.sphereId = sphere.id"
+                >
+                  <component :is="getSphereIcon(sphere.id)" :size="18" :stroke-width="2" />
+                  <span>{{ getSphereNameOnly(sphere.id) }}</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="why-section-divider">
+              <span>Правило "3 Почему"</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">1. Почему эта цель мне важна?</label>
+              <textarea 
+                v-model="newGoal.whyImportant"
+                class="form-textarea"
+                placeholder="Опишите, почему эта цель важна для вас"
+                rows="3"
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">2. Почему именно это даст мне то, что я хочу?</label>
+              <textarea 
+                v-model="newGoal.why2"
+                class="form-textarea"
+                placeholder="Объясните, как достижение этой цели приведёт вас к желаемому результату"
+                rows="3"
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">3. Почему это действительно про меня?</label>
+              <textarea 
+                v-model="newGoal.why3"
+                class="form-textarea"
+                placeholder="Подтвердите, что эта цель соответствует вашим ценностям и личности"
+                rows="3"
+              ></textarea>
+            </div>
+
+            <div class="validation-section">
+              <div class="validation-label">Оценка цели:</div>
+              <div class="validation-buttons">
+                <button 
+                  class="btn btn-validation btn-true-goal"
+                  :class="{ active: newGoal.status === 'validated' }"
+                  @click="selectNewGoalValidationStatus(true)"
+                >
+                  <CheckCircle :size="18" :stroke-width="2" />
+                  Это истинная цель
+                </button>
+                <button 
+                  class="btn btn-validation btn-false-goal"
+                  :class="{ active: newGoal.status === 'rejected' }"
+                  @click="selectNewGoalValidationStatus(false)"
+                >
+                  <XCircle :size="18" :stroke-width="2" />
+                  Это ложная цель
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer modal-footer-add">
+            <button class="btn btn-secondary" @click="closeAddModal">
+              Отмена
+            </button>
+            <button class="btn btn-primary" @click="saveNewGoal" :disabled="!newGoal.text.trim()">
+              <Plus :size="16" :stroke-width="2" />
+              Добавить цель
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -1063,6 +1175,16 @@ const selectedBankGoals = ref([])
 const showEditModal = ref(false)
 const editingGoal = ref(null)
 
+const showAddModal = ref(false)
+const newGoal = ref({
+  text: '',
+  sphereId: '',
+  whyImportant: '',
+  why2: '',
+  why3: '',
+  status: null
+})
+
 const showEmptyState = computed(() => {
   return false
 })
@@ -1104,8 +1226,51 @@ function goToPlanning() {
 }
 
 function addNewGoal() {
-  addingNewGoal.value = true
-  store.setGoalsBankStep(1)
+  newGoal.value = {
+    text: '',
+    sphereId: '',
+    whyImportant: '',
+    why2: '',
+    why3: '',
+    status: null
+  }
+  showAddModal.value = true
+}
+
+function closeAddModal() {
+  showAddModal.value = false
+  newGoal.value = {
+    text: '',
+    sphereId: '',
+    whyImportant: '',
+    why2: '',
+    why3: '',
+    status: null
+  }
+}
+
+function saveNewGoal() {
+  if (!newGoal.value.text.trim()) {
+    return
+  }
+  
+  store.addRawIdea({
+    text: newGoal.value.text.trim(),
+    sphereId: newGoal.value.sphereId,
+    whyImportant: newGoal.value.whyImportant,
+    status: newGoal.value.status,
+    threeWhys: {
+      why1: newGoal.value.whyImportant,
+      why2: newGoal.value.why2,
+      why3: newGoal.value.why3
+    }
+  }, { insertAtTop: true })
+  
+  closeAddModal()
+}
+
+function selectNewGoalValidationStatus(isValid) {
+  newGoal.value.status = isValid ? 'validated' : 'rejected'
 }
 
 function restartLesson() {
@@ -5109,6 +5274,15 @@ onMounted(() => {
 .modal-footer-right {
   display: flex;
   gap: 0.75rem;
+}
+
+.modal-footer-add {
+  justify-content: space-between;
+}
+
+.modal-footer-add .btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn-danger-outline {
