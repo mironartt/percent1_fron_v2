@@ -321,37 +321,37 @@ const timeOptions = [
 const localSpheres = ref([
   { id: 'wealth', name: 'Благосостояние', score: 5 },
   { id: 'hobbies', name: 'Хобби и отдых', score: 5 },
-  { id: 'relationships', name: 'Дружба и окружение', score: 5 },
+  { id: 'friendship', name: 'Дружба и окружение', score: 5 },
   { id: 'health', name: 'Здоровье и спорт', score: 5 },
-  { id: 'family', name: 'Любовь и семья', score: 5 },
-  { id: 'career', name: 'Работа и карьера', score: 5 }
+  { id: 'career', name: 'Работа и карьера', score: 5 },
+  { id: 'love', name: 'Любовь, семья, отношения', score: 5 }
 ])
 
 const sphereIcons = {
   wealth: Wallet,
   hobbies: Palette,
-  relationships: Users,
+  friendship: Users,
   health: Dumbbell,
-  family: Heart,
-  career: Briefcase
+  career: Briefcase,
+  love: Heart
 }
 
 const sphereColors = {
   wealth: '#10b981',
   hobbies: '#f59e0b',
-  relationships: '#8b5cf6',
+  friendship: '#8b5cf6',
   health: '#ef4444',
-  family: '#ec4899',
-  career: '#3b82f6'
+  career: '#3b82f6',
+  love: '#ec4899'
 }
 
 const sphereHints = {
   wealth: 'Финансы, сбережения, материальная стабильность',
   hobbies: 'Увлечения, отдых, творчество, путешествия',
-  relationships: 'Друзья, социальные связи, нетворкинг',
+  friendship: 'Друзья, социальные связи, нетворкинг',
   health: 'Физическое здоровье, спорт, питание, сон',
-  family: 'Партнёр, дети, близкие родственники',
-  career: 'Работа, профессия, развитие, достижения'
+  career: 'Работа, профессия, развитие, достижения',
+  love: 'Партнёр, дети, близкие родственники'
 }
 
 function getSphereIcon(id) {
@@ -462,7 +462,7 @@ function generateWeeklyPlan() {
       { title: 'Время для себя', description: 'Посвятите время любимому занятию', duration: '30 мин' },
       { title: 'Новое хобби', description: 'Попробуйте что-то новое', duration: '20 мин' }
     ],
-    relationships: [
+    friendship: [
       { title: 'Связь с другом', description: 'Напишите или позвоните другу', duration: '15 мин' },
       { title: 'Новое знакомство', description: 'Начните разговор с новым человеком', duration: '10 мин' }
     ],
@@ -470,13 +470,13 @@ function generateWeeklyPlan() {
       { title: 'Утренняя зарядка', description: '10 минут простых упражнений', duration: '10 мин' },
       { title: 'Прогулка', description: 'Прогуляйтесь на свежем воздухе', duration: '20 мин' }
     ],
-    family: [
-      { title: 'Качественное время', description: 'Проведите время с близкими без телефона', duration: '30 мин' },
-      { title: 'Благодарность', description: 'Скажите близким, за что вы их цените', duration: '5 мин' }
-    ],
     career: [
       { title: 'Развитие навыка', description: 'Изучите что-то новое по работе', duration: '20 мин' },
       { title: 'Планирование', description: 'Составьте план на следующую неделю', duration: '15 мин' }
+    ],
+    love: [
+      { title: 'Качественное время', description: 'Проведите время с близкими без телефона', duration: '30 мин' },
+      { title: 'Благодарность', description: 'Скажите близким, за что вы их цените', duration: '5 мин' }
     ]
   }
   
@@ -673,6 +673,10 @@ async function completeOnboarding() {
 
 .step-content {
   animation: fadeIn 0.3s ease;
+}
+
+.step-content.step-diagnosis {
+  padding-top: 1rem;
 }
 
 @keyframes fadeIn {
