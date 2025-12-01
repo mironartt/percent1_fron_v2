@@ -562,17 +562,18 @@ async function completeOnboarding() {
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  overflow-y: auto;
 }
 
 .onboarding-container {
   width: 100%;
   max-width: 600px;
+  max-height: calc(100vh - 4rem);
   background: var(--card-bg);
   border-radius: 24px;
   padding: 2.5rem;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
   transition: max-width 0.3s ease;
+  overflow-y: auto;
 }
 
 .onboarding-container.wide {
@@ -603,6 +604,12 @@ async function completeOnboarding() {
 
 .progress-section {
   margin-bottom: 2rem;
+  position: sticky;
+  top: 0;
+  background: var(--card-bg);
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  z-index: 10;
 }
 
 .progress-steps {
