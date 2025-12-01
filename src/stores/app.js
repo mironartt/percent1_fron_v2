@@ -1391,30 +1391,43 @@ export const useAppStore = defineStore('app', () => {
   }
 
   // Goals Bank methods
-  function addRawIdea(idea) {
-    goalsBank.value.rawIdeas.push({
-      id: Date.now().toString(),
+  function addRawIdea(idea, options = {}) {
+    const newIdea = {
+      id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9),
       createdAt: new Date().toISOString(),
       text: idea.text || '',
       whyImportant: idea.whyImportant || '',
       sphereId: idea.sphereId || '',
       mvp: idea.mvp || '',
       decomposition: idea.decomposition || '',
-      status: 'raw',
-      validated: false,
+      status: idea.status || 'raw',
+      validated: idea.status === 'validated',
       threeWhys: {
-        why1: '',
-        why2: '',
-        why3: ''
+        why1: idea.whyImportant || idea.threeWhys?.why1 || '',
+        why2: idea.threeWhys?.why2 || '',
+        why3: idea.threeWhys?.why3 || ''
       }
-    })
+    }
+    
+    if (options.insertAtTop) {
+      goalsBank.value.rawIdeas.unshift(newIdea)
+    } else {
+      goalsBank.value.rawIdeas.push(newIdea)
+    }
     
     // Триггер для первых шагов
     if (!firstSteps.value.add_idea) {
       completeFirstStep('add_idea')
     }
     
+    // Если цель сразу валидирована
+    if (newIdea.status === 'validated' && !firstSteps.value.validate_goal) {
+      completeFirstStep('validate_goal')
+    }
+    
     saveToLocalStorage()
+    
+    return newIdea
   }
 
   function updateRawIdea(ideaId, updates) {
