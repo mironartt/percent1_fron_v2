@@ -10,23 +10,24 @@
         <div class="progress-section">
           <div class="progress-steps">
             <div 
-              v-for="step in totalSteps" 
-              :key="step"
-              class="progress-step"
-              :class="{ 
-                active: currentStep === step, 
-                completed: currentStep > step 
-              }"
+              v-for="(label, index) in stepLabels" 
+              :key="index"
+              class="progress-step-wrapper"
             >
-              <span class="step-number">{{ step }}</span>
+              <div 
+                class="progress-step"
+                :class="{ 
+                  active: currentStep === index + 1, 
+                  completed: currentStep > index + 1 
+                }"
+              >
+                <span class="step-number">{{ index + 1 }}</span>
+              </div>
+              <span 
+                class="progress-label"
+                :class="{ active: currentStep === index + 1 }"
+              >{{ label }}</span>
             </div>
-          </div>
-          <div class="progress-labels">
-            <span :class="{ active: currentStep === 1 }">Знакомство</span>
-            <span :class="{ active: currentStep === 2 }">Диагностика</span>
-            <span :class="{ active: currentStep === 3 }">Результат</span>
-            <span :class="{ active: currentStep === 4 }">Анализ</span>
-            <span :class="{ active: currentStep === 5 }">План</span>
           </div>
         </div>
 
@@ -302,6 +303,7 @@ const store = useAppStore()
 
 const currentStep = ref(1)
 const totalSteps = 5
+const stepLabels = ['Знакомство', 'Диагностика', 'Результат', 'Анализ', 'План']
 const isLoading = ref(false)
 const isAnalyzing = ref(false)
 
@@ -607,19 +609,25 @@ async function completeOnboarding() {
   display: flex;
   justify-content: space-between;
   position: relative;
-  margin-bottom: 0.5rem;
 }
 
 .progress-steps::before {
   content: '';
   position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
+  top: 16px;
+  left: 32px;
+  right: 32px;
   height: 2px;
   background: var(--border-color);
-  transform: translateY(-50%);
   z-index: 0;
+}
+
+.progress-step-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
 }
 
 .progress-step {
@@ -651,19 +659,14 @@ async function completeOnboarding() {
   color: white;
 }
 
-.progress-labels {
-  display: flex;
-  justify-content: space-between;
+.progress-label {
   font-size: 0.75rem;
   color: var(--text-secondary);
-}
-
-.progress-labels span {
-  flex: 1;
   text-align: center;
+  white-space: nowrap;
 }
 
-.progress-labels span.active {
+.progress-label.active {
   color: var(--primary-color);
   font-weight: 600;
 }
