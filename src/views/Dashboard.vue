@@ -13,7 +13,7 @@
   />
 
   <div v-else class="dashboard-wrapper">
-    <div class="dashboard">
+    <div :class="['dashboard', { 'panel-collapsed': isMentorPanelCollapsed }]">
     <header class="page-header">
       <div>
         <h1>Привет, {{ userName }}</h1>
@@ -243,6 +243,7 @@ const lifeSpheres = computed(() => store.lifeSpheres)
 const dailyTasks = computed(() => store.dailyPlan.tasks)
 const journalStreak = computed(() => store.journalStreak)
 const allFirstStepsCompleted = computed(() => store.allFirstStepsCompleted)
+const isMentorPanelCollapsed = computed(() => store.mentorPanelCollapsed)
 
 const shouldShowOnboarding = computed(() => {
   const show = store.shouldShowOnboarding
@@ -292,11 +293,20 @@ function pluralize(n, one, few, many) {
 .dashboard {
   flex: 1;
   min-width: 0;
-  padding-right: 400px;
+  padding-right: 500px;
+  transition: padding-right 0.3s ease;
+}
+
+.dashboard.panel-collapsed {
+  padding-right: 100px;
 }
 
 @media (max-width: 1024px) {
   .dashboard {
+    padding-right: 0;
+  }
+  
+  .dashboard.panel-collapsed {
     padding-right: 0;
   }
 }

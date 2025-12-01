@@ -93,13 +93,15 @@
       </div>
 
       <form class="input-container" @submit.prevent="sendMessage">
-        <input
+        <textarea
           v-model="inputText"
-          type="text"
           placeholder="Напишите сообщение..."
           :disabled="isTyping"
           ref="inputRef"
-        />
+          rows="3"
+          @keydown.enter.exact.prevent="sendMessage"
+          @keydown.enter.shift.exact="() => {}"
+        ></textarea>
         <button 
           type="submit" 
           class="send-btn"
@@ -314,7 +316,7 @@ onMounted(() => {
   border-radius: 16px;
   display: flex;
   flex-direction: column;
-  width: 360px;
+  width: 460px;
   transition: width 0.3s ease;
   z-index: 100;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
@@ -622,23 +624,27 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-.input-container input {
+.input-container textarea {
   flex: 1;
   padding: 12px 16px;
   border: 1px solid var(--border-color);
-  border-radius: 24px;
+  border-radius: 16px;
   background: var(--card-bg);
   font-size: 0.875rem;
   color: var(--text-primary);
   outline: none;
   transition: border-color 0.2s;
+  resize: none;
+  font-family: inherit;
+  line-height: 1.5;
+  min-height: 72px;
 }
 
-.input-container input:focus {
+.input-container textarea:focus {
   border-color: var(--primary-color);
 }
 
-.input-container input::placeholder {
+.input-container textarea::placeholder {
   color: var(--text-secondary);
 }
 
