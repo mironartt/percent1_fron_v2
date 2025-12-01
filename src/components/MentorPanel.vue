@@ -1,13 +1,15 @@
 <template>
   <div :class="['mentor-panel', { collapsed: isCollapsed }]">
-    <button 
-      v-if="isCollapsed" 
-      class="expand-btn"
-      @click="togglePanel"
-      title="Открыть AI Ментор"
-    >
-      <Bot :size="24" :stroke-width="1.5" />
-    </button>
+    <div v-if="isCollapsed" class="collapsed-content" @click="togglePanel">
+      <div class="collapsed-avatar">
+        <Bot :size="20" :stroke-width="1.5" />
+      </div>
+      <span class="collapsed-label">AI Ментор</span>
+      <div class="collapsed-indicator" :class="{ 'has-messages': messages.length > 0 }">
+        <MessageCircle :size="14" :stroke-width="1.5" />
+      </div>
+      <ChevronLeft :size="16" :stroke-width="1.5" class="collapsed-arrow" />
+    </div>
 
     <div v-else class="panel-content">
       <div class="panel-header">
@@ -122,7 +124,9 @@ import {
   Lightbulb, 
   Calendar, 
   BookOpen,
-  PanelRightClose
+  PanelRightClose,
+  MessageCircle,
+  ChevronLeft
 } from 'lucide-vue-next'
 
 const store = useAppStore()
@@ -302,7 +306,7 @@ onMounted(() => {
 <style scoped>
 .mentor-panel {
   position: fixed;
-  top: 2rem;
+  top: 140px;
   right: 2rem;
   bottom: 2rem;
   background: var(--card-bg);
@@ -311,36 +315,78 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   width: 360px;
-  transition: width 0.3s ease, right 0.3s ease;
+  transition: width 0.3s ease;
   z-index: 100;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
 }
 
 .mentor-panel.collapsed {
   width: 56px;
-  align-items: center;
-  justify-content: flex-start;
-  padding-top: 1rem;
 }
 
-.expand-btn {
-  width: 44px;
-  height: 44px;
+.collapsed-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 8px;
+  cursor: pointer;
+  height: 100%;
+}
+
+.collapsed-avatar {
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  color: white;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s, box-shadow 0.2s;
+  color: white;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.expand-btn:hover {
+.collapsed-content:hover .collapsed-avatar {
   transform: scale(1.05);
   box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.collapsed-label {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
+}
+
+.collapsed-indicator {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.collapsed-indicator.has-messages {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: transparent;
+  color: white;
+}
+
+.collapsed-arrow {
+  color: var(--text-secondary);
+  margin-top: auto;
+  transition: transform 0.2s;
+}
+
+.collapsed-content:hover .collapsed-arrow {
+  transform: translateX(-2px);
 }
 
 .panel-content {

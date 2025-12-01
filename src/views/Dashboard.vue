@@ -107,6 +107,48 @@
           </div>
         </div>
 
+        <div class="widgets-row">
+          <div class="card spheres-widget">
+            <div class="card-header">
+              <h3 class="card-title">
+                <ChartPie :size="18" :stroke-width="1.5" />
+                Сферы жизни
+              </h3>
+            </div>
+            <div class="card-body">
+              <div class="spheres-list">
+                <div 
+                  v-for="sphere in lifeSpheres" 
+                  :key="sphere.id"
+                  class="sphere-item"
+                >
+                  <span class="sphere-icon">{{ sphere.icon }}</span>
+                  <span class="sphere-name">{{ sphere.name }}</span>
+                  <div class="sphere-bar">
+                    <div 
+                      class="sphere-fill" 
+                      :style="{ width: `${(sphere.score / 10) * 100}%` }"
+                    ></div>
+                  </div>
+                  <span class="sphere-score">{{ sphere.score }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card motivation-card">
+            <div class="motivation-content">
+              <Lightbulb :size="28" :stroke-width="1.5" class="motivation-icon" />
+              <div>
+                <h4 class="motivation-title">Эффект 1%</h4>
+                <p class="motivation-text">
+                  Улучшая каждый день на 1%, за год вы станете сильнее в 37 раз.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="card quick-actions">
           <div class="card-header">
             <h3 class="card-title">
@@ -144,48 +186,6 @@
           </div>
         </div>
       </div>
-
-      <aside class="sidebar-widgets">
-        <div class="card spheres-widget">
-          <div class="card-header">
-            <h3 class="card-title">
-              <ChartPie :size="18" :stroke-width="1.5" />
-              Сферы жизни
-            </h3>
-          </div>
-          <div class="card-body">
-            <div class="spheres-list">
-              <div 
-                v-for="sphere in lifeSpheres" 
-                :key="sphere.id"
-                class="sphere-item"
-              >
-                <span class="sphere-icon">{{ sphere.icon }}</span>
-                <span class="sphere-name">{{ sphere.name }}</span>
-                <div class="sphere-bar">
-                  <div 
-                    class="sphere-fill" 
-                    :style="{ width: `${(sphere.score / 10) * 100}%` }"
-                  ></div>
-                </div>
-                <span class="sphere-score">{{ sphere.score }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card motivation-card">
-          <div class="motivation-content">
-            <Lightbulb :size="28" :stroke-width="1.5" class="motivation-icon" />
-            <div>
-              <h4 class="motivation-title">Эффект 1%</h4>
-              <p class="motivation-text">
-                Улучшая каждый день на 1%, за год вы станете сильнее в 37 раз.
-              </p>
-            </div>
-          </div>
-        </div>
-      </aside>
     </div>
     </div>
     
@@ -389,15 +389,9 @@ function pluralize(n, one, few, many) {
 }
 
 .main-layout {
-  display: grid;
-  grid-template-columns: 1fr 340px;
+  display: flex;
+  flex-direction: column;
   gap: 1.5rem;
-}
-
-@media (max-width: 1024px) {
-  .main-layout {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 768px) {
@@ -570,10 +564,16 @@ function pluralize(n, one, few, many) {
   flex-shrink: 0;
 }
 
-.sidebar-widgets {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+.widgets-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .widgets-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .spheres-list {
