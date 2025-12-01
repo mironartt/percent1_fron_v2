@@ -292,7 +292,7 @@ function pluralize(n, one, few, many) {
 .dashboard {
   flex: 1;
   min-width: 0;
-  padding-right: 380px;
+  padding-right: 400px;
 }
 
 @media (max-width: 1024px) {

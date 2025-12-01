@@ -302,16 +302,18 @@ onMounted(() => {
 <style scoped>
 .mentor-panel {
   position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
+  top: 2rem;
+  right: 2rem;
+  bottom: 2rem;
   background: var(--card-bg);
-  border-left: 1px solid var(--border-color);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
   width: 360px;
-  transition: width 0.3s ease;
+  transition: width 0.3s ease, right 0.3s ease;
   z-index: 100;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
 }
 
 .mentor-panel.collapsed {
