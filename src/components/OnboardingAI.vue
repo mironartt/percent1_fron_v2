@@ -34,7 +34,7 @@
         <div v-if="currentStep === 1" class="step-content step-welcome">
           <div class="welcome-icon">
             <span class="icon-wrapper icon-wrapper-lg primary">
-              <Sparkles :size="48" />
+              <span class="one-percent-text">1%</span>
             </span>
           </div>
           <h1 class="step-title">Добро пожаловать в OnePercent</h1>
@@ -714,6 +714,12 @@ async function completeOnboarding() {
 .icon-wrapper.primary {
   background: linear-gradient(135deg, var(--primary-color), #a78bfa);
   color: white;
+}
+
+.one-percent-text {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -1px;
 }
 
 .survey-questions {
