@@ -658,6 +658,11 @@ async function completeOnboarding() {
   color: var(--text-secondary);
 }
 
+.progress-labels span {
+  flex: 1;
+  text-align: center;
+}
+
 .progress-labels span.active {
   color: var(--primary-color);
   font-weight: 600;
@@ -793,8 +798,9 @@ async function completeOnboarding() {
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--primary-hover);
+  background: var(--primary-dark);
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
 .btn-secondary {
