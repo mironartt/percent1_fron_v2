@@ -1,5 +1,5 @@
 <template>
-  <Onboarding v-if="shouldShowOnboarding" />
+  <OnboardingAI v-if="shouldShowOnboarding" />
 
   <MiniTaskWelcome 
     v-else-if="shouldShowMiniTask && !showMiniTask" 
@@ -207,7 +207,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useAppStore } from '../stores/app'
-import Onboarding from '../components/Onboarding.vue'
+import OnboardingAI from '../components/OnboardingAI.vue'
 import MiniTaskWelcome from '../components/MiniTaskWelcome.vue'
 import MiniTask from '../components/MiniTask.vue'
 import JournalWidget from '../components/JournalWidget.vue'

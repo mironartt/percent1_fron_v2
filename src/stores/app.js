@@ -813,6 +813,13 @@ export const useAppStore = defineStore('app', () => {
   }
 
   const shouldShowOnboarding = computed(() => {
+    if (FORCE_SHOW_ONBOARDING) {
+      if (DEBUG_MODE) {
+        console.log('[Store] Onboarding forced to show (FORCE_SHOW_ONBOARDING=true)')
+      }
+      return true
+    }
+    
     if (!user.value.is_authenticated) {
       return false
     }
@@ -821,13 +828,6 @@ export const useAppStore = defineStore('app', () => {
     
     if (isCompleted) {
       return false
-    }
-    
-    if (FORCE_SHOW_ONBOARDING) {
-      if (DEBUG_MODE) {
-        console.log('[Store] Onboarding forced to show (FORCE_SHOW_ONBOARDING=true)')
-      }
-      return true
     }
     
     return true

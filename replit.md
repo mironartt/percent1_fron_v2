@@ -25,7 +25,14 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite with a pr
   - **URL Parameters**: Filters sync to URL query params (?search=...&sphere=...&status=...&week=1) and restore on page load
   - **Empty State**: "Перейти к декомпозиции" button navigates to /app/goals-bank
 - **Authentication**: Integrates with the Django backend for user login, registration, and logout. Supports Telegram authentication with dedicated modals for error handling and new user registration flow (email/password setup).
-- **Onboarding**: A streamlined 3-step process (Philosophy → Points A/B → Rules) with optional fields and skip functionality. Utilizes Lucide icons and ensures proper navigation upon completion.
+- **Onboarding (AI-Powered)**: New 5-step onboarding with integrated SSP diagnosis and AI analysis:
+  1. **Welcome + Survey**: Goal selection (balance/career/health/relationships) + time commitment
+  2. **Diagnosis**: Rate 6 life spheres with sliders (0-10), hints per sphere
+  3. **Wheel of Balance**: WheelOfLife visualization with stats (average, strongest, weakest)
+  4. **AI Analysis**: Mentor provides personalized insights based on ratings (demo mode, OpenAI planned)
+  5. **7-Day Plan**: Auto-generated tasks targeting weak spheres
+  
+  On completion: saves sphere ratings to SSP store, marks 'ssp' and 'chat_mentor' first steps complete, stores survey data and weekly plan in onboarding.data. Component: `OnboardingAI.vue`.
 - **AI Mentor**: Central product value - a personalized coach that guides users through all modules with contextual help and analysis. Features:
   - Dashboard Widget (MentorWidget.vue): Full chat interface with welcome message, quick prompts, and demo responses
   - Floating Button (MentorFloatingButton.vue): Available on all pages except dashboard, with contextual hints per page
@@ -113,6 +120,18 @@ The application uses a modular structure with dedicated components, services, vi
     1. No data (categories=0, user_rating=0, reflections=0) → welcome screen (step 1, lessonStarted=false)
     2. Completed: `(user_rating > 0 OR reflection_questions_answers > 0) AND categories_with_rating == 6` → final screen (step 4)
     3. Partial data → starts from step 2 (after theory)
+- **AI-Powered Onboarding (December 2025)**:
+  - Replaced 3-step philosophy-focused onboarding with 5-step AI-powered flow
+  - New steps: Welcome+Survey → Diagnosis (6 spheres) → Wheel visualization → AI Analysis → 7-Day Plan
+  - Integrates SSP diagnosis directly into onboarding for immediate personalized value
+  - Auto-generates weekly tasks targeting weak spheres
+  - Saves sphere ratings to store, marks 'ssp' and 'chat_mentor' first steps complete
+  - Component: OnboardingAI.vue (replaces Onboarding.vue in Dashboard)
+- **AI Mentor Panel improvements (December 2025)**:
+  - Panel now extends full height (top: 0 to bottom: 0)
+  - Width increased to 460px
+  - Textarea input with 3 lines minimum (Enter to send, Shift+Enter for newline)
+  - Dashboard content adapts when panel collapsed/expanded
 
 ## External Dependencies
 - **Django REST API Backend**: Provides user authentication, profile management, SSP data, goals bank, decomposition, planning, onboarding, and mini-task services.
