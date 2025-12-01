@@ -12,7 +12,8 @@
     @complete="onMiniTaskComplete"
   />
 
-  <div v-else class="dashboard">
+  <div v-else class="dashboard-wrapper">
+    <div class="dashboard">
     <header class="page-header">
       <div>
         <h1>Привет, {{ userName }}</h1>
@@ -145,8 +146,6 @@
       </div>
 
       <aside class="sidebar-widgets">
-        <MentorWidget />
-        
         <div class="card spheres-widget">
           <div class="card-header">
             <h3 class="card-title">
@@ -188,6 +187,9 @@
         </div>
       </aside>
     </div>
+    </div>
+    
+    <MentorPanel />
   </div>
 
   <Teleport to="body">
@@ -210,7 +212,7 @@ import MiniTaskWelcome from '../components/MiniTaskWelcome.vue'
 import MiniTask from '../components/MiniTask.vue'
 import JournalWidget from '../components/JournalWidget.vue'
 import JournalEntry from '../components/JournalEntry.vue'
-import MentorWidget from '../components/MentorWidget.vue'
+import MentorPanel from '../components/MentorPanel.vue'
 import FirstSteps from '../components/FirstSteps.vue'
 import { DEBUG_MODE } from '@/config/settings.js'
 import { 
@@ -282,9 +284,21 @@ function pluralize(n, one, few, many) {
 </script>
 
 <style scoped>
+.dashboard-wrapper {
+  display: flex;
+  min-height: 100%;
+}
+
 .dashboard {
-  max-width: 1200px;
-  margin: 0 auto;
+  flex: 1;
+  min-width: 0;
+  padding-right: 380px;
+}
+
+@media (max-width: 1024px) {
+  .dashboard {
+    padding-right: 0;
+  }
 }
 
 .page-header {

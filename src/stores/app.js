@@ -420,6 +420,13 @@ export const useAppStore = defineStore('app', () => {
     lastActivity: null
   })
 
+  const mentorPanelCollapsed = ref(false)
+
+  function toggleMentorPanel() {
+    mentorPanelCollapsed.value = !mentorPanelCollapsed.value
+    saveToLocalStorage()
+  }
+
   function openMentorChat() {
     mentor.value.isOpen = true
     if (!firstSteps.value.chat_mentor) {
@@ -647,7 +654,8 @@ export const useAppStore = defineStore('app', () => {
       telegramSettings: telegramSettings.value,
       journal: journal.value,
       firstSteps: firstSteps.value,
-      mentor: mentor.value
+      mentor: mentor.value,
+      mentorPanelCollapsed: mentorPanelCollapsed.value
     }))
   }
 
@@ -681,6 +689,7 @@ export const useAppStore = defineStore('app', () => {
         if (parsed.journal) journal.value = { ...journal.value, ...parsed.journal }
         if (parsed.firstSteps) firstSteps.value = { ...firstSteps.value, ...parsed.firstSteps }
         if (parsed.mentor) mentor.value = { ...mentor.value, ...parsed.mentor }
+        if (parsed.mentorPanelCollapsed !== undefined) mentorPanelCollapsed.value = parsed.mentorPanelCollapsed
       } catch (e) {
         console.error('Error loading data:', e)
       }
@@ -1794,6 +1803,8 @@ export const useAppStore = defineStore('app', () => {
     
     // Mentor (ИИ-наставник)
     mentor,
+    mentorPanelCollapsed,
+    toggleMentorPanel,
     openMentorChat,
     closeMentorChat,
     addMentorMessage,
