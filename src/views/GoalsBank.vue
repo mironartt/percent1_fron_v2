@@ -160,8 +160,8 @@
                   <span v-else-if="isGoalTransferred(goal.id)" class="status-badge in-work">
                     В работе
                   </span>
-                  <span v-else-if="goal.status === 'validated'" class="status-badge validated">
-                    Истинная
+                  <span v-else-if="goal.status === 'validated'" class="status-badge available">
+                    Не в работе
                   </span>
                   <span v-else-if="goal.status === 'rejected'" class="status-badge rejected">
                     Отклонена
