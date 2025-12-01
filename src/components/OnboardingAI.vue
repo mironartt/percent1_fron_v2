@@ -276,7 +276,7 @@
             </button>
             <button class="btn btn-primary btn-lg" @click="completeOnboarding">
               <Rocket :size="20" />
-              Начать путь к успеху
+              Сделать первый +1%
             </button>
           </div>
         </div>
