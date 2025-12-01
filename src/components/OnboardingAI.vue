@@ -38,7 +38,7 @@
             </span>
           </div>
           <h1 class="step-title">Добро пожаловать в OnePercent</h1>
-          <p class="step-subtitle">Мы поможем вам улучшить жизнь на 1% каждый день</p>
+          <p class="step-subtitle">Система для развития навыка управления жизнью и доходом</p>
 
           <div class="survey-questions">
             <div class="survey-question">
