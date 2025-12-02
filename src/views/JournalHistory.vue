@@ -21,18 +21,35 @@
 
     <div class="content-layout">
       <div class="main-content">
-        <div v-if="!hasTodayEntry" class="today-cta card">
+        <div class="today-cta card">
           <div class="cta-content">
             <BookOpen :size="32" :stroke-width="1.5" class="cta-icon" />
             <div>
-              <h3>Заполните итоги сегодняшнего дня</h3>
+              <h3 v-if="!hasTodayEntry">Заполните итоги сегодняшнего дня</h3>
+              <h3 v-else>Добавить новую запись</h3>
               <p>Рефлексия помогает осознанно двигаться к целям</p>
             </div>
           </div>
           <button class="btn btn-primary" @click="openTodayEntry">
             <Pencil :size="16" :stroke-width="1.5" />
-            Написать
+            {{ hasTodayEntry ? 'Редактировать' : 'Написать' }}
           </button>
+        </div>
+
+        <div class="search-bar">
+          <Search :size="18" :stroke-width="1.5" class="search-icon" />
+          <input 
+            v-model="searchQuery"
+            @input="handleSearch"
+            type="text"
+            placeholder="Поиск по записям (мин. 3 символа)..."
+            class="search-input"
+          />
+        </div>
+
+        <div v-if="isLoading && journalEntries.length === 0" class="loading-state">
+          <Loader2 :size="32" :stroke-width="1.5" class="spin" />
+          <span>Загрузка записей...</span>
         </div>
 
         <div class="entries-list">
@@ -48,16 +65,32 @@
                 <span>{{ formatDate(entry.date) }}</span>
                 <span v-if="isToday(entry.date)" class="today-badge">Сегодня</span>
               </div>
-              <button 
-                class="expand-btn"
-                @click="toggleExpand(entry.id)"
-              >
-                <ChevronDown 
-                  :size="18" 
-                  :stroke-width="1.5" 
-                  :class="{ rotated: expandedEntries.includes(entry.id) }" 
-                />
-              </button>
+              <div class="entry-actions">
+                <button 
+                  class="action-btn edit-btn"
+                  @click.stop="editEntry(entry)"
+                  title="Редактировать"
+                >
+                  <Edit2 :size="16" :stroke-width="1.5" />
+                </button>
+                <button 
+                  class="action-btn delete-btn"
+                  @click.stop="deleteEntry(entry)"
+                  title="Удалить"
+                >
+                  <Trash2 :size="16" :stroke-width="1.5" />
+                </button>
+                <button 
+                  class="expand-btn"
+                  @click="toggleExpand(entry.id)"
+                >
+                  <ChevronDown 
+                    :size="18" 
+                    :stroke-width="1.5" 
+                    :class="{ rotated: expandedEntries.includes(entry.id) }" 
+                  />
+                </button>
+              </div>
             </div>
 
             <div class="entry-summary" v-if="!expandedEntries.includes(entry.id)">
@@ -95,7 +128,7 @@
             </div>
           </div>
 
-          <div v-if="journalEntries.length === 0" class="empty-state">
+          <div v-if="journalEntries.length === 0 && !isLoading" class="empty-state">
             <BookOpen :size="48" :stroke-width="1" class="empty-icon" />
             <h3>Пока нет записей</h3>
             <p>Начните вести дневник — записывайте итоги дня и получайте обратную связь от AI-коуча</p>
@@ -103,6 +136,16 @@
               Создать первую запись
             </button>
           </div>
+
+          <button 
+            v-if="currentPage < totalPages && journalEntries.length > 0"
+            class="btn btn-outline load-more-btn"
+            :disabled="isLoading"
+            @click="loadMore"
+          >
+            <Loader2 v-if="isLoading" :size="16" :stroke-width="1.5" class="spin" />
+            <span v-else>Загрузить ещё</span>
+          </button>
         </div>
       </div>
     </div>
@@ -113,7 +156,7 @@
           <button class="modal-close" @click="showEntryModal = false">
             <X :size="20" :stroke-width="1.5" />
           </button>
-          <JournalEntry @saved="onEntrySaved" />
+          <JournalEntry :editing-entry="editingEntry" @saved="onEntrySaved" />
         </div>
       </div>
     </Teleport>
@@ -121,7 +164,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'
 import JournalEntry from '@/components/JournalEntry.vue'
 import { 
@@ -135,18 +178,122 @@ import {
   Lightbulb,
   ListTodo,
   Sparkles,
-  X
+  X,
+  Trash2,
+  Edit2,
+  Loader2,
+  Search
 } from 'lucide-vue-next'
 
 const store = useAppStore()
 
 const showEntryModal = ref(false)
 const expandedEntries = ref([])
+const isLoading = ref(false)
+const editingEntry = ref(null)
+const searchQuery = ref('')
+const currentPage = ref(1)
+const totalPages = ref(1)
+const totalItems = ref(0)
 
 const journalEntries = computed(() => store.journal.entries || [])
 const journalStreak = computed(() => store.journalStreak)
-const totalEntries = computed(() => journalEntries.value.length)
+const totalEntries = computed(() => totalItems.value || journalEntries.value.length)
 const hasTodayEntry = computed(() => store.hasTodayEntry)
+
+// Load diary entries from backend
+async function loadDiaryEntries(page = 1) {
+  isLoading.value = true
+  try {
+    const { getDiaryEntries } = await import('@/services/api.js')
+    const params = {
+      order_by: 'date_created',
+      order_direction: 'desc',
+      page: page
+    }
+    
+    if (searchQuery.value && searchQuery.value.length >= 3) {
+      params.query_filter = searchQuery.value
+    }
+    
+    const result = await getDiaryEntries(params)
+    
+    if (result.status === 'ok' && result.data) {
+      const backendEntries = (result.data.diaries_data || []).map(entry => ({
+        id: String(entry.diary_id),
+        backendId: entry.diary_id,
+        date: entry.date_created.split(' ')[0],
+        whatDone: entry.what_done || '',
+        whatNotDone: entry.what_not_done || '',
+        reflection: entry.reflection || '',
+        tomorrowPlans: entry.plans || '',
+        dateCreated: entry.date_created
+      }))
+      
+      if (page === 1) {
+        store.journal.entries = backendEntries
+      } else {
+        store.journal.entries = [...store.journal.entries, ...backendEntries]
+      }
+      
+      currentPage.value = result.data.page || 1
+      totalPages.value = result.data.total_pages || 1
+      totalItems.value = result.data.total_items || 0
+    }
+  } catch (error) {
+    console.error('[JournalHistory] Error loading diary entries:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Search with debounce
+let searchTimeout = null
+function handleSearch() {
+  if (searchTimeout) clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    currentPage.value = 1
+    loadDiaryEntries(1)
+  }, 500)
+}
+
+function loadMore() {
+  if (currentPage.value < totalPages.value) {
+    loadDiaryEntries(currentPage.value + 1)
+  }
+}
+
+// Delete entry
+async function deleteEntry(entry) {
+  if (!confirm('Удалить эту запись?')) return
+  
+  try {
+    const { deleteDiaryEntry } = await import('@/services/api.js')
+    
+    // Optimistic UI update
+    store.journal.entries = store.journal.entries.filter(e => e.id !== entry.id)
+    totalItems.value--
+    
+    // Sync with backend
+    if (entry.backendId) {
+      await deleteDiaryEntry(entry.backendId)
+    }
+  } catch (error) {
+    console.error('[JournalHistory] Error deleting entry:', error)
+    // Reload on error
+    loadDiaryEntries(1)
+  }
+}
+
+// Edit entry
+function editEntry(entry) {
+  editingEntry.value = entry
+  showEntryModal.value = true
+}
+
+onMounted(() => {
+  loadDiaryEntries(1)
+})
 
 function formatDate(dateStr) {
   const date = new Date(dateStr)
@@ -186,11 +333,24 @@ function toggleExpand(entryId) {
 }
 
 function openTodayEntry() {
+  // Check if there's already an entry for today
+  const today = new Date().toISOString().split('T')[0]
+  const todayEntry = journalEntries.value.find(e => e.date === today)
+  
+  if (todayEntry) {
+    // Open with existing data for editing
+    editingEntry.value = todayEntry
+  } else {
+    editingEntry.value = null
+  }
   showEntryModal.value = true
 }
 
 function onEntrySaved() {
   showEntryModal.value = false
+  editingEntry.value = null
+  // Reload entries from backend
+  loadDiaryEntries(1)
 }
 </script>
 
@@ -496,5 +656,102 @@ function onEntrySaved() {
 .modal-close:hover {
   background: var(--bg-tertiary);
   color: var(--text-primary);
+}
+
+/* Search bar */
+.search-bar {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.875rem 1rem 0.875rem 2.75rem;
+  font-size: 0.9375rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.search-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* Loading state */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem;
+  color: var(--text-secondary);
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Entry actions */
+.entry-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.action-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  color: var(--text-tertiary);
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+  background: var(--bg-tertiary);
+}
+
+.action-btn.edit-btn:hover {
+  color: var(--primary-color);
+}
+
+.action-btn.delete-btn:hover {
+  color: var(--danger-color);
+}
+
+/* Load more button */
+.load-more-btn {
+  width: 100%;
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 </style>

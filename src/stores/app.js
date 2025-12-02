@@ -725,6 +725,44 @@ export const useAppStore = defineStore('app', () => {
     return newEntry
   }
 
+  // Обновить существующую запись дневника
+  function updateJournalEntry(entryId, updates) {
+    const entryIndex = journal.value.entries.findIndex(e => 
+      e.id === entryId || String(e.id) === String(entryId)
+    )
+    
+    if (entryIndex !== -1) {
+      const existingEntry = journal.value.entries[entryIndex]
+      const updatedEntry = {
+        ...existingEntry,
+        whatDone: updates.whatDone ?? existingEntry.whatDone,
+        whatNotDone: updates.whatNotDone ?? existingEntry.whatNotDone,
+        reflection: updates.reflection ?? existingEntry.reflection,
+        tomorrowPlans: updates.tomorrowPlans ?? existingEntry.tomorrowPlans
+      }
+      journal.value.entries[entryIndex] = updatedEntry
+      saveToLocalStorage()
+      return updatedEntry
+    }
+    
+    return null
+  }
+  
+  // Удалить запись дневника
+  function deleteJournalEntry(entryId) {
+    const entryIndex = journal.value.entries.findIndex(e => 
+      e.id === entryId || String(e.id) === String(entryId)
+    )
+    
+    if (entryIndex !== -1) {
+      journal.value.entries.splice(entryIndex, 1)
+      saveToLocalStorage()
+      return true
+    }
+    
+    return false
+  }
+
   // Обновить AI-ответ для записи
   function updateJournalAIResponse(entryId, aiResponse) {
     const entry = journal.value.entries.find(e => e.id === entryId)
@@ -2218,6 +2256,8 @@ export const useAppStore = defineStore('app', () => {
     todayJournalEntry,
     journalStreak,
     addJournalEntry,
+    updateJournalEntry,
+    deleteJournalEntry,
     updateJournalAIResponse,
     setJournalAILoading,
     getRecentJournalEntries,

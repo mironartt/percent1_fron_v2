@@ -650,6 +650,73 @@ export async function scheduleStep(goalId, stepId, date, priority = null, timeDu
   })
 }
 
+// ==================== DIARY API ====================
+
+/**
+ * Получить записи дневника
+ * @param {object} params - Параметры запроса
+ * @param {string} [params.order_by] - Поле сортировки (date_created)
+ * @param {string} [params.order_direction] - Направление (asc, desc)
+ * @param {string} [params.query_filter] - Текстовый поиск (мин 3 символа)
+ * @param {number} [params.page] - Номер страницы
+ * @returns {Promise<object>} - Список записей дневника
+ */
+export async function getDiaryEntries(params = {}) {
+  const requestData = {
+    order_by: params.order_by || 'date_created',
+    order_direction: params.order_direction || 'desc',
+    page: params.page || 1
+  }
+  
+  if (params.query_filter && params.query_filter.length >= 3) {
+    requestData.query_filter = params.query_filter
+  }
+  
+  return request('POST', '/api/rest/front/app/diary/get/', requestData)
+}
+
+/**
+ * Создать или обновить запись дневника
+ * @param {object} data - Данные записи
+ * @param {number} [data.diary_id] - ID записи (null для создания)
+ * @param {string} [data.what_done] - Что сделал
+ * @param {string} [data.what_not_done] - Что не сделал
+ * @param {string} [data.reflection] - Рефлексия
+ * @param {string} [data.plans] - Планы на завтра
+ * @param {boolean} [data.deleted] - Удалить запись
+ * @returns {Promise<object>} - { diary_id }
+ */
+export async function updateDiaryEntry(data) {
+  return request('POST', '/api/rest/front/app/diary/update/', data)
+}
+
+/**
+ * Создать новую запись дневника
+ * @param {object} entryData - Данные записи
+ * @returns {Promise<object>} - { diary_id }
+ */
+export async function createDiaryEntry(entryData) {
+  return updateDiaryEntry({
+    diary_id: null,
+    what_done: entryData.what_done || '',
+    what_not_done: entryData.what_not_done || '',
+    reflection: entryData.reflection || '',
+    plans: entryData.plans || ''
+  })
+}
+
+/**
+ * Удалить запись дневника
+ * @param {number} diaryId - ID записи
+ * @returns {Promise<object>} - Результат
+ */
+export async function deleteDiaryEntry(diaryId) {
+  return updateDiaryEntry({
+    diary_id: diaryId,
+    deleted: true
+  })
+}
+
 // Экспорт API как объекта для удобства
 export const api = {
   request,
@@ -684,7 +751,12 @@ export const api = {
   updateStep,
   deleteStep,
   toggleStepComplete,
-  scheduleStep
+  scheduleStep,
+  // Diary API
+  getDiaryEntries,
+  updateDiaryEntry,
+  createDiaryEntry,
+  deleteDiaryEntry
 }
 
 export default api
