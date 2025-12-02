@@ -415,10 +415,23 @@ export const useAppStore = defineStore('app', () => {
   })
 
   const mentorPanelCollapsed = ref(false)
+  const mentorMobileOpen = ref(false)
 
-  function toggleMentorPanel() {
-    mentorPanelCollapsed.value = !mentorPanelCollapsed.value
+  function toggleMentorPanel(forceState) {
+    if (typeof forceState === 'boolean') {
+      mentorPanelCollapsed.value = forceState
+    } else {
+      mentorPanelCollapsed.value = !mentorPanelCollapsed.value
+    }
     saveToLocalStorage()
+  }
+
+  function openMentorMobile() {
+    mentorMobileOpen.value = true
+  }
+
+  function closeMentorMobile() {
+    mentorMobileOpen.value = false
   }
 
   function openMentorChat() {
@@ -2204,7 +2217,10 @@ export const useAppStore = defineStore('app', () => {
     // Mentor (ИИ-наставник)
     mentor,
     mentorPanelCollapsed,
+    mentorMobileOpen,
     toggleMentorPanel,
+    openMentorMobile,
+    closeMentorMobile,
     openMentorChat,
     closeMentorChat,
     addMentorMessage,

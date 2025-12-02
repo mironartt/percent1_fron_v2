@@ -1,17 +1,34 @@
 <template>
-  <div :class="['mentor-panel', { collapsed: isCollapsed }]">
-    <div v-if="isCollapsed" class="collapsed-content" @click="togglePanel">
-      <div class="collapsed-avatar">
-        <Bot :size="20" :stroke-width="1.5" />
+  <div class="mentor-panel-wrapper">
+    <div 
+      v-if="isMobileOpen" 
+      class="mentor-overlay"
+      @click="closeMobile"
+    ></div>
+    
+    <button 
+      v-if="isMobile"
+      class="mentor-mobile-btn"
+      :class="{ active: isMobileOpen }"
+      @click="toggleMobile"
+    >
+      <Bot v-if="!isMobileOpen" :size="24" :stroke-width="1.5" />
+      <X v-else :size="24" :stroke-width="1.5" />
+    </button>
+    
+    <div :class="['mentor-panel', { collapsed: isCollapsed && !isMobile, 'mobile-open': isMobileOpen }]">
+      <div v-if="isCollapsed && !isMobile" class="collapsed-content" @click="togglePanel">
+        <div class="collapsed-avatar">
+          <Bot :size="20" :stroke-width="1.5" />
+        </div>
+        <span class="collapsed-label">AI Ментор</span>
+        <div class="collapsed-indicator" :class="{ 'has-messages': messages.length > 0 }">
+          <MessageCircle :size="14" :stroke-width="1.5" />
+        </div>
+        <ChevronLeft :size="16" :stroke-width="1.5" class="collapsed-arrow" />
       </div>
-      <span class="collapsed-label">AI Ментор</span>
-      <div class="collapsed-indicator" :class="{ 'has-messages': messages.length > 0 }">
-        <MessageCircle :size="14" :stroke-width="1.5" />
-      </div>
-      <ChevronLeft :size="16" :stroke-width="1.5" class="collapsed-arrow" />
-    </div>
 
-    <div v-else class="panel-content">
+      <div v-else class="panel-content">
       <div class="panel-header">
         <div class="header-left">
           <div class="mentor-avatar">
@@ -110,12 +127,14 @@
           <Send :size="18" :stroke-width="1.5" />
         </button>
       </form>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, nextTick, watch, onMounted, markRaw } from 'vue'
+import { ref, computed, nextTick, watch, onMounted, onUnmounted, markRaw } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useXpStore } from '../stores/xp'
 import { 
@@ -130,9 +149,11 @@ import {
   Star,
   PanelRightClose,
   MessageCircle,
-  ChevronLeft
+  ChevronLeft,
+  X
 } from 'lucide-vue-next'
 
+const route = useRoute()
 const store = useAppStore()
 const xpStore = useXpStore()
 
@@ -140,9 +161,34 @@ const inputText = ref('')
 const isTyping = ref(false)
 const chatContainer = ref(null)
 const inputRef = ref(null)
+const isMobile = ref(false)
 
 const messages = computed(() => store.mentor.messages)
 const isCollapsed = computed(() => store.mentorPanelCollapsed)
+const isMobileOpen = computed(() => store.mentorMobileOpen)
+
+function checkMobile() {
+  isMobile.value = window.innerWidth < 1024
+  if (!isMobile.value) {
+    store.closeMentorMobile()
+    document.body.style.overflow = ''
+  }
+}
+
+function toggleMobile() {
+  if (isMobileOpen.value) {
+    store.closeMentorMobile()
+    document.body.style.overflow = ''
+  } else {
+    store.openMentorMobile()
+    document.body.style.overflow = 'hidden'
+  }
+}
+
+function closeMobile() {
+  store.closeMentorMobile()
+  document.body.style.overflow = ''
+}
 
 const quickPrompts = computed(() => {
   const basePrompts = [
@@ -247,7 +293,11 @@ const demoResponses = {
 }
 
 function togglePanel() {
-  store.toggleMentorPanel()
+  if (isMobile.value) {
+    closeMobile()
+  } else {
+    store.toggleMentorPanel()
+  }
 }
 
 function findResponse(userMessage) {
@@ -316,12 +366,80 @@ watch(messages, () => {
   nextTick(() => scrollToBottom())
 }, { deep: true })
 
+watch(isMobileOpen, (newValue) => {
+  document.body.style.overflow = newValue ? 'hidden' : ''
+})
+
+watch(() => route.path, () => {
+  if (isMobile.value && isMobileOpen.value) {
+    closeMobile()
+  }
+})
+
 onMounted(() => {
   scrollToBottom()
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+  document.body.style.overflow = ''
 })
 </script>
 
 <style scoped>
+.mentor-panel-wrapper {
+  position: relative;
+  z-index: 100;
+}
+
+.mentor-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 998;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.mentor-mobile-btn {
+  display: none;
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
+  cursor: pointer;
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+  align-items: center;
+  justify-content: center;
+}
+
+.mentor-mobile-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 24px rgba(102, 126, 234, 0.5);
+}
+
+.mentor-mobile-btn.active {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
 .mentor-panel {
   position: fixed;
   top: 0;
@@ -333,8 +451,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   width: 460px;
-  transition: width 0.3s ease;
-  z-index: 100;
+  transition: width 0.3s ease, transform 0.3s ease;
+  z-index: 999;
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.08);
 }
 
@@ -689,8 +807,40 @@ onMounted(() => {
 }
 
 @media (max-width: 1024px) {
+  .mentor-mobile-btn {
+    display: flex;
+  }
+  
   .mentor-panel {
+    transform: translateX(100%);
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .mentor-panel.mobile-open {
+    transform: translateX(0);
+  }
+  
+  .mentor-panel.collapsed {
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .collapsed-content {
     display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .mentor-panel {
+    max-width: 100%;
+  }
+  
+  .mentor-mobile-btn {
+    bottom: 16px;
+    right: 16px;
+    width: 52px;
+    height: 52px;
   }
 }
 </style>

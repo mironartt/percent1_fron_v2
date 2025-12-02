@@ -17,6 +17,11 @@ The application employs a guided, multi-step workflow for core modules. Key visu
 - FirstSteps: Vertical layout below 480px with reduced sizes
 - MentorWidget: Reduced height, stacked quick prompts on mobile
 - PlanReview/OnboardingAI: Full-width modals below 640px
+- **Global MentorPanel**: Available on all /app/* pages with unified desktop/mobile experience:
+  - Desktop (≥1024px): Fixed right panel with collapse/expand toggle
+  - Mobile (<1024px): Floating button triggers drawer overlay from right
+  - State management: `mentorPanelCollapsed` (desktop) and `mentorMobileOpen` (mobile) are independent
+  - Drawer auto-closes on route change; collapse button closes drawer on mobile
 
 ### Technical Implementations
 The frontend is built with Vue 3 (Composition API, script setup), Vite with a proxy to the Django backend, Vue Router for navigation with authentication guards, and Pinia for state management with localStorage persistence. A custom Django-style configuration system (`settings.js` + `local_settings.js`) is used for environment-specific settings. Authentication is cookie-based with CSRF protection.

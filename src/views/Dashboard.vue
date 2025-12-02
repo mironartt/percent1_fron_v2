@@ -13,7 +13,7 @@
   />
 
   <div v-else class="dashboard-wrapper">
-    <div :class="['dashboard', { 'panel-collapsed': isMentorPanelCollapsed }]">
+    <div class="dashboard">
       <header class="day-header">
         <div class="greeting-section">
           <div class="time-icon" :class="timeOfDayClass">
@@ -183,8 +183,6 @@
 
       </div>
     </div>
-    
-    <MentorPanel />
   </div>
 
   <Teleport to="body">
@@ -220,7 +218,6 @@ import OnboardingAI from '../components/OnboardingAI.vue'
 import MiniTaskWelcome from '../components/MiniTaskWelcome.vue'
 import MiniTask from '../components/MiniTask.vue'
 import JournalEntry from '../components/JournalEntry.vue'
-import MentorPanel from '../components/MentorPanel.vue'
 import PlanReview from '../components/PlanReview.vue'
 import HabitTracker from '../components/HabitTracker.vue'
 import HabitManagerModal from '../components/HabitManagerModal.vue'
@@ -256,7 +253,6 @@ const averageScore = computed(() => store.averageScore)
 const dailyTasks = computed(() => store.todayScheduledTasks || [])
 const journalStreak = computed(() => store.journalStreak)
 const hasTodayEntry = computed(() => store.hasTodayEntry)
-const isMentorPanelCollapsed = computed(() => store.mentorPanelCollapsed)
 const showPlanReview = computed(() => store.showPlanReview)
 
 const currentHour = computed(() => new Date().getHours())
@@ -390,7 +386,11 @@ function toggleFocusTask(task) {
 }
 
 function openMentorPanel() {
-  store.toggleMentorPanel(false)
+  if (window.innerWidth < 1024) {
+    store.openMentorMobile()
+  } else {
+    store.toggleMentorPanel(false)
+  }
 }
 
 function onPlanConfirmed() {
