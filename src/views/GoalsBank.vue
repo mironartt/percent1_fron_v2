@@ -83,7 +83,7 @@
       </div>
 
       <!-- Единая таблица целей -->
-      <div class="goals-table-section card" v-if="rawIdeas.length > 0">
+      <div class="goals-table-section card" v-if="rawIdeas.length > 0 || hasActiveFilters">
         <div class="table-header">
           <h3>Банк идей и целей</h3>
           <p class="section-hint">Все ваши цели и идеи</p>
@@ -149,6 +149,19 @@
               </tr>
             </thead>
             <tbody>
+              <!-- Empty state when filters return no results -->
+              <tr v-if="paginatedGoals.length === 0 && hasActiveFilters" class="empty-results-row">
+                <td colspan="4" class="empty-results-cell">
+                  <div class="empty-results-content">
+                    <Search :size="32" :stroke-width="1.5" class="empty-icon" />
+                    <p class="empty-title">Ничего не найдено</p>
+                    <p class="empty-hint">Попробуйте изменить параметры фильтрации</p>
+                    <button class="btn btn-sm btn-primary" @click="clearFilters">
+                      Сбросить фильтры
+                    </button>
+                  </div>
+                </td>
+              </tr>
               <tr 
                 v-for="goal in paginatedGoals" 
                 :key="goal.id"
@@ -1213,6 +1226,11 @@ const newGoal = ref({
 
 const showEmptyState = computed(() => {
   return false
+})
+
+// Check if any filters are active
+const hasActiveFilters = computed(() => {
+  return !!(filterSphere.value || filterStatus.value || filterGoalType.value || searchQuery.value)
 })
 
 const showSummary = computed(() => {
@@ -2634,6 +2652,44 @@ onMounted(async () => {
   text-align: center;
   color: var(--text-secondary);
   font-style: italic;
+}
+
+.empty-results-row {
+  background: transparent !important;
+}
+
+.empty-results-row:hover {
+  background: transparent !important;
+}
+
+.empty-results-cell {
+  padding: 3rem 1rem !important;
+  text-align: center;
+}
+
+.empty-results-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.empty-results-content .empty-icon {
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+.empty-results-content .empty-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.empty-results-content .empty-hint {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
 }
 
 .goals-table-wrapper {
