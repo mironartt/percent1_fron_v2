@@ -11,6 +11,13 @@ I prefer simple language and iterative development. Ask before making major chan
 ### UI/UX Decisions
 The application employs a guided, multi-step workflow for core modules. Key visual components include an interactive "Wheel of Life." The UI features a collapsible sidebar, dark/light theme, responsive design, and a consistent color priority system. Lucide Vue Next provides minimalist line icons.
 
+**Mobile Responsiveness (December 2025)**:
+- Primary breakpoint: 768px for mobile/desktop switch
+- Sidebar: Hamburger menu on mobile with overlay, auto-close on route change, always expanded (never collapsed) on mobile
+- FirstSteps: Vertical layout below 480px with reduced sizes
+- MentorWidget: Reduced height, stacked quick prompts on mobile
+- PlanReview/OnboardingAI: Full-width modals below 640px
+
 ### Technical Implementations
 The frontend is built with Vue 3 (Composition API, script setup), Vite with a proxy to the Django backend, Vue Router for navigation with authentication guards, and Pinia for state management with localStorage persistence. A custom Django-style configuration system (`settings.js` + `local_settings.js`) is used for environment-specific settings. Authentication is cookie-based with CSRF protection.
 
