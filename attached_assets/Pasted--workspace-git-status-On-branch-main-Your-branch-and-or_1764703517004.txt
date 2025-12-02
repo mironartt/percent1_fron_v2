@@ -1,0 +1,57 @@
+~/workspace$ git status
+On branch main
+Your branch and 'origin/main' have diverged,
+and have 30 and 32 different commits each, respectively.
+  (use "git pull" if you want to integrate the remote branch with yours)
+
+nothing to commit, working tree clean
+~/workspace$ git pull origin main --no-rebase
+From https://github.com/mironartt/percent1_fron_v2
+ * branch            main       -> FETCH_HEAD
+Auto-merging .replit
+Auto-merging replit.md
+Auto-merging src/components/Sidebar.vue
+Auto-merging src/stores/app.js
+Auto-merging src/views/Dashboard.vue
+CONFLICT (content): Merge conflict in src/views/Dashboard.vue
+Automatic merge failed; fix conflicts and then commit the result.
+~/workspace$ git status
+On branch main
+Your branch and 'origin/main' have diverged,
+and have 30 and 32 different commits each, respectively.
+  (use "git pull" if you want to integrate the remote branch with yours)
+
+You have unmerged paths.
+  (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
+
+Changes to be committed:
+    modified:   .replit
+    modified:   README.md
+    new file:   attached_assets/Pasted---1764655991060_1764655991061.txt
+    new file:   attached_assets/Pasted--1--1764665387933_1764665387933.txt
+    new file:   attached_assets/Pasted--1-2-score--1764657051813_1764657051813.txt
+    new file:   attached_assets/Pasted--1-api-rest-front-app-diary-get--1764660886443_1764660886443.txt
+    new file:   attached_assets/Pasted--1-api-rest-front-app-goa-1764662827410_1764662827411.txt
+    new file:   attached_assets/Pasted--api-rest-front-app-goals-s-1764668793278_1764668793278.txt
+    new file:   attached_assets/image_1764670438551.png
+    new file:   attached_assets/image_1764670456802.png
+    modified:   replit.md
+    modified:   src/components/JournalEntry.vue
+    modified:   src/components/Sidebar.vue
+    modified:   src/services/api.js
+    modified:   src/stores/app.js
+    modified:   src/views/GoalEdit.vue
+    modified:   src/views/GoalsBank.vue
+    modified:   src/views/JournalHistory.vue
+    modified:   src/views/Planning.vue
+
+Unmerged paths:
+  (use "git add <file>..." to mark resolution)
+    both modified:   src/views/Dashboard.vue
+
+~/workspace$ ^C
+~/workspace$ 
+
+
+

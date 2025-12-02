@@ -14,13 +14,8 @@
   />
   -->
 
-<<<<<<< HEAD
   <div v-else class="dashboard-wrapper">
     <div class="dashboard">
-=======
-  <div v-else-if="!shouldShowOnboarding" class="dashboard-wrapper">
-    <div :class="['dashboard', { 'panel-collapsed': isMentorPanelCollapsed }]">
->>>>>>> 77ac8544dd2abe4064b1b890da2bdcc274952755
       <header class="day-header">
         <div class="greeting-section">
           <div class="time-icon" :class="timeOfDayClass">
