@@ -121,16 +121,8 @@
               <option value="unstatus">Не оценённые</option>
             </select>
           </div>
-          <div class="filter-group">
-            <label class="filter-label">Тип цели:</label>
-            <select v-model="filterGoalType" class="filter-select" @change="onFilterChange">
-              <option value="">Все типы</option>
-              <option value="true">Истинная</option>
-              <option value="false">Ложная</option>
-            </select>
-          </div>
           <button 
-            v-if="filterSphere || filterStatus || filterGoalType || searchQuery" 
+            v-if="filterSphere || filterStatus || searchQuery" 
             class="btn btn-sm btn-ghost"
             @click="clearFilters"
           >
@@ -1203,7 +1195,6 @@ const lessonStarted = ref(false)
 const addingNewGoal = ref(false)
 const filterSphere = ref('')
 const filterStatus = ref('')
-const filterGoalType = ref('')
 const searchQuery = ref('')
 const displayLimit = ref(6)
 
@@ -1230,7 +1221,7 @@ const showEmptyState = computed(() => {
 
 // Check if any filters are active
 const hasActiveFilters = computed(() => {
-  return !!(filterSphere.value || filterStatus.value || filterGoalType.value || searchQuery.value)
+  return !!(filterSphere.value || filterStatus.value || searchQuery.value)
 })
 
 const showSummary = computed(() => {
@@ -1380,24 +1371,9 @@ function isGoalCompleted(goalId) {
   return getTransferredGoalStatus(goalId) === 'completed'
 }
 
-const filteredGoals = computed(() => {
-  // Backend already filters by: category_filter, status_filter, query_filter
-  // Local filtering only for: filterGoalType (not supported by backend API)
-  return rawIdeas.value.filter(goal => {
-    // Local filter: Goal type (true/false) - not supported by backend
-    if (filterGoalType.value) {
-      const status = goal.status || 'raw'
-      if (filterGoalType.value === 'true' && status !== 'validated') {
-        return false
-      }
-      if (filterGoalType.value === 'false' && status !== 'rejected') {
-        return false
-      }
-    }
-    
-    return true
-  })
-})
+// Backend already filters by: category_filter, status_filter, query_filter
+// No local filtering needed - just return rawIdeas
+const filteredGoals = computed(() => rawIdeas.value)
 
 const paginatedGoals = computed(() => {
   return filteredGoals.value.slice(0, displayLimit.value)
@@ -1443,7 +1419,6 @@ function resetPagination() {
 function clearFilters() {
   filterSphere.value = ''
   filterStatus.value = ''
-  filterGoalType.value = ''
   searchQuery.value = ''
   resetPagination()
   updateUrlParams()
