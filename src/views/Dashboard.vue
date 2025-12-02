@@ -47,7 +47,16 @@
                 <Crosshair :size="18" :stroke-width="1.5" />
                 Фокус дня
               </h3>
-              <span class="focus-count">{{ completedFocusTasks }}/{{ focusTasks.length }}</span>
+              <div class="header-actions">
+                <span class="focus-count">{{ completedFocusTasks }}/{{ focusTasks.length }}</span>
+                <button 
+                  class="settings-btn" 
+                  @click="$router.push('/app/planning')"
+                  title="Настроить задачи"
+                >
+                  <Settings :size="16" :stroke-width="1.5" />
+                </button>
+              </div>
             </div>
             <div class="card-body">
               <div v-if="focusTasks.length === 0" class="empty-focus">
@@ -230,7 +239,8 @@ import {
   MessageCircle,
   Sparkles,
   Flag,
-  X
+  X,
+  Settings
 } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 
@@ -563,6 +573,12 @@ function pluralize(n, one, few, many) {
   padding: 1.25rem;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .focus-count {
   font-size: 0.875rem;
   font-weight: 600;
@@ -570,6 +586,26 @@ function pluralize(n, one, few, many) {
   background: rgba(99, 102, 241, 0.1);
   padding: 0.25rem 0.625rem;
   border-radius: var(--radius-full);
+}
+
+.settings-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.settings-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--primary-color);
 }
 
 .empty-focus {
