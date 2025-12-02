@@ -781,7 +781,6 @@ function openEditModal() {
     sphereId: goal.value.sphereId,
     whyImportant: rawIdea?.whyImportant || rawIdea?.threeWhys?.why1 || goal.value.description || '',
     why2: rawIdea?.threeWhys?.why2 || '',
-    why3: rawIdea?.threeWhys?.why3 || '',
     status: rawIdea?.status || 'validated'
   }
   showEditModal.value = true
@@ -820,8 +819,7 @@ function saveEditModal() {
     sphereId: editingGoal.value.sphereId,
     threeWhys: {
       why1: editingGoal.value.whyImportant,
-      why2: editingGoal.value.why2,
-      why3: editingGoal.value.why3
+      why2: editingGoal.value.why2
     }
   })
   

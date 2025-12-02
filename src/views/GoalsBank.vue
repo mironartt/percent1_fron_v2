@@ -1151,7 +1151,6 @@ const newGoal = ref({
   sphereId: '',
   whyImportant: '',
   why2: '',
-  why3: '',
   status: null
 })
 
@@ -1201,7 +1200,6 @@ function addNewGoal() {
     sphereId: '',
     whyImportant: '',
     why2: '',
-    why3: '',
     status: null
   }
   showAddModal.value = true
@@ -1214,7 +1212,6 @@ function closeAddModal() {
     sphereId: '',
     whyImportant: '',
     why2: '',
-    why3: '',
     status: null
   }
 }
@@ -1231,8 +1228,7 @@ function saveNewGoal() {
     status: newGoal.value.status,
     threeWhys: {
       why1: newGoal.value.whyImportant,
-      why2: newGoal.value.why2,
-      why3: newGoal.value.why3
+      why2: newGoal.value.why2
     }
   }, { insertAtTop: true })
   
@@ -1307,8 +1303,7 @@ const filteredGoals = computed(() => {
       const matchesWhy = goal.whyImportant?.toLowerCase().includes(query)
       const matchesWhy1 = goal.threeWhys?.why1?.toLowerCase().includes(query)
       const matchesWhy2 = goal.threeWhys?.why2?.toLowerCase().includes(query)
-      const matchesWhy3 = goal.threeWhys?.why3?.toLowerCase().includes(query)
-      if (!matchesText && !matchesWhy && !matchesWhy1 && !matchesWhy2 && !matchesWhy3) {
+      if (!matchesText && !matchesWhy && !matchesWhy1 && !matchesWhy2) {
         return false
       }
     }
@@ -1914,7 +1909,6 @@ function openEditModal(goal) {
     text: goal.text,
     whyImportant: goal.whyImportant || goal.threeWhys?.why1 || '',
     why2: goal.threeWhys?.why2 || '',
-    why3: goal.threeWhys?.why3 || '',
     sphereId: goal.sphereId,
     status: goal.status || 'raw'
   }
@@ -1936,8 +1930,7 @@ function saveGoalEdit() {
     status: editingGoal.value.status,
     threeWhys: {
       why1: editingGoal.value.whyImportant,
-      why2: editingGoal.value.why2,
-      why3: editingGoal.value.why3
+      why2: editingGoal.value.why2
     }
   })
   
