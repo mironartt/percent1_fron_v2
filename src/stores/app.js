@@ -1,10 +1,129 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { DEBUG_MODE, FORCE_SHOW_ONBOARDING, FORCE_SHOW_MINITASK } from '@/config/settings.js'
-import { getOnboardingData, updateOnboardingData, getMiniTaskData, updateMiniTaskData, getSSPData, updateSSPData } from '@/services/api.js'
+import { getOnboardingData, updateOnboardingData, getMiniTaskData, updateMiniTaskData, getSSPData, updateSSPData, getGlobalData } from '@/services/api.js'
 import { useToastStore } from '@/stores/toast'
 
 export const useAppStore = defineStore('app', () => {
+  // ========================================
+  // GLOBAL DATA (справочники из бэкенда)
+  // ========================================
+  
+  const globalData = ref({
+    loading: false,
+    loaded: false,
+    telegramAuthLink: '',
+    telegramAuthCallbackUrl: '',
+    // Справочники для целей и шагов
+    goalsCategories: [],        // Категории целей (welfare, hobby, ...)
+    goalsTypes: [],             // Типы оценки целей (true, false)
+    goalsStatuses: [],          // Статусы целей (work, complete)
+    goalsStatusesFilter: [],    // Статусы для фильтрации (+ unstatus)
+    stepStatusesFilter: [],     // Статусы шагов (planned, unplanned)
+    stepResultsFilter: [],      // Результаты шагов (complete, uncomplete)
+    timesData: [],              // Варианты времени (half, one, two, ...)
+    priorityData: []            // Приоритеты (critical, important, ...)
+  })
+  
+  /**
+   * Загрузить глобальные данные с бэкенда
+   * Включает справочники для целей, шагов, приоритетов и т.д.
+   */
+  async function loadGlobalData() {
+    if (globalData.value.loading) return
+    
+    globalData.value.loading = true
+    
+    try {
+      const result = await getGlobalData()
+      
+      if (result.status === 'ok' && result.data) {
+        const data = result.data
+        
+        globalData.value = {
+          loading: false,
+          loaded: true,
+          telegramAuthLink: data.t_auth_link || '',
+          telegramAuthCallbackUrl: data.t_auth_callback_url || '',
+          goalsCategories: data.goals_categories_data || [],
+          goalsTypes: data.goals_types_data || [],
+          goalsStatuses: data.goals_statuses_data || [],
+          goalsStatusesFilter: data.goals_statuses_filter_data || [],
+          stepStatusesFilter: data.step_statuses_filter_data || [],
+          stepResultsFilter: data.step_results_filter_data || [],
+          timesData: data.times_data || [],
+          priorityData: data.priority_data || []
+        }
+        
+        if (DEBUG_MODE) {
+          console.log('[Store] Global data loaded:', {
+            categories: globalData.value.goalsCategories.length,
+            types: globalData.value.goalsTypes.length,
+            statuses: globalData.value.goalsStatuses.length,
+            priorities: globalData.value.priorityData.length
+          })
+        }
+      } else {
+        globalData.value.loading = false
+        if (DEBUG_MODE) {
+          console.warn('[Store] Failed to load global data:', result)
+        }
+      }
+    } catch (error) {
+      globalData.value.loading = false
+      if (DEBUG_MODE) {
+        console.error('[Store] Error loading global data:', error)
+      }
+    }
+  }
+  
+  /**
+   * Маппинг категорий бэкенда на фронтенд ID сфер
+   * Бэкенд: welfare, hobby, environment, health_sport, work, family
+   * Фронт: wealth, hobbies, friendship, health, career, love
+   */
+  const categoryBackendToFrontend = {
+    'welfare': 'wealth',
+    'hobby': 'hobbies',
+    'environment': 'friendship',
+    'health_sport': 'health',
+    'work': 'career',
+    'family': 'love'
+  }
+  
+  const categoryFrontendToBackend = {
+    'wealth': 'welfare',
+    'hobbies': 'hobby',
+    'friendship': 'environment',
+    'health': 'health_sport',
+    'career': 'work',
+    'love': 'family'
+  }
+  
+  /**
+   * Получить название категории по ID
+   */
+  function getCategoryTitle(categoryId) {
+    const category = globalData.value.goalsCategories.find(c => c.id === categoryId)
+    return category ? category.title : categoryId
+  }
+  
+  /**
+   * Получить название приоритета по ID
+   */
+  function getPriorityTitle(priorityId) {
+    const priority = globalData.value.priorityData.find(p => p.id === priorityId)
+    return priority ? priority.title : priorityId
+  }
+  
+  /**
+   * Получить название времени по ID
+   */
+  function getTimeTitle(timeId) {
+    const time = globalData.value.timesData.find(t => t.id === timeId)
+    return time ? time.title : timeId
+  }
+  
   // ========================================
   // USER & AUTH
   // ========================================
@@ -1895,6 +2014,15 @@ export const useAppStore = defineStore('app', () => {
     telegramSettings,
     connectTelegram,
     disconnectTelegram,
-    updateTelegramNotifications
+    updateTelegramNotifications,
+    
+    // Global Data (справочники)
+    globalData,
+    loadGlobalData,
+    categoryBackendToFrontend,
+    categoryFrontendToBackend,
+    getCategoryTitle,
+    getPriorityTitle,
+    getTimeTitle
   }
 })

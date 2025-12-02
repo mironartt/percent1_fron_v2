@@ -525,14 +525,16 @@ src/
 
 ### API эндпоинты
 
-| Модуль | GET | POST |
-|--------|-----|------|
+| Модуль | GET | POST/UPDATE |
+|--------|-----|-------------|
 | Аутентификация | `/api/rest/front/get-user-data/` | - |
 | Глобальные данные | `/api/rest/front/get-global-data/` | - |
 | CSRF | `/api/rest/front/csrf/` | - |
 | ССП | `/api/rest/front/app/ssp/get/` | `/api/rest/front/app/ssp/update/` |
 | Мини-задачи | `/api/rest/front/app/onboard/mini-task/get/` | `/api/rest/front/app/onboard/mini-task/update/` |
 | Онбординг | - | `/api/rest/front/app/onboard/update/` |
+| **Цели (Goals)** | `/api/rest/front/app/goals/get/` | `/api/rest/front/app/goals/update/` |
+| **Шаги целей** | `/api/rest/front/app/goals/steps/get/` | `/api/rest/front/app/goals/steps/update/` |
 
 ### ССП Backend Integration
 
@@ -648,6 +650,220 @@ loadSSPFromBackend() → проверка totalData
 
 // backend → frontend
 { calendar: 'calendar', action: 'next', idea: 'someday', info: 'reference' }
+```
+
+### Goals API Integration (Банк целей, Планирование, Детали цели)
+
+**Файлы:** `src/services/api.js`, `src/stores/app.js`
+
+**API эндпоинты:**
+
+| Эндпоинт | Описание | Используется на |
+|----------|----------|-----------------|
+| `/api/rest/front/app/goals/get/` | Получение списка целей | Банк целей, Планирование |
+| `/api/rest/front/app/goals/steps/get/` | Получение шагов цели | Детали цели, Планирование |
+| `/api/rest/front/app/goals/update/` | Создание/обновление целей | Все страницы с целями |
+| `/api/rest/front/app/goals/steps/update/` | Создание/обновление шагов | Детали цели, Планирование |
+
+#### Справочные данные (Global Data)
+
+Эндпоинт `/api/rest/front/get-global-data/` теперь возвращает справочники для целей и шагов:
+
+| Поле | Описание | Пример значений |
+|------|----------|-----------------|
+| `goals_categories_data` | Категории целей | welfare, hobby, environment, health_sport, work, family |
+| `goals_types_data` | Типы оценки целей | true (Истинная), false (Ложная) |
+| `goals_statuses_data` | Статусы целей | work (В работе), complete (Завершенные) |
+| `goals_statuses_filter_data` | Статусы для фильтров | + unstatus (Не оцененные) |
+| `step_statuses_filter_data` | Статусы шагов | planned, unplanned |
+| `step_results_filter_data` | Результаты шагов | complete, uncomplete |
+| `times_data` | Варианты времени | half (30м), one (1ч), two (2ч), three (3ч), four (4ч) |
+| `priority_data` | Приоритеты | critical, important, attention, optional |
+
+#### GET Goals (`/api/rest/front/app/goals/get/`)
+
+**Параметры запроса:**
+
+| Параметр | Тип | Описание |
+|----------|-----|----------|
+| `with_steps_data` | boolean | Получить данные по шагам (первая страница) |
+| `order_by` | string | Поле сортировки: date_created, status, title, category |
+| `order_direction` | string | Направление: asc, desc |
+| `status_filter` | string | Фильтр: work, complete, unstatus |
+| `category_filter` | string | Фильтр по категории |
+| `query_filter` | string | Текстовый поиск (min 3 символа) |
+| `page` | number | Номер страницы |
+
+**Структура ответа:**
+
+```javascript
+{
+  status: "ok",
+  data: {
+    goals_data: [
+      {
+        goal_id: 1,
+        title: "Название цели",
+        category: "health_sport",
+        status: "work",           // work | complete | null
+        score: "true",            // true | false | null (оценка истинности)
+        why_important: "...",
+        why_give_me: "...",
+        why_about_me: "...",
+        date_created: "2025-12-01 09:39:12",
+        date_completed: null,
+        total_steps_data: { total_steps: 3, complete_steps: 1, complete_percent: 33 },
+        steps_data: [...]         // если with_steps_data=true
+      }
+    ],
+    total_data: {
+      total_goals: 40,
+      true_goals: 15,
+      false_goals: 8,
+      in_work_goals: 18
+    },
+    total_data_steps_data: {...}, // если with_steps_data=true
+    page: 1,
+    page_size: 6,
+    total_pages: 7,
+    total_items: 40,
+    total_filtered_items: 40
+  }
+}
+```
+
+#### GET Goal Steps (`/api/rest/front/app/goals/steps/get/`)
+
+**Параметры запроса:**
+
+| Параметр | Тип | Описание |
+|----------|-----|----------|
+| `goal_id` | number | ID цели (обязательный) |
+| `order_by` | string | Поле сортировки: order, date_created, status, priority |
+| `order_direction` | string | Направление: asc, desc |
+| `status_filter` | string | planned, unplanned |
+| `result_filter` | string | complete, uncomplete |
+| `priority_filter` | string | critical, important, attention, optional |
+| `query_filter` | string | Текстовый поиск |
+| `page` | number | Номер страницы |
+| `page_size` | number | Размер страницы (6-10) |
+
+**Структура шага:**
+
+```javascript
+{
+  step_id: 1,
+  goal_id: 1,
+  title: "Название шага",
+  description: "Описание/комментарий",
+  status: "planned",        // planned | unplanned
+  priority: "important",    // critical | important | attention | optional
+  time_duration: "one",     // half | one | two | three | four
+  dt: "2025-01-14",        // Запланированная дата (YYYY-MM-DD)
+  order: 1,
+  is_complete: false,
+  date_created: "2025-12-01 16:12:22",
+  date_completed: null
+}
+```
+
+#### UPDATE Goals (`/api/rest/front/app/goals/update/`)
+
+**Параметры запроса:**
+
+```javascript
+{
+  goals_data: [
+    {
+      goal_id: null,          // null для создания, число для обновления
+      title: "Название",
+      category: "hobby",
+      status: "work",
+      score: "true",
+      why_important: "...",
+      why_give_me: "...",
+      why_about_me: "..."
+    }
+  ],
+  deleted_goals_ids: [1, 2],   // ID целей для удаления
+  completed_goals_ids: [3, 4]  // ID целей для завершения
+}
+```
+
+#### UPDATE Steps (`/api/rest/front/app/goals/steps/update/`)
+
+**Параметры запроса:**
+
+```javascript
+{
+  goals_steps_data: [
+    {
+      goal_id: 1,             // обязательный
+      step_id: null,          // null для создания, число для обновления
+      title: "Название",
+      description: "Описание",
+      priority: "important",
+      time_duration: "one",
+      dt: "2025-01-14",
+      order: 1,
+      is_complete: false,
+      is_deleted: false       // true для удаления
+    }
+  ]
+}
+```
+
+#### Helper-функции в API сервисе
+
+| Функция | Описание |
+|---------|----------|
+| `getGoals(params)` | Получить список целей |
+| `getGoalSteps(params)` | Получить шаги цели |
+| `updateGoals(data)` | Обновить цели (batch) |
+| `updateGoalSteps(data)` | Обновить шаги (batch) |
+| `createGoal(goalData)` | Создать одну цель |
+| `updateGoal(goalId, goalData)` | Обновить одну цель |
+| `deleteGoal(goalId)` | Удалить цель |
+| `completeGoal(goalId)` | Завершить цель |
+| `createStep(goalId, stepData)` | Создать шаг |
+| `updateStep(goalId, stepId, stepData)` | Обновить шаг |
+| `deleteStep(goalId, stepId)` | Удалить шаг |
+| `toggleStepComplete(goalId, stepId, isComplete)` | Отметить завершение |
+| `scheduleStep(goalId, stepId, date, priority, timeDuration)` | Запланировать шаг |
+
+#### Store: Global Data
+
+**Методы:**
+
+| Метод | Описание |
+|-------|----------|
+| `loadGlobalData()` | Загрузка справочников при старте приложения |
+| `getCategoryTitle(id)` | Получить название категории |
+| `getPriorityTitle(id)` | Получить название приоритета |
+| `getTimeTitle(id)` | Получить название времени |
+
+**Маппинг категорий:**
+
+```javascript
+// Backend ID → Frontend ID (сферы жизни)
+const categoryBackendToFrontend = {
+  welfare: 'wealth',
+  hobby: 'hobbies',
+  environment: 'friendship',
+  health_sport: 'health',
+  work: 'career',
+  family: 'love'
+}
+
+// Frontend ID → Backend ID
+const categoryFrontendToBackend = {
+  wealth: 'welfare',
+  hobbies: 'hobby',
+  friendship: 'environment',
+  health: 'health_sport',
+  career: 'work',
+  love: 'family'
+}
 ```
 
 ---
