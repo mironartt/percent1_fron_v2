@@ -275,16 +275,13 @@
                   </select>
                   
                   <!-- Дата -->
-                  <div class="date-picker-wrapper">
-                    <input 
-                      type="date"
-                      :value="step.scheduledDate || ''"
-                      @change="updateStepAndSave(getOriginalIndex(step), 'scheduledDate', $event.target.value)"
-                      class="step-param-select date-input-sm"
-                      title="Запланировать на дату"
-                    />
-                    <Calendar :size="14" class="date-icon" />
-                  </div>
+                  <input 
+                    type="date"
+                    :value="step.scheduledDate || ''"
+                    @change="updateStepAndSave(getOriginalIndex(step), 'scheduledDate', $event.target.value)"
+                    class="step-param-select date-input-sm"
+                    title="Запланировать на дату"
+                  />
                 </div>
                 
                 <!-- Комментарий -->
@@ -408,16 +405,13 @@
                       </select>
                       
                       <!-- Дата -->
-                      <div class="date-picker-wrapper">
-                        <input 
-                          type="date"
-                          :value="step.scheduledDate || ''"
-                          @change="updateStepAndSave(getOriginalIndex(step), 'scheduledDate', $event.target.value)"
-                          class="step-param-select date-input-sm"
-                          title="Запланировать на дату"
-                        />
-                        <Calendar :size="14" class="date-icon" />
-                      </div>
+                      <input 
+                        type="date"
+                        :value="step.scheduledDate || ''"
+                        @change="updateStepAndSave(getOriginalIndex(step), 'scheduledDate', $event.target.value)"
+                        class="step-param-select date-input-sm"
+                        title="Запланировать на дату"
+                      />
                     </div>
                     
                     <!-- Комментарий -->
@@ -1968,22 +1962,8 @@ function formatDate(dateString) {
   min-width: 80px;
 }
 
-.date-picker-wrapper {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
 .date-input-sm {
-  min-width: 120px;
-  padding-right: 1.75rem;
-}
-
-.date-icon {
-  position: absolute;
-  right: 0.5rem;
-  color: var(--text-secondary);
-  pointer-events: none;
+  min-width: 130px;
 }
 
 /* Комментарий */
