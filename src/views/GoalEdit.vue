@@ -782,10 +782,137 @@ function getOriginalIndex(step) {
   return goalForm.value.steps.findIndex(s => s.id === step.id)
 }
 
-// Сброс пагинации при изменении фильтров
-watch([searchQuery, filterStatus, filterPriority], () => {
+// Сброс пагинации и загрузка с бэкенда при изменении фильтров
+let filterDebounceTimer = null
+let previousHasFilters = false
+
+watch([searchQuery, filterStatus, filterPriority, sortBy], () => {
   stepsDisplayLimit.value = 10
+  
+  // Debounce for search query, immediate for other filters
+  if (filterDebounceTimer) clearTimeout(filterDebounceTimer)
+  
+  const hasFilters = searchQuery.value || filterStatus.value || filterPriority.value || sortBy.value !== 'order'
+  const filtersCleared = previousHasFilters && !hasFilters
+  
+  if (goal.value?.backendId) {
+    // Always reload: when filters active, when filters cleared, or when sort changed
+    const needsReload = hasFilters || filtersCleared
+    
+    if (needsReload) {
+      // Shorter debounce for non-search filters, longer for search
+      const debounceMs = searchQuery.value && searchQuery.value.length > 0 ? 500 : 100
+      
+      filterDebounceTimer = setTimeout(() => {
+        loadStepsWithFilters()
+      }, debounceMs)
+    }
+  }
+  
+  previousHasFilters = hasFilters
 })
+
+// Map frontend sort keys to backend order_by values
+// Backend supports: order, date_created, priority
+function mapSortToBackend(sortKey) {
+  const sortMap = {
+    'order': 'order',
+    'priority': 'priority',
+    'time': 'order', // time sorting not supported by backend, fallback to order
+    'date': 'date_created',
+    'status': 'order' // status sorting not supported by backend, fallback to order
+  }
+  return sortMap[sortKey] || 'order'
+}
+
+// Map frontend priority values to backend values
+// Frontend uses 'desirable', backend expects 'important'
+function mapPriorityToBackend(priority) {
+  const priorityMap = {
+    'critical': 'critical',
+    'desirable': 'important', // frontend → backend
+    'attention': 'attention',
+    'optional': 'optional'
+  }
+  return priorityMap[priority] || priority
+}
+
+// Map backend priority values to frontend values
+function mapPriorityFromBackend(priority) {
+  const priorityMap = {
+    'critical': 'critical',
+    'important': 'desirable', // backend → frontend
+    'attention': 'attention',
+    'optional': 'optional'
+  }
+  return priorityMap[priority] || priority
+}
+
+// Load steps from backend with current filters
+async function loadStepsWithFilters() {
+  if (!goal.value?.backendId) return
+  
+  const currentGoalId = route.params.id
+  
+  try {
+    const { getGoalSteps } = await import('@/services/api.js')
+    
+    const params = {
+      goal_id: goal.value.backendId,
+      order_by: mapSortToBackend(sortBy.value),
+      order_direction: sortDirection.value
+    }
+    
+    // Add filters if present
+    // API accepts: query_filter (min 3 chars), result_filter (complete/uncomplete), priority_filter
+    if (searchQuery.value && searchQuery.value.length >= 3) {
+      params.query_filter = searchQuery.value
+    }
+    if (filterStatus.value) {
+      // Frontend uses 'completed'/'pending', backend uses 'complete'/'uncomplete'
+      params.result_filter = filterStatus.value === 'completed' ? 'complete' : 'uncomplete'
+    }
+    if (filterPriority.value) {
+      params.priority_filter = mapPriorityToBackend(filterPriority.value)
+    }
+    
+    console.log('[GoalEdit] Loading steps with filters:', params)
+    
+    const result = await getGoalSteps(params)
+    
+    // Check if user navigated away
+    if (route.params.id !== currentGoalId) return
+    
+    if (result.status === 'ok' && result.data) {
+      const stepsData = result.data.steps_data || result.data.goal_data?.steps_data || []
+      
+      const backendSteps = stepsData.map(s => ({
+        id: String(s.step_id),
+        backendId: s.step_id,
+        title: s.title || '',
+        completed: s.is_complete || false,
+        comment: s.description || '',
+        timeEstimate: mapTimeFromBackend(s.time_duration),
+        priority: mapPriorityFromBackend(s.priority) || '',
+        scheduledDate: s.dt || '',
+        status: s.is_complete ? 'completed' : 'pending',
+        order: s.order || 0
+      }))
+      
+      // Merge with existing new steps (isNew flag)
+      const newStepsLocal = goalForm.value.steps.filter(s => s.isNew)
+      goalForm.value.steps = [...backendSteps, ...newStepsLocal]
+      
+      recalculateProgress()
+      takeStepsSnapshot()
+      adjustAllCommentHeights()
+      
+      console.log('[GoalEdit] Loaded', backendSteps.length, 'filtered steps from backend')
+    }
+  } catch (error) {
+    console.error('[GoalEdit] Error loading filtered steps:', error)
+  }
+}
 
 function openEditModal() {
   // Найти данные из rawIdeas (банка целей)
@@ -952,7 +1079,7 @@ async function loadStepsFromBackend() {
         completed: s.is_complete || false,
         comment: s.description || '',
         timeEstimate: mapTimeFromBackend(s.time_duration),
-        priority: s.priority || '',
+        priority: mapPriorityFromBackend(s.priority) || '',
         scheduledDate: s.dt || '',
         status: s.is_complete ? 'completed' : 'pending',
         order: s.order || 0
@@ -973,6 +1100,9 @@ async function loadStepsFromBackend() {
       recalculateProgress()
       lastSavedHash = getStepsHash()
       adjustAllCommentHeights()
+      
+      // Take snapshot for change detection
+      takeStepsSnapshot()
       
       // Update store goal only if it still matches the current goal
       // Use computed goal which is bound to route.params.id
@@ -1078,6 +1208,10 @@ function loadGoalData() {
     stepsDisplayLimit.value = Math.max(10, Math.min(stepsCount, 50))
     // Корректировать высоту многострочных комментариев
     adjustAllCommentHeights()
+    // Take snapshot for change detection (if not loading from backend)
+    if (!stepsLoadedFromBackend.value) {
+      takeStepsSnapshot()
+    }
   }
 }
 
@@ -1336,27 +1470,96 @@ async function doSave(showNotification = true) {
   }
 }
 
-// Sync steps to backend
+// Snapshot of steps for change detection
+let stepsSnapshot = []
+
+function takeStepsSnapshot() {
+  stepsSnapshot = goalForm.value.steps.map(s => ({
+    id: s.id,
+    backendId: s.backendId,
+    title: s.title,
+    comment: s.comment || '',
+    priority: s.priority || '',
+    timeEstimate: s.timeEstimate || '',
+    scheduledDate: s.scheduledDate || '',
+    completed: s.completed || false,
+    order: s.order
+  }))
+}
+
+// Get only changed steps for backend sync
+function getChangedSteps(currentSteps) {
+  const changedSteps = []
+  
+  currentSteps.forEach((step, index) => {
+    const snapshot = stepsSnapshot.find(s => s.id === step.id)
+    
+    if (!snapshot) {
+      // New step - send all fields
+      changedSteps.push({
+        step,
+        index,
+        isNew: true,
+        changedFields: ['title', 'description', 'priority', 'time_duration', 'dt', 'order', 'is_complete']
+      })
+    } else {
+      // Check what changed
+      const changes = []
+      if (step.title !== snapshot.title) changes.push('title')
+      if ((step.comment || '') !== snapshot.comment) changes.push('description')
+      if ((step.priority || '') !== snapshot.priority) changes.push('priority')
+      if ((step.timeEstimate || '') !== snapshot.timeEstimate) changes.push('time_duration')
+      if ((step.scheduledDate || '') !== snapshot.scheduledDate) changes.push('dt')
+      if (index !== snapshot.order) changes.push('order')
+      if ((step.completed || false) !== snapshot.completed) changes.push('is_complete')
+      
+      if (changes.length > 0) {
+        changedSteps.push({ step, index, isNew: false, changedFields: changes })
+      }
+    }
+  })
+  
+  return changedSteps
+}
+
+// Sync only changed steps to backend
 async function syncStepsToBackend(steps) {
   if (!goal.value?.backendId) return
+  
+  const changedSteps = getChangedSteps(steps)
+  
+  if (changedSteps.length === 0) {
+    console.log('[GoalEdit] No changes to sync')
+    return
+  }
   
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
     
-    const stepsData = steps.map((s, index) => ({
-      goal_id: goal.value.backendId,
-      step_id: s.backendId || null,
-      title: s.title,
-      description: s.comment || '',
-      priority: s.priority || null,
-      time_duration: mapTimeToBackend(s.timeEstimate),
-      dt: s.scheduledDate || null,
-      order: index,
-      is_complete: s.completed || false,
-      is_deleted: false
-    }))
+    const stepsData = changedSteps.map(({ step, index, changedFields }) => {
+      const data = {
+        goal_id: goal.value.backendId,
+        step_id: step.backendId || null
+      }
+      
+      // Only include changed fields
+      if (changedFields.includes('title')) data.title = step.title
+      if (changedFields.includes('description')) data.description = step.comment || ''
+      if (changedFields.includes('priority')) data.priority = mapPriorityToBackend(step.priority) || null
+      if (changedFields.includes('time_duration')) data.time_duration = mapTimeToBackend(step.timeEstimate)
+      if (changedFields.includes('dt')) data.dt = step.scheduledDate || null
+      if (changedFields.includes('order')) data.order = index
+      if (changedFields.includes('is_complete')) data.is_complete = step.completed || false
+      
+      return data
+    })
+    
+    console.log('[GoalEdit] Syncing', stepsData.length, 'changed steps:', stepsData.map(s => ({ step_id: s.step_id, fields: Object.keys(s).filter(k => k !== 'goal_id' && k !== 'step_id') })))
     
     await updateGoalSteps({ goals_steps_data: stepsData })
+    
+    // Update snapshot after successful sync
+    takeStepsSnapshot()
     
   } catch (error) {
     console.error('[GoalEdit] Error syncing steps to backend:', error)

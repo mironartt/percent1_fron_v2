@@ -1460,6 +1460,7 @@ function clearFilters() {
 }
 
 // Backend filtering - build API params from current filters
+// API fields: category_filter, status_filter, query_filter, order_by, order_direction, page, with_steps_data
 function buildApiParams(page = 1) {
   const params = {
     with_steps_data: false,
@@ -1473,22 +1474,18 @@ function buildApiParams(page = 1) {
     params.query_filter = searchQuery.value
   }
   
-  // Add sphere/category filter
+  // Add sphere/category filter (API field: category_filter)
   if (filterSphere.value) {
     const backendCategory = store.categoryFrontendToBackend[filterSphere.value]
     if (backendCategory) {
-      params.category = backendCategory
+      params.category_filter = backendCategory
     }
   }
   
-  // Add status filter (planned/unplanned/unstatus)
+  // Add status filter (API field: status_filter)
+  // Values: work, complete, null (for all)
   if (filterStatus.value) {
-    params.status = filterStatus.value
-  }
-  
-  // Add goal type filter (true/false = истинная/ложная)
-  if (filterGoalType.value) {
-    params.score = filterGoalType.value
+    params.status_filter = filterStatus.value
   }
   
   return params

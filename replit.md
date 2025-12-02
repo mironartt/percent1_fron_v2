@@ -40,6 +40,15 @@ The application uses a modular structure with dedicated components, services, vi
   - When `append=true`: new goals added to existing list (deduplicated by backendId)
   - When `append=false`: data replaced (for filters/initial load)
   - `remainingGoalsCount` computed from `totalFilteredItems - rawIdeas.length`
+- **Optimized Step Sync (GoalEdit)**:
+  - `stepsSnapshot` tracks step state after load
+  - `getChangedSteps()` compares and identifies changed steps/fields
+  - `syncStepsToBackend()` sends only changed steps with changed fields
+  - Priority mapping: frontend 'desirable' ↔ backend 'important'
+- **API Field Naming**:
+  - Goals: `category_filter`, `status_filter`, `query_filter`
+  - Steps: `result_filter` (complete/uncomplete), `priority_filter`, `query_filter`
+  - Sort: backend supports `order`, `date_created`, `priority`
 
 ## External Dependencies
 - **Django REST API Backend**: Provides user authentication, profile management, SSP data, goals bank, decomposition, planning, onboarding, and journal services.
