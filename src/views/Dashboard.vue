@@ -138,7 +138,7 @@
                 </div>
                 <router-link 
                   v-if="allActiveGoals.length > 3"
-                  to="/app/goals" 
+                  to="/app/goals-bank" 
                   class="more-goals-link"
                 >
                   +{{ allActiveGoals.length - 3 }} {{ pluralize(allActiveGoals.length - 3, 'цель', 'цели', 'целей') }}
