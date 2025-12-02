@@ -401,4 +401,36 @@ function goToNextStep() {
   justify-content: center;
   gap: 0.5rem;
 }
+
+@media (max-width: 480px) {
+  .first-steps-widget {
+    padding: 1rem;
+  }
+  
+  .widget-header {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .progress-badge {
+    align-self: flex-start;
+  }
+  
+  .header-icon {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .step-item {
+    padding: 0.5rem;
+  }
+  
+  .step-title {
+    font-size: 0.875rem;
+  }
+  
+  .step-hint {
+    font-size: 0.7rem;
+  }
+}
 </style>
