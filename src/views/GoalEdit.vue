@@ -569,13 +569,6 @@
                   <XCircle :size="18" :stroke-width="2" />
                   Ложная цель
                 </button>
-                <button 
-                  class="btn btn-validation btn-neutral"
-                  :class="{ active: !editingGoal.validationStatus }"
-                  @click="editingGoal.validationStatus = null"
-                >
-                  Не оценена
-                </button>
               </div>
             </div>
             
@@ -595,13 +588,6 @@
                   @click="editingGoal.workStatus = 'complete'"
                 >
                   Завершена
-                </button>
-                <button 
-                  class="btn btn-validation"
-                  :class="{ active: editingGoal.workStatus === 'unstatus' }"
-                  @click="editingGoal.workStatus = 'unstatus'"
-                >
-                  Без статуса
                 </button>
               </div>
             </div>
@@ -994,14 +980,12 @@ async function loadStepsWithFilters() {
 }
 
 function openEditModal() {
-  // Найти данные из rawIdeas (банка целей)
-  const rawIdea = store.goalsBank?.rawIdeas?.find(r => r.id === goal.value.sourceId)
+  // Найти данные из rawIdeas (банка целей) по backendId
+  const rawIdea = store.goalsBank?.rawIdeas?.find(r => r.backendId === goalBackendId.value || r.id === goal.value.sourceId)
   
-  // Map backend score to frontend validation status
-  // Backend: 'true'/'false'/null → Frontend: 'validated'/'rejected'/null
-  let validationStatus = rawIdea?.status || null
-  if (rawIdea?.score === 'true') validationStatus = 'validated'
-  else if (rawIdea?.score === 'false') validationStatus = 'rejected'
+  // rawIdea.status уже содержит 'validated'/'rejected'/'raw' (смаппировано из backend score)
+  // rawIdea.workStatus содержит 'work'/'complete'/null (из backend status)
+  const validationStatus = rawIdea?.status === 'raw' ? null : (rawIdea?.status || null)
   
   editingGoal.value = {
     id: goal.value.sourceId,
@@ -1011,7 +995,7 @@ function openEditModal() {
     why2: rawIdea?.threeWhys?.why2 || '',
     why3: rawIdea?.threeWhys?.why3 || '',
     validationStatus: validationStatus, // 'validated'/'rejected'/null - тип цели (score)
-    workStatus: rawIdea?.workStatus || goal.value.status || 'work' // work/complete/unstatus
+    workStatus: rawIdea?.workStatus || goal.value.status || 'work' // work/complete
   }
   showEditModal.value = true
 }
@@ -1091,10 +1075,18 @@ async function saveEditModal() {
   }
   
   // Backend success - now update local state
+  // Map frontend validationStatus back to backend score format for storage
+  let scoreForStore = null
+  if (goalData.validationStatus === 'validated') scoreForStore = 'true'
+  else if (goalData.validationStatus === 'rejected') scoreForStore = 'false'
+  
   store.updateRawIdea(goalData.id, {
     text: goalData.text,
     whyImportant: goalData.whyImportant,
     sphereId: goalData.sphereId,
+    score: scoreForStore,
+    workStatus: goalData.workStatus,
+    status: goalData.validationStatus, // legacy field
     threeWhys: {
       why1: goalData.whyImportant,
       why2: goalData.why2,
@@ -1107,7 +1099,8 @@ async function saveEditModal() {
     store.updateGoal(goal.value.id, {
       title: goalData.text,
       sphereId: goalData.sphereId,
-      description: goalData.whyImportant
+      description: goalData.whyImportant,
+      status: goalData.workStatus
     })
   }
   
