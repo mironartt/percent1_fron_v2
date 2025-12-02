@@ -551,23 +551,57 @@
             </div>
             
             <div class="validation-section">
-              <div class="validation-label">Оценка цели:</div>
+              <div class="validation-label">Тип цели:</div>
               <div class="validation-buttons">
                 <button 
                   class="btn btn-validation btn-true-goal"
-                  :class="{ active: editingGoal.status === 'validated' }"
-                  @click="editingGoal.status = 'validated'"
+                  :class="{ active: editingGoal.validationStatus === 'validated' }"
+                  @click="editingGoal.validationStatus = 'validated'"
                 >
                   <CheckCircle :size="18" :stroke-width="2" />
-                  Это истинная цель
+                  Истинная цель
                 </button>
                 <button 
                   class="btn btn-validation btn-false-goal"
-                  :class="{ active: editingGoal.status === 'rejected' }"
-                  @click="editingGoal.status = 'rejected'"
+                  :class="{ active: editingGoal.validationStatus === 'rejected' }"
+                  @click="editingGoal.validationStatus = 'rejected'"
                 >
                   <XCircle :size="18" :stroke-width="2" />
-                  Это ложная цель
+                  Ложная цель
+                </button>
+                <button 
+                  class="btn btn-validation btn-neutral"
+                  :class="{ active: !editingGoal.validationStatus }"
+                  @click="editingGoal.validationStatus = null"
+                >
+                  Не оценена
+                </button>
+              </div>
+            </div>
+            
+            <div class="validation-section">
+              <div class="validation-label">Статус:</div>
+              <div class="validation-buttons">
+                <button 
+                  class="btn btn-validation"
+                  :class="{ active: editingGoal.workStatus === 'work' }"
+                  @click="editingGoal.workStatus = 'work'"
+                >
+                  В работе
+                </button>
+                <button 
+                  class="btn btn-validation"
+                  :class="{ active: editingGoal.workStatus === 'complete' }"
+                  @click="editingGoal.workStatus = 'complete'"
+                >
+                  Завершена
+                </button>
+                <button 
+                  class="btn btn-validation"
+                  :class="{ active: editingGoal.workStatus === 'unstatus' }"
+                  @click="editingGoal.workStatus = 'unstatus'"
+                >
+                  Без статуса
                 </button>
               </div>
             </div>
@@ -963,6 +997,12 @@ function openEditModal() {
   // Найти данные из rawIdeas (банка целей)
   const rawIdea = store.goalsBank?.rawIdeas?.find(r => r.id === goal.value.sourceId)
   
+  // Map backend score to frontend validation status
+  // Backend: 'true'/'false'/null → Frontend: 'validated'/'rejected'/null
+  let validationStatus = rawIdea?.status || null
+  if (rawIdea?.score === 'true') validationStatus = 'validated'
+  else if (rawIdea?.score === 'false') validationStatus = 'rejected'
+  
   editingGoal.value = {
     id: goal.value.sourceId,
     text: goal.value.title,
@@ -970,7 +1010,8 @@ function openEditModal() {
     whyImportant: rawIdea?.whyImportant || rawIdea?.threeWhys?.why1 || goal.value.description || '',
     why2: rawIdea?.threeWhys?.why2 || '',
     why3: rawIdea?.threeWhys?.why3 || '',
-    status: rawIdea?.status || 'validated'
+    validationStatus: validationStatus, // 'validated'/'rejected'/null - тип цели (score)
+    workStatus: rawIdea?.workStatus || goal.value.status || 'work' // work/complete/unstatus
   }
   showEditModal.value = true
 }
@@ -1008,7 +1049,9 @@ async function saveEditModal() {
     sphereId: editingGoal.value.sphereId,
     whyImportant: editingGoal.value.whyImportant,
     why2: editingGoal.value.why2,
-    why3: editingGoal.value.why3
+    why3: editingGoal.value.why3,
+    validationStatus: editingGoal.value.validationStatus,
+    workStatus: editingGoal.value.workStatus
   }
   
   // First, sync to backend (blocking - wait for response)
@@ -1017,9 +1060,18 @@ async function saveEditModal() {
       const { updateGoal: updateGoalApi } = await import('@/services/api.js')
       // Map frontend sphereId to backend category
       const backendCategory = store.categoryFrontendToBackend[goalData.sphereId] || goalData.sphereId
+      
+      // Map frontend validationStatus to backend score
+      // Frontend: 'validated'/'rejected'/null → Backend: 'true'/'false'/null
+      let backendScore = null
+      if (goalData.validationStatus === 'validated') backendScore = 'true'
+      else if (goalData.validationStatus === 'rejected') backendScore = 'false'
+      
       const result = await updateGoalApi(goalBackendId.value, {
         title: goalData.text,
         category: backendCategory,
+        status: goalData.workStatus || null,
+        score: backendScore,
         why_important: goalData.whyImportant || null,
         why_give_me: goalData.why2 || null,
         why_about_me: goalData.why3 || null
