@@ -1015,9 +1015,11 @@ async function saveEditModal() {
   if (goalBackendId.value) {
     try {
       const { updateGoal: updateGoalApi } = await import('@/services/api.js')
+      // Map frontend sphereId to backend category
+      const backendCategory = store.categoryFrontendToBackend[goalData.sphereId] || goalData.sphereId
       const result = await updateGoalApi(goalBackendId.value, {
         title: goalData.text,
-        category: goalData.sphereId,
+        category: backendCategory,
         why_important: goalData.whyImportant || null,
         why_give_me: goalData.why2 || null,
         why_about_me: goalData.why3 || null
