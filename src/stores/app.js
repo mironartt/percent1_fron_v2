@@ -2,7 +2,6 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { DEBUG_MODE, FORCE_SHOW_ONBOARDING, FORCE_SHOW_MINITASK } from '@/config/settings.js'
 import { getOnboardingData, updateOnboardingData, getMiniTaskData, updateMiniTaskData, getSSPData, updateSSPData } from '@/services/api.js'
-import { useToastStore } from '@/stores/toast'
 
 export const useAppStore = defineStore('app', () => {
   // ========================================
@@ -379,15 +378,6 @@ export const useAppStore = defineStore('app', () => {
       
       if (DEBUG_MODE) {
         console.log('[Store] First step completed:', stepId)
-      }
-      
-      try {
-        const toastStore = useToastStore()
-        toastStore.showFirstStepToast(stepId, firstSteps.value)
-      } catch (e) {
-        if (DEBUG_MODE) {
-          console.warn('[Store] Could not show toast:', e)
-        }
       }
       
       if (mentorStepMessages[stepId]) {
