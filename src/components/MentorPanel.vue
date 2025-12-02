@@ -7,13 +7,11 @@
     ></div>
     
     <button 
-      v-if="isMobile"
+      v-if="isMobile && !isMobileOpen"
       class="mentor-mobile-btn"
-      :class="{ active: isMobileOpen }"
       @click="toggleMobile"
     >
-      <Bot v-if="!isMobileOpen" :size="24" :stroke-width="1.5" />
-      <X v-else :size="24" :stroke-width="1.5" />
+      <Bot :size="24" :stroke-width="1.5" />
     </button>
     
     <div :class="['mentor-panel', { collapsed: isCollapsed && !isMobile, 'mobile-open': isMobileOpen }]">
@@ -43,14 +41,6 @@
           </div>
         </div>
         <div class="header-actions">
-          <button 
-            v-if="messages.length > 0" 
-            class="icon-btn"
-            @click="clearChat"
-            title="Очистить чат"
-          >
-            <Trash2 :size="16" :stroke-width="1.5" />
-          </button>
           <button 
             class="icon-btn collapse-btn"
             @click="togglePanel"
