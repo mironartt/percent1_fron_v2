@@ -53,7 +53,7 @@
           <div class="summary-icon summary-icon-ideas">
             <Lightbulb :size="18" :stroke-width="2" />
           </div>
-          <div class="summary-value">{{ rawIdeas.length }}</div>
+          <div class="summary-value">{{ totalGoalsCount }}</div>
           <div class="summary-label">Идей в банке</div>
         </div>
 
@@ -61,7 +61,7 @@
           <div class="summary-icon summary-icon-valid">
             <CheckCircle :size="18" :stroke-width="2" />
           </div>
-          <div class="summary-value">{{ validatedCount }}</div>
+          <div class="summary-value">{{ trueGoalsCount }}</div>
           <div class="summary-label">Истинных целей</div>
         </div>
 
@@ -69,7 +69,7 @@
           <div class="summary-icon summary-icon-rejected">
             <XCircle :size="18" :stroke-width="2" />
           </div>
-          <div class="summary-value">{{ rejectedCount }}</div>
+          <div class="summary-value">{{ falseGoalsCount }}</div>
           <div class="summary-label">Ложных целей</div>
         </div>
 
@@ -77,13 +77,13 @@
           <div class="summary-icon summary-icon-work">
             <PlayCircle :size="18" :stroke-width="2" />
           </div>
-          <div class="summary-value">{{ transferredGoalsCount }}</div>
+          <div class="summary-value">{{ inWorkGoalsCount }}</div>
           <div class="summary-label">Целей в работе</div>
         </div>
       </div>
 
       <!-- Единая таблица целей -->
-      <div class="goals-table-section card" v-if="rawIdeas.length > 0">
+      <div class="goals-table-section card" v-if="rawIdeas.length > 0 || hasActiveFilters">
         <div class="table-header">
           <h3>Банк идей и целей</h3>
           <p class="section-hint">Все ваши цели и идеи</p>
@@ -99,12 +99,13 @@
                 type="text"
                 class="search-input"
                 placeholder="Поиск по названию и содержанию..."
+                @input="onSearchInput"
               />
             </div>
           </div>
           <div class="filter-group">
             <label class="filter-label">Сфера:</label>
-            <select v-model="filterSphere" class="filter-select">
+            <select v-model="filterSphere" class="filter-select" @change="onFilterChange">
               <option value="">Все сферы</option>
               <option v-for="sphere in lifeSpheres" :key="sphere.id" :value="sphere.id">
                 {{ sphere.icon }} {{ sphere.name }}
@@ -113,14 +114,11 @@
           </div>
           <div class="filter-group">
             <label class="filter-label">Статус:</label>
-            <select v-model="filterStatus" class="filter-select">
+            <select v-model="filterStatus" class="filter-select" @change="onFilterChange">
               <option value="">Все статусы</option>
-              <option value="validated">Истинные</option>
-              <option value="rejected">Отклонённые</option>
-              <option value="raw">Не оценённые</option>
-              <option value="in-work">В работе</option>
-              <option value="completed">Завершённые</option>
-              <option value="available">Доступные</option>
+              <option value="work">В работе</option>
+              <option value="complete">Завершенные</option>
+              <option value="unstatus">Не оценённые</option>
             </select>
           </div>
           <button 
@@ -143,6 +141,19 @@
               </tr>
             </thead>
             <tbody>
+              <!-- Empty state when filters return no results -->
+              <tr v-if="paginatedGoals.length === 0 && hasActiveFilters" class="empty-results-row">
+                <td colspan="4" class="empty-results-cell">
+                  <div class="empty-results-content">
+                    <Search :size="32" :stroke-width="1.5" class="empty-icon" />
+                    <p class="empty-title">Ничего не найдено</p>
+                    <p class="empty-hint">Попробуйте изменить параметры фильтрации</p>
+                    <button class="btn btn-sm btn-primary" @click="clearFilters">
+                      Сбросить фильтры
+                    </button>
+                  </div>
+                </td>
+              </tr>
               <tr 
                 v-for="goal in paginatedGoals" 
                 :key="goal.id"
@@ -1134,12 +1145,31 @@ const sphereAnalysis = computed(() => store.goalsBank.sphereAnalysis)
 const completedAt = computed(() => store.goalsBank.completedAt)
 const allGoals = computed(() => [...store.goals])
 
+// API data from store
+const goalsApiData = computed(() => store.goalsApiData)
+const apiTotalData = computed(() => goalsApiData.value?.totalData || null)
+const apiPagination = computed(() => goalsApiData.value?.pagination || { page: 1, totalPages: 1, totalItems: 0 })
+
+// Stats from API (prefer API data, fallback to local)
+const totalGoalsCount = computed(() => apiTotalData.value?.total_goals ?? rawIdeas.value.length)
+const trueGoalsCount = computed(() => apiTotalData.value?.true_goals ?? validatedGoals.value.length)
+const falseGoalsCount = computed(() => apiTotalData.value?.false_goals ?? rejectedGoals.value.length)
+const inWorkGoalsCount = computed(() => apiTotalData.value?.in_work_goals ?? transferredGoals.value.length)
+
+// Pagination state
+const currentPage = ref(1)
+const totalPages = computed(() => apiPagination.value.totalPages || 1)
+const hasMorePages = computed(() => currentPage.value < totalPages.value)
+
 const lessonStarted = ref(false)
 const addingNewGoal = ref(false)
 const filterSphere = ref('')
 const filterStatus = ref('')
 const searchQuery = ref('')
 const displayLimit = ref(6)
+
+// Debounce timer for search
+let searchDebounceTimer = null
 const selectedBankGoals = ref([])
 
 const showEditModal = ref(false)
@@ -1156,6 +1186,11 @@ const newGoal = ref({
 
 const showEmptyState = computed(() => {
   return false
+})
+
+// Check if any filters are active
+const hasActiveFilters = computed(() => {
+  return !!(filterSphere.value || filterStatus.value || searchQuery.value)
 })
 
 const showSummary = computed(() => {
@@ -1216,12 +1251,12 @@ function closeAddModal() {
   }
 }
 
-function saveNewGoal() {
+async function saveNewGoal() {
   if (!newGoal.value.text.trim()) {
     return
   }
   
-  store.addRawIdea({
+  const goalData = {
     text: newGoal.value.text.trim(),
     sphereId: newGoal.value.sphereId,
     whyImportant: newGoal.value.whyImportant,
@@ -1230,9 +1265,23 @@ function saveNewGoal() {
       why1: newGoal.value.whyImportant,
       why2: newGoal.value.why2
     }
-  }, { insertAtTop: true })
+  }
+  
+  // Optimistic UI: add to local state first
+  const localGoal = store.addRawIdea(goalData, { insertAtTop: true })
   
   closeAddModal()
+  
+  // Update displayLimit to show new goal
+  displayLimit.value = rawIdeas.value.length
+  
+  // Sync with backend (non-blocking)
+  store.createGoalOnBackend(goalData).then(result => {
+    if (result.success && result.goalId) {
+      // Update local goal with backend ID
+      store.updateRawIdea(localGoal.id, { backendId: result.goalId })
+    }
+  })
 }
 
 function selectNewGoalValidationStatus(isValid) {
@@ -1291,70 +1340,49 @@ function isGoalCompleted(goalId) {
   return getTransferredGoalStatus(goalId) === 'completed'
 }
 
-const filteredGoals = computed(() => {
-  return rawIdeas.value.filter(goal => {
-    if (filterSphere.value && goal.sphereId !== filterSphere.value) {
-      return false
-    }
-    
-    if (searchQuery.value) {
-      const query = searchQuery.value.toLowerCase()
-      const matchesText = goal.text?.toLowerCase().includes(query)
-      const matchesWhy = goal.whyImportant?.toLowerCase().includes(query)
-      const matchesWhy1 = goal.threeWhys?.why1?.toLowerCase().includes(query)
-      const matchesWhy2 = goal.threeWhys?.why2?.toLowerCase().includes(query)
-      if (!matchesText && !matchesWhy && !matchesWhy1 && !matchesWhy2) {
-        return false
-      }
-    }
-    
-    if (filterStatus.value) {
-      const transferred = isGoalTransferred(goal.id)
-      const completed = isGoalCompleted(goal.id)
-      const status = goal.status || 'raw'
-      
-      if (filterStatus.value === 'available' && (transferred || completed || status !== 'validated')) {
-        return false
-      }
-      if (filterStatus.value === 'in-work' && (!transferred || completed)) {
-        return false
-      }
-      if (filterStatus.value === 'completed' && !completed) {
-        return false
-      }
-      if (filterStatus.value === 'validated' && status !== 'validated') {
-        return false
-      }
-      if (filterStatus.value === 'rejected' && status !== 'rejected') {
-        return false
-      }
-      if (filterStatus.value === 'raw' && status !== 'raw') {
-        return false
-      }
-    }
-    
-    return true
-  })
-})
+// Backend already filters by: category_filter, status_filter, query_filter
+// No local filtering needed - just return rawIdeas
+const filteredGoals = computed(() => rawIdeas.value)
 
 const paginatedGoals = computed(() => {
   return filteredGoals.value.slice(0, displayLimit.value)
 })
 
 const hasMoreGoals = computed(() => {
+  // Prefer API pagination, fallback to local
+  if (apiPagination.value.totalPages > 1) {
+    return currentPage.value < apiPagination.value.totalPages
+  }
   return filteredGoals.value.length > displayLimit.value
 })
 
 const remainingGoalsCount = computed(() => {
+  // Prefer API pagination, fallback to local
+  if (apiPagination.value.totalItems > 0) {
+    const loaded = rawIdeas.value.length
+    return apiPagination.value.totalFilteredItems - loaded
+  }
   return filteredGoals.value.length - displayLimit.value
 })
 
-function loadMoreGoals() {
-  displayLimit.value += 6
+async function loadMoreGoals() {
+  if (isLoadingGoals.value) return
+  
+  // If we have API pagination, load next page
+  if (apiPagination.value.totalPages > 1 && currentPage.value < apiPagination.value.totalPages) {
+    currentPage.value++
+    await loadGoalsWithFilters(currentPage.value, true)
+    // Increase displayLimit to show all loaded data (API returns 6 per page)
+    displayLimit.value = rawIdeas.value.length
+  } else {
+    // Fallback to local pagination
+    displayLimit.value += 6
+  }
 }
 
 function resetPagination() {
   displayLimit.value = 6
+  currentPage.value = 1
 }
 
 function clearFilters() {
@@ -1363,6 +1391,86 @@ function clearFilters() {
   searchQuery.value = ''
   resetPagination()
   updateUrlParams()
+  // Reload from backend without filters
+  loadGoalsWithFilters(1, false)
+}
+
+// Backend filtering - build API params from current filters
+// API fields: category_filter, status_filter, query_filter, order_by, order_direction, page, with_steps_data
+function buildApiParams(page = 1) {
+  const params = {
+    with_steps_data: false,
+    order_by: 'date_created',
+    order_direction: 'desc',
+    page: page
+  }
+  
+  // Add text search filter (min 3 characters)
+  if (searchQuery.value && searchQuery.value.length >= 3) {
+    params.query_filter = searchQuery.value
+  }
+  
+  // Add sphere/category filter (API field: category_filter)
+  if (filterSphere.value) {
+    const backendCategory = store.categoryFrontendToBackend[filterSphere.value]
+    if (backendCategory) {
+      params.category_filter = backendCategory
+    }
+  }
+  
+  // Add status filter (API field: status_filter)
+  // Values: work, complete, null (for all)
+  if (filterStatus.value) {
+    params.status_filter = filterStatus.value
+  }
+  
+  return params
+}
+
+// Load goals with current filters from backend
+async function loadGoalsWithFilters(page = 1, append = false) {
+  if (isLoadingGoals.value) return
+  
+  isLoadingGoals.value = true
+  
+  try {
+    const params = buildApiParams(page)
+    // Pass append flag to store - true for pagination (page > 1), false for fresh load
+    const result = await store.loadGoalsFromBackend(params, append)
+    
+    if (result.success) {
+      currentPage.value = page
+      console.log('[GoalsBank] Goals loaded, page:', page, 'append:', append, 'total loaded:', rawIdeas.value.length)
+    }
+  } catch (error) {
+    console.error('[GoalsBank] Error loading goals with filters:', error)
+  } finally {
+    isLoadingGoals.value = false
+  }
+}
+
+// Handler for filter dropdowns change
+function onFilterChange() {
+  resetPagination()
+  updateUrlParams()
+  loadGoalsWithFilters(1, false)
+}
+
+// Handler for search input with debounce
+function onSearchInput() {
+  // Clear previous timer
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer)
+  }
+  
+  // Only search if 3+ characters or empty
+  if (searchQuery.value.length >= 3 || searchQuery.value.length === 0) {
+    searchDebounceTimer = setTimeout(() => {
+      resetPagination()
+      updateUrlParams()
+      loadGoalsWithFilters(1, false)
+    }, 500) // 500ms debounce
+  }
 }
 
 // URL parameter sync
@@ -1402,11 +1510,8 @@ function loadFiltersFromUrl() {
   if (route.query.status) filterStatus.value = route.query.status
 }
 
-// Watch filters and update URL (with debounce effect via check in updateUrlParams)
-watch([searchQuery, filterSphere, filterStatus], () => {
-  updateUrlParams()
-  resetPagination()
-})
+// Note: Filter changes are now handled via onFilterChange and onSearchInput
+// No need for watch - it would cause duplicate API calls
 
 const isBankGoalSelected = (goalId) => selectedBankGoals.value.includes(goalId)
 
@@ -1813,7 +1918,7 @@ function completeGoalsBankHandler() {
   }
 }
 
-function takeGoalToWork(goal) {
+async function takeGoalToWork(goal) {
   if (isGoalTransferred(goal.id)) return
   
   const goalData = {
@@ -1826,35 +1931,57 @@ function takeGoalToWork(goal) {
     steps: [],
     progress: 0
   }
+  
+  // Optimistic UI: add to local state
   store.addGoal(goalData)
+  
+  // Sync with backend (non-blocking) - set status to 'work'
+  const backendId = goal.backendId
+  if (backendId) {
+    store.takeGoalToWorkOnBackend(backendId)
+  }
 }
 
-function completeGoalFromBank(goal) {
+async function completeGoalFromBank(goal) {
   const transferredGoal = store.goals.find(g => g.sourceId === goal.id)
   if (!transferredGoal) return
   
   if (confirm(`Завершить цель "${transferredGoal.title}"?`)) {
+    // Optimistic UI: update local state
     store.updateGoal(transferredGoal.id, { 
       status: 'completed',
       progress: 100,
       completedAt: new Date().toISOString()
     })
+    
+    // Sync with backend (non-blocking)
+    const backendId = goal.backendId || transferredGoal.backendId
+    if (backendId) {
+      store.completeGoalOnBackend(backendId)
+    }
   }
 }
 
-function returnToWork(sourceId) {
+async function returnToWork(sourceId) {
   const goal = store.goals.find(g => g.sourceId === sourceId && g.source === 'goals-bank')
   if (!goal) return
   
   if (confirm(`Вернуть цель "${goal.title}" в работу?`)) {
+    // Optimistic UI: update local state
     store.updateGoal(goal.id, { 
       status: 'active',
       completedAt: null
     })
+    
+    // Sync with backend (non-blocking)
+    const backendId = goal.backendId
+    if (backendId) {
+      store.takeGoalToWorkOnBackend(backendId)
+    }
   }
 }
 
-function removeFromWork(goalId) {
+async function removeFromWork(goalId) {
   const goal = transferredGoals.value.find(g => g.id === goalId)
   if (goal) {
     const hasSteps = goal.steps && goal.steps.length > 0
@@ -1863,6 +1990,7 @@ function removeFromWork(goalId) {
       : `Убрать цель "${goal.title}" из работы? Цель вернётся в банк.`
     
     if (confirm(message)) {
+      // Optimistic UI: update local state
       if (goal.sourceId) {
         store.updateRawIdea(goal.sourceId, { status: 'validated', validated: true })
       } else {
@@ -1876,6 +2004,12 @@ function removeFromWork(goalId) {
         })
       }
       store.deleteGoal(goal.id)
+      
+      // Sync with backend (non-blocking)
+      const backendId = goal.backendId
+      if (backendId) {
+        store.removeGoalFromWorkOnBackend(backendId)
+      }
     }
   }
 }
@@ -1920,10 +2054,10 @@ function closeEditModal() {
   editingGoal.value = null
 }
 
-function saveGoalEdit() {
+async function saveGoalEdit() {
   if (!editingGoal.value) return
   
-  store.updateRawIdea(editingGoal.value.id, {
+  const updates = {
     text: editingGoal.value.text,
     whyImportant: editingGoal.value.whyImportant,
     sphereId: editingGoal.value.sphereId,
@@ -1932,9 +2066,20 @@ function saveGoalEdit() {
       why1: editingGoal.value.whyImportant,
       why2: editingGoal.value.why2
     }
-  })
+  }
+  
+  // Optimistic UI: update local state first
+  store.updateRawIdea(editingGoal.value.id, updates)
+  
+  const goalId = editingGoal.value.id
+  const backendId = rawIdeas.value.find(g => g.id === goalId)?.backendId
   
   closeEditModal()
+  
+  // Sync with backend (non-blocking)
+  if (backendId) {
+    store.updateGoalOnBackend(backendId, updates)
+  }
 }
 
 function selectValidationStatus(isTrue) {
@@ -1966,27 +2111,31 @@ function goToDecompose(goalId) {
   // Сохранить текущие фильтры перед переходом
   saveFiltersToStorage()
   
-  const transferredGoal = store.goals.find(g => g.sourceId === goalId && g.source === 'goals-bank')
-  if (transferredGoal) {
-    router.push(`/app/goals/${transferredGoal.id}`)
+  // Find the goal and get its backendId
+  const rawGoal = rawIdeas.value.find(g => g.id === goalId)
+  if (rawGoal && rawGoal.backendId) {
+    // Navigate using backendId - this will be used by GoalEdit to fetch data
+    router.push(`/app/goals/${rawGoal.backendId}`)
   } else {
-    const rawGoal = rawIdeas.value.find(g => g.id === goalId)
-    if (rawGoal && rawGoal.status === 'validated') {
-      takeGoalToWork(rawGoal)
-      const newGoal = store.goals.find(g => g.sourceId === goalId && g.source === 'goals-bank')
-      if (newGoal) {
-        router.push(`/app/goals/${newGoal.id}`)
-      }
-    }
+    console.warn('[GoalsBank] Cannot decompose: goal not found or no backendId', goalId)
   }
 }
 
-function deleteGoalFromModal() {
+async function deleteGoalFromModal() {
   if (!editingGoal.value) return
   
   if (confirm('Удалить эту цель из банка?')) {
-    store.deleteRawIdea(editingGoal.value.id)
+    const goalId = editingGoal.value.id
+    const backendId = rawIdeas.value.find(g => g.id === goalId)?.backendId
+    
+    // Optimistic UI: delete from local state first
+    store.deleteRawIdea(goalId)
     closeEditModal()
+    
+    // Sync with backend (non-blocking)
+    if (backendId) {
+      store.deleteGoalOnBackend(backendId)
+    }
   }
 }
 
@@ -1997,9 +2146,37 @@ function goToFullEdit(goalId) {
   }
 }
 
-onMounted(() => {
+// Loading state for API
+const isLoadingGoals = ref(false)
+
+// Load goals from backend (uses current filters)
+async function loadGoals() {
+  if (isLoadingGoals.value) return
+  
+  isLoadingGoals.value = true
+  
+  try {
+    // Load global data first if not loaded
+    if (!store.globalData.loaded) {
+      await store.loadGlobalData()
+    }
+    
+    // Load goals with current filters
+    const params = buildApiParams(1)
+    await store.loadGoalsFromBackend(params)
+  } catch (error) {
+    console.error('[GoalsBank] Error loading goals:', error)
+  } finally {
+    isLoadingGoals.value = false
+  }
+}
+
+onMounted(async () => {
   // Load filters from URL
   loadFiltersFromUrl()
+  
+  // Load goals from backend (non-blocking)
+  loadGoals()
   
   // Handle edit query parameter
   const editId = route.query.edit
@@ -2379,6 +2556,44 @@ onMounted(() => {
   text-align: center;
   color: var(--text-secondary);
   font-style: italic;
+}
+
+.empty-results-row {
+  background: transparent !important;
+}
+
+.empty-results-row:hover {
+  background: transparent !important;
+}
+
+.empty-results-cell {
+  padding: 3rem 1rem !important;
+  text-align: center;
+}
+
+.empty-results-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.empty-results-content .empty-icon {
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+.empty-results-content .empty-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.empty-results-content .empty-hint {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
 }
 
 .goals-table-wrapper {

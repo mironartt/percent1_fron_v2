@@ -1,9 +1,468 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { DEBUG_MODE, FORCE_SHOW_ONBOARDING, FORCE_SHOW_MINITASK } from '@/config/settings.js'
-import { getOnboardingData, updateOnboardingData, getMiniTaskData, updateMiniTaskData, getSSPData, updateSSPData } from '@/services/api.js'
+import { 
+  getOnboardingData, 
+  updateOnboardingData, 
+  getMiniTaskData, 
+  updateMiniTaskData, 
+  getSSPData, 
+  updateSSPData, 
+  getGlobalData,
+  getGoals,
+  getGoalSteps,
+  updateGoals,
+  updateGoalSteps,
+  createGoal as apiCreateGoal,
+  updateGoal as apiUpdateGoal,
+  deleteGoal as apiDeleteGoal,
+  completeGoal as apiCompleteGoal,
+  createStep as apiCreateStep,
+  updateStep as apiUpdateStep,
+  deleteStep as apiDeleteStep,
+  toggleStepComplete as apiToggleStepComplete,
+  scheduleStep as apiScheduleStep
+} from '@/services/api.js'
+import { useToastStore } from '@/stores/toast'
 
 export const useAppStore = defineStore('app', () => {
+  // ========================================
+  // GLOBAL DATA (справочники из бэкенда)
+  // ========================================
+  
+  const globalData = ref({
+    loading: false,
+    loaded: false,
+    telegramAuthLink: '',
+    telegramAuthCallbackUrl: '',
+    // Справочники для целей и шагов
+    goalsCategories: [],        // Категории целей (welfare, hobby, ...)
+    goalsTypes: [],             // Типы оценки целей (true, false)
+    goalsStatuses: [],          // Статусы целей (work, complete)
+    goalsStatusesFilter: [],    // Статусы для фильтрации (+ unstatus)
+    stepStatusesFilter: [],     // Статусы шагов (planned, unplanned)
+    stepResultsFilter: [],      // Результаты шагов (complete, uncomplete)
+    timesData: [],              // Варианты времени (half, one, two, ...)
+    priorityData: []            // Приоритеты (critical, important, ...)
+  })
+  
+  /**
+   * Загрузить глобальные данные с бэкенда
+   * Включает справочники для целей, шагов, приоритетов и т.д.
+   */
+  async function loadGlobalData() {
+    if (globalData.value.loading) return
+    
+    globalData.value.loading = true
+    
+    try {
+      const result = await getGlobalData()
+      
+      if (result.status === 'ok' && result.data) {
+        const data = result.data
+        
+        globalData.value = {
+          loading: false,
+          loaded: true,
+          telegramAuthLink: data.t_auth_link || '',
+          telegramAuthCallbackUrl: data.t_auth_callback_url || '',
+          goalsCategories: data.goals_categories_data || [],
+          goalsTypes: data.goals_types_data || [],
+          goalsStatuses: data.goals_statuses_data || [],
+          goalsStatusesFilter: data.goals_statuses_filter_data || [],
+          stepStatusesFilter: data.step_statuses_filter_data || [],
+          stepResultsFilter: data.step_results_filter_data || [],
+          timesData: data.times_data || [],
+          priorityData: data.priority_data || []
+        }
+        
+        if (DEBUG_MODE) {
+          console.log('[Store] Global data loaded:', {
+            categories: globalData.value.goalsCategories.length,
+            types: globalData.value.goalsTypes.length,
+            statuses: globalData.value.goalsStatuses.length,
+            priorities: globalData.value.priorityData.length
+          })
+        }
+      } else {
+        globalData.value.loading = false
+        if (DEBUG_MODE) {
+          console.warn('[Store] Failed to load global data:', result)
+        }
+      }
+    } catch (error) {
+      globalData.value.loading = false
+      if (DEBUG_MODE) {
+        console.error('[Store] Error loading global data:', error)
+      }
+    }
+  }
+  
+  /**
+   * Маппинг категорий бэкенда на фронтенд ID сфер
+   * Бэкенд: welfare, hobby, environment, health_sport, work, family
+   * Фронт: wealth, hobbies, friendship, health, career, love
+   */
+  const categoryBackendToFrontend = {
+    'welfare': 'wealth',
+    'hobby': 'hobbies',
+    'environment': 'friendship',
+    'health_sport': 'health',
+    'work': 'career',
+    'family': 'love'
+  }
+  
+  const categoryFrontendToBackend = {
+    'wealth': 'welfare',
+    'hobbies': 'hobby',
+    'friendship': 'environment',
+    'health': 'health_sport',
+    'career': 'work',
+    'love': 'family'
+  }
+  
+  /**
+   * Получить название категории по ID
+   */
+  function getCategoryTitle(categoryId) {
+    const category = globalData.value.goalsCategories.find(c => c.id === categoryId)
+    return category ? category.title : categoryId
+  }
+  
+  /**
+   * Получить название приоритета по ID
+   */
+  function getPriorityTitle(priorityId) {
+    const priority = globalData.value.priorityData.find(p => p.id === priorityId)
+    return priority ? priority.title : priorityId
+  }
+  
+  /**
+   * Получить название времени по ID
+   */
+  function getTimeTitle(timeId) {
+    const time = globalData.value.timesData.find(t => t.id === timeId)
+    return time ? time.title : timeId
+  }
+  
+  // ========================================
+  // GOALS API (загрузка и синхронизация с бэкендом)
+  // ========================================
+  
+  const goalsApiData = ref({
+    loading: false,
+    loaded: false,
+    totalData: null,
+    pagination: { page: 1, pageSize: 6, totalPages: 1, totalItems: 0 }
+  })
+  
+  /**
+   * Загрузить цели с бэкенда и синхронизировать с локальным состоянием
+   * @param {Object} params - Параметры запроса (фильтры, сортировка, пагинация)
+   * @param {boolean} append - Добавить к существующим данным (для пагинации) или заменить
+   */
+  async function loadGoalsFromBackend(params = {}, append = false) {
+    if (goalsApiData.value.loading) return { success: false, reason: 'loading' }
+    
+    goalsApiData.value.loading = true
+    
+    try {
+      const result = await getGoals(params)
+      
+      if (result.status === 'ok' && result.data) {
+        const data = result.data
+        
+        // Сохраняем статистику
+        goalsApiData.value.totalData = data.total_data || null
+        goalsApiData.value.pagination = {
+          page: data.page || 1,
+          pageSize: data.page_size || 6,
+          totalPages: data.total_pages || 1,
+          totalItems: data.total_items || 0,
+          totalFilteredItems: data.total_filtered_items || 0
+        }
+        
+        // Синхронизируем цели с локальным состоянием goalsBank.rawIdeas
+        if (data.goals_data && Array.isArray(data.goals_data)) {
+          syncGoalsFromBackend(data.goals_data, append)
+        }
+        
+        goalsApiData.value.loaded = true
+        goalsApiData.value.loading = false
+        
+        if (DEBUG_MODE) {
+          console.log('[Store] Goals loaded from backend:', {
+            count: data.goals_data?.length || 0,
+            total: data.total_items,
+            page: data.page,
+            append
+          })
+        }
+        
+        return { success: true, data }
+      } else {
+        goalsApiData.value.loading = false
+        if (DEBUG_MODE) {
+          console.warn('[Store] Failed to load goals:', result)
+        }
+        return { success: false, error: result.message }
+      }
+    } catch (error) {
+      goalsApiData.value.loading = false
+      if (DEBUG_MODE) {
+        console.error('[Store] Error loading goals:', error)
+      }
+      return { success: false, error: error.message }
+    }
+  }
+  
+  /**
+   * Синхронизировать цели из бэкенда с локальным store
+   * Преобразует формат бэкенда в формат фронтенда
+   * @param {Array} backendGoals - Цели из бэкенда
+   * @param {boolean} append - Добавить к существующим данным или заменить
+   */
+  function syncGoalsFromBackend(backendGoals, append = false) {
+    const syncedGoals = backendGoals.map(g => ({
+      id: String(g.goal_id),
+      backendId: g.goal_id,
+      text: g.title || '',
+      sphereId: categoryBackendToFrontend[g.category] || g.category || '',
+      whyImportant: g.why_important || '',
+      threeWhys: {
+        why1: g.why_important || '',
+        why2: g.why_give_me || '',
+        why3: g.why_about_me || ''
+      },
+      // score: 'true' → validated, 'false' → rejected, null → raw
+      status: g.score === 'true' ? 'validated' : (g.score === 'false' ? 'rejected' : 'raw'),
+      validated: g.score === 'true',
+      // status из бэкенда: 'work', 'complete', null
+      workStatus: g.status || null,
+      dateCreated: g.date_created || new Date().toISOString(),
+      dateCompleted: g.date_completed || null,
+      totalStepsData: g.total_steps_data || null,
+      stepsData: g.steps_data || []
+    }))
+    
+    // Обновляем goalsBank.rawIdeas
+    if (append) {
+      // Добавляем новые цели, избегая дубликатов по backendId
+      const existingIds = new Set(goalsBank.value.rawIdeas.map(g => g.backendId))
+      const newGoals = syncedGoals.filter(g => !existingIds.has(g.backendId))
+      goalsBank.value.rawIdeas = [...goalsBank.value.rawIdeas, ...newGoals]
+    } else {
+      goalsBank.value.rawIdeas = syncedGoals
+    }
+    
+    // Также обновляем goals (цели в работе)
+    const goalsInWork = syncedGoals.filter(g => g.workStatus === 'work' || g.workStatus === 'complete')
+    
+    goalsInWork.forEach(backendGoal => {
+      const existingGoal = goals.value.find(g => g.backendId === backendGoal.backendId)
+      if (!existingGoal) {
+        // Добавляем цель в работу
+        goals.value.push({
+          id: backendGoal.id,
+          backendId: backendGoal.backendId,
+          title: backendGoal.text,
+          description: backendGoal.whyImportant,
+          sphereId: backendGoal.sphereId,
+          source: 'goals-bank',
+          sourceId: backendGoal.id,
+          threeWhys: backendGoal.threeWhys,
+          status: backendGoal.workStatus === 'complete' ? 'completed' : 'active',
+          progress: backendGoal.totalStepsData?.complete_percent || 0,
+          steps: backendGoal.stepsData || [],
+          createdAt: backendGoal.dateCreated,
+          completedAt: backendGoal.dateCompleted
+        })
+      } else {
+        // Обновляем существующую цель
+        Object.assign(existingGoal, {
+          title: backendGoal.text,
+          description: backendGoal.whyImportant,
+          sphereId: backendGoal.sphereId,
+          threeWhys: backendGoal.threeWhys,
+          status: backendGoal.workStatus === 'complete' ? 'completed' : 'active',
+          progress: backendGoal.totalStepsData?.complete_percent || 0,
+          steps: backendGoal.stepsData || [],
+          completedAt: backendGoal.dateCompleted
+        })
+      }
+    })
+    
+    if (DEBUG_MODE) {
+      console.log('[Store] Goals synced from backend:', {
+        rawIdeas: goalsBank.value.rawIdeas.length,
+        goalsInWork: goalsInWork.length
+      })
+    }
+  }
+  
+  /**
+   * Создать новую цель на бэкенде
+   * @param {Object} goalData - Данные цели
+   * @returns {Promise<{success: boolean, goalId?: number}>}
+   */
+  async function createGoalOnBackend(goalData) {
+    try {
+      const backendData = {
+        title: goalData.text || goalData.title,
+        category: categoryFrontendToBackend[goalData.sphereId] || goalData.sphereId,
+        score: goalData.status === 'validated' ? 'true' : (goalData.status === 'rejected' ? 'false' : null),
+        status: goalData.workStatus || null,
+        why_important: goalData.whyImportant || goalData.threeWhys?.why1 || '',
+        why_give_me: goalData.threeWhys?.why2 || '',
+        why_about_me: goalData.threeWhys?.why3 || ''
+      }
+      
+      const result = await apiCreateGoal(backendData)
+      
+      if (result.status === 'ok') {
+        if (DEBUG_MODE) {
+          console.log('[Store] Goal created on backend:', result.data)
+        }
+        
+        // Optimistic update: increment stats
+        if (goalsApiData.value.totalData) {
+          goalsApiData.value.totalData.total_goals = (goalsApiData.value.totalData.total_goals || 0) + 1
+          
+          // Update type-specific counter based on status
+          if (goalData.status === 'validated') {
+            goalsApiData.value.totalData.true_goals = (goalsApiData.value.totalData.true_goals || 0) + 1
+          } else if (goalData.status === 'rejected') {
+            goalsApiData.value.totalData.false_goals = (goalsApiData.value.totalData.false_goals || 0) + 1
+          }
+        }
+        
+        // Update pagination totals
+        if (goalsApiData.value.pagination) {
+          goalsApiData.value.pagination.totalItems = (goalsApiData.value.pagination.totalItems || 0) + 1
+          goalsApiData.value.pagination.totalFilteredItems = (goalsApiData.value.pagination.totalFilteredItems || 0) + 1
+        }
+        
+        return { success: true, goalId: result.data?.created_goals_ids?.[0] }
+      }
+      
+      return { success: false, error: result.message }
+    } catch (error) {
+      if (DEBUG_MODE) {
+        console.error('[Store] Error creating goal on backend:', error)
+      }
+      return { success: false, error: error.message }
+    }
+  }
+  
+  /**
+   * Обновить цель на бэкенде
+   * @param {number} goalId - ID цели
+   * @param {Object} goalData - Данные для обновления
+   */
+  async function updateGoalOnBackend(goalId, goalData) {
+    try {
+      const backendData = {}
+      
+      if (goalData.text !== undefined) backendData.title = goalData.text
+      if (goalData.title !== undefined) backendData.title = goalData.title
+      if (goalData.sphereId !== undefined) {
+        backendData.category = categoryFrontendToBackend[goalData.sphereId] || goalData.sphereId
+      }
+      if (goalData.status !== undefined) {
+        backendData.score = goalData.status === 'validated' ? 'true' : (goalData.status === 'rejected' ? 'false' : null)
+      }
+      if (goalData.workStatus !== undefined) {
+        backendData.status = goalData.workStatus
+      }
+      if (goalData.whyImportant !== undefined) backendData.why_important = goalData.whyImportant
+      if (goalData.threeWhys !== undefined) {
+        backendData.why_important = goalData.threeWhys.why1 || ''
+        backendData.why_give_me = goalData.threeWhys.why2 || ''
+        backendData.why_about_me = goalData.threeWhys.why3 || ''
+      }
+      
+      const result = await apiUpdateGoal(goalId, backendData)
+      
+      if (result.status === 'ok') {
+        if (DEBUG_MODE) {
+          console.log('[Store] Goal updated on backend:', goalId)
+        }
+        return { success: true }
+      }
+      
+      return { success: false, error: result.message }
+    } catch (error) {
+      if (DEBUG_MODE) {
+        console.error('[Store] Error updating goal on backend:', error)
+      }
+      return { success: false, error: error.message }
+    }
+  }
+  
+  /**
+   * Удалить цель на бэкенде
+   * @param {number} goalId - ID цели
+   */
+  async function deleteGoalOnBackend(goalId) {
+    try {
+      const result = await apiDeleteGoal(goalId)
+      
+      if (result.status === 'ok') {
+        if (DEBUG_MODE) {
+          console.log('[Store] Goal deleted on backend:', goalId)
+        }
+        return { success: true }
+      }
+      
+      return { success: false, error: result.message }
+    } catch (error) {
+      if (DEBUG_MODE) {
+        console.error('[Store] Error deleting goal on backend:', error)
+      }
+      return { success: false, error: error.message }
+    }
+  }
+  
+  /**
+   * Завершить цель на бэкенде
+   * @param {number} goalId - ID цели
+   */
+  async function completeGoalOnBackend(goalId) {
+    try {
+      const result = await apiCompleteGoal(goalId)
+      
+      if (result.status === 'ok') {
+        if (DEBUG_MODE) {
+          console.log('[Store] Goal completed on backend:', goalId)
+        }
+        return { success: true }
+      }
+      
+      return { success: false, error: result.message }
+    } catch (error) {
+      if (DEBUG_MODE) {
+        console.error('[Store] Error completing goal on backend:', error)
+      }
+      return { success: false, error: error.message }
+    }
+  }
+  
+  /**
+   * Взять цель в работу (установить status: 'work' на бэкенде)
+   * @param {number} goalId - ID цели
+   */
+  async function takeGoalToWorkOnBackend(goalId) {
+    return updateGoalOnBackend(goalId, { workStatus: 'work' })
+  }
+  
+  /**
+   * Убрать цель из работы (установить status: null на бэкенде)
+   * @param {number} goalId - ID цели
+   */
+  async function removeGoalFromWorkOnBackend(goalId) {
+    return updateGoalOnBackend(goalId, { workStatus: null })
+  }
+  
   // ========================================
   // USER & AUTH
   // ========================================
@@ -298,6 +757,44 @@ export const useAppStore = defineStore('app', () => {
     
     saveToLocalStorage()
     return newEntry
+  }
+
+  // Обновить существующую запись дневника
+  function updateJournalEntry(entryId, updates) {
+    const entryIndex = journal.value.entries.findIndex(e => 
+      e.id === entryId || String(e.id) === String(entryId)
+    )
+    
+    if (entryIndex !== -1) {
+      const existingEntry = journal.value.entries[entryIndex]
+      const updatedEntry = {
+        ...existingEntry,
+        whatDone: updates.whatDone ?? existingEntry.whatDone,
+        whatNotDone: updates.whatNotDone ?? existingEntry.whatNotDone,
+        reflection: updates.reflection ?? existingEntry.reflection,
+        tomorrowPlans: updates.tomorrowPlans ?? existingEntry.tomorrowPlans
+      }
+      journal.value.entries[entryIndex] = updatedEntry
+      saveToLocalStorage()
+      return updatedEntry
+    }
+    
+    return null
+  }
+  
+  // Удалить запись дневника
+  function deleteJournalEntry(entryId) {
+    const entryIndex = journal.value.entries.findIndex(e => 
+      e.id === entryId || String(e.id) === String(entryId)
+    )
+    
+    if (entryIndex !== -1) {
+      journal.value.entries.splice(entryIndex, 1)
+      saveToLocalStorage()
+      return true
+    }
+    
+    return false
   }
 
   // Обновить AI-ответ для записи
@@ -2203,6 +2700,8 @@ export const useAppStore = defineStore('app', () => {
     todayJournalEntry,
     journalStreak,
     addJournalEntry,
+    updateJournalEntry,
+    deleteJournalEntry,
     updateJournalAIResponse,
     setJournalAILoading,
     getRecentJournalEntries,
@@ -2338,6 +2837,26 @@ export const useAppStore = defineStore('app', () => {
     telegramSettings,
     connectTelegram,
     disconnectTelegram,
-    updateTelegramNotifications
+    updateTelegramNotifications,
+    
+    // Global Data (справочники)
+    globalData,
+    loadGlobalData,
+    categoryBackendToFrontend,
+    categoryFrontendToBackend,
+    
+    // Goals API (загрузка и синхронизация целей)
+    goalsApiData,
+    loadGoalsFromBackend,
+    syncGoalsFromBackend,
+    createGoalOnBackend,
+    updateGoalOnBackend,
+    deleteGoalOnBackend,
+    completeGoalOnBackend,
+    takeGoalToWorkOnBackend,
+    removeGoalFromWorkOnBackend,
+    getCategoryTitle,
+    getPriorityTitle,
+    getTimeTitle
   }
 })

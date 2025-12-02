@@ -56,6 +56,7 @@
         <span class="nav-label">{{ isDark ? 'Светлая тема' : 'Тёмная тема' }}</span>
       </div>
       
+      <!-- User info and Telegram bot temporarily hidden
       <div class="user-info" v-if="store.isAuthenticated && !isCollapsed">
         <User class="user-avatar" :size="24" :stroke-width="1.5" />
         <span class="user-name">{{ store.displayName }}</span>
@@ -70,6 +71,7 @@
         <Send class="icon telegram-icon" :size="20" :stroke-width="1.5" />
         <span class="nav-label">Телеграм бот</span>
       </button>
+      -->
       
       <router-link to="/app/settings" class="settings-link" :title="isCollapsed ? 'Настройки' : ''">
         <Settings class="icon" :size="20" :stroke-width="1.5" />
@@ -82,6 +84,7 @@
     </div>
   </aside>
 
+  <!-- Telegram modal temporarily hidden
   <Teleport to="body">
     <div v-if="showTelegramModal" class="modal-overlay" @click.self="showTelegramModal = false">
       <div class="modal-container">
@@ -131,6 +134,7 @@
       </div>
     </div>
   </Teleport>
+  -->
 </template>
 
 <script setup>

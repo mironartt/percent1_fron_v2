@@ -412,6 +412,311 @@ export async function updateMiniTaskData(data) {
   return request('POST', '/api/rest/front/app/onboard/mini-task/update/', data)
 }
 
+// ========================================
+// GOALS API (Банк целей, Планирование, Детали цели)
+// ========================================
+
+/**
+ * Получить список целей с возможностью фильтрации и пагинации
+ * Используется на страницах: Банк целей, Планирование
+ * 
+ * @param {object} params - Параметры запроса
+ * @param {boolean} [params.with_steps_data] - Получить данные по шагам (первая страница)
+ * @param {string} [params.order_by] - Поле сортировки: 'date_created' | 'status' | 'title' | 'category'
+ * @param {string} [params.order_direction] - Направление: 'asc' | 'desc'
+ * @param {string} [params.status_filter] - Фильтр по статусу: 'work' | 'complete' | 'unstatus'
+ * @param {string} [params.category_filter] - Фильтр по категории
+ * @param {string} [params.query_filter] - Текстовый поиск (min 3 символа)
+ * @param {number} [params.page] - Номер страницы
+ * @returns {Promise<object>} - Список целей с пагинацией и статистикой
+ * 
+ * Ответ содержит:
+ * - goals_data: массив целей
+ * - total_data: статистика (total_goals, true_goals, false_goals, in_work_goals)
+ * - total_data_steps_data: статистика по шагам (если with_steps_data=true)
+ * - page, page_size, total_pages, total_items, total_filtered_items
+ */
+export async function getGoals(params = {}) {
+  return request('POST', '/api/rest/front/app/goals/get/', params)
+}
+
+/**
+ * Получить данные по шагам конкретной цели с фильтрацией и пагинацией
+ * Используется на страницах: Детали цели, Планирование (при раскрытии карточки)
+ * 
+ * @param {object} params - Параметры запроса
+ * @param {number} params.goal_id - ID цели (обязательный)
+ * @param {string} [params.order_by] - Поле сортировки: 'order' | 'date_created' | 'status' | 'priority'
+ * @param {string} [params.order_direction] - Направление: 'asc' | 'desc'
+ * @param {string} [params.status_filter] - Фильтр по статусу: 'planned' | 'unplanned'
+ * @param {string} [params.result_filter] - Фильтр по результату: 'complete' | 'uncomplete'
+ * @param {string} [params.priority_filter] - Фильтр по приоритету: 'critical' | 'important' | 'attention' | 'optional'
+ * @param {string} [params.query_filter] - Текстовый поиск (min 3 символа)
+ * @param {number} [params.page] - Номер страницы
+ * @param {number} [params.page_size] - Размер страницы (6-10)
+ * @returns {Promise<object>} - Данные цели с шагами
+ * 
+ * Ответ содержит:
+ * - goal_data: данные цели + steps_data + total_data
+ * - page, page_size, total_pages, total_items, total_filtered_items
+ */
+export async function getGoalSteps(params) {
+  return request('POST', '/api/rest/front/app/goals/steps/get/', params)
+}
+
+/**
+ * Создать или обновить цели
+ * 
+ * @param {object} data - Данные для обновления
+ * @param {Array} [data.goals_data] - Массив целей для создания/обновления
+ * @param {number|null} data.goals_data[].goal_id - ID цели (null для создания, число для обновления)
+ * @param {string} data.goals_data[].title - Название цели
+ * @param {string} [data.goals_data[].category] - Категория: 'welfare' | 'hobby' | 'environment' | 'health_sport' | 'work' | 'family'
+ * @param {string} [data.goals_data[].status] - Статус: 'work' | 'complete' | null
+ * @param {string} [data.goals_data[].score] - Оценка: 'true' | 'false' | null
+ * @param {string} [data.goals_data[].why_important] - Почему это важно?
+ * @param {string} [data.goals_data[].why_give_me] - Что это мне даст?
+ * @param {string} [data.goals_data[].why_about_me] - Почему это про меня?
+ * @param {Array<number>} [data.deleted_goals_ids] - ID целей для удаления
+ * @param {Array<number>} [data.completed_goals_ids] - ID целей для завершения
+ * @returns {Promise<object>} - Обновлённые данные целей
+ */
+export async function updateGoals(data) {
+  return request('POST', '/api/rest/front/app/goals/update/', data)
+}
+
+/**
+ * Создать или обновить шаги целей
+ * 
+ * @param {object} data - Данные для обновления
+ * @param {Array} data.goals_steps_data - Массив шагов для создания/обновления
+ * @param {number} data.goals_steps_data[].goal_id - ID цели (обязательный)
+ * @param {number|null} [data.goals_steps_data[].step_id] - ID шага (null для создания, число для обновления)
+ * @param {string} data.goals_steps_data[].title - Название шага
+ * @param {string} [data.goals_steps_data[].description] - Описание/комментарий
+ * @param {string} [data.goals_steps_data[].priority] - Приоритет: 'critical' | 'important' | 'attention' | 'optional'
+ * @param {string} [data.goals_steps_data[].time_duration] - Время: 'half' | 'one' | 'two' | 'three' | 'four'
+ * @param {string} [data.goals_steps_data[].dt] - Дата выполнения (YYYY-MM-DD)
+ * @param {number} data.goals_steps_data[].order - Порядковый номер
+ * @param {boolean} [data.goals_steps_data[].is_complete] - Шаг завершён
+ * @param {boolean} [data.goals_steps_data[].is_deleted] - Шаг удалён
+ * @returns {Promise<object>} - Обновлённые данные целей с шагами
+ */
+export async function updateGoalSteps(data) {
+  return request('POST', '/api/rest/front/app/goals/steps/update/', data)
+}
+
+// ========================================
+// GOALS API HELPER FUNCTIONS
+// ========================================
+
+/**
+ * Создать новую цель
+ * @param {object} goalData - Данные цели
+ * @returns {Promise<object>} - Созданная цель
+ */
+export async function createGoal(goalData) {
+  return updateGoals({
+    goals_data: [{
+      goal_id: null,
+      ...goalData
+    }]
+  })
+}
+
+/**
+ * Обновить существующую цель
+ * @param {number} goalId - ID цели
+ * @param {object} goalData - Данные для обновления
+ * @returns {Promise<object>} - Обновлённая цель
+ */
+export async function updateGoal(goalId, goalData) {
+  return updateGoals({
+    goals_data: [{
+      goal_id: goalId,
+      ...goalData
+    }]
+  })
+}
+
+/**
+ * Удалить цель
+ * @param {number} goalId - ID цели
+ * @returns {Promise<object>} - Результат удаления
+ */
+export async function deleteGoal(goalId) {
+  return updateGoals({
+    deleted_goals_ids: [goalId]
+  })
+}
+
+/**
+ * Завершить цель
+ * @param {number} goalId - ID цели
+ * @returns {Promise<object>} - Результат
+ */
+export async function completeGoal(goalId) {
+  return updateGoals({
+    completed_goals_ids: [goalId]
+  })
+}
+
+/**
+ * Создать новый шаг
+ * @param {number} goalId - ID цели
+ * @param {object} stepData - Данные шага
+ * @returns {Promise<object>} - Созданный шаг
+ */
+export async function createStep(goalId, stepData) {
+  return updateGoalSteps({
+    goals_steps_data: [{
+      goal_id: goalId,
+      step_id: null,
+      ...stepData
+    }]
+  })
+}
+
+/**
+ * Обновить существующий шаг
+ * @param {number} goalId - ID цели
+ * @param {number} stepId - ID шага
+ * @param {object} stepData - Данные для обновления
+ * @returns {Promise<object>} - Обновлённый шаг
+ */
+export async function updateStep(goalId, stepId, stepData) {
+  return updateGoalSteps({
+    goals_steps_data: [{
+      goal_id: goalId,
+      step_id: stepId,
+      ...stepData
+    }]
+  })
+}
+
+/**
+ * Удалить шаг
+ * @param {number} goalId - ID цели
+ * @param {number} stepId - ID шага
+ * @returns {Promise<object>} - Результат удаления
+ */
+export async function deleteStep(goalId, stepId) {
+  return updateGoalSteps({
+    goals_steps_data: [{
+      goal_id: goalId,
+      step_id: stepId,
+      is_deleted: true
+    }]
+  })
+}
+
+/**
+ * Отметить шаг завершённым/незавершённым
+ * @param {number} goalId - ID цели
+ * @param {number} stepId - ID шага
+ * @param {boolean} isComplete - Завершён ли шаг
+ * @returns {Promise<object>} - Результат
+ */
+export async function toggleStepComplete(goalId, stepId, isComplete) {
+  return updateGoalSteps({
+    goals_steps_data: [{
+      goal_id: goalId,
+      step_id: stepId,
+      is_complete: isComplete
+    }]
+  })
+}
+
+/**
+ * Запланировать шаг на дату
+ * @param {number} goalId - ID цели
+ * @param {number} stepId - ID шага
+ * @param {string} date - Дата в формате YYYY-MM-DD
+ * @param {string} [priority] - Приоритет
+ * @param {string} [timeDuration] - Время выполнения
+ * @returns {Promise<object>} - Результат
+ */
+export async function scheduleStep(goalId, stepId, date, priority = null, timeDuration = null) {
+  const stepData = {
+    goal_id: goalId,
+    step_id: stepId,
+    dt: date
+  }
+  if (priority) stepData.priority = priority
+  if (timeDuration) stepData.time_duration = timeDuration
+  
+  return updateGoalSteps({
+    goals_steps_data: [stepData]
+  })
+}
+
+// ==================== DIARY API ====================
+
+/**
+ * Получить записи дневника
+ * @param {object} params - Параметры запроса
+ * @param {string} [params.order_by] - Поле сортировки (date_created)
+ * @param {string} [params.order_direction] - Направление (asc, desc)
+ * @param {string} [params.query_filter] - Текстовый поиск (мин 3 символа)
+ * @param {number} [params.page] - Номер страницы
+ * @returns {Promise<object>} - Список записей дневника
+ */
+export async function getDiaryEntries(params = {}) {
+  const requestData = {
+    order_by: params.order_by || 'date_created',
+    order_direction: params.order_direction || 'desc',
+    page: params.page || 1
+  }
+  
+  if (params.query_filter && params.query_filter.length >= 3) {
+    requestData.query_filter = params.query_filter
+  }
+  
+  return request('POST', '/api/rest/front/app/diary/get/', requestData)
+}
+
+/**
+ * Создать или обновить запись дневника
+ * @param {object} data - Данные записи
+ * @param {number} [data.diary_id] - ID записи (null для создания)
+ * @param {string} [data.what_done] - Что сделал
+ * @param {string} [data.what_not_done] - Что не сделал
+ * @param {string} [data.reflection] - Рефлексия
+ * @param {string} [data.plans] - Планы на завтра
+ * @param {boolean} [data.deleted] - Удалить запись
+ * @returns {Promise<object>} - { diary_id }
+ */
+export async function updateDiaryEntry(data) {
+  return request('POST', '/api/rest/front/app/diary/update/', data)
+}
+
+/**
+ * Создать новую запись дневника
+ * @param {object} entryData - Данные записи
+ * @returns {Promise<object>} - { diary_id }
+ */
+export async function createDiaryEntry(entryData) {
+  return updateDiaryEntry({
+    diary_id: null,
+    what_done: entryData.what_done || '',
+    what_not_done: entryData.what_not_done || '',
+    reflection: entryData.reflection || '',
+    plans: entryData.plans || ''
+  })
+}
+
+/**
+ * Удалить запись дневника
+ * @param {number} diaryId - ID записи
+ * @returns {Promise<object>} - Результат
+ */
+export async function deleteDiaryEntry(diaryId) {
+  return updateDiaryEntry({
+    diary_id: diaryId,
+    deleted: true
+  })
+}
+
 // Экспорт API как объекта для удобства
 export const api = {
   request,
@@ -431,7 +736,27 @@ export const api = {
   getSSPData,
   updateSSPData,
   getMiniTaskData,
-  updateMiniTaskData
+  updateMiniTaskData,
+  // Goals API
+  getGoals,
+  getGoalSteps,
+  updateGoals,
+  updateGoalSteps,
+  // Goals Helper Functions
+  createGoal,
+  updateGoal,
+  deleteGoal,
+  completeGoal,
+  createStep,
+  updateStep,
+  deleteStep,
+  toggleStepComplete,
+  scheduleStep,
+  // Diary API
+  getDiaryEntries,
+  updateDiaryEntry,
+  createDiaryEntry,
+  deleteDiaryEntry
 }
 
 export default api

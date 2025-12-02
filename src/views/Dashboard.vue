@@ -1,6 +1,7 @@
 <template>
   <OnboardingAI v-if="shouldShowOnboarding" />
 
+  <!-- MiniTask disabled - decision to remove this feature
   <MiniTaskWelcome 
     v-else-if="shouldShowMiniTask && !showMiniTask" 
     @start="showMiniTask = true"
@@ -11,9 +12,15 @@
     v-else-if="showMiniTask && !isMiniTaskCompleted" 
     @complete="onMiniTaskComplete"
   />
+  -->
 
+<<<<<<< HEAD
   <div v-else class="dashboard-wrapper">
     <div class="dashboard">
+=======
+  <div v-else-if="!shouldShowOnboarding" class="dashboard-wrapper">
+    <div :class="['dashboard', { 'panel-collapsed': isMentorPanelCollapsed }]">
+>>>>>>> 77ac8544dd2abe4064b1b890da2bdcc274952755
       <header class="day-header">
         <div class="greeting-section">
           <div class="time-icon" :class="timeOfDayClass">

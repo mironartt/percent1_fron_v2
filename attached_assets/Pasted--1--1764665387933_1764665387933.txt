@@ -1,0 +1,34 @@
+Проблемы сохранились и новые правки:
+
+- 1. страница "детали по цели": сейчас странное поведение при перетаскивание шага.
+Нужно отправлять на обновление данные только по тем шагам, где меняется `order`, не нужно слать все шаги и все поля по шагам, только то что обновляется.
+Аналогичное же поведение, если я пытаюсь изменить что-нибудь в рамках одного шага, к примеру его приоритет, при этом на бэк в запросе почему-то отправляются данные больше чем по одному шагу, это излишне, нужно только то что обновляется.
+
+- 2. также странице "детали по цели" - сейчас при фильтрации не используется бэк. Еще раз опишу схему:
+```
+юзер выбрал фильр -> отправка на запроса на бэк с указанными фильтрами -> получение ответа с бэка -> отрисока полученных результатов (обновление данных по пагинации и тд...), и если быть точным то не отрисовка, а добавление данных в таблицу, и появление вертикального скролла (сейчас так должно быть практически везде где есть пагинация)
+```
+
+- 3. на странице банк целей, используются некоректные поля для фильтраций, вот актуальные:
+```
+with_steps_data = RestBooleanField(required=False, allow_null=True, help_text='Получить данные о целях _(общие данные и первая страница пагинации при дефолтной сортировке)_')
+order_by = RestChoiceField(choices=Goal.ALLOWED_ORDER_BY, required=False, default='date_created', help_text="Поле сортировки", example="status")
+order_direction = RestChoiceField(choices=['asc', 'desc'], default='desc', help_text='Направление сортировки', example='desc', required=False)
+status_filter = RestChoiceField(choices=user_data.GOAL_STATUSES, required=False, allow_null=True, help_text="Фильтр по статусу цели", example="work")
+category_filter = RestChoiceField(choices=user_data.CATEGORY_CHOICES, required=False, allow_null=True, help_text="Фильтр по категории цели", example="health_sport")
+query_filter = RestCharField(required=False, allow_null=True, default=None, help_text="Фильтр по вхождению указанной фразы в название цели", example="454554", max_length=100, min_length=3)
+page = RestIntegerField(help_text='Выбранная страница пагинации', example=1, required=False, min_value=1)
+```
+А я встретил, к примеру, при фильтрации по категориям, что в запросе было:
+```
+category	"health_sport"
+order_by	"date_created"
+order_direction	"desc"
+page	1
+score	"false"
+with_steps_data	false
+```
+Т.е. вместо `category_filter` было отправлено `category`.
+Нужно еще раз проверить корректность отправляемых полей и поправить неточности.
+
+- 4. также страница "банк целей" - при использование текстового фильтра ничего не происходит. Имею ввди не отправляется никаких запросов на бэк. Это не правильно. Вся фильтрация должна быть через бэк.

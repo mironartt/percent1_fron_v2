@@ -136,7 +136,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { 
   BookOpen, 
@@ -150,11 +150,20 @@ import {
   Loader2
 } from 'lucide-vue-next'
 
+const props = defineProps({
+  editingEntry: {
+    type: Object,
+    default: null
+  }
+})
+
 const emit = defineEmits(['saved'])
 const store = useAppStore()
 
 const isEditing = ref(false)
 const saving = ref(false)
+const currentEntryId = ref(null)
+const currentBackendId = ref(null)
 
 const form = ref({
   whatDone: '',
@@ -165,6 +174,25 @@ const form = ref({
 
 const hasTodayEntry = computed(() => store.hasTodayEntry)
 const todayEntry = computed(() => store.todayJournalEntry)
+
+// Initialize form with editing entry data
+watch(() => props.editingEntry, (entry) => {
+  if (entry) {
+    form.value = {
+      whatDone: entry.whatDone || '',
+      whatNotDone: entry.whatNotDone || '',
+      reflection: entry.reflection || '',
+      tomorrowPlans: entry.tomorrowPlans || ''
+    }
+    currentEntryId.value = entry.id
+    currentBackendId.value = entry.backendId || null
+    isEditing.value = true
+  } else {
+    currentEntryId.value = null
+    currentBackendId.value = null
+    isEditing.value = false
+  }
+}, { immediate: true })
 
 const formattedDate = computed(() => {
   const today = new Date()
@@ -208,20 +236,62 @@ async function saveEntry() {
   saving.value = true
   
   try {
-    const entry = store.addJournalEntry({
-      whatDone: form.value.whatDone,
-      whatNotDone: form.value.whatNotDone,
+    const { updateDiaryEntry } = await import('@/services/api.js')
+    
+    // Prepare data for backend
+    const backendData = {
+      diary_id: currentBackendId.value || null,
+      what_done: form.value.whatDone,
+      what_not_done: form.value.whatNotDone,
       reflection: form.value.reflection,
-      tomorrowPlans: form.value.tomorrowPlans
-    })
+      plans: form.value.tomorrowPlans
+    }
+    
+    const isUpdate = !!currentBackendId.value
+    let localEntry
+    
+    if (isUpdate) {
+      // Update existing entry in store
+      localEntry = store.updateJournalEntry(currentEntryId.value, {
+        whatDone: form.value.whatDone,
+        whatNotDone: form.value.whatNotDone,
+        reflection: form.value.reflection,
+        tomorrowPlans: form.value.tomorrowPlans
+      })
+    } else {
+      // Create new entry in store
+      localEntry = store.addJournalEntry({
+        whatDone: form.value.whatDone,
+        whatNotDone: form.value.whatNotDone,
+        reflection: form.value.reflection,
+        tomorrowPlans: form.value.tomorrowPlans
+      })
+    }
     
     isEditing.value = false
-    emit('saved', entry)
+    emit('saved', localEntry)
     
-    store.setJournalAILoading(entry.id, true)
+    // Sync with backend
+    try {
+      const result = await updateDiaryEntry(backendData)
+      
+      if (result.status === 'ok' && result.data?.diary_id) {
+        // Update local entry with backend ID
+        if (localEntry && !isUpdate) {
+          localEntry.backendId = result.data.diary_id
+          localEntry.id = String(result.data.diary_id)
+        }
+      }
+    } catch (apiError) {
+      console.error('[JournalEntry] Error syncing to backend:', apiError)
+    }
     
-    const aiResponse = await getAIResponse(form.value)
-    store.updateJournalAIResponse(entry.id, aiResponse)
+    // Get AI response (demo mode) - only for new entries
+    if (!isUpdate && localEntry) {
+      store.setJournalAILoading(localEntry.id, true)
+      const aiResponse = await getAIResponse(form.value)
+      store.updateJournalAIResponse(localEntry.id, aiResponse)
+    }
     
   } catch (error) {
     console.error('Error saving journal entry:', error)

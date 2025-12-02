@@ -1,0 +1,208 @@
+Еще новые эндпоинты по работе с разделом "дневник":
+
+- 1. `/api/rest/front/app/diary/get/` - получение данных по записям в дневнике. Основной эндопнит которые будет дергаться в на странице "дневник" для получения данных (доступна фильтрафия по текстовому вхождению).
+Ожидает на вход (пример):
+```
+function callApi() {
+    const url = 'http://127.0.0.1:8017/api/rest/front/app/diary/get/';
+    const data = {
+        "order_by": "date_created",
+        "order_direction": "desc",
+        "query_filter": "доделал",
+        "page": 1
+    };
+    const headers = {
+        "Content-Type": "application/json"
+    };
+
+    // Добавляем CSRF токен в заголовки
+    const csrftoken = getCookie('csrftoken');
+    if (csrftoken) {
+        headers['X-CSRFToken'] = csrftoken;
+    }
+
+    return fetch(url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: headers,
+            body: JSON.stringify(data),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Response:', data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// Использование: сначала инициализируем CSRF, потом вызываем эндпоинт
+initCsrf()
+    .then(() => callApi())
+    .catch(console.error);
+```
+Пример ответа:
+```
+{
+  "status" : "ok",
+  "data" : {
+    "total_items" : 21,
+    "total_filtered_items" : 21,
+    "total_pages" : 3,
+    "page" : 1,
+    "page_size" : 10,
+    "diaries_data" : [ {
+      "diary_id" : 3,
+      "what_done" : "Сделал важную задачу, которая долго висела",
+      "what_not_done" : "Но забыл про тренировку",
+      "reflection" : "Важно соблюдать баланс между работой и телом.",
+      "plans" : "Попробовать поделить день на блоки.",
+      "date_created" : "2025-12-02 10:08:00"
+    }, {
+      "diary_id" : 1,
+      "what_done" : "Написал более подробный отчёт:\n- выполнил задачи по работе\n- разобрал почту\n- улучшил структуру проекта\n- протестировал ключевой функционал\n- пообщался с командой",
+      "what_not_done" : "Не занялся самообразованием сегодня.",
+      "reflection" : "Отчётный формат помогает лучше понять процесс.",
+      "plans" : "Уделить завтра время обучению.",
+      "date_created" : "2025-12-02 10:06:23"
+    }, {
+      "diary_id" : 15,
+      "what_done" : "Встретился с друзьями.",
+      "what_not_done" : null,
+      "reflection" : "Получил заряд позитива.",
+      "plans" : "Назначить встречу с родителями.",
+      "date_created" : "2025-02-04 22:18:54"
+    } ]
+  }
+}
+```
+В сериализаторе НА ЗАПРОС на бэке это выглядит так:
+```
+class GetDiaryDataRequestSerializer(BaseSerializer):
+    """
+    Блок Дневник - получение данных
+    """
+
+    order_by = RestChoiceField(choices=Diary.ALLOWED_ORDER_BY, required=False, default='date_created', help_text="Поле сортировки", example="date_created")
+    order_direction = RestChoiceField(choices=['asc', 'desc'], default='desc', help_text='Направление сортировки', example='desc', required=False)
+    query_filter = RestCharField(required=False, allow_null=True, default=None, help_text="Фильтр по вхождению указанной фразы в название цели", example="454554", max_length=100, min_length=3)
+    page = RestIntegerField(help_text='Выбранная страница пагинации', example=1, required=False, min_value=1)
+```
+В сериализаторе НА ОТВЕТ на бэке это выглядит так (это DRF, и также учитывай наследование классов друг от друга для лучшего понимания):
+```
+class BaseDiaryDataResponseSerializer(BaseSerializer):
+    diary_id = RestIntegerField(help_text='ID записи дневника', example=1, required=False, allow_null=True, min_value=1)
+    what_done = RestCharField(required=False, allow_null=True, allow_blank=True, help_text='Что сделал', max_length=20000)
+    what_not_done = RestCharField(required=False, allow_null=True, allow_blank=True, help_text='Что не сделал', max_length=20000)
+    reflection = RestCharField(required=False, allow_null=True, allow_blank=True, help_text='Рефлексия', max_length=20000)
+    plans = RestCharField(required=False, allow_null=True, allow_blank=True, help_text='Планы на завтра', max_length=20000)
+    date_created = RestDateTimeField(required=False, help_text="Дата создания записи", format="%Y-%m-%d %H:%M:%S", example="2023-08-27 15:43:45")
+
+
+class DiaryDataResponseSerializer(BaseSerializer):
+    diaries_data = RestListField(child=BaseDiaryDataResponseSerializer(help_text='Данные по записи в дневнике'), required=False, help_text='Данные по записям в дневнике', example_count=6)
+
+    total_items = RestIntegerField(help_text='Общее кол-во записей - БЕЗ учета фильтров', example=1, required=False, min_value=0)
+    total_filtered_items = RestIntegerField(help_text='Общее кол-во записей - С учетом фильтров', example=1, required=False, min_value=0)
+    total_pages = RestIntegerField(help_text='Всего страниц', example=1, required=False, min_value=0)
+    page = RestIntegerField(help_text='Выбранная страница пагинации', example=1, required=False, min_value=1)
+    page_size = RestIntegerField(help_text='Размерность пагинации _(сколько элементов возвращается в одной странице)_', example=10, required=False, default=10, min_value=5, max_value=10)
+
+
+class GetDiaryDataResponseSerializer(BaseSerializer):
+    """
+    Дневник - получение данных
+    """
+    status = RestChoiceField(required=False, choices=['ok', 'error'], help_text='str: Статус ответа ("ok" или "error")')
+    data = DiaryDataResponseSerializer(required=False, help_text="Блок с данными ответа по эндпоинту")
+```
+
+В каких случаях/местах используется:
+- на странице "Дневник" - первичная загрузка данных, дальнейшая пагинация, поиск по тексту
+
+
+- 2. `/api/rest/front/app/diary/update/` - создание и обновление записей в дневнике.
+Ожидает на вход (пример):
+```
+// Основной запрос к API
+function callApi() {
+    const url = 'http://127.0.0.1:8017/api/rest/front/app/diary/update/';
+    const data = {
+    "diary_id": null,                                                   // если не указано - создание, если указано - обновление
+    "what_done": "Сделал важную задачу, которая долго висела",
+    "what_not_done": "Но забыл про тренировку",
+    "reflection": "Важно соблюдать баланс между работой и телом.",
+    "plans": "Попробовать поделить день на блоки."
+  };
+    const headers = {
+        "Content-Type": "application/json"
+    };
+
+    // Добавляем CSRF токен в заголовки
+    const csrftoken = getCookie('csrftoken');
+    if (csrftoken) {
+        headers['X-CSRFToken'] = csrftoken;
+    }
+
+    return fetch(url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: headers,
+            body: JSON.stringify(data),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Response:', data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// Использование: сначала инициализируем CSRF, потом вызываем эндпоинт
+initCsrf()
+    .then(() => callApi())
+    .catch(console.error);
+```
+Пример ответа:
+```
+{
+  "status" : "ok",
+  "data" : {
+    "diary_id": 24
+  }
+}
+```
+В сериализаторе НА ЗАПРОС на бэке это выглядит так:
+```
+class UpdateDiaryDataRequestSerializer(BaseSerializer):
+    """
+    Дневник - заполнение/обновление данных
+    """
+
+    diary_id = RestIntegerField(help_text='ID записи дневника _(указывается если идет обновление записи)_', example=1, required=False, allow_null=True, min_value=1)
+    what_done = RestCharField(required=False, allow_null=True, allow_blank=True, help_text='Что сделал', max_length=20000)
+    what_not_done = RestCharField(required=False, allow_null=True, allow_blank=True, help_text='Что не сделал', max_length=20000)
+    reflection = RestCharField(required=False, allow_null=True, allow_blank=True, help_text='Рефлексия', max_length=20000)
+    plans = RestCharField(required=False, allow_null=True, allow_blank=True, help_text='Планы на завтра', max_length=20000)
+    deleted = RestBooleanField(default=False, required=False, help_text='Удалить запись дневника')
+```
+В сериализаторе НА ОТВЕТ на бэке это выглядит так (это DRF, и также учитывай наследование классов друг от друга для лучшего понимания):
+```
+class UpdateDiaryDataResponseSerializer(BaseSerializer):
+    """
+    Дневник - заполнение/обновление данных - ответ
+    """
+
+    diary_id = RestIntegerField(help_text='ID записи дневника', example=1, required=False, min_value=1)
+```
+
+Сейчас кажется на странице дневника, нет возможности редактировать записи - это нужно добавить. Также нужно добавить возможно удалять записи.
+И кажется нет возможности добавлять несколько записей за один день. Это верно, но нужно чтобы кнопка добавить была всегда достпной, и если за сегодня запись уже добавлена, то по клику на добавить, открывалась модалка добавления, с уже заполненными за сегодня данными, чтобы юзер моег добавить или внести правки в уже созданную сегодня запись.
+В каких случаях/местах используется:
+- на странице "Дневник" - создание записи, обновление записи
+
+----
+
+Если все понятно, то можешь начинать работу.
+Также внеси описание логики и деталей в `README.md` (именно в `README.md`, не в какой-нибудь другой файл!!!).
