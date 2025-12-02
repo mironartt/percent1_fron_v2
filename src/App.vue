@@ -94,11 +94,12 @@ const appClasses = computed(() => ({
 
 @media (min-width: 1024px) {
   #app.has-mentor-panel .main-content {
-    padding-right: 460px;
+    margin-right: 460px;
+    transition: margin-left 0.3s ease, margin-right 0.3s ease;
   }
   
   #app.has-mentor-panel.mentor-collapsed .main-content {
-    padding-right: 56px;
+    margin-right: 56px;
   }
 }
 
