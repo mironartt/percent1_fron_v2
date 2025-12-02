@@ -662,11 +662,18 @@ export const useAppStore = defineStore('app', () => {
   
   // Задачи на сегодня из недельного плана (синхронизация Planning ↔ Dashboard)
   const todayScheduledTasks = computed(() => {
-    const today = new Date().toISOString().split('T')[0]
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
+    const today = now.toISOString().split('T')[0]
     const currentPlan = getCurrentWeekPlan()
-    if (!currentPlan || !currentPlan.scheduledTasks) return []
     
-    return currentPlan.scheduledTasks
+    console.log('[Store] todayScheduledTasks - today:', today)
+    console.log('[Store] todayScheduledTasks - currentPlan:', currentPlan?.id, 'weekStart:', currentPlan?.weekStart)
+    console.log('[Store] todayScheduledTasks - weekly tasks:', currentPlan?.scheduledTasks?.length || 0)
+    console.log('[Store] todayScheduledTasks - dailyPlan tasks:', dailyPlan.value?.tasks?.length || 0)
+    
+    // Задачи из weeklyPlans (новый механизм - Planning)
+    const weeklyTasks = (currentPlan?.scheduledTasks || [])
       .filter(task => task.scheduledDate === today)
       .map(task => ({
         id: task.id,
@@ -679,14 +686,48 @@ export const useAppStore = defineStore('app', () => {
         priority: task.priority,
         timeEstimate: task.timeEstimate,
         scheduledDate: task.scheduledDate,
-        sphere: getSphereNameById(task.sphereId)
+        sphere: getSphereNameById(task.sphereId),
+        source: 'weekly'
       }))
-      .sort((a, b) => {
-        const priorityOrder = { critical: 0, desirable: 1, attention: 2, optional: 3 }
-        const priorityA = priorityOrder[a.priority] ?? 4
-        const priorityB = priorityOrder[b.priority] ?? 4
-        return priorityA - priorityB
+    
+    // Задачи из dailyPlan (старый механизм - AI рекомендации и пр.)
+    const dailyTasks = (dailyPlan.value?.tasks || [])
+      .filter(task => {
+        // Проверяем что задача для сегодня (или без даты = сегодня)
+        const taskDate = task.scheduledDate || dailyPlan.value.date
+        return taskDate === today
       })
+      .map(task => ({
+        id: task.id,
+        title: task.title || task.stepTitle || 'Задача',
+        goalTitle: task.goalTitle || '',
+        goalId: task.goalId || '',
+        stepId: task.stepId || '',
+        completed: task.completed || false,
+        completedAt: task.completedAt,
+        priority: task.priority || '',
+        timeEstimate: task.duration || task.timeEstimate || '',
+        scheduledDate: task.scheduledDate || today,
+        sphere: task.sphere || getSphereNameById(task.sphereId),
+        source: 'daily'
+      }))
+    
+    // Объединяем, избегая дублей по id
+    const allTasks = [...weeklyTasks]
+    dailyTasks.forEach(dt => {
+      if (!allTasks.find(wt => wt.id === dt.id)) {
+        allTasks.push(dt)
+      }
+    })
+    
+    console.log('[Store] todayScheduledTasks - combined:', allTasks.length, 'tasks')
+    
+    return allTasks.sort((a, b) => {
+      const priorityOrder = { critical: 0, desirable: 1, attention: 2, optional: 3 }
+      const priorityA = priorityOrder[a.priority] ?? 4
+      const priorityB = priorityOrder[b.priority] ?? 4
+      return priorityA - priorityB
+    })
   })
   
   function getSphereNameById(sphereId) {
@@ -2049,8 +2090,9 @@ export const useAppStore = defineStore('app', () => {
     }
   }
   
-  // Переключение задачи из текущего недельного плана (для Dashboard)
+  // Переключение задачи из текущего недельного плана или dailyPlan (для Dashboard)
   function toggleTodayTask(taskId) {
+    // Сначала ищем в weeklyPlans
     const plan = getCurrentWeekPlan()
     if (plan) {
       const task = plan.scheduledTasks.find(t => t.id === taskId)
@@ -2063,10 +2105,28 @@ export const useAppStore = defineStore('app', () => {
           wasCompleted, 
           isNowCompleted: task.completed,
           taskId: task.id,
-          taskTitle: task.stepTitle || task.goalTitle || 'Задача'
+          taskTitle: task.stepTitle || task.goalTitle || 'Задача',
+          source: 'weekly'
         }
       }
     }
+    
+    // Если не нашли в weeklyPlans, ищем в dailyPlan
+    const dailyTask = dailyPlan.value?.tasks?.find(t => t.id === taskId)
+    if (dailyTask) {
+      const wasCompleted = dailyTask.completed
+      dailyTask.completed = !dailyTask.completed
+      dailyTask.completedAt = dailyTask.completed ? new Date().toISOString() : null
+      saveToLocalStorage()
+      return {
+        wasCompleted,
+        isNowCompleted: dailyTask.completed,
+        taskId: dailyTask.id,
+        taskTitle: dailyTask.title || dailyTask.stepTitle || 'Задача',
+        source: 'daily'
+      }
+    }
+    
     return null
   }
 

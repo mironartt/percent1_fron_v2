@@ -1552,10 +1552,12 @@ function getUncompletedSteps(goal) {
 const weekDays = computed(() => {
   const days = []
   const today = new Date()
+  today.setHours(0, 0, 0, 0)
   const dayOfWeek = today.getDay()
   const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
   const monday = new Date(today)
   monday.setDate(today.getDate() + mondayOffset + (weekOffset.value * 7))
+  monday.setHours(0, 0, 0, 0)
   
   const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
   const fullNames = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
@@ -1563,6 +1565,7 @@ const weekDays = computed(() => {
   for (let i = 0; i < 7; i++) {
     const date = new Date(monday)
     date.setDate(monday.getDate() + i)
+    date.setHours(0, 0, 0, 0)
     days.push({
       date: date.toISOString().split('T')[0],
       dayNum: date.getDate(),
