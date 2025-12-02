@@ -1381,44 +1381,16 @@ function isGoalCompleted(goalId) {
 }
 
 const filteredGoals = computed(() => {
+  // Backend already filters by: category_filter, status_filter, query_filter
+  // Local filtering only for: filterGoalType (not supported by backend API)
   return rawIdeas.value.filter(goal => {
-    if (filterSphere.value && goal.sphereId !== filterSphere.value) {
-      return false
-    }
-    
-    if (searchQuery.value) {
-      const query = searchQuery.value.toLowerCase()
-      const matchesText = goal.text?.toLowerCase().includes(query)
-      const matchesWhy = goal.whyImportant?.toLowerCase().includes(query)
-      const matchesWhy1 = goal.threeWhys?.why1?.toLowerCase().includes(query)
-      const matchesWhy2 = goal.threeWhys?.why2?.toLowerCase().includes(query)
-      const matchesWhy3 = goal.threeWhys?.why3?.toLowerCase().includes(query)
-      if (!matchesText && !matchesWhy && !matchesWhy1 && !matchesWhy2 && !matchesWhy3) {
-        return false
-      }
-    }
-    
-    if (filterStatus.value) {
-      const transferred = isGoalTransferred(goal.id)
-      const completed = isGoalCompleted(goal.id)
+    // Local filter: Goal type (true/false) - not supported by backend
+    if (filterGoalType.value) {
       const status = goal.status || 'raw'
-      
-      if (filterStatus.value === 'available' && (transferred || completed || status !== 'validated')) {
+      if (filterGoalType.value === 'true' && status !== 'validated') {
         return false
       }
-      if (filterStatus.value === 'in-work' && (!transferred || completed)) {
-        return false
-      }
-      if (filterStatus.value === 'completed' && !completed) {
-        return false
-      }
-      if (filterStatus.value === 'validated' && status !== 'validated') {
-        return false
-      }
-      if (filterStatus.value === 'rejected' && status !== 'rejected') {
-        return false
-      }
-      if (filterStatus.value === 'raw' && status !== 'raw') {
+      if (filterGoalType.value === 'false' && status !== 'rejected') {
         return false
       }
     }
@@ -1455,6 +1427,8 @@ async function loadMoreGoals() {
   if (apiPagination.value.totalPages > 1 && currentPage.value < apiPagination.value.totalPages) {
     currentPage.value++
     await loadGoalsWithFilters(currentPage.value, true)
+    // Increase displayLimit to show all loaded data (API returns 6 per page)
+    displayLimit.value = rawIdeas.value.length
   } else {
     // Fallback to local pagination
     displayLimit.value += 6
