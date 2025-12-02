@@ -579,7 +579,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { 
   Trash2, Save, Plus, ArrowLeft, GripVertical, X, Edit2, ChevronUp, ChevronDown, ChevronsUpDown,
@@ -899,6 +899,10 @@ onMounted(() => {
   loadGoalData()
 })
 
+onBeforeRouteLeave(() => {
+  flushSave(false)
+})
+
 watch(() => route.params.id, () => {
   loadGoalData()
 })
@@ -1212,6 +1216,9 @@ function saveAndGoToBank() {
 }
 
 function goBack() {
+  // Сохранить изменения перед уходом
+  flushSave(false)
+  
   // Сохранить текущие фильтры банка целей
   const savedFilters = localStorage.getItem('goalsBankFilters')
   let query = {}
