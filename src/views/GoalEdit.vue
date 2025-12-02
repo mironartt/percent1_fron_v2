@@ -1001,49 +1001,69 @@ function goToPlanning() {
 async function saveEditModal() {
   if (!editingGoal.value) return
   
-  // Обновить в банке целей (optimistic UI)
-  store.updateRawIdea(editingGoal.value.id, {
+  // Capture data before any async operation
+  const goalData = {
+    id: editingGoal.value.id,
     text: editingGoal.value.text,
+    sphereId: editingGoal.value.sphereId,
     whyImportant: editingGoal.value.whyImportant,
-    sphereId: editingGoal.value.sphereId,
-    threeWhys: {
-      why1: editingGoal.value.whyImportant,
-      why2: editingGoal.value.why2,
-      why3: editingGoal.value.why3
-    }
-  })
+    why2: editingGoal.value.why2,
+    why3: editingGoal.value.why3
+  }
   
-  // Обновить текущую цель (optimistic UI)
-  store.updateGoal(goal.value.id, {
-    title: editingGoal.value.text,
-    sphereId: editingGoal.value.sphereId,
-    description: editingGoal.value.whyImportant
-  })
-  
-  // Обновить локальную форму
-  goalForm.value.title = editingGoal.value.text
-  goalForm.value.sphereId = editingGoal.value.sphereId
-  goalForm.value.description = editingGoal.value.whyImportant
-  
-  closeEditModal()
-  showToast('Цель успешно обновлена')
-  
-  // Sync to backend (non-blocking)
+  // First, sync to backend (blocking - wait for response)
   if (goalBackendId.value) {
     try {
       const { updateGoal: updateGoalApi } = await import('@/services/api.js')
-      await updateGoalApi(goalBackendId.value, {
-        title: editingGoal.value.text,
-        category: editingGoal.value.sphereId,
-        why_important: editingGoal.value.whyImportant || null,
-        why_give_me: editingGoal.value.why2 || null,
-        why_about_me: editingGoal.value.why3 || null
+      const result = await updateGoalApi(goalBackendId.value, {
+        title: goalData.text,
+        category: goalData.sphereId,
+        why_important: goalData.whyImportant || null,
+        why_give_me: goalData.why2 || null,
+        why_about_me: goalData.why3 || null
       })
-      console.log('[GoalEdit] Goal updated on backend:', goalBackendId.value)
+      
+      console.log('[GoalEdit] Goal updated on backend:', goalBackendId.value, result)
+      
+      if (result.status !== 'ok') {
+        showToast('Ошибка сохранения на сервере', 'error')
+        return
+      }
     } catch (error) {
       console.error('[GoalEdit] Error updating goal on backend:', error)
+      showToast('Ошибка сохранения: ' + (error.message || 'Неизвестная ошибка'), 'error')
+      return
     }
   }
+  
+  // Backend success - now update local state
+  store.updateRawIdea(goalData.id, {
+    text: goalData.text,
+    whyImportant: goalData.whyImportant,
+    sphereId: goalData.sphereId,
+    threeWhys: {
+      why1: goalData.whyImportant,
+      why2: goalData.why2,
+      why3: goalData.why3
+    }
+  })
+  
+  // Обновить текущую цель
+  if (goal.value) {
+    store.updateGoal(goal.value.id, {
+      title: goalData.text,
+      sphereId: goalData.sphereId,
+      description: goalData.whyImportant
+    })
+  }
+  
+  // Обновить локальную форму
+  goalForm.value.title = goalData.text
+  goalForm.value.sphereId = goalData.sphereId
+  goalForm.value.description = goalData.whyImportant
+  
+  closeEditModal()
+  showToast('Цель успешно обновлена')
 }
 
 function getSphereIconComponent(sphereId) {
