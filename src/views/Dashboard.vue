@@ -25,7 +25,7 @@
           </div>
         </div>
         <div class="header-badges">
-          <XpBadge @click="$router.push('/app/profile')" />
+          <XpBadge @click="$router.push('/app/achievements')" />
           <div class="streak-badge" v-if="journalStreak > 0">
             <Flame :size="16" :stroke-width="1.5" />
             <span>{{ journalStreak }} {{ pluralize(journalStreak, 'день', 'дня', 'дней') }}</span>

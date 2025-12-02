@@ -146,10 +146,10 @@ const router = createRouter({
       meta: { title: 'Обучение', requiresAuth: true }
     },
     {
-      path: '/app/profile',
-      name: 'profile',
+      path: '/app/achievements',
+      name: 'achievements',
       component: Profile,
-      meta: { title: 'Профиль', requiresAuth: true }
+      meta: { title: 'Достижения', requiresAuth: true }
     },
     
     // Редиректы для обратной совместимости со старыми URL
