@@ -1,0 +1,746 @@
+Отлично.
+Теперь актуализируй данные которые я только что подтянул из мастера и пойдем дальше.
+
+Теперь по плану добавить работу с бэком в разделы:
+- банк целей
+- детали по цели
+- планирование
+
+В начале я опишу тебе все эндопинты на бэке:
+```
+    path('/api/rest/front/app/goals/get/', ....),               # + получение списка целей (с возможностью фильтраций/сортировок)
+    path('/api/rest/front/app/goals/steps/get/', ....),         # + получение данных по шагам конкретной цели (с возможностью фильтраций/сортировок)
+    path('/api/rest/front/app/goals/update/', goals.....),      # + создание/обновление данных по целям
+    path('/api/rest/front/app/goals/steps/update/', ....),      # + создание/обновление данных по шагам целей
+```
+
+Далее пройдемся детально по каждому эндпоинту и после по задачам которые они решают, где и как их можно применить.
+
+Вначале про обновления:
+- 0. `/api/rest/front/get-global-data/` - в ответ добавлены новые поля, пример ответа:
+```
+{
+  "status" : "ok",
+  "data" : {
+    "t_auth_link" : "https://oauth.telegram.org/auth?bot_id=8073846126&origin=https://4cb22700-a529-46b3-bb4b-a6a0b736d9dd.tunnel4.com&request_access=write&return_to=https://4cb22700-a529-46b3-bb4b-a6a0b736d9dd.tunnel4.com/telegram/test/login/",
+    "t_auth_callback_url" : "https://4cb22700-a529-46b3-bb4b-a6a0b736d9dd.tunnel4.com/telegram/auth/callback/",
+    "goals_categories_data" : [ {
+      "id" : "welfare",
+      "title" : "Благосостояние"
+    }, {
+      "id" : "hobby",
+      "title" : "Хобби и отдых"
+    }, {
+      "id" : "environment",
+      "title" : "Дружба и окружение"
+    }, {
+      "id" : "health_sport",
+      "title" : "Здоровье и спорт"
+    }, {
+      "id" : "work",
+      "title" : "Работа и карьера"
+    }, {
+      "id" : "family",
+      "title" : "Любовь, семья, отношения"
+    } ],
+    "goals_types_data" : [ {
+      "id" : "true",
+      "title" : "Истинная"
+    }, {
+      "id" : "false",
+      "title" : "Ложная"
+    } ],
+    "goals_statuses_data" : [ {
+      "id" : "work",
+      "title" : "В работе"
+    }, {
+      "id" : "complete",
+      "title" : "Завершенные"
+    } ],
+    "goals_statuses_filter_data" : [ {
+      "id" : "work",
+      "title" : "В работе"
+    }, {
+      "id" : "complete",
+      "title" : "Завершенные"
+    }, {
+      "id" : "unstatus",
+      "title" : "Не оцененные"
+    } ],
+    "step_statuses_filter_data" : [ {
+      "id" : "planned",
+      "title" : "Запланирован"
+    }, {
+      "id" : "unplanned",
+      "title" : "Не Запланирован"
+    } ],
+    "step_results_filter_data" : [ {
+      "id" : "complete",
+      "title" : "Завершен"
+    }, {
+      "id" : "uncomplete",
+      "title" : "Не завершен"
+    } ],
+    "times_data" : [ {
+      "id" : "half",
+      "title" : "30м"
+    }, {
+      "id" : "one",
+      "title" : "1ч"
+    }, {
+      "id" : "two",
+      "title" : "2ч"
+    }, {
+      "id" : "three",
+      "title" : "3ч"
+    }, {
+      "id" : "four",
+      "title" : "4ч"
+    } ],
+    "priority_data" : [ {
+      "id" : "critical",
+      "title" : "Критично"
+    }, {
+      "id" : "important",
+      "title" : "Важно"
+    }, {
+      "id" : "attention",
+      "title" : "Внимание"
+    }, {
+      "id" : "optional",
+      "title" : "Опционально"
+    } ]
+  }
+}
+```
+В сериализаторе на бэке это выглядит так:
+```
+class GlobalDataResponseSerializer(BaseSerializer):
+    t_auth_link = RestCharField(required=True, help_text='Линк на авторизацию через телеграм')
+    t_auth_callback_url = RestCharField(required=True, help_text='Линк потверждения после авторизации через телеграм')
+    goals_categories_data = RestListField(child=CategoriesGlobalDataResponseSerializer(), required=True, allow_empty=True, max_length=6, help_text='Общие данные по возможным категориям целей _(инфо-поле)_', example_count=2)
+    goals_types_data = RestListField(child=TypesGlobalDataResponseSerializer(), required=True, allow_empty=True, max_length=6, help_text='Общие данные по возможным типам целей _(инфо-поле)_', example_count=2)
+    goals_statuses_data = RestListField(child=StatusesGlobalDataResponseSerializer(), required=True, allow_empty=True, max_length=6, help_text='Общие данные по возможным статусам целей _(инфо-поле)_', example_count=2)
+    goals_statuses_filter_data = RestListField(child=StatusesFilterGlobalDataResponseSerializer(), required=True, allow_empty=True, max_length=6, help_text='Общие данные по возможным статусам целей _(инфо-поле)_', example_count=2)
+    step_statuses_filter_data = RestListField(child=StepsStatusesFilterGlobalDataResponseSerializer(), required=True, allow_empty=True, max_length=6, help_text='Общие данные по возможным статусам шагов _(инфо-поле)_', example_count=2)
+    step_results_filter_data = RestListField(child=StepsResultsFilterGlobalDataResponseSerializer(), required=True, allow_empty=True, max_length=6, help_text='Общие данные по возможным результатом шагов _(инфо-поле)_', example_count=2)
+    times_data = RestListField(child=TimesGlobalDataResponseSerializer(), required=True, allow_empty=True, max_length=6, help_text='Общие данные по возможным интервалам времени _(инфо-поле)_', example_count=2)
+    priority_data = RestListField(child=PrioritiesGlobalDataResponseSerializer(), required=True, allow_empty=True, max_length=6, help_text='Общие данные по возможным приоритетам _(инфо-поле)_', example_count=2)
+
+
+class GetGlobalDataResponseSerializer(BaseSerializer):
+    status = serializers.ChoiceField(required=False, choices=['ok', 'error'], help_text='str: Статус ответа ("ok" или "error")')
+    data = GlobalDataResponseSerializer(required=False, help_text="Блок с данными ответа по эндпоинту")
+```
+На основание этих данных далее нужно будет заполнять возможные значения для фильтров и подбоного на различных страницах.
+
+----
+
+Далее по новым эндпоинтам:
+
+- 1. `/api/rest/front/app/goals/get/` - получение списка целей. Основной эндопнит которые будет дергаться в на страницах "банка целей" и страницы "планирования" для получения данных.
+Ожидает на вход (пример):
+```
+function callApi() {
+    const url = 'http://127.0.0.1:8017/api/rest/front/app/goals/get/';
+    const data = {
+        "with_steps_data": true,
+        "order_by": "status",
+        "order_direction": "desc",
+        "status_filter": "work",
+        "category_filter": "health_sport",
+        "query_filter": "454554",
+        "page": 1
+    };
+    const headers = {
+        "Content-Type": "application/json"
+    };
+
+    // Добавляем CSRF токен в заголовки
+    const csrftoken = getCookie('csrftoken');
+    if (csrftoken) {
+        headers['X-CSRFToken'] = csrftoken;
+    }
+
+    return fetch(url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: headers,
+            body: JSON.stringify(data),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Response:', data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// Использование: сначала инициализируем CSRF, потом вызываем эндпоинт
+initCsrf()
+    .then(() => callApi())
+    .catch(console.error);
+```
+Пример ответа:
+```
+{
+    "status": "ok",
+    "data": {
+        "goals_data": [
+            {
+                "category": "health_sport",
+                "date_completed": null,
+                "date_created": "2025-12-01 09:39:12",
+                "goal_id": 2,
+                "score": "false",
+                "status": null,
+                "title": "Начать бегать по утрам",
+                "why_about_me": "Мне подходит активный образ жизни",
+                "why_give_me": null,
+                "why_important": "Хочу укрепить здоровье",
+                "total_steps_data": {"complete_days_in_row": 0, "complete_percent": 0, "complete_steps": 0, "total_steps": 3},
+                "steps_data": [
+                    {
+                        "date_completed": null,
+                        "date_created": "2025-12-01 16:12:22",
+                        "description": "Набросать общий план",
+                        "dt": "2025, 1, 14",
+                        "goal_id": 4,
+                        "is_complete": false,
+                        "order": 1,
+                        "priority": "important",
+                        "status": "planned",
+                        "step_id": 5,
+                        "time_duration": "one",
+                        "title": "Подготовить план изучения"
+                    },
+                ],
+            },
+            # ...
+        ],
+        "page": 1,
+        "page_size": 6,
+        "total_data": {"false_goals": 8, "in_work_goals": 18, "total_goals": 40, "true_goals": 15},
+        "total_data_steps_data": {"complete_days_in_row": 0, "complete_percent": 5, "complete_steps": 2, "total_steps": 34},
+        "total_filtered_items": 40,
+        "total_items": 40, "total_pages": 7
+    },
+}
+```
+В сериализаторе НА ЗАПРОС на бэке это выглядит так:
+```
+Goal.ALLOWED_ORDER_BY = [
+    ('date_created', 'Дата создания'),
+    ('status', 'Статус'),
+    ('title', 'Название'),
+    ('category', 'Категория'),
+]
+user_data.GOAL_STATUSES = [
+    ('work', 'В работе'),
+    ('complete', 'Завершенные'),
+]
+user_data.CATEGORY_CHOICES = [
+    ('welfare', 'Благосостояние'),
+    ('hobby', 'Хобби и отдых'),
+    ('environment', 'Дружба и окружение'),
+    ('health_sport', 'Здоровье и спорт'),
+    ('work', 'Работа и карьера'),
+    ('family', 'Любовь, семья, отношения'),
+]
+
+class GetGoalsDataRequestSerializer(BaseSerializer):
+    """
+    Блок Банк Целей - получение данных
+    """
+
+    with_steps_data = RestBooleanField(required=False, allow_null=True, help_text='Получить данные о целях _(общие данные и первая страница пагинации при дефолтной сортировке)_')
+    order_by = RestChoiceField(choices=Goal.ALLOWED_ORDER_BY, required=False, default='date_created', help_text="Поле сортировки", example="status")
+    order_direction = RestChoiceField(choices=['asc', 'desc'], default='desc', help_text='Направление сортировки', example='desc', required=False)
+    status_filter = RestChoiceField(choices=user_data.GOAL_STATUSES, required=False, allow_null=True, help_text="Фильтр по статусу цели", example="work")
+    category_filter = RestChoiceField(choices=user_data.CATEGORY_CHOICES, required=False, allow_null=True, help_text="Фильтр по категории цели", example="health_sport")
+    query_filter = RestCharField(required=False, allow_null=True, default=None, help_text="Фильтр по вхождению указанной фразы в название цели", example="454554", max_length=100, min_length=3)
+    page = RestIntegerField(help_text='Выбранная страница пагинации', example=1, required=False, min_value=1)
+```
+В сериализаторе НА ОТВЕТ на бэке это выглядит так (это DRF, и также учитывай наследование классов друг от друга для лучшего понимания):
+```
+class StepsDataGetGoalsDetailDataResponseSerializer(BaseSerializer):
+    step_id = RestIntegerField(help_text='ID шага', example=1, required=True, min_value=1)
+    goal_id = RestIntegerField(help_text='ID цели', example=1, required=True, min_value=1)
+    title = RestCharField(required=True, max_length=500, help_text="Название шага", example="Выучить английский язык")
+    description = RestCharField(required=True, max_length=10000, help_text="Описание шага", example="Выучить английский язык")
+    status = RestChoiceField(choices=user_data.STEP_STATUSES, required=False, allow_null=True, allow_blank=True, help_text="Статус шага", example="planned")
+    priority = RestChoiceField(choices=user_data.STEP_PRIORITY_CHOICES, required=False, allow_null=True, allow_blank=True, help_text="Приоритет шага", example="planned")
+    time_duration = RestChoiceField(choices=user_data.STEP_TIME_CHOICES, required=False, allow_null=True, allow_blank=True, help_text="Временный интервал шага", example="planned")
+    dt = RestDateField(required=False, allow_null=True, help_text="Запланированная дата выполнения (формат: 'YYYY-MM-DD').", example="2024-10-10", format="%Y-%m-%d")
+    order = RestIntegerField(help_text='Порядковый номер шага (для сортировки по выбранному пользователю формату)', example=1, required=True, allow_null=False, min_value=1)
+    is_complete = RestBooleanField(required=False, allow_null=True, help_text='Пометить шаг выполненным', example=False)
+    date_created = RestDateTimeField(required=False, help_text="Дата создания цели", format="%Y-%m-%d %H:%M:%S", example="2023-08-27 15:43:45")
+    date_completed = RestDateTimeField(required=False, help_text="Дата завершения цели", format="%Y-%m-%d %H:%M:%S", example="2023-08-27 15:43:45")
+
+class TotalDataGetGoalsStepsDetailDataResponseSerializer(BaseSerializer):
+    total_steps = RestIntegerField(help_text='Всего шагов', example=1, required=False, min_value=0)
+    complete_steps = RestIntegerField(help_text='Выполнено шагов _(штук)_', example=1, required=False, min_value=0)
+    complete_percent = RestIntegerField(help_text='Выполнено шагов подряд _(процент)_', example=1, required=False, min_value=0)
+    complete_days_in_row = RestIntegerField(help_text='Выполнено шагов дней подряд', example=1, required=False, min_value=0)
+
+
+class BaseGoalsDataGetGoalsDataResponseSerializer(GoalsDataGetGoalsDataResponseSerializer):
+    """
+    Блок data.goals_data в ответе блока Банк Целей
+    """
+
+    # наследие полей от GoalsDataGetGoalsDataResponseSerializer +:
+
+    steps_data = RestListField(child=StepsDataGetGoalsDetailDataResponseSerializer(), required=False, help_text='Данные по шагам, если был передан параметр *with_steps_data*', example_count=6, max_length=GoalStep.MAX_PER_PAGE)
+    total_steps_data = TotalDataGetGoalsStepsDetailDataResponseSerializer(help_text='Общие данные по шагам цели, если был передан параметр *with_steps_data*', required=False)
+
+
+class TotalDataGetGoalsDataResponseSerializer(BaseSerializer):
+    """
+    Блок data.total_data в ответе блока Банк Целей
+    """
+
+    total_goals = RestIntegerField(help_text='Всего целей/идей в банке', example=1, required=False, min_value=0)
+    true_goals = RestIntegerField(help_text='Всего истинных целей/идей в банке', example=1, required=False, min_value=0)
+    false_goals = RestIntegerField(help_text='Всего ложных целей/идей в банке', example=1, required=False, min_value=0)
+    in_work_goals = RestIntegerField(help_text='Всего целей/идей в банке со статусом "в работе"', example=1, required=False, min_value=0)
+
+class DataGetGoalsDataResponseSerializer(BaseSerializer):
+    """
+    Блок data в ответе блока Банк Целей
+    """
+
+    goals_data = RestListField(child=BaseGoalsDataGetGoalsDataResponseSerializer(), required=True, help_text='Данные по целям', example_count=6, max_length=Goal.PER_BANK_PAGE)
+    total_data = TotalDataGetGoalsDataResponseSerializer(help_text='Общие данные по целям')
+    total_data_steps_data = TotalDataGetGoalsStepsDetailDataResponseSerializer(help_text='Общие данные по всем шагам всех целей, если был передан параметр *with_steps_data*', required=False)
+
+    total_items = RestIntegerField(help_text='Общее кол-во целей - БЕЗ учета фильтров', example=1, required=False, min_value=0)
+    total_filtered_items = RestIntegerField(help_text='Общее кол-во целей - С учетом фильтров', example=1, required=False, min_value=0)
+    total_pages = RestIntegerField(help_text='Всего страниц', example=1, required=False, min_value=0)
+    page = RestIntegerField(help_text='Выбранная страница пагинации', example=1, required=False, min_value=1)
+    page_size = RestIntegerField(help_text='Размерность пагинации _(сколько элементов возвращается в одной странице)_', example=1, required=False, min_value=1)
+
+
+class GetGoalsDataResponseSerializer(BaseSerializer):
+    """
+    Блок Банк Целей - получение данных
+    """
+    status = RestChoiceField(required=False, choices=['ok', 'error'], help_text='str: Статус ответа ("ok" или "error")')
+    data = DataGetGoalsDataResponseSerializer(required=False, help_text="Блок с данными ответа по эндпоинту")
+```
+
+Что можно получить с помощью него: получить данные по целям пользователя, паганировать цели, фильтровать цели, получать первые страницы данных по шагам всех целей, получить общие (тотал) данные по шагам целей.
+В каких случаях/местах используется:
+- на странице "банк целей" - первичная загрузка данных, дальнейшая пагинация, получение общих сведений для шапки страницы
+- на странице "планирование" (нижний блок) - первичная загрузка данных по целям, дальнейшая пагинация, получение первой страницы данных по шагам (если передать флаг *with_steps_data*).
+Отдельно отмечу момент с флагом: `with_steps_data`. Есть места где нужно сразу получть первые данные по шагам, этот флаг как раз для этих целей, мы получаем в одном запросе первичные данные по шагам, и далее, если нужно будет больше деталей по шагам, можем использовать уже другой эндпоинт.
+- на странице "планирование" (нижний блок) - верхний блок с общими данными по шагам (если передать флаг *with_steps_data*, данные будут лежать в ответе в `total_data_steps_data`)
+
+
+- 2. `/api/rest/front/app/goals/steps/get/` - получение данных по шагам конкретной цели (с возможностью фильтраций/сортировок)
+Ожидает на вход (пример):
+```
+// Основной запрос к API
+function callApi() {
+    const url = 'http://127.0.0.1:8017/api/rest/front/app/goals/steps/get/';
+    const data = {
+        "goal_id": 17,
+        "order_by": "order",
+        "order_direction": "desc",
+//         "status_filter": "planned",
+        "result_filter": "uncomplete",
+//         "priority_filter": "attention",
+//         "query_filter": "454554",
+        "page": 1,
+        "page_size": 6
+    };
+    const headers = {
+        "Content-Type": "application/json"
+    };
+
+    // Добавляем CSRF токен в заголовки
+    const csrftoken = getCookie('csrftoken');
+    if (csrftoken) {
+        headers['X-CSRFToken'] = csrftoken;
+    }
+
+    return fetch(url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: headers,
+            body: JSON.stringify(data),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Response:', data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// Использование: сначала инициализируем CSRF, потом вызываем эндпоинт
+initCsrf()
+    .then(() => callApi())
+    .catch(console.error);
+```
+Пример ответа:
+```
+{
+    "status": "ok",
+    "data": {
+        "goal_data": {
+            "category": "hobby",
+            "date_completed": null,
+            "date_created": "2025-12-01 09:39:12",
+            "goal_id": 17,
+            "score": "true",
+            "status": null,
+            "steps_data": [
+                {
+                    "date_completed": null,
+                    "date_created": "2025-12-01 16:12:22",
+                    "description": "Базовая проверка",
+                    "dt": null,
+                    "goal_id": 17,
+                    "is_complete": false,
+                    "order": 12,
+                    "priority": "important",
+                    "status": "unplanned",
+                    "step_id": 62,
+                    "time_duration": null,
+                    "title": "Проверить настройки",
+                },
+                # ....
+            ],
+            "title": "Научиться готовить 5 новых блюд",
+            "total_data": {"complete_days_in_row": 0, "complete_percent": 15, "complete_steps": 2, "total_steps": 6},
+            "why_about_me": "Люблю готовить",
+            "why_give_me": null,
+            "why_important": null,
+        },
+        "page": 1,
+        "page_size": 6,
+        "total_filtered_items": 11,
+        "total_items": 13,
+        "total_pages": 2
+    },
+}
+```
+В сериализаторе НА ЗАПРОС на бэке это выглядит так:
+```
+class GetGoalsDetailDataRequestSerializer(BaseSerializer):
+    goal_id = RestIntegerField(help_text='ID цели', example=1, required=True, allow_null=False, min_value=1)
+    order_by = RestChoiceField(choices=GoalStep.ALLOWED_ORDER_BY, required=False, default='date_created', help_text="Поле сортировки", example="order")
+    order_direction = RestChoiceField(choices=['asc', 'desc'], default='desc', help_text='Направление сортировки', example='desc', required=False)
+    status_filter = RestChoiceField(choices=user_data.STEP_STATUSES, required=False, allow_null=True, help_text="Фильтр по статусу шага _(запланирован / не запланирован)_", example="planned")
+    result_filter = RestChoiceField(choices=user_data.RESULT_STATUSES, required=False, allow_null=True, help_text="Фильтр по результату шага _(завершен / не завершен)_", example="uncomplete")
+    priority_filter = RestChoiceField(choices=user_data.STEP_PRIORITY_CHOICES, required=False, allow_null=True, help_text="Фильтр по приоритету шага", example="attention")
+    query_filter = RestCharField(required=False, allow_null=True, default=None, help_text="Фильтр по вхождению указанной фразы в название цели", example="454554", max_length=100, min_length=3)
+    page = RestIntegerField(help_text='Выбранная страница пагинации', example=1, required=False, min_value=1)
+    page_size = RestIntegerField(help_text='Размерность пагинации _(от 6 до 10)_', example=1, required=False, default=6, min_value=6, max_value=10)
+
+```
+В сериализаторе НА ОТВЕТ на бэке это выглядит так (это DRF, и также учитывай наследование классов друг от друга для лучшего понимания):
+```
+user_data.CATEGORY_CHOICES = [
+    ('welfare', 'Благосостояние'),
+    ('hobby', 'Хобби и отдых'),
+    ('environment', 'Дружба и окружение'),
+    ('health_sport', 'Здоровье и спорт'),
+    ('work', 'Работа и карьера'),
+    ('family', 'Любовь, семья, отношения'),
+]
+user_data.FRONT_GOAL_STATUSES = [
+    ('work', 'В работе'),
+    ('complete', 'Завершенные'),
+    ('unstatus', 'Не оцененные'),
+]
+GOAL_TYPES = [
+    ('true', 'Истинная'),
+    ('false', 'Ложная'),
+]
+user_data.STEP_STATUSES = [
+    ('planned', 'Запланирован'),
+    ('unplanned', 'Не Запланирован'),
+]
+STEP_PRIORITY_CHOICES = [
+    ('critical', 'Критично'),
+    ('important', 'Важно'),
+    ('attention', 'Внимание'),
+    ('optional', 'Опционально'),
+]
+user_data.STEP_TIME_CHOICES = [
+    ('half', '30м'),
+    ('one', '1ч'),
+    ('two', '2ч'),
+    ('three', '3ч'),
+    ('four', '4ч'),
+]
+
+class GoalsDataGetGoalsDataResponseSerializer(BaseSerializer):
+    goal_id = RestIntegerField(help_text='ID цели', example=1, required=True, min_value=1)
+    title = RestCharField(required=True, max_length=500, help_text="Название цели", example="Выучить английский язык")
+    category = RestChoiceField(choices=user_data.CATEGORY_CHOICES, required=False, allow_null=True, allow_blank=True, help_text="Категория цели", example="hobby")
+    status = RestChoiceField(choices=user_data.FRONT_GOAL_STATUSES, required=False, allow_null=True, allow_blank=True, help_text="Статус цели", example="work")
+    score = RestChoiceField(choices=user_data.GOAL_TYPES, required=False, allow_null=True, allow_blank=True, help_text="Оценка цели _(истинная/ложная)_", example="true")
+    why_important = RestCharField(required=False, allow_null=True, allow_blank=True, help_text="Почему эта цель мне важна?", example="Потому что: то-то и то-то")
+    why_give_me = RestCharField(required=False, allow_null=True, allow_blank=True, help_text="Почему именно это даст мне то, что я хочу?", example="Потому что: то-то и то-то")
+    why_about_me = RestCharField(required=False, allow_null=True, allow_blank=True, help_text="Почему это действительно про меня?", example="Потому что: то-то и то-то")
+    date_created = RestDateTimeField(required=False, help_text="Дата создания цели", format="%Y-%m-%d %H:%M:%S", example="2023-08-27 15:43:45")
+    date_completed = RestDateTimeField(required=False, help_text="Дата завершения цели", format="%Y-%m-%d %H:%M:%S", example="2023-08-27 15:43:45")
+
+class TotalDataGetGoalsStepsDetailDataResponseSerializer(BaseSerializer):
+    total_steps = RestIntegerField(help_text='Всего шагов', example=1, required=False, min_value=0)
+    complete_steps = RestIntegerField(help_text='Выполнено шагов _(штук)_', example=1, required=False, min_value=0)
+    complete_percent = RestIntegerField(help_text='Выполнено шагов подряд _(процент)_', example=1, required=False, min_value=0)
+    complete_days_in_row = RestIntegerField(help_text='Выполнено шагов дней подряд', example=1, required=False, min_value=0)
+
+class StepsDataGetGoalsDetailDataResponseSerializer(BaseSerializer):
+    step_id = RestIntegerField(help_text='ID шага', example=1, required=True, min_value=1)
+    goal_id = RestIntegerField(help_text='ID цели', example=1, required=True, min_value=1)
+    title = RestCharField(required=True, max_length=500, help_text="Название шага", example="Выучить английский язык")
+    description = RestCharField(required=True, max_length=10000, help_text="Описание шага", example="Выучить английский язык")
+    status = RestChoiceField(choices=user_data.STEP_STATUSES, required=False, allow_null=True, allow_blank=True, help_text="Статус шага", example="planned")
+    priority = RestChoiceField(choices=user_data.STEP_PRIORITY_CHOICES, required=False, allow_null=True, allow_blank=True, help_text="Приоритет шага", example="planned")
+    time_duration = RestChoiceField(choices=user_data.STEP_TIME_CHOICES, required=False, allow_null=True, allow_blank=True, help_text="Временный интервал шага", example="planned")
+    dt = RestDateField(required=False, allow_null=True, help_text="Запланированная дата выполнения (формат: 'YYYY-MM-DD').", example="2024-10-10", format="%Y-%m-%d")
+    order = RestIntegerField(help_text='Порядковый номер шага (для сортировки по выбранному пользователю формату)', example=1, required=True, allow_null=False, min_value=1)
+    is_complete = RestBooleanField(required=False, allow_null=True, help_text='Пометить шаг выполненным', example=False)
+    date_created = RestDateTimeField(required=False, help_text="Дата создания цели", format="%Y-%m-%d %H:%M:%S", example="2023-08-27 15:43:45")
+    date_completed = RestDateTimeField(required=False, help_text="Дата завершения цели", format="%Y-%m-%d %H:%M:%S", example="2023-08-27 15:43:45")
+
+class GoalsStepDataGetGoalsDataResponseSerializer(GoalsDataGetGoalsDataResponseSerializer):
+    # + наследует поля GoalsDataGetGoalsDataResponseSerializer
+    steps_data = RestListField(child=StepsDataGetGoalsDetailDataResponseSerializer(), required=True, help_text='Данные по шагам', example_count=6, max_length=GoalStep.MAX_PER_PAGE)
+    total_data = TotalDataGetGoalsStepsDetailDataResponseSerializer(help_text='Общие данные по шагам цели')
+
+
+class DataGetGoalsDetailDataResponseSerializer(BaseSerializer):
+    goal_data = GoalsStepDataGetGoalsDataResponseSerializer(required=True, help_text='Данные по цели')
+    total_items = RestIntegerField(help_text='Общее кол-во шагов - БЕЗ учета фильтров', example=1, required=False, min_value=0)
+    total_filtered_items = RestIntegerField(help_text='Общее кол-во шагов - С учетом фильтров', example=1, required=False, min_value=0)
+    total_pages = RestIntegerField(help_text='Всего страниц', example=1, required=False, min_value=0)
+    page = RestIntegerField(help_text='Выбранная страница пагинации', example=1, required=False, min_value=1)
+    page_size = RestIntegerField(help_text='Размерность пагинации _(сколько элементов возвращается в одной странице)_', example=6, required=False, min_value=6, max_value=10)
+
+
+class GetGoalsDetailDataResponseSerializer(BaseSerializer):
+    status = RestChoiceField(required=False, choices=['ok', 'error'], help_text='str: Статус ответа ("ok" или "error")')
+    data = DataGetGoalsDetailDataResponseSerializer(required=False, help_text="Блок с данными ответа по эндпоинту")
+```
+
+Что можно получить с помощью него: основная задача это получение данных по шагам для конкретной цели, с возможностью фильтраций шагой, сортировки шагов и подобное.
+В каких случаях/местах используется:
+- на странице "детали цели" - можно сразу полностью получить все данные по цели и шагам, и далее, если нужно, пагинировать данные шагов, или фильтровать их, и тд...
+- на странице "планирование" при раскрытие цели: в данном блоке первая страница шагов наполняется через эндпоинт `/api/rest/front/app/goals/get/` с переданным флагом `with_steps_data`, но если далее нужна будет пагинация, либо юзер захочет использовать фильтрации, то для этих целей нужно будет использовать уже данный эндпоинт.
+
+
+- 3. `/api/rest/front/app/goals/update/` - создание/обновление данных по целям
+Ожидает на вход (пример):
+```
+function callApi() {
+    const url = 'http://127.0.0.1:8017/api/rest/front/app/goals/update/';
+    const data = {
+        "goals_data": [
+            {
+                "goal_id": null,                    // без указания - идет создание, если указано - идет обновление переданных полей
+                "title": "Прочитать 10 книг",
+                "category": "hobby",
+                "status": "work",
+                "score": "true",
+                "why_important": null,
+                "why_give_me": null,
+                "why_about_me": null
+            },
+            {
+                // "goal_id": null,
+                "title": "Начать бегать по утрам",
+                "category": "health_sport",
+                "status": null,
+                "score": "false",
+                "why_important": "Хочу укрепить здоровье",
+                "why_give_me": null,
+                "why_about_me": "Мне подходит активный образ жизни"
+            },
+        ]
+    };
+    const headers = {
+        "Content-Type": "application/json"
+    };
+
+    // Добавляем CSRF токен в заголовки
+    const csrftoken = getCookie('csrftoken');
+    if (csrftoken) {
+        headers['X-CSRFToken'] = csrftoken;
+    }
+
+    return fetch(url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: headers,
+            body: JSON.stringify(data),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Response:', data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// Использование: сначала инициализируем CSRF, потом вызываем эндпоинт
+initCsrf()
+    .then(() => callApi())
+    .catch(console.error);
+```
+Ответом является формат данных, аналогичный ответу эндпоинта `/api/rest/front/app/goals/get/`, только в нем будут цели, которые либо были созданы, либо были обновлены в рамках данного запроса.
+В сериализаторе НА ЗАПРОС на бэке это выглядит так:
+```
+class DataUpdateGoalsDataRequestSerializer(BaseSerializer):
+    goal_id = RestIntegerField(help_text='ID цели _(если указывается - значит происходит обновление цели, т.е. может не указывать только при создание)_', example=1, required=False, allow_null=True, min_value=1)
+    title = RestCharField(required=True, max_length=500, help_text="Название цели", example="Выучить английский язык")
+    category = RestChoiceField(choices=user_data.CATEGORY_CHOICES, required=False, allow_null=True, allow_blank=True, help_text="Категория цели", example="hobby")
+    status = RestChoiceField(choices=user_data.GOAL_STATUSES, required=False, allow_null=True, help_text="Статус цели", example="work")
+    score = RestChoiceField(choices=user_data.GOAL_TYPES, required=False, allow_null=True, allow_blank=True, help_text="Оценка цели _(истинная/ложная)_", example="true")
+    why_important = RestCharField(required=False, allow_null=True, allow_blank=True, help_text="Почему эта цель мне важна?", example="Потому что: то-то и то-то", max_length=10000)
+    why_give_me = RestCharField(required=False, allow_null=True, allow_blank=True, help_text="Почему именно это даст мне то, что я хочу?", example="Потому что: то-то и то-то", max_length=10000)
+    why_about_me = RestCharField(required=False, allow_null=True, allow_blank=True, help_text="Почему это действительно про меня?", example="Потому что: то-то и то-то", max_length=10000)
+
+class UpdateGoalsDataRequestSerializer(BaseSerializer):
+    goals_data = RestListField(child=DataUpdateGoalsDataRequestSerializer(), required=False, allow_empty=False, max_length=1000, help_text='Данные целей для обновления', example_count=4)
+    deleted_goals_ids = RestListField(child=RestIntegerField(min_value=1, example=3), required=False, allow_empty=False, max_length=1000, help_text='Список ID целей, которые нужно пометить удаленными', example_count=4)
+    completed_goals_ids = RestListField(child=RestIntegerField(min_value=1, example=3), required=False, allow_empty=False, max_length=1000, help_text='Список ID целей, которые нужно пометить завершенными', example_count=4)
+```
+Т.е. если нужно удалить цель или завершить ее, то нужно передавать ее id в специальных списках на запрос.
+
+В каких случаях/местах используется: 
+- если нужно создать или обновить данные по одной или нескольких целях за раз.
+- если нужно поменить цель/цели удаленными/завершенными
+
+
+- 4. `/api/rest/front/app/goals/steps/update/` - создание/обновление данных по шагам целей
+Ожидает на вход (пример):
+```
+function callApi() {
+    const url = 'http://127.0.0.1:8017/api/rest/front/app/goals/steps/update/';
+    const data = {
+        "goals_steps_data": [
+            {
+                "goal_id": 4,
+                "step_id": null,
+                "title": "Подготовить план изучения",
+                "description": "Набросать общий план\nОпределить основные модули\nВыделить ключевые темы\nУточнить сроки по неделям",
+                "priority": "important",
+                "time_duration": "one",
+                "dt": "2025-01-14",
+                "order": 1,
+                "is_complete": false,
+                "is_deleted": false
+            },
+            {
+                "goal_id": 4,
+                "step_id": null,
+                "title": "Выбрать обучающие материалы",
+                "description": "Посмотреть несколько вариантов курсов",
+                "priority": "optional",
+                "time_duration": null,
+                "order": 2
+            },
+        ]
+    };
+    const headers = {
+        "Content-Type": "application/json"
+    };
+
+    // Добавляем CSRF токен в заголовки
+    const csrftoken = getCookie('csrftoken');
+    if (csrftoken) {
+        headers['X-CSRFToken'] = csrftoken;
+    }
+
+    return fetch(url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: headers,
+            body: JSON.stringify(data),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Response:', data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// Использование: сначала инициализируем CSRF, потом вызываем эндпоинт
+initCsrf()
+    .then(() => callApi())
+    .catch(console.error);
+```
+Ответом является формат данных, аналогичный ответу эндпоинта `/api/rest/front/app/goals/steps/get/`, только в нем будут цели, шаги которых либо были созданы, либо были обновлены в рамках данного запроса.
+В сериализаторе НА ОТВЕТ на бэке это выглядит так (это DRF, и также учитывай наследование классов друг от друга для лучшего понимания):
+```
+class DataUpdateGoalsDetailDataResponseSerializer(BaseSerializer):
+    goals_data = RestIntegerField(GoalsStepDataGetGoalsDataResponseSerializer(help_text='Данные по цели'), help_text='Данные по шагам и целям, которые были обновлены/созданы')
+
+    total_items = RestIntegerField(help_text='Общее кол-во шагов - БЕЗ учета фильтров', example=1, required=False, min_value=0)
+    total_filtered_items = RestIntegerField(help_text='Общее кол-во шагов - С учетом фильтров', example=1, required=False, min_value=0)
+    total_pages = RestIntegerField(help_text='Всего страниц', example=1, required=False, min_value=0)
+    page = RestIntegerField(help_text='Выбранная страница пагинации', example=1, required=False, min_value=1)
+    page_size = RestIntegerField(help_text='Размерность пагинации _(сколько элементов возвращается в одной странице)_', example=6, required=False, min_value=6, max_value=10)
+
+
+class UpdateGetGoalsDetailDataResponseSerializer(BaseSerializer):
+    """
+    Шаги цели - получение данных
+    """
+    status = RestChoiceField(required=False, choices=['ok', 'error'], help_text='str: Статус ответа ("ok" или "error")')
+    data = DataUpdateGoalsDetailDataResponseSerializer(required=False, help_text="Блок с данными ответа по эндпоинту")
+```
+Т.е. ответ почти аналогичен тому же что и в `/api/rest/front/app/goals/steps/get/`, за исключением что в нем не `goal_data` а список `goals_data` по всем целям, шаги которых были созданы или обновлены.
+
+В сериализаторе НА ЗАПРОС на бэке это выглядит так:
+```
+user_data.STEP_PRIORITY_CHOICES = [
+    ('critical', 'Критично'),
+    ('important', 'Важно'),
+    ('attention', 'Внимание'),
+    ('optional', 'Опционально'),
+]
+user_data.STEP_TIME_CHOICES = [
+    ('half', '30м'),
+    ('one', '1ч'),
+    ('two', '2ч'),
+    ('three', '3ч'),
+    ('four', '4ч'),
+]
+
+class DataUpdateGoalsStepsDataRequestSerializer(BaseSerializer):
+    goal_id = RestIntegerField(help_text='ID цели', example=1, required=True, allow_null=False, min_value=1)
+    step_id = RestIntegerField(help_text='ID Шага _(если указывается - значит происходит обновление шага, т.е. может не указывать только при создание)_', example=1, required=False, allow_null=True, min_value=1)
+    title = RestCharField(required=True, max_length=500, help_text="Название шага", example="Выучить английский язык")
+    description = RestCharField(required=True, max_length=500, help_text="Описание цели", example="Какие-то заметки, чтобы выучить английский язык")
+    priority = RestChoiceField(choices=user_data.STEP_PRIORITY_CHOICES, required=False, allow_null=True, allow_blank=True, help_text="Приоритет шага", example="attention")
+    time_duration = RestChoiceField(choices=user_data.STEP_TIME_CHOICES, required=False, allow_null=True, allow_blank=True, help_text="Время на выполнение шага", example="two")
+    dt = RestDateField(required=False, allow_null=True, help_text="Запланированная дата выполнения (формат: 'YYYY-MM-DD').", example="2024-10-10", format="%Y-%m-%d")
+    order = RestIntegerField(help_text='Порядковый номер шага (для сортировки по выбранному пользователю формату)', example=1, required=True, allow_null=False, min_value=1)
+    is_complete = RestBooleanField(required=False, allow_null=True, help_text='Пометить шаг выполненным', example=False)
+    is_deleted = RestBooleanField(required=False, allow_null=True, help_text='Пометить шаг удаленным', example=False)
+
+class UpdateGoalsStepsDataRequestSerializer(BaseSerializer):
+    goals_steps_data = RestListField(child=DataUpdateGoalsStepsDataRequestSerializer(), required=False, allow_empty=False, max_length=1000, help_text='Данные шагам целей для обновления', example_count=4)
+```
+
+В каких случаях/местах используется:
+- если нужно создать или обновить данные по одному или нескольких шагах за раз.
+- любые обновления связанные с шагами
+
+----
+
+Тщательно проанализируй все описанное выше ТЗ по работе с бэком.
+Если есть вопросы, составь их мне, и я дам ответы.
+Если вопросов нет, то подготовь план работ, и покажи мне его.
