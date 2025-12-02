@@ -1,0 +1,130 @@
+Страница "детали по цели".
+Открываю страницу, и идет запрос на эндпоинт `/api/rest/front/app/goals/steps/get/`.
+Тут все верно.
+Также вижу что успешно отрисовываются детали по цели (ее название, категория и тд...)
+
+Теперь проблемы:
+- 1. на данной странице, при открытие модального окна редактирования цели, кликаю по "сохранить" пишет что данные сохранены, но я не вижу в логах никакого запроса на бэк. Нужно исправить и сохранять данные через бэк.
+
+- 2. На запрос `/api/rest/front/app/goals/steps/get/`, бэк вернул:
+```
+{
+  "status": "ok",
+  "data": {
+    "total_items": 20,
+    "total_filtered_items": 20,
+    "total_pages": 4,
+    "page": null,
+    "page_size": 6,
+    "goal_data": {
+      "goal_id": 23,
+      "title": "Улучшить финансовую дисциплину",
+      "category": "welfare",
+      "status": "work",
+      "score": "true",
+      "why_important": null,
+      "why_give_me": "Больше контроля",
+      "why_about_me": null,
+      "date_created": "2025-12-02 15:29:10",
+      "date_completed": null,
+      "steps_data": [
+        {
+          "step_id": 125,
+          "title": "Создать шаблон документа",
+          "description": "Определить структуру файла",
+          "status": "unplanned",
+          "priority": "important",
+          "time_duration": "two",
+          "dt": null,
+          "order": 1,
+          "is_complete": false,
+          "date_completed": null,
+          "date_created": "2025-12-02 08:51:02",
+          "goal_id": 23
+        },
+        {
+          "step_id": 75,
+          "title": "Создать шаблон документа",
+          "description": "Определить структуру файла",
+          "status": "unplanned",
+          "priority": "important",
+          "time_duration": "two",
+          "dt": null,
+          "order": 1,
+          "is_complete": false,
+          "date_completed": null,
+          "date_created": "2025-12-02 08:48:28",
+          "goal_id": 23
+        },
+        {
+          "step_id": 16,
+          "title": "Создать шаблон документа",
+          "description": "Определить структуру файла",
+          "status": "unplanned",
+          "priority": "important",
+          "time_duration": "two",
+          "dt": null,
+          "order": 1,
+          "is_complete": false,
+          "date_completed": null,
+          "date_created": "2025-12-01 16:12:22",
+          "goal_id": 23
+        },
+        {
+          "step_id": 100,
+          "title": "Создать шаблон документа",
+          "description": "Определить структуру файла",
+          "status": "unplanned",
+          "priority": "important",
+          "time_duration": "two",
+          "dt": null,
+          "order": 1,
+          "is_complete": false,
+          "date_completed": null,
+          "date_created": "2025-12-02 08:50:15",
+          "goal_id": 23
+        },
+        {
+          "step_id": 17,
+          "title": "Настроить оформление",
+          "description": "Использовать фирменные стили",
+          "status": "unplanned",
+          "priority": null,
+          "time_duration": null,
+          "dt": null,
+          "order": 2,
+          "is_complete": false,
+          "date_completed": null,
+          "date_created": "2025-12-01 16:12:22",
+          "goal_id": 23
+        },
+        {
+          "step_id": 76,
+          "title": "Настроить оформление",
+          "description": "Использовать фирменные стили",
+          "status": "unplanned",
+          "priority": null,
+          "time_duration": null,
+          "dt": null,
+          "order": 2,
+          "is_complete": false,
+          "date_completed": null,
+          "date_created": "2025-12-02 08:48:28",
+          "goal_id": 23
+        }
+      ],
+      "total_data": {
+        "total_steps": 6,
+        "complete_steps": 0,
+        "complete_percent": 0,
+        "complete_days_in_row": 0
+      }
+    }
+  }
+}
+```
+
+Как видно, бэк сказал что всего 20 шагов (поле `total_items`).
+Но на фронте написано что всего 6 шагов, и не отображается пагинация.
+
+Исправь все указанное.

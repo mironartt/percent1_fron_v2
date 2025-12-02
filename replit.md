@@ -17,7 +17,7 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite with a pr
 ### Feature Specifications
 - **SSP Module**: A 4-step guided flow for life balance assessment with a redesigned Wheel of Life, color-coded reflection accordions, and inline editing.
 - **Goals Bank Module**: A 3-step workflow for goal validation, filtering, and transfer, including an inline editing modal.
-- **Decomposition Module**: Facilitates breaking down goals into actionable steps, with step persistence and ID-based tracking.
+- **Decomposition Module**: Facilitates breaking down goals into actionable steps, with step persistence, ID-based tracking, backend pagination for steps, and inline goal editing with backend sync.
 - **Planning Module**: Includes a 5-day workweek view, week navigation, color-coded priority tasks, drag & drop task management, weekly statistics, quick-add functionality, undo for task deletion, comprehensive filters (text, sphere, status, week), pagination, and URL parameter syncing.
 - **Authentication**: Integrates with the Django backend for user login, registration, and logout, supporting Telegram authentication.
 - **Onboarding (AI-Powered)**: A 5-step onboarding process with integrated SSP diagnosis, AI analysis, and auto-generated 7-day plans targeting weak spheres.

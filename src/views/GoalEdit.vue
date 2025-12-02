@@ -91,7 +91,11 @@
         <div class="card">
           <div class="card-header">
             <h3>Декомпозиция на шаги</h3>
-            <span class="steps-count">{{ goalForm.steps.length }} шагов</span>
+            <span class="steps-count">
+              {{ goalForm.steps.filter(s => !s.isNew).length }}
+              <template v-if="totalStepsFromBackend > 0"> из {{ totalStepsFromBackend }}</template>
+              шагов
+            </span>
           </div>
 
           <div class="form-hint decomposition-hint">
@@ -302,10 +306,22 @@
               </div>
             </div>
             
-            <!-- Кнопка загрузить ещё -->
+            <!-- Кнопка загрузить ещё (локальная пагинация) -->
             <div v-if="hasMoreSteps" class="load-more-steps">
               <button class="btn btn-secondary btn-sm" @click="loadMoreSteps">
-                Загрузить ещё {{ remainingStepsCount }} шагов
+                Показать ещё {{ remainingStepsCount }} шагов
+              </button>
+            </div>
+            
+            <!-- Кнопка загрузить ещё с бэкенда (если есть больше шагов) -->
+            <div v-if="hasMoreStepsToLoad && !hasMoreSteps" class="load-more-steps">
+              <button 
+                class="btn btn-secondary btn-sm" 
+                @click="loadMoreStepsFromBackend"
+                :disabled="isLoadingSteps"
+              >
+                <template v-if="isLoadingSteps">Загрузка...</template>
+                <template v-else>Загрузить ещё {{ remainingStepsToLoadCount }} шагов</template>
               </button>
             </div>
 
@@ -982,10 +998,10 @@ function goToPlanning() {
   router.push('/app/planning')
 }
 
-function saveEditModal() {
+async function saveEditModal() {
   if (!editingGoal.value) return
   
-  // Обновить в банке целей
+  // Обновить в банке целей (optimistic UI)
   store.updateRawIdea(editingGoal.value.id, {
     text: editingGoal.value.text,
     whyImportant: editingGoal.value.whyImportant,
@@ -997,7 +1013,7 @@ function saveEditModal() {
     }
   })
   
-  // Обновить текущую цель
+  // Обновить текущую цель (optimistic UI)
   store.updateGoal(goal.value.id, {
     title: editingGoal.value.text,
     sphereId: editingGoal.value.sphereId,
@@ -1011,6 +1027,23 @@ function saveEditModal() {
   
   closeEditModal()
   showToast('Цель успешно обновлена')
+  
+  // Sync to backend (non-blocking)
+  if (goalBackendId.value) {
+    try {
+      const { updateGoal: updateGoalApi } = await import('@/services/api.js')
+      await updateGoalApi(goalBackendId.value, {
+        title: editingGoal.value.text,
+        category: editingGoal.value.sphereId,
+        why_important: editingGoal.value.whyImportant || null,
+        why_give_me: editingGoal.value.why2 || null,
+        why_about_me: editingGoal.value.why3 || null
+      })
+      console.log('[GoalEdit] Goal updated on backend:', goalBackendId.value)
+    } catch (error) {
+      console.error('[GoalEdit] Error updating goal on backend:', error)
+    }
+  }
 }
 
 function getSphereIconComponent(sphereId) {
@@ -1061,8 +1094,23 @@ let autoScrollInterval = null
 const isLoadingSteps = ref(false)
 const stepsLoadedFromBackend = ref(false)
 
+// Steps pagination from backend
+const totalStepsFromBackend = ref(0)
+const currentStepsPage = ref(1)
+const stepsPageSize = ref(6)
+const totalStepsPages = ref(1)
+
+const hasMoreStepsToLoad = computed(() => {
+  return goalForm.value.steps.filter(s => !s.isNew).length < totalStepsFromBackend.value
+})
+
+const remainingStepsToLoadCount = computed(() => {
+  const loadedCount = goalForm.value.steps.filter(s => !s.isNew).length
+  return Math.max(0, totalStepsFromBackend.value - loadedCount)
+})
+
 // Load steps from backend
-async function loadStepsFromBackend() {
+async function loadStepsFromBackend(page = 1, append = false) {
   // route.params.id IS the backendId now
   const backendId = goalBackendId.value
   
@@ -1081,7 +1129,8 @@ async function loadStepsFromBackend() {
     const result = await getGoalSteps({
       goal_id: backendId,
       order_by: 'order',
-      order_direction: 'asc'
+      order_direction: 'asc',
+      page: page
     })
     
     // Check if user navigated away - don't update if goal changed
@@ -1092,6 +1141,12 @@ async function loadStepsFromBackend() {
     }
     
     if (result.status === 'ok' && result.data) {
+      // Update pagination info
+      totalStepsFromBackend.value = result.data.total_items || result.data.goal_data?.total_data?.total_steps || 0
+      totalStepsPages.value = result.data.total_pages || 1
+      stepsPageSize.value = result.data.page_size || 6
+      currentStepsPage.value = page
+      
       // Handle steps from steps_data or goal_data.steps_data
       const stepsData = result.data.steps_data || result.data.goal_data?.steps_data || []
       
@@ -1119,7 +1174,19 @@ async function loadStepsFromBackend() {
       // Mark that we've loaded steps from backend for THIS goal
       stepsLoadedFromBackend.value = true
       
-      goalForm.value.steps = backendSteps
+      if (append) {
+        // Append mode: add new steps to existing, dedupe by backendId
+        const existingBackendIds = new Set(goalForm.value.steps.map(s => s.backendId))
+        const newStepsLocal = goalForm.value.steps.filter(s => s.isNew)
+        const existingSteps = goalForm.value.steps.filter(s => !s.isNew)
+        const uniqueNewSteps = backendSteps.filter(s => !existingBackendIds.has(s.backendId))
+        goalForm.value.steps = [...existingSteps, ...uniqueNewSteps, ...newStepsLocal]
+      } else {
+        // Replace mode: preserve only local new steps
+        const newStepsLocal = goalForm.value.steps.filter(s => s.isNew)
+        goalForm.value.steps = [...backendSteps, ...newStepsLocal]
+      }
+      
       recalculateProgress()
       lastSavedHash = getStepsHash()
       adjustAllCommentHeights()
@@ -1130,10 +1197,10 @@ async function loadStepsFromBackend() {
       // Update store goal if it exists
       const currentGoal = goal.value
       if (currentGoal) {
-        currentGoal.steps = backendSteps
+        currentGoal.steps = goalForm.value.steps.filter(s => !s.isNew)
       }
       
-      console.log('[GoalEdit] Loaded', backendSteps.length, 'steps from backend for goal', currentBackendId)
+      console.log('[GoalEdit] Loaded', backendSteps.length, 'steps from backend for goal', currentBackendId, '(page', page, ', append:', append, ')')
     }
     
     isLoadingSteps.value = false
@@ -1141,6 +1208,14 @@ async function loadStepsFromBackend() {
     console.error('[GoalEdit] Error loading steps from backend:', error)
     isLoadingSteps.value = false
   }
+}
+
+// Load more steps from backend (next page)
+async function loadMoreStepsFromBackend() {
+  if (isLoadingSteps.value || !hasMoreStepsToLoad.value) return
+  
+  const nextPage = currentStepsPage.value + 1
+  await loadStepsFromBackend(nextPage, true)
 }
 
 // Map backend time duration to frontend
