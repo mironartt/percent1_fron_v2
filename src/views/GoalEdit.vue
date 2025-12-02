@@ -174,7 +174,8 @@
           <div 
             ref="stepsContainer"
             class="steps-section" 
-            :class="{ 'has-scroll': paginatedSteps.length > 6 }"
+            :class="{ 'has-scroll': hasMoreStepsToLoad || paginatedSteps.length > 6 }"
+            :style="stepsContainerStyle"
             @dragover="handleContainerDragOver"
           >
             <div 
@@ -1167,6 +1168,19 @@ const currentStepsPage = ref(1)
 const stepsPageSize = ref(6)
 const totalStepsPages = ref(1)
 
+// Fixed height for steps container after initial load
+const initialStepsContainerHeight = ref(null)
+
+const stepsContainerStyle = computed(() => {
+  if (initialStepsContainerHeight.value && hasMoreStepsToLoad.value) {
+    return {
+      minHeight: `${initialStepsContainerHeight.value}px`,
+      maxHeight: `${initialStepsContainerHeight.value}px`
+    }
+  }
+  return {}
+})
+
 const hasMoreStepsToLoad = computed(() => {
   return goalForm.value.steps.filter(s => !s.isNew).length < totalStepsFromBackend.value
 })
@@ -1248,6 +1262,12 @@ async function loadStepsFromBackend(page = 1, append = false) {
         const existingSteps = goalForm.value.steps.filter(s => !s.isNew)
         const uniqueNewSteps = backendSteps.filter(s => !existingBackendIds.has(s.backendId))
         goalForm.value.steps = [...existingSteps, ...uniqueNewSteps, ...newStepsLocal]
+        
+        // Increase display limit to show all loaded steps from backend
+        const totalBackendSteps = goalForm.value.steps.filter(s => !s.isNew).length
+        if (stepsDisplayLimit.value < totalBackendSteps) {
+          stepsDisplayLimit.value = totalBackendSteps
+        }
       } else {
         // Replace mode: preserve only local new steps
         const newStepsLocal = goalForm.value.steps.filter(s => s.isNew)
@@ -1268,6 +1288,16 @@ async function loadStepsFromBackend(page = 1, append = false) {
       }
       
       console.log('[GoalEdit] Loaded', backendSteps.length, 'steps from backend for goal', currentBackendId, '(page', page, ', append:', append, ')')
+      
+      // Capture initial container height after first page load (for fixed height on pagination)
+      if (!append && !initialStepsContainerHeight.value && totalStepsFromBackend.value > stepsPageSize.value) {
+        nextTick(() => {
+          if (stepsContainer.value) {
+            initialStepsContainerHeight.value = stepsContainer.value.offsetHeight
+            console.log('[GoalEdit] Captured initial steps container height:', initialStepsContainerHeight.value)
+          }
+        })
+      }
     }
     
     isLoadingSteps.value = false
@@ -1313,8 +1343,9 @@ function mapTimeToBackend(timeEstimate) {
 onMounted(async () => {
   loadGoalData()
   
-  // Reset flag on mount
+  // Reset flags on mount
   stepsLoadedFromBackend.value = false
+  initialStepsContainerHeight.value = null
   
   // Always try to load steps from backend (will check for backendId internally)
   loadStepsFromBackend()
@@ -2252,7 +2283,6 @@ function formatDate(dateString) {
 }
 
 .steps-section.has-scroll {
-  max-height: 600px;
   overflow-y: auto;
   padding-right: 0.5rem;
 }
