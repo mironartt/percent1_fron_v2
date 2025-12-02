@@ -998,6 +998,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { useXpStore, XP_REWARDS } from '../stores/xp'
 import { DEMO_PLANNING_MODE } from '../config/settings.js'
 import { 
   Calendar, 
@@ -1024,6 +1025,7 @@ import {
 } from 'lucide-vue-next'
 
 const store = useAppStore()
+const xpStore = useXpStore()
 const router = useRouter()
 const route = useRoute()
 
@@ -1550,10 +1552,12 @@ function getUncompletedSteps(goal) {
 const weekDays = computed(() => {
   const days = []
   const today = new Date()
+  today.setHours(0, 0, 0, 0)
   const dayOfWeek = today.getDay()
   const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
   const monday = new Date(today)
   monday.setDate(today.getDate() + mondayOffset + (weekOffset.value * 7))
+  monday.setHours(0, 0, 0, 0)
   
   const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
   const fullNames = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
@@ -1561,6 +1565,7 @@ const weekDays = computed(() => {
   for (let i = 0; i < 7; i++) {
     const date = new Date(monday)
     date.setDate(monday.getDate() + i)
+    date.setHours(0, 0, 0, 0)
     days.push({
       date: date.toISOString().split('T')[0],
       dayNum: date.getDate(),
@@ -1774,6 +1779,7 @@ async function scheduleStep(goalId, step, dateStr) {
       stepId: step.id,
       stepTitle: step.title,
       goalTitle: goal?.title || '',
+      sphereId: goal?.sphereId || '',
       scheduledDate: dateStr,
       timeEstimate: '',
       priority: ''
@@ -1814,8 +1820,27 @@ async function toggleTaskComplete(taskId) {
   const task = plan.scheduledTasks.find(t => t.id === taskId)
   if (!task) return
   
+  const wasCompleted = task.completed
+  
   // Optimistic UI update
   store.toggleScheduledTaskComplete(plan.id, taskId)
+  
+  // XP logic
+  if (!wasCompleted) {
+    xpStore.awardXP(XP_REWARDS.FOCUS_TASK_COMPLETED, 'focus_task_completed', { 
+      taskId: task.id, 
+      taskTitle: task.stepTitle || task.goalTitle 
+    })
+  } else {
+    const lastEvent = xpStore.xpHistory.find(
+      e => e.source === 'focus_task_completed' && 
+           e.metadata?.taskId === task.id &&
+           new Date(e.timestamp).toDateString() === new Date().toDateString()
+    )
+    if (lastEvent) {
+      xpStore.revokeXP(lastEvent.id)
+    }
+  }
   
   // Sync completion status to backend
   const goal = goals.value.find(g => g.id === task.goalId)
@@ -1828,7 +1853,7 @@ async function toggleTaskComplete(taskId) {
         goals_steps_data: [{
           goal_id: goal.backendId,
           step_id: step.backendId,
-          is_complete: !task.completed
+          is_complete: !wasCompleted
         }]
       })
     } catch (error) {

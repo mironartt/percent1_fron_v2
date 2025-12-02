@@ -25,103 +25,130 @@
           </div>
         </div>
         <div class="header-badges">
+          <XpBadge @click="$router.push('/app/achievements')" />
           <div class="streak-badge" v-if="journalStreak > 0">
             <Flame :size="16" :stroke-width="1.5" />
             <span>{{ journalStreak }} {{ pluralize(journalStreak, 'день', 'дня', 'дней') }}</span>
           </div>
-          <div class="balance-badge">
+          <div class="balance-badge" @click="$router.push('/app/ssp')" title="Перейти к балансу жизни">
             <Target :size="16" :stroke-width="1.5" />
             <span>{{ averageScore }}/10</span>
           </div>
         </div>
       </header>
 
+      <DailyProgressBar class="progress-section" />
+
       <div class="day-content">
-        <div class="card focus-card">
-          <div class="card-header">
-            <h3 class="card-title">
-              <Crosshair :size="18" :stroke-width="1.5" />
-              Фокус дня
-            </h3>
-            <span class="focus-count">{{ completedFocusTasks }}/{{ focusTasks.length }}</span>
-          </div>
-          <div class="card-body">
-            <div v-if="focusTasks.length === 0" class="empty-focus">
-              <div class="empty-icon">
-                <Sparkles :size="32" :stroke-width="1.5" />
-              </div>
-              <p>Выберите 1-3 важных дела на сегодня</p>
-              <router-link to="/app/planning" class="btn btn-primary">
-                <Plus :size="18" :stroke-width="1.5" />
-                Выбрать задачи
-              </router-link>
-            </div>
-            <div v-else class="focus-list">
-              <div 
-                v-for="task in focusTasks" 
-                :key="task.id"
-                class="focus-item"
-                :class="{ completed: task.completed }"
-              >
+        <div class="focus-goals-grid">
+          <div class="card focus-card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <Crosshair :size="18" :stroke-width="1.5" />
+                Фокус дня
+              </h3>
+              <div class="header-actions">
+                <span class="focus-count">{{ completedFocusTasks }}/{{ focusTasks.length }}</span>
                 <button 
-                  class="focus-check"
-                  :class="{ checked: task.completed }"
-                  @click="toggleFocusTask(task)"
+                  class="settings-btn" 
+                  @click="$router.push('/app/planning')"
+                  title="Настроить задачи"
                 >
-                  <Check v-if="task.completed" :size="16" :stroke-width="2" />
+                  <Settings :size="16" :stroke-width="1.5" />
                 </button>
-                <div class="focus-content">
-                  <span class="focus-title">{{ task.title }}</span>
-                  <span class="focus-sphere" v-if="task.sphere">{{ task.sphere }}</span>
-                </div>
               </div>
-              <router-link 
-                v-if="dailyTasks.length > 3"
-                to="/app/planning" 
-                class="more-tasks-link"
-              >
-                +{{ dailyTasks.length - 3 }} {{ pluralize(dailyTasks.length - 3, 'задача', 'задачи', 'задач') }}
-              </router-link>
+            </div>
+            <div class="card-body">
+              <div v-if="focusTasks.length === 0" class="empty-focus">
+                <div class="empty-icon">
+                  <Sparkles :size="32" :stroke-width="1.5" />
+                </div>
+                <p>Выберите 1-3 важных дела на сегодня</p>
+                <router-link to="/app/planning" class="btn btn-primary">
+                  <Plus :size="18" :stroke-width="1.5" />
+                  Выбрать задачи
+                </router-link>
+              </div>
+              <div v-else class="focus-list">
+                <div 
+                  v-for="task in focusTasks" 
+                  :key="task.id"
+                  class="focus-item"
+                  :class="{ completed: task.completed }"
+                >
+                  <button 
+                    class="focus-check"
+                    :class="{ checked: task.completed }"
+                    @click="toggleFocusTask(task)"
+                  >
+                    <Check v-if="task.completed" :size="16" :stroke-width="2" />
+                  </button>
+                  <div class="focus-content">
+                    <span class="focus-title">{{ task.title }}</span>
+                    <span class="focus-sphere" v-if="task.sphere">{{ task.sphere }}</span>
+                  </div>
+                </div>
+                <router-link 
+                  v-if="dailyTasks.length > 3"
+                  to="/app/planning" 
+                  class="more-tasks-link"
+                >
+                  +{{ dailyTasks.length - 3 }} {{ pluralize(dailyTasks.length - 3, 'задача', 'задачи', 'задач') }}
+                </router-link>
+              </div>
+            </div>
+          </div>
+
+          <div class="card goals-card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <Flag :size="18" :stroke-width="1.5" />
+                Мои цели
+              </h3>
+              <span class="goals-count">{{ topGoals.length }}</span>
+            </div>
+            <div class="card-body">
+              <div v-if="topGoals.length === 0" class="empty-goals">
+                <div class="empty-icon">
+                  <Target :size="32" :stroke-width="1.5" />
+                </div>
+                <p>Добавьте цели для отслеживания прогресса</p>
+                <router-link to="/app/goals" class="btn btn-primary">
+                  <Plus :size="18" :stroke-width="1.5" />
+                  В банк целей
+                </router-link>
+              </div>
+              <div v-else class="goals-list">
+                <div 
+                  v-for="goal in topGoals" 
+                  :key="goal.id"
+                  class="goal-item"
+                  @click="goToGoal(goal.id)"
+                >
+                  <div class="goal-info">
+                    <span class="goal-sphere-badge" v-if="goal.sphereIcon">{{ goal.sphereIcon }}</span>
+                    <span class="goal-title">{{ goal.title }}</span>
+                  </div>
+                  <div class="goal-progress-wrap">
+                    <div class="goal-progress-bar">
+                      <div class="goal-progress-fill" :style="{ width: goal.progress + '%' }"></div>
+                    </div>
+                    <span class="goal-progress-text">{{ goal.progress }}%</span>
+                  </div>
+                </div>
+                <router-link 
+                  v-if="allActiveGoals.length > 3"
+                  to="/app/goals" 
+                  class="more-goals-link"
+                >
+                  +{{ allActiveGoals.length - 3 }} {{ pluralize(allActiveGoals.length - 3, 'цель', 'цели', 'целей') }}
+                </router-link>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="habits-row">
-          <div class="card habit-card">
-            <div class="habit-icon journal">
-              <BookOpen :size="20" :stroke-width="1.5" />
-            </div>
-            <div class="habit-info">
-              <span class="habit-name">Дневник</span>
-              <span class="habit-status" :class="{ done: hasTodayEntry }">
-                {{ hasTodayEntry ? 'Записано' : 'Не записано' }}
-              </span>
-            </div>
-            <button 
-              v-if="!hasTodayEntry"
-              class="habit-action"
-              @click="showJournalModal = true"
-            >
-              <Plus :size="16" :stroke-width="2" />
-            </button>
-            <div v-else class="habit-check">
-              <Check :size="16" :stroke-width="2" />
-            </div>
-          </div>
-
-          <div class="card habit-card">
-            <div class="habit-icon balance">
-              <ChartPie :size="20" :stroke-width="1.5" />
-            </div>
-            <div class="habit-info">
-              <span class="habit-name">Баланс</span>
-              <span class="habit-status">{{ averageScore }}/10</span>
-            </div>
-            <router-link to="/app/ssp" class="habit-action">
-              <ChevronRight :size="16" :stroke-width="2" />
-            </router-link>
-          </div>
-        </div>
+        <HabitTracker @manage="showHabitManager = true" />
 
         <div v-if="isEvening" class="card evening-card">
           <div class="evening-content">
@@ -154,20 +181,6 @@
           </div>
         </div>
 
-        <div class="quick-links">
-          <router-link to="/app/goals-bank" class="quick-link">
-            <Lightbulb :size="18" :stroke-width="1.5" />
-            <span>Банк целей</span>
-          </router-link>
-          <router-link to="/app/planning" class="quick-link">
-            <Calendar :size="18" :stroke-width="1.5" />
-            <span>Планирование</span>
-          </router-link>
-          <router-link to="/app/journal" class="quick-link">
-            <BookOpen :size="18" :stroke-width="1.5" />
-            <span>Дневник</span>
-          </router-link>
-        </div>
       </div>
     </div>
     
@@ -184,16 +197,35 @@
       </div>
     </div>
   </Teleport>
+
+  <Teleport to="body">
+    <PlanReview 
+      v-if="showPlanReview" 
+      @close="store.closePlanReview()"
+      @confirmed="onPlanConfirmed"
+    />
+  </Teleport>
+
+  <HabitManagerModal 
+    v-if="showHabitManager" 
+    @close="showHabitManager = false" 
+  />
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { useAppStore } from '../stores/app'
+import { useXpStore, XP_REWARDS } from '../stores/xp'
 import OnboardingAI from '../components/OnboardingAI.vue'
 import MiniTaskWelcome from '../components/MiniTaskWelcome.vue'
 import MiniTask from '../components/MiniTask.vue'
 import JournalEntry from '../components/JournalEntry.vue'
 import MentorPanel from '../components/MentorPanel.vue'
+import PlanReview from '../components/PlanReview.vue'
+import HabitTracker from '../components/HabitTracker.vue'
+import HabitManagerModal from '../components/HabitManagerModal.vue'
+import DailyProgressBar from '../components/DailyProgressBar.vue'
+import XpBadge from '../components/XpBadge.vue'
 import { DEBUG_MODE } from '@/config/settings.js'
 import { 
   Sun,
@@ -203,27 +235,29 @@ import {
   Crosshair,
   Check,
   Plus,
-  BookOpen,
-  Calendar,
-  ChartPie,
-  ChevronRight,
-  Lightbulb,
   Flame,
   MessageCircle,
   Sparkles,
-  X
+  Flag,
+  X,
+  Settings
 } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
 
 const store = useAppStore()
+const xpStore = useXpStore()
+const router = useRouter()
 const showJournalModal = ref(false)
 const showMiniTask = ref(false)
+const showHabitManager = ref(false)
 
 const userName = computed(() => store.displayName)
 const averageScore = computed(() => store.averageScore)
-const dailyTasks = computed(() => store.dailyPlan.tasks || [])
+const dailyTasks = computed(() => store.todayScheduledTasks || [])
 const journalStreak = computed(() => store.journalStreak)
 const hasTodayEntry = computed(() => store.hasTodayEntry)
 const isMentorPanelCollapsed = computed(() => store.mentorPanelCollapsed)
+const showPlanReview = computed(() => store.showPlanReview)
 
 const currentHour = computed(() => new Date().getHours())
 
@@ -280,6 +314,34 @@ const mentorHint = computed(() => {
   return 'Готов помочь с текущими задачами'
 })
 
+const sphereIcons = {
+  family: '👨‍👩‍👧',
+  wealth: '💰',
+  hobbies: '🎯',
+  friendship: '👥',
+  health: '❤️',
+  career: '💼',
+  love: '💕'
+}
+
+const allActiveGoals = computed(() => {
+  return (store.goals || [])
+    .filter(g => g.status === 'active')
+    .map(g => ({
+      ...g,
+      sphereIcon: sphereIcons[g.sphereId] || '🎯',
+      progress: g.progress || 0
+    }))
+})
+
+const topGoals = computed(() => {
+  return allActiveGoals.value.slice(0, 3)
+})
+
+function goToGoal(goalId) {
+  router.push(`/app/goals/${goalId}`)
+}
+
 const shouldShowOnboarding = computed(() => {
   const show = store.shouldShowOnboarding
   if (DEBUG_MODE) {
@@ -307,11 +369,34 @@ function onMiniTaskSkip() {
 }
 
 function toggleFocusTask(task) {
-  store.toggleTask(task.id)
+  const result = store.toggleTodayTask(task.id)
+  if (!result) return
+  
+  if (result.isNowCompleted) {
+    xpStore.awardXP(XP_REWARDS.FOCUS_TASK_COMPLETED, 'focus_task_completed', { 
+      taskId: result.taskId, 
+      taskTitle: result.taskTitle 
+    })
+  } else {
+    const lastEvent = xpStore.xpHistory.find(
+      e => e.source === 'focus_task_completed' && 
+           e.metadata?.taskId === result.taskId &&
+           new Date(e.timestamp).toDateString() === new Date().toDateString()
+    )
+    if (lastEvent) {
+      xpStore.revokeXP(lastEvent.id)
+    }
+  }
 }
 
 function openMentorPanel() {
   store.toggleMentorPanel(false)
+}
+
+function onPlanConfirmed() {
+  if (DEBUG_MODE) {
+    console.log('[Dashboard] AI Plan confirmed, tasks added to daily plan')
+  }
 }
 
 function pluralize(n, one, few, many) {
@@ -425,12 +510,35 @@ function pluralize(n, one, few, many) {
 .balance-badge {
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
   color: var(--primary-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.balance-badge:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+  transform: translateY(-1px);
+}
+
+.progress-section {
+  margin-bottom: 1.5rem;
 }
 
 .day-content {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+}
+
+.focus-goals-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .focus-goals-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .card {
@@ -465,6 +573,12 @@ function pluralize(n, one, few, many) {
   padding: 1.25rem;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .focus-count {
   font-size: 0.875rem;
   font-weight: 600;
@@ -472,6 +586,26 @@ function pluralize(n, one, few, many) {
   background: rgba(99, 102, 241, 0.1);
   padding: 0.25rem 0.625rem;
   border-radius: var(--radius-full);
+}
+
+.settings-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.settings-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--primary-color);
 }
 
 .empty-focus {
@@ -573,6 +707,141 @@ function pluralize(n, one, few, many) {
 }
 
 .more-tasks-link:hover {
+  text-decoration: underline;
+}
+
+.goals-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.goals-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.5rem;
+  background: var(--primary-light);
+  color: var(--primary-color);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+.empty-goals {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.empty-goals .empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  color: var(--primary-color);
+}
+
+.empty-goals p {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  font-size: 0.9375rem;
+}
+
+.goals-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.goal-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.875rem 1.25rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.goal-item:last-of-type {
+  border-bottom: none;
+}
+
+.goal-item:hover {
+  background: var(--bg-secondary);
+}
+
+.goal-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.goal-sphere-badge {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.goal-title {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.goal-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.goal-progress-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.goal-progress-fill {
+  height: 100%;
+  background: var(--primary-color);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.goal-progress-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 2.5rem;
+  text-align: right;
+}
+
+.more-goals-link {
+  display: block;
+  text-align: center;
+  padding: 0.625rem;
+  color: var(--primary-color);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.more-goals-link:hover {
   text-decoration: underline;
 }
 
@@ -747,39 +1016,7 @@ function pluralize(n, one, few, many) {
   margin: 0;
 }
 
-.quick-links {
-  display: flex;
-  gap: 0.75rem;
-  padding-top: 0.5rem;
-}
-
-.quick-link {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.875rem;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.quick-link:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-}
-
 @media (max-width: 600px) {
-  .quick-links {
-    flex-direction: column;
-  }
-  
   .day-header {
     flex-direction: column;
     align-items: flex-start;

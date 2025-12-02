@@ -542,11 +542,10 @@
             </div>
 
             <div v-if="selectedGoal?.threeWhys" class="goal-detail-section why-section">
-              <h4>Почему эта цель важна (3 Почему)</h4>
+              <h4>Проверка цели</h4>
               <div class="why-answers">
-                <p v-if="selectedGoal.threeWhys.why1"><strong>1.</strong> {{ selectedGoal.threeWhys.why1 }}</p>
-                <p v-if="selectedGoal.threeWhys.why2"><strong>2.</strong> {{ selectedGoal.threeWhys.why2 }}</p>
-                <p v-if="selectedGoal.threeWhys.why3"><strong>3.</strong> {{ selectedGoal.threeWhys.why3 }}</p>
+                <p v-if="selectedGoal.threeWhys.why1"><strong>1. Почему для меня это важно:</strong> {{ selectedGoal.threeWhys.why1 }}</p>
+                <p v-if="selectedGoal.threeWhys.why2"><strong>2. Как поможет выйти на новый уровень:</strong> {{ selectedGoal.threeWhys.why2 }}</p>
               </div>
             </div>
 

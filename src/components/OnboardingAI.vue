@@ -538,11 +538,13 @@ async function completeOnboarding() {
     completedAt: new Date().toISOString()
   })
   
+  store.initAIRecommendations(weeklyTasks.value)
+  
   store.completeFirstStep('ssp')
   store.completeFirstStep('chat_mentor')
   
   if (DEBUG_MODE) {
-    console.log('[OnboardingAI] Completed, navigating to dashboard')
+    console.log('[OnboardingAI] Completed, navigating to dashboard with AI plan review')
   }
   
   router.push('/app')

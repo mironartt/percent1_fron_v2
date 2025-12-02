@@ -129,10 +129,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { 
   BarChart3, 
-  Compass, 
   Target, 
   Landmark, 
-  Trophy, 
   Calendar, 
   Zap, 
   Gem, 
@@ -221,16 +219,15 @@ const lockTooltip = 'Для доступа в систему необходим�
 
 const menuItems = [
   { path: '/app', icon: BarChart3, label: 'Главная', locked: false, showLock: false },
-  { path: '/app/who', icon: Compass, label: 'Кто ты', locked: true, showLock: false },
   { path: '/app/ssp', icon: Target, label: 'ССП', locked: false, showLock: false },
   { path: '/app/goals-bank', icon: Landmark, label: 'Банк целей', locked: false, showLock: false },
   { path: '/app/planning', icon: Calendar, label: 'Планирование', locked: false, showLock: false },
   { path: '/app/journal', icon: BookOpen, label: 'Дневник', locked: false, showLock: false },
+  { path: '/app/achievements', icon: Award, label: 'Достижения', locked: false, showLock: false },
   { path: '/app/learning', icon: GraduationCap, label: 'Обучение', locked: false, showLock: false },
   { path: '/app/energy', icon: Zap, label: 'Ресурс и энергия', locked: true, showLock: false },
   { path: '/app/principles', icon: Gem, label: 'Принципы и убеждения', locked: true, showLock: false },
-  { path: '/app/club', icon: Users, label: 'Клуб 1%', locked: true, showLock: false },
-  { path: '/app/achievements', icon: Award, label: 'Достижения', locked: true, showLock: false }
+  { path: '/app/club', icon: Users, label: 'Клуб 1%', locked: true, showLock: false }
 ]
 </script>
 

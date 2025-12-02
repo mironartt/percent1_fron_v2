@@ -653,6 +653,10 @@ export const useAppStore = defineStore('app', () => {
     completedActions: []
   })
 
+  // AI Recommendations (задачи из онбординга)
+  const aiRecommendations = ref([])
+  const showPlanReview = ref(false)
+
   // Payment data
   const payment = ref({
     completed: false,
@@ -1006,11 +1010,226 @@ export const useAppStore = defineStore('app', () => {
     eveningReflection: ''
   })
 
+  // ========================================
+  // HABITS (Привычки)
+  // ========================================
+  
+  const habits = ref([])
+  const habitLog = ref({})
+  
+  const defaultHabits = [
+    { id: 'journal', name: 'Дневник', icon: '📝', xpReward: 10, isDefault: true },
+    { id: 'balance', name: 'Баланс жизни', icon: '⚖️', xpReward: 5, isDefault: true }
+  ]
+
+  const todayHabits = computed(() => {
+    const today = new Date().toISOString().split('T')[0]
+    const allHabits = [...defaultHabits, ...habits.value.filter(h => !h.archived)]
+    
+    return allHabits.map(habit => ({
+      ...habit,
+      completed: habitLog.value[today]?.includes(habit.id) || false
+    }))
+  })
+
+  const todayHabitsCompleted = computed(() => {
+    return todayHabits.value.filter(h => h.completed).length
+  })
+
+  const todayHabitsTotal = computed(() => {
+    return todayHabits.value.length
+  })
+
+  const habitStreak = computed(() => {
+    let streak = 0
+    const today = new Date()
+    
+    for (let i = 0; i < 365; i++) {
+      const date = new Date(today)
+      date.setDate(date.getDate() - i)
+      const dateStr = date.toISOString().split('T')[0]
+      
+      const dayLog = habitLog.value[dateStr]
+      if (!dayLog || dayLog.length === 0) {
+        if (i === 0) continue
+        break
+      }
+      streak++
+    }
+    
+    return streak
+  })
+
+  function addHabit(habit) {
+    const newHabit = {
+      id: Date.now().toString(),
+      name: habit.name,
+      icon: habit.icon || '✨',
+      xpReward: habit.xpReward || 5,
+      description: habit.description || '',
+      createdAt: new Date().toISOString(),
+      archived: false,
+      isDefault: false
+    }
+    
+    habits.value.push(newHabit)
+    
+    if (DEBUG_MODE) {
+      console.log('[Store] Habit added:', newHabit.name)
+    }
+    
+    saveToLocalStorage()
+    return newHabit
+  }
+
+  function updateHabit(habitId, updates) {
+    const habit = habits.value.find(h => h.id === habitId)
+    if (habit) {
+      Object.assign(habit, updates)
+      saveToLocalStorage()
+      
+      if (DEBUG_MODE) {
+        console.log('[Store] Habit updated:', habit.name)
+      }
+    }
+  }
+
+  function removeHabit(habitId) {
+    const index = habits.value.findIndex(h => h.id === habitId)
+    if (index !== -1) {
+      const removed = habits.value.splice(index, 1)[0]
+      saveToLocalStorage()
+      
+      if (DEBUG_MODE) {
+        console.log('[Store] Habit removed:', removed.name)
+      }
+    }
+  }
+
+  function toggleHabit(habitId, date = null) {
+    const targetDate = date || new Date().toISOString().split('T')[0]
+    
+    if (!habitLog.value[targetDate]) {
+      habitLog.value[targetDate] = []
+    }
+    
+    const index = habitLog.value[targetDate].indexOf(habitId)
+    let completed = false
+    
+    if (index === -1) {
+      habitLog.value[targetDate].push(habitId)
+      completed = true
+    } else {
+      habitLog.value[targetDate].splice(index, 1)
+      completed = false
+    }
+    
+    if (DEBUG_MODE) {
+      console.log(`[Store] Habit ${habitId} toggled: ${completed ? 'completed' : 'uncompleted'}`)
+    }
+    
+    saveToLocalStorage()
+    return { completed, habitId, date: targetDate }
+  }
+
+  function getHabitHistory(habitId, days = 30) {
+    const history = []
+    const today = new Date()
+    
+    for (let i = 0; i < days; i++) {
+      const date = new Date(today)
+      date.setDate(date.getDate() - i)
+      const dateStr = date.toISOString().split('T')[0]
+      
+      history.push({
+        date: dateStr,
+        completed: habitLog.value[dateStr]?.includes(habitId) || false
+      })
+    }
+    
+    return history
+  }
+
   // Computed
   const averageScore = computed(() => {
     const total = lifeSpheres.value.reduce((sum, sphere) => sum + sphere.score, 0)
     return Math.round(total / lifeSpheres.value.length)
   })
+  
+  // Задачи на сегодня из недельного плана (синхронизация Planning ↔ Dashboard)
+  const todayScheduledTasks = computed(() => {
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
+    const today = now.toISOString().split('T')[0]
+    const currentPlan = getCurrentWeekPlan()
+    
+    console.log('[Store] todayScheduledTasks - today:', today)
+    console.log('[Store] todayScheduledTasks - currentPlan:', currentPlan?.id, 'weekStart:', currentPlan?.weekStart)
+    console.log('[Store] todayScheduledTasks - weekly tasks:', currentPlan?.scheduledTasks?.length || 0)
+    console.log('[Store] todayScheduledTasks - dailyPlan tasks:', dailyPlan.value?.tasks?.length || 0)
+    
+    // Задачи из weeklyPlans (новый механизм - Planning)
+    const weeklyTasks = (currentPlan?.scheduledTasks || [])
+      .filter(task => task.scheduledDate === today)
+      .map(task => ({
+        id: task.id,
+        title: task.stepTitle || task.goalTitle || 'Задача',
+        goalTitle: task.goalTitle,
+        goalId: task.goalId,
+        stepId: task.stepId,
+        completed: task.completed || false,
+        completedAt: task.completedAt,
+        priority: task.priority,
+        timeEstimate: task.timeEstimate,
+        scheduledDate: task.scheduledDate,
+        sphere: getSphereNameById(task.sphereId),
+        source: 'weekly'
+      }))
+    
+    // Задачи из dailyPlan (старый механизм - AI рекомендации и пр.)
+    const dailyTasks = (dailyPlan.value?.tasks || [])
+      .filter(task => {
+        // Проверяем что задача для сегодня (или без даты = сегодня)
+        const taskDate = task.scheduledDate || dailyPlan.value.date
+        return taskDate === today
+      })
+      .map(task => ({
+        id: task.id,
+        title: task.title || task.stepTitle || 'Задача',
+        goalTitle: task.goalTitle || '',
+        goalId: task.goalId || '',
+        stepId: task.stepId || '',
+        completed: task.completed || false,
+        completedAt: task.completedAt,
+        priority: task.priority || '',
+        timeEstimate: task.duration || task.timeEstimate || '',
+        scheduledDate: task.scheduledDate || today,
+        sphere: task.sphere || getSphereNameById(task.sphereId),
+        source: 'daily'
+      }))
+    
+    // Объединяем, избегая дублей по id
+    const allTasks = [...weeklyTasks]
+    dailyTasks.forEach(dt => {
+      if (!allTasks.find(wt => wt.id === dt.id)) {
+        allTasks.push(dt)
+      }
+    })
+    
+    console.log('[Store] todayScheduledTasks - combined:', allTasks.length, 'tasks')
+    
+    return allTasks.sort((a, b) => {
+      const priorityOrder = { critical: 0, desirable: 1, attention: 2, optional: 3 }
+      const priorityA = priorityOrder[a.priority] ?? 4
+      const priorityB = priorityOrder[b.priority] ?? 4
+      return priorityA - priorityB
+    })
+  })
+  
+  function getSphereNameById(sphereId) {
+    const sphere = lifeSpheres.value.find(s => s.id === sphereId)
+    return sphere?.name || ''
+  }
 
   const totalGoals = computed(() => goals.value.length)
   
@@ -1151,7 +1370,11 @@ export const useAppStore = defineStore('app', () => {
       journal: journal.value,
       firstSteps: firstSteps.value,
       mentor: mentor.value,
-      mentorPanelCollapsed: mentorPanelCollapsed.value
+      mentorPanelCollapsed: mentorPanelCollapsed.value,
+      aiRecommendations: aiRecommendations.value,
+      showPlanReview: showPlanReview.value,
+      habits: habits.value,
+      habitLog: habitLog.value
     }))
   }
 
@@ -1186,6 +1409,10 @@ export const useAppStore = defineStore('app', () => {
         if (parsed.firstSteps) firstSteps.value = { ...firstSteps.value, ...parsed.firstSteps }
         if (parsed.mentor) mentor.value = { ...mentor.value, ...parsed.mentor }
         if (parsed.mentorPanelCollapsed !== undefined) mentorPanelCollapsed.value = parsed.mentorPanelCollapsed
+        if (parsed.aiRecommendations) aiRecommendations.value = parsed.aiRecommendations
+        if (parsed.showPlanReview !== undefined) showPlanReview.value = parsed.showPlanReview
+        if (parsed.habits) habits.value = parsed.habits
+        if (parsed.habitLog) habitLog.value = parsed.habitLog
       } catch (e) {
         console.error('Error loading data:', e)
       }
@@ -1374,6 +1601,119 @@ export const useAppStore = defineStore('app', () => {
     }
     saveToLocalStorage()
   }
+
+  // ========================================
+  // AI RECOMMENDATIONS METHODS
+  // ========================================
+
+  function initAIRecommendations(tasks) {
+    aiRecommendations.value = tasks.map(task => ({
+      ...task,
+      status: 'pending',
+      replaced: false,
+      originalTitle: task.title
+    }))
+    showPlanReview.value = true
+    saveToLocalStorage()
+    
+    if (DEBUG_MODE) {
+      console.log('[Store] AI Recommendations initialized:', aiRecommendations.value.length)
+    }
+  }
+
+  function updateRecommendationStatus(taskId, status) {
+    const task = aiRecommendations.value.find(t => t.id === taskId)
+    if (task) {
+      task.status = status
+      saveToLocalStorage()
+      
+      if (DEBUG_MODE) {
+        console.log(`[Store] Recommendation ${taskId} status: ${status}`)
+      }
+    }
+  }
+
+  function updateRecommendation(taskId, updates) {
+    const task = aiRecommendations.value.find(t => t.id === taskId)
+    if (task) {
+      Object.assign(task, updates)
+      saveToLocalStorage()
+      
+      if (DEBUG_MODE) {
+        console.log(`[Store] Recommendation ${taskId} updated:`, updates)
+      }
+    }
+  }
+
+  function confirmAIRecommendations() {
+    const acceptedTasks = aiRecommendations.value.filter(t => t.status === 'accepted')
+    
+    if (DEBUG_MODE) {
+      console.log('[Store] Confirming AI recommendations:', acceptedTasks.length)
+    }
+    
+    const dayToDate = {
+      'Пн': getNextWeekday(1),
+      'Вт': getNextWeekday(2),
+      'Ср': getNextWeekday(3),
+      'Чт': getNextWeekday(4),
+      'Пт': getNextWeekday(5),
+      'Сб': getNextWeekday(6),
+      'Вс': getNextWeekday(0)
+    }
+    
+    acceptedTasks.forEach(task => {
+      const scheduledDate = dayToDate[task.day] || new Date().toISOString().split('T')[0]
+      
+      const newTask = {
+        id: `ai-${task.id}-${Date.now()}`,
+        title: task.title,
+        description: task.description,
+        sphereId: task.sphereId,
+        duration: task.duration,
+        scheduledDate: scheduledDate,
+        completed: false,
+        source: 'ai_recommendation',
+        createdAt: new Date().toISOString()
+      }
+      
+      dailyPlan.value.tasks.push(newTask)
+    })
+    
+    showPlanReview.value = false
+    saveToLocalStorage()
+    
+    if (DEBUG_MODE) {
+      console.log('[Store] AI tasks added to daily plan:', dailyPlan.value.tasks.length)
+    }
+  }
+
+  function getNextWeekday(targetDay) {
+    const today = new Date()
+    const currentDay = today.getDay()
+    let daysUntilTarget = targetDay - currentDay
+    
+    if (daysUntilTarget <= 0) {
+      daysUntilTarget += 7
+    }
+    
+    const targetDate = new Date(today)
+    targetDate.setDate(today.getDate() + daysUntilTarget)
+    return targetDate.toISOString().split('T')[0]
+  }
+
+  function closePlanReview() {
+    showPlanReview.value = false
+    saveToLocalStorage()
+  }
+
+  function hasUnprocessedRecommendations() {
+    return aiRecommendations.value.some(t => t.status === 'pending')
+  }
+
+  const pendingRecommendationsCount = computed(() => 
+    aiRecommendations.value.filter(t => t.status === 'pending').length
+  )
 
   // ========================================
   // MINI-TASK BACKEND METHODS
@@ -2194,8 +2534,11 @@ export const useAppStore = defineStore('app', () => {
         stepId: task.stepId,
         stepTitle: task.stepTitle,
         goalTitle: task.goalTitle,
+        sphereId: task.sphereId || '',
         scheduledDate: task.scheduledDate,
         scheduledTime: task.scheduledTime || null,
+        priority: task.priority || '',
+        timeEstimate: task.timeEstimate || '',
         completed: false,
         completedAt: null
       })
@@ -2242,6 +2585,46 @@ export const useAppStore = defineStore('app', () => {
       }
     }
   }
+  
+  // Переключение задачи из текущего недельного плана или dailyPlan (для Dashboard)
+  function toggleTodayTask(taskId) {
+    // Сначала ищем в weeklyPlans
+    const plan = getCurrentWeekPlan()
+    if (plan) {
+      const task = plan.scheduledTasks.find(t => t.id === taskId)
+      if (task) {
+        const wasCompleted = task.completed
+        task.completed = !task.completed
+        task.completedAt = task.completed ? new Date().toISOString() : null
+        saveToLocalStorage()
+        return { 
+          wasCompleted, 
+          isNowCompleted: task.completed,
+          taskId: task.id,
+          taskTitle: task.stepTitle || task.goalTitle || 'Задача',
+          source: 'weekly'
+        }
+      }
+    }
+    
+    // Если не нашли в weeklyPlans, ищем в dailyPlan
+    const dailyTask = dailyPlan.value?.tasks?.find(t => t.id === taskId)
+    if (dailyTask) {
+      const wasCompleted = dailyTask.completed
+      dailyTask.completed = !dailyTask.completed
+      dailyTask.completedAt = dailyTask.completed ? new Date().toISOString() : null
+      saveToLocalStorage()
+      return {
+        wasCompleted,
+        isNowCompleted: dailyTask.completed,
+        taskId: dailyTask.id,
+        taskTitle: dailyTask.title || dailyTask.stepTitle || 'Задача',
+        source: 'daily'
+      }
+    }
+    
+    return null
+  }
 
   // Load data on init
   loadFromLocalStorage()
@@ -2265,6 +2648,7 @@ export const useAppStore = defineStore('app', () => {
     goals,
     weeklyPlan,
     dailyPlan,
+    todayScheduledTasks,
     
     // Computed
     averageScore,
@@ -2364,6 +2748,17 @@ export const useAppStore = defineStore('app', () => {
     completeMiniTask,
     resetMiniTask,
     
+    // AI Recommendations
+    aiRecommendations,
+    showPlanReview,
+    pendingRecommendationsCount,
+    initAIRecommendations,
+    updateRecommendationStatus,
+    updateRecommendation,
+    confirmAIRecommendations,
+    closePlanReview,
+    hasUnprocessedRecommendations,
+    
     // SSP backend methods
     sspBackendData,
     loadSSPFromBackend,
@@ -2388,6 +2783,20 @@ export const useAppStore = defineStore('app', () => {
     updateScheduledTask,
     removeScheduledTask,
     toggleScheduledTaskComplete,
+    toggleTodayTask,
+    
+    // Habits (Привычки)
+    habits,
+    habitLog,
+    todayHabits,
+    todayHabitsCompleted,
+    todayHabitsTotal,
+    habitStreak,
+    addHabit,
+    updateHabit,
+    removeHabit,
+    toggleHabit,
+    getHabitHistory,
     
     // Telegram Settings
     telegramSettings,

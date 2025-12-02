@@ -539,12 +539,11 @@
             </div>
 
             <div class="three-whys-instruction card">
-              <h3><CheckCircle :size="18" :stroke-width="2" class="header-icon success" /> Правило "3 Почему"</h3>
-              <p>Для каждой цели ответь на три вопроса:</p>
+              <h3><CheckCircle :size="18" :stroke-width="2" class="header-icon success" /> Проверка цели</h3>
+              <p>Для каждой цели ответь на два вопроса:</p>
               <ol>
-                <li><strong>Почему эта цель мне важна?</strong></li>
-                <li><strong>Почему именно это даст мне то, что я хочу?</strong></li>
-                <li><strong>Почему это действительно про меня?</strong></li>
+                <li><strong>Почему для меня это важно?</strong></li>
+                <li><strong>Как эта цель поможет выйти на новый уровень?</strong></li>
               </ol>
             </div>
 
@@ -612,7 +611,7 @@
 
                 <div class="three-whys-form-compact">
                   <div class="why-field-compact">
-                    <label>1. Почему эта цель мне важна?</label>
+                    <label>1. Почему для меня это важно?</label>
                     <textarea 
                       :value="idea.threeWhys?.why1 || ''"
                       @input="updateIdeaWhys(idea.id, 'why1', $event.target.value)"
@@ -621,19 +620,10 @@
                     ></textarea>
                   </div>
                   <div class="why-field-compact">
-                    <label>2. Почему именно это даст мне то, что я хочу?</label>
+                    <label>2. Как эта цель поможет выйти на новый уровень?</label>
                     <textarea 
                       :value="idea.threeWhys?.why2 || ''"
                       @input="updateIdeaWhys(idea.id, 'why2', $event.target.value)"
-                      rows="2"
-                      placeholder="Напиши свой ответ..."
-                    ></textarea>
-                  </div>
-                  <div class="why-field-compact">
-                    <label>3. Почему это действительно про меня?</label>
-                    <textarea 
-                      :value="idea.threeWhys?.why3 || ''"
-                      @input="updateIdeaWhys(idea.id, 'why3', $event.target.value)"
                       rows="2"
                       placeholder="Напиши свой ответ..."
                     ></textarea>
@@ -881,11 +871,11 @@
             </div>
 
             <div class="why-section-divider">
-              <span>Правило "3 Почему"</span>
+              <span>Проверка цели</span>
             </div>
 
             <div class="form-group">
-              <label class="form-label">1. Почему эта цель мне важна?</label>
+              <label class="form-label">1. Почему для меня это важно?</label>
               <textarea 
                 v-model="editingGoal.whyImportant"
                 class="form-textarea"
@@ -895,21 +885,11 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label">2. Почему именно это даст мне то, что я хочу?</label>
+              <label class="form-label">2. Как эта цель поможет выйти на новый уровень?</label>
               <textarea 
                 v-model="editingGoal.why2"
                 class="form-textarea"
-                placeholder="Объясните, как достижение этой цели приведёт вас к желаемому результату"
-                rows="3"
-              ></textarea>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">3. Почему это действительно про меня?</label>
-              <textarea 
-                v-model="editingGoal.why3"
-                class="form-textarea"
-                placeholder="Подтвердите, что эта цель соответствует вашим ценностям и личности"
+                placeholder="Опишите, как достижение этой цели изменит вашу жизнь"
                 rows="3"
               ></textarea>
             </div>
@@ -1023,11 +1003,11 @@
             </div>
 
             <div class="why-section-divider">
-              <span>Правило "3 Почему"</span>
+              <span>Проверка цели</span>
             </div>
 
             <div class="form-group">
-              <label class="form-label">1. Почему эта цель мне важна?</label>
+              <label class="form-label">1. Почему для меня это важно?</label>
               <textarea 
                 v-model="newGoal.whyImportant"
                 class="form-textarea"
@@ -1037,21 +1017,11 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label">2. Почему именно это даст мне то, что я хочу?</label>
+              <label class="form-label">2. Как эта цель поможет выйти на новый уровень?</label>
               <textarea 
                 v-model="newGoal.why2"
                 class="form-textarea"
-                placeholder="Объясните, как достижение этой цели приведёт вас к желаемому результату"
-                rows="3"
-              ></textarea>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">3. Почему это действительно про меня?</label>
-              <textarea 
-                v-model="newGoal.why3"
-                class="form-textarea"
-                placeholder="Подтвердите, что эта цель соответствует вашим ценностям и личности"
+                placeholder="Опишите, как достижение этой цели изменит вашу жизнь"
                 rows="3"
               ></textarea>
             </div>
@@ -1211,7 +1181,6 @@ const newGoal = ref({
   sphereId: '',
   whyImportant: '',
   why2: '',
-  why3: '',
   status: null
 })
 
@@ -1266,7 +1235,6 @@ function addNewGoal() {
     sphereId: '',
     whyImportant: '',
     why2: '',
-    why3: '',
     status: null
   }
   showAddModal.value = true
@@ -1279,7 +1247,6 @@ function closeAddModal() {
     sphereId: '',
     whyImportant: '',
     why2: '',
-    why3: '',
     status: null
   }
 }
@@ -1296,8 +1263,7 @@ async function saveNewGoal() {
     status: newGoal.value.status,
     threeWhys: {
       why1: newGoal.value.whyImportant,
-      why2: newGoal.value.why2,
-      why3: newGoal.value.why3
+      why2: newGoal.value.why2
     }
   }
   
@@ -2077,7 +2043,6 @@ function openEditModal(goal) {
     text: goal.text,
     whyImportant: goal.whyImportant || goal.threeWhys?.why1 || '',
     why2: goal.threeWhys?.why2 || '',
-    why3: goal.threeWhys?.why3 || '',
     sphereId: goal.sphereId,
     status: goal.status || 'raw'
   }
@@ -2099,8 +2064,7 @@ async function saveGoalEdit() {
     status: editingGoal.value.status,
     threeWhys: {
       why1: editingGoal.value.whyImportant,
-      why2: editingGoal.value.why2,
-      why3: editingGoal.value.why3
+      why2: editingGoal.value.why2
     }
   }
   

@@ -18,14 +18,18 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite with a pr
 - **SSP Module**: A 4-step guided flow for life balance assessment with a redesigned Wheel of Life, color-coded reflection accordions, and inline editing.
 - **Goals Bank Module**: A 3-step workflow for goal validation, filtering, and transfer, including an inline editing modal.
 - **Decomposition Module**: Facilitates breaking down goals into actionable steps, with step persistence, ID-based tracking, backend pagination for steps, and inline goal editing with backend sync.
-- **Planning Module**: Includes a 5-day workweek view, week navigation, color-coded priority tasks, drag & drop task management, weekly statistics, quick-add functionality, undo for task deletion, comprehensive filters (text, sphere, status, week), pagination, and URL parameter syncing.
+- **Planning Module**: Includes a 5-day workweek view, week navigation, color-coded priority tasks, drag & drop task management, weekly statistics, quick-add functionality, undo for task deletion, comprehensive filters (text, sphere, status, week), pagination, and URL parameter syncing. **Synchronized with Dashboard** via `todayScheduledTasks` computed getter.
 - **Authentication**: Integrates with the Django backend for user login, registration, and logout, supporting Telegram authentication.
 - **Onboarding (AI-Powered)**: A 5-step onboarding process with integrated SSP diagnosis, AI analysis, and auto-generated 7-day plans targeting weak spheres.
 - **AI Mentor**: A personalized coach providing contextual help and analysis via a Dashboard Widget (full chat interface) and a Floating Button (contextual hints). Features a demo mode with planned OpenAI integration and user settings for interaction style.
 - **First Steps**: A 7-step checklist guiding users through initial actions, with auto-completion triggers and personalized AI Mentor encouragement.
 - **Learning Center**: A dedicated page containing all tutorial content, with progress tracking for lessons.
-- **Dashboard ("День пользователя")**: Redesigned for daily retention, featuring a context-aware header, "Focus of the Day," compact habit tracker (Journal, Balance score), evening reflection, AI Mentor CTA, and quick navigation links.
+- **Dashboard ("День пользователя")**: Redesigned for daily retention, featuring a context-aware header, "Focus of the Day," compact habit tracker (Journal, Balance score), evening reflection, AI Mentor CTA, and quick navigation links. 2-column grid layout with responsive stacking.
 - **Journal/Diary Module**: Daily reflection feature with 4 questions, AI coach responses (demo mode), streak tracking, calendar history view, and full backend synchronization with optimistic UI updates.
+- **Goal Details Page**: Provides full step management with drag & drop, step parameters (priority, estimate, date, status), filtering, sorting, and pagination. Includes modal editing for goal details. Uses `onBeforeRouteLeave` guard and `flushSave()` to ensure step changes are saved before navigation.
+- **XP/Gamification System**: Complete extrinsic motivation system with XP economy (habits +5, focus tasks +10, goal steps +25, goals +150 XP), reward wishlist, daily progress tracking, profile statistics page. Uses separate `xp.js` Pinia store for decoupled state management.
+- **Profile Page**: User statistics with XP balance, lifetime earned, habit/journal streaks, XP history timeline, and integrated reward wishlist management.
+- **Habit Tracker**: Dashboard-integrated habit completion widget with "+X XP" micro-feedback animations and customizable habits via modal manager.
 
 ### System Design Choices
 The application uses a modular structure with dedicated components, services, views, router, and stores. Pinia manages state with persistence and reactivity. The system prioritizes user guidance, visual feedback, and a clean interface. The AI Mentor is a central value proposition. Backend synchronization provides immediate UI feedback and reliable data persistence.
