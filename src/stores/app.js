@@ -822,6 +822,22 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
+  function updateGoalStep(goalId, stepId, updates) {
+    const goal = goals.value.find(g => g.id === goalId)
+    if (goal && goal.steps) {
+      const step = goal.steps.find(s => s.id === stepId)
+      if (step) {
+        Object.assign(step, updates)
+        
+        const totalSteps = goal.steps.length
+        const completedSteps = goal.steps.filter(s => s.completed).length
+        goal.progress = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
+        
+        saveToLocalStorage()
+      }
+    }
+  }
+
   function deleteGoal(goalId) {
     const index = goals.value.findIndex(g => g.id === goalId)
     if (index !== -1) {
@@ -2201,6 +2217,7 @@ export const useAppStore = defineStore('app', () => {
     updateSphereReflection,
     addGoal,
     updateGoal,
+    updateGoalStep,
     deleteGoal,
     updateWeeklyPlan,
     updateDailyPlan,
