@@ -159,8 +159,9 @@ export const useAppStore = defineStore('app', () => {
   /**
    * Загрузить цели с бэкенда и синхронизировать с локальным состоянием
    * @param {Object} params - Параметры запроса (фильтры, сортировка, пагинация)
+   * @param {boolean} append - Добавить к существующим данным (для пагинации) или заменить
    */
-  async function loadGoalsFromBackend(params = {}) {
+  async function loadGoalsFromBackend(params = {}, append = false) {
     if (goalsApiData.value.loading) return { success: false, reason: 'loading' }
     
     goalsApiData.value.loading = true
@@ -183,7 +184,7 @@ export const useAppStore = defineStore('app', () => {
         
         // Синхронизируем цели с локальным состоянием goalsBank.rawIdeas
         if (data.goals_data && Array.isArray(data.goals_data)) {
-          syncGoalsFromBackend(data.goals_data)
+          syncGoalsFromBackend(data.goals_data, append)
         }
         
         goalsApiData.value.loaded = true
@@ -193,7 +194,8 @@ export const useAppStore = defineStore('app', () => {
           console.log('[Store] Goals loaded from backend:', {
             count: data.goals_data?.length || 0,
             total: data.total_items,
-            page: data.page
+            page: data.page,
+            append
           })
         }
         
@@ -217,8 +219,10 @@ export const useAppStore = defineStore('app', () => {
   /**
    * Синхронизировать цели из бэкенда с локальным store
    * Преобразует формат бэкенда в формат фронтенда
+   * @param {Array} backendGoals - Цели из бэкенда
+   * @param {boolean} append - Добавить к существующим данным или заменить
    */
-  function syncGoalsFromBackend(backendGoals) {
+  function syncGoalsFromBackend(backendGoals, append = false) {
     const syncedGoals = backendGoals.map(g => ({
       id: String(g.goal_id),
       backendId: g.goal_id,
@@ -242,7 +246,14 @@ export const useAppStore = defineStore('app', () => {
     }))
     
     // Обновляем goalsBank.rawIdeas
-    goalsBank.value.rawIdeas = syncedGoals
+    if (append) {
+      // Добавляем новые цели, избегая дубликатов по backendId
+      const existingIds = new Set(goalsBank.value.rawIdeas.map(g => g.backendId))
+      const newGoals = syncedGoals.filter(g => !existingIds.has(g.backendId))
+      goalsBank.value.rawIdeas = [...goalsBank.value.rawIdeas, ...newGoals]
+    } else {
+      goalsBank.value.rawIdeas = syncedGoals
+    }
     
     // Также обновляем goals (цели в работе)
     const goalsInWork = syncedGoals.filter(g => g.workStatus === 'work' || g.workStatus === 'complete')

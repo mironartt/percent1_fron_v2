@@ -35,7 +35,11 @@ The application uses a modular structure with dedicated components, services, vi
 - **Steps Loading Protection**: `stepsLoadedFromBackend` flag prevents `loadGoalData()` from overwriting backend-loaded steps with empty store data
 - **Journal Today Entry Tracking**: `hasTodayEntryFromBackend` tracks actual backend state separately from filtered UI display
 - **Optimistic UI Updates**: UI updates immediately, then syncs with backend; errors logged without blocking user flow
-- **API Pagination**: Uses `goalsApiData.pagination` from backend response; `loadMore()` fetches next page
+- **API Pagination with Append**: 
+  - `store.loadGoalsFromBackend(params, append)` accepts `append` flag
+  - When `append=true`: new goals added to existing list (deduplicated by backendId)
+  - When `append=false`: data replaced (for filters/initial load)
+  - `remainingGoalsCount` computed from `totalFilteredItems - rawIdeas.length`
 
 ## External Dependencies
 - **Django REST API Backend**: Provides user authentication, profile management, SSP data, goals bank, decomposition, planning, onboarding, and journal services.

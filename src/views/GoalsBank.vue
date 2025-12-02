@@ -1502,11 +1502,12 @@ async function loadGoalsWithFilters(page = 1, append = false) {
   
   try {
     const params = buildApiParams(page)
-    const result = await store.loadGoalsFromBackend(params)
+    // Pass append flag to store - true for pagination (page > 1), false for fresh load
+    const result = await store.loadGoalsFromBackend(params, append)
     
     if (result.success) {
       currentPage.value = page
-      // Note: store.loadGoalsFromBackend already syncs data
+      console.log('[GoalsBank] Goals loaded, page:', page, 'append:', append, 'total loaded:', rawIdeas.value.length)
     }
   } catch (error) {
     console.error('[GoalsBank] Error loading goals with filters:', error)
