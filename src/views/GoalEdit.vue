@@ -91,7 +91,11 @@
         <div class="card">
           <div class="card-header">
             <h3>Декомпозиция на шаги</h3>
-            <span class="steps-count">{{ goalForm.steps.length }} шагов</span>
+            <span class="steps-count">
+              {{ goalForm.steps.filter(s => !s.isNew).length }}
+              <template v-if="totalStepsFromBackend > 0"> из {{ totalStepsFromBackend }}</template>
+              шагов
+            </span>
           </div>
 
           <div class="form-hint decomposition-hint">
@@ -170,7 +174,8 @@
           <div 
             ref="stepsContainer"
             class="steps-section" 
-            :class="{ 'has-scroll': paginatedSteps.length > 6 }"
+            :class="{ 'has-scroll': hasMoreStepsToLoad || paginatedSteps.length > 6 }"
+            :style="stepsContainerStyle"
             @dragover="handleContainerDragOver"
           >
             <div 
@@ -299,10 +304,22 @@
               </div>
             </div>
             
-            <!-- Кнопка загрузить ещё -->
+            <!-- Кнопка загрузить ещё (локальная пагинация) -->
             <div v-if="hasMoreSteps" class="load-more-steps">
               <button class="btn btn-secondary btn-sm" @click="loadMoreSteps">
-                Загрузить ещё {{ remainingStepsCount }} шагов
+                Показать ещё {{ remainingStepsCount }} шагов
+              </button>
+            </div>
+            
+            <!-- Кнопка загрузить ещё с бэкенда (если есть больше шагов) -->
+            <div v-if="hasMoreStepsToLoad && !hasMoreSteps" class="load-more-steps">
+              <button 
+                class="btn btn-secondary btn-sm" 
+                @click="loadMoreStepsFromBackend"
+                :disabled="isLoadingSteps"
+              >
+                <template v-if="isLoadingSteps">Загрузка...</template>
+                <template v-else>Загрузить ещё {{ remainingStepsToLoadCount }} шагов</template>
               </button>
             </div>
 
@@ -519,23 +536,43 @@
             </div>
             
             <div class="validation-section">
-              <div class="validation-label">Оценка цели:</div>
+              <div class="validation-label">Тип цели:</div>
               <div class="validation-buttons">
                 <button 
                   class="btn btn-validation btn-true-goal"
-                  :class="{ active: editingGoal.status === 'validated' }"
-                  @click="editingGoal.status = 'validated'"
+                  :class="{ active: editingGoal.validationStatus === 'validated' }"
+                  @click="editingGoal.validationStatus = 'validated'"
                 >
                   <CheckCircle :size="18" :stroke-width="2" />
-                  Это истинная цель
+                  Истинная цель
                 </button>
                 <button 
                   class="btn btn-validation btn-false-goal"
-                  :class="{ active: editingGoal.status === 'rejected' }"
-                  @click="editingGoal.status = 'rejected'"
+                  :class="{ active: editingGoal.validationStatus === 'rejected' }"
+                  @click="editingGoal.validationStatus = 'rejected'"
                 >
                   <XCircle :size="18" :stroke-width="2" />
-                  Это ложная цель
+                  Ложная цель
+                </button>
+              </div>
+            </div>
+            
+            <div class="validation-section">
+              <div class="validation-label">Статус:</div>
+              <div class="validation-buttons">
+                <button 
+                  class="btn btn-validation"
+                  :class="{ active: editingGoal.workStatus === 'work' }"
+                  @click="editingGoal.workStatus = 'work'"
+                >
+                  В работе
+                </button>
+                <button 
+                  class="btn btn-validation"
+                  :class="{ active: editingGoal.workStatus === 'complete' }"
+                  @click="editingGoal.workStatus = 'complete'"
+                >
+                  Завершена
                 </button>
               </div>
             </div>
@@ -585,8 +622,35 @@ const store = useAppStore()
 const lifeSpheres = computed(() => store.lifeSpheres)
 const goals = computed(() => store.goals)
 
+// route.params.id is now backendId from the URL
+const goalBackendId = computed(() => route.params.id)
+
+// Find goal by backendId in store.goals or rawIdeas
 const goal = computed(() => {
-  return goals.value.find(g => g.id === route.params.id)
+  // First try to find in goals by backendId
+  let found = goals.value.find(g => g.backendId === goalBackendId.value || String(g.backendId) === goalBackendId.value)
+  if (found) return found
+  
+  // Then try in rawIdeas
+  const rawGoal = store.goalsBank.rawIdeas.find(g => 
+    g.backendId === goalBackendId.value || String(g.backendId) === goalBackendId.value
+  )
+  if (rawGoal) {
+    // Create a goal-like object from rawIdea for display
+    return {
+      id: rawGoal.id,
+      backendId: rawGoal.backendId,
+      title: rawGoal.title,
+      description: rawGoal.description || rawGoal.why,
+      sphereId: rawGoal.category,
+      status: rawGoal.status,
+      steps: [],
+      source: 'goals-bank',
+      sourceId: rawGoal.id
+    }
+  }
+  
+  return null
 })
 
 const goalForm = ref({
@@ -766,14 +830,147 @@ function getOriginalIndex(step) {
   return goalForm.value.steps.findIndex(s => s.id === step.id)
 }
 
-// Сброс пагинации при изменении фильтров
-watch([searchQuery, filterStatus, filterPriority], () => {
+// Сброс пагинации и загрузка с бэкенда при изменении фильтров
+let filterDebounceTimer = null
+let previousHasFilters = false
+
+watch([searchQuery, filterStatus, filterPriority, sortBy], () => {
   stepsDisplayLimit.value = 10
+  
+  // Debounce for search query, immediate for other filters
+  if (filterDebounceTimer) clearTimeout(filterDebounceTimer)
+  
+  const hasFilters = searchQuery.value || filterStatus.value || filterPriority.value || sortBy.value !== 'order'
+  const filtersCleared = previousHasFilters && !hasFilters
+  
+  if (goalBackendId.value) {
+    // Always reload: when filters active, when filters cleared, or when sort changed
+    const needsReload = hasFilters || filtersCleared
+    
+    if (needsReload) {
+      // Shorter debounce for non-search filters, longer for search
+      const debounceMs = searchQuery.value && searchQuery.value.length > 0 ? 500 : 100
+      
+      filterDebounceTimer = setTimeout(() => {
+        loadStepsWithFilters()
+      }, debounceMs)
+    }
+  }
+  
+  previousHasFilters = hasFilters
 })
 
+// Map frontend sort keys to backend order_by values
+// Backend supports: order, date_created, priority
+function mapSortToBackend(sortKey) {
+  const sortMap = {
+    'order': 'order',
+    'priority': 'priority',
+    'time': 'order', // time sorting not supported by backend, fallback to order
+    'date': 'date_created',
+    'status': 'order' // status sorting not supported by backend, fallback to order
+  }
+  return sortMap[sortKey] || 'order'
+}
+
+// Map frontend priority values to backend values
+// Frontend uses 'desirable', backend expects 'important'
+function mapPriorityToBackend(priority) {
+  const priorityMap = {
+    'critical': 'critical',
+    'desirable': 'important', // frontend → backend
+    'attention': 'attention',
+    'optional': 'optional'
+  }
+  return priorityMap[priority] || priority
+}
+
+// Map backend priority values to frontend values
+function mapPriorityFromBackend(priority) {
+  const priorityMap = {
+    'critical': 'critical',
+    'important': 'desirable', // backend → frontend
+    'attention': 'attention',
+    'optional': 'optional'
+  }
+  return priorityMap[priority] || priority
+}
+
+// Load steps from backend with current filters
+async function loadStepsWithFilters() {
+  // Use goalBackendId from URL directly
+  const backendId = goalBackendId.value
+  if (!backendId) return
+  
+  const currentBackendId = backendId
+  
+  try {
+    const { getGoalSteps } = await import('@/services/api.js')
+    
+    const params = {
+      goal_id: backendId,
+      order_by: mapSortToBackend(sortBy.value),
+      order_direction: sortDirection.value
+    }
+    
+    // Add filters if present
+    // API accepts: query_filter (min 3 chars), result_filter (complete/uncomplete), priority_filter
+    if (searchQuery.value && searchQuery.value.length >= 3) {
+      params.query_filter = searchQuery.value
+    }
+    if (filterStatus.value) {
+      // Frontend uses 'completed'/'pending', backend uses 'complete'/'uncomplete'
+      params.result_filter = filterStatus.value === 'completed' ? 'complete' : 'uncomplete'
+    }
+    if (filterPriority.value) {
+      params.priority_filter = mapPriorityToBackend(filterPriority.value)
+    }
+    
+    console.log('[GoalEdit] Loading steps with filters:', params)
+    
+    const result = await getGoalSteps(params)
+    
+    // Check if user navigated away
+    if (goalBackendId.value !== currentBackendId) return
+    
+    if (result.status === 'ok' && result.data) {
+      const stepsData = result.data.steps_data || result.data.goal_data?.steps_data || []
+      
+      const backendSteps = stepsData.map(s => ({
+        id: String(s.step_id),
+        backendId: s.step_id,
+        title: s.title || '',
+        completed: s.is_complete || false,
+        comment: s.description || '',
+        timeEstimate: mapTimeFromBackend(s.time_duration),
+        priority: mapPriorityFromBackend(s.priority) || '',
+        scheduledDate: s.dt || '',
+        status: s.is_complete ? 'completed' : 'pending',
+        order: s.order || 0
+      }))
+      
+      // Merge with existing new steps (isNew flag)
+      const newStepsLocal = goalForm.value.steps.filter(s => s.isNew)
+      goalForm.value.steps = [...backendSteps, ...newStepsLocal]
+      
+      recalculateProgress()
+      takeStepsSnapshot()
+      adjustAllCommentHeights()
+      
+      console.log('[GoalEdit] Loaded', backendSteps.length, 'filtered steps from backend')
+    }
+  } catch (error) {
+    console.error('[GoalEdit] Error loading filtered steps:', error)
+  }
+}
+
 function openEditModal() {
-  // Найти данные из rawIdeas (банка целей)
-  const rawIdea = store.goalsBank?.rawIdeas?.find(r => r.id === goal.value.sourceId)
+  // Найти данные из rawIdeas (банка целей) по backendId
+  const rawIdea = store.goalsBank?.rawIdeas?.find(r => r.backendId === goalBackendId.value || r.id === goal.value.sourceId)
+  
+  // rawIdea.status уже содержит 'validated'/'rejected'/'raw' (смаппировано из backend score)
+  // rawIdea.workStatus содержит 'work'/'complete'/null (из backend status)
+  const validationStatus = rawIdea?.status === 'raw' ? null : (rawIdea?.status || null)
   
   editingGoal.value = {
     id: goal.value.sourceId,
@@ -781,7 +978,9 @@ function openEditModal() {
     sphereId: goal.value.sphereId,
     whyImportant: rawIdea?.whyImportant || rawIdea?.threeWhys?.why1 || goal.value.description || '',
     why2: rawIdea?.threeWhys?.why2 || '',
-    status: rawIdea?.status || 'validated'
+    why3: rawIdea?.threeWhys?.why3 || '',
+    validationStatus: validationStatus, // 'validated'/'rejected'/null - тип цели (score)
+    workStatus: rawIdea?.workStatus || goal.value.status || 'work' // work/complete
   }
   showEditModal.value = true
 }
@@ -809,31 +1008,91 @@ function goToPlanning() {
   router.push('/app/planning')
 }
 
-function saveEditModal() {
+async function saveEditModal() {
   if (!editingGoal.value) return
   
-  // Обновить в банке целей
-  store.updateRawIdea(editingGoal.value.id, {
+  // Capture data before any async operation
+  const goalData = {
+    id: editingGoal.value.id,
     text: editingGoal.value.text,
-    whyImportant: editingGoal.value.whyImportant,
     sphereId: editingGoal.value.sphereId,
+    whyImportant: editingGoal.value.whyImportant,
+    why2: editingGoal.value.why2,
+    why3: editingGoal.value.why3,
+    validationStatus: editingGoal.value.validationStatus,
+    workStatus: editingGoal.value.workStatus
+  }
+  
+  // First, sync to backend (blocking - wait for response)
+  if (goalBackendId.value) {
+    try {
+      const { updateGoal: updateGoalApi } = await import('@/services/api.js')
+      // Map frontend sphereId to backend category
+      const backendCategory = store.categoryFrontendToBackend[goalData.sphereId] || goalData.sphereId
+      
+      // Map frontend validationStatus to backend score
+      // Frontend: 'validated'/'rejected'/null → Backend: 'true'/'false'/null
+      let backendScore = null
+      if (goalData.validationStatus === 'validated') backendScore = 'true'
+      else if (goalData.validationStatus === 'rejected') backendScore = 'false'
+      
+      const result = await updateGoalApi(goalBackendId.value, {
+        title: goalData.text,
+        category: backendCategory,
+        status: goalData.workStatus || null,
+        score: backendScore,
+        why_important: goalData.whyImportant || null,
+        why_give_me: goalData.why2 || null,
+        why_about_me: goalData.why3 || null
+      })
+      
+      console.log('[GoalEdit] Goal updated on backend:', goalBackendId.value, result)
+      
+      if (result.status !== 'ok') {
+        showToast('Ошибка сохранения на сервере', 'error')
+        return
+      }
+    } catch (error) {
+      console.error('[GoalEdit] Error updating goal on backend:', error)
+      showToast('Ошибка сохранения: ' + (error.message || 'Неизвестная ошибка'), 'error')
+      return
+    }
+  }
+  
+  // Backend success - now update local state
+  // Map frontend validationStatus back to backend score format for storage
+  let scoreForStore = null
+  if (goalData.validationStatus === 'validated') scoreForStore = 'true'
+  else if (goalData.validationStatus === 'rejected') scoreForStore = 'false'
+  
+  store.updateRawIdea(goalData.id, {
+    text: goalData.text,
+    whyImportant: goalData.whyImportant,
+    sphereId: goalData.sphereId,
+    score: scoreForStore,
+    workStatus: goalData.workStatus,
+    status: goalData.validationStatus, // legacy field
     threeWhys: {
-      why1: editingGoal.value.whyImportant,
-      why2: editingGoal.value.why2
+      why1: goalData.whyImportant,
+      why2: goalData.why2,
+      why3: goalData.why3
     }
   })
   
   // Обновить текущую цель
-  store.updateGoal(goal.value.id, {
-    title: editingGoal.value.text,
-    sphereId: editingGoal.value.sphereId,
-    description: editingGoal.value.whyImportant
-  })
+  if (goal.value) {
+    store.updateGoal(goal.value.id, {
+      title: goalData.text,
+      sphereId: goalData.sphereId,
+      description: goalData.whyImportant,
+      status: goalData.workStatus
+    })
+  }
   
   // Обновить локальную форму
-  goalForm.value.title = editingGoal.value.text
-  goalForm.value.sphereId = editingGoal.value.sphereId
-  goalForm.value.description = editingGoal.value.whyImportant
+  goalForm.value.title = goalData.text
+  goalForm.value.sphereId = goalData.sphereId
+  goalForm.value.description = goalData.whyImportant
   
   closeEditModal()
   showToast('Цель успешно обновлена')
@@ -883,18 +1142,216 @@ const dragOverIndex = ref(null)
 const stepsContainer = ref(null)
 let autoScrollInterval = null
 
-onMounted(() => {
-  loadGoalData()
+// Loading state for API
+const isLoadingSteps = ref(false)
+const stepsLoadedFromBackend = ref(false)
+
+// Steps pagination from backend
+const totalStepsFromBackend = ref(0)
+const currentStepsPage = ref(1)
+const stepsPageSize = ref(6)
+const totalStepsPages = ref(1)
+
+// Fixed height for steps container after initial load
+const initialStepsContainerHeight = ref(null)
+
+const stepsContainerStyle = computed(() => {
+  if (initialStepsContainerHeight.value && hasMoreStepsToLoad.value) {
+    return {
+      minHeight: `${initialStepsContainerHeight.value}px`,
+      maxHeight: `${initialStepsContainerHeight.value}px`
+    }
+  }
+  return {}
 })
 
+const hasMoreStepsToLoad = computed(() => {
+  // Use page-based check instead of counting loaded steps
+  return currentStepsPage.value < totalStepsPages.value
+})
+
+const remainingStepsToLoadCount = computed(() => {
+  // Calculate remaining based on total and pages already loaded
+  const loadedPagesCount = currentStepsPage.value
+  const alreadyLoadedCount = loadedPagesCount * stepsPageSize.value
+  // On last page there might be fewer items than page_size, so cap at total
+  const effectiveLoaded = Math.min(alreadyLoadedCount, totalStepsFromBackend.value)
+  return Math.max(0, totalStepsFromBackend.value - effectiveLoaded)
+})
+
+// Load steps from backend
+async function loadStepsFromBackend(page = 1, append = false) {
+  // route.params.id IS the backendId now
+  const backendId = goalBackendId.value
+  
+  if (!backendId) {
+    console.log('[GoalEdit] No backendId in URL, skipping backend load')
+    return
+  }
+  
+  // Capture current backendId to detect stale responses
+  const currentBackendId = backendId
+  
+  isLoadingSteps.value = true
+  
+  try {
+    const { getGoalSteps } = await import('@/services/api.js')
+    const result = await getGoalSteps({
+      goal_id: backendId,
+      order_by: 'order',
+      order_direction: 'asc',
+      page: page
+    })
+    
+    // Check if user navigated away - don't update if goal changed
+    if (goalBackendId.value !== currentBackendId) {
+      console.log('[GoalEdit] Goal changed during load, discarding stale response')
+      isLoadingSteps.value = false
+      return
+    }
+    
+    if (result.status === 'ok' && result.data) {
+      // Update pagination info
+      totalStepsFromBackend.value = result.data.total_items || result.data.goal_data?.total_data?.total_steps || 0
+      totalStepsPages.value = result.data.total_pages || 1
+      stepsPageSize.value = result.data.page_size || 6
+      currentStepsPage.value = page
+      
+      // Handle steps from steps_data or goal_data.steps_data
+      const stepsData = result.data.steps_data || result.data.goal_data?.steps_data || []
+      
+      const backendSteps = stepsData.map(s => ({
+        id: String(s.step_id),
+        backendId: s.step_id,
+        title: s.title || '',
+        completed: s.is_complete || false,
+        comment: s.description || '',
+        timeEstimate: mapTimeFromBackend(s.time_duration),
+        priority: mapPriorityFromBackend(s.priority) || '',
+        scheduledDate: s.dt || '',
+        status: s.is_complete ? 'completed' : 'pending',
+        order: s.order || 0
+      }))
+      
+      // Final check before mutating any state
+      if (goalBackendId.value !== currentBackendId) {
+        console.log('[GoalEdit] Goal changed before applying steps, discarding')
+        isLoadingSteps.value = false
+        return
+      }
+      
+      // All checks passed - safe to mutate state
+      // Mark that we've loaded steps from backend for THIS goal
+      stepsLoadedFromBackend.value = true
+      
+      if (append) {
+        // Append mode: add new steps to existing, dedupe by backendId
+        const existingBackendIds = new Set(goalForm.value.steps.map(s => s.backendId))
+        const newStepsLocal = goalForm.value.steps.filter(s => s.isNew)
+        const existingSteps = goalForm.value.steps.filter(s => !s.isNew)
+        const uniqueNewSteps = backendSteps.filter(s => !existingBackendIds.has(s.backendId))
+        goalForm.value.steps = [...existingSteps, ...uniqueNewSteps, ...newStepsLocal]
+        
+        // Increase display limit to show all loaded steps from backend
+        const totalBackendSteps = goalForm.value.steps.filter(s => !s.isNew).length
+        if (stepsDisplayLimit.value < totalBackendSteps) {
+          stepsDisplayLimit.value = totalBackendSteps
+        }
+      } else {
+        // Replace mode: preserve only local new steps
+        const newStepsLocal = goalForm.value.steps.filter(s => s.isNew)
+        goalForm.value.steps = [...backendSteps, ...newStepsLocal]
+      }
+      
+      recalculateProgress()
+      lastSavedHash = getStepsHash()
+      adjustAllCommentHeights()
+      
+      // Take snapshot for change detection
+      takeStepsSnapshot()
+      
+      // Update store goal if it exists
+      const currentGoal = goal.value
+      if (currentGoal) {
+        currentGoal.steps = goalForm.value.steps.filter(s => !s.isNew)
+      }
+      
+      console.log('[GoalEdit] Loaded', backendSteps.length, 'steps from backend for goal', currentBackendId, '(page', page, ', append:', append, ')')
+      
+      // Capture initial container height after first page load (for fixed height on pagination)
+      if (!append && !initialStepsContainerHeight.value && totalStepsFromBackend.value > stepsPageSize.value) {
+        nextTick(() => {
+          if (stepsContainer.value) {
+            initialStepsContainerHeight.value = stepsContainer.value.offsetHeight
+            console.log('[GoalEdit] Captured initial steps container height:', initialStepsContainerHeight.value)
+          }
+        })
+      }
+    }
+    
+    isLoadingSteps.value = false
+  } catch (error) {
+    console.error('[GoalEdit] Error loading steps from backend:', error)
+    isLoadingSteps.value = false
+  }
+}
+
+// Load more steps from backend (next page)
+async function loadMoreStepsFromBackend() {
+  if (isLoadingSteps.value || !hasMoreStepsToLoad.value) return
+  
+  const nextPage = currentStepsPage.value + 1
+  await loadStepsFromBackend(nextPage, true)
+}
+
+// Map backend time duration to frontend
+function mapTimeFromBackend(timeDuration) {
+  const map = {
+    'half': '30',
+    'one': '60',
+    'two': '120',
+    'three': '180',
+    'four': '240'
+  }
+  return map[timeDuration] || ''
+}
+
+// Map frontend time to backend
+function mapTimeToBackend(timeEstimate) {
+  const map = {
+    '15': 'half',
+    '30': 'half',
+    '60': 'one',
+    '120': 'two',
+    '180': 'three',
+    '240': 'four'
+  }
+  return map[timeEstimate] || null
+}
+
+// Save pending changes before leaving the route
 onBeforeRouteLeave(() => {
   if (pendingSave) {
     flushSave(false)
   }
 })
 
-watch(() => route.params.id, () => {
+onMounted(async () => {
   loadGoalData()
+  
+  // Reset flags on mount
+  stepsLoadedFromBackend.value = false
+  initialStepsContainerHeight.value = null
+  
+  // Always try to load steps from backend (will check for backendId internally)
+  loadStepsFromBackend()
+})
+
+watch(goalBackendId, () => {
+  // Reset flag on route change
+  stepsLoadedFromBackend.value = false
+  loadGoalData()
+  loadStepsFromBackend()
 })
 
 const commentTextareas = ref([])
@@ -922,12 +1379,16 @@ function adjustAllCommentHeights() {
 
 function loadGoalData() {
   if (goal.value) {
+    // Don't overwrite steps if they were already loaded from backend
+    const shouldLoadSteps = !stepsLoadedFromBackend.value
+    
     goalForm.value = {
       title: goal.value.title || '',
       description: goal.value.description || '',
       sphereId: goal.value.sphereId || '',
       mvp: goal.value.mvp || '',
-      steps: goal.value.steps ? goal.value.steps.map(s => ({ ...s })) : [],
+      // Only use store steps if we haven't loaded from backend yet
+      steps: shouldLoadSteps ? (goal.value.steps ? goal.value.steps.map(s => ({ ...s })) : []) : goalForm.value.steps,
       progress: goal.value.progress || 0
     }
     recalculateProgress()
@@ -938,6 +1399,10 @@ function loadGoalData() {
     stepsDisplayLimit.value = Math.max(10, Math.min(stepsCount, 50))
     // Корректировать высоту многострочных комментариев
     adjustAllCommentHeights()
+    // Take snapshot for change detection (if not loading from backend)
+    if (!stepsLoadedFromBackend.value) {
+      takeStepsSnapshot()
+    }
   }
 }
 
@@ -1030,10 +1495,29 @@ function handleDrop(index, event) {
   dragOverIndex.value = null
 }
 
-function removeStep(index) {
+async function removeStep(index) {
+  const step = goalForm.value.steps[index]
+  
+  // Optimistic UI: remove locally first
   goalForm.value.steps.splice(index, 1)
   recalculateProgress()
   autoSave()
+  
+  // Sync deletion to backend if step has backendId
+  if (step?.backendId && goalBackendId.value) {
+    try {
+      const { updateGoalSteps } = await import('@/services/api.js')
+      await updateGoalSteps({
+        goals_steps_data: [{
+          goal_id: goalBackendId.value,
+          step_id: step.backendId,
+          is_deleted: true
+        }]
+      })
+    } catch (error) {
+      console.error('[GoalEdit] Error deleting step from backend:', error)
+    }
+  }
 }
 
 function updateStep(index, field, value) {
@@ -1113,7 +1597,7 @@ function getStepsHash() {
     })))
 }
 
-function doSave(showNotification = true) {
+async function doSave(showNotification = true) {
   if (!goal.value) return
   
   const currentHash = getStepsHash()
@@ -1132,19 +1616,22 @@ function doSave(showNotification = true) {
       .filter(s => s.title.trim())
       .map((s, index) => ({
         id: s.id || `step_${Date.now()}_${index}`,
+        backendId: s.backendId || null,
         title: s.title,
         completed: s.completed || false,
         comment: s.comment || '',
         timeEstimate: s.timeEstimate || '',
         priority: s.priority || '',
         scheduledDate: s.scheduledDate || '',
-        status: s.status || (s.completed ? 'completed' : 'pending')
+        status: s.status || (s.completed ? 'completed' : 'pending'),
+        order: index
       }))
 
     const progress = stepsToSave.length > 0
       ? Math.round((stepsToSave.filter(s => s.completed).length / stepsToSave.length) * 100)
       : 0
 
+    // Optimistic UI: update local state first
     store.updateGoal(goal.value.id, {
       steps: stepsToSave,
       progress: progress
@@ -1162,10 +1649,111 @@ function doSave(showNotification = true) {
     if (showNotification) {
       showToast('Изменения сохранены')
     }
+    
+    // Sync with backend (non-blocking)
+    if (goalBackendId.value) {
+      syncStepsToBackend(stepsToSave)
+    }
   } catch (e) {
     showToast('Ошибка сохранения', 'error')
   } finally {
     isSaving.value = false
+  }
+}
+
+// Snapshot of steps for change detection
+let stepsSnapshot = []
+
+function takeStepsSnapshot() {
+  stepsSnapshot = goalForm.value.steps.map(s => ({
+    id: s.id,
+    backendId: s.backendId,
+    title: s.title,
+    comment: s.comment || '',
+    priority: s.priority || '',
+    timeEstimate: s.timeEstimate || '',
+    scheduledDate: s.scheduledDate || '',
+    completed: s.completed || false,
+    order: s.order
+  }))
+}
+
+// Get only changed steps for backend sync
+function getChangedSteps(currentSteps) {
+  const changedSteps = []
+  
+  currentSteps.forEach((step, index) => {
+    const snapshot = stepsSnapshot.find(s => s.id === step.id)
+    
+    if (!snapshot) {
+      // New step - send all fields
+      changedSteps.push({
+        step,
+        index,
+        isNew: true,
+        changedFields: ['title', 'description', 'priority', 'time_duration', 'dt', 'order', 'is_complete']
+      })
+    } else {
+      // Check what changed
+      const changes = []
+      if (step.title !== snapshot.title) changes.push('title')
+      if ((step.comment || '') !== snapshot.comment) changes.push('description')
+      if ((step.priority || '') !== snapshot.priority) changes.push('priority')
+      if ((step.timeEstimate || '') !== snapshot.timeEstimate) changes.push('time_duration')
+      if ((step.scheduledDate || '') !== snapshot.scheduledDate) changes.push('dt')
+      if (index !== snapshot.order) changes.push('order')
+      if ((step.completed || false) !== snapshot.completed) changes.push('is_complete')
+      
+      if (changes.length > 0) {
+        changedSteps.push({ step, index, isNew: false, changedFields: changes })
+      }
+    }
+  })
+  
+  return changedSteps
+}
+
+// Sync only changed steps to backend
+async function syncStepsToBackend(steps) {
+  if (!goalBackendId.value) return
+  
+  const changedSteps = getChangedSteps(steps)
+  
+  if (changedSteps.length === 0) {
+    console.log('[GoalEdit] No changes to sync')
+    return
+  }
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    
+    const stepsData = changedSteps.map(({ step, index, changedFields }) => {
+      const data = {
+        goal_id: goalBackendId.value,
+        step_id: step.backendId || null
+      }
+      
+      // Only include changed fields
+      if (changedFields.includes('title')) data.title = step.title
+      if (changedFields.includes('description')) data.description = step.comment || ''
+      if (changedFields.includes('priority')) data.priority = mapPriorityToBackend(step.priority) || null
+      if (changedFields.includes('time_duration')) data.time_duration = mapTimeToBackend(step.timeEstimate)
+      if (changedFields.includes('dt')) data.dt = step.scheduledDate || null
+      if (changedFields.includes('order')) data.order = index
+      if (changedFields.includes('is_complete')) data.is_complete = step.completed || false
+      
+      return data
+    })
+    
+    console.log('[GoalEdit] Syncing', stepsData.length, 'changed steps:', stepsData.map(s => ({ step_id: s.step_id, fields: Object.keys(s).filter(k => k !== 'goal_id' && k !== 'step_id') })))
+    
+    await updateGoalSteps({ goals_steps_data: stepsData })
+    
+    // Update snapshot after successful sync
+    takeStepsSnapshot()
+    
+  } catch (error) {
+    console.error('[GoalEdit] Error syncing steps to backend:', error)
   }
 }
 
@@ -1694,7 +2282,6 @@ function formatDate(dateString) {
 }
 
 .steps-section.has-scroll {
-  max-height: 600px;
   overflow-y: auto;
   padding-right: 0.5rem;
 }
@@ -2328,6 +2915,21 @@ function formatDate(dateString) {
   font-size: 0.875rem;
   font-weight: 500;
   transition: all 0.2s ease;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.btn-validation:hover {
+  background: var(--bg-secondary);
+  border-color: var(--primary-color);
+  color: var(--text-primary);
+}
+
+.btn-validation.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
 }
 
 .btn-true-goal {

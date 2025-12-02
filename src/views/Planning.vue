@@ -1778,13 +1778,37 @@ function getScheduledPriority(goalId, stepId) {
   return task?.priority || ''
 }
 
-function updateScheduledStep(goalId, stepId, field, value) {
+async function updateScheduledStep(goalId, stepId, field, value) {
   const plan = ensureWeekPlan()
   if (!plan) return
 
   const existingTask = plan.scheduledTasks.find(t => t.goalId === goalId && t.stepId === stepId)
   if (existingTask) {
     store.updateScheduledTask(plan.id, existingTask.id, { [field]: value })
+  }
+  
+  // Sync to backend for priority and timeEstimate
+  if (field === 'priority' || field === 'timeEstimate') {
+    const goal = goals.value.find(g => g.id === goalId)
+    const step = goal?.steps?.find(s => s.id === stepId)
+    
+    if (goal?.backendId && step?.backendId) {
+      try {
+        const { updateGoalSteps } = await import('@/services/api.js')
+        const updateData = { goal_id: goal.backendId, step_id: step.backendId }
+        
+        if (field === 'priority') {
+          updateData.priority = value || null
+        } else if (field === 'timeEstimate') {
+          const timeMap = { '30min': 'half', '1h': 'one', '2h': 'two', '4h': 'four' }
+          updateData.time_duration = timeMap[value] || null
+        }
+        
+        await updateGoalSteps({ goals_steps_data: [updateData] })
+      } catch (error) {
+        console.error('[Planning] Error syncing step field to backend:', error)
+      }
+    }
   }
 }
 
@@ -1802,7 +1826,7 @@ function ensureWeekPlan() {
   return plan
 }
 
-function scheduleStep(goalId, step, dateStr) {
+async function scheduleStep(goalId, step, dateStr) {
   console.log('[Planning] scheduleStep called:', { goalId, stepId: step?.id, dateStr })
   const plan = ensureWeekPlan()
   console.log('[Planning] Plan for scheduling:', plan?.id || 'null')
@@ -1828,6 +1852,23 @@ function scheduleStep(goalId, step, dateStr) {
       priority: ''
     })
   }
+  
+  // Sync scheduled date to backend
+  const goal = goals.value.find(g => g.id === goalId)
+  if (goal?.backendId && step?.backendId) {
+    try {
+      const { updateGoalSteps } = await import('@/services/api.js')
+      await updateGoalSteps({
+        goals_steps_data: [{
+          goal_id: goal.backendId,
+          step_id: step.backendId,
+          dt: dateStr || null
+        }]
+      })
+    } catch (error) {
+      console.error('[Planning] Error syncing step date to backend:', error)
+    }
+  }
 }
 
 function unscheduleStep(goalId, stepId) {
@@ -1839,7 +1880,7 @@ function unscheduleStep(goalId, stepId) {
   }
 }
 
-function toggleTaskComplete(taskId) {
+async function toggleTaskComplete(taskId) {
   const plan = currentPlan.value
   if (!plan) return
   
@@ -1847,8 +1888,11 @@ function toggleTaskComplete(taskId) {
   if (!task) return
   
   const wasCompleted = task.completed
+  
+  // Optimistic UI update
   store.toggleScheduledTaskComplete(plan.id, taskId)
   
+  // XP logic
   if (!wasCompleted) {
     xpStore.awardXP(XP_REWARDS.FOCUS_TASK_COMPLETED, 'focus_task_completed', { 
       taskId: task.id, 
@@ -1862,6 +1906,25 @@ function toggleTaskComplete(taskId) {
     )
     if (lastEvent) {
       xpStore.revokeXP(lastEvent.id)
+    }
+  }
+  
+  // Sync completion status to backend
+  const goal = goals.value.find(g => g.id === task.goalId)
+  const step = goal?.steps?.find(s => s.id === task.stepId)
+  
+  if (goal?.backendId && step?.backendId) {
+    try {
+      const { updateGoalSteps } = await import('@/services/api.js')
+      await updateGoalSteps({
+        goals_steps_data: [{
+          goal_id: goal.backendId,
+          step_id: step.backendId,
+          is_complete: !wasCompleted
+        }]
+      })
+    } catch (error) {
+      console.error('[Planning] Error syncing task completion to backend:', error)
     }
   }
 }
@@ -2048,12 +2111,47 @@ function setupDemoData() {
   }
 }
 
-onMounted(() => {
+// Loading state
+const isLoadingGoals = ref(false)
+
+// Load goals with steps from backend
+async function loadGoalsFromBackend() {
+  if (isLoadingGoals.value) return
+  
+  isLoadingGoals.value = true
+  
+  try {
+    // Load goals with steps data for planning
+    const result = await store.loadGoalsFromBackend({
+      with_steps_data: true,
+      order_by: 'date_created',
+      order_direction: 'desc',
+      status: 'work' // Only goals in work
+    })
+    
+    if (result.success) {
+      console.log('[Planning] Loaded goals from backend, count:', result.count || store.goals.length)
+    } else if (result.error) {
+      console.warn('[Planning] Backend returned error:', result.error)
+    }
+  } catch (error) {
+    console.error('[Planning] Error loading goals from backend:', error)
+    // Continue with local data - don't block UI
+  } finally {
+    isLoadingGoals.value = false
+  }
+}
+
+onMounted(async () => {
   console.log('[Planning] onMounted - goals count:', store.goals.length)
   console.log('[Planning] onMounted - goalsWithSteps:', goalsWithSteps.value.length)
   store.goals.forEach(g => {
     console.log('[Planning] Goal:', g.title, 'status:', g.status, 'steps:', g.steps?.length || 0)
   })
+  
+  // Load goals from backend first
+  await loadGoalsFromBackend()
+  
   ensureWeekPlan()
   setupDemoData()
   loadFiltersFromUrl()
