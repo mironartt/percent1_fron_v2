@@ -37,7 +37,7 @@
         </div>
       </header>
 
-      <DailyProgressBar />
+      <DailyProgressBar class="progress-section" />
 
       <div class="day-content">
         <div class="card focus-card">
@@ -122,20 +122,6 @@
           </div>
         </div>
 
-        <div class="quick-links">
-          <router-link to="/app/goals-bank" class="quick-link">
-            <Lightbulb :size="18" :stroke-width="1.5" />
-            <span>Банк целей</span>
-          </router-link>
-          <router-link to="/app/planning" class="quick-link">
-            <Calendar :size="18" :stroke-width="1.5" />
-            <span>Планирование</span>
-          </router-link>
-          <router-link to="/app/journal" class="quick-link">
-            <BookOpen :size="18" :stroke-width="1.5" />
-            <span>Дневник</span>
-          </router-link>
-        </div>
       </div>
     </div>
     
@@ -190,11 +176,6 @@ import {
   Crosshair,
   Check,
   Plus,
-  BookOpen,
-  Calendar,
-  ChartPie,
-  ChevronRight,
-  Lightbulb,
   Flame,
   MessageCircle,
   Sparkles,
@@ -438,6 +419,10 @@ function pluralize(n, one, few, many) {
 .balance-badge {
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
   color: var(--primary-color);
+}
+
+.progress-section {
+  margin-bottom: 1.5rem;
 }
 
 .day-content {
@@ -760,39 +745,7 @@ function pluralize(n, one, few, many) {
   margin: 0;
 }
 
-.quick-links {
-  display: flex;
-  gap: 0.75rem;
-  padding-top: 0.5rem;
-}
-
-.quick-link {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.875rem;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.quick-link:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-}
-
 @media (max-width: 600px) {
-  .quick-links {
-    flex-direction: column;
-  }
-  
   .day-header {
     flex-direction: column;
     align-items: flex-start;
