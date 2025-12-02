@@ -1249,12 +1249,12 @@ function closeAddModal() {
   }
 }
 
-function saveNewGoal() {
+async function saveNewGoal() {
   if (!newGoal.value.text.trim()) {
     return
   }
   
-  store.addRawIdea({
+  const goalData = {
     text: newGoal.value.text.trim(),
     sphereId: newGoal.value.sphereId,
     whyImportant: newGoal.value.whyImportant,
@@ -1264,9 +1264,20 @@ function saveNewGoal() {
       why2: newGoal.value.why2,
       why3: newGoal.value.why3
     }
-  }, { insertAtTop: true })
+  }
+  
+  // Optimistic UI: add to local state first
+  const localGoal = store.addRawIdea(goalData, { insertAtTop: true })
   
   closeAddModal()
+  
+  // Sync with backend (non-blocking)
+  store.createGoalOnBackend(goalData).then(result => {
+    if (result.success && result.goalId) {
+      // Update local goal with backend ID
+      store.updateRawIdea(localGoal.id, { backendId: result.goalId })
+    }
+  })
 }
 
 function selectNewGoalValidationStatus(isValid) {
@@ -1848,7 +1859,7 @@ function completeGoalsBankHandler() {
   }
 }
 
-function takeGoalToWork(goal) {
+async function takeGoalToWork(goal) {
   if (isGoalTransferred(goal.id)) return
   
   const goalData = {
@@ -1861,35 +1872,57 @@ function takeGoalToWork(goal) {
     steps: [],
     progress: 0
   }
+  
+  // Optimistic UI: add to local state
   store.addGoal(goalData)
+  
+  // Sync with backend (non-blocking) - set status to 'work'
+  const backendId = goal.backendId
+  if (backendId) {
+    store.takeGoalToWorkOnBackend(backendId)
+  }
 }
 
-function completeGoalFromBank(goal) {
+async function completeGoalFromBank(goal) {
   const transferredGoal = store.goals.find(g => g.sourceId === goal.id)
   if (!transferredGoal) return
   
   if (confirm(`Завершить цель "${transferredGoal.title}"?`)) {
+    // Optimistic UI: update local state
     store.updateGoal(transferredGoal.id, { 
       status: 'completed',
       progress: 100,
       completedAt: new Date().toISOString()
     })
+    
+    // Sync with backend (non-blocking)
+    const backendId = goal.backendId || transferredGoal.backendId
+    if (backendId) {
+      store.completeGoalOnBackend(backendId)
+    }
   }
 }
 
-function returnToWork(sourceId) {
+async function returnToWork(sourceId) {
   const goal = store.goals.find(g => g.sourceId === sourceId && g.source === 'goals-bank')
   if (!goal) return
   
   if (confirm(`Вернуть цель "${goal.title}" в работу?`)) {
+    // Optimistic UI: update local state
     store.updateGoal(goal.id, { 
       status: 'active',
       completedAt: null
     })
+    
+    // Sync with backend (non-blocking)
+    const backendId = goal.backendId
+    if (backendId) {
+      store.takeGoalToWorkOnBackend(backendId)
+    }
   }
 }
 
-function removeFromWork(goalId) {
+async function removeFromWork(goalId) {
   const goal = transferredGoals.value.find(g => g.id === goalId)
   if (goal) {
     const hasSteps = goal.steps && goal.steps.length > 0
@@ -1898,6 +1931,7 @@ function removeFromWork(goalId) {
       : `Убрать цель "${goal.title}" из работы? Цель вернётся в банк.`
     
     if (confirm(message)) {
+      // Optimistic UI: update local state
       if (goal.sourceId) {
         store.updateRawIdea(goal.sourceId, { status: 'validated', validated: true })
       } else {
@@ -1911,6 +1945,12 @@ function removeFromWork(goalId) {
         })
       }
       store.deleteGoal(goal.id)
+      
+      // Sync with backend (non-blocking)
+      const backendId = goal.backendId
+      if (backendId) {
+        store.removeGoalFromWorkOnBackend(backendId)
+      }
     }
   }
 }
@@ -1956,10 +1996,10 @@ function closeEditModal() {
   editingGoal.value = null
 }
 
-function saveGoalEdit() {
+async function saveGoalEdit() {
   if (!editingGoal.value) return
   
-  store.updateRawIdea(editingGoal.value.id, {
+  const updates = {
     text: editingGoal.value.text,
     whyImportant: editingGoal.value.whyImportant,
     sphereId: editingGoal.value.sphereId,
@@ -1969,9 +2009,20 @@ function saveGoalEdit() {
       why2: editingGoal.value.why2,
       why3: editingGoal.value.why3
     }
-  })
+  }
+  
+  // Optimistic UI: update local state first
+  store.updateRawIdea(editingGoal.value.id, updates)
+  
+  const goalId = editingGoal.value.id
+  const backendId = rawIdeas.value.find(g => g.id === goalId)?.backendId
   
   closeEditModal()
+  
+  // Sync with backend (non-blocking)
+  if (backendId) {
+    store.updateGoalOnBackend(backendId, updates)
+  }
 }
 
 function selectValidationStatus(isTrue) {
@@ -2018,12 +2069,21 @@ function goToDecompose(goalId) {
   }
 }
 
-function deleteGoalFromModal() {
+async function deleteGoalFromModal() {
   if (!editingGoal.value) return
   
   if (confirm('Удалить эту цель из банка?')) {
-    store.deleteRawIdea(editingGoal.value.id)
+    const goalId = editingGoal.value.id
+    const backendId = rawIdeas.value.find(g => g.id === goalId)?.backendId
+    
+    // Optimistic UI: delete from local state first
+    store.deleteRawIdea(goalId)
     closeEditModal()
+    
+    // Sync with backend (non-blocking)
+    if (backendId) {
+      store.deleteGoalOnBackend(backendId)
+    }
   }
 }
 
@@ -2034,9 +2094,40 @@ function goToFullEdit(goalId) {
   }
 }
 
-onMounted(() => {
+// Loading state for API
+const isLoadingGoals = ref(false)
+
+// Load goals from backend
+async function loadGoals() {
+  if (isLoadingGoals.value) return
+  
+  isLoadingGoals.value = true
+  
+  try {
+    // Load global data first if not loaded
+    if (!store.globalData.loaded) {
+      await store.loadGlobalData()
+    }
+    
+    // Load goals from backend
+    await store.loadGoalsFromBackend({
+      with_steps_data: false,
+      order_by: 'date_created',
+      order_direction: 'desc'
+    })
+  } catch (error) {
+    console.error('[GoalsBank] Error loading goals:', error)
+  } finally {
+    isLoadingGoals.value = false
+  }
+}
+
+onMounted(async () => {
   // Load filters from URL
   loadFiltersFromUrl()
+  
+  // Load goals from backend (non-blocking)
+  loadGoals()
   
   // Handle edit query parameter
   const editId = route.query.edit

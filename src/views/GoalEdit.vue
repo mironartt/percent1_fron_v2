@@ -901,12 +901,88 @@ const dragOverIndex = ref(null)
 const stepsContainer = ref(null)
 let autoScrollInterval = null
 
-onMounted(() => {
+// Loading state for API
+const isLoadingSteps = ref(false)
+
+// Load steps from backend
+async function loadStepsFromBackend() {
+  if (!goal.value?.backendId) return
+  
+  isLoadingSteps.value = true
+  
+  try {
+    const { getGoalSteps } = await import('@/services/api.js')
+    const result = await getGoalSteps({
+      goal_id: goal.value.backendId,
+      order_by: 'order',
+      order_direction: 'asc'
+    })
+    
+    if (result.status === 'ok' && result.data?.steps_data) {
+      const backendSteps = result.data.steps_data.map(s => ({
+        id: String(s.step_id),
+        backendId: s.step_id,
+        title: s.title || '',
+        completed: s.is_complete || false,
+        comment: s.description || '',
+        timeEstimate: mapTimeFromBackend(s.time_duration),
+        priority: s.priority || '',
+        scheduledDate: s.dt || '',
+        status: s.is_complete ? 'completed' : 'pending',
+        order: s.order || 0
+      }))
+      
+      goalForm.value.steps = backendSteps
+      recalculateProgress()
+      lastSavedHash = getStepsHash()
+      adjustAllCommentHeights()
+    }
+  } catch (error) {
+    console.error('[GoalEdit] Error loading steps from backend:', error)
+  } finally {
+    isLoadingSteps.value = false
+  }
+}
+
+// Map backend time duration to frontend
+function mapTimeFromBackend(timeDuration) {
+  const map = {
+    'half': '30',
+    'one': '60',
+    'two': '120',
+    'three': '180',
+    'four': '240'
+  }
+  return map[timeDuration] || ''
+}
+
+// Map frontend time to backend
+function mapTimeToBackend(timeEstimate) {
+  const map = {
+    '15': 'half',
+    '30': 'half',
+    '60': 'one',
+    '120': 'two',
+    '180': 'three',
+    '240': 'four'
+  }
+  return map[timeEstimate] || null
+}
+
+onMounted(async () => {
   loadGoalData()
+  
+  // Load steps from backend (non-blocking)
+  if (goal.value?.backendId) {
+    loadStepsFromBackend()
+  }
 })
 
 watch(() => route.params.id, () => {
   loadGoalData()
+  if (goal.value?.backendId) {
+    loadStepsFromBackend()
+  }
 })
 
 const commentTextareas = ref([])
@@ -1042,10 +1118,29 @@ function handleDrop(index, event) {
   dragOverIndex.value = null
 }
 
-function removeStep(index) {
+async function removeStep(index) {
+  const step = goalForm.value.steps[index]
+  
+  // Optimistic UI: remove locally first
   goalForm.value.steps.splice(index, 1)
   recalculateProgress()
   autoSave()
+  
+  // Sync deletion to backend if step has backendId
+  if (step?.backendId && goal.value?.backendId) {
+    try {
+      const { updateGoalSteps } = await import('@/services/api.js')
+      await updateGoalSteps({
+        goals_steps_data: [{
+          goal_id: goal.value.backendId,
+          step_id: step.backendId,
+          is_deleted: true
+        }]
+      })
+    } catch (error) {
+      console.error('[GoalEdit] Error deleting step from backend:', error)
+    }
+  }
 }
 
 function updateStep(index, field, value) {
@@ -1125,7 +1220,7 @@ function getStepsHash() {
     })))
 }
 
-function doSave(showNotification = true) {
+async function doSave(showNotification = true) {
   if (!goal.value) return
   
   const currentHash = getStepsHash()
@@ -1144,19 +1239,22 @@ function doSave(showNotification = true) {
       .filter(s => s.title.trim())
       .map((s, index) => ({
         id: s.id || `step_${Date.now()}_${index}`,
+        backendId: s.backendId || null,
         title: s.title,
         completed: s.completed || false,
         comment: s.comment || '',
         timeEstimate: s.timeEstimate || '',
         priority: s.priority || '',
         scheduledDate: s.scheduledDate || '',
-        status: s.status || (s.completed ? 'completed' : 'pending')
+        status: s.status || (s.completed ? 'completed' : 'pending'),
+        order: index
       }))
 
     const progress = stepsToSave.length > 0
       ? Math.round((stepsToSave.filter(s => s.completed).length / stepsToSave.length) * 100)
       : 0
 
+    // Optimistic UI: update local state first
     store.updateGoal(goal.value.id, {
       steps: stepsToSave,
       progress: progress
@@ -1174,10 +1272,42 @@ function doSave(showNotification = true) {
     if (showNotification) {
       showToast('Изменения сохранены')
     }
+    
+    // Sync with backend (non-blocking)
+    if (goal.value.backendId) {
+      syncStepsToBackend(stepsToSave)
+    }
   } catch (e) {
     showToast('Ошибка сохранения', 'error')
   } finally {
     isSaving.value = false
+  }
+}
+
+// Sync steps to backend
+async function syncStepsToBackend(steps) {
+  if (!goal.value?.backendId) return
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    
+    const stepsData = steps.map((s, index) => ({
+      goal_id: goal.value.backendId,
+      step_id: s.backendId || null,
+      title: s.title,
+      description: s.comment || '',
+      priority: s.priority || null,
+      time_duration: mapTimeToBackend(s.timeEstimate),
+      dt: s.scheduledDate || null,
+      order: index,
+      is_complete: s.completed || false,
+      is_deleted: false
+    }))
+    
+    await updateGoalSteps({ goals_steps_data: stepsData })
+    
+  } catch (error) {
+    console.error('[GoalEdit] Error syncing steps to backend:', error)
   }
 }
 
