@@ -495,11 +495,11 @@
             </div>
             
             <div class="why-section-divider">
-              <span>Правило "3 Почему"</span>
+              <span>Проверка цели</span>
             </div>
             
             <div class="form-group">
-              <label class="form-label">1. Почему эта цель мне важна?</label>
+              <label class="form-label">1. Почему для меня это важно?</label>
               <textarea 
                 v-model="editingGoal.whyImportant"
                 class="form-textarea"
@@ -509,21 +509,11 @@
             </div>
             
             <div class="form-group">
-              <label class="form-label">2. Почему именно это даст мне то, что я хочу?</label>
+              <label class="form-label">2. Как эта цель поможет выйти на новый уровень?</label>
               <textarea 
                 v-model="editingGoal.why2"
                 class="form-textarea"
-                placeholder="Объясните, как достижение этой цели приведёт вас к желаемому результату"
-                rows="3"
-              ></textarea>
-            </div>
-            
-            <div class="form-group">
-              <label class="form-label">3. Почему это действительно про меня?</label>
-              <textarea 
-                v-model="editingGoal.why3"
-                class="form-textarea"
-                placeholder="Подтвердите, что эта цель соответствует вашим ценностям и личности"
+                placeholder="Опишите, как достижение этой цели изменит вашу жизнь"
                 rows="3"
               ></textarea>
             </div>
