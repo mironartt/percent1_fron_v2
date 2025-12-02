@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { DEBUG_MODE, FORCE_SHOW_ONBOARDING, FORCE_SHOW_MINITASK } from '@/config/settings.js'
-<<<<<<< HEAD
 import { 
   getOnboardingData, 
   updateOnboardingData, 
@@ -25,9 +24,6 @@ import {
   scheduleStep as apiScheduleStep
 } from '@/services/api.js'
 import { useToastStore } from '@/stores/toast'
-=======
-import { getOnboardingData, updateOnboardingData, getMiniTaskData, updateMiniTaskData, getSSPData, updateSSPData } from '@/services/api.js'
->>>>>>> a96c76513d085fd92a823713b09b5dcc5a260c00
 
 export const useAppStore = defineStore('app', () => {
   // ========================================
