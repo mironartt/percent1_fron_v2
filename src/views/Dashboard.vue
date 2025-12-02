@@ -40,51 +40,101 @@
       <DailyProgressBar class="progress-section" />
 
       <div class="day-content">
-        <div class="card focus-card">
-          <div class="card-header">
-            <h3 class="card-title">
-              <Crosshair :size="18" :stroke-width="1.5" />
-              Фокус дня
-            </h3>
-            <span class="focus-count">{{ completedFocusTasks }}/{{ focusTasks.length }}</span>
-          </div>
-          <div class="card-body">
-            <div v-if="focusTasks.length === 0" class="empty-focus">
-              <div class="empty-icon">
-                <Sparkles :size="32" :stroke-width="1.5" />
-              </div>
-              <p>Выберите 1-3 важных дела на сегодня</p>
-              <router-link to="/app/planning" class="btn btn-primary">
-                <Plus :size="18" :stroke-width="1.5" />
-                Выбрать задачи
-              </router-link>
+        <div class="focus-goals-grid">
+          <div class="card focus-card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <Crosshair :size="18" :stroke-width="1.5" />
+                Фокус дня
+              </h3>
+              <span class="focus-count">{{ completedFocusTasks }}/{{ focusTasks.length }}</span>
             </div>
-            <div v-else class="focus-list">
-              <div 
-                v-for="task in focusTasks" 
-                :key="task.id"
-                class="focus-item"
-                :class="{ completed: task.completed }"
-              >
-                <button 
-                  class="focus-check"
-                  :class="{ checked: task.completed }"
-                  @click="toggleFocusTask(task)"
-                >
-                  <Check v-if="task.completed" :size="16" :stroke-width="2" />
-                </button>
-                <div class="focus-content">
-                  <span class="focus-title">{{ task.title }}</span>
-                  <span class="focus-sphere" v-if="task.sphere">{{ task.sphere }}</span>
+            <div class="card-body">
+              <div v-if="focusTasks.length === 0" class="empty-focus">
+                <div class="empty-icon">
+                  <Sparkles :size="32" :stroke-width="1.5" />
                 </div>
+                <p>Выберите 1-3 важных дела на сегодня</p>
+                <router-link to="/app/planning" class="btn btn-primary">
+                  <Plus :size="18" :stroke-width="1.5" />
+                  Выбрать задачи
+                </router-link>
               </div>
-              <router-link 
-                v-if="dailyTasks.length > 3"
-                to="/app/planning" 
-                class="more-tasks-link"
-              >
-                +{{ dailyTasks.length - 3 }} {{ pluralize(dailyTasks.length - 3, 'задача', 'задачи', 'задач') }}
-              </router-link>
+              <div v-else class="focus-list">
+                <div 
+                  v-for="task in focusTasks" 
+                  :key="task.id"
+                  class="focus-item"
+                  :class="{ completed: task.completed }"
+                >
+                  <button 
+                    class="focus-check"
+                    :class="{ checked: task.completed }"
+                    @click="toggleFocusTask(task)"
+                  >
+                    <Check v-if="task.completed" :size="16" :stroke-width="2" />
+                  </button>
+                  <div class="focus-content">
+                    <span class="focus-title">{{ task.title }}</span>
+                    <span class="focus-sphere" v-if="task.sphere">{{ task.sphere }}</span>
+                  </div>
+                </div>
+                <router-link 
+                  v-if="dailyTasks.length > 3"
+                  to="/app/planning" 
+                  class="more-tasks-link"
+                >
+                  +{{ dailyTasks.length - 3 }} {{ pluralize(dailyTasks.length - 3, 'задача', 'задачи', 'задач') }}
+                </router-link>
+              </div>
+            </div>
+          </div>
+
+          <div class="card goals-card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <Flag :size="18" :stroke-width="1.5" />
+                Мои цели
+              </h3>
+              <span class="goals-count">{{ topGoals.length }}</span>
+            </div>
+            <div class="card-body">
+              <div v-if="topGoals.length === 0" class="empty-goals">
+                <div class="empty-icon">
+                  <Target :size="32" :stroke-width="1.5" />
+                </div>
+                <p>Добавьте цели для отслеживания прогресса</p>
+                <router-link to="/app/goals" class="btn btn-primary">
+                  <Plus :size="18" :stroke-width="1.5" />
+                  В банк целей
+                </router-link>
+              </div>
+              <div v-else class="goals-list">
+                <div 
+                  v-for="goal in topGoals" 
+                  :key="goal.id"
+                  class="goal-item"
+                  @click="goToGoal(goal.id)"
+                >
+                  <div class="goal-info">
+                    <span class="goal-sphere-badge" v-if="goal.sphereIcon">{{ goal.sphereIcon }}</span>
+                    <span class="goal-title">{{ goal.title }}</span>
+                  </div>
+                  <div class="goal-progress-wrap">
+                    <div class="goal-progress-bar">
+                      <div class="goal-progress-fill" :style="{ width: goal.progress + '%' }"></div>
+                    </div>
+                    <span class="goal-progress-text">{{ goal.progress }}%</span>
+                  </div>
+                </div>
+                <router-link 
+                  v-if="allActiveGoals.length > 3"
+                  to="/app/goals" 
+                  class="more-goals-link"
+                >
+                  +{{ allActiveGoals.length - 3 }} {{ pluralize(allActiveGoals.length - 3, 'цель', 'цели', 'целей') }}
+                </router-link>
+              </div>
             </div>
           </div>
         </div>
@@ -179,11 +229,14 @@ import {
   Flame,
   MessageCircle,
   Sparkles,
+  Flag,
   X
 } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
 
 const store = useAppStore()
 const xpStore = useXpStore()
+const router = useRouter()
 const showJournalModal = ref(false)
 const showMiniTask = ref(false)
 const showHabitManager = ref(false)
@@ -250,6 +303,34 @@ const mentorHint = computed(() => {
   if (completedFocusTasks.value === focusTasks.value.length) return 'Отлично! Все задачи выполнены'
   return 'Готов помочь с текущими задачами'
 })
+
+const sphereIcons = {
+  family: '👨‍👩‍👧',
+  wealth: '💰',
+  hobbies: '🎯',
+  friendship: '👥',
+  health: '❤️',
+  career: '💼',
+  love: '💕'
+}
+
+const allActiveGoals = computed(() => {
+  return (store.goals || [])
+    .filter(g => g.status === 'active')
+    .map(g => ({
+      ...g,
+      sphereIcon: sphereIcons[g.sphereId] || '🎯',
+      progress: g.progress || 0
+    }))
+})
+
+const topGoals = computed(() => {
+  return allActiveGoals.value.slice(0, 3)
+})
+
+function goToGoal(goalId) {
+  router.push(`/app/goals/${goalId}`)
+}
 
 const shouldShowOnboarding = computed(() => {
   const show = store.shouldShowOnboarding
@@ -438,6 +519,18 @@ function pluralize(n, one, few, many) {
   gap: 1.25rem;
 }
 
+.focus-goals-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .focus-goals-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .card {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
@@ -578,6 +671,141 @@ function pluralize(n, one, few, many) {
 }
 
 .more-tasks-link:hover {
+  text-decoration: underline;
+}
+
+.goals-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.goals-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.5rem;
+  background: var(--primary-light);
+  color: var(--primary-color);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+.empty-goals {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.empty-goals .empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  color: var(--primary-color);
+}
+
+.empty-goals p {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  font-size: 0.9375rem;
+}
+
+.goals-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.goal-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.875rem 1.25rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.goal-item:last-of-type {
+  border-bottom: none;
+}
+
+.goal-item:hover {
+  background: var(--bg-secondary);
+}
+
+.goal-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.goal-sphere-badge {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.goal-title {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.goal-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.goal-progress-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.goal-progress-fill {
+  height: 100%;
+  background: var(--primary-color);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.goal-progress-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 2.5rem;
+  text-align: right;
+}
+
+.more-goals-link {
+  display: block;
+  text-align: center;
+  padding: 0.625rem;
+  color: var(--primary-color);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.more-goals-link:hover {
   text-decoration: underline;
 }
 
