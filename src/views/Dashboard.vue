@@ -30,7 +30,7 @@
             <Flame :size="16" :stroke-width="1.5" />
             <span>{{ journalStreak }} {{ pluralize(journalStreak, 'день', 'дня', 'дней') }}</span>
           </div>
-          <div class="balance-badge">
+          <div class="balance-badge" @click="$router.push('/app/ssp')" title="Перейти к балансу жизни">
             <Target :size="16" :stroke-width="1.5" />
             <span>{{ averageScore }}/10</span>
           </div>
@@ -419,6 +419,13 @@ function pluralize(n, one, few, many) {
 .balance-badge {
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
   color: var(--primary-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.balance-badge:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+  transform: translateY(-1px);
 }
 
 .progress-section {
