@@ -62,6 +62,10 @@
         <span class="nav-label">Телеграм бот</span>
       </button>
       
+      <router-link to="/app/profile" class="profile-link" :title="isCollapsed ? 'Профиль' : ''">
+        <UserCircle class="icon" :size="20" :stroke-width="1.5" />
+        <span class="nav-label">Профиль</span>
+      </router-link>
       <router-link to="/app/settings" class="settings-link" :title="isCollapsed ? 'Настройки' : ''">
         <Settings class="icon" :size="20" :stroke-width="1.5" />
         <span class="nav-label">Настройки</span>
@@ -139,6 +143,7 @@ import {
   Users, 
   Award,
   User,
+  UserCircle,
   Settings,
   LogOut,
   Lock,
@@ -472,6 +477,7 @@ const menuItems = [
   font-size: 0.9375rem;
 }
 
+.profile-link,
 .settings-link,
 .logout-link {
   display: flex;
@@ -484,12 +490,14 @@ const menuItems = [
   transition: all 0.2s ease;
 }
 
+.sidebar.collapsed .profile-link,
 .sidebar.collapsed .settings-link,
 .sidebar.collapsed .logout-link {
   justify-content: center;
   padding: 0.75rem;
 }
 
+.profile-link:hover,
 .settings-link:hover,
 .logout-link:hover {
   color: var(--text-primary);

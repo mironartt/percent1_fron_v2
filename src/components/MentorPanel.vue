@@ -117,6 +117,7 @@
 <script setup>
 import { ref, computed, nextTick, watch, onMounted, markRaw } from 'vue'
 import { useAppStore } from '../stores/app'
+import { useXpStore } from '../stores/xp'
 import { 
   Bot, 
   Sparkles, 
@@ -126,12 +127,14 @@ import {
   Lightbulb, 
   Calendar, 
   BookOpen,
+  Star,
   PanelRightClose,
   MessageCircle,
   ChevronLeft
 } from 'lucide-vue-next'
 
 const store = useAppStore()
+const xpStore = useXpStore()
 
 const inputText = ref('')
 const isTyping = ref(false)
@@ -141,12 +144,25 @@ const inputRef = ref(null)
 const messages = computed(() => store.mentor.messages)
 const isCollapsed = computed(() => store.mentorPanelCollapsed)
 
-const quickPrompts = [
-  { id: 1, icon: markRaw(Target), label: 'С чего начать?', text: 'С чего мне начать работу над целями?' },
-  { id: 2, icon: markRaw(Lightbulb), label: 'Как ставить цели?', text: 'Как правильно формулировать цели?' },
-  { id: 3, icon: markRaw(Calendar), label: 'Планирование', text: 'Как эффективно планировать неделю?' },
-  { id: 4, icon: markRaw(BookOpen), label: 'О методе 1%', text: 'Расскажи о методе 1% улучшений' }
-]
+const quickPrompts = computed(() => {
+  const basePrompts = [
+    { id: 1, icon: markRaw(Target), label: 'С чего начать?', text: 'С чего мне начать работу над целями?' },
+    { id: 2, icon: markRaw(Lightbulb), label: 'Как ставить цели?', text: 'Как правильно формулировать цели?' },
+    { id: 3, icon: markRaw(Calendar), label: 'Планирование', text: 'Как эффективно планировать неделю?' },
+    { id: 4, icon: markRaw(BookOpen), label: 'О методе 1%', text: 'Расскажи о методе 1% улучшений' }
+  ]
+  
+  if (xpStore && xpStore.nextReward) {
+    basePrompts.push({
+      id: 5,
+      icon: markRaw(Star),
+      label: `До награды: ${xpStore.xpToNextReward} XP`,
+      text: `Как быстрее заработать ${xpStore.xpToNextReward} XP до награды "${xpStore.nextReward.name}"?`
+    })
+  }
+  
+  return basePrompts
+})
 
 const demoResponses = {
   default: `Отличный вопрос! Я помогу вам разобраться.

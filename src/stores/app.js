@@ -514,6 +514,146 @@ export const useAppStore = defineStore('app', () => {
     eveningReflection: ''
   })
 
+  // ========================================
+  // HABITS (Привычки)
+  // ========================================
+  
+  const habits = ref([])
+  const habitLog = ref({})
+  
+  const defaultHabits = [
+    { id: 'journal', name: 'Дневник', icon: '📝', xpReward: 10, isDefault: true },
+    { id: 'balance', name: 'Баланс жизни', icon: '⚖️', xpReward: 5, isDefault: true }
+  ]
+
+  const todayHabits = computed(() => {
+    const today = new Date().toISOString().split('T')[0]
+    const allHabits = [...defaultHabits, ...habits.value.filter(h => !h.archived)]
+    
+    return allHabits.map(habit => ({
+      ...habit,
+      completed: habitLog.value[today]?.includes(habit.id) || false
+    }))
+  })
+
+  const todayHabitsCompleted = computed(() => {
+    return todayHabits.value.filter(h => h.completed).length
+  })
+
+  const todayHabitsTotal = computed(() => {
+    return todayHabits.value.length
+  })
+
+  const habitStreak = computed(() => {
+    let streak = 0
+    const today = new Date()
+    
+    for (let i = 0; i < 365; i++) {
+      const date = new Date(today)
+      date.setDate(date.getDate() - i)
+      const dateStr = date.toISOString().split('T')[0]
+      
+      const dayLog = habitLog.value[dateStr]
+      if (!dayLog || dayLog.length === 0) {
+        if (i === 0) continue
+        break
+      }
+      streak++
+    }
+    
+    return streak
+  })
+
+  function addHabit(habit) {
+    const newHabit = {
+      id: Date.now().toString(),
+      name: habit.name,
+      icon: habit.icon || '✨',
+      xpReward: habit.xpReward || 5,
+      description: habit.description || '',
+      createdAt: new Date().toISOString(),
+      archived: false,
+      isDefault: false
+    }
+    
+    habits.value.push(newHabit)
+    
+    if (DEBUG_MODE) {
+      console.log('[Store] Habit added:', newHabit.name)
+    }
+    
+    saveToLocalStorage()
+    return newHabit
+  }
+
+  function updateHabit(habitId, updates) {
+    const habit = habits.value.find(h => h.id === habitId)
+    if (habit) {
+      Object.assign(habit, updates)
+      saveToLocalStorage()
+      
+      if (DEBUG_MODE) {
+        console.log('[Store] Habit updated:', habit.name)
+      }
+    }
+  }
+
+  function removeHabit(habitId) {
+    const index = habits.value.findIndex(h => h.id === habitId)
+    if (index !== -1) {
+      const removed = habits.value.splice(index, 1)[0]
+      saveToLocalStorage()
+      
+      if (DEBUG_MODE) {
+        console.log('[Store] Habit removed:', removed.name)
+      }
+    }
+  }
+
+  function toggleHabit(habitId, date = null) {
+    const targetDate = date || new Date().toISOString().split('T')[0]
+    
+    if (!habitLog.value[targetDate]) {
+      habitLog.value[targetDate] = []
+    }
+    
+    const index = habitLog.value[targetDate].indexOf(habitId)
+    let completed = false
+    
+    if (index === -1) {
+      habitLog.value[targetDate].push(habitId)
+      completed = true
+    } else {
+      habitLog.value[targetDate].splice(index, 1)
+      completed = false
+    }
+    
+    if (DEBUG_MODE) {
+      console.log(`[Store] Habit ${habitId} toggled: ${completed ? 'completed' : 'uncompleted'}`)
+    }
+    
+    saveToLocalStorage()
+    return { completed, habitId, date: targetDate }
+  }
+
+  function getHabitHistory(habitId, days = 30) {
+    const history = []
+    const today = new Date()
+    
+    for (let i = 0; i < days; i++) {
+      const date = new Date(today)
+      date.setDate(date.getDate() - i)
+      const dateStr = date.toISOString().split('T')[0]
+      
+      history.push({
+        date: dateStr,
+        completed: habitLog.value[dateStr]?.includes(habitId) || false
+      })
+    }
+    
+    return history
+  }
+
   // Computed
   const averageScore = computed(() => {
     const total = lifeSpheres.value.reduce((sum, sphere) => sum + sphere.score, 0)
@@ -661,7 +801,9 @@ export const useAppStore = defineStore('app', () => {
       mentor: mentor.value,
       mentorPanelCollapsed: mentorPanelCollapsed.value,
       aiRecommendations: aiRecommendations.value,
-      showPlanReview: showPlanReview.value
+      showPlanReview: showPlanReview.value,
+      habits: habits.value,
+      habitLog: habitLog.value
     }))
   }
 
@@ -698,6 +840,8 @@ export const useAppStore = defineStore('app', () => {
         if (parsed.mentorPanelCollapsed !== undefined) mentorPanelCollapsed.value = parsed.mentorPanelCollapsed
         if (parsed.aiRecommendations) aiRecommendations.value = parsed.aiRecommendations
         if (parsed.showPlanReview !== undefined) showPlanReview.value = parsed.showPlanReview
+        if (parsed.habits) habits.value = parsed.habits
+        if (parsed.habitLog) habitLog.value = parsed.habitLog
       } catch (e) {
         console.error('Error loading data:', e)
       }
@@ -2022,6 +2166,19 @@ export const useAppStore = defineStore('app', () => {
     updateScheduledTask,
     removeScheduledTask,
     toggleScheduledTaskComplete,
+    
+    // Habits (Привычки)
+    habits,
+    habitLog,
+    todayHabits,
+    todayHabitsCompleted,
+    todayHabitsTotal,
+    habitStreak,
+    addHabit,
+    updateHabit,
+    removeHabit,
+    toggleHabit,
+    getHabitHistory,
     
     // Telegram Settings
     telegramSettings,

@@ -25,6 +25,7 @@
           </div>
         </div>
         <div class="header-badges">
+          <XpBadge @click="$router.push('/app/profile')" />
           <div class="streak-badge" v-if="journalStreak > 0">
             <Flame :size="16" :stroke-width="1.5" />
             <span>{{ journalStreak }} {{ pluralize(journalStreak, 'день', 'дня', 'дней') }}</span>
@@ -35,6 +36,8 @@
           </div>
         </div>
       </header>
+
+      <DailyProgressBar />
 
       <div class="day-content">
         <div class="card focus-card">
@@ -86,42 +89,7 @@
           </div>
         </div>
 
-        <div class="habits-row">
-          <div class="card habit-card">
-            <div class="habit-icon journal">
-              <BookOpen :size="20" :stroke-width="1.5" />
-            </div>
-            <div class="habit-info">
-              <span class="habit-name">Дневник</span>
-              <span class="habit-status" :class="{ done: hasTodayEntry }">
-                {{ hasTodayEntry ? 'Записано' : 'Не записано' }}
-              </span>
-            </div>
-            <button 
-              v-if="!hasTodayEntry"
-              class="habit-action"
-              @click="showJournalModal = true"
-            >
-              <Plus :size="16" :stroke-width="2" />
-            </button>
-            <div v-else class="habit-check">
-              <Check :size="16" :stroke-width="2" />
-            </div>
-          </div>
-
-          <div class="card habit-card">
-            <div class="habit-icon balance">
-              <ChartPie :size="20" :stroke-width="1.5" />
-            </div>
-            <div class="habit-info">
-              <span class="habit-name">Баланс</span>
-              <span class="habit-status">{{ averageScore }}/10</span>
-            </div>
-            <router-link to="/app/ssp" class="habit-action">
-              <ChevronRight :size="16" :stroke-width="2" />
-            </router-link>
-          </div>
-        </div>
+        <HabitTracker @manage="showHabitManager = true" />
 
         <div v-if="isEvening" class="card evening-card">
           <div class="evening-content">
@@ -192,17 +160,27 @@
       @confirmed="onPlanConfirmed"
     />
   </Teleport>
+
+  <HabitManagerModal 
+    v-if="showHabitManager" 
+    @close="showHabitManager = false" 
+  />
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { useAppStore } from '../stores/app'
+import { useXpStore, XP_REWARDS } from '../stores/xp'
 import OnboardingAI from '../components/OnboardingAI.vue'
 import MiniTaskWelcome from '../components/MiniTaskWelcome.vue'
 import MiniTask from '../components/MiniTask.vue'
 import JournalEntry from '../components/JournalEntry.vue'
 import MentorPanel from '../components/MentorPanel.vue'
 import PlanReview from '../components/PlanReview.vue'
+import HabitTracker from '../components/HabitTracker.vue'
+import HabitManagerModal from '../components/HabitManagerModal.vue'
+import DailyProgressBar from '../components/DailyProgressBar.vue'
+import XpBadge from '../components/XpBadge.vue'
 import { DEBUG_MODE } from '@/config/settings.js'
 import { 
   Sun,
@@ -224,8 +202,10 @@ import {
 } from 'lucide-vue-next'
 
 const store = useAppStore()
+const xpStore = useXpStore()
 const showJournalModal = ref(false)
 const showMiniTask = ref(false)
+const showHabitManager = ref(false)
 
 const userName = computed(() => store.displayName)
 const averageScore = computed(() => store.averageScore)
@@ -317,7 +297,24 @@ function onMiniTaskSkip() {
 }
 
 function toggleFocusTask(task) {
+  const wasCompleted = task.completed
   store.toggleTask(task.id)
+  
+  if (!wasCompleted) {
+    xpStore.awardXP(XP_REWARDS.FOCUS_TASK_COMPLETED, 'focus_task_completed', { 
+      taskId: task.id, 
+      taskTitle: task.title 
+    })
+  } else {
+    const lastEvent = xpStore.xpHistory.find(
+      e => e.source === 'focus_task_completed' && 
+           e.metadata?.taskId === task.id &&
+           new Date(e.timestamp).toDateString() === new Date().toDateString()
+    )
+    if (lastEvent) {
+      xpStore.revokeXP(lastEvent.id)
+    }
+  }
 }
 
 function openMentorPanel() {
