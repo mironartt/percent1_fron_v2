@@ -417,22 +417,6 @@ function pluralize(n, one, few, many) {
 .dashboard {
   flex: 1;
   min-width: 0;
-  padding-right: 500px;
-  transition: padding-right 0.3s ease;
-}
-
-.dashboard.panel-collapsed {
-  padding-right: 100px;
-}
-
-@media (max-width: 1024px) {
-  .dashboard {
-    padding-right: 0;
-  }
-  
-  .dashboard.panel-collapsed {
-    padding-right: 0;
-  }
 }
 
 .day-header {
