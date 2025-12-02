@@ -31,7 +31,11 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite with a pr
 The application uses a modular structure with dedicated components, services, views, router, and stores. Pinia manages state with persistence and reactivity. The system prioritizes user guidance, visual feedback, and a clean interface. The AI Mentor is a central value proposition. Backend synchronization provides immediate UI feedback and reliable data persistence.
 
 ### Backend Sync Patterns (Dec 2025)
-- **Race Condition Prevention**: Components capture current ID before async calls and verify it hasn't changed before applying response data (GoalEdit.vue uses `currentGoalId` check)
+- **Goal Routing with backendId**: URL `/app/goals/<backendId>` uses backend ID directly
+  - GoalsBank.vue `goToDecompose()` navigates with `backendId` from rawIdeas
+  - GoalEdit.vue uses `goalBackendId = route.params.id` for all API calls
+  - Goal data found by matching `backendId` in store.goals or rawIdeas
+- **Race Condition Prevention**: Components capture current ID before async calls and verify it hasn't changed before applying response data (GoalEdit.vue uses `currentBackendId` check)
 - **Steps Loading Protection**: `stepsLoadedFromBackend` flag prevents `loadGoalData()` from overwriting backend-loaded steps with empty store data
 - **Journal Today Entry Tracking**: `hasTodayEntryFromBackend` tracks actual backend state separately from filtered UI display
 - **Optimistic UI Updates**: UI updates immediately, then syncs with backend; errors logged without blocking user flow

@@ -601,8 +601,35 @@ const store = useAppStore()
 const lifeSpheres = computed(() => store.lifeSpheres)
 const goals = computed(() => store.goals)
 
+// route.params.id is now backendId from the URL
+const goalBackendId = computed(() => route.params.id)
+
+// Find goal by backendId in store.goals or rawIdeas
 const goal = computed(() => {
-  return goals.value.find(g => g.id === route.params.id)
+  // First try to find in goals by backendId
+  let found = goals.value.find(g => g.backendId === goalBackendId.value || String(g.backendId) === goalBackendId.value)
+  if (found) return found
+  
+  // Then try in rawIdeas
+  const rawGoal = store.goalsBank.rawIdeas.find(g => 
+    g.backendId === goalBackendId.value || String(g.backendId) === goalBackendId.value
+  )
+  if (rawGoal) {
+    // Create a goal-like object from rawIdea for display
+    return {
+      id: rawGoal.id,
+      backendId: rawGoal.backendId,
+      title: rawGoal.title,
+      description: rawGoal.description || rawGoal.why,
+      sphereId: rawGoal.category,
+      status: rawGoal.status,
+      steps: [],
+      source: 'goals-bank',
+      sourceId: rawGoal.id
+    }
+  }
+  
+  return null
 })
 
 const goalForm = ref({
@@ -795,7 +822,7 @@ watch([searchQuery, filterStatus, filterPriority, sortBy], () => {
   const hasFilters = searchQuery.value || filterStatus.value || filterPriority.value || sortBy.value !== 'order'
   const filtersCleared = previousHasFilters && !hasFilters
   
-  if (goal.value?.backendId) {
+  if (goalBackendId.value) {
     // Always reload: when filters active, when filters cleared, or when sort changed
     const needsReload = hasFilters || filtersCleared
     
@@ -850,15 +877,17 @@ function mapPriorityFromBackend(priority) {
 
 // Load steps from backend with current filters
 async function loadStepsWithFilters() {
-  if (!goal.value?.backendId) return
+  // Use goalBackendId from URL directly
+  const backendId = goalBackendId.value
+  if (!backendId) return
   
-  const currentGoalId = route.params.id
+  const currentBackendId = backendId
   
   try {
     const { getGoalSteps } = await import('@/services/api.js')
     
     const params = {
-      goal_id: goal.value.backendId,
+      goal_id: backendId,
       order_by: mapSortToBackend(sortBy.value),
       order_direction: sortDirection.value
     }
@@ -881,7 +910,7 @@ async function loadStepsWithFilters() {
     const result = await getGoalSteps(params)
     
     // Check if user navigated away
-    if (route.params.id !== currentGoalId) return
+    if (goalBackendId.value !== currentBackendId) return
     
     if (result.status === 'ok' && result.data) {
       const stepsData = result.data.steps_data || result.data.goal_data?.steps_data || []
@@ -1034,22 +1063,16 @@ const stepsLoadedFromBackend = ref(false)
 
 // Load steps from backend
 async function loadStepsFromBackend() {
-  // Capture current goal ID to detect stale responses
-  const currentGoalId = route.params.id
-  
-  // Try to get backendId from goal or from rawIdeas
-  let backendId = goal.value?.backendId
-  
-  // If goal doesn't have backendId, try to find it in rawIdeas
-  if (!backendId) {
-    const rawGoal = store.goalsBank.rawIdeas.find(g => g.id === currentGoalId)
-    backendId = rawGoal?.backendId
-  }
+  // route.params.id IS the backendId now
+  const backendId = goalBackendId.value
   
   if (!backendId) {
-    console.log('[GoalEdit] No backendId found, skipping backend load')
+    console.log('[GoalEdit] No backendId in URL, skipping backend load')
     return
   }
+  
+  // Capture current backendId to detect stale responses
+  const currentBackendId = backendId
   
   isLoadingSteps.value = true
   
@@ -1062,7 +1085,7 @@ async function loadStepsFromBackend() {
     })
     
     // Check if user navigated away - don't update if goal changed
-    if (route.params.id !== currentGoalId) {
+    if (goalBackendId.value !== currentBackendId) {
       console.log('[GoalEdit] Goal changed during load, discarding stale response')
       isLoadingSteps.value = false
       return
@@ -1086,7 +1109,7 @@ async function loadStepsFromBackend() {
       }))
       
       // Final check before mutating any state
-      if (route.params.id !== currentGoalId) {
+      if (goalBackendId.value !== currentBackendId) {
         console.log('[GoalEdit] Goal changed before applying steps, discarding')
         isLoadingSteps.value = false
         return
@@ -1104,14 +1127,13 @@ async function loadStepsFromBackend() {
       // Take snapshot for change detection
       takeStepsSnapshot()
       
-      // Update store goal only if it still matches the current goal
-      // Use computed goal which is bound to route.params.id
+      // Update store goal if it exists
       const currentGoal = goal.value
-      if (currentGoal && currentGoal.id === currentGoalId) {
+      if (currentGoal) {
         currentGoal.steps = backendSteps
       }
       
-      console.log('[GoalEdit] Loaded', backendSteps.length, 'steps from backend for goal', currentGoalId)
+      console.log('[GoalEdit] Loaded', backendSteps.length, 'steps from backend for goal', currentBackendId)
     }
     
     isLoadingSteps.value = false
@@ -1156,7 +1178,7 @@ onMounted(async () => {
   loadStepsFromBackend()
 })
 
-watch(() => route.params.id, () => {
+watch(goalBackendId, () => {
   // Reset flag on route change
   stepsLoadedFromBackend.value = false
   loadGoalData()
@@ -1313,12 +1335,12 @@ async function removeStep(index) {
   autoSave()
   
   // Sync deletion to backend if step has backendId
-  if (step?.backendId && goal.value?.backendId) {
+  if (step?.backendId && goalBackendId.value) {
     try {
       const { updateGoalSteps } = await import('@/services/api.js')
       await updateGoalSteps({
         goals_steps_data: [{
-          goal_id: goal.value.backendId,
+          goal_id: goalBackendId.value,
           step_id: step.backendId,
           is_deleted: true
         }]
@@ -1460,7 +1482,7 @@ async function doSave(showNotification = true) {
     }
     
     // Sync with backend (non-blocking)
-    if (goal.value.backendId) {
+    if (goalBackendId.value) {
       syncStepsToBackend(stepsToSave)
     }
   } catch (e) {
@@ -1524,7 +1546,7 @@ function getChangedSteps(currentSteps) {
 
 // Sync only changed steps to backend
 async function syncStepsToBackend(steps) {
-  if (!goal.value?.backendId) return
+  if (!goalBackendId.value) return
   
   const changedSteps = getChangedSteps(steps)
   
@@ -1538,7 +1560,7 @@ async function syncStepsToBackend(steps) {
     
     const stepsData = changedSteps.map(({ step, index, changedFields }) => {
       const data = {
-        goal_id: goal.value.backendId,
+        goal_id: goalBackendId.value,
         step_id: step.backendId || null
       }
       

@@ -2147,18 +2147,13 @@ function goToDecompose(goalId) {
   // Сохранить текущие фильтры перед переходом
   saveFiltersToStorage()
   
-  const transferredGoal = store.goals.find(g => g.sourceId === goalId && g.source === 'goals-bank')
-  if (transferredGoal) {
-    router.push(`/app/goals/${transferredGoal.id}`)
+  // Find the goal and get its backendId
+  const rawGoal = rawIdeas.value.find(g => g.id === goalId)
+  if (rawGoal && rawGoal.backendId) {
+    // Navigate using backendId - this will be used by GoalEdit to fetch data
+    router.push(`/app/goals/${rawGoal.backendId}`)
   } else {
-    const rawGoal = rawIdeas.value.find(g => g.id === goalId)
-    if (rawGoal && rawGoal.status === 'validated') {
-      takeGoalToWork(rawGoal)
-      const newGoal = store.goals.find(g => g.sourceId === goalId && g.source === 'goals-bank')
-      if (newGoal) {
-        router.push(`/app/goals/${newGoal.id}`)
-      }
-    }
+    console.warn('[GoalsBank] Cannot decompose: goal not found or no backendId', goalId)
   }
 }
 
