@@ -1,9 +1,18 @@
 <template>
-  <aside class="sidebar" :class="{ collapsed: isCollapsed }">
+  <button class="mobile-menu-btn" @click="toggleMobile" :class="{ hidden: isMobileOpen }">
+    <Menu :size="24" :stroke-width="1.5" />
+  </button>
+  
+  <div class="mobile-overlay" :class="{ visible: isMobileOpen }" @click="closeMobile"></div>
+  
+  <aside class="sidebar" :class="{ collapsed: isCollapsed, 'mobile-open': isMobileOpen }">
     <div class="sidebar-header">
       <h1 class="logo" v-show="!isCollapsed">OnePercent</h1>
       <h1 class="logo-short" v-show="isCollapsed">1%</h1>
       <p class="tagline" v-show="!isCollapsed">+1% каждый день</p>
+      <button class="mobile-close-btn" @click="closeMobile">
+        <X :size="24" :stroke-width="1.5" />
+      </button>
     </div>
 
     <button class="collapse-btn" @click="toggleCollapse" :title="isCollapsed ? 'Развернуть меню' : 'Свернуть меню'">
@@ -129,7 +138,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { 
   BarChart3, 
@@ -153,10 +162,13 @@ import {
   Check,
   ExternalLink,
   BookOpen,
-  GraduationCap
+  GraduationCap,
+  Menu
 } from 'lucide-vue-next'
+import { useRoute } from 'vue-router'
 
 const store = useAppStore()
+const route = useRoute()
 const emit = defineEmits(['collapse-change'])
 
 const isCollapsed = ref(false)
@@ -164,6 +176,31 @@ const isDark = ref(false)
 const showTelegramModal = ref(false)
 const copied = ref(false)
 const linkInput = ref(null)
+const isMobileOpen = ref(false)
+const isMobile = ref(false)
+
+function toggleMobile() {
+  isMobileOpen.value = !isMobileOpen.value
+  if (isMobileOpen.value) {
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = ''
+  }
+}
+
+function closeMobile() {
+  isMobileOpen.value = false
+  document.body.style.overflow = ''
+}
+
+function checkMobile() {
+  isMobile.value = window.innerWidth < 768
+  if (isMobile.value) {
+    isCollapsed.value = false
+  } else {
+    closeMobile()
+  }
+}
 
 function copyLink() {
   if (store.user.telegram_bot_link) {
@@ -195,6 +232,20 @@ onMounted(() => {
     if (prefersDark) {
       document.documentElement.classList.add('dark')
     }
+  }
+  
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+  document.body.style.overflow = ''
+})
+
+watch(() => route.path, () => {
+  if (isMobile.value) {
+    closeMobile()
   }
 })
 
@@ -722,5 +773,144 @@ const menuItems = [
 
 .open-telegram-btn:active {
   transform: translateY(0);
+}
+
+.mobile-menu-btn {
+  display: none;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 200;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.mobile-menu-btn:hover {
+  background: var(--bg-tertiary);
+}
+
+.mobile-menu-btn.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.mobile-overlay.visible {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mobile-close-btn {
+  display: none;
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--bg-tertiary);
+  border: none;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.mobile-close-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: flex;
+  }
+  
+  .mobile-overlay {
+    display: block;
+  }
+  
+  .mobile-close-btn {
+    display: flex;
+  }
+  
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    width: 280px !important;
+  }
+  
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  
+  .sidebar.collapsed {
+    width: 280px !important;
+  }
+  
+  .sidebar.collapsed .nav-label,
+  .sidebar.collapsed .tagline {
+    opacity: 1;
+    width: auto;
+    display: block;
+  }
+  
+  .sidebar.collapsed .nav-item {
+    padding: 0.875rem 1.5rem;
+    justify-content: flex-start;
+  }
+  
+  .sidebar.collapsed .sidebar-header {
+    padding: 2rem 1.5rem 1.5rem;
+    text-align: left;
+  }
+  
+  .sidebar.collapsed .logo-short {
+    display: none;
+  }
+  
+  .sidebar.collapsed .logo {
+    display: block !important;
+  }
+  
+  .sidebar.collapsed .sidebar-footer {
+    padding: 1rem 1.5rem;
+  }
+  
+  .sidebar.collapsed .theme-toggle,
+  .sidebar.collapsed .settings-link,
+  .sidebar.collapsed .logout-link,
+  .sidebar.collapsed .telegram-btn {
+    justify-content: flex-start;
+    padding: 0.75rem 0;
+  }
+  
+  .collapse-btn {
+    display: none;
+  }
 }
 </style>

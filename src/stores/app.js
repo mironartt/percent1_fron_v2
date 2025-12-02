@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { DEBUG_MODE, FORCE_SHOW_ONBOARDING, FORCE_SHOW_MINITASK } from '@/config/settings.js'
+<<<<<<< HEAD
 import { 
   getOnboardingData, 
   updateOnboardingData, 
@@ -24,6 +25,9 @@ import {
   scheduleStep as apiScheduleStep
 } from '@/services/api.js'
 import { useToastStore } from '@/stores/toast'
+=======
+import { getOnboardingData, updateOnboardingData, getMiniTaskData, updateMiniTaskData, getSSPData, updateSSPData } from '@/services/api.js'
+>>>>>>> a96c76513d085fd92a823713b09b5dcc5a260c00
 
 export const useAppStore = defineStore('app', () => {
   // ========================================
@@ -653,8 +657,8 @@ export const useAppStore = defineStore('app', () => {
     completedActions: []
   })
 
-  // AI Recommendations (задачи из онбординга)
-  const aiRecommendations = ref([])
+  // AI Recommendations (цели из онбординга)
+  const aiRecommendedGoals = ref([])
   const showPlanReview = ref(false)
 
   // Payment data
@@ -875,15 +879,6 @@ export const useAppStore = defineStore('app', () => {
       
       if (DEBUG_MODE) {
         console.log('[Store] First step completed:', stepId)
-      }
-      
-      try {
-        const toastStore = useToastStore()
-        toastStore.showFirstStepToast(stepId, firstSteps.value)
-      } catch (e) {
-        if (DEBUG_MODE) {
-          console.warn('[Store] Could not show toast:', e)
-        }
       }
       
       if (mentorStepMessages[stepId]) {
@@ -1318,6 +1313,22 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
+  function updateGoalStep(goalId, stepId, updates) {
+    const goal = goals.value.find(g => g.id === goalId)
+    if (goal && goal.steps) {
+      const step = goal.steps.find(s => s.id === stepId)
+      if (step) {
+        Object.assign(step, updates)
+        
+        const totalSteps = goal.steps.length
+        const completedSteps = goal.steps.filter(s => s.completed).length
+        goal.progress = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
+        
+        saveToLocalStorage()
+      }
+    }
+  }
+
   function deleteGoal(goalId) {
     const index = goals.value.findIndex(g => g.id === goalId)
     if (index !== -1) {
@@ -1371,7 +1382,7 @@ export const useAppStore = defineStore('app', () => {
       firstSteps: firstSteps.value,
       mentor: mentor.value,
       mentorPanelCollapsed: mentorPanelCollapsed.value,
-      aiRecommendations: aiRecommendations.value,
+      aiRecommendedGoals: aiRecommendedGoals.value,
       showPlanReview: showPlanReview.value,
       habits: habits.value,
       habitLog: habitLog.value
@@ -1409,7 +1420,7 @@ export const useAppStore = defineStore('app', () => {
         if (parsed.firstSteps) firstSteps.value = { ...firstSteps.value, ...parsed.firstSteps }
         if (parsed.mentor) mentor.value = { ...mentor.value, ...parsed.mentor }
         if (parsed.mentorPanelCollapsed !== undefined) mentorPanelCollapsed.value = parsed.mentorPanelCollapsed
-        if (parsed.aiRecommendations) aiRecommendations.value = parsed.aiRecommendations
+        if (parsed.aiRecommendedGoals) aiRecommendedGoals.value = parsed.aiRecommendedGoals
         if (parsed.showPlanReview !== undefined) showPlanReview.value = parsed.showPlanReview
         if (parsed.habits) habits.value = parsed.habits
         if (parsed.habitLog) habitLog.value = parsed.habitLog
@@ -1603,103 +1614,113 @@ export const useAppStore = defineStore('app', () => {
   }
 
   // ========================================
-  // AI RECOMMENDATIONS METHODS
+  // AI RECOMMENDATIONS METHODS (GOALS)
   // ========================================
 
-  function initAIRecommendations(tasks) {
-    aiRecommendations.value = tasks.map(task => ({
-      ...task,
+  function initAIRecommendations(aiGoals) {
+    aiRecommendedGoals.value = aiGoals.map(goal => ({
+      ...goal,
       status: 'pending',
-      replaced: false,
-      originalTitle: task.title
+      steps: (goal.steps || []).map((step, index) => ({
+        ...step,
+        id: step.id || `step-${Date.now()}-${index}`,
+        order: index + 1,
+        completed: false
+      }))
     }))
     showPlanReview.value = true
     saveToLocalStorage()
     
     if (DEBUG_MODE) {
-      console.log('[Store] AI Recommendations initialized:', aiRecommendations.value.length)
+      console.log('[Store] AI Goal Recommendations initialized:', aiRecommendedGoals.value.length)
     }
   }
 
-  function updateRecommendationStatus(taskId, status) {
-    const task = aiRecommendations.value.find(t => t.id === taskId)
-    if (task) {
-      task.status = status
+  function updateRecommendedGoalStatus(goalId, status) {
+    const goal = aiRecommendedGoals.value.find(g => g.id === goalId)
+    if (goal) {
+      goal.status = status
       saveToLocalStorage()
       
       if (DEBUG_MODE) {
-        console.log(`[Store] Recommendation ${taskId} status: ${status}`)
+        console.log(`[Store] Recommended goal ${goalId} status: ${status}`)
       }
     }
   }
 
-  function updateRecommendation(taskId, updates) {
-    const task = aiRecommendations.value.find(t => t.id === taskId)
-    if (task) {
-      Object.assign(task, updates)
+  function updateRecommendedGoal(goalId, updates) {
+    const goal = aiRecommendedGoals.value.find(g => g.id === goalId)
+    if (goal) {
+      Object.assign(goal, updates)
       saveToLocalStorage()
       
       if (DEBUG_MODE) {
-        console.log(`[Store] Recommendation ${taskId} updated:`, updates)
+        console.log(`[Store] Recommended goal ${goalId} updated:`, updates)
+      }
+    }
+  }
+
+  function updateRecommendedGoalStep(goalId, stepId, updates) {
+    const goal = aiRecommendedGoals.value.find(g => g.id === goalId)
+    if (goal) {
+      const step = goal.steps.find(s => s.id === stepId)
+      if (step) {
+        Object.assign(step, updates)
+        saveToLocalStorage()
+        
+        if (DEBUG_MODE) {
+          console.log(`[Store] Recommended goal step ${stepId} updated:`, updates)
+        }
       }
     }
   }
 
   function confirmAIRecommendations() {
-    const acceptedTasks = aiRecommendations.value.filter(t => t.status === 'accepted')
+    const acceptedGoals = aiRecommendedGoals.value.filter(g => g.status === 'accepted')
     
     if (DEBUG_MODE) {
-      console.log('[Store] Confirming AI recommendations:', acceptedTasks.length)
+      console.log('[Store] Confirming AI goal recommendations:', acceptedGoals.length)
     }
     
-    const dayToDate = {
-      'Пн': getNextWeekday(1),
-      'Вт': getNextWeekday(2),
-      'Ср': getNextWeekday(3),
-      'Чт': getNextWeekday(4),
-      'Пт': getNextWeekday(5),
-      'Сб': getNextWeekday(6),
-      'Вс': getNextWeekday(0)
-    }
-    
-    acceptedTasks.forEach(task => {
-      const scheduledDate = dayToDate[task.day] || new Date().toISOString().split('T')[0]
-      
-      const newTask = {
-        id: `ai-${task.id}-${Date.now()}`,
-        title: task.title,
-        description: task.description,
-        sphereId: task.sphereId,
-        duration: task.duration,
-        scheduledDate: scheduledDate,
-        completed: false,
-        source: 'ai_recommendation',
+    acceptedGoals.forEach(aiGoal => {
+      const newGoal = {
+        id: `goal-ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        title: aiGoal.title,
+        description: aiGoal.description || '',
+        sphereId: aiGoal.sphereId,
+        threeWhys: {
+          whyImportant: aiGoal.whyImportant || 'Рекомендовано AI на основе анализа',
+          why2: aiGoal.why2 || ''
+        },
+        steps: aiGoal.steps.map((step, index) => ({
+          id: `step-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
+          title: step.title,
+          order: index + 1,
+          completed: false,
+          priority: step.priority || 'none',
+          estimate: step.estimate || '',
+          dueDate: step.dueDate || null
+        })),
+        progress: 0,
+        status: 'active',
+        source: 'ai_onboarding',
         createdAt: new Date().toISOString()
       }
       
-      dailyPlan.value.tasks.push(newTask)
+      goals.value.push(newGoal)
+      
+      if (DEBUG_MODE) {
+        console.log('[Store] AI goal added:', newGoal.title, 'with', newGoal.steps.length, 'steps')
+      }
     })
     
     showPlanReview.value = false
+    aiRecommendedGoals.value = []
     saveToLocalStorage()
     
     if (DEBUG_MODE) {
-      console.log('[Store] AI tasks added to daily plan:', dailyPlan.value.tasks.length)
+      console.log('[Store] AI goals added to goals bank:', acceptedGoals.length)
     }
-  }
-
-  function getNextWeekday(targetDay) {
-    const today = new Date()
-    const currentDay = today.getDay()
-    let daysUntilTarget = targetDay - currentDay
-    
-    if (daysUntilTarget <= 0) {
-      daysUntilTarget += 7
-    }
-    
-    const targetDate = new Date(today)
-    targetDate.setDate(today.getDate() + daysUntilTarget)
-    return targetDate.toISOString().split('T')[0]
   }
 
   function closePlanReview() {
@@ -1708,11 +1729,11 @@ export const useAppStore = defineStore('app', () => {
   }
 
   function hasUnprocessedRecommendations() {
-    return aiRecommendations.value.some(t => t.status === 'pending')
+    return aiRecommendedGoals.value.some(g => g.status === 'pending')
   }
 
   const pendingRecommendationsCount = computed(() => 
-    aiRecommendations.value.filter(t => t.status === 'pending').length
+    aiRecommendedGoals.value.filter(g => g.status === 'pending').length
   )
 
   // ========================================
@@ -2699,6 +2720,7 @@ export const useAppStore = defineStore('app', () => {
     updateSphereReflection,
     addGoal,
     updateGoal,
+    updateGoalStep,
     deleteGoal,
     updateWeeklyPlan,
     updateDailyPlan,
@@ -2748,13 +2770,14 @@ export const useAppStore = defineStore('app', () => {
     completeMiniTask,
     resetMiniTask,
     
-    // AI Recommendations
-    aiRecommendations,
+    // AI Recommendations (Goals)
+    aiRecommendedGoals,
     showPlanReview,
     pendingRecommendationsCount,
     initAIRecommendations,
-    updateRecommendationStatus,
-    updateRecommendation,
+    updateRecommendedGoalStatus,
+    updateRecommendedGoal,
+    updateRecommendedGoalStep,
     confirmAIRecommendations,
     closePlanReview,
     hasUnprocessedRecommendations,

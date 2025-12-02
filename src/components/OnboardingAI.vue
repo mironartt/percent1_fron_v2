@@ -229,39 +229,49 @@
         <div v-if="currentStep === 5" class="step-content step-plan">
           <div class="plan-header">
             <div class="plan-icon">
-              <Calendar :size="40" />
+              <Target :size="40" />
             </div>
-            <h2 class="step-title">Ваш план на 7 дней</h2>
-            <p class="step-subtitle">Персональные задачи для улучшения слабых сфер</p>
+            <h2 class="step-title">Ваши первые цели</h2>
+            <p class="step-subtitle">AI подготовил цели с шагами для улучшения слабых сфер</p>
           </div>
 
-          <div class="weekly-plan">
+          <div class="goals-preview">
             <div 
-              v-for="task in weeklyTasks" 
-              :key="task.id"
-              class="plan-task"
-              :style="{ '--task-color': getSphereColor(task.sphereId) }"
+              v-for="goal in aiGoals" 
+              :key="goal.id"
+              class="goal-preview-card"
+              :style="{ '--goal-color': getSphereColor(goal.sphereId) }"
             >
-              <div class="task-day">{{ task.day }}</div>
-              <div class="task-content">
-                <div class="task-sphere">
-                  <component :is="getSphereIcon(task.sphereId)" :size="16" />
-                  {{ getSphereName(task.sphereId) }}
+              <div class="goal-preview-header">
+                <div class="goal-sphere-icon" :style="{ background: getSphereColor(goal.sphereId) }">
+                  <component :is="getSphereIcon(goal.sphereId)" :size="18" />
                 </div>
-                <h4>{{ task.title }}</h4>
-                <p>{{ task.description }}</p>
+                <div class="goal-preview-info">
+                  <span class="goal-sphere-name">{{ getSphereName(goal.sphereId) }}</span>
+                  <h4>{{ goal.title }}</h4>
+                </div>
               </div>
-              <div class="task-time">
-                <Clock :size="14" />
-                {{ task.duration }}
+              <div class="goal-steps-preview">
+                <div class="steps-label">
+                  <ListTodo :size="14" />
+                  {{ goal.steps.length }} шагов к цели:
+                </div>
+                <ul class="steps-list-mini">
+                  <li v-for="(step, index) in goal.steps.slice(0, 3)" :key="index">
+                    {{ step.title }}
+                  </li>
+                  <li v-if="goal.steps.length > 3" class="more-steps">
+                    +{{ goal.steps.length - 3 }} ещё...
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
 
           <div class="plan-summary">
             <div class="summary-item">
-              <CheckCircle :size="20" class="text-success" />
-              <span>{{ weeklyTasks.length }} задач на неделю</span>
+              <Target :size="20" class="text-success" />
+              <span>{{ aiGoals.length }} цели для старта</span>
             </div>
             <div class="summary-item">
               <TrendingUp :size="20" class="text-primary" />
@@ -295,7 +305,7 @@ import {
   Sparkles, Target, Clock, ArrowRight, ArrowLeft,
   Bot, Calendar, Rocket, CheckCircle, TrendingUp,
   Briefcase, Heart, Dumbbell, Users, Palette, Wallet,
-  Lightbulb, AlertTriangle, Zap
+  Lightbulb, AlertTriangle, Zap, ListTodo
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -404,7 +414,7 @@ const weakSpheresCount = computed(() => weakSpheres.value.length)
 const aiAnalysis = ref('')
 const insights = ref([])
 
-const weeklyTasks = ref([])
+const aiGoals = ref([])
 
 function generateAIAnalysis() {
   isAnalyzing.value = true
@@ -449,54 +459,103 @@ function generateAIAnalysis() {
   }, 2000)
 }
 
-function generateWeeklyPlan() {
-  const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
-  const tasks = []
-  
-  const taskTemplates = {
-    wealth: [
-      { title: 'Анализ расходов', description: 'Проверьте траты за последнюю неделю', duration: '15 мин' },
-      { title: 'Финансовая цель', description: 'Запишите одну финансовую цель на месяц', duration: '10 мин' }
-    ],
-    hobbies: [
-      { title: 'Время для себя', description: 'Посвятите время любимому занятию', duration: '30 мин' },
-      { title: 'Новое хобби', description: 'Попробуйте что-то новое', duration: '20 мин' }
-    ],
-    friendship: [
-      { title: 'Связь с другом', description: 'Напишите или позвоните другу', duration: '15 мин' },
-      { title: 'Новое знакомство', description: 'Начните разговор с новым человеком', duration: '10 мин' }
-    ],
-    health: [
-      { title: 'Утренняя зарядка', description: '10 минут простых упражнений', duration: '10 мин' },
-      { title: 'Прогулка', description: 'Прогуляйтесь на свежем воздухе', duration: '20 мин' }
-    ],
-    career: [
-      { title: 'Развитие навыка', description: 'Изучите что-то новое по работе', duration: '20 мин' },
-      { title: 'Планирование', description: 'Составьте план на следующую неделю', duration: '15 мин' }
-    ],
-    love: [
-      { title: 'Качественное время', description: 'Проведите время с близкими без телефона', duration: '30 мин' },
-      { title: 'Благодарность', description: 'Скажите близким, за что вы их цените', duration: '5 мин' }
-    ]
+function generateAIGoals() {
+  const goalTemplates = {
+    wealth: {
+      title: 'Улучшить финансовое положение',
+      description: 'Начать осознанно управлять деньгами и создать финансовую подушку',
+      whyImportant: 'Финансовая стабильность даёт свободу выбора и снижает стресс',
+      steps: [
+        { title: 'Записать все источники дохода и расходы за месяц' },
+        { title: 'Определить 3 категории расходов для оптимизации' },
+        { title: 'Открыть накопительный счёт и настроить автоперевод' },
+        { title: 'Изучить основы инвестирования (1 статья/видео)' },
+        { title: 'Составить бюджет на следующий месяц' }
+      ]
+    },
+    hobbies: {
+      title: 'Развить творческое хобби',
+      description: 'Регулярно уделять время любимому занятию для отдыха и самовыражения',
+      whyImportant: 'Хобби наполняет энергией и помогает справляться со стрессом',
+      steps: [
+        { title: 'Выбрать одно хобби для развития на ближайший месяц' },
+        { title: 'Выделить 30 минут 3 раза в неделю на занятие' },
+        { title: 'Найти онлайн-сообщество или курс по теме' },
+        { title: 'Попробовать что-то новое в рамках хобби' },
+        { title: 'Поделиться результатами с друзьями или в соцсетях' }
+      ]
+    },
+    friendship: {
+      title: 'Укрепить дружеские связи',
+      description: 'Поддерживать регулярное общение с важными людьми',
+      whyImportant: 'Крепкие социальные связи повышают качество жизни и поддержку',
+      steps: [
+        { title: 'Составить список 5 важных друзей' },
+        { title: 'Написать или позвонить одному другу на этой неделе' },
+        { title: 'Запланировать встречу с другом на ближайшие 2 недели' },
+        { title: 'Познакомиться с новым человеком (коллега, сосед)' },
+        { title: 'Организовать небольшую встречу с друзьями' }
+      ]
+    },
+    health: {
+      title: 'Улучшить физическое здоровье',
+      description: 'Внедрить простые привычки для поддержания энергии и здоровья',
+      whyImportant: 'Здоровье — фундамент для всех достижений в жизни',
+      steps: [
+        { title: 'Начать делать 10-минутную зарядку каждое утро' },
+        { title: 'Выпивать 8 стаканов воды в день' },
+        { title: 'Добавить 20-минутную прогулку в распорядок дня' },
+        { title: 'Лечь спать на 30 минут раньше обычного' },
+        { title: 'Заменить один нездоровый перекус на полезный' }
+      ]
+    },
+    career: {
+      title: 'Развить профессиональные навыки',
+      description: 'Инвестировать в карьерный рост и новые компетенции',
+      whyImportant: 'Профессиональный рост открывает новые возможности',
+      steps: [
+        { title: 'Определить 1-2 навыка для развития' },
+        { title: 'Найти онлайн-курс или книгу по теме' },
+        { title: 'Уделять 20 минут в день на обучение' },
+        { title: 'Применить новый навык в работе' },
+        { title: 'Запросить обратную связь от коллег или руководителя' }
+      ]
+    },
+    love: {
+      title: 'Укрепить семейные отношения',
+      description: 'Уделять качественное время близким людям',
+      whyImportant: 'Крепкая семья даёт поддержку и чувство принадлежности',
+      steps: [
+        { title: 'Провести вечер вместе без гаджетов' },
+        { title: 'Сказать близким, за что вы их цените' },
+        { title: 'Организовать совместный ужин или прогулку' },
+        { title: 'Помочь близкому с его задачей или проблемой' },
+        { title: 'Спланировать совместное мероприятие на выходные' }
+      ]
+    }
   }
   
-  weakSpheres.value.forEach((sphere, sphereIndex) => {
-    const templates = taskTemplates[sphere.id] || []
-    templates.forEach((template, taskIndex) => {
-      const dayIndex = (sphereIndex * 2 + taskIndex) % 7
-      tasks.push({
-        id: `${sphere.id}-${taskIndex}`,
+  const generatedGoals = []
+  
+  weakSpheres.value.slice(0, 3).forEach((sphere, index) => {
+    const template = goalTemplates[sphere.id]
+    if (template) {
+      generatedGoals.push({
+        id: `ai-goal-${sphere.id}-${Date.now()}-${index}`,
         sphereId: sphere.id,
-        day: days[dayIndex],
-        ...template
+        title: template.title,
+        description: template.description,
+        whyImportant: template.whyImportant,
+        steps: template.steps.map((step, stepIndex) => ({
+          id: `step-${Date.now()}-${index}-${stepIndex}`,
+          title: step.title,
+          order: stepIndex + 1
+        }))
       })
-    })
+    }
   })
   
-  weeklyTasks.value = tasks.sort((a, b) => {
-    const dayOrder = { 'Пн': 0, 'Вт': 1, 'Ср': 2, 'Чт': 3, 'Пт': 4, 'Сб': 5, 'Вс': 6 }
-    return dayOrder[a.day] - dayOrder[b.day]
-  })
+  aiGoals.value = generatedGoals
 }
 
 function nextStep() {
@@ -508,7 +567,7 @@ function nextStep() {
     }
     
     if (currentStep.value === 5) {
-      generateWeeklyPlan()
+      generateAIGoals()
     }
   }
 }
@@ -534,17 +593,17 @@ async function completeOnboarding() {
   store.completeOnboarding({
     surveyData: surveyData.value,
     sphereRatings: localSpheres.value.map(s => ({ id: s.id, score: s.score })),
-    weeklyPlan: weeklyTasks.value,
+    aiGoals: aiGoals.value,
     completedAt: new Date().toISOString()
   })
   
-  store.initAIRecommendations(weeklyTasks.value)
+  store.initAIRecommendations(aiGoals.value)
   
   store.completeFirstStep('ssp')
   store.completeFirstStep('chat_mentor')
   
   if (DEBUG_MODE) {
-    console.log('[OnboardingAI] Completed, navigating to dashboard with AI plan review')
+    console.log('[OnboardingAI] Completed, navigating to dashboard with AI goals review')
   }
   
   router.push('/app')
@@ -1247,6 +1306,99 @@ async function completeOnboarding() {
 
 .text-primary {
   color: var(--primary-color);
+}
+
+.goals-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.goal-preview-card {
+  background: var(--bg-color);
+  border-radius: 12px;
+  border-left: 4px solid var(--goal-color);
+  padding: 1rem;
+}
+
+.goal-preview-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.goal-sphere-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.goal-preview-info {
+  flex: 1;
+}
+
+.goal-sphere-name {
+  font-size: 0.75rem;
+  color: var(--goal-color);
+  font-weight: 500;
+}
+
+.goal-preview-info h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0.25rem 0 0 0;
+}
+
+.goal-steps-preview {
+  background: var(--card-bg);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.steps-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.steps-list-mini {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.steps-list-mini li {
+  font-size: 0.85rem;
+  padding: 0.25rem 0;
+  padding-left: 1rem;
+  position: relative;
+  color: var(--text-primary);
+}
+
+.steps-list-mini li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--goal-color);
+}
+
+.steps-list-mini li.more-steps {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.steps-list-mini li.more-steps::before {
+  content: '';
 }
 
 @media (max-width: 768px) {

@@ -528,4 +528,45 @@ onMounted(() => {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+@media (max-width: 768px) {
+  .mentor-widget {
+    height: 400px;
+  }
+  
+  .mentor-header {
+    padding: 12px;
+  }
+  
+  .mentor-avatar {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .welcome-icon {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .welcome-message {
+    padding: 16px 12px;
+  }
+  
+  .quick-prompts {
+    flex-direction: column;
+  }
+  
+  .quick-prompt-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .chat-container {
+    padding: 12px;
+  }
+  
+  .input-container {
+    padding: 12px;
+  }
+}
 </style>

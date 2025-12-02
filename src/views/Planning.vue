@@ -822,7 +822,7 @@
                     <h4 class="truncate-1" :title="goal.title">{{ goal.title }}</h4>
                   </div>
                   <div class="goal-header-right">
-                    <span class="steps-count">{{ getUncompletedSteps(goal).length }} шагов</span>
+                    <span class="steps-count">{{ (goal.steps || []).length }} шагов</span>
                     <span class="scheduled-count" v-if="getScheduledStepsCount(goal) > 0">
                       ✓ {{ getScheduledStepsCount(goal) }} запланировано
                     </span>
@@ -848,6 +848,8 @@
                       class="step-filter-select"
                     >
                       <option value="">Все статусы</option>
+                      <option value="uncompleted">Невыполненные</option>
+                      <option value="completed">Выполненные</option>
                       <option value="scheduled">Запланированные</option>
                       <option value="unscheduled">Незапланированные</option>
                     </select>
@@ -893,7 +895,7 @@
                   </div>
                   <div class="step-filter-stats" v-if="hasActiveStepFilters(goal.id)">
                     <span class="filter-count">
-                      Показано: {{ getFilteredSteps(goal).length }} из {{ getUncompletedSteps(goal).length }}
+                      Показано: {{ getFilteredSteps(goal).length }} из {{ (goal.steps || []).length }}
                     </span>
                   </div>
                 </div>
@@ -906,13 +908,23 @@
                     :class="{ 
                       scheduled: isStepScheduled(goal.id, step.id),
                       ['priority-' + getScheduledPriority(goal.id, step.id)]: isStepScheduled(goal.id, step.id),
-                      dragging: draggedStep && draggedStep.stepId === step.id
+                      dragging: draggedStep && draggedStep.stepId === step.id,
+                      completed: step.completed
                     }"
                     draggable="true"
                     @dragstart="handleStepDragStart($event, goal, step)"
                     @dragend="handleStepDragEnd"
                   >
-                    <span class="step-title truncate-1" :title="step.title">{{ step.title }}</span>
+                    <button 
+                      class="step-complete-btn"
+                      :class="{ completed: step.completed }"
+                      @click.stop="toggleStepComplete(goal, step)"
+                      :title="step.completed ? 'Отменить выполнение' : 'Отметить выполненным'"
+                    >
+                      <CheckCircle v-if="step.completed" :size="18" />
+                      <Circle v-else :size="18" />
+                    </button>
+                    <span class="step-title truncate-1" :class="{ completed: step.completed }" :title="step.title">{{ step.title }}</span>
                     <div class="step-actions">
                       <span class="step-date-display" v-if="isStepScheduled(goal.id, step.id)">
                         {{ formatStepDate(goal.id, step.id) }}
@@ -1021,7 +1033,9 @@ import {
   Briefcase,
   HeartHandshake,
   Search,
-  Filter
+  Filter,
+  Circle,
+  CheckCircle
 } from 'lucide-vue-next'
 
 const store = useAppStore()
@@ -1094,7 +1108,7 @@ function toggleStepSortDirection(goalId) {
 
 // Get filtered and sorted steps for a goal
 function getFilteredSteps(goal) {
-  let steps = getUncompletedSteps(goal)
+  let steps = goal.steps || []
   const filters = getStepFilters(goal.id)
   
   // Apply search filter
@@ -1107,7 +1121,6 @@ function getFilteredSteps(goal) {
   if (filters.priority) {
     const scheduled = scheduledTasks.value.find(t => t.goalId === goal.id)
     if (filters.priority === 'none') {
-      // Steps without priority
       steps = steps.filter(s => {
         const task = scheduledTasks.value.find(t => t.goalId === goal.id && t.stepId === s.id)
         return !task?.priority
@@ -1126,6 +1139,10 @@ function getFilteredSteps(goal) {
       steps = steps.filter(s => isStepScheduled(goal.id, s.id))
     } else if (filters.status === 'unscheduled') {
       steps = steps.filter(s => !isStepScheduled(goal.id, s.id))
+    } else if (filters.status === 'completed') {
+      steps = steps.filter(s => s.completed)
+    } else if (filters.status === 'uncompleted') {
+      steps = steps.filter(s => !s.completed)
     }
   }
   
@@ -1547,6 +1564,56 @@ function getSphereIdFromGoal(goalId) {
 
 function getUncompletedSteps(goal) {
   return (goal.steps || []).filter(s => !s.completed)
+}
+
+async function toggleStepComplete(goal, step) {
+  const wasCompleted = step.completed
+  const newCompleted = !wasCompleted
+  
+  store.updateGoalStep(goal.id, step.id, { completed: newCompleted })
+  
+  if (newCompleted) {
+    xpStore.awardXP(XP_REWARDS.GOAL_STEP_COMPLETED, 'goal_step_completed', { 
+      goalId: goal.id,
+      stepId: step.id, 
+      stepTitle: step.title,
+      goalTitle: goal.title
+    })
+    
+    const allSteps = goal.steps || []
+    const completedSteps = allSteps.filter(s => s.id === step.id ? true : s.completed).length
+    if (completedSteps === allSteps.length && allSteps.length > 0) {
+      xpStore.awardXP(XP_REWARDS.GOAL_COMPLETED, 'goal_completed', { 
+        goalId: goal.id,
+        goalTitle: goal.title
+      })
+      store.updateGoal(goal.id, { status: 'completed' })
+    }
+  } else {
+    const lastEvent = xpStore.xpHistory.find(
+      e => e.source === 'goal_step_completed' && 
+           e.metadata?.stepId === step.id &&
+           new Date(e.timestamp).toDateString() === new Date().toDateString()
+    )
+    if (lastEvent) {
+      xpStore.revokeXP(lastEvent.id)
+    }
+  }
+  
+  if (goal.backendId && step.backendId) {
+    try {
+      const { updateGoalSteps } = await import('@/services/api.js')
+      await updateGoalSteps({
+        goals_steps_data: [{
+          goal_id: goal.backendId,
+          step_id: step.backendId,
+          is_complete: newCompleted
+        }]
+      })
+    } catch (error) {
+      console.error('[Planning] Error syncing step completion to backend:', error)
+    }
+  }
 }
 
 const weekDays = computed(() => {
@@ -3494,6 +3561,45 @@ onMounted(async () => {
 .step-item.priority-optional {
   border-left-color: var(--text-tertiary);
   background: rgba(156, 163, 175, 0.05);
+}
+
+.step-item.completed {
+  opacity: 0.6;
+}
+
+.step-item.completed .step-title {
+  text-decoration: line-through;
+  color: var(--text-tertiary);
+}
+
+.step-complete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  flex-shrink: 0;
+  border-radius: 50%;
+  transition: color 0.2s, background 0.2s;
+}
+
+.step-complete-btn:hover {
+  color: var(--primary-color);
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.step-complete-btn.completed {
+  color: var(--success-color);
+}
+
+.step-complete-btn.completed:hover {
+  color: var(--danger-color);
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .step-item .step-title {

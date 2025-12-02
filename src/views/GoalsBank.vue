@@ -5149,21 +5149,145 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
+  .goals-bank-container {
+    padding: 1rem;
+  }
+  
   .progress-bar {
     padding: 0;
+    margin-bottom: 1.5rem;
   }
   
   .step-label {
+    font-size: 0.7rem;
+  }
+  
+  .step-number {
+    width: 32px;
+    height: 32px;
+    font-size: 0.875rem;
+  }
+  
+  .goals-filters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+  
+  .filter-group {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.375rem;
+  }
+  
+  .filter-group.search-group {
+    min-width: unset;
+  }
+  
+  .filter-label {
     font-size: 0.75rem;
   }
   
-  .goals-table {
-    overflow-x: auto;
+  .filter-select {
+    width: 100%;
+    padding: 0.625rem;
   }
   
-  .table-header,
-  .table-row {
-    min-width: 900px;
+  .search-input {
+    padding: 0.625rem 0.625rem 0.625rem 2.25rem;
+  }
+  
+  .goals-table-section .goals-table-wrapper {
+    overflow-x: visible;
+    overflow-y: visible;
+  }
+  
+  .goals-table-section .goals-table {
+    display: block;
+  }
+  
+  .goals-table-section .goals-table thead {
+    display: none;
+  }
+  
+  .goals-table-section .goals-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .goals-table-section .goals-table tbody tr {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+  
+  .goals-table-section .goals-table tbody tr:hover {
+    background: var(--bg-primary);
+  }
+  
+  .goals-table-section .goals-table tbody tr.in-work {
+    border-color: var(--primary-color);
+    border-width: 2px;
+  }
+  
+  .goals-table-section .goals-table tbody tr.row-rejected {
+    border-color: var(--danger-color);
+  }
+  
+  .goals-table-section .goals-table tbody tr.row-raw {
+    border-color: var(--warning-color);
+  }
+  
+  .goals-table-section .goals-table td {
+    padding: 0;
+    border-bottom: none;
+  }
+  
+  .goals-table-section .goals-table .col-status {
+    width: 100%;
+    text-align: left;
+    order: -1;
+  }
+  
+  .goals-table-section .goals-table .col-goal {
+    width: 100%;
+  }
+  
+  .goals-table-section .goals-table .col-why {
+    width: 100%;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+  
+  .goals-table-section .goals-table .col-actions {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border-color);
+  }
+  
+  .goals-table-section .goal-cell {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .goals-table-section .goal-text {
+    font-size: 1rem;
+    font-weight: 500;
+  }
+  
+  .goals-table-section .goal-sphere-badge-new {
+    margin-top: 0.25rem;
   }
   
   .add-idea-section {
@@ -5186,6 +5310,36 @@ onMounted(async () => {
   
   .filter-types {
     grid-template-columns: 1fr;
+  }
+  
+  .section-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  
+  .summary-card {
+    padding: 1rem;
+  }
+  
+  .summary-value {
+    font-size: 1.5rem;
+  }
+  
+  .pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  
+  .pagination-info {
+    width: 100%;
+    text-align: center;
+    order: -1;
+    margin-bottom: 0.5rem;
   }
 }
 
@@ -5556,6 +5710,44 @@ onMounted(async () => {
 }
 
 @media (max-width: 480px) {
+  .empty-state-card {
+    padding: 1.5rem;
+  }
+  
+  .empty-state-card .empty-icon {
+    font-size: 3rem;
+  }
+  
+  .empty-state-card h1 {
+    font-size: 1.5rem;
+  }
+  
+  .empty-state-card .subtitle {
+    font-size: 0.9375rem;
+  }
+  
+  .lesson-info {
+    padding: 1rem;
+  }
+  
+  .lesson-step {
+    gap: 0.75rem;
+  }
+  
+  .lesson-step .step-num {
+    width: 24px;
+    height: 24px;
+    font-size: 0.75rem;
+  }
+  
+  .lesson-step strong {
+    font-size: 0.9375rem;
+  }
+  
+  .lesson-step p {
+    font-size: 0.8125rem;
+  }
+  
   .sphere-select-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -5569,6 +5761,28 @@ onMounted(async () => {
   .modal-footer-right {
     width: 100%;
     justify-content: center;
+  }
+  
+  .progress-bar {
+    gap: 0.25rem;
+  }
+  
+  .step-label {
+    font-size: 0.625rem;
+  }
+  
+  .step-number {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+  
+  .step-content h2 {
+    font-size: 1.25rem;
+  }
+  
+  .section-hint {
+    font-size: 0.875rem;
   }
 }
 </style>
