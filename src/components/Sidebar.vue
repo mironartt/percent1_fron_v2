@@ -179,6 +179,7 @@ function toggleMobile() {
   isMobileOpen.value = !isMobileOpen.value
   if (isMobileOpen.value) {
     document.body.style.overflow = 'hidden'
+    store.closeMentorMobile()
   } else {
     document.body.style.overflow = ''
   }
