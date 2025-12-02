@@ -659,6 +659,40 @@ export const useAppStore = defineStore('app', () => {
     const total = lifeSpheres.value.reduce((sum, sphere) => sum + sphere.score, 0)
     return Math.round(total / lifeSpheres.value.length)
   })
+  
+  // Задачи на сегодня из недельного плана (синхронизация Planning ↔ Dashboard)
+  const todayScheduledTasks = computed(() => {
+    const today = new Date().toISOString().split('T')[0]
+    const currentPlan = getCurrentWeekPlan()
+    if (!currentPlan || !currentPlan.scheduledTasks) return []
+    
+    return currentPlan.scheduledTasks
+      .filter(task => task.scheduledDate === today)
+      .map(task => ({
+        id: task.id,
+        title: task.stepTitle || task.goalTitle || 'Задача',
+        goalTitle: task.goalTitle,
+        goalId: task.goalId,
+        stepId: task.stepId,
+        completed: task.completed || false,
+        completedAt: task.completedAt,
+        priority: task.priority,
+        timeEstimate: task.timeEstimate,
+        scheduledDate: task.scheduledDate,
+        sphere: getSphereNameById(task.sphereId)
+      }))
+      .sort((a, b) => {
+        const priorityOrder = { critical: 0, desirable: 1, attention: 2, optional: 3 }
+        const priorityA = priorityOrder[a.priority] ?? 4
+        const priorityB = priorityOrder[b.priority] ?? 4
+        return priorityA - priorityB
+      })
+  })
+  
+  function getSphereNameById(sphereId) {
+    const sphere = lifeSpheres.value.find(s => s.id === sphereId)
+    return sphere?.name || ''
+  }
 
   const totalGoals = computed(() => goals.value.length)
   
@@ -2011,6 +2045,22 @@ export const useAppStore = defineStore('app', () => {
       }
     }
   }
+  
+  // Переключение задачи из текущего недельного плана (для Dashboard)
+  function toggleTodayTask(taskId) {
+    const plan = getCurrentWeekPlan()
+    if (plan) {
+      const task = plan.scheduledTasks.find(t => t.id === taskId)
+      if (task) {
+        const wasCompleted = task.completed
+        task.completed = !task.completed
+        task.completedAt = task.completed ? new Date().toISOString() : null
+        saveToLocalStorage()
+        return { wasCompleted, isNowCompleted: task.completed }
+      }
+    }
+    return null
+  }
 
   // Load data on init
   loadFromLocalStorage()
@@ -2034,6 +2084,7 @@ export const useAppStore = defineStore('app', () => {
     goals,
     weeklyPlan,
     dailyPlan,
+    todayScheduledTasks,
     
     // Computed
     averageScore,
@@ -2166,6 +2217,7 @@ export const useAppStore = defineStore('app', () => {
     updateScheduledTask,
     removeScheduledTask,
     toggleScheduledTaskComplete,
+    toggleTodayTask,
     
     // Habits (Привычки)
     habits,
