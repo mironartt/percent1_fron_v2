@@ -2900,6 +2900,21 @@ function formatDate(dateString) {
   font-size: 0.875rem;
   font-weight: 500;
   transition: all 0.2s ease;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.btn-validation:hover {
+  background: var(--bg-secondary);
+  border-color: var(--primary-color);
+  color: var(--text-primary);
+}
+
+.btn-validation.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
 }
 
 .btn-true-goal {
