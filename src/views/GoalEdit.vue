@@ -900,7 +900,9 @@ onMounted(() => {
 })
 
 onBeforeRouteLeave(() => {
-  flushSave(false)
+  if (pendingSave) {
+    flushSave(false)
+  }
 })
 
 watch(() => route.params.id, () => {
