@@ -116,8 +116,8 @@
             <label class="filter-label">Статус:</label>
             <select v-model="filterStatus" class="filter-select" @change="onFilterChange">
               <option value="">Все статусы</option>
-              <option value="planned">Запланирован</option>
-              <option value="unplanned">Не запланирован</option>
+              <option value="work">В работе</option>
+              <option value="complete">Завершенные</option>
               <option value="unstatus">Не оценённые</option>
             </select>
           </div>
