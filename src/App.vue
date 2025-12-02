@@ -52,7 +52,7 @@ const isAuthPage = computed(() => {
 const hasSidebar = computed(() => !isAuthPage.value)
 
 const isAppPage = computed(() => {
-  return route.path.startsWith('/app/')
+  return route.path === '/app' || route.path.startsWith('/app/')
 })
 
 const showMentorPanel = computed(() => {
