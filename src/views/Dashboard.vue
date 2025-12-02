@@ -417,21 +417,26 @@ function pluralize(n, one, few, many) {
 .dashboard {
   flex: 1;
   min-width: 0;
-  padding-right: 500px;
-  transition: padding-right 0.3s ease;
+  max-width: 900px;
+  margin: 0 auto;
+  padding-right: 420px;
+  transition: padding-right 0.3s ease, max-width 0.3s ease;
 }
 
-.dashboard.panel-collapsed {
-  padding-right: 100px;
+:global(#app.mentor-collapsed) .dashboard {
+  padding-right: 60px;
+  max-width: 1100px;
 }
 
 @media (max-width: 1024px) {
   .dashboard {
     padding-right: 0;
+    max-width: 100%;
   }
   
-  .dashboard.panel-collapsed {
+  :global(#app.mentor-collapsed) .dashboard {
     padding-right: 0;
+    max-width: 100%;
   }
 }
 
