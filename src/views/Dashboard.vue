@@ -190,7 +190,7 @@ const showHabitManager = ref(false)
 
 const userName = computed(() => store.displayName)
 const averageScore = computed(() => store.averageScore)
-const dailyTasks = computed(() => store.dailyPlan.tasks || [])
+const dailyTasks = computed(() => store.todayScheduledTasks || [])
 const journalStreak = computed(() => store.journalStreak)
 const hasTodayEntry = computed(() => store.hasTodayEntry)
 const isMentorPanelCollapsed = computed(() => store.mentorPanelCollapsed)
@@ -278,18 +278,18 @@ function onMiniTaskSkip() {
 }
 
 function toggleFocusTask(task) {
-  const wasCompleted = task.completed
-  store.toggleTask(task.id)
+  const result = store.toggleTodayTask(task.id)
+  if (!result) return
   
-  if (!wasCompleted) {
+  if (result.isNowCompleted) {
     xpStore.awardXP(XP_REWARDS.FOCUS_TASK_COMPLETED, 'focus_task_completed', { 
-      taskId: task.id, 
-      taskTitle: task.title 
+      taskId: result.taskId, 
+      taskTitle: result.taskTitle 
     })
   } else {
     const lastEvent = xpStore.xpHistory.find(
       e => e.source === 'focus_task_completed' && 
-           e.metadata?.taskId === task.id &&
+           e.metadata?.taskId === result.taskId &&
            new Date(e.timestamp).toDateString() === new Date().toDateString()
     )
     if (lastEvent) {

@@ -998,6 +998,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { useXpStore, XP_REWARDS } from '../stores/xp'
 import { DEMO_PLANNING_MODE } from '../config/settings.js'
 import { 
   Calendar, 
@@ -1024,6 +1025,7 @@ import {
 } from 'lucide-vue-next'
 
 const store = useAppStore()
+const xpStore = useXpStore()
 const router = useRouter()
 const route = useRoute()
 
@@ -1750,6 +1752,7 @@ function scheduleStep(goalId, step, dateStr) {
       stepId: step.id,
       stepTitle: step.title,
       goalTitle: goal?.title || '',
+      sphereId: goal?.sphereId || '',
       scheduledDate: dateStr,
       timeEstimate: '',
       priority: ''
@@ -1768,8 +1771,28 @@ function unscheduleStep(goalId, stepId) {
 
 function toggleTaskComplete(taskId) {
   const plan = currentPlan.value
-  if (plan) {
-    store.toggleScheduledTaskComplete(plan.id, taskId)
+  if (!plan) return
+  
+  const task = plan.scheduledTasks.find(t => t.id === taskId)
+  if (!task) return
+  
+  const wasCompleted = task.completed
+  store.toggleScheduledTaskComplete(plan.id, taskId)
+  
+  if (!wasCompleted) {
+    xpStore.awardXP(XP_REWARDS.FOCUS_TASK_COMPLETED, 'focus_task_completed', { 
+      taskId: task.id, 
+      taskTitle: task.stepTitle || task.goalTitle 
+    })
+  } else {
+    const lastEvent = xpStore.xpHistory.find(
+      e => e.source === 'focus_task_completed' && 
+           e.metadata?.taskId === task.id &&
+           new Date(e.timestamp).toDateString() === new Date().toDateString()
+    )
+    if (lastEvent) {
+      xpStore.revokeXP(lastEvent.id)
+    }
   }
 }
 

@@ -1997,8 +1997,11 @@ export const useAppStore = defineStore('app', () => {
         stepId: task.stepId,
         stepTitle: task.stepTitle,
         goalTitle: task.goalTitle,
+        sphereId: task.sphereId || '',
         scheduledDate: task.scheduledDate,
         scheduledTime: task.scheduledTime || null,
+        priority: task.priority || '',
+        timeEstimate: task.timeEstimate || '',
         completed: false,
         completedAt: null
       })
@@ -2056,7 +2059,12 @@ export const useAppStore = defineStore('app', () => {
         task.completed = !task.completed
         task.completedAt = task.completed ? new Date().toISOString() : null
         saveToLocalStorage()
-        return { wasCompleted, isNowCompleted: task.completed }
+        return { 
+          wasCompleted, 
+          isNowCompleted: task.completed,
+          taskId: task.id,
+          taskTitle: task.stepTitle || task.goalTitle || 'Задача'
+        }
       }
     }
     return null
