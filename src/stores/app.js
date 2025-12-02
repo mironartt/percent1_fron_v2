@@ -195,6 +195,10 @@ export const useAppStore = defineStore('app', () => {
     completedActions: []
   })
 
+  // AI Recommendations (задачи из онбординга)
+  const aiRecommendations = ref([])
+  const showPlanReview = ref(false)
+
   // Payment data
   const payment = ref({
     completed: false,
@@ -655,7 +659,9 @@ export const useAppStore = defineStore('app', () => {
       journal: journal.value,
       firstSteps: firstSteps.value,
       mentor: mentor.value,
-      mentorPanelCollapsed: mentorPanelCollapsed.value
+      mentorPanelCollapsed: mentorPanelCollapsed.value,
+      aiRecommendations: aiRecommendations.value,
+      showPlanReview: showPlanReview.value
     }))
   }
 
@@ -690,6 +696,8 @@ export const useAppStore = defineStore('app', () => {
         if (parsed.firstSteps) firstSteps.value = { ...firstSteps.value, ...parsed.firstSteps }
         if (parsed.mentor) mentor.value = { ...mentor.value, ...parsed.mentor }
         if (parsed.mentorPanelCollapsed !== undefined) mentorPanelCollapsed.value = parsed.mentorPanelCollapsed
+        if (parsed.aiRecommendations) aiRecommendations.value = parsed.aiRecommendations
+        if (parsed.showPlanReview !== undefined) showPlanReview.value = parsed.showPlanReview
       } catch (e) {
         console.error('Error loading data:', e)
       }
@@ -878,6 +886,119 @@ export const useAppStore = defineStore('app', () => {
     }
     saveToLocalStorage()
   }
+
+  // ========================================
+  // AI RECOMMENDATIONS METHODS
+  // ========================================
+
+  function initAIRecommendations(tasks) {
+    aiRecommendations.value = tasks.map(task => ({
+      ...task,
+      status: 'pending',
+      replaced: false,
+      originalTitle: task.title
+    }))
+    showPlanReview.value = true
+    saveToLocalStorage()
+    
+    if (DEBUG_MODE) {
+      console.log('[Store] AI Recommendations initialized:', aiRecommendations.value.length)
+    }
+  }
+
+  function updateRecommendationStatus(taskId, status) {
+    const task = aiRecommendations.value.find(t => t.id === taskId)
+    if (task) {
+      task.status = status
+      saveToLocalStorage()
+      
+      if (DEBUG_MODE) {
+        console.log(`[Store] Recommendation ${taskId} status: ${status}`)
+      }
+    }
+  }
+
+  function updateRecommendation(taskId, updates) {
+    const task = aiRecommendations.value.find(t => t.id === taskId)
+    if (task) {
+      Object.assign(task, updates)
+      saveToLocalStorage()
+      
+      if (DEBUG_MODE) {
+        console.log(`[Store] Recommendation ${taskId} updated:`, updates)
+      }
+    }
+  }
+
+  function confirmAIRecommendations() {
+    const acceptedTasks = aiRecommendations.value.filter(t => t.status === 'accepted')
+    
+    if (DEBUG_MODE) {
+      console.log('[Store] Confirming AI recommendations:', acceptedTasks.length)
+    }
+    
+    const dayToDate = {
+      'Пн': getNextWeekday(1),
+      'Вт': getNextWeekday(2),
+      'Ср': getNextWeekday(3),
+      'Чт': getNextWeekday(4),
+      'Пт': getNextWeekday(5),
+      'Сб': getNextWeekday(6),
+      'Вс': getNextWeekday(0)
+    }
+    
+    acceptedTasks.forEach(task => {
+      const scheduledDate = dayToDate[task.day] || new Date().toISOString().split('T')[0]
+      
+      const newTask = {
+        id: `ai-${task.id}-${Date.now()}`,
+        title: task.title,
+        description: task.description,
+        sphereId: task.sphereId,
+        duration: task.duration,
+        scheduledDate: scheduledDate,
+        completed: false,
+        source: 'ai_recommendation',
+        createdAt: new Date().toISOString()
+      }
+      
+      dailyPlan.value.tasks.push(newTask)
+    })
+    
+    showPlanReview.value = false
+    saveToLocalStorage()
+    
+    if (DEBUG_MODE) {
+      console.log('[Store] AI tasks added to daily plan:', dailyPlan.value.tasks.length)
+    }
+  }
+
+  function getNextWeekday(targetDay) {
+    const today = new Date()
+    const currentDay = today.getDay()
+    let daysUntilTarget = targetDay - currentDay
+    
+    if (daysUntilTarget <= 0) {
+      daysUntilTarget += 7
+    }
+    
+    const targetDate = new Date(today)
+    targetDate.setDate(today.getDate() + daysUntilTarget)
+    return targetDate.toISOString().split('T')[0]
+  }
+
+  function closePlanReview() {
+    showPlanReview.value = false
+    saveToLocalStorage()
+  }
+
+  function hasUnprocessedRecommendations() {
+    return aiRecommendations.value.some(t => t.status === 'pending')
+  }
+
+  const pendingRecommendationsCount = computed(() => 
+    aiRecommendations.value.filter(t => t.status === 'pending').length
+  )
 
   // ========================================
   // MINI-TASK BACKEND METHODS
@@ -1865,6 +1986,17 @@ export const useAppStore = defineStore('app', () => {
     completeMiniTaskWithBackend,
     completeMiniTask,
     resetMiniTask,
+    
+    // AI Recommendations
+    aiRecommendations,
+    showPlanReview,
+    pendingRecommendationsCount,
+    initAIRecommendations,
+    updateRecommendationStatus,
+    updateRecommendation,
+    confirmAIRecommendations,
+    closePlanReview,
+    hasUnprocessedRecommendations,
     
     // SSP backend methods
     sspBackendData,

@@ -184,6 +184,14 @@
       </div>
     </div>
   </Teleport>
+
+  <Teleport to="body">
+    <PlanReview 
+      v-if="showPlanReview" 
+      @close="store.closePlanReview()"
+      @confirmed="onPlanConfirmed"
+    />
+  </Teleport>
 </template>
 
 <script setup>
@@ -194,6 +202,7 @@ import MiniTaskWelcome from '../components/MiniTaskWelcome.vue'
 import MiniTask from '../components/MiniTask.vue'
 import JournalEntry from '../components/JournalEntry.vue'
 import MentorPanel from '../components/MentorPanel.vue'
+import PlanReview from '../components/PlanReview.vue'
 import { DEBUG_MODE } from '@/config/settings.js'
 import { 
   Sun,
@@ -224,6 +233,7 @@ const dailyTasks = computed(() => store.dailyPlan.tasks || [])
 const journalStreak = computed(() => store.journalStreak)
 const hasTodayEntry = computed(() => store.hasTodayEntry)
 const isMentorPanelCollapsed = computed(() => store.mentorPanelCollapsed)
+const showPlanReview = computed(() => store.showPlanReview)
 
 const currentHour = computed(() => new Date().getHours())
 
@@ -312,6 +322,12 @@ function toggleFocusTask(task) {
 
 function openMentorPanel() {
   store.toggleMentorPanel(false)
+}
+
+function onPlanConfirmed() {
+  if (DEBUG_MODE) {
+    console.log('[Dashboard] AI Plan confirmed, tasks added to daily plan')
+  }
 }
 
 function pluralize(n, one, few, many) {
