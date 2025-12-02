@@ -323,6 +323,25 @@ export const useAppStore = defineStore('app', () => {
         if (DEBUG_MODE) {
           console.log('[Store] Goal created on backend:', result.data)
         }
+        
+        // Optimistic update: increment stats
+        if (goalsApiData.value.totalData) {
+          goalsApiData.value.totalData.total_goals = (goalsApiData.value.totalData.total_goals || 0) + 1
+          
+          // Update type-specific counter based on status
+          if (goalData.status === 'validated') {
+            goalsApiData.value.totalData.true_goals = (goalsApiData.value.totalData.true_goals || 0) + 1
+          } else if (goalData.status === 'rejected') {
+            goalsApiData.value.totalData.false_goals = (goalsApiData.value.totalData.false_goals || 0) + 1
+          }
+        }
+        
+        // Update pagination totals
+        if (goalsApiData.value.pagination) {
+          goalsApiData.value.pagination.totalItems = (goalsApiData.value.pagination.totalItems || 0) + 1
+          goalsApiData.value.pagination.totalFilteredItems = (goalsApiData.value.pagination.totalFilteredItems || 0) + 1
+        }
+        
         return { success: true, goalId: result.data?.created_goals_ids?.[0] }
       }
       

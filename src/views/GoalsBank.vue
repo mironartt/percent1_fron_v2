@@ -1306,6 +1306,9 @@ async function saveNewGoal() {
   
   closeAddModal()
   
+  // Update displayLimit to show new goal
+  displayLimit.value = rawIdeas.value.length
+  
   // Sync with backend (non-blocking)
   store.createGoalOnBackend(goalData).then(result => {
     if (result.success && result.goalId) {
