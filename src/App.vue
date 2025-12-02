@@ -30,8 +30,10 @@ import Sidebar from './components/Sidebar.vue'
 import TelegramAuthModals from './components/TelegramAuthModals.vue'
 import MentorPanel from './components/MentorPanel.vue'
 import ToastNotification from './components/ToastNotification.vue'
+import { useAppStore } from './stores/app'
 
 const route = useRoute()
+const store = useAppStore()
 const sidebarCollapsed = ref(false)
 
 onMounted(() => {
@@ -61,7 +63,9 @@ const showMentorPanel = computed(() => {
 
 const appClasses = computed(() => ({
   'has-sidebar': hasSidebar.value,
-  'sidebar-collapsed': hasSidebar.value && sidebarCollapsed.value
+  'sidebar-collapsed': hasSidebar.value && sidebarCollapsed.value,
+  'has-mentor-panel': showMentorPanel.value,
+  'mentor-panel-collapsed': showMentorPanel.value && store.mentorPanelCollapsed
 }))
 </script>
 
@@ -86,6 +90,21 @@ const appClasses = computed(() => ({
 
 #app.has-sidebar.sidebar-collapsed .main-content {
   margin-left: 72px;
+}
+
+#app.has-mentor-panel .main-content {
+  margin-right: 460px;
+}
+
+#app.has-mentor-panel.mentor-panel-collapsed .main-content {
+  margin-right: 56px;
+}
+
+@media (max-width: 1024px) {
+  #app.has-mentor-panel .main-content,
+  #app.has-mentor-panel.mentor-panel-collapsed .main-content {
+    margin-right: 0;
+  }
 }
 
 @media (max-width: 768px) {
