@@ -26,14 +26,12 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useAppStore } from './stores/app'
 import Sidebar from './components/Sidebar.vue'
 import TelegramAuthModals from './components/TelegramAuthModals.vue'
 import MentorPanel from './components/MentorPanel.vue'
 import ToastNotification from './components/ToastNotification.vue'
 
 const route = useRoute()
-const store = useAppStore()
 const sidebarCollapsed = ref(false)
 
 onMounted(() => {
@@ -61,12 +59,9 @@ const showMentorPanel = computed(() => {
   return hasSidebar.value && isAppPage.value
 })
 
-const isMentorCollapsed = computed(() => store.mentorPanelCollapsed)
-
 const appClasses = computed(() => ({
   'has-sidebar': hasSidebar.value,
-  'sidebar-collapsed': hasSidebar.value && sidebarCollapsed.value,
-  'mentor-collapsed': isAppPage.value && isMentorCollapsed.value
+  'sidebar-collapsed': hasSidebar.value && sidebarCollapsed.value
 }))
 </script>
 
