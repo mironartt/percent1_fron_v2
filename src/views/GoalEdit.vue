@@ -1182,12 +1182,17 @@ const stepsContainerStyle = computed(() => {
 })
 
 const hasMoreStepsToLoad = computed(() => {
-  return goalForm.value.steps.filter(s => !s.isNew).length < totalStepsFromBackend.value
+  // Use page-based check instead of counting loaded steps
+  return currentStepsPage.value < totalStepsPages.value
 })
 
 const remainingStepsToLoadCount = computed(() => {
-  const loadedCount = goalForm.value.steps.filter(s => !s.isNew).length
-  return Math.max(0, totalStepsFromBackend.value - loadedCount)
+  // Calculate remaining based on total and pages already loaded
+  const loadedPagesCount = currentStepsPage.value
+  const alreadyLoadedCount = loadedPagesCount * stepsPageSize.value
+  // On last page there might be fewer items than page_size, so cap at total
+  const effectiveLoaded = Math.min(alreadyLoadedCount, totalStepsFromBackend.value)
+  return Math.max(0, totalStepsFromBackend.value - effectiveLoaded)
 })
 
 // Load steps from backend
