@@ -1530,12 +1530,6 @@ function updateUrlParams() {
     delete newQuery.status
   }
   
-  if (filterGoalType.value) {
-    newQuery.goal_type = filterGoalType.value
-  } else {
-    delete newQuery.goal_type
-  }
-  
   // Check if query actually changed to avoid redundant navigation
   const currentQuery = JSON.stringify(route.query)
   const updatedQuery = JSON.stringify(newQuery)
@@ -1548,7 +1542,6 @@ function loadFiltersFromUrl() {
   if (route.query.search) searchQuery.value = route.query.search
   if (route.query.sphere) filterSphere.value = route.query.sphere
   if (route.query.status) filterStatus.value = route.query.status
-  if (route.query.goal_type) filterGoalType.value = route.query.goal_type
 }
 
 // Note: Filter changes are now handled via onFilterChange and onSearchInput
