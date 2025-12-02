@@ -30,6 +30,13 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite with a pr
 ### System Design Choices
 The application uses a modular structure with dedicated components, services, views, router, and stores. Pinia manages state with persistence and reactivity. The system prioritizes user guidance, visual feedback, and a clean interface. The AI Mentor is a central value proposition. Backend synchronization provides immediate UI feedback and reliable data persistence.
 
+### Backend Sync Patterns (Dec 2025)
+- **Race Condition Prevention**: Components capture current ID before async calls and verify it hasn't changed before applying response data (GoalEdit.vue uses `currentGoalId` check)
+- **Steps Loading Protection**: `stepsLoadedFromBackend` flag prevents `loadGoalData()` from overwriting backend-loaded steps with empty store data
+- **Journal Today Entry Tracking**: `hasTodayEntryFromBackend` tracks actual backend state separately from filtered UI display
+- **Optimistic UI Updates**: UI updates immediately, then syncs with backend; errors logged without blocking user flow
+- **API Pagination**: Uses `goalsApiData.pagination` from backend response; `loadMore()` fetches next page
+
 ## External Dependencies
 - **Django REST API Backend**: Provides user authentication, profile management, SSP data, goals bank, decomposition, planning, onboarding, and journal services.
 - **Lucide Vue Next**: Used for minimalist line icons.

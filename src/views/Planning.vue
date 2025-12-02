@@ -2019,12 +2019,47 @@ function setupDemoData() {
   }
 }
 
-onMounted(() => {
+// Loading state
+const isLoadingGoals = ref(false)
+
+// Load goals with steps from backend
+async function loadGoalsFromBackend() {
+  if (isLoadingGoals.value) return
+  
+  isLoadingGoals.value = true
+  
+  try {
+    // Load goals with steps data for planning
+    const result = await store.loadGoalsFromBackend({
+      with_steps_data: true,
+      order_by: 'date_created',
+      order_direction: 'desc',
+      status: 'work' // Only goals in work
+    })
+    
+    if (result.success) {
+      console.log('[Planning] Loaded goals from backend, count:', result.count || store.goals.length)
+    } else if (result.error) {
+      console.warn('[Planning] Backend returned error:', result.error)
+    }
+  } catch (error) {
+    console.error('[Planning] Error loading goals from backend:', error)
+    // Continue with local data - don't block UI
+  } finally {
+    isLoadingGoals.value = false
+  }
+}
+
+onMounted(async () => {
   console.log('[Planning] onMounted - goals count:', store.goals.length)
   console.log('[Planning] onMounted - goalsWithSteps:', goalsWithSteps.value.length)
   store.goals.forEach(g => {
     console.log('[Planning] Goal:', g.title, 'status:', g.status, 'steps:', g.steps?.length || 0)
   })
+  
+  // Load goals from backend first
+  await loadGoalsFromBackend()
+  
   ensureWeekPlan()
   setupDemoData()
   loadFiltersFromUrl()

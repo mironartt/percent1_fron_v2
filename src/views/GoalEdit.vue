@@ -903,23 +903,49 @@ let autoScrollInterval = null
 
 // Loading state for API
 const isLoadingSteps = ref(false)
+const stepsLoadedFromBackend = ref(false)
 
 // Load steps from backend
 async function loadStepsFromBackend() {
-  if (!goal.value?.backendId) return
+  // Capture current goal ID to detect stale responses
+  const currentGoalId = route.params.id
+  
+  // Try to get backendId from goal or from rawIdeas
+  let backendId = goal.value?.backendId
+  
+  // If goal doesn't have backendId, try to find it in rawIdeas
+  if (!backendId) {
+    const rawGoal = store.goalsBank.rawIdeas.find(g => g.id === currentGoalId)
+    backendId = rawGoal?.backendId
+  }
+  
+  if (!backendId) {
+    console.log('[GoalEdit] No backendId found, skipping backend load')
+    return
+  }
   
   isLoadingSteps.value = true
   
   try {
     const { getGoalSteps } = await import('@/services/api.js')
     const result = await getGoalSteps({
-      goal_id: goal.value.backendId,
+      goal_id: backendId,
       order_by: 'order',
       order_direction: 'asc'
     })
     
-    if (result.status === 'ok' && result.data?.steps_data) {
-      const backendSteps = result.data.steps_data.map(s => ({
+    // Check if user navigated away - don't update if goal changed
+    if (route.params.id !== currentGoalId) {
+      console.log('[GoalEdit] Goal changed during load, discarding stale response')
+      isLoadingSteps.value = false
+      return
+    }
+    
+    if (result.status === 'ok' && result.data) {
+      // Handle steps from steps_data or goal_data.steps_data
+      const stepsData = result.data.steps_data || result.data.goal_data?.steps_data || []
+      
+      const backendSteps = stepsData.map(s => ({
         id: String(s.step_id),
         backendId: s.step_id,
         title: s.title || '',
@@ -932,14 +958,35 @@ async function loadStepsFromBackend() {
         order: s.order || 0
       }))
       
+      // Final check before mutating any state
+      if (route.params.id !== currentGoalId) {
+        console.log('[GoalEdit] Goal changed before applying steps, discarding')
+        isLoadingSteps.value = false
+        return
+      }
+      
+      // All checks passed - safe to mutate state
+      // Mark that we've loaded steps from backend for THIS goal
+      stepsLoadedFromBackend.value = true
+      
       goalForm.value.steps = backendSteps
       recalculateProgress()
       lastSavedHash = getStepsHash()
       adjustAllCommentHeights()
+      
+      // Update store goal only if it still matches the current goal
+      // Use computed goal which is bound to route.params.id
+      const currentGoal = goal.value
+      if (currentGoal && currentGoal.id === currentGoalId) {
+        currentGoal.steps = backendSteps
+      }
+      
+      console.log('[GoalEdit] Loaded', backendSteps.length, 'steps from backend for goal', currentGoalId)
     }
+    
+    isLoadingSteps.value = false
   } catch (error) {
     console.error('[GoalEdit] Error loading steps from backend:', error)
-  } finally {
     isLoadingSteps.value = false
   }
 }
@@ -972,17 +1019,18 @@ function mapTimeToBackend(timeEstimate) {
 onMounted(async () => {
   loadGoalData()
   
-  // Load steps from backend (non-blocking)
-  if (goal.value?.backendId) {
-    loadStepsFromBackend()
-  }
+  // Reset flag on mount
+  stepsLoadedFromBackend.value = false
+  
+  // Always try to load steps from backend (will check for backendId internally)
+  loadStepsFromBackend()
 })
 
 watch(() => route.params.id, () => {
+  // Reset flag on route change
+  stepsLoadedFromBackend.value = false
   loadGoalData()
-  if (goal.value?.backendId) {
-    loadStepsFromBackend()
-  }
+  loadStepsFromBackend()
 })
 
 const commentTextareas = ref([])
@@ -1010,12 +1058,16 @@ function adjustAllCommentHeights() {
 
 function loadGoalData() {
   if (goal.value) {
+    // Don't overwrite steps if they were already loaded from backend
+    const shouldLoadSteps = !stepsLoadedFromBackend.value
+    
     goalForm.value = {
       title: goal.value.title || '',
       description: goal.value.description || '',
       sphereId: goal.value.sphereId || '',
       mvp: goal.value.mvp || '',
-      steps: goal.value.steps ? goal.value.steps.map(s => ({ ...s })) : [],
+      // Only use store steps if we haven't loaded from backend yet
+      steps: shouldLoadSteps ? (goal.value.steps ? goal.value.steps.map(s => ({ ...s })) : []) : goalForm.value.steps,
       progress: goal.value.progress || 0
     }
     recalculateProgress()

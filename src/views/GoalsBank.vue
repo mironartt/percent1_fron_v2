@@ -53,7 +53,7 @@
           <div class="summary-icon summary-icon-ideas">
             <Lightbulb :size="18" :stroke-width="2" />
           </div>
-          <div class="summary-value">{{ rawIdeas.length }}</div>
+          <div class="summary-value">{{ totalGoalsCount }}</div>
           <div class="summary-label">Идей в банке</div>
         </div>
 
@@ -61,7 +61,7 @@
           <div class="summary-icon summary-icon-valid">
             <CheckCircle :size="18" :stroke-width="2" />
           </div>
-          <div class="summary-value">{{ validatedCount }}</div>
+          <div class="summary-value">{{ trueGoalsCount }}</div>
           <div class="summary-label">Истинных целей</div>
         </div>
 
@@ -69,7 +69,7 @@
           <div class="summary-icon summary-icon-rejected">
             <XCircle :size="18" :stroke-width="2" />
           </div>
-          <div class="summary-value">{{ rejectedCount }}</div>
+          <div class="summary-value">{{ falseGoalsCount }}</div>
           <div class="summary-label">Ложных целей</div>
         </div>
 
@@ -77,7 +77,7 @@
           <div class="summary-icon summary-icon-work">
             <PlayCircle :size="18" :stroke-width="2" />
           </div>
-          <div class="summary-value">{{ transferredGoalsCount }}</div>
+          <div class="summary-value">{{ inWorkGoalsCount }}</div>
           <div class="summary-label">Целей в работе</div>
         </div>
       </div>
@@ -99,12 +99,13 @@
                 type="text"
                 class="search-input"
                 placeholder="Поиск по названию и содержанию..."
+                @input="onSearchInput"
               />
             </div>
           </div>
           <div class="filter-group">
             <label class="filter-label">Сфера:</label>
-            <select v-model="filterSphere" class="filter-select">
+            <select v-model="filterSphere" class="filter-select" @change="onFilterChange">
               <option value="">Все сферы</option>
               <option v-for="sphere in lifeSpheres" :key="sphere.id" :value="sphere.id">
                 {{ sphere.icon }} {{ sphere.name }}
@@ -113,18 +114,23 @@
           </div>
           <div class="filter-group">
             <label class="filter-label">Статус:</label>
-            <select v-model="filterStatus" class="filter-select">
+            <select v-model="filterStatus" class="filter-select" @change="onFilterChange">
               <option value="">Все статусы</option>
-              <option value="validated">Истинные</option>
-              <option value="rejected">Отклонённые</option>
-              <option value="raw">Не оценённые</option>
-              <option value="in-work">В работе</option>
-              <option value="completed">Завершённые</option>
-              <option value="available">Доступные</option>
+              <option value="planned">Запланирован</option>
+              <option value="unplanned">Не запланирован</option>
+              <option value="unstatus">Не оценённые</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Тип цели:</label>
+            <select v-model="filterGoalType" class="filter-select" @change="onFilterChange">
+              <option value="">Все типы</option>
+              <option value="true">Истинная</option>
+              <option value="false">Ложная</option>
             </select>
           </div>
           <button 
-            v-if="filterSphere || filterStatus || searchQuery" 
+            v-if="filterSphere || filterStatus || filterGoalType || searchQuery" 
             class="btn btn-sm btn-ghost"
             @click="clearFilters"
           >
@@ -1164,12 +1170,32 @@ const sphereAnalysis = computed(() => store.goalsBank.sphereAnalysis)
 const completedAt = computed(() => store.goalsBank.completedAt)
 const allGoals = computed(() => [...store.goals])
 
+// API data from store
+const goalsApiData = computed(() => store.goalsApiData)
+const apiTotalData = computed(() => goalsApiData.value?.totalData || null)
+const apiPagination = computed(() => goalsApiData.value?.pagination || { page: 1, totalPages: 1, totalItems: 0 })
+
+// Stats from API (prefer API data, fallback to local)
+const totalGoalsCount = computed(() => apiTotalData.value?.total_goals ?? rawIdeas.value.length)
+const trueGoalsCount = computed(() => apiTotalData.value?.true_goals ?? validatedGoals.value.length)
+const falseGoalsCount = computed(() => apiTotalData.value?.false_goals ?? rejectedGoals.value.length)
+const inWorkGoalsCount = computed(() => apiTotalData.value?.in_work_goals ?? transferredGoals.value.length)
+
+// Pagination state
+const currentPage = ref(1)
+const totalPages = computed(() => apiPagination.value.totalPages || 1)
+const hasMorePages = computed(() => currentPage.value < totalPages.value)
+
 const lessonStarted = ref(false)
 const addingNewGoal = ref(false)
 const filterSphere = ref('')
 const filterStatus = ref('')
+const filterGoalType = ref('')
 const searchQuery = ref('')
 const displayLimit = ref(6)
+
+// Debounce timer for search
+let searchDebounceTimer = null
 const selectedBankGoals = ref([])
 
 const showEditModal = ref(false)
@@ -1388,27 +1414,129 @@ const paginatedGoals = computed(() => {
 })
 
 const hasMoreGoals = computed(() => {
+  // Prefer API pagination, fallback to local
+  if (apiPagination.value.totalPages > 1) {
+    return currentPage.value < apiPagination.value.totalPages
+  }
   return filteredGoals.value.length > displayLimit.value
 })
 
 const remainingGoalsCount = computed(() => {
+  // Prefer API pagination, fallback to local
+  if (apiPagination.value.totalItems > 0) {
+    const loaded = rawIdeas.value.length
+    return apiPagination.value.totalFilteredItems - loaded
+  }
   return filteredGoals.value.length - displayLimit.value
 })
 
-function loadMoreGoals() {
-  displayLimit.value += 6
+async function loadMoreGoals() {
+  if (isLoadingGoals.value) return
+  
+  // If we have API pagination, load next page
+  if (apiPagination.value.totalPages > 1 && currentPage.value < apiPagination.value.totalPages) {
+    currentPage.value++
+    await loadGoalsWithFilters(currentPage.value, true)
+  } else {
+    // Fallback to local pagination
+    displayLimit.value += 6
+  }
 }
 
 function resetPagination() {
   displayLimit.value = 6
+  currentPage.value = 1
 }
 
 function clearFilters() {
   filterSphere.value = ''
   filterStatus.value = ''
+  filterGoalType.value = ''
   searchQuery.value = ''
   resetPagination()
   updateUrlParams()
+  // Reload from backend without filters
+  loadGoalsWithFilters(1, false)
+}
+
+// Backend filtering - build API params from current filters
+function buildApiParams(page = 1) {
+  const params = {
+    with_steps_data: false,
+    order_by: 'date_created',
+    order_direction: 'desc',
+    page: page
+  }
+  
+  // Add text search filter (min 3 characters)
+  if (searchQuery.value && searchQuery.value.length >= 3) {
+    params.query_filter = searchQuery.value
+  }
+  
+  // Add sphere/category filter
+  if (filterSphere.value) {
+    const backendCategory = store.categoryFrontendToBackend[filterSphere.value]
+    if (backendCategory) {
+      params.category = backendCategory
+    }
+  }
+  
+  // Add status filter (planned/unplanned/unstatus)
+  if (filterStatus.value) {
+    params.status = filterStatus.value
+  }
+  
+  // Add goal type filter (true/false = истинная/ложная)
+  if (filterGoalType.value) {
+    params.score = filterGoalType.value
+  }
+  
+  return params
+}
+
+// Load goals with current filters from backend
+async function loadGoalsWithFilters(page = 1, append = false) {
+  if (isLoadingGoals.value) return
+  
+  isLoadingGoals.value = true
+  
+  try {
+    const params = buildApiParams(page)
+    const result = await store.loadGoalsFromBackend(params)
+    
+    if (result.success) {
+      currentPage.value = page
+      // Note: store.loadGoalsFromBackend already syncs data
+    }
+  } catch (error) {
+    console.error('[GoalsBank] Error loading goals with filters:', error)
+  } finally {
+    isLoadingGoals.value = false
+  }
+}
+
+// Handler for filter dropdowns change
+function onFilterChange() {
+  resetPagination()
+  updateUrlParams()
+  loadGoalsWithFilters(1, false)
+}
+
+// Handler for search input with debounce
+function onSearchInput() {
+  // Clear previous timer
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer)
+  }
+  
+  // Only search if 3+ characters or empty
+  if (searchQuery.value.length >= 3 || searchQuery.value.length === 0) {
+    searchDebounceTimer = setTimeout(() => {
+      resetPagination()
+      updateUrlParams()
+      loadGoalsWithFilters(1, false)
+    }, 500) // 500ms debounce
+  }
 }
 
 // URL parameter sync
@@ -1434,6 +1562,12 @@ function updateUrlParams() {
     delete newQuery.status
   }
   
+  if (filterGoalType.value) {
+    newQuery.goal_type = filterGoalType.value
+  } else {
+    delete newQuery.goal_type
+  }
+  
   // Check if query actually changed to avoid redundant navigation
   const currentQuery = JSON.stringify(route.query)
   const updatedQuery = JSON.stringify(newQuery)
@@ -1446,13 +1580,11 @@ function loadFiltersFromUrl() {
   if (route.query.search) searchQuery.value = route.query.search
   if (route.query.sphere) filterSphere.value = route.query.sphere
   if (route.query.status) filterStatus.value = route.query.status
+  if (route.query.goal_type) filterGoalType.value = route.query.goal_type
 }
 
-// Watch filters and update URL (with debounce effect via check in updateUrlParams)
-watch([searchQuery, filterSphere, filterStatus], () => {
-  updateUrlParams()
-  resetPagination()
-})
+// Note: Filter changes are now handled via onFilterChange and onSearchInput
+// No need for watch - it would cause duplicate API calls
 
 const isBankGoalSelected = (goalId) => selectedBankGoals.value.includes(goalId)
 
@@ -2097,7 +2229,7 @@ function goToFullEdit(goalId) {
 // Loading state for API
 const isLoadingGoals = ref(false)
 
-// Load goals from backend
+// Load goals from backend (uses current filters)
 async function loadGoals() {
   if (isLoadingGoals.value) return
   
@@ -2109,12 +2241,9 @@ async function loadGoals() {
       await store.loadGlobalData()
     }
     
-    // Load goals from backend
-    await store.loadGoalsFromBackend({
-      with_steps_data: false,
-      order_by: 'date_created',
-      order_direction: 'desc'
-    })
+    // Load goals with current filters
+    const params = buildApiParams(1)
+    await store.loadGoalsFromBackend(params)
   } catch (error) {
     console.error('[GoalsBank] Error loading goals:', error)
   } finally {

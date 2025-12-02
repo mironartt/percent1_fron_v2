@@ -199,10 +199,18 @@ const totalItems = ref(0)
 const journalEntries = computed(() => store.journal.entries || [])
 const journalStreak = computed(() => store.journalStreak)
 const totalEntries = computed(() => totalItems.value || journalEntries.value.length)
-const hasTodayEntry = computed(() => store.hasTodayEntry)
+
+// Track if today's entry exists from backend (independent of filters)
+const hasTodayEntryFromBackend = ref(false)
+const todayDateStr = computed(() => new Date().toISOString().split('T')[0])
+
+// Combined check: either from backend tracking or from local store
+const hasTodayEntry = computed(() => {
+  return hasTodayEntryFromBackend.value || store.hasTodayEntry
+})
 
 // Load diary entries from backend
-async function loadDiaryEntries(page = 1) {
+async function loadDiaryEntries(page = 1, isFiltered = false) {
   isLoading.value = true
   try {
     const { getDiaryEntries } = await import('@/services/api.js')
@@ -232,6 +240,13 @@ async function loadDiaryEntries(page = 1) {
       
       if (page === 1) {
         store.journal.entries = backendEntries
+        
+        // On first page load without filters, check for today's entry
+        if (!isFiltered || !searchQuery.value) {
+          hasTodayEntryFromBackend.value = backendEntries.some(
+            entry => entry.date === todayDateStr.value
+          )
+        }
       } else {
         store.journal.entries = [...store.journal.entries, ...backendEntries]
       }
@@ -253,7 +268,8 @@ function handleSearch() {
   if (searchTimeout) clearTimeout(searchTimeout)
   searchTimeout = setTimeout(() => {
     currentPage.value = 1
-    loadDiaryEntries(1)
+    // Pass isFiltered=true when search query is present
+    loadDiaryEntries(1, searchQuery.value.length >= 3)
   }, 500)
 }
 
