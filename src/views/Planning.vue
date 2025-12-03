@@ -530,43 +530,6 @@
             </div>
           </header>
 
-          <!-- Weekly Statistics -->
-          <div class="weekly-stats card">
-            <div class="stats-grid">
-              <div class="stat-box">
-                <div class="stat-content">
-                  <span class="stat-number">{{ weeklyCompletedTasks }}</span>
-                  <span class="stat-label">Выполнено</span>
-                </div>
-              </div>
-              <div class="stat-box">
-                <div class="stat-content">
-                  <span class="stat-number">{{ weeklyTotalTasks }}</span>
-                  <span class="stat-label">Всего задач</span>
-                </div>
-              </div>
-              <div class="stat-box">
-                <div class="stat-content">
-                  <span class="stat-number">{{ weeklyCompletionRate }}%</span>
-                  <span class="stat-label">Прогресс</span>
-                </div>
-              </div>
-              <div class="stat-box">
-                <div class="stat-content">
-                  <span class="stat-number">{{ currentStreak }}</span>
-                  <span class="stat-label">Дней подряд</span>
-                </div>
-              </div>
-            </div>
-            <div class="progress-bar-container">
-              <div class="progress-bar-bg">
-                <div 
-                  class="progress-bar-fill" 
-                  :style="{ width: weeklyCompletionRate + '%' }"
-                ></div>
-              </div>
-            </div>
-          </div>
 
           <!-- Week Calendar - Workdays (5 days) -->
           <div class="week-calendar-full card">
@@ -822,85 +785,16 @@
                     <h4 class="truncate-1" :title="goal.title">{{ goal.title }}</h4>
                   </div>
                   <div class="goal-header-right">
-                    <span class="steps-count">{{ (goal.steps || []).length }} шагов</span>
+                    <span class="steps-count">
+                      {{ getCompletedStepsCount(goal) }} из {{ getTotalStepsCount(goal) }} шагов
+                    </span>
                     <span class="scheduled-count" v-if="getScheduledStepsCount(goal) > 0">
                       ✓ {{ getScheduledStepsCount(goal) }} запланировано
                     </span>
-                    <span class="goal-progress">{{ goal.progress || 0 }}%</span>
+                    <span class="goal-progress">{{ getGoalProgress(goal) }}%</span>
                   </div>
                 </div>
-                <!-- Step filters panel -->
-                <div class="step-filters-panel" v-show="expandedGoals[goal.id]">
-                  <div class="step-filters-row">
-                    <div class="step-search-wrapper">
-                      <Search class="search-icon" :size="14" />
-                      <input 
-                        type="text"
-                        :value="getStepFilters(goal.id).search"
-                        @input="updateStepFilter(goal.id, 'search', $event.target.value)"
-                        placeholder="Поиск шагов..."
-                        class="step-search-input"
-                      />
-                    </div>
-                    <select 
-                      :value="getStepFilters(goal.id).status"
-                      @change="updateStepFilter(goal.id, 'status', $event.target.value)"
-                      class="step-filter-select"
-                    >
-                      <option value="">Все статусы</option>
-                      <option value="uncompleted">Невыполненные</option>
-                      <option value="completed">Выполненные</option>
-                      <option value="scheduled">Запланированные</option>
-                      <option value="unscheduled">Незапланированные</option>
-                    </select>
-                    <select 
-                      :value="getStepFilters(goal.id).priority"
-                      @change="updateStepFilter(goal.id, 'priority', $event.target.value)"
-                      class="step-filter-select"
-                    >
-                      <option value="">Все приоритеты</option>
-                      <option value="critical">Критично</option>
-                      <option value="desirable">Важно</option>
-                      <option value="attention">Внимание</option>
-                      <option value="optional">Опционально</option>
-                      <option value="none">Без приоритета</option>
-                    </select>
-                    <div class="step-sort-wrapper">
-                      <select 
-                        :value="getStepFilters(goal.id).sortBy"
-                        @change="updateStepFilter(goal.id, 'sortBy', $event.target.value)"
-                        class="step-filter-select"
-                      >
-                        <option value="order">По порядку</option>
-                        <option value="priority">По приоритету</option>
-                        <option value="date">По дате</option>
-                        <option value="status">По статусу</option>
-                      </select>
-                      <button 
-                        v-if="getStepFilters(goal.id).sortBy !== 'order'"
-                        class="btn-sort-dir"
-                        @click.stop="toggleStepSortDirection(goal.id)"
-                        :title="getStepFilters(goal.id).sortDir === 'asc' ? 'По возрастанию' : 'По убыванию'"
-                      >
-                        {{ getStepFilters(goal.id).sortDir === 'asc' ? '↑' : '↓' }}
-                      </button>
-                    </div>
-                    <button 
-                      v-if="hasActiveStepFilters(goal.id)"
-                      class="btn btn-xs btn-ghost clear-step-filters"
-                      @click.stop="clearStepFilters(goal.id)"
-                    >
-                      Сбросить
-                    </button>
-                  </div>
-                  <div class="step-filter-stats" v-if="hasActiveStepFilters(goal.id)">
-                    <span class="filter-count">
-                      Показано: {{ getFilteredSteps(goal).length }} из {{ (goal.steps || []).length }}
-                    </span>
-                  </div>
-                </div>
-                
-                <div class="steps-list" v-show="expandedGoals[goal.id]" :class="{ 'has-scroll': getFilteredSteps(goal).length > 5 }">
+                <div class="steps-list" v-show="expandedGoals[goal.id]" :class="{ 'has-scroll': (goal.steps || []).length > 6 }">
                   <div 
                     v-for="step in getVisibleSteps(goal)" 
                     :key="step.id"
@@ -973,11 +867,17 @@
                   
                   <!-- Load more steps button -->
                   <button 
-                    v-if="hasMoreSteps(goal)"
+                    v-if="hasMoreStepsToLoad(goal)"
                     class="btn btn-sm btn-outline load-more-steps"
-                    @click.stop="loadMoreSteps(goal.id)"
+                    :disabled="stepsLoadingForGoal[goal.backendId]"
+                    @click.stop="loadMoreStepsFromBackend(goal)"
                   >
-                    Ещё {{ remainingStepsCount(goal) }} шагов
+                    <template v-if="stepsLoadingForGoal[goal.backendId]">
+                      Загрузка...
+                    </template>
+                    <template v-else>
+                      Ещё {{ getRemainingStepsToLoad(goal) }} шагов
+                    </template>
                   </button>
                 </div>
               </div>
@@ -1060,6 +960,8 @@ const filterThisWeek = ref(false)
 // Pagination state
 const goalsDisplayLimit = ref(10)
 const stepsDisplayLimits = ref({})
+const stepsLoadingForGoal = ref({})
+const stepsPageForGoal = ref({})
 
 // Step filters per goal (each goal can have its own filters)
 const stepsFilters = ref({})
@@ -1388,21 +1290,21 @@ function loadMoreGoals() {
   goalsDisplayLimit.value += 10
 }
 
-// Get visible steps for a goal (with pagination)
+// Get visible steps for a goal (simple - no filtering, just pagination)
 function getVisibleSteps(goal) {
-  const steps = getFilteredSteps(goal)
+  const steps = goal.steps || []
   const limit = stepsDisplayLimits.value[goal.id] || 6
   return steps.slice(0, limit)
 }
 
 function hasMoreSteps(goal) {
-  const steps = getFilteredSteps(goal)
+  const steps = goal.steps || []
   const limit = stepsDisplayLimits.value[goal.id] || 6
   return steps.length > limit
 }
 
 function remainingStepsCount(goal) {
-  const steps = getFilteredSteps(goal)
+  const steps = goal.steps || []
   const limit = stepsDisplayLimits.value[goal.id] || 6
   return steps.length - limit
 }
@@ -1410,6 +1312,106 @@ function remainingStepsCount(goal) {
 function loadMoreSteps(goalId) {
   const currentLimit = stepsDisplayLimits.value[goalId] || 6
   stepsDisplayLimits.value[goalId] = currentLimit + 6
+}
+
+// Get total steps count from backend totalStepsData
+function getTotalStepsCount(goal) {
+  if (goal.totalStepsData?.total_steps !== undefined) {
+    return goal.totalStepsData.total_steps
+  }
+  return (goal.steps || []).length
+}
+
+// Get completed steps count from backend totalStepsData
+function getCompletedStepsCount(goal) {
+  if (goal.totalStepsData?.complete_steps !== undefined) {
+    return goal.totalStepsData.complete_steps
+  }
+  return (goal.steps || []).filter(s => s.completed).length
+}
+
+// Get goal progress from backend totalStepsData
+function getGoalProgress(goal) {
+  if (goal.totalStepsData?.complete_percent !== undefined) {
+    return goal.totalStepsData.complete_percent
+  }
+  return goal.progress || 0
+}
+
+// Check if there are more steps to load from backend
+function hasMoreStepsToLoad(goal) {
+  const loadedSteps = (goal.steps || []).length
+  const totalSteps = getTotalStepsCount(goal)
+  return loadedSteps < totalSteps
+}
+
+// Get remaining steps to load from backend
+function getRemainingStepsToLoad(goal) {
+  const loadedSteps = (goal.steps || []).length
+  const totalSteps = getTotalStepsCount(goal)
+  return Math.max(0, totalSteps - loadedSteps)
+}
+
+// Load more steps from backend API
+async function loadMoreStepsFromBackend(goal) {
+  if (!goal.backendId || stepsLoadingForGoal.value[goal.backendId]) return
+  
+  stepsLoadingForGoal.value[goal.backendId] = true
+  
+  try {
+    const { getGoalSteps } = await import('@/services/api.js')
+    
+    // Calculate next page (each page has 6 steps)
+    const currentPage = stepsPageForGoal.value[goal.backendId] || 1
+    const nextPage = currentPage + 1
+    
+    console.log('[Planning] Loading more steps for goal:', goal.backendId, 'page:', nextPage)
+    
+    const result = await getGoalSteps({
+      goal_id: goal.backendId,
+      page: nextPage,
+      page_size: 6,
+      order_by: 'order',
+      order_direction: 'asc'
+    })
+    
+    if (result.status === 'ok' && result.data?.goal_data?.steps_data) {
+      const newSteps = result.data.goal_data.steps_data.map(s => ({
+        id: s.step_id,
+        backendId: s.step_id,
+        title: s.title,
+        description: s.description || '',
+        priority: s.priority || null,
+        timeEstimate: s.time_duration || null,
+        date: s.dt || null,
+        order: s.order,
+        completed: s.is_complete || false,
+        dateCompleted: s.date_completed || null,
+        dateCreated: s.date_created || null,
+        status: s.status || 'unplanned',
+        goalId: s.goal_id
+      }))
+      
+      // Add new steps to goal, avoiding duplicates
+      const existingIds = new Set((goal.steps || []).map(s => s.id))
+      const uniqueNewSteps = newSteps.filter(s => !existingIds.has(s.id))
+      
+      if (uniqueNewSteps.length > 0) {
+        goal.steps = [...(goal.steps || []), ...uniqueNewSteps]
+        // Update display limit to show all loaded steps
+        stepsDisplayLimits.value[goal.id] = goal.steps.length
+      }
+      
+      // Update page counter
+      stepsPageForGoal.value[goal.backendId] = nextPage
+      
+      console.log('[Planning] Loaded', uniqueNewSteps.length, 'new steps, total:', goal.steps.length)
+    }
+  } catch (error) {
+    console.error('[Planning] Error loading more steps:', error)
+  } finally {
+    stepsLoadingForGoal.value[goal.backendId] = false
+  }
 }
 
 // Clear all filters
@@ -2122,11 +2124,12 @@ async function loadGoalsFromBackend() {
   
   try {
     // Load goals with steps data for planning
+    // Using status_filter=work to get only goals "in work"
     const result = await store.loadGoalsFromBackend({
       with_steps_data: true,
       order_by: 'date_created',
       order_direction: 'desc',
-      status: 'work' // Only goals in work
+      status_filter: 'work' // Only goals in work - using correct API param name
     })
     
     if (result.success) {

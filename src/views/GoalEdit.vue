@@ -93,7 +93,12 @@
             <h3>Декомпозиция на шаги</h3>
             <span class="steps-count">
               {{ goalForm.steps.filter(s => !s.isNew).length }}
-              <template v-if="totalStepsFromBackend > 0"> из {{ totalStepsFromBackend }}</template>
+              <template v-if="totalFilteredSteps > 0 && totalFilteredSteps !== totalStepsFromBackend">
+                из {{ totalFilteredSteps }} (всего {{ totalStepsFromBackend }})
+              </template>
+              <template v-else-if="totalStepsFromBackend > 0">
+                из {{ totalStepsFromBackend }}
+              </template>
               шагов
             </span>
           </div>
@@ -149,9 +154,10 @@
                 <select v-model="sortBy" class="filter-select sort-select">
                   <option value="order">По порядку</option>
                   <option value="priority">По приоритету</option>
-                  <option value="status">По статусу</option>
-                  <option value="time">По времени</option>
-                  <option value="date">По дате</option>
+                  <option value="is_complete">По результату</option>
+                  <option value="time_duration">По времени</option>
+                  <option value="date_created">По дате создания</option>
+                  <option value="title">По названию</option>
                 </select>
                 <button 
                   class="btn-icon sort-direction-btn"
@@ -341,6 +347,7 @@
                     ['priority-' + step.priority]: step.priority && !step.completed
                   }"
                   :style="step.priority && !step.completed ? { '--priority-color': getPriorityColor(step.priority) } : {}"
+                  @focusout="handleNewStepFocusOut(step, $event)"
                 >
                   <!-- Левая колонка: drag-handle, checkbox, delete -->
                   <div class="step-actions-column">
@@ -352,7 +359,7 @@
                       <input 
                         type="checkbox"
                         :checked="step.completed"
-                        @change="toggleStepCompletion(getOriginalIndex(step))"
+                        @change="updateStep(getOriginalIndex(step), 'completed', !step.completed)"
                         class="step-checkbox"
                         :id="`new-step-checkbox-${step.id}`"
                       />
@@ -369,7 +376,7 @@
                     <button 
                       class="btn-icon btn-icon-danger step-delete-btn"
                       @click="removeStep(getOriginalIndex(step))"
-                      title="Удалить шаг"
+                      title="Удалить шаблон"
                     >
                       <X :size="14" :stroke-width="2" />
                     </button>
@@ -382,7 +389,7 @@
                       type="text"
                       :value="step.title"
                       @input="updateStep(getOriginalIndex(step), 'title', $event.target.value)"
-                      @blur="autoSave"
+                      @keydown.enter="saveNewStep(step)"
                       class="step-input"
                       :class="{ 'completed-text': step.completed }"
                       :placeholder="`Введите название нового шага`"
@@ -393,7 +400,7 @@
                       <!-- Приоритет -->
                       <select 
                         :value="step.priority || ''"
-                        @change="updateStepAndSave(getOriginalIndex(step), 'priority', $event.target.value)"
+                        @change="updateStep(getOriginalIndex(step), 'priority', $event.target.value)"
                         class="step-param-select priority-select-sm"
                         :class="'priority-' + (step.priority || 'none')"
                         title="Приоритет"
@@ -408,7 +415,7 @@
                       <!-- Время -->
                       <select 
                         :value="step.timeEstimate || ''"
-                        @change="updateStepAndSave(getOriginalIndex(step), 'timeEstimate', $event.target.value)"
+                        @change="updateStep(getOriginalIndex(step), 'timeEstimate', $event.target.value)"
                         class="step-param-select time-select-sm"
                         title="Время на выполнение"
                       >
@@ -425,10 +432,20 @@
                       <input 
                         type="date"
                         :value="step.scheduledDate || ''"
-                        @change="updateStepAndSave(getOriginalIndex(step), 'scheduledDate', $event.target.value)"
+                        @change="updateStep(getOriginalIndex(step), 'scheduledDate', $event.target.value)"
                         class="step-param-select date-input-sm"
                         title="Запланировать на дату"
                       />
+                      
+                      <!-- Кнопка добавления -->
+                      <button 
+                        class="btn btn-primary btn-sm save-new-step-btn"
+                        @click="saveNewStep(step)"
+                        title="Добавить шаг"
+                      >
+                        <Check :size="14" />
+                        Добавить
+                      </button>
                     </div>
                     
                     <!-- Комментарий -->
@@ -436,7 +453,6 @@
                       <textarea 
                         :value="step.comment || ''"
                         @input="handleCommentInput(getOriginalIndex(step), $event)"
-                        @blur="autoSave"
                         class="step-comment-input"
                         :placeholder="'Комментарий к шагу (необязательно)'"
                         rows="1"
@@ -834,18 +850,19 @@ function getOriginalIndex(step) {
 let filterDebounceTimer = null
 let previousHasFilters = false
 
-watch([searchQuery, filterStatus, filterPriority, sortBy], () => {
+watch([searchQuery, filterStatus, filterPriority, sortBy, sortDirection], () => {
   stepsDisplayLimit.value = 10
   
   // Debounce for search query, immediate for other filters
   if (filterDebounceTimer) clearTimeout(filterDebounceTimer)
   
-  const hasFilters = searchQuery.value || filterStatus.value || filterPriority.value || sortBy.value !== 'order'
-  const filtersCleared = previousHasFilters && !hasFilters
+  const hasFiltersOrSort = searchQuery.value || filterStatus.value || filterPriority.value || 
+    sortBy.value !== 'order' || sortDirection.value !== 'asc'
+  const filtersCleared = previousHasFilters && !hasFiltersOrSort
   
   if (goalBackendId.value) {
-    // Always reload: when filters active, when filters cleared, or when sort changed
-    const needsReload = hasFilters || filtersCleared
+    // Always reload: when filters/sort active, when filters cleared, or when sort changed
+    const needsReload = hasFiltersOrSort || filtersCleared
     
     if (needsReload) {
       // Shorter debounce for non-search filters, longer for search
@@ -857,20 +874,15 @@ watch([searchQuery, filterStatus, filterPriority, sortBy], () => {
     }
   }
   
-  previousHasFilters = hasFilters
+  previousHasFilters = hasFiltersOrSort
 })
 
 // Map frontend sort keys to backend order_by values
-// Backend supports: order, date_created, priority
+// Backend supports: order, date_created, title, status, priority, time_duration, is_complete
 function mapSortToBackend(sortKey) {
-  const sortMap = {
-    'order': 'order',
-    'priority': 'priority',
-    'time': 'order', // time sorting not supported by backend, fallback to order
-    'date': 'date_created',
-    'status': 'order' // status sorting not supported by backend, fallback to order
-  }
-  return sortMap[sortKey] || 'order'
+  // Frontend now uses same keys as backend, just pass through
+  const validKeys = ['order', 'date_created', 'title', 'status', 'priority', 'time_duration', 'is_complete']
+  return validKeys.includes(sortKey) ? sortKey : 'order'
 }
 
 // Map frontend priority values to backend values
@@ -934,6 +946,13 @@ async function loadStepsWithFilters() {
     if (goalBackendId.value !== currentBackendId) return
     
     if (result.status === 'ok' && result.data) {
+      // Update pagination info (reset to page 1 on filter/sort change)
+      totalStepsFromBackend.value = result.data.total_items || result.data.goal_data?.total_data?.total_steps || 0
+      totalFilteredSteps.value = result.data.total_filtered_items || totalStepsFromBackend.value
+      totalStepsPages.value = result.data.total_pages || 1
+      stepsPageSize.value = result.data.page_size || 6
+      currentStepsPage.value = 1
+      
       const stepsData = result.data.steps_data || result.data.goal_data?.steps_data || []
       
       const backendSteps = stepsData.map(s => ({
@@ -957,7 +976,7 @@ async function loadStepsWithFilters() {
       takeStepsSnapshot()
       adjustAllCommentHeights()
       
-      console.log('[GoalEdit] Loaded', backendSteps.length, 'filtered steps from backend')
+      console.log('[GoalEdit] Loaded', backendSteps.length, 'filtered steps from backend, total:', totalStepsFromBackend.value)
     }
   } catch (error) {
     console.error('[GoalEdit] Error loading filtered steps:', error)
@@ -1147,7 +1166,8 @@ const isLoadingSteps = ref(false)
 const stepsLoadedFromBackend = ref(false)
 
 // Steps pagination from backend
-const totalStepsFromBackend = ref(0)
+const totalStepsFromBackend = ref(0)      // total_items (всего без фильтров)
+const totalFilteredSteps = ref(0)         // total_filtered_items (с учётом фильтров)
 const currentStepsPage = ref(1)
 const stepsPageSize = ref(6)
 const totalStepsPages = ref(1)
@@ -1171,12 +1191,13 @@ const hasMoreStepsToLoad = computed(() => {
 })
 
 const remainingStepsToLoadCount = computed(() => {
-  // Calculate remaining based on total and pages already loaded
+  // Calculate remaining based on filtered total and pages already loaded
+  const total = totalFilteredSteps.value || totalStepsFromBackend.value
   const loadedPagesCount = currentStepsPage.value
   const alreadyLoadedCount = loadedPagesCount * stepsPageSize.value
   // On last page there might be fewer items than page_size, so cap at total
-  const effectiveLoaded = Math.min(alreadyLoadedCount, totalStepsFromBackend.value)
-  return Math.max(0, totalStepsFromBackend.value - effectiveLoaded)
+  const effectiveLoaded = Math.min(alreadyLoadedCount, total)
+  return Math.max(0, total - effectiveLoaded)
 })
 
 // Load steps from backend
@@ -1213,6 +1234,7 @@ async function loadStepsFromBackend(page = 1, append = false) {
     if (result.status === 'ok' && result.data) {
       // Update pagination info
       totalStepsFromBackend.value = result.data.total_items || result.data.goal_data?.total_data?.total_steps || 0
+      totalFilteredSteps.value = result.data.total_filtered_items || totalStepsFromBackend.value
       totalStepsPages.value = result.data.total_pages || 1
       stepsPageSize.value = result.data.page_size || 6
       currentStepsPage.value = page
@@ -1421,7 +1443,51 @@ function addStep() {
   goalForm.value.steps.push(newStep)
   
   // НЕ изменяем stepsDisplayLimit — новые шаги отображаются отдельно внизу
-  // НЕ сохраняем пустой шаг — сохранение произойдёт когда пользователь введёт название
+  // НЕ сохраняем пустой шаг — сохранение произойдёт по кнопке "Добавить"
+  
+  // Auto-scroll к новому шаблону
+  nextTick(() => {
+    const newStepEl = document.querySelector('.new-step-card:last-child')
+    if (newStepEl) {
+      newStepEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      // Фокус на поле ввода названия
+      const titleInput = newStepEl.querySelector('.step-input')
+      if (titleInput) titleInput.focus()
+    }
+  })
+}
+
+// Сохранить новый шаг (кнопка "Добавить")
+function saveNewStep(step) {
+  // Валидация: нельзя создать шаг с пустым названием
+  if (!step.title?.trim()) {
+    showToast('Введите название шага', 'error')
+    return
+  }
+  
+  // Убираем флаг isNew - шаг готов к сохранению
+  step.isNew = false
+  
+  // Сохраняем
+  flushSave(true)
+}
+
+// Обработка focusout со всего шаблона нового шага
+function handleNewStepFocusOut(step, event) {
+  // Проверяем, остаётся ли фокус внутри этого же шаблона
+  const stepCard = event.currentTarget
+  const relatedTarget = event.relatedTarget
+  
+  // Если фокус уходит внутрь этого же шаблона - игнорируем
+  if (relatedTarget && stepCard.contains(relatedTarget)) {
+    return
+  }
+  
+  // Фокус ушёл полностью с шаблона
+  // Если есть название - сохраняем автоматически
+  if (step.title?.trim()) {
+    saveNewStep(step)
+  }
 }
 
 function handleDragStart(index, event) {
@@ -1614,8 +1680,8 @@ async function doSave(showNotification = true) {
   try {
     const stepsToSave = goalForm.value.steps
       .filter(s => s.title.trim())
-      .map((s, index) => ({
-        id: s.id || `step_${Date.now()}_${index}`,
+      .map((s) => ({
+        id: s.id || `step_${Date.now()}_${Math.random()}`,
         backendId: s.backendId || null,
         title: s.title,
         completed: s.completed || false,
@@ -1624,7 +1690,7 @@ async function doSave(showNotification = true) {
         priority: s.priority || '',
         scheduledDate: s.scheduledDate || '',
         status: s.status || (s.completed ? 'completed' : 'pending'),
-        order: index
+        order: s.order  // Preserve original order from backend, don't overwrite with index!
       }))
 
     const progress = stepsToSave.length > 0
@@ -1682,30 +1748,40 @@ function takeStepsSnapshot() {
 function getChangedSteps(currentSteps) {
   const changedSteps = []
   
-  currentSteps.forEach((step, index) => {
+  currentSteps.forEach((step) => {
+    // Skip new steps without title (empty new steps)
+    if (step.isNew && !step.title?.trim()) return
+    
     const snapshot = stepsSnapshot.find(s => s.id === step.id)
     
     if (!snapshot) {
-      // New step - send all fields
-      changedSteps.push({
-        step,
-        index,
-        isNew: true,
-        changedFields: ['title', 'description', 'priority', 'time_duration', 'dt', 'order', 'is_complete']
-      })
+      // New step - send all fields EXCEPT order (backend assigns order automatically)
+      // Only if step has backendId === undefined (truly new, not just missing from snapshot)
+      if (!step.backendId) {
+        changedSteps.push({
+          step,
+          isNew: true,
+          changedFields: ['title', 'description', 'priority', 'time_duration', 'dt', 'is_complete']
+        })
+      }
+      // If step has backendId but not in snapshot - it was loaded later, skip it
+      // (don't send existing steps that we didn't modify)
     } else {
-      // Check what changed
+      // Check what changed - compare step.order with snapshot.order (not array index)
       const changes = []
       if (step.title !== snapshot.title) changes.push('title')
       if ((step.comment || '') !== snapshot.comment) changes.push('description')
       if ((step.priority || '') !== snapshot.priority) changes.push('priority')
       if ((step.timeEstimate || '') !== snapshot.timeEstimate) changes.push('time_duration')
       if ((step.scheduledDate || '') !== snapshot.scheduledDate) changes.push('dt')
-      if (index !== snapshot.order) changes.push('order')
+      // Compare order as numbers to avoid type mismatch issues
+      const currentOrder = step.order ?? -1
+      const snapshotOrder = snapshot.order ?? -1
+      if (currentOrder !== snapshotOrder) changes.push('order')
       if ((step.completed || false) !== snapshot.completed) changes.push('is_complete')
       
       if (changes.length > 0) {
-        changedSteps.push({ step, index, isNew: false, changedFields: changes })
+        changedSteps.push({ step, isNew: false, changedFields: changes })
       }
     }
   })
@@ -1727,9 +1803,12 @@ async function syncStepsToBackend(steps) {
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
     
-    const stepsData = changedSteps.map(({ step, index, changedFields }) => {
+    // Convert goalBackendId to integer
+    const goalIdInt = parseInt(goalBackendId.value, 10)
+    
+    const stepsData = changedSteps.map(({ step, changedFields }) => {
       const data = {
-        goal_id: goalBackendId.value,
+        goal_id: goalIdInt,
         step_id: step.backendId || null
       }
       
@@ -1739,7 +1818,7 @@ async function syncStepsToBackend(steps) {
       if (changedFields.includes('priority')) data.priority = mapPriorityToBackend(step.priority) || null
       if (changedFields.includes('time_duration')) data.time_duration = mapTimeToBackend(step.timeEstimate)
       if (changedFields.includes('dt')) data.dt = step.scheduledDate || null
-      if (changedFields.includes('order')) data.order = index
+      if (changedFields.includes('order')) data.order = step.order
       if (changedFields.includes('is_complete')) data.is_complete = step.completed || false
       
       return data
@@ -2470,6 +2549,21 @@ function formatDate(dateString) {
   font-size: 0.625rem;
   padding: 0.125rem 0.375rem;
   min-width: auto;
+}
+
+/* Кнопка добавления нового шага */
+.save-new-step-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.save-new-step-btn:hover {
+  transform: translateY(-1px);
 }
 
 .step-main {
