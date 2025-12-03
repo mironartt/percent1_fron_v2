@@ -935,6 +935,12 @@ async function loadStepsWithFilters() {
     if (goalBackendId.value !== currentBackendId) return
     
     if (result.status === 'ok' && result.data) {
+      // Update pagination info (reset to page 1 on filter/sort change)
+      totalStepsFromBackend.value = result.data.total_items || result.data.goal_data?.total_data?.total_steps || 0
+      totalStepsPages.value = result.data.total_pages || 1
+      stepsPageSize.value = result.data.page_size || 6
+      currentStepsPage.value = 1
+      
       const stepsData = result.data.steps_data || result.data.goal_data?.steps_data || []
       
       const backendSteps = stepsData.map(s => ({
@@ -958,7 +964,7 @@ async function loadStepsWithFilters() {
       takeStepsSnapshot()
       adjustAllCommentHeights()
       
-      console.log('[GoalEdit] Loaded', backendSteps.length, 'filtered steps from backend')
+      console.log('[GoalEdit] Loaded', backendSteps.length, 'filtered steps from backend, total:', totalStepsFromBackend.value)
     }
   } catch (error) {
     console.error('[GoalEdit] Error loading filtered steps:', error)
