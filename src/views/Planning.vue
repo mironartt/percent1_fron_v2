@@ -1527,7 +1527,7 @@ watch([searchQuery, filterSphere, filterStatus, filterThisWeek], () => {
   resetPagination()
 })
 
-// Format date for step display
+// Format date for step display - includes day of week for dates outside current week
 function formatStepDate(goalId, stepId) {
   const date = getScheduledDate(goalId, stepId)
   if (!date) return ''
@@ -1538,6 +1538,15 @@ function formatStepDate(goalId, stepId) {
   const dateObj = new Date(year, month - 1, day) // month is 0-indexed
   const dayNum = dateObj.getDate()
   const monthStr = dateObj.toLocaleDateString('ru-RU', { month: 'short' })
+  
+  // Check if date is within current week - if not, show day of week
+  const isInCurrentWeek = weekDays.value.some(d => d.date === date)
+  if (!isInCurrentWeek) {
+    const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
+    const dayOfWeek = dayNames[dateObj.getDay()]
+    return `${dayNum} ${monthStr} ${dayOfWeek}`
+  }
+  
   return `${dayNum} ${monthStr}`
 }
 
