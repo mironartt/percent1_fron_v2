@@ -1577,11 +1577,14 @@ export const useAppStore = defineStore('app', () => {
   })
 
   const shouldShowMiniTask = computed(() => {
-    if (FORCE_SHOW_MINITASK) {
-      if (DEBUG_MODE) {
-        console.log('[Store] MiniTask forced to show (FORCE_SHOW_MINITASK=true)')
-      }
-      return true
+    // MiniTask feature is currently DISABLED (components commented out)
+    // Only show if explicitly forced via FORCE_SHOW_MINITASK setting
+    if (!FORCE_SHOW_MINITASK) {
+      return false
+    }
+    
+    if (DEBUG_MODE) {
+      console.log('[Store] MiniTask forced to show (FORCE_SHOW_MINITASK=true)')
     }
     
     if (!user.value.is_authenticated) {
