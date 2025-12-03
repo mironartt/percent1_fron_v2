@@ -1892,13 +1892,49 @@ function removeKeyGoal(goalId) {
   store.deleteKeyGoal(goalId)
 }
 
-function completeGoalsBankHandler() {
+async function completeGoalsBankHandler() {
   if (selectedGoalIds.value.length < 1) {
     alert('Выберите хотя бы одну цель')
     return
   }
   
   const selectedGoals = validatedGoals.value.filter(g => selectedGoalIds.value.includes(g.id))
+  
+  // First, sync ALL rawIdeas with backend (those without backendId)
+  const goalsToCreate = rawIdeas.value.filter(g => !g.backendId)
+  
+  if (goalsToCreate.length > 0) {
+    console.log('[GoalsBank] Creating', goalsToCreate.length, 'goals on backend')
+    
+    // Create goals on backend in parallel
+    const createPromises = goalsToCreate.map(async (goal) => {
+      const result = await store.createGoalOnBackend({
+        text: goal.text,
+        sphereId: goal.sphereId,
+        whyImportant: goal.whyImportant || goal.threeWhys?.why1 || '',
+        status: goal.status,
+        threeWhys: goal.threeWhys
+      })
+      
+      if (result.success && result.goalId) {
+        // Update local goal with backend ID
+        store.updateRawIdea(goal.id, { backendId: result.goalId })
+        return { localId: goal.id, backendId: result.goalId }
+      }
+      return null
+    })
+    
+    await Promise.all(createPromises)
+  }
+  
+  // Now set selected goals to "work" status on backend
+  for (const goal of selectedGoals) {
+    const backendId = goal.backendId || rawIdeas.value.find(g => g.id === goal.id)?.backendId
+    if (backendId) {
+      console.log('[GoalsBank] Setting goal to work:', backendId)
+      store.takeGoalToWorkOnBackend(backendId)
+    }
+  }
   
   const goalsToTransfer = selectedGoals.map(g => ({
     id: g.id,
