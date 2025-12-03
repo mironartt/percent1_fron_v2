@@ -798,9 +798,9 @@
                 <div 
                   class="steps-list" 
                   v-show="expandedGoals[goal.id]" 
+                  :data-steps-list="goal.id"
                   :class="{ 
-                    'has-scroll': (goal.steps || []).length > 6,
-                    'expanded-scroll': stepsPageForGoal[goal.backendId] > 1 || (stepsDisplayLimits[goal.id] || 6) > 6
+                    'has-scroll': stepsContainerHeights[goal.id]
                   }"
                   :style="getStepsListStyle(goal)"
                 >
@@ -972,6 +972,7 @@ const goalsDisplayLimit = ref(10)
 const stepsDisplayLimits = ref({})
 const stepsLoadingForGoal = ref({})
 const stepsPageForGoal = ref({})
+const stepsContainerHeights = ref({}) // Fixed heights for steps containers after pagination
 
 // Step filters per goal (each goal can have its own filters)
 const stepsFilters = ref({})
@@ -1320,23 +1321,26 @@ function remainingStepsCount(goal) {
 }
 
 function loadMoreSteps(goalId) {
+  // Capture current container height BEFORE showing more steps
+  captureStepsContainerHeight(goalId)
+  
   const currentLimit = stepsDisplayLimits.value[goalId] || 6
   stepsDisplayLimits.value[goalId] = currentLimit + 6
 }
 
-// Calculate dynamic max-height for steps list based on loaded steps count
+// Get style for steps list container - fixed height after pagination
 function getStepsListStyle(goal) {
-  const loadedSteps = (goal.steps || []).length
-  const displayLimit = stepsDisplayLimits.value[goal.id] || 6
-  const visibleSteps = Math.min(loadedSteps, displayLimit)
+  const fixedHeight = stepsContainerHeights.value[goal.id]
   
-  // If more steps were loaded via pagination, increase max-height
-  if (stepsPageForGoal.value[goal.backendId] > 1 || displayLimit > 6) {
-    // Dynamic height: each step is ~44px + 50px for button
-    const maxHeight = Math.max(visibleSteps * 44 + 60, 300)
-    return { maxHeight: `${maxHeight}px` }
+  // If height was captured before pagination, use it to create fixed container with scroll
+  if (fixedHeight) {
+    return { 
+      maxHeight: `${fixedHeight}px`,
+      overflowY: 'auto'
+    }
   }
   
+  // No fixed height yet - let container expand naturally for initial 6 steps
   return {}
 }
 
@@ -1378,9 +1382,25 @@ function getRemainingStepsToLoad(goal) {
   return Math.max(0, totalSteps - loadedSteps)
 }
 
+// Capture current height of steps list before pagination
+function captureStepsContainerHeight(goalId) {
+  // Only capture if not already captured
+  if (stepsContainerHeights.value[goalId]) return
+  
+  const container = document.querySelector(`[data-steps-list="${goalId}"]`)
+  if (container) {
+    const height = container.offsetHeight
+    stepsContainerHeights.value[goalId] = height
+    console.log('[Planning] Captured steps container height for goal', goalId, ':', height)
+  }
+}
+
 // Load more steps from backend API
 async function loadMoreStepsFromBackend(goal) {
   if (!goal.backendId || stepsLoadingForGoal.value[goal.backendId]) return
+  
+  // Capture current container height BEFORE loading more steps
+  captureStepsContainerHeight(goal.id)
   
   stepsLoadingForGoal.value[goal.backendId] = true
   
@@ -1454,6 +1474,7 @@ function clearFilters() {
 function resetPagination() {
   goalsDisplayLimit.value = 10
   stepsDisplayLimits.value = {}
+  stepsContainerHeights.value = {} // Reset fixed heights
 }
 
 // URL parameter sync
@@ -1511,10 +1532,13 @@ function formatStepDate(goalId, stepId) {
   const date = getScheduledDate(goalId, stepId)
   if (!date) return ''
   
-  const dateObj = new Date(date)
-  const day = dateObj.getDate()
-  const month = dateObj.toLocaleDateString('ru-RU', { month: 'short' })
-  return `${day} ${month}`
+  // Parse date parts directly to avoid timezone issues
+  // Date format is "YYYY-MM-DD"
+  const [year, month, day] = date.split('-').map(Number)
+  const dateObj = new Date(year, month - 1, day) // month is 0-indexed
+  const dayNum = dateObj.getDate()
+  const monthStr = dateObj.toLocaleDateString('ru-RU', { month: 'short' })
+  return `${dayNum} ${monthStr}`
 }
 
 const expandedGoals = ref({})
@@ -1644,15 +1668,23 @@ async function toggleStepComplete(goal, step) {
   }
 }
 
+// Format date as YYYY-MM-DD in local timezone (avoids UTC conversion issues)
+function formatDateLocal(date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 const weekDays = computed(() => {
   const days = []
   const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  today.setHours(12, 0, 0, 0) // Use noon to avoid DST issues
   const dayOfWeek = today.getDay()
   const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
   const monday = new Date(today)
   monday.setDate(today.getDate() + mondayOffset + (weekOffset.value * 7))
-  monday.setHours(0, 0, 0, 0)
+  monday.setHours(12, 0, 0, 0)
   
   const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
   const fullNames = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
@@ -1660,9 +1692,8 @@ const weekDays = computed(() => {
   for (let i = 0; i < 7; i++) {
     const date = new Date(monday)
     date.setDate(monday.getDate() + i)
-    date.setHours(0, 0, 0, 0)
     days.push({
-      date: date.toISOString().split('T')[0],
+      date: formatDateLocal(date),
       dayNum: date.getDate(),
       shortName: dayNames[i],
       label: fullNames[i],
@@ -1703,7 +1734,7 @@ const weekRangeText = computed(() => {
 })
 
 function isToday(dateStr) {
-  return dateStr === new Date().toISOString().split('T')[0]
+  return dateStr === formatDateLocal(new Date())
 }
 
 const currentPlan = computed(() => {
@@ -1742,7 +1773,7 @@ const currentStreak = computed(() => {
   for (let i = 0; i < 30; i++) {
     const checkDate = new Date(today)
     checkDate.setDate(today.getDate() - i)
-    const dateStr = checkDate.toISOString().split('T')[0]
+    const dateStr = formatDateLocal(checkDate)
     
     const dayTasks = scheduledTasks.value.filter(t => t.scheduledDate === dateStr)
     if (dayTasks.length === 0) {
@@ -2141,7 +2172,7 @@ function setupDemoData() {
     const getDateStr = (offset) => {
       const d = new Date(monday)
       d.setDate(monday.getDate() + offset)
-      return d.toISOString().split('T')[0]
+      return formatDateLocal(d)
     }
     
     const demoTasks = [
@@ -3402,14 +3433,8 @@ onMounted(async () => {
   overflow-y: auto;
 }
 
-/* Steps list with scroll (5 шагов видимых) */
+/* Steps list with scroll - applies after pagination, height is set via inline style */
 .steps-list.has-scroll {
-  max-height: calc(5 * 44px + 50px);
-  overflow-y: auto;
-}
-
-.steps-list.expanded-scroll {
-  max-height: none !important;
   overflow-y: auto;
 }
 
