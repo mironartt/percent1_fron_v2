@@ -17,7 +17,7 @@
     </header>
 
     <div class="stats-bar">
-      <div class="stat-item streak">
+      <button class="stat-item streak clickable" @click="showStreakModal = true" title="Нажмите для просмотра серии">
         <div class="stat-icon">
           <Zap :size="20" :stroke-width="1.5" />
         </div>
@@ -25,8 +25,11 @@
           <span class="stat-value">{{ habitStreak }}</span>
           <span class="stat-label">{{ pluralizeDays(habitStreak) }} подряд</span>
         </div>
-      </div>
-      <div class="stat-item today">
+        <div class="stat-action-hint">
+          <TrendingUp :size="12" :stroke-width="1.5" />
+        </div>
+      </button>
+      <button class="stat-item today clickable" @click="showTodayModal = true" title="Нажмите для просмотра сегодня">
         <div class="stat-icon">
           <CheckCircle :size="20" :stroke-width="1.5" />
         </div>
@@ -34,8 +37,11 @@
           <span class="stat-value">{{ todayCompleted }}/{{ todayTotal }}</span>
           <span class="stat-label">сегодня</span>
         </div>
-      </div>
-      <div class="stat-item xp">
+        <div class="stat-action-hint">
+          <TrendingUp :size="12" :stroke-width="1.5" />
+        </div>
+      </button>
+      <button class="stat-item xp clickable" @click="showXpModal = true" title="Нажмите для просмотра XP">
         <div class="stat-icon">
           <Sparkles :size="20" :stroke-width="1.5" />
         </div>
@@ -43,8 +49,11 @@
           <span class="stat-value">{{ weekXpFromHabits }}</span>
           <span class="stat-label">XP за неделю</span>
         </div>
-      </div>
-      <button class="stat-item mode clickable" @click="showSettingsModal = true" title="Нажмите для настройки геймификации">
+        <div class="stat-action-hint">
+          <TrendingUp :size="12" :stroke-width="1.5" />
+        </div>
+      </button>
+      <button class="stat-item mode settings clickable" @click="showSettingsModal = true" title="Настройки геймификации">
         <div class="stat-icon" :class="gameSettings.difficultyMode">
           <Shield :size="20" :stroke-width="1.5" />
         </div>
@@ -52,8 +61,9 @@
           <span class="stat-value">{{ difficultyLabel }}</span>
           <span class="stat-label">режим</span>
         </div>
-        <div class="stat-action">
+        <div class="settings-cta">
           <Settings :size="14" :stroke-width="1.5" />
+          <span>Настроить</span>
         </div>
       </button>
     </div>
@@ -78,26 +88,6 @@
     </div>
 
     <div class="tab-content" v-if="activeTab === 'tracker'">
-      <div class="analytics-mini" v-if="allHabits.length > 0">
-        <div class="mini-stat">
-          <span class="mini-value">{{ weekCompletionRate }}%</span>
-          <span class="mini-label">за неделю</span>
-        </div>
-        <div class="mini-stat">
-          <span class="mini-value">{{ monthCompletionRate }}%</span>
-          <span class="mini-label">за месяц</span>
-        </div>
-        <div class="mini-chart">
-          <div 
-            v-for="(day, index) in last14Days.slice(-7)" 
-            :key="index" 
-            class="mini-bar"
-            :class="{ filled: day.completed > 0, partial: day.completed > 0 && day.completed < day.total }"
-            :style="{ height: day.total > 0 ? (day.completed / day.total * 100) + '%' : '10%' }"
-            :title="`${day.date}: ${day.completed}/${day.total}`"
-          ></div>
-        </div>
-      </div>
     </div>
 
     <div class="tab-content analytics-tab" v-if="activeTab === 'analytics' && allHabits.length > 0">
@@ -316,7 +306,7 @@
 
     <Teleport to="body">
       <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
-        <div class="modal-container">
+        <div class="modal-container modal-compact">
           <div class="modal-header">
             <h3>{{ editingHabit ? 'Редактировать привычку' : 'Новая привычка' }}</h3>
             <button class="btn-close" @click="closeModal">
@@ -324,155 +314,100 @@
             </button>
           </div>
           
-          <div class="modal-content modal-sections">
-            <div class="modal-section">
-              <div class="section-title-row">
-                <div class="icon-preview">{{ formData.icon }}</div>
-                <div class="name-input-wrap">
-                  <input 
-                    v-model="formData.name"
-                    type="text"
-                    class="form-input name-input"
-                    placeholder="Название привычки"
-                  />
-                </div>
-              </div>
-              <div class="icon-grid compact">
-                <button 
-                  v-for="icon in habitIcons" 
-                  :key="icon"
-                  class="icon-option"
-                  :class="{ selected: formData.icon === icon }"
-                  @click="formData.icon = icon"
-                >
-                  {{ icon }}
-                </button>
-              </div>
-            </div>
-            
-            <div class="modal-section">
-              <label class="section-label">Описание</label>
-              <textarea 
-                v-model="formData.description"
-                class="form-input"
-                rows="2"
-                placeholder="Зачем вам эта привычка? (необязательно)"
+          <div class="modal-content">
+            <div class="habit-name-row">
+              <button class="icon-picker-btn" @click="showIconPicker = !showIconPicker">
+                {{ formData.icon }}
+              </button>
+              <input 
+                v-model="formData.name"
+                type="text"
+                class="form-input name-input"
+                placeholder="Название привычки"
               />
-            </div>
-            
-            <div class="modal-section xp-section">
-              <label class="section-label">
+              <div class="xp-inline">
                 <Sparkles :size="14" :stroke-width="1.5" />
-                Очки опыта
-              </label>
-              <div class="xp-inputs">
-                <div class="xp-input-group">
-                  <span class="xp-label positive">
-                    <Plus :size="12" :stroke-width="2" />
-                    Награда
-                  </span>
-                  <div class="input-with-suffix compact">
-                    <input 
-                      v-model.number="formData.xpReward"
-                      type="number"
-                      min="1"
-                      max="100"
-                      class="form-input"
-                    />
-                    <span class="suffix">XP</span>
-                  </div>
-                </div>
-                
-                <div class="xp-input-group" :class="{ disabled: !gameSettings.penaltiesEnabled }">
-                  <span class="xp-label negative">
-                    <Minus :size="12" :stroke-width="2" />
-                    Штраф
-                  </span>
-                  <div class="input-with-suffix compact">
-                    <input 
-                      v-model.number="formData.xpPenalty"
-                      type="number"
-                      min="0"
-                      max="50"
-                      class="form-input"
-                      :disabled="!gameSettings.penaltiesEnabled"
-                    />
-                    <span class="suffix">XP</span>
-                  </div>
-                </div>
+                <input 
+                  v-model.number="formData.xpReward"
+                  type="number"
+                  min="1"
+                  max="100"
+                  class="xp-input-mini"
+                />
+                <span class="xp-suffix">XP</span>
               </div>
-              <p class="xp-hint" v-if="!gameSettings.penaltiesEnabled">
-                Штрафы отключены в настройках
-              </p>
             </div>
             
-            <div class="modal-section">
-              <label class="section-label">
-                <Calendar :size="14" :stroke-width="1.5" />
-                Расписание
-              </label>
-              <div class="schedule-options">
+            <div class="icon-grid-dropdown" v-if="showIconPicker">
+              <button 
+                v-for="icon in habitIcons" 
+                :key="icon"
+                class="icon-option"
+                :class="{ selected: formData.icon === icon }"
+                @click="formData.icon = icon; showIconPicker = false"
+              >
+                {{ icon }}
+              </button>
+            </div>
+            
+            <div class="schedule-compact">
+              <div class="schedule-presets">
                 <button 
-                  class="schedule-btn"
+                  class="preset-btn"
                   :class="{ active: formData.frequencyType === 'daily' }"
                   @click="formData.frequencyType = 'daily'"
                 >
-                  <span class="schedule-icon">📅</span>
-                  <span>Ежедневно</span>
+                  Каждый день
                 </button>
                 <button 
-                  class="schedule-btn"
+                  class="preset-btn"
                   :class="{ active: formData.frequencyType === 'weekdays' }"
                   @click="formData.frequencyType = 'weekdays'"
                 >
-                  <span class="schedule-icon">💼</span>
-                  <span>Будни</span>
+                  Будни
                 </button>
                 <button 
-                  class="schedule-btn"
+                  class="preset-btn"
                   :class="{ active: formData.frequencyType === 'weekends' }"
                   @click="formData.frequencyType = 'weekends'"
                 >
-                  <span class="schedule-icon">🌴</span>
-                  <span>Выходные</span>
-                </button>
-                <button 
-                  class="schedule-btn"
-                  :class="{ active: formData.frequencyType === 'custom' }"
-                  @click="formData.frequencyType = 'custom'"
-                >
-                  <span class="schedule-icon">⚙️</span>
-                  <span>Свои дни</span>
+                  Выходные
                 </button>
               </div>
-              
-              <div v-if="formData.frequencyType === 'custom'" class="days-selector">
+              <div class="days-row">
                 <button 
                   v-for="day in weekDaysConfig" 
                   :key="day.key"
-                  class="day-btn"
+                  class="day-btn-compact"
                   :class="{ active: formData.scheduleDays.includes(day.key) }"
-                  @click="toggleDay(day.key)"
+                  @click="toggleDayManual(day.key)"
                 >
                   {{ day.short }}
                 </button>
               </div>
             </div>
             
-            <div class="form-group">
-              <label>Напоминание (необязательно)</label>
-              <input 
-                v-model="formData.reminderTime"
-                type="time"
-                class="form-input time-input"
+            <div class="optional-fields" v-if="showAdvancedOptions || formData.description">
+              <textarea 
+                v-model="formData.description"
+                class="form-input description-input"
+                rows="2"
+                placeholder="Зачем вам эта привычка?"
               />
             </div>
+            
+            <button 
+              v-if="!showAdvancedOptions && !formData.description"
+              class="btn-link add-description"
+              @click="showAdvancedOptions = true"
+            >
+              + Добавить описание
+            </button>
           </div>
           
-          <div class="modal-footer">
-            <button v-if="editingHabit" class="btn btn-danger" @click="deleteHabit">
-              <Trash2 :size="16" :stroke-width="1.5" />
-              Удалить
+          <div class="modal-footer compact">
+            <button v-if="editingHabit" class="btn-icon-only danger" @click="deleteHabit" title="Удалить">
+              <Trash2 :size="18" :stroke-width="1.5" />
             </button>
             <div class="spacer"></div>
             <button class="btn btn-secondary" @click="closeModal">Отмена</button>
@@ -588,12 +523,11 @@
                     step="10"
                     v-model.number="gameSettings.customPenaltyPercent"
                     @change="saveGameSettings"
-                    class="slider"
+                    class="slider penalty-slider"
                   />
-                  <div class="slider-labels">
+                  <div class="slider-labels penalty-labels">
                     <span>0%</span>
-                    <span>50%</span>
-                    <span>100%</span>
+                    <span>75%</span>
                     <span>150%</span>
                   </div>
                 </div>
@@ -611,11 +545,10 @@
                     step="1"
                     v-model.number="gameSettings.weeklyAmnestyCount"
                     @change="saveGameSettings"
-                    class="slider"
+                    class="slider amnesty-slider"
                   />
                   <div class="slider-labels amnesty-labels">
                     <span>0</span>
-                    <span>1</span>
                     <span>3</span>
                     <span>7</span>
                   </div>
@@ -714,6 +647,120 @@
         </div>
       </div>
     </Teleport>
+
+    <Teleport to="body">
+      <div v-if="showStreakModal" class="modal-overlay" @click.self="showStreakModal = false">
+        <div class="modal-container modal-mini">
+          <div class="modal-header">
+            <h3>
+              <Zap :size="20" :stroke-width="1.5" />
+              Серия выполнений
+            </h3>
+            <button class="btn-close" @click="showStreakModal = false">
+              <X :size="20" :stroke-width="1.5" />
+            </button>
+          </div>
+          <div class="modal-content">
+            <div class="streak-display">
+              <span class="streak-number">{{ habitStreak }}</span>
+              <span class="streak-text">{{ pluralizeDays(habitStreak) }} подряд</span>
+            </div>
+            <div class="streak-calendar">
+              <div class="streak-week" v-for="week in streakCalendar" :key="week.weekNum">
+                <div 
+                  v-for="day in week.days" 
+                  :key="day.date"
+                  class="streak-day"
+                  :class="{ success: day.allCompleted, partial: day.partialCompleted, missed: day.missed, today: day.isToday, future: day.isFuture }"
+                  :title="day.label"
+                >
+                  <span class="day-letter">{{ day.letter }}</span>
+                </div>
+              </div>
+            </div>
+            <p class="streak-tip">Выполняйте все запланированные привычки каждый день, чтобы увеличить серию</p>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <Teleport to="body">
+      <div v-if="showTodayModal" class="modal-overlay" @click.self="showTodayModal = false">
+        <div class="modal-container modal-mini">
+          <div class="modal-header">
+            <h3>
+              <CheckCircle :size="20" :stroke-width="1.5" />
+              Сегодня
+            </h3>
+            <button class="btn-close" @click="showTodayModal = false">
+              <X :size="20" :stroke-width="1.5" />
+            </button>
+          </div>
+          <div class="modal-content">
+            <div class="today-progress">
+              <div class="progress-circle" :style="{ '--progress': todayProgressPercent }">
+                <span class="progress-value">{{ todayCompleted }}/{{ todayTotal }}</span>
+              </div>
+              <span class="progress-label">привычек выполнено</span>
+            </div>
+            <div class="today-habits-list">
+              <div 
+                v-for="habit in scheduledToday" 
+                :key="habit.id"
+                class="today-habit-item"
+                :class="{ completed: isHabitCompletedToday(habit) }"
+              >
+                <span class="habit-icon">{{ habit.icon }}</span>
+                <span class="habit-name">{{ habit.name }}</span>
+                <CheckCircle v-if="isHabitCompletedToday(habit)" :size="16" :stroke-width="2" class="check-icon" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <Teleport to="body">
+      <div v-if="showXpModal" class="modal-overlay" @click.self="showXpModal = false">
+        <div class="modal-container modal-mini">
+          <div class="modal-header">
+            <h3>
+              <Sparkles :size="20" :stroke-width="1.5" />
+              XP за привычки
+            </h3>
+            <button class="btn-close" @click="showXpModal = false">
+              <X :size="20" :stroke-width="1.5" />
+            </button>
+          </div>
+          <div class="modal-content">
+            <div class="xp-summary">
+              <div class="xp-stat">
+                <span class="xp-value">{{ weekXpFromHabits }}</span>
+                <span class="xp-label">XP за неделю</span>
+              </div>
+              <div class="xp-stat">
+                <span class="xp-value">{{ monthXpFromHabits }}</span>
+                <span class="xp-label">XP за месяц</span>
+              </div>
+            </div>
+            <div class="xp-chart">
+              <div 
+                v-for="(day, index) in xpByDay" 
+                :key="index"
+                class="xp-bar-container"
+              >
+                <div 
+                  class="xp-bar" 
+                  :style="{ height: day.height + '%' }"
+                  :class="{ today: day.isToday }"
+                ></div>
+                <span class="xp-day-label">{{ day.label }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -738,6 +785,11 @@ const editingHabit = ref(null)
 const showXpPopup = ref(null)
 const coachHint = ref(null)
 const activeTab = ref('tracker')
+const showIconPicker = ref(false)
+const showAdvancedOptions = ref(false)
+const showStreakModal = ref(false)
+const showTodayModal = ref(false)
+const showXpModal = ref(false)
 
 const weekDaysConfig = [
   { key: 1, name: 'Понедельник', short: 'Пн' },
@@ -825,6 +877,91 @@ const weekXpFromHabits = computed(() => {
     .filter(e => e.source === 'habit_completed' && new Date(e.timestamp) >= weekAgo)
     .reduce((sum, e) => sum + e.amount, 0)
 })
+
+const monthXpFromHabits = computed(() => {
+  const monthAgo = new Date()
+  monthAgo.setDate(monthAgo.getDate() - 30)
+  return xpStore.xpHistory
+    .filter(e => e.source === 'habit_completed' && new Date(e.timestamp) >= monthAgo)
+    .reduce((sum, e) => sum + e.amount, 0)
+})
+
+const todayProgressPercent = computed(() => {
+  if (todayTotal.value === 0) return 0
+  return Math.round((todayCompleted.value / todayTotal.value) * 100)
+})
+
+const streakCalendar = computed(() => {
+  const weeks = []
+  const today = new Date()
+  const dayLetters = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
+  
+  for (let w = 2; w >= 0; w--) {
+    const weekStart = new Date(today)
+    weekStart.setDate(today.getDate() - today.getDay() - (w * 7) + 1)
+    
+    const days = []
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(weekStart)
+      date.setDate(weekStart.getDate() + d)
+      const dateStr = date.toISOString().split('T')[0]
+      const todayStr = today.toISOString().split('T')[0]
+      const isFuture = date > today
+      const isToday = dateStr === todayStr
+      
+      const completedIds = appStore.habitLog[dateStr] || []
+      const dayKey = date.getDay()
+      const scheduled = allHabits.value.filter(h => isScheduledForDay(h, dayKey))
+      const completedCount = scheduled.filter(h => completedIds.includes(h.id)).length
+      
+      days.push({
+        date: dateStr,
+        letter: dayLetters[date.getDay()],
+        isToday,
+        isFuture,
+        allCompleted: !isFuture && scheduled.length > 0 && completedCount === scheduled.length,
+        partialCompleted: !isFuture && completedCount > 0 && completedCount < scheduled.length,
+        missed: !isFuture && !isToday && scheduled.length > 0 && completedCount === 0,
+        label: `${date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}: ${completedCount}/${scheduled.length}`
+      })
+    }
+    weeks.push({ weekNum: w, days })
+  }
+  return weeks
+})
+
+const xpByDay = computed(() => {
+  const days = []
+  const today = new Date()
+  const dayLabels = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
+  
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date(today)
+    date.setDate(today.getDate() - i)
+    const dateStr = date.toISOString().split('T')[0]
+    const todayStr = today.toISOString().split('T')[0]
+    
+    const xp = xpStore.xpHistory
+      .filter(e => e.source === 'habit_completed' && e.timestamp.startsWith(dateStr))
+      .reduce((sum, e) => sum + e.amount, 0)
+    
+    days.push({
+      date: dateStr,
+      xp,
+      label: dayLabels[date.getDay()],
+      isToday: dateStr === todayStr
+    })
+  }
+  
+  const maxXp = Math.max(...days.map(d => d.xp), 1)
+  return days.map(d => ({ ...d, height: (d.xp / maxXp) * 100 }))
+})
+
+function isHabitCompletedToday(habit) {
+  const todayStr = new Date().toISOString().split('T')[0]
+  const completedIds = appStore.habitLog[todayStr] || []
+  return completedIds.includes(habit.id)
+}
 
 const difficultyLabel = computed(() => {
   const labels = { soft: 'Мягкий', balanced: 'Баланс', hardcore: 'Хардкор', custom: 'Свой' }
@@ -1087,11 +1224,6 @@ function isScheduledForToday(habit) {
   return isScheduledForDay(habit, today)
 }
 
-function isHabitCompletedToday(habit) {
-  const today = new Date().toISOString().split('T')[0]
-  return appStore.habitLog[today]?.includes(habit.id)
-}
-
 function isCompletedOnDay(habit, dateStr) {
   return appStore.habitLog[dateStr]?.includes(habit.id)
 }
@@ -1185,6 +1317,8 @@ function editHabit(habit) {
 function closeModal() {
   showModal.value = false
   editingHabit.value = null
+  showIconPicker.value = false
+  showAdvancedOptions.value = false
 }
 
 function toggleDay(dayKey) {
@@ -1194,6 +1328,11 @@ function toggleDay(dayKey) {
   } else if (formData.value.scheduleDays.length > 1) {
     formData.value.scheduleDays.splice(index, 1)
   }
+}
+
+function toggleDayManual(dayKey) {
+  formData.value.frequencyType = 'custom'
+  toggleDay(dayKey)
 }
 
 function saveHabit() {
@@ -1370,6 +1509,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  position: relative;
 }
 
 .stat-item.mode {
@@ -1913,6 +2053,25 @@ onMounted(() => {
 
 .stat-item.clickable:hover .stat-action {
   color: var(--primary-color);
+}
+
+.settings-cta {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.6rem;
+  background: rgba(124, 58, 237, 0.1);
+  border-radius: 6px;
+  color: var(--primary-color);
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-left: auto;
+  transition: all 0.2s ease;
+}
+
+.stat-item.settings:hover .settings-cta {
+  background: var(--primary-color);
+  color: white;
 }
 
 .analytics-section {
@@ -2871,6 +3030,443 @@ onMounted(() => {
 
 .amnesty-info .btn {
   margin-left: auto;
+}
+
+.stat-action-hint {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.stat-item.clickable:hover .stat-action-hint {
+  opacity: 1;
+  color: var(--primary-color);
+}
+
+.modal-compact {
+  max-width: 420px;
+}
+
+.modal-compact .modal-content {
+  padding: 1rem 1.25rem;
+}
+
+.habit-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.icon-picker-btn {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.icon-picker-btn:hover {
+  border-color: var(--primary-color);
+  background: rgba(124, 58, 237, 0.05);
+}
+
+.modal-compact .name-input {
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.75rem 1rem;
+}
+
+.xp-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.xp-inline svg {
+  color: var(--primary-color);
+}
+
+.xp-input-mini {
+  width: 40px;
+  padding: 0.25rem 0.35rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  background: var(--card-bg);
+  color: var(--text-primary);
+}
+
+.xp-input-mini:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.xp-suffix {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.icon-grid-dropdown {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  animation: slideDown 0.15s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.schedule-compact {
+  margin-top: 1rem;
+}
+
+.schedule-presets {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.preset-btn {
+  flex: 1;
+  padding: 0.5rem 0.5rem;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.preset-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.preset-btn.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.days-row {
+  display: flex;
+  gap: 4px;
+}
+
+.day-btn-compact {
+  flex: 1;
+  padding: 0.5rem 0;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.day-btn-compact:hover {
+  border-color: var(--primary-color);
+}
+
+.day-btn-compact.active {
+  background: rgba(124, 58, 237, 0.15);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.optional-fields {
+  margin-top: 1rem;
+}
+
+.description-input {
+  resize: none;
+  font-size: 0.9rem;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  margin-top: 0.5rem;
+  transition: color 0.2s ease;
+}
+
+.btn-link:hover {
+  color: var(--primary-color);
+}
+
+.modal-footer.compact {
+  padding: 0.75rem 1.25rem;
+}
+
+.btn-icon-only {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.btn-icon-only.danger:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.modal-mini {
+  max-width: 360px;
+}
+
+.modal-mini .modal-header h3 {
+  font-size: 1rem;
+}
+
+.streak-display {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.streak-number {
+  display: block;
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  line-height: 1;
+}
+
+.streak-text {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+.streak-calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 1rem;
+}
+
+.streak-week {
+  display: flex;
+  gap: 4px;
+}
+
+.streak-day {
+  flex: 1;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+
+.streak-day.success {
+  background: #22c55e;
+  color: white;
+}
+
+.streak-day.partial {
+  background: #fbbf24;
+  color: white;
+}
+
+.streak-day.missed {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+}
+
+.streak-day.today {
+  box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.streak-day.future {
+  opacity: 0.4;
+}
+
+.streak-tip {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.today-progress {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.progress-circle {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 0.75rem;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--primary-color) calc(var(--progress) * 3.6deg),
+    var(--bg-secondary) 0
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.progress-circle::before {
+  content: '';
+  width: 75px;
+  height: 75px;
+  background: var(--card-bg);
+  border-radius: 50%;
+  position: absolute;
+}
+
+.progress-value {
+  position: relative;
+  z-index: 1;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.progress-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.today-habits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.today-habit-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.today-habit-item.completed {
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.today-habit-item .habit-icon {
+  font-size: 1.25rem;
+}
+
+.today-habit-item .habit-name {
+  flex: 1;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.today-habit-item .check-icon {
+  color: #22c55e;
+}
+
+.xp-summary {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 1.5rem;
+}
+
+.xp-stat {
+  text-align: center;
+}
+
+.xp-stat .xp-value {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.xp-stat .xp-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.xp-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 80px;
+  padding: 0 0.5rem;
+}
+
+.xp-bar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  height: 100%;
+}
+
+.xp-bar {
+  width: 100%;
+  max-width: 24px;
+  background: var(--bg-secondary);
+  border-radius: 4px 4px 0 0;
+  transition: all 0.3s ease;
+  margin-bottom: 4px;
+}
+
+.xp-bar.today {
+  background: var(--primary-color);
+}
+
+.xp-day-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.slider-labels.penalty-labels,
+.slider-labels.amnesty-labels {
+  display: flex;
+  justify-content: space-between;
 }
 
 @media (max-width: 640px) {
