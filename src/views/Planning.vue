@@ -2087,13 +2087,20 @@ async function refreshGoalHeadersAsync(changedGoalId, changedStepId, stepChanges
     if (response?.data?.results) {
       // Update goal headers via store methods (proper reactivity)
       response.data.results.forEach(backendGoal => {
-        if (backendGoal.total_steps_data) {
-          store.updateGoalTotalStepsData(backendGoal.id, {
+        // Backend returns goal_id, not id
+        const goalBackendId = backendGoal.goal_id ?? backendGoal.id
+        
+        if (backendGoal.total_steps_data && goalBackendId) {
+          const updated = store.updateGoalTotalStepsData(goalBackendId, {
             total_steps: backendGoal.total_steps_data.total_steps,
             complete_steps: backendGoal.total_steps_data.complete_steps,
             complete_percent: backendGoal.total_steps_data.complete_percent,
             complete_days_in_row: backendGoal.total_steps_data.complete_days_in_row
           })
+          
+          if (!updated) {
+            console.warn('[Planning] Goal not found for backendId:', goalBackendId)
+          }
         }
       })
       
