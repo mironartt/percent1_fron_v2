@@ -58,11 +58,53 @@
       </button>
     </div>
 
-    <div class="analytics-section" v-if="allHabits.length > 0">
+    <div class="tabs-navigation" v-if="allHabits.length > 0">
+      <button 
+        class="tab-btn" 
+        :class="{ active: activeTab === 'tracker' }"
+        @click="activeTab = 'tracker'"
+      >
+        <CheckCircle :size="16" :stroke-width="1.5" />
+        Трекер
+      </button>
+      <button 
+        class="tab-btn" 
+        :class="{ active: activeTab === 'analytics' }"
+        @click="activeTab = 'analytics'"
+      >
+        <TrendingUp :size="16" :stroke-width="1.5" />
+        Аналитика
+      </button>
+    </div>
+
+    <div class="tab-content" v-if="activeTab === 'tracker'">
+      <div class="analytics-mini" v-if="allHabits.length > 0">
+        <div class="mini-stat">
+          <span class="mini-value">{{ weekCompletionRate }}%</span>
+          <span class="mini-label">за неделю</span>
+        </div>
+        <div class="mini-stat">
+          <span class="mini-value">{{ monthCompletionRate }}%</span>
+          <span class="mini-label">за месяц</span>
+        </div>
+        <div class="mini-chart">
+          <div 
+            v-for="(day, index) in last14Days.slice(-7)" 
+            :key="index" 
+            class="mini-bar"
+            :class="{ filled: day.completed > 0, partial: day.completed > 0 && day.completed < day.total }"
+            :style="{ height: day.total > 0 ? (day.completed / day.total * 100) + '%' : '10%' }"
+            :title="`${day.date}: ${day.completed}/${day.total}`"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content analytics-tab" v-if="activeTab === 'analytics' && allHabits.length > 0">
       <div class="analytics-header">
         <h3>
           <TrendingUp :size="18" :stroke-width="1.5" />
-          Аналитика
+          Детальная аналитика
         </h3>
       </div>
       
@@ -141,14 +183,58 @@
           </div>
         </div>
       </div>
+
+      <div class="habits-per-habit-analytics">
+        <h4>По привычкам</h4>
+        <div class="habit-analytics-list">
+          <div v-for="habit in allHabits" :key="habit.id" class="habit-analytics-item">
+            <div class="habit-analytics-header">
+              <span class="habit-icon-small">{{ habit.icon }}</span>
+              <span class="habit-name-small">{{ habit.name }}</span>
+              <span class="habit-streak-badge">
+                <Zap :size="12" :stroke-width="1.5" />
+                {{ getHabitStreak(habit) }} дн.
+              </span>
+            </div>
+            <div class="habit-week-view">
+              <div 
+                v-for="day in last14Days" 
+                :key="day.date"
+                class="habit-day-cell"
+                :class="{ 
+                  completed: isCompletedOnDay(habit, day.date),
+                  scheduled: isScheduledForDay(habit, new Date(day.date).getDay()),
+                  'not-scheduled': !isScheduledForDay(habit, new Date(day.date).getDay())
+                }"
+                :title="formatCalendarDate(day.date)"
+              >
+                <Check v-if="isCompletedOnDay(habit, day.date)" :size="10" :stroke-width="2.5" />
+              </div>
+            </div>
+            <div class="habit-analytics-stats">
+              <span class="stat-mini">{{ getHabitCompletionRate(habit, 7) }}% за неделю</span>
+              <span class="stat-mini">{{ getHabitCompletionRate(habit, 30) }}% за месяц</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ai-insights" v-if="gameSettings.aiCoachEnabled && aiInsights.length > 0">
+        <h4>
+          <Bot :size="16" :stroke-width="1.5" />
+          AI-инсайты
+        </h4>
+        <div class="insights-list">
+          <div v-for="insight in aiInsights" :key="insight.id" class="insight-item">
+            <span class="insight-icon">{{ insight.icon }}</span>
+            <span class="insight-text">{{ insight.text }}</span>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="habits-content">
+    <div class="habits-content" v-if="activeTab === 'tracker' || allHabits.length === 0">
       <div class="habits-list" v-if="allHabits.length > 0">
-        <div class="week-header">
-          <span class="day-label" v-for="day in weekDays" :key="day.key">{{ day.short }}</span>
-        </div>
-        
         <div 
           v-for="habit in allHabits" 
           :key="habit.id"
@@ -177,18 +263,19 @@
             </transition>
           </div>
           
-          <div class="habit-schedule">
+          <div class="habit-schedule-inline">
             <div 
               v-for="day in weekDays" 
               :key="day.key"
-              class="schedule-dot"
+              class="schedule-day"
               :class="{ 
                 active: isScheduledForDay(habit, day.key),
                 completed: isCompletedOnDay(habit, day.date),
                 today: day.isToday
               }"
+              :title="`${day.name}: ${isCompletedOnDay(habit, day.date) ? 'выполнено' : isScheduledForDay(habit, day.key) ? 'запланировано' : 'не запланировано'}`"
             >
-              <div class="dot-inner"></div>
+              <span class="day-letter">{{ day.short.charAt(0) }}</span>
             </div>
           </div>
           
@@ -237,10 +324,20 @@
             </button>
           </div>
           
-          <div class="modal-content">
-            <div class="form-group">
-              <label>Иконка</label>
-              <div class="icon-grid">
+          <div class="modal-content modal-sections">
+            <div class="modal-section">
+              <div class="section-title-row">
+                <div class="icon-preview">{{ formData.icon }}</div>
+                <div class="name-input-wrap">
+                  <input 
+                    v-model="formData.name"
+                    type="text"
+                    class="form-input name-input"
+                    placeholder="Название привычки"
+                  />
+                </div>
+              </div>
+              <div class="icon-grid compact">
                 <button 
                   v-for="icon in habitIcons" 
                   :key="icon"
@@ -253,90 +350,99 @@
               </div>
             </div>
             
-            <div class="form-group">
-              <label>Название</label>
-              <input 
-                v-model="formData.name"
-                type="text"
-                class="form-input"
-                placeholder="Например: Утренняя пробежка"
-              />
-            </div>
-            
-            <div class="form-group">
-              <label>Описание (необязательно)</label>
+            <div class="modal-section">
+              <label class="section-label">Описание</label>
               <textarea 
                 v-model="formData.description"
                 class="form-input"
                 rows="2"
-                placeholder="Зачем вам эта привычка?"
+                placeholder="Зачем вам эта привычка? (необязательно)"
               />
             </div>
             
-            <div class="form-row">
-              <div class="form-group half">
-                <label>Награда за выполнение</label>
-                <div class="input-with-suffix">
-                  <input 
-                    v-model.number="formData.xpReward"
-                    type="number"
-                    min="1"
-                    max="100"
-                    class="form-input"
-                  />
-                  <span class="suffix">XP</span>
+            <div class="modal-section xp-section">
+              <label class="section-label">
+                <Sparkles :size="14" :stroke-width="1.5" />
+                Очки опыта
+              </label>
+              <div class="xp-inputs">
+                <div class="xp-input-group">
+                  <span class="xp-label positive">
+                    <Plus :size="12" :stroke-width="2" />
+                    Награда
+                  </span>
+                  <div class="input-with-suffix compact">
+                    <input 
+                      v-model.number="formData.xpReward"
+                      type="number"
+                      min="1"
+                      max="100"
+                      class="form-input"
+                    />
+                    <span class="suffix">XP</span>
+                  </div>
+                </div>
+                
+                <div class="xp-input-group" :class="{ disabled: !gameSettings.penaltiesEnabled }">
+                  <span class="xp-label negative">
+                    <Minus :size="12" :stroke-width="2" />
+                    Штраф
+                  </span>
+                  <div class="input-with-suffix compact">
+                    <input 
+                      v-model.number="formData.xpPenalty"
+                      type="number"
+                      min="0"
+                      max="50"
+                      class="form-input"
+                      :disabled="!gameSettings.penaltiesEnabled"
+                    />
+                    <span class="suffix">XP</span>
+                  </div>
                 </div>
               </div>
-              
-              <div class="form-group half">
-                <label>
-                  Штраф за пропуск
-                  <span class="optional">(опционально)</span>
-                </label>
-                <div class="input-with-suffix">
-                  <input 
-                    v-model.number="formData.xpPenalty"
-                    type="number"
-                    min="0"
-                    max="50"
-                    class="form-input"
-                    :disabled="!gameSettings.penaltiesEnabled"
-                  />
-                  <span class="suffix">XP</span>
-                </div>
-              </div>
+              <p class="xp-hint" v-if="!gameSettings.penaltiesEnabled">
+                Штрафы отключены в настройках
+              </p>
             </div>
             
-            <div class="form-group">
-              <label>Расписание</label>
+            <div class="modal-section">
+              <label class="section-label">
+                <Calendar :size="14" :stroke-width="1.5" />
+                Расписание
+              </label>
               <div class="schedule-options">
                 <button 
                   class="schedule-btn"
                   :class="{ active: formData.frequencyType === 'daily' }"
                   @click="formData.frequencyType = 'daily'"
                 >
-                  Ежедневно
+                  <span class="schedule-icon">📅</span>
+                  <span>Ежедневно</span>
                 </button>
                 <button 
                   class="schedule-btn"
                   :class="{ active: formData.frequencyType === 'weekdays' }"
                   @click="formData.frequencyType = 'weekdays'"
                 >
-                  Будни
+                  <span class="schedule-icon">💼</span>
+                  <span>Будни</span>
                 </button>
                 <button 
                   class="schedule-btn"
                   :class="{ active: formData.frequencyType === 'weekends' }"
                   @click="formData.frequencyType = 'weekends'"
                 >
-                  Выходные
+                  <span class="schedule-icon">🌴</span>
+                  <span>Выходные</span>
                 </button>
                 <button 
                   class="schedule-btn"
                   :class="{ active: formData.frequencyType === 'custom' }"
                   @click="formData.frequencyType = 'custom'"
                 >
-                  По дням
+                  <span class="schedule-icon">⚙️</span>
+                  <span>Свои дни</span>
                 </button>
               </div>
               
@@ -450,6 +556,70 @@
                     <Check :size="16" :stroke-width="2.5" />
                   </div>
                 </button>
+                
+                <button 
+                  class="difficulty-btn custom"
+                  :class="{ active: gameSettings.difficultyMode === 'custom' }"
+                  @click="setDifficulty('custom')"
+                >
+                  <div class="diff-icon">⚙️</div>
+                  <div class="diff-info">
+                    <span class="diff-name">Свой режим</span>
+                    <span class="diff-desc">Настроить вручную</span>
+                    <span class="diff-details">Полный контроль над штрафами и амнистиями. Для опытных пользователей.</span>
+                  </div>
+                  <div class="diff-check" v-if="gameSettings.difficultyMode === 'custom'">
+                    <Check :size="16" :stroke-width="2.5" />
+                  </div>
+                </button>
+              </div>
+              
+              <div class="custom-settings" v-if="gameSettings.difficultyMode === 'custom'">
+                <div class="custom-setting">
+                  <div class="setting-header">
+                    <label>Размер штрафа</label>
+                    <span class="setting-value">{{ gameSettings.customPenaltyPercent }}%</span>
+                  </div>
+                  <div class="setting-hint">При награде 10 XP штраф будет {{ Math.round(10 * gameSettings.customPenaltyPercent / 100) }} XP</div>
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="150" 
+                    step="10"
+                    v-model.number="gameSettings.customPenaltyPercent"
+                    @change="saveGameSettings"
+                    class="slider"
+                  />
+                  <div class="slider-labels">
+                    <span>0%</span>
+                    <span>50%</span>
+                    <span>100%</span>
+                    <span>150%</span>
+                  </div>
+                </div>
+                
+                <div class="custom-setting">
+                  <div class="setting-header">
+                    <label>Амнистий в неделю</label>
+                    <span class="setting-value">{{ gameSettings.weeklyAmnestyCount }}</span>
+                  </div>
+                  <div class="setting-hint">Сколько раз можно отменить штрафы за день</div>
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="7" 
+                    step="1"
+                    v-model.number="gameSettings.weeklyAmnestyCount"
+                    @change="saveGameSettings"
+                    class="slider"
+                  />
+                  <div class="slider-labels amnesty-labels">
+                    <span>0</span>
+                    <span>1</span>
+                    <span>3</span>
+                    <span>7</span>
+                  </div>
+                </div>
               </div>
             </div>
             
@@ -510,11 +680,14 @@
                 </label>
               </div>
               
-              <div class="amnesty-info" v-if="gameSettings.penaltiesEnabled">
+              <div class="amnesty-info" v-if="gameSettings.penaltiesEnabled && maxAmnesties > 0">
                 <Gift :size="18" :stroke-width="1.5" />
                 <div class="amnesty-content">
                   <span class="amnesty-title">Амнистия</span>
-                  <span class="amnesty-desc">{{ weeklyAmnestyAvailable ? 'Доступна 1 раз в неделю — отменяет все штрафы за день' : 'Использована на этой неделе' }}</span>
+                  <span class="amnesty-desc" v-if="amnestiesRemaining > 0">
+                    Доступно {{ amnestiesRemaining }} из {{ maxAmnesties }} на этой неделе — отменяет штрафы за день
+                  </span>
+                  <span class="amnesty-desc" v-else>Все амнистии использованы на этой неделе</span>
                 </div>
                 <button 
                   v-if="weeklyAmnestyAvailable" 
@@ -523,6 +696,14 @@
                 >
                   Активировать
                 </button>
+              </div>
+              
+              <div class="amnesty-info no-amnesty" v-if="gameSettings.penaltiesEnabled && maxAmnesties === 0 && gameSettings.difficultyMode !== 'custom'">
+                <Gift :size="18" :stroke-width="1.5" />
+                <div class="amnesty-content">
+                  <span class="amnesty-title">Амнистия</span>
+                  <span class="amnesty-desc">Недоступна в режиме "{{ difficultyLabel }}"</span>
+                </div>
               </div>
             </div>
           </div>
@@ -543,7 +724,7 @@ import { useXpStore, XP_REWARDS } from '../stores/xp'
 import { useToastStore } from '../stores/toast'
 import { DEBUG_MODE } from '@/config/settings.js'
 import { 
-  Flame, Plus, Zap, CheckCircle, Sparkles, Shield, Bot,
+  Flame, Plus, Minus, Zap, CheckCircle, Sparkles, Shield, Bot,
   Check, Pencil, X, Trash2, Settings, Gift, Archive, Info, TrendingUp, Calendar, Award
 } from 'lucide-vue-next'
 
@@ -556,6 +737,7 @@ const showSettingsModal = ref(false)
 const editingHabit = ref(null)
 const showXpPopup = ref(null)
 const coachHint = ref(null)
+const activeTab = ref('tracker')
 
 const weekDaysConfig = [
   { key: 1, name: 'Понедельник', short: 'Пн' },
@@ -589,7 +771,11 @@ const gameSettings = ref({
   journalPenalty: false,
   planningPenalty: false,
   aiCoachEnabled: true,
-  weeklyAmnestyUsed: null
+  weeklyAmnestyUsed: null,
+  customPenaltyPercent: 50,
+  weeklyAmnestyCount: 1,
+  amnestiesUsedThisWeek: 0,
+  amnestyWeekStart: null
 })
 
 const weekDays = computed(() => {
@@ -641,16 +827,51 @@ const weekXpFromHabits = computed(() => {
 })
 
 const difficultyLabel = computed(() => {
-  const labels = { soft: 'Мягкий', balanced: 'Баланс', hardcore: 'Хардкор' }
+  const labels = { soft: 'Мягкий', balanced: 'Баланс', hardcore: 'Хардкор', custom: 'Свой' }
   return labels[gameSettings.value.difficultyMode]
 })
 
-const weeklyAmnestyAvailable = computed(() => {
-  if (!gameSettings.value.weeklyAmnestyUsed) return true
-  const usedDate = new Date(gameSettings.value.weeklyAmnestyUsed)
+const currentPenaltyPercent = computed(() => {
+  const mode = gameSettings.value.difficultyMode
+  if (mode === 'soft') return 0
+  if (mode === 'balanced') return 50
+  if (mode === 'hardcore') return 100
+  return gameSettings.value.customPenaltyPercent
+})
+
+const maxAmnesties = computed(() => {
+  const mode = gameSettings.value.difficultyMode
+  if (mode === 'soft') return 0
+  if (mode === 'balanced') return 1
+  if (mode === 'hardcore') return 0
+  return gameSettings.value.weeklyAmnestyCount
+})
+
+const amnestiesRemaining = computed(() => {
   const now = new Date()
-  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-  return usedDate < weekAgo
+  const weekStart = getWeekStart(now)
+  
+  if (!gameSettings.value.amnestyWeekStart || 
+      new Date(gameSettings.value.amnestyWeekStart).getTime() !== weekStart.getTime()) {
+    return maxAmnesties.value
+  }
+  
+  return Math.max(0, maxAmnesties.value - gameSettings.value.amnestiesUsedThisWeek)
+})
+
+function getWeekStart(date) {
+  const d = new Date(date)
+  const day = d.getDay()
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
+  d.setDate(diff)
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
+const weeklyAmnestyAvailable = computed(() => {
+  if (gameSettings.value.difficultyMode === 'soft') return false
+  if (!gameSettings.value.penaltiesEnabled) return false
+  return amnestiesRemaining.value > 0
 })
 
 function isScheduledForDay(habit, dayKey) {
@@ -709,6 +930,114 @@ const monthCompletionRate = computed(() => {
     totalScheduled += total
   }
   return totalScheduled > 0 ? Math.round((totalCompleted / totalScheduled) * 100) : 0
+})
+
+function getHabitStreak(habit) {
+  let streak = 0
+  const today = new Date()
+  
+  for (let i = 0; i < 365; i++) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - i)
+    const dateStr = date.toISOString().split('T')[0]
+    const dayOfWeek = date.getDay()
+    
+    if (!isScheduledForDay(habit, dayOfWeek)) continue
+    
+    if (appStore.habitLog[dateStr]?.includes(habit.id)) {
+      streak++
+    } else {
+      break
+    }
+  }
+  return streak
+}
+
+function getHabitCompletionRate(habit, days) {
+  let completed = 0
+  let scheduled = 0
+  const today = new Date()
+  
+  for (let i = 0; i < days; i++) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - i)
+    const dateStr = date.toISOString().split('T')[0]
+    const dayOfWeek = date.getDay()
+    
+    if (isScheduledForDay(habit, dayOfWeek)) {
+      scheduled++
+      if (appStore.habitLog[dateStr]?.includes(habit.id)) {
+        completed++
+      }
+    }
+  }
+  
+  return scheduled > 0 ? Math.round((completed / scheduled) * 100) : 0
+}
+
+const aiInsights = computed(() => {
+  const insights = []
+  
+  const dayNames = ['воскресенье', 'понедельник', 'вторник', 'среду', 'четверг', 'пятницу', 'субботу']
+  const dayCompletionRates = Array(7).fill(0).map((_, dayIndex) => {
+    let completed = 0
+    let scheduled = 0
+    const today = new Date()
+    
+    for (let i = 0; i < 30; i++) {
+      const date = new Date(today)
+      date.setDate(date.getDate() - i)
+      if (date.getDay() !== dayIndex) continue
+      
+      const dateStr = date.toISOString().split('T')[0]
+      allHabits.value.forEach(habit => {
+        if (isScheduledForDay(habit, dayIndex)) {
+          scheduled++
+          if (appStore.habitLog[dateStr]?.includes(habit.id)) {
+            completed++
+          }
+        }
+      })
+    }
+    
+    return { day: dayIndex, rate: scheduled > 0 ? completed / scheduled : 1 }
+  })
+  
+  const worstDay = dayCompletionRates.reduce((min, curr) => curr.rate < min.rate ? curr : min)
+  if (worstDay.rate < 0.5 && allHabits.value.length > 0) {
+    insights.push({
+      id: 'worst-day',
+      icon: '📊',
+      text: `Вы чаще пропускаете привычки в ${dayNames[worstDay.day]}. Возможно, стоит пересмотреть расписание.`
+    })
+  }
+  
+  allHabits.value.forEach(habit => {
+    const streak = getHabitStreak(habit)
+    if (streak >= 21) {
+      insights.push({
+        id: `habit-${habit.id}-streak`,
+        icon: '🎯',
+        text: `"${habit.name}" выполняется ${streak} дней — это уже настоящая привычка!`
+      })
+    }
+  })
+  
+  if (weekCompletionRate.value >= 90) {
+    insights.push({
+      id: 'excellent-week',
+      icon: '🌟',
+      text: 'Отличная неделя! Продолжайте в том же духе.'
+    })
+  } else if (weekCompletionRate.value < 50 && allHabits.value.length > 3) {
+    insights.push({
+      id: 'too-many-habits',
+      icon: '💡',
+      text: 'Много пропусков? Попробуйте сфокусироваться на 2-3 ключевых привычках.'
+    })
+  }
+  
+  return insights.slice(0, 3)
 })
 
 const calendarWeeks = computed(() => {
@@ -921,6 +1250,15 @@ function confirmDeleteHabit(habit) {
 function setDifficulty(mode) {
   gameSettings.value.difficultyMode = mode
   gameSettings.value.penaltiesEnabled = mode !== 'soft'
+  
+  if (mode === 'soft') {
+    gameSettings.value.weeklyAmnestyCount = 0
+  } else if (mode === 'balanced') {
+    gameSettings.value.weeklyAmnestyCount = 1
+  } else if (mode === 'hardcore') {
+    gameSettings.value.weeklyAmnestyCount = 0
+  }
+  
   saveGameSettings()
 }
 
@@ -947,9 +1285,24 @@ function loadGameSettings() {
 }
 
 function useAmnesty() {
-  gameSettings.value.weeklyAmnestyUsed = new Date().toISOString()
+  const now = new Date()
+  const weekStart = getWeekStart(now)
+  
+  if (!gameSettings.value.amnestyWeekStart || 
+      new Date(gameSettings.value.amnestyWeekStart).getTime() !== weekStart.getTime()) {
+    gameSettings.value.amnestyWeekStart = weekStart.toISOString()
+    gameSettings.value.amnestiesUsedThisWeek = 0
+  }
+  
+  gameSettings.value.amnestiesUsedThisWeek++
+  gameSettings.value.weeklyAmnestyUsed = now.toISOString()
   saveGameSettings()
-  toast.showToast({ title: 'Амнистия активирована!', message: 'Штрафы за сегодня отменены', type: 'success' })
+  
+  const remaining = amnestiesRemaining.value
+  const message = remaining > 0 
+    ? `Штрафы за сегодня отменены. Осталось амнистий: ${remaining}` 
+    : 'Штрафы за сегодня отменены. Это была последняя амнистия на этой неделе'
+  toast.showToast({ title: 'Амнистия активирована!', message, type: 'success' })
 }
 
 onMounted(() => {
@@ -1074,6 +1427,236 @@ onMounted(() => {
 .stat-label {
   font-size: 0.75rem;
   color: var(--text-muted);
+}
+
+.stat-item.mode .stat-icon.custom { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+
+.tabs-navigation {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 4px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+  color: var(--text-primary);
+}
+
+.tab-btn.active {
+  background: var(--card-bg);
+  color: var(--primary-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.analytics-mini {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
+}
+
+.mini-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.mini-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.mini-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.mini-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 30px;
+  margin-left: auto;
+}
+
+.mini-bar {
+  width: 6px;
+  min-height: 4px;
+  background: var(--border-color);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.mini-bar.filled {
+  background: var(--primary-color);
+}
+
+.mini-bar.partial {
+  background: rgba(124, 58, 237, 0.5);
+}
+
+.analytics-tab {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.habits-per-habit-analytics {
+  margin-top: 1.5rem;
+}
+
+.habits-per-habit-analytics h4 {
+  font-size: 0.9rem;
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+}
+
+.habit-analytics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.habit-analytics-item {
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+}
+
+.habit-analytics-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.habit-icon-small {
+  font-size: 1.25rem;
+}
+
+.habit-name-small {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.habit-streak-badge {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(234, 179, 8, 0.1);
+  color: #eab308;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.habit-week-view {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.habit-day-cell {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.habit-day-cell.scheduled {
+  background: rgba(124, 58, 237, 0.15);
+}
+
+.habit-day-cell.completed {
+  background: var(--primary-color);
+  color: white;
+}
+
+.habit-day-cell.not-scheduled {
+  opacity: 0.3;
+}
+
+.habit-analytics-stats {
+  display: flex;
+  gap: 1rem;
+}
+
+.stat-mini {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.ai-insights {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(59, 130, 246, 0.05));
+  border-radius: 12px;
+  border: 1px solid rgba(124, 58, 237, 0.2);
+}
+
+.ai-insights h4 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  margin: 0 0 0.75rem 0;
+  color: var(--primary-color);
+}
+
+.insights-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.insight-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: var(--card-bg);
+  border-radius: 8px;
+}
+
+.insight-icon {
+  font-size: 1rem;
+}
+
+.insight-text {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  line-height: 1.4;
 }
 
 .habits-content {
@@ -1240,38 +1823,49 @@ onMounted(() => {
   100% { transform: scale(1) translateY(0); opacity: 1; }
 }
 
-.habit-schedule {
+.habit-schedule-inline {
   display: flex;
-  gap: 4px;
+  gap: 3px;
+  margin-left: auto;
+  margin-right: 0.5rem;
 }
 
-.schedule-dot {
-  width: 32px;
+.schedule-day {
+  width: 24px;
   height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.dot-inner {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary);
   transition: all 0.2s ease;
+  cursor: default;
 }
 
-.schedule-dot.active .dot-inner {
-  background: var(--text-muted);
+.day-letter {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
 }
 
-.schedule-dot.completed .dot-inner {
+.schedule-day.active {
+  background: rgba(124, 58, 237, 0.15);
+}
+
+.schedule-day.active .day-letter {
+  color: var(--primary-color);
+}
+
+.schedule-day.completed {
   background: #22c55e;
-  width: 10px;
-  height: 10px;
 }
 
-.schedule-dot.today .dot-inner {
+.schedule-day.completed .day-letter {
+  color: white;
+}
+
+.schedule-day.today {
   box-shadow: 0 0 0 2px var(--primary-color);
 }
 
@@ -1745,6 +2339,152 @@ onMounted(() => {
   padding: 1.5rem;
 }
 
+.modal-content.modal-sections {
+  padding: 1rem 1.5rem;
+}
+
+.modal-section {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-section:last-child {
+  border-bottom: none;
+}
+
+.section-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.icon-preview {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.name-input-wrap {
+  flex: 1;
+}
+
+.name-input {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.icon-grid.compact {
+  grid-template-columns: repeat(8, 1fr);
+  gap: 0.2rem;
+}
+
+.icon-grid.compact .icon-option {
+  width: 36px;
+  height: 36px;
+  font-size: 1.2rem;
+}
+
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.xp-section {
+  background: var(--bg-secondary);
+  margin: 0 -1.5rem;
+  padding: 1rem 1.5rem;
+  border-bottom: none;
+}
+
+.xp-inputs {
+  display: flex;
+  gap: 1rem;
+}
+
+.xp-input-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.xp-input-group.disabled {
+  opacity: 0.5;
+}
+
+.xp-label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.xp-label.positive {
+  color: #22c55e;
+}
+
+.xp-label.negative {
+  color: #ef4444;
+}
+
+.input-with-suffix.compact .form-input {
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+}
+
+.xp-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0.5rem 0 0 0;
+}
+
+.schedule-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.schedule-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.schedule-btn:hover {
+  border-color: var(--primary-color);
+}
+
+.schedule-btn.active {
+  border-color: var(--primary-color);
+  background: rgba(124, 58, 237, 0.1);
+  color: var(--primary-color);
+}
+
+.schedule-icon {
+  font-size: 1rem;
+}
+
 .modal-footer {
   display: flex;
   gap: 0.75rem;
@@ -1955,6 +2695,116 @@ onMounted(() => {
 .diff-desc {
   font-size: 0.8rem;
   color: var(--text-muted);
+}
+
+.diff-details {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+  line-height: 1.4;
+}
+
+.diff-check {
+  margin-left: auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.difficulty-btn.custom.active {
+  border-color: #8b5cf6;
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.custom-settings {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+}
+
+.custom-setting {
+  margin-bottom: 1.25rem;
+}
+
+.custom-setting:last-child {
+  margin-bottom: 0;
+}
+
+.custom-setting .setting-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.custom-setting .setting-header label {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.custom-setting .setting-value {
+  font-weight: 600;
+  color: var(--primary-color);
+  font-size: 0.9rem;
+}
+
+.custom-setting .setting-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border-color);
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.slider-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.25rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.amnesty-info.no-amnesty {
+  opacity: 0.6;
 }
 
 .toggle-row {
