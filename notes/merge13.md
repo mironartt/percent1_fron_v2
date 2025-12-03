@@ -289,13 +289,138 @@ const priorityOrder = {
 
 ---
 
-## 9. Тестирование
+---
 
-### Чек-лист
+## 9. Drag & Drop и синхронизация с бэкендом
+
+### Перетаскивание шагов
+
+#### Из блока "Цели и шаги" в календарь
+Функция `scheduleStepWithBackend()`:
+```javascript
+async function scheduleStepWithBackend(goalId, stepId, stepTitle, goal, dateStr) {
+  // Получаем backend IDs
+  let backendGoalId = goal?.backendId || goalId
+  let backendStepId = goal?.steps?.find(s => s.id === stepId)?.backendId || stepId
+  
+  // Отправляем на бэкенд
+  await updateGoalSteps({
+    goals_steps_data: [{
+      goal_id: backendGoalId,
+      step_id: backendStepId,
+      dt: dateStr  // Дата назначения
+    }]
+  })
+  
+  // Перезагружаем данные календаря
+  await loadWeeklySteps()
+}
+```
+
+#### Между днями календаря
+Функция `updateTaskDateWithBackend()`:
+```javascript
+async function updateTaskDateWithBackend(task, newDate) {
+  const goalId = task.backendGoalId || task.goalId
+  const stepId = task.backendStepId || task.stepId
+  
+  await updateGoalSteps({
+    goals_steps_data: [{
+      goal_id: goalId,
+      step_id: stepId,
+      dt: newDate
+    }]
+  })
+  
+  await loadWeeklySteps()
+}
+```
+
+### Пометка выполнения
+
+Функция `toggleTaskComplete()` определяет тип задачи по ID:
+- Backend задачи: `backend-{step_id}`
+- Локальные задачи: другой формат
+
+```javascript
+if (isBackendTask) {
+  await updateGoalSteps({
+    goals_steps_data: [{
+      goal_id: taskData.goal_id,
+      step_id: taskData.step_id,
+      is_complete: newCompleted
+    }]
+  })
+  await loadWeeklySteps()
+}
+```
+
+### Удаление из календаря (крестик)
+
+Функция `removeTask()` отправляет `dt: null`:
+```javascript
+if (isBackendTask) {
+  await updateGoalSteps({
+    goals_steps_data: [{
+      goal_id: taskToRemove.goal_id,
+      step_id: taskToRemove.step_id,
+      dt: null  // Убираем дату = удаляем из календаря
+    }]
+  })
+  await loadWeeklySteps()
+}
+```
+
+---
+
+## 10. API эндпоинт для обновления шагов
+
+### Эндпоинт: `/api/rest/front/app/goals/steps/update/`
+
+#### Параметры запроса
+```json
+{
+  "goals_steps_data": [
+    {
+      "goal_id": 23,
+      "step_id": 18,
+      "dt": "2025-12-05",           // Дата (null для удаления из календаря)
+      "is_complete": true,           // Статус выполнения
+      "priority": "important",       // Приоритет
+      "time_duration": "two"         // Время выполнения
+    }
+  ]
+}
+```
+
+#### Поддерживаемые поля
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `goal_id` | int | ID цели (обязательно) |
+| `step_id` | int | ID шага (обязательно) |
+| `dt` | string/null | Дата YYYY-MM-DD или null |
+| `is_complete` | bool | Выполнен ли шаг |
+| `priority` | string | important, attention, optional |
+| `time_duration` | string | half, one, two, three, four |
+
+---
+
+## 11. Тестирование
+
+### Чек-лист API
 - [ ] При загрузке `/app/planning` в сетевых запросах виден POST на `/goals/steps/planned/get/`
 - [ ] Даты date_from и date_to соответствуют текущей неделе (Пн-Вс)
 - [ ] При переключении недели (стрелки навигации) отправляется новый запрос
 - [ ] Шаги из бэкенда отображаются в блоке "План на неделю"
+
+### Чек-лист Drag & Drop
+- [ ] Перетаскивание шага из "Цели и шаги" в день недели → POST на `/goals/steps/update/` с `dt`
+- [ ] Перетаскивание между днями недели → POST на `/goals/steps/update/` с новой `dt`
+- [ ] Клик по чекбоксу → POST с `is_complete: true/false`
+- [ ] Клик по крестику (удалить) → POST с `dt: null`
+- [ ] После каждого действия календарь перезагружается
+
+### Чек-лист фильтров
 - [ ] Приоритеты корректно маппятся (important → critical)
 - [ ] Время маппится (four → 4h, one → 1h и т.д.)
 - [ ] Фильтр "Все статусы" показывает все цели

@@ -1140,14 +1140,17 @@ function handleDayDragLeave() {
   dragOverDay.value = null
 }
 
-function handleDayDrop(event, dayDate) {
+async function handleDayDrop(event, dayDate) {
   if (draggedStep.value) {
     event.preventDefault()
     console.log('[Planning] Drop step:', draggedStep.value.stepTitle, 'on day:', dayDate)
-    scheduleStep(draggedStep.value.goalId, { 
-      id: draggedStep.value.stepId, 
-      title: draggedStep.value.stepTitle 
-    }, dayDate)
+    await scheduleStepWithBackend(
+      draggedStep.value.goalId, 
+      draggedStep.value.stepId, 
+      draggedStep.value.stepTitle,
+      draggedStep.value.goal,
+      dayDate
+    )
     handleStepDragEnd()
   }
 }
@@ -1170,7 +1173,13 @@ function updateNotification(key, value) {
 
 function handleDragStart(task) {
   draggedTaskId.value = task.id
-  draggedTask.value = task
+  // For backend tasks, keep the original goalId/stepId for API calls
+  draggedTask.value = {
+    ...task,
+    // Ensure we have backend IDs for API calls
+    backendGoalId: task.goalId,
+    backendStepId: task.stepId
+  }
 }
 
 function handleDragEnd() {
@@ -1190,33 +1199,55 @@ function handleDragLeave() {
   dragOverDay.value = null
 }
 
-function handleDrop(newDate) {
+async function handleDrop(newDate) {
   // Handle step drag from goals section
   if (draggedStep.value) {
     console.log('[Planning] Drop step:', draggedStep.value.stepTitle, 'on day:', newDate)
-    scheduleStep(draggedStep.value.goalId, { 
-      id: draggedStep.value.stepId, 
-      title: draggedStep.value.stepTitle 
-    }, newDate)
+    await scheduleStepWithBackend(
+      draggedStep.value.goalId, 
+      draggedStep.value.stepId, 
+      draggedStep.value.stepTitle,
+      draggedStep.value.goal,
+      newDate
+    )
     handleStepDragEnd()
     return
   }
   
-  // Handle task drag between days
+  // Handle task drag between days (from weekly calendar)
   if (draggedTask.value && draggedTask.value.scheduledDate !== newDate) {
-    updateTaskDate(draggedTask.value.id, newDate)
+    await updateTaskDateWithBackend(draggedTask.value, newDate)
   }
   handleDragEnd()
 }
 
-function updateTaskDate(taskId, newDate) {
-  const plan = currentPlan.value
-  if (!plan) return
+async function updateTaskDateWithBackend(task, newDate) {
+  console.log('[Planning] Updating task date:', task.stepTitle, 'to', newDate)
   
-  const task = plan.scheduledTasks.find(t => t.id === taskId)
-  if (task) {
-    task.scheduledDate = newDate
-    store.saveToLocalStorage()
+  // Get backend IDs from the task (already stored as goalId/stepId from backend data)
+  const goalId = task.backendGoalId || task.goalId
+  const stepId = task.backendStepId || task.stepId
+  
+  if (!goalId || !stepId) {
+    console.error('[Planning] Missing goalId or stepId for task:', task)
+    return
+  }
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: goalId,
+        step_id: stepId,
+        dt: newDate
+      }]
+    })
+    console.log('[Planning] Successfully updated step date on backend')
+    
+    // Reload weekly steps data to reflect changes
+    await loadWeeklySteps()
+  } catch (error) {
+    console.error('[Planning] Error updating task date on backend:', error)
   }
 }
 
@@ -1980,6 +2011,48 @@ async function scheduleStep(goalId, step, dateStr) {
   }
 }
 
+// Schedule step from "Goals and Steps" block with backend sync
+async function scheduleStepWithBackend(goalId, stepId, stepTitle, goal, dateStr) {
+  console.log('[Planning] scheduleStepWithBackend:', { goalId, stepId, stepTitle, dateStr })
+  
+  // Get backend IDs - could be from goal object or directly if dragged from backend data
+  let backendGoalId = goal?.backendId || goalId
+  let backendStepId = null
+  
+  // Find step's backendId from goal's steps array
+  if (goal?.steps) {
+    const step = goal.steps.find(s => s.id === stepId || s.backendId === stepId)
+    backendStepId = step?.backendId || stepId
+  } else {
+    // If no goal object, assume stepId is already backend ID
+    backendStepId = stepId
+  }
+  
+  console.log('[Planning] Backend IDs:', { backendGoalId, backendStepId })
+  
+  if (!backendGoalId || !backendStepId) {
+    console.error('[Planning] Missing backend IDs for scheduling')
+    return
+  }
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: backendGoalId,
+        step_id: backendStepId,
+        dt: dateStr
+      }]
+    })
+    console.log('[Planning] Successfully scheduled step on backend')
+    
+    // Reload weekly steps data to reflect changes
+    await loadWeeklySteps()
+  } catch (error) {
+    console.error('[Planning] Error scheduling step on backend:', error)
+  }
+}
+
 function unscheduleStep(goalId, stepId) {
   const plan = currentPlan.value
   if (!plan) return
@@ -1990,6 +2063,62 @@ function unscheduleStep(goalId, stepId) {
 }
 
 async function toggleTaskComplete(taskId) {
+  // For backend tasks, taskId has format "backend-{stepId}"
+  const isBackendTask = taskId.toString().startsWith('backend-')
+  
+  if (isBackendTask) {
+    // Find the task in weeklyStepsData
+    let taskData = null
+    for (const dayData of weeklyStepsData.value) {
+      const found = dayData.steps_data?.find(s => `backend-${s.step_id}` === taskId)
+      if (found) {
+        taskData = found
+        break
+      }
+    }
+    
+    if (taskData) {
+      const newCompleted = !taskData.step_is_complete
+      console.log('[Planning] Toggling backend task completion:', taskData.step_title, '→', newCompleted)
+      
+      // XP logic
+      if (newCompleted) {
+        xpStore.awardXP(XP_REWARDS.FOCUS_TASK_COMPLETED, 'focus_task_completed', { 
+          taskId: taskId, 
+          taskTitle: taskData.step_title 
+        })
+      } else {
+        const lastEvent = xpStore.xpHistory.find(
+          e => e.source === 'focus_task_completed' && 
+               e.metadata?.taskId === taskId &&
+               new Date(e.timestamp).toDateString() === new Date().toDateString()
+        )
+        if (lastEvent) {
+          xpStore.revokeXP(lastEvent.id)
+        }
+      }
+      
+      try {
+        const { updateGoalSteps } = await import('@/services/api.js')
+        await updateGoalSteps({
+          goals_steps_data: [{
+            goal_id: taskData.goal_id,
+            step_id: taskData.step_id,
+            is_complete: newCompleted
+          }]
+        })
+        console.log('[Planning] Successfully toggled completion on backend')
+        
+        // Reload weekly steps data to reflect changes
+        await loadWeeklySteps()
+      } catch (error) {
+        console.error('[Planning] Error toggling task completion:', error)
+      }
+    }
+    return
+  }
+  
+  // Handle local tasks (legacy)
   const plan = currentPlan.value
   if (!plan) return
   
@@ -2038,7 +2167,45 @@ async function toggleTaskComplete(taskId) {
   }
 }
 
-function removeTask(taskId) {
+async function removeTask(taskId) {
+  // For backend tasks, taskId has format "backend-{stepId}"
+  const isBackendTask = taskId.toString().startsWith('backend-')
+  
+  if (isBackendTask) {
+    // Find the task in weeklyStepsData
+    let taskToRemove = null
+    for (const dayData of weeklyStepsData.value) {
+      const found = dayData.steps_data?.find(s => `backend-${s.step_id}` === taskId)
+      if (found) {
+        taskToRemove = found
+        break
+      }
+    }
+    
+    if (taskToRemove) {
+      console.log('[Planning] Removing backend task from calendar:', taskToRemove.step_title)
+      
+      try {
+        const { updateGoalSteps } = await import('@/services/api.js')
+        await updateGoalSteps({
+          goals_steps_data: [{
+            goal_id: taskToRemove.goal_id,
+            step_id: taskToRemove.step_id,
+            dt: null  // Remove from calendar by clearing the date
+          }]
+        })
+        console.log('[Planning] Successfully removed step from calendar on backend')
+        
+        // Reload weekly steps data to reflect changes
+        await loadWeeklySteps()
+      } catch (error) {
+        console.error('[Planning] Error removing task from calendar:', error)
+      }
+    }
+    return
+  }
+  
+  // Handle local tasks (legacy)
   const plan = currentPlan.value
   if (plan) {
     const taskToDelete = plan.scheduledTasks.find(t => t.id === taskId)
