@@ -1,5 +1,18 @@
 # OnePercent MVP
 
+## Recent Changes (December 2025)
+
+### Bug Fix: Infinite Onboarding Loop
+- **Issue**: After completing onboarding and confirming AI goals in PlanReview, users would see "Ваши первые цели" screen again
+- **Root Cause**: `completeOnboarding()` in OnboardingAI.vue only updated local state but never called backend to set `is_complete=true` and `finish_onboarding=true`. After any auth refresh, backend returned `finish_onboarding=false`, triggering onboarding again
+- **Fix**: Added `store.completeOnboardingWithBackend()` call in OnboardingAI.vue before local state update
+- **Fallback**: Added `setUserFinishOnboarding()` function to set flag locally on backend error, preventing loop
+- **Files Changed**: `src/components/OnboardingAI.vue`, `src/stores/app.js`
+
+### Goals Bank Backend Sync
+- Goals from 3-step onboarding lesson now batch-save to backend via `/api/rest/front/app/goals/update/`
+- `completeGoalsBankHandler()` modified to send all goals without backendId and update local IDs from response
+
 ## Overview
 The OnePercent MVP is a Vue 3 + Vite application for personal life management and goal tracking, inspired by the "1% improvement" philosophy. It features a Balanced Scorecard (SSP) module for life balance assessment and a Goals Bank for structured goal setting. The project provides a guided, multi-step workflow for personal development, leveraging interactive UI components and an AI Mentor for user engagement, integrating with a Django REST API backend for authentication. The business vision is to empower users with tools for self-improvement, fostering consistent growth and offering a market-leading platform for personal development.
 

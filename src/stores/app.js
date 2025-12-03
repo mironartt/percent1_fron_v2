@@ -544,6 +544,14 @@ export const useAppStore = defineStore('app', () => {
     }
   }
   
+  function setUserFinishOnboarding(value) {
+    user.value.finish_onboarding = value
+    if (DEBUG_MODE) {
+      console.log('[Store] User finish_onboarding set to:', value)
+    }
+    saveToLocalStorage()
+  }
+  
   const isAuthenticated = computed(() => user.value.is_authenticated)
   
   const displayName = computed(() => {
@@ -2688,6 +2696,7 @@ export const useAppStore = defineStore('app', () => {
     userLoading,
     setUser,
     clearUser,
+    setUserFinishOnboarding,
     isAuthenticated,
     displayName,
     

@@ -590,6 +590,34 @@ async function completeOnboarding() {
     }
   })
   
+  const onboardingData = {
+    reason_joined: surveyData.value.reason,
+    desired_changes: surveyData.value.desiredChanges,
+    growth_comfort_zones: surveyData.value.growthZones,
+    current_state: surveyData.value.currentState,
+    goal_state: surveyData.value.goalState,
+    why_important: surveyData.value.whyImportant
+  }
+  
+  if (!SKIP_AUTH_CHECK) {
+    try {
+      await store.completeOnboardingWithBackend(onboardingData)
+      if (DEBUG_MODE) {
+        console.log('[OnboardingAI] Onboarding saved to backend successfully')
+      }
+    } catch (error) {
+      console.error('[OnboardingAI] Failed to save onboarding to backend:', error)
+      store.setUserFinishOnboarding(true)
+      if (DEBUG_MODE) {
+        console.log('[OnboardingAI] Set finish_onboarding locally to prevent loop')
+      }
+    }
+  } else {
+    if (DEBUG_MODE) {
+      console.log('[OnboardingAI] Backend save skipped (SKIP_AUTH_CHECK=true)')
+    }
+  }
+  
   store.completeOnboarding({
     surveyData: surveyData.value,
     sphereRatings: localSpheres.value.map(s => ({ id: s.id, score: s.score })),
