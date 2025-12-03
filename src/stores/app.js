@@ -259,6 +259,23 @@ export const useAppStore = defineStore('app', () => {
     const goalsInWork = syncedGoals.filter(g => g.workStatus === 'work' || g.workStatus === 'complete')
     
     goalsInWork.forEach(backendGoal => {
+      // Transform steps from backend format to frontend format
+      const transformedSteps = (backendGoal.stepsData || []).map(s => ({
+        id: s.step_id,
+        backendId: s.step_id,
+        title: s.title,
+        description: s.description || '',
+        priority: s.priority || null,
+        timeEstimate: s.time_duration || null,
+        date: s.dt || null,
+        order: s.order,
+        completed: s.is_complete || false,
+        dateCompleted: s.date_completed || null,
+        dateCreated: s.date_created || null,
+        status: s.status || 'unplanned',
+        goalId: s.goal_id
+      }))
+      
       const existingGoal = goals.value.find(g => g.backendId === backendGoal.backendId)
       if (!existingGoal) {
         // Добавляем цель в работу
@@ -273,7 +290,9 @@ export const useAppStore = defineStore('app', () => {
           threeWhys: backendGoal.threeWhys,
           status: backendGoal.workStatus === 'complete' ? 'completed' : 'active',
           progress: backendGoal.totalStepsData?.complete_percent || 0,
-          steps: backendGoal.stepsData || [],
+          totalStepsData: backendGoal.totalStepsData || null,
+          steps: transformedSteps,
+          stepsPage: 1,
           createdAt: backendGoal.dateCreated,
           completedAt: backendGoal.dateCompleted
         })
@@ -286,7 +305,8 @@ export const useAppStore = defineStore('app', () => {
           threeWhys: backendGoal.threeWhys,
           status: backendGoal.workStatus === 'complete' ? 'completed' : 'active',
           progress: backendGoal.totalStepsData?.complete_percent || 0,
-          steps: backendGoal.stepsData || [],
+          totalStepsData: backendGoal.totalStepsData || null,
+          steps: transformedSteps,
           completedAt: backendGoal.dateCompleted
         })
       }

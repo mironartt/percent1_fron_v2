@@ -785,14 +785,16 @@
                     <h4 class="truncate-1" :title="goal.title">{{ goal.title }}</h4>
                   </div>
                   <div class="goal-header-right">
-                    <span class="steps-count">{{ (goal.steps || []).length }} шагов</span>
+                    <span class="steps-count">
+                      {{ getCompletedStepsCount(goal) }} из {{ getTotalStepsCount(goal) }} шагов
+                    </span>
                     <span class="scheduled-count" v-if="getScheduledStepsCount(goal) > 0">
                       ✓ {{ getScheduledStepsCount(goal) }} запланировано
                     </span>
-                    <span class="goal-progress">{{ goal.progress || 0 }}%</span>
+                    <span class="goal-progress">{{ getGoalProgress(goal) }}%</span>
                   </div>
                 </div>
-                <div class="steps-list" v-show="expandedGoals[goal.id]" :class="{ 'has-scroll': (goal.steps || []).length > 5 }">
+                <div class="steps-list" v-show="expandedGoals[goal.id]" :class="{ 'has-scroll': (goal.steps || []).length > 6 }">
                   <div 
                     v-for="step in getVisibleSteps(goal)" 
                     :key="step.id"
@@ -865,11 +867,17 @@
                   
                   <!-- Load more steps button -->
                   <button 
-                    v-if="hasMoreSteps(goal)"
+                    v-if="hasMoreStepsToLoad(goal)"
                     class="btn btn-sm btn-outline load-more-steps"
-                    @click.stop="loadMoreSteps(goal.id)"
+                    :disabled="stepsLoadingForGoal[goal.backendId]"
+                    @click.stop="loadMoreStepsFromBackend(goal)"
                   >
-                    Ещё {{ remainingStepsCount(goal) }} шагов
+                    <template v-if="stepsLoadingForGoal[goal.backendId]">
+                      Загрузка...
+                    </template>
+                    <template v-else>
+                      Ещё {{ getRemainingStepsToLoad(goal) }} шагов
+                    </template>
                   </button>
                 </div>
               </div>
@@ -952,6 +960,8 @@ const filterThisWeek = ref(false)
 // Pagination state
 const goalsDisplayLimit = ref(10)
 const stepsDisplayLimits = ref({})
+const stepsLoadingForGoal = ref({})
+const stepsPageForGoal = ref({})
 
 // Step filters per goal (each goal can have its own filters)
 const stepsFilters = ref({})
@@ -1302,6 +1312,106 @@ function remainingStepsCount(goal) {
 function loadMoreSteps(goalId) {
   const currentLimit = stepsDisplayLimits.value[goalId] || 6
   stepsDisplayLimits.value[goalId] = currentLimit + 6
+}
+
+// Get total steps count from backend totalStepsData
+function getTotalStepsCount(goal) {
+  if (goal.totalStepsData?.total_steps !== undefined) {
+    return goal.totalStepsData.total_steps
+  }
+  return (goal.steps || []).length
+}
+
+// Get completed steps count from backend totalStepsData
+function getCompletedStepsCount(goal) {
+  if (goal.totalStepsData?.complete_steps !== undefined) {
+    return goal.totalStepsData.complete_steps
+  }
+  return (goal.steps || []).filter(s => s.completed).length
+}
+
+// Get goal progress from backend totalStepsData
+function getGoalProgress(goal) {
+  if (goal.totalStepsData?.complete_percent !== undefined) {
+    return goal.totalStepsData.complete_percent
+  }
+  return goal.progress || 0
+}
+
+// Check if there are more steps to load from backend
+function hasMoreStepsToLoad(goal) {
+  const loadedSteps = (goal.steps || []).length
+  const totalSteps = getTotalStepsCount(goal)
+  return loadedSteps < totalSteps
+}
+
+// Get remaining steps to load from backend
+function getRemainingStepsToLoad(goal) {
+  const loadedSteps = (goal.steps || []).length
+  const totalSteps = getTotalStepsCount(goal)
+  return Math.max(0, totalSteps - loadedSteps)
+}
+
+// Load more steps from backend API
+async function loadMoreStepsFromBackend(goal) {
+  if (!goal.backendId || stepsLoadingForGoal.value[goal.backendId]) return
+  
+  stepsLoadingForGoal.value[goal.backendId] = true
+  
+  try {
+    const { getGoalSteps } = await import('@/services/api.js')
+    
+    // Calculate next page (each page has 6 steps)
+    const currentPage = stepsPageForGoal.value[goal.backendId] || 1
+    const nextPage = currentPage + 1
+    
+    console.log('[Planning] Loading more steps for goal:', goal.backendId, 'page:', nextPage)
+    
+    const result = await getGoalSteps({
+      goal_id: goal.backendId,
+      page: nextPage,
+      page_size: 6,
+      order_by: 'order',
+      order_direction: 'asc'
+    })
+    
+    if (result.status === 'ok' && result.data?.goal_data?.steps_data) {
+      const newSteps = result.data.goal_data.steps_data.map(s => ({
+        id: s.step_id,
+        backendId: s.step_id,
+        title: s.title,
+        description: s.description || '',
+        priority: s.priority || null,
+        timeEstimate: s.time_duration || null,
+        date: s.dt || null,
+        order: s.order,
+        completed: s.is_complete || false,
+        dateCompleted: s.date_completed || null,
+        dateCreated: s.date_created || null,
+        status: s.status || 'unplanned',
+        goalId: s.goal_id
+      }))
+      
+      // Add new steps to goal, avoiding duplicates
+      const existingIds = new Set((goal.steps || []).map(s => s.id))
+      const uniqueNewSteps = newSteps.filter(s => !existingIds.has(s.id))
+      
+      if (uniqueNewSteps.length > 0) {
+        goal.steps = [...(goal.steps || []), ...uniqueNewSteps]
+        // Update display limit to show all loaded steps
+        stepsDisplayLimits.value[goal.id] = goal.steps.length
+      }
+      
+      // Update page counter
+      stepsPageForGoal.value[goal.backendId] = nextPage
+      
+      console.log('[Planning] Loaded', uniqueNewSteps.length, 'new steps, total:', goal.steps.length)
+    }
+  } catch (error) {
+    console.error('[Planning] Error loading more steps:', error)
+  } finally {
+    stepsLoadingForGoal.value[goal.backendId] = false
+  }
 }
 
 // Clear all filters

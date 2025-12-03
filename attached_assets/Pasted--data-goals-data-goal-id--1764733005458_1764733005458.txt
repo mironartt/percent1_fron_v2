@@ -1,0 +1,126 @@
+Да, хорошо. Идем дальше.
+
+Вижу что для одной цели бэк вернул: `data.goals_data[]`:
+```
+{
+  "goal_id": 23,
+  "title": "Улучшить финансовую дисциплину",
+  "category": "welfare",
+  "status": "work",
+  "score": "true",
+  "why_important": "312223",
+  "why_give_me": "Больше контроля222",
+  "why_about_me": null,
+  "date_created": "2025-12-02 15:29:10",
+  "date_completed": null,
+  "total_steps_data": {
+    "total_steps": 24,
+    "complete_steps": 2,
+    "complete_percent": 8,
+    "complete_days_in_row": 0
+  },
+  "steps_data": [
+    {
+      "step_id": 129,
+      "title": "Ожидание результатов",
+      "description": "Ожидание ответа",
+      "status": "unplanned",
+      "priority": "optional",
+      "time_duration": null,
+      "dt": null,
+      "order": 0,
+      "is_complete": false,
+      "date_completed": null,
+      "date_created": "2025-12-02 08:51:02",
+      "goal_id": 23
+    },
+    {
+      "step_id": 193,
+      "title": "какой-то тест 3",
+      "description": "",
+      "status": "planned",
+      "priority": null,
+      "time_duration": "two",
+      "dt": "2025-12-17",
+      "order": 1,
+      "is_complete": false,
+      "date_completed": null,
+      "date_created": "2025-12-03 05:44:31",
+      "goal_id": 23
+    },
+    {
+      "step_id": 192,
+      "title": "какой-то тест 2",
+      "description": "",
+      "status": "planned",
+      "priority": "critical",
+      "time_duration": null,
+      "dt": "2025-12-15",
+      "order": 2,
+      "is_complete": false,
+      "date_completed": null,
+      "date_created": "2025-12-03 05:44:20",
+      "goal_id": 23
+    },
+    {
+      "step_id": 190,
+      "title": "тестовый шаг 2",
+      "description": "комменте",
+      "status": "unplanned",
+      "priority": null,
+      "time_duration": null,
+      "dt": null,
+      "order": 3,
+      "is_complete": false,
+      "date_completed": null,
+      "date_created": "2025-12-03 05:33:01",
+      "goal_id": 23
+    },
+    {
+      "step_id": 128,
+      "title": "Отправить результат на проверку",
+      "description": "Передать ответственному",
+      "status": "unplanned",
+      "priority": "optional",
+      "time_duration": "three",
+      "dt": null,
+      "order": 4,
+      "is_complete": false,
+      "date_completed": null,
+      "date_created": "2025-12-02 08:51:02",
+      "goal_id": 23
+    },
+    {
+      "step_id": 75,
+      "title": "Создать шаблон документа2",
+      "description": "Определить структуру файла",
+      "status": "unplanned",
+      "priority": "critical",
+      "time_duration": "two",
+      "dt": null,
+      "order": 5,
+      "is_complete": true,
+      "date_completed": "2025-12-03 05:01:51",
+      "date_created": "2025-12-02 08:48:28",
+      "goal_id": 23
+    }
+  ]
+}
+```
+Если посмотреть на блок в ответе:
+```
+"total_steps_data": {
+"total_steps": 24,
+"complete_steps": 2,
+"complete_percent": 8,
+"complete_days_in_row": 0
+},
+```
+То видно, что всего шагов у цели 24, 2 из них выполнено, а общий процент прогресса - 8%.
+Это нужно сразу отображать для цели.
+И также на оснвоание этого, если нужно добавлять кнопку пагиации для шагов конкретной цели.
+Также, сейчас по клику на цель, открыавется окно с вертикальном скроллом шагов, в высоту до 3 шагов для цели. Нужно увеличить вертикальный размер так, чтобы помещалось 6 целей и кнопка пагинации, и после вертикальный скролл.
+
+Если юзер будет использовать пагиацию для выбранной цели, то запросы уже нужно слать на эндпоинт `'/api/rest/front/app/goals/steps/get/'`, которые мы детально обсуждали в рамках страницы "детали по цели", и ты уже хорошо знаешь как он работает.
+
+Внеси указанные доработки.
