@@ -309,6 +309,7 @@
                           <option value="30min">30 мин</option>
                           <option value="1h">1 час</option>
                           <option value="2h">2 часа</option>
+                          <option value="3h">3 часа</option>
                           <option value="4h">4 часа</option>
                         </select>
                         <select 
@@ -794,7 +795,15 @@
                     <span class="goal-progress">{{ getGoalProgress(goal) }}%</span>
                   </div>
                 </div>
-                <div class="steps-list" v-show="expandedGoals[goal.id]" :class="{ 'has-scroll': (goal.steps || []).length > 6 }">
+                <div 
+                  class="steps-list" 
+                  v-show="expandedGoals[goal.id]" 
+                  :class="{ 
+                    'has-scroll': (goal.steps || []).length > 6,
+                    'expanded-scroll': stepsPageForGoal[goal.backendId] > 1 || (stepsDisplayLimits[goal.id] || 6) > 6
+                  }"
+                  :style="getStepsListStyle(goal)"
+                >
                   <div 
                     v-for="step in getVisibleSteps(goal)" 
                     :key="step.id"
@@ -847,6 +856,7 @@
                         <option value="30min">30м</option>
                         <option value="1h">1ч</option>
                         <option value="2h">2ч</option>
+                        <option value="3h">3ч</option>
                         <option value="4h">4ч</option>
                       </select>
                       <select 
@@ -1314,6 +1324,22 @@ function loadMoreSteps(goalId) {
   stepsDisplayLimits.value[goalId] = currentLimit + 6
 }
 
+// Calculate dynamic max-height for steps list based on loaded steps count
+function getStepsListStyle(goal) {
+  const loadedSteps = (goal.steps || []).length
+  const displayLimit = stepsDisplayLimits.value[goal.id] || 6
+  const visibleSteps = Math.min(loadedSteps, displayLimit)
+  
+  // If more steps were loaded via pagination, increase max-height
+  if (stepsPageForGoal.value[goal.backendId] > 1 || displayLimit > 6) {
+    // Dynamic height: each step is ~44px + 50px for button
+    const maxHeight = Math.max(visibleSteps * 44 + 60, 300)
+    return { maxHeight: `${maxHeight}px` }
+  }
+  
+  return {}
+}
+
 // Get total steps count from backend totalStepsData
 function getTotalStepsCount(goal) {
   if (goal.totalStepsData?.total_steps !== undefined) {
@@ -1748,7 +1774,7 @@ function getTasksForDay(dateStr) {
 }
 
 function getTotalTimeForDay(dateStr) {
-  const timeValues = { '30min': 30, '1h': 60, '2h': 120, '4h': 240 }
+  const timeValues = { '30min': 30, '1h': 60, '2h': 120, '3h': 180, '4h': 240 }
   const tasks = getTasksForDay(dateStr)
   const totalMinutes = tasks.reduce((sum, task) => {
     return sum + (timeValues[task.timeEstimate] || 0)
@@ -1762,22 +1788,47 @@ function getTotalTimeForDay(dateStr) {
 }
 
 function isStepScheduled(goalId, stepId) {
-  return scheduledTasks.value.some(t => t.goalId === goalId && t.stepId === stepId)
+  // Проверяем в scheduledTasks
+  const inScheduled = scheduledTasks.value.some(t => t.goalId === goalId && t.stepId === stepId)
+  if (inScheduled) return true
+  
+  // Проверяем в данных шага (из backend)
+  const goal = goals.value.find(g => g.id === goalId)
+  const step = goal?.steps?.find(s => s.id === stepId)
+  return !!step?.date
 }
 
 function getScheduledDate(goalId, stepId) {
+  // Сначала проверяем в scheduledTasks (локальные изменения)
   const task = scheduledTasks.value.find(t => t.goalId === goalId && t.stepId === stepId)
-  return task?.scheduledDate || ''
+  if (task?.scheduledDate) return task.scheduledDate
+  
+  // Затем проверяем в данных шага (из backend)
+  const goal = goals.value.find(g => g.id === goalId)
+  const step = goal?.steps?.find(s => s.id === stepId)
+  return step?.date || ''
 }
 
 function getScheduledTimeEstimate(goalId, stepId) {
+  // Сначала проверяем в scheduledTasks (локальные изменения)
   const task = scheduledTasks.value.find(t => t.goalId === goalId && t.stepId === stepId)
-  return task?.timeEstimate || ''
+  if (task?.timeEstimate) return task.timeEstimate
+  
+  // Затем проверяем в данных шага (из backend)
+  const goal = goals.value.find(g => g.id === goalId)
+  const step = goal?.steps?.find(s => s.id === stepId)
+  return step?.timeEstimate || ''
 }
 
 function getScheduledPriority(goalId, stepId) {
+  // Сначала проверяем в scheduledTasks (локальные изменения)
   const task = scheduledTasks.value.find(t => t.goalId === goalId && t.stepId === stepId)
-  return task?.priority || ''
+  if (task?.priority) return task.priority
+  
+  // Затем проверяем в данных шага (из backend)
+  const goal = goals.value.find(g => g.id === goalId)
+  const step = goal?.steps?.find(s => s.id === stepId)
+  return step?.priority || ''
 }
 
 async function updateScheduledStep(goalId, stepId, field, value) {
@@ -1802,7 +1853,7 @@ async function updateScheduledStep(goalId, stepId, field, value) {
         if (field === 'priority') {
           updateData.priority = value || null
         } else if (field === 'timeEstimate') {
-          const timeMap = { '30min': 'half', '1h': 'one', '2h': 'two', '4h': 'four' }
+          const timeMap = { '30min': 'half', '1h': 'one', '2h': 'two', '3h': 'three', '4h': 'four' }
           updateData.time_duration = timeMap[value] || null
         }
         
@@ -3354,6 +3405,11 @@ onMounted(async () => {
 /* Steps list with scroll (5 шагов видимых) */
 .steps-list.has-scroll {
   max-height: calc(5 * 44px + 50px);
+  overflow-y: auto;
+}
+
+.steps-list.expanded-scroll {
+  max-height: none !important;
   overflow-y: auto;
 }
 

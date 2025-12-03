@@ -222,6 +222,23 @@ export const useAppStore = defineStore('app', () => {
    * @param {Array} backendGoals - Цели из бэкенда
    * @param {boolean} append - Добавить к существующим данным или заменить
    */
+  // Маппинг time_duration: backend → frontend
+  const timeDurationBackendToFrontend = {
+    'half': '30min',
+    'one': '1h',
+    'two': '2h',
+    'three': '3h',
+    'four': '4h'
+  }
+  
+  const timeDurationFrontendToBackend = {
+    '30min': 'half',
+    '1h': 'one',
+    '2h': 'two',
+    '3h': 'three',
+    '4h': 'four'
+  }
+  
   function syncGoalsFromBackend(backendGoals, append = false) {
     const syncedGoals = backendGoals.map(g => ({
       id: String(g.goal_id),
@@ -266,7 +283,7 @@ export const useAppStore = defineStore('app', () => {
         title: s.title,
         description: s.description || '',
         priority: s.priority || null,
-        timeEstimate: s.time_duration || null,
+        timeEstimate: timeDurationBackendToFrontend[s.time_duration] || s.time_duration || null,
         date: s.dt || null,
         order: s.order,
         completed: s.is_complete || false,
@@ -2894,6 +2911,10 @@ export const useAppStore = defineStore('app', () => {
     loadGlobalData,
     categoryBackendToFrontend,
     categoryFrontendToBackend,
+    
+    // Time duration mapping
+    timeDurationBackendToFrontend,
+    timeDurationFrontendToBackend,
     
     // Goals API (загрузка и синхронизация целей)
     goalsApiData,

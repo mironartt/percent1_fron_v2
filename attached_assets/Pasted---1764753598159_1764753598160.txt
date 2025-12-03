@@ -1,0 +1,78 @@
+Ок.
+Давай дальше теперь по странице планирования.
+Изучи ее текущую работу, как она общается с бэком, бизнес логику и все остальное связанное со страницей.
+После этого мы продолжим.
+
+Теперь доработки по странице планирования:
+- В нижнем блоке, где отображаются цели. Если я разверну одну цель, у которой есть пагинация, после клика на кнопку пагинации, вертикальный размер уменьшается обратно до трех шагов в высоту блока. Нужно фиксировать высоту блока на момент нажатия кнопки пагинации (кнопка: "загрузить еще", или как-то так она назыавлась), и лишь добавлять вертикальный скролл.
+- Фронт дергает эндпоинт, и базово бэк возвращает, пример для одной цели бэк вернул: `data.goals_data[]`:
+```
+{
+  "goal_id": 23,
+  "title": "Улучшить финансовую дисциплину",
+  "category": "welfare",
+  "status": "work",
+  "score": "true",
+  "why_important": "312223",
+  "why_give_me": "Больше контроля222",
+  "why_about_me": null,
+  "date_created": "2025-12-02 15:29:10",
+  "date_completed": null,
+  "total_steps_data": {
+    "total_steps": 24,
+    "complete_steps": 2,
+    "complete_percent": 8,
+    "complete_days_in_row": 0
+  },
+  "steps_data": [
+    {
+      "step_id": 190,
+      "title": "тестовый шаг 2",
+      "description": "комменте",
+      "status": "unplanned",
+      "priority": null,
+      "time_duration": null,
+      "dt": null,
+      "order": 3,
+      "is_complete": false,
+      "date_completed": null,
+      "date_created": "2025-12-03 05:33:01",
+      "goal_id": 23
+    },
+    {
+      "step_id": 128,
+      "title": "Отправить результат на проверку",
+      "description": "Передать ответственному",
+      "status": "unplanned",
+      "priority": "optional",
+      "time_duration": "three",
+      "dt": null,
+      "order": 4,
+      "is_complete": false,
+      "date_completed": null,
+      "date_created": "2025-12-02 08:51:02",
+      "goal_id": 23
+    },
+  ]
+}
+```
+Вот сериализатор полей на бэке, чтобы понимать что они значат:
+```
+class StepsDataGetGoalsDetailDataResponseSerializer(BaseSerializer):
+    step_id = RestIntegerField(help_text='ID шага', example=1, required=True, min_value=1)
+    goal_id = RestIntegerField(help_text='ID цели', example=1, required=True, min_value=1)
+    title = RestCharField(required=True, max_length=500, help_text="Название шага", example="Выучить английский язык")
+    description = RestCharField(required=True, max_length=10000, help_text="Описание шага", example="Выучить английский язык")
+    status = RestChoiceField(choices=user_data.STEP_STATUSES, required=False, allow_null=True, allow_blank=True, help_text="Статус шага", example="planned")
+    priority = RestChoiceField(choices=user_data.STEP_PRIORITY_CHOICES, required=False, allow_null=True, allow_blank=True, help_text="Приоритет шага", example="planned")
+    time_duration = RestChoiceField(choices=user_data.STEP_TIME_CHOICES, required=False, allow_null=True, allow_blank=True, help_text="Временный интервал шага", example="planned")
+    dt = RestDateField(required=False, allow_null=True, help_text="Запланированная дата выполнения (формат: 'YYYY-MM-DD').", example="2024-10-10", format="%Y-%m-%d")
+    order = RestIntegerField(help_text='Порядковый номер шага (для сортировки по выбранному пользователю формату)', example=1, required=True, allow_null=False, min_value=1)
+    is_complete = RestBooleanField(required=False, allow_null=True, help_text='Пометить шаг выполненным', example=False)
+    date_created = RestDateTimeField(required=False, help_text="Дата создания цели", format="%Y-%m-%d %H:%M:%S", example="2023-08-27 15:43:45")
+    date_completed = RestDateTimeField(required=False, help_text="Дата завершения цели", format="%Y-%m-%d %H:%M:%S", example="2023-08-27 15:43:45")
+```
+Но на фронте есть проблема: для шагов не отоборажаются данные по шагу. Имею ввиду, видно, бэк возвращает данные по: приоритету, дате, статусу, выбранному временому интервалу, дате создания. 
+Ничего из этого не переносится на фронт для шага.
+
+Исправь указанное.
