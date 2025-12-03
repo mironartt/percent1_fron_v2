@@ -19,10 +19,22 @@
 - **Fix**: Functions now first check scheduledTasks for local changes, then fallback to step object data from backend
 - **Time Duration Mapping**: Added complete backend↔frontend conversion: 'half'↔'30min', 'one'↔'1h', 'two'↔'2h', 'three'↔'3h', 'four'↔'4h'
 
-### Planning Pagination Height Fix
-- **Issue**: When loading more steps, container height would snap back to minimal height
-- **Root Cause**: CSS `max-height: 330px` on `.has-scroll` class limited expanded content
-- **Fix**: Added `expanded-scroll` CSS class and dynamic `getStepsListStyle()` function that calculates appropriate max-height when extra steps are loaded (stepsDisplayLimits > 6)
+### Planning Pagination Height Fix (Updated)
+- **Issue**: When loading more steps, container height would snap back or expand dynamically - user wanted fixed height with scroll
+- **Root Cause**: Previous implementation dynamically expanded height instead of fixing it
+- **Fix**: Implemented GoalEdit.vue-style pagination:
+  - `stepsContainerHeights` ref stores captured height per goal
+  - `captureStepsContainerHeight()` captures height BEFORE loading more steps
+  - `getStepsListStyle()` applies fixed maxHeight after pagination click
+  - Container becomes scrollable with fixed height after "Ещё X шагов" click
+
+### Planning Date Timezone Fix
+- **Issue**: Day selector showed wrong day of week (e.g., "Вс" instead of "Сб" for December 6)
+- **Root Cause**: `toISOString().split('T')[0]` converts to UTC, shifting dates in some timezones
+- **Fix**: Added `formatDateLocal()` helper that formats dates as YYYY-MM-DD in local timezone
+  - Updated `weekDays` computed to use local formatting
+  - Fixed `formatStepDate()` to parse date parts directly
+  - Fixed `isToday()`, `currentStreak`, and demo task generation
 
 ## Overview
 The OnePercent MVP is a Vue 3 + Vite application for personal life management and goal tracking, inspired by the "1% improvement" philosophy. It features a Balanced Scorecard (SSP) module for life balance assessment and a Goals Bank for structured goal setting. The project provides a guided, multi-step workflow for personal development, leveraging interactive UI components and an AI Mentor for user engagement, integrating with a Django REST API backend for authentication. The business vision is to empower users with tools for self-improvement, fostering consistent growth and offering a market-leading platform for personal development.
