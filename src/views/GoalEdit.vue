@@ -1698,21 +1698,24 @@ function takeStepsSnapshot() {
 function getChangedSteps(currentSteps) {
   const changedSteps = []
   
-  // DEBUG: Log snapshot and current steps for comparison
-  console.log('[GoalEdit] getChangedSteps DEBUG:')
-  console.log('  Snapshot:', stepsSnapshot.map(s => ({ id: s.id, order: s.order, title: s.title?.substring(0, 20) })))
-  console.log('  Current:', currentSteps.map(s => ({ id: s.id, order: s.order, title: s.title?.substring(0, 20) })))
-  
   currentSteps.forEach((step) => {
+    // Skip new steps without title (empty new steps)
+    if (step.isNew && !step.title?.trim()) return
+    
     const snapshot = stepsSnapshot.find(s => s.id === step.id)
     
     if (!snapshot) {
-      // New step - send all fields
-      changedSteps.push({
-        step,
-        isNew: true,
-        changedFields: ['title', 'description', 'priority', 'time_duration', 'dt', 'order', 'is_complete']
-      })
+      // New step - send all fields EXCEPT order (backend assigns order automatically)
+      // Only if step has backendId === undefined (truly new, not just missing from snapshot)
+      if (!step.backendId) {
+        changedSteps.push({
+          step,
+          isNew: true,
+          changedFields: ['title', 'description', 'priority', 'time_duration', 'dt', 'is_complete']
+        })
+      }
+      // If step has backendId but not in snapshot - it was loaded later, skip it
+      // (don't send existing steps that we didn't modify)
     } else {
       // Check what changed - compare step.order with snapshot.order (not array index)
       const changes = []
@@ -1721,10 +1724,10 @@ function getChangedSteps(currentSteps) {
       if ((step.priority || '') !== snapshot.priority) changes.push('priority')
       if ((step.timeEstimate || '') !== snapshot.timeEstimate) changes.push('time_duration')
       if ((step.scheduledDate || '') !== snapshot.scheduledDate) changes.push('dt')
-      if (step.order !== snapshot.order) {
-        console.log(`  [ORDER DIFF] step ${step.id}: current=${step.order} (${typeof step.order}), snapshot=${snapshot.order} (${typeof snapshot.order})`)
-        changes.push('order')
-      }
+      // Compare order as numbers to avoid type mismatch issues
+      const currentOrder = step.order ?? -1
+      const snapshotOrder = snapshot.order ?? -1
+      if (currentOrder !== snapshotOrder) changes.push('order')
       if ((step.completed || false) !== snapshot.completed) changes.push('is_complete')
       
       if (changes.length > 0) {
