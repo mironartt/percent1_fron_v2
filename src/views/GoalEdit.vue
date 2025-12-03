@@ -1682,30 +1682,29 @@ function takeStepsSnapshot() {
 function getChangedSteps(currentSteps) {
   const changedSteps = []
   
-  currentSteps.forEach((step, index) => {
+  currentSteps.forEach((step) => {
     const snapshot = stepsSnapshot.find(s => s.id === step.id)
     
     if (!snapshot) {
       // New step - send all fields
       changedSteps.push({
         step,
-        index,
         isNew: true,
         changedFields: ['title', 'description', 'priority', 'time_duration', 'dt', 'order', 'is_complete']
       })
     } else {
-      // Check what changed
+      // Check what changed - compare step.order with snapshot.order (not array index)
       const changes = []
       if (step.title !== snapshot.title) changes.push('title')
       if ((step.comment || '') !== snapshot.comment) changes.push('description')
       if ((step.priority || '') !== snapshot.priority) changes.push('priority')
       if ((step.timeEstimate || '') !== snapshot.timeEstimate) changes.push('time_duration')
       if ((step.scheduledDate || '') !== snapshot.scheduledDate) changes.push('dt')
-      if (index !== snapshot.order) changes.push('order')
+      if (step.order !== snapshot.order) changes.push('order')
       if ((step.completed || false) !== snapshot.completed) changes.push('is_complete')
       
       if (changes.length > 0) {
-        changedSteps.push({ step, index, isNew: false, changedFields: changes })
+        changedSteps.push({ step, isNew: false, changedFields: changes })
       }
     }
   })
@@ -1727,9 +1726,12 @@ async function syncStepsToBackend(steps) {
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
     
-    const stepsData = changedSteps.map(({ step, index, changedFields }) => {
+    // Convert goalBackendId to integer
+    const goalIdInt = parseInt(goalBackendId.value, 10)
+    
+    const stepsData = changedSteps.map(({ step, changedFields }) => {
       const data = {
-        goal_id: goalBackendId.value,
+        goal_id: goalIdInt,
         step_id: step.backendId || null
       }
       
@@ -1739,7 +1741,7 @@ async function syncStepsToBackend(steps) {
       if (changedFields.includes('priority')) data.priority = mapPriorityToBackend(step.priority) || null
       if (changedFields.includes('time_duration')) data.time_duration = mapTimeToBackend(step.timeEstimate)
       if (changedFields.includes('dt')) data.dt = step.scheduledDate || null
-      if (changedFields.includes('order')) data.order = index
+      if (changedFields.includes('order')) data.order = step.order
       if (changedFields.includes('is_complete')) data.is_complete = step.completed || false
       
       return data
