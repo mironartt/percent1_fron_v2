@@ -1390,6 +1390,42 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
+  // Update goal's totalStepsData by backend ID (for Planning calendar sync)
+  function updateGoalTotalStepsData(backendId, totalStepsData) {
+    const goal = goals.value.find(g => g.backendId === backendId)
+    if (goal) {
+      goal.totalStepsData = totalStepsData
+      goal.progress = totalStepsData?.complete_percent || goal.progress || 0
+      
+      if (DEBUG_MODE) {
+        console.log('[Store] Updated goal totalStepsData:', goal.title, totalStepsData)
+      }
+      
+      saveToLocalStorage()
+      return true
+    }
+    return false
+  }
+
+  // Update step in goal by backend IDs (for Planning calendar sync)
+  function updateGoalStepByBackendId(goalBackendId, stepBackendId, updates) {
+    const goal = goals.value.find(g => g.backendId === goalBackendId)
+    if (goal && goal.steps) {
+      const step = goal.steps.find(s => s.backendId === stepBackendId)
+      if (step) {
+        Object.assign(step, updates)
+        
+        if (DEBUG_MODE) {
+          console.log('[Store] Updated step by backendId:', step.title, updates)
+        }
+        
+        saveToLocalStorage()
+        return true
+      }
+    }
+    return false
+  }
+
   function deleteGoal(goalId) {
     const index = goals.value.findIndex(g => g.id === goalId)
     if (index !== -1) {
@@ -2800,6 +2836,8 @@ export const useAppStore = defineStore('app', () => {
     addGoal,
     updateGoal,
     updateGoalStep,
+    updateGoalTotalStepsData,
+    updateGoalStepByBackendId,
     deleteGoal,
     updateWeeklyPlan,
     updateDailyPlan,
