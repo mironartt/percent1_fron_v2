@@ -4,11 +4,61 @@
 
 ## Обзор изменений
 
-Критическое исправление бага, при котором пользователи застревали в бесконечном цикле онбординга после его завершения. Также добавлена синхронизация целей с бэкендом при завершении урока в Банке целей.
+Критическое исправление бага, при котором пользователи застревали в бесконечном цикле онбординга после его завершения. Проблема была в двух местах:
+1. OnboardingAI не отправлял данные на backend при завершении
+2. При загрузке страницы `finish_onboarding` из user data НЕ синхронизировался с `onboarding.completed`
 
 ---
 
-## 1. Исправление бесконечного цикла онбординга (OnboardingAI.vue)
+## 1. Синхронизация user.finish_onboarding → onboarding.completed (app.js)
+
+### Проблема
+Backend корректно возвращал `finish_onboarding: true` в `/api/rest/front/get-user-data/`, но:
+- `setUser()` устанавливал только `user.value.finish_onboarding`
+- `onboarding.value.completed` оставался `false`
+- `shouldShowOnboarding` проверял ОБА флага: `user.finish_onboarding || onboarding.completed`
+- При любой перезаписи `onboarding.value` онбординг снова показывался
+
+### Решение #1: Синхронизация в setUser()
+
+```javascript
+function setUser(userData) {
+  // ... existing code ...
+  
+  // ДОБАВЛЕНО: синхронизация onboarding.completed
+  if (userData.finish_onboarding) {
+    onboarding.value.completed = true
+    if (DEBUG_MODE) {
+      console.log('[Store] Synced onboarding.completed = true from user.finish_onboarding')
+    }
+  }
+}
+```
+
+### Решение #2: Guard в loadOnboardingFromBackend()
+
+```javascript
+async function loadOnboardingFromBackend() {
+  // ДОБАВЛЕНО: early return если онбординг уже завершён
+  if (user.value.finish_onboarding) {
+    if (DEBUG_MODE) {
+      console.log('[Store] Skipping onboarding load - user.finish_onboarding is true')
+    }
+    onboarding.value.completed = true
+    onboarding.value.loading = false
+    return onboarding.value
+  }
+  
+  // ... existing code ...
+  
+  // ИЗМЕНЕНО: fallback на user.finish_onboarding
+  const isCompleted = data.is_complete ?? user.value.finish_onboarding ?? false
+}
+```
+
+---
+
+## 2. Отправка данных на backend при завершении (OnboardingAI.vue)
 
 ### Симптомы
 После завершения онбординга и подтверждения AI-целей в PlanReview, пользователи снова видели экран "Ваши первые цели" с кнопкой "Сделать первый +1%". Это создавало бесконечный цикл без возможности попасть в личный кабинет.

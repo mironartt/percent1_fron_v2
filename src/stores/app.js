@@ -513,6 +513,13 @@ export const useAppStore = defineStore('app', () => {
         telegram_bot_link: userData.telegram_bot_link || ''
       }
       
+      if (userData.finish_onboarding) {
+        onboarding.value.completed = true
+        if (DEBUG_MODE) {
+          console.log('[Store] Synced onboarding.completed = true from user.finish_onboarding')
+        }
+      }
+      
       if (DEBUG_MODE) {
         console.log('[Store] User set:', {
           id: user.value.id,
@@ -1476,6 +1483,15 @@ export const useAppStore = defineStore('app', () => {
       console.log('[Store] Loading onboarding data from backend...')
     }
     
+    if (user.value.finish_onboarding) {
+      if (DEBUG_MODE) {
+        console.log('[Store] Skipping onboarding load - user.finish_onboarding is true')
+      }
+      onboarding.value.completed = true
+      onboarding.value.loading = false
+      return onboarding.value
+    }
+    
     onboarding.value.loading = true
     
     try {
@@ -1484,8 +1500,10 @@ export const useAppStore = defineStore('app', () => {
       if (result.status === 'ok' && result.data) {
         const data = result.data
         
+        const isCompleted = data.is_complete ?? user.value.finish_onboarding ?? false
+        
         onboarding.value = {
-          completed: data.is_complete ?? false,
+          completed: isCompleted,
           loading: false,
           stepCompleted: data.step_completed ?? 0,
           data: {
