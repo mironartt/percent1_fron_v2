@@ -1626,8 +1626,8 @@ async function doSave(showNotification = true) {
   try {
     const stepsToSave = goalForm.value.steps
       .filter(s => s.title.trim())
-      .map((s, index) => ({
-        id: s.id || `step_${Date.now()}_${index}`,
+      .map((s) => ({
+        id: s.id || `step_${Date.now()}_${Math.random()}`,
         backendId: s.backendId || null,
         title: s.title,
         completed: s.completed || false,
@@ -1636,7 +1636,7 @@ async function doSave(showNotification = true) {
         priority: s.priority || '',
         scheduledDate: s.scheduledDate || '',
         status: s.status || (s.completed ? 'completed' : 'pending'),
-        order: index
+        order: s.order  // Preserve original order from backend, don't overwrite with index!
       }))
 
     const progress = stepsToSave.length > 0
