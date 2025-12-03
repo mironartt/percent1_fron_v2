@@ -2062,14 +2062,13 @@ function unscheduleStep(goalId, stepId) {
   }
 }
 
-// Async refresh goal headers after step changes (without reloading steps)
-async function refreshGoalHeadersAsync(changedGoalId, changedStepId, stepChanges) {
+// Synchronous refresh of goals after calendar changes
+async function refreshGoalsAfterCalendarChange() {
+  console.log('[Planning] Refreshing goals after calendar change...')
   try {
-    const { getGoals } = await import('@/services/api.js')
-    
-    // Build request params matching current filters
+    // Use store method to reload goals - this handles all syncing properly
     const params = {
-      with_steps_data: false,  // Don't need steps, just headers
+      with_steps_data: true,
       page: 1,
       per_page: 100
     }
@@ -2081,37 +2080,61 @@ async function refreshGoalHeadersAsync(changedGoalId, changedStepId, stepChanges
       params.status_filter = filterStatus.value
     }
     
-    const response = await getGoals(params)
-    console.log('[Planning] Refreshed goal headers async')
-    
-    if (response?.data?.results) {
-      // Update goal headers via store methods (proper reactivity)
-      response.data.results.forEach(backendGoal => {
-        // Backend returns goal_id, not id
-        const goalBackendId = backendGoal.goal_id ?? backendGoal.id
-        
-        if (backendGoal.total_steps_data && goalBackendId) {
-          const updated = store.updateGoalTotalStepsData(goalBackendId, {
-            total_steps: backendGoal.total_steps_data.total_steps,
-            complete_steps: backendGoal.total_steps_data.complete_steps,
-            complete_percent: backendGoal.total_steps_data.complete_percent,
-            complete_days_in_row: backendGoal.total_steps_data.complete_days_in_row
-          })
-          
-          if (!updated) {
-            console.warn('[Planning] Goal not found for backendId:', goalBackendId)
-          }
-        }
-      })
-      
-      // If we have a changed step, update it via store
-      if (changedGoalId && changedStepId && stepChanges) {
-        store.updateGoalStepByBackendId(changedGoalId, changedStepId, stepChanges)
-      }
-    }
+    await store.loadGoalsFromBackend(params, false)
+    console.log('[Planning] Goals refreshed successfully')
   } catch (error) {
-    console.error('[Planning] Error refreshing goal headers:', error)
+    console.error('[Planning] Error refreshing goals:', error)
   }
+}
+
+// Local sync: update step in weeklyStepsData (calendar) when changed
+function syncStepToCalendar(goalId, stepId, changes) {
+  for (const dayData of weeklyStepsData.value) {
+    if (!dayData.steps_data) continue
+    const step = dayData.steps_data.find(s => s.goal_id === goalId && s.step_id === stepId)
+    if (step) {
+      if (changes.completed !== undefined) {
+        step.step_is_complete = changes.completed
+      }
+      if (changes.date !== undefined) {
+        step.step_dt = changes.date
+      }
+      if (changes.priority !== undefined) {
+        step.step_priority = changes.priority
+      }
+      if (changes.timeEstimate !== undefined) {
+        step.step_time_duration = changes.timeEstimate
+      }
+      console.log('[Planning] Synced step to calendar:', step.step_title, changes)
+      return true
+    }
+  }
+  return false
+}
+
+// Local sync: update step in store.goals (goals block) when changed
+function syncStepToGoalsBlock(goalId, stepId, changes) {
+  const goal = store.goals.find(g => g.backendId === goalId)
+  if (!goal || !goal.steps) return false
+  
+  const step = goal.steps.find(s => s.backendId === stepId)
+  if (!step) return false
+  
+  if (changes.completed !== undefined) {
+    step.completed = changes.completed
+  }
+  if (changes.date !== undefined) {
+    step.date = changes.date
+  }
+  if (changes.priority !== undefined) {
+    step.priority = changes.priority
+  }
+  if (changes.timeEstimate !== undefined) {
+    step.timeEstimate = changes.timeEstimate
+  }
+  
+  console.log('[Planning] Synced step to goals block:', step.title, changes)
+  return true
 }
 
 async function toggleTaskComplete(taskId) {
@@ -2161,11 +2184,17 @@ async function toggleTaskComplete(taskId) {
         })
         console.log('[Planning] Successfully toggled completion on backend')
         
-        // Reload weekly steps data to reflect changes
-        await loadWeeklySteps()
+        // 1. Local sync: update calendar data
+        syncStepToCalendar(taskData.goal_id, taskData.step_id, { completed: newCompleted })
         
-        // Async refresh goal headers (don't await - runs in background)
-        refreshGoalHeadersAsync(taskData.goal_id, taskData.step_id, { completed: newCompleted })
+        // 2. Local sync: update goals block
+        syncStepToGoalsBlock(taskData.goal_id, taskData.step_id, { completed: newCompleted })
+        
+        // 3. Reload goals from backend to update headers (counts, percents)
+        await refreshGoalsAfterCalendarChange()
+        
+        // 4. Also reload weekly steps to stay in sync
+        await loadWeeklySteps()
       } catch (error) {
         console.error('[Planning] Error toggling task completion:', error)
       }
@@ -2251,11 +2280,14 @@ async function removeTask(taskId) {
         })
         console.log('[Planning] Successfully removed step from calendar on backend')
         
-        // Reload weekly steps data to reflect changes
-        await loadWeeklySteps()
+        // 1. Local sync: update goals block (clear date)
+        syncStepToGoalsBlock(taskToRemove.goal_id, taskToRemove.step_id, { date: null })
         
-        // Async refresh goal headers (don't await - runs in background)
-        refreshGoalHeadersAsync(taskToRemove.goal_id, taskToRemove.step_id, { date: null })
+        // 2. Reload goals from backend to update headers
+        await refreshGoalsAfterCalendarChange()
+        
+        // 3. Reload weekly steps to reflect removal
+        await loadWeeklySteps()
       } catch (error) {
         console.error('[Planning] Error removing task from calendar:', error)
       }
