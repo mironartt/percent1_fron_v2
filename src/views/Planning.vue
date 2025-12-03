@@ -973,6 +973,10 @@ const stepsLoadingForGoal = ref({})
 const stepsPageForGoal = ref({})
 const stepsContainerHeights = ref({}) // Fixed heights for steps containers after pagination
 
+// Weekly planner data from backend API
+const weeklyStepsData = ref([]) // Data from /goals/steps/planned/get/
+const weeklyStepsLoading = ref(false)
+
 // Step filters per goal (each goal can have its own filters)
 const stepsFilters = ref({})
 // { [goalId]: { search: '', priority: '', status: '', sortBy: 'order', sortDir: 'asc' } }
@@ -1780,9 +1784,42 @@ const currentStreak = computed(() => {
   return streak
 })
 
-const priorityOrder = { critical: 0, desirable: 1, attention: 2, optional: 3, '': 4 }
+const priorityOrder = { critical: 0, important: 0, desirable: 1, attention: 2, optional: 3, '': 4 }
+
+// Map backend time_duration to frontend timeEstimate
+const timeDurationMap = { 'half': '30min', 'one': '1h', 'two': '2h', 'three': '3h', 'four': '4h' }
+
+// Map backend priority to frontend priority
+const priorityBackendToFrontend = { 'important': 'critical', 'attention': 'attention', 'optional': 'optional' }
 
 function getTasksForDay(dateStr) {
+  // First check weeklyStepsData from backend API
+  const dayData = weeklyStepsData.value.find(d => d.date === dateStr)
+  if (dayData && dayData.steps_data && dayData.steps_data.length > 0) {
+    // Transform backend format to UI format
+    return dayData.steps_data
+      .map(step => ({
+        id: `backend-${step.step_id}`,
+        goalId: step.goal_id,
+        stepId: step.step_id,
+        stepTitle: step.step_title,
+        goalTitle: step.goal_title,
+        goalCategory: step.goal_category,
+        scheduledDate: step.step_dt,
+        timeEstimate: timeDurationMap[step.step_time_duration] || '',
+        priority: priorityBackendToFrontend[step.step_priority] || step.step_priority || '',
+        completed: step.step_is_complete || false,
+        order: step.step_order,
+        description: step.step_description
+      }))
+      .sort((a, b) => {
+        const priorityA = priorityOrder[a.priority] ?? 4
+        const priorityB = priorityOrder[b.priority] ?? 4
+        return priorityA - priorityB
+      })
+  }
+  
+  // Fallback to local scheduledTasks if no backend data
   return scheduledTasks.value
     .filter(t => t.scheduledDate === dateStr)
     .sort((a, b) => {
@@ -2186,6 +2223,51 @@ function setupDemoData() {
 // Loading state
 const isLoadingGoals = ref(false)
 
+// Load weekly steps data from backend API for the week planner
+async function loadWeeklySteps() {
+  if (weeklyStepsLoading.value) return
+  
+  // Get week date range based on weekOffset
+  const today = new Date()
+  today.setHours(12, 0, 0, 0)
+  const dayOfWeek = today.getDay()
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+  const monday = new Date(today)
+  monday.setDate(today.getDate() + mondayOffset + (weekOffset.value * 7))
+  monday.setHours(12, 0, 0, 0)
+  
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  
+  const dateFrom = formatDateLocal(monday)
+  const dateTo = formatDateLocal(sunday)
+  
+  console.log('[Planning] Loading weekly steps for:', dateFrom, 'to', dateTo)
+  
+  weeklyStepsLoading.value = true
+  
+  try {
+    const { getPlannedSteps } = await import('@/services/api.js')
+    const response = await getPlannedSteps({
+      date_from: dateFrom,
+      date_to: dateTo
+    })
+    
+    if (response.status === 'ok' && response.data?.result_week_data) {
+      weeklyStepsData.value = response.data.result_week_data
+      console.log('[Planning] Loaded weekly steps data:', weeklyStepsData.value.length, 'days')
+    } else {
+      console.warn('[Planning] Unexpected response format:', response)
+      weeklyStepsData.value = []
+    }
+  } catch (error) {
+    console.error('[Planning] Error loading weekly steps:', error)
+    weeklyStepsData.value = []
+  } finally {
+    weeklyStepsLoading.value = false
+  }
+}
+
 // Load goals with steps from backend with filters
 async function loadGoalsFromBackend() {
   if (isLoadingGoals.value) return
@@ -2278,6 +2360,11 @@ watch(searchQuery, (newVal) => {
   }
 })
 
+// Watch weekOffset to reload weekly steps when navigating weeks
+watch(weekOffset, () => {
+  loadWeeklySteps()
+})
+
 onMounted(async () => {
   console.log('[Planning] onMounted - goals count:', store.goals.length)
   console.log('[Planning] onMounted - goalsWithSteps:', goalsWithSteps.value.length)
@@ -2287,6 +2374,9 @@ onMounted(async () => {
   
   // Load goals from backend first
   await loadGoalsFromBackend()
+  
+  // Load weekly steps data for the week planner
+  await loadWeeklySteps()
   
   ensureWeekPlan()
   setupDemoData()
