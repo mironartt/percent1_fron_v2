@@ -13,6 +13,17 @@
 - Goals from 3-step onboarding lesson now batch-save to backend via `/api/rest/front/app/goals/update/`
 - `completeGoalsBankHandler()` modified to send all goals without backendId and update local IDs from response
 
+### Planning Module Step Data Fix
+- **Issue**: Backend step data (priority, dt, time_duration, status) was not displaying in Planning page UI
+- **Root Cause**: `getScheduledDate/Priority/TimeEstimate` functions only checked scheduledTasks array, ignoring step object data
+- **Fix**: Functions now first check scheduledTasks for local changes, then fallback to step object data from backend
+- **Time Duration Mapping**: Added complete backend↔frontend conversion: 'half'↔'30min', 'one'↔'1h', 'two'↔'2h', 'three'↔'3h', 'four'↔'4h'
+
+### Planning Pagination Height Fix
+- **Issue**: When loading more steps, container height would snap back to minimal height
+- **Root Cause**: CSS `max-height: 330px` on `.has-scroll` class limited expanded content
+- **Fix**: Added `expanded-scroll` CSS class and dynamic `getStepsListStyle()` function that calculates appropriate max-height when extra steps are loaded (stepsDisplayLimits > 6)
+
 ## Overview
 The OnePercent MVP is a Vue 3 + Vite application for personal life management and goal tracking, inspired by the "1% improvement" philosophy. It features a Balanced Scorecard (SSP) module for life balance assessment and a Goals Bank for structured goal setting. The project provides a guided, multi-step workflow for personal development, leveraging interactive UI components and an AI Mentor for user engagement, integrating with a Django REST API backend for authentication. The business vision is to empower users with tools for self-improvement, fostering consistent growth and offering a market-leading platform for personal development.
 
