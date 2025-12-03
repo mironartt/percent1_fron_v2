@@ -2092,11 +2092,16 @@ async function refreshGoalHeadersAsync(changedStepId, stepChanges) {
       response.data.results.forEach(backendGoal => {
         const localGoal = goals.value.find(g => g.backendId === backendGoal.id)
         if (localGoal) {
-          // Update header fields
-          localGoal.stepsCount = backendGoal.steps_count || 0
-          localGoal.completedStepsCount = backendGoal.completed_steps_count || 0
-          localGoal.plannedStepsCount = backendGoal.planned_steps_count || 0
-          localGoal.progress = backendGoal.progress || 0
+          // Update totalStepsData from backend response
+          if (backendGoal.total_steps_data) {
+            localGoal.totalStepsData = {
+              total_steps: backendGoal.total_steps_data.total_steps,
+              complete_steps: backendGoal.total_steps_data.complete_steps,
+              complete_percent: backendGoal.total_steps_data.complete_percent,
+              complete_days_in_row: backendGoal.total_steps_data.complete_days_in_row
+            }
+            console.log('[Planning] Updated goal totalStepsData:', localGoal.title, localGoal.totalStepsData)
+          }
           
           // If this goal contains the changed step, update it locally
           if (changedStepId && stepChanges && localGoal.steps) {
