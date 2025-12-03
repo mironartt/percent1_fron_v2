@@ -44,13 +44,101 @@
           <span class="stat-label">XP за неделю</span>
         </div>
       </div>
-      <div class="stat-item mode" @click="showSettingsModal = true">
+      <button class="stat-item mode clickable" @click="showSettingsModal = true" title="Нажмите для настройки геймификации">
         <div class="stat-icon" :class="gameSettings.difficultyMode">
           <Shield :size="20" :stroke-width="1.5" />
         </div>
         <div class="stat-content">
           <span class="stat-value">{{ difficultyLabel }}</span>
           <span class="stat-label">режим</span>
+        </div>
+        <div class="stat-action">
+          <Settings :size="14" :stroke-width="1.5" />
+        </div>
+      </button>
+    </div>
+
+    <div class="analytics-section" v-if="allHabits.length > 0">
+      <div class="analytics-header">
+        <h3>
+          <TrendingUp :size="18" :stroke-width="1.5" />
+          Аналитика
+        </h3>
+      </div>
+      
+      <div class="analytics-grid">
+        <div class="analytics-card completion">
+          <div class="card-header">
+            <span class="card-title">Выполнение</span>
+          </div>
+          <div class="completion-stats">
+            <div class="completion-item">
+              <span class="completion-value">{{ weekCompletionRate }}%</span>
+              <span class="completion-label">за 7 дней</span>
+            </div>
+            <div class="completion-item">
+              <span class="completion-value">{{ monthCompletionRate }}%</span>
+              <span class="completion-label">за 30 дней</span>
+            </div>
+          </div>
+          <div class="trend-chart">
+            <div 
+              v-for="(day, index) in last14Days" 
+              :key="index" 
+              class="trend-bar"
+              :class="{ filled: day.completed > 0, partial: day.completed > 0 && day.completed < day.total }"
+              :style="{ height: day.total > 0 ? (day.completed / day.total * 100) + '%' : '10%' }"
+              :title="`${day.date}: ${day.completed}/${day.total}`"
+            ></div>
+          </div>
+        </div>
+
+        <div class="analytics-card calendar">
+          <div class="card-header">
+            <span class="card-title">Календарь</span>
+            <span class="card-subtitle">последние 4 недели</span>
+          </div>
+          <div class="heatmap">
+            <div class="heatmap-row" v-for="week in calendarWeeks" :key="week.weekNum">
+              <div 
+                v-for="day in week.days" 
+                :key="day.date"
+                class="heatmap-cell"
+                :class="getHeatmapClass(day)"
+                :title="`${formatCalendarDate(day.date)}: ${day.completed}/${day.total}`"
+              ></div>
+            </div>
+          </div>
+          <div class="heatmap-legend">
+            <span>Меньше</span>
+            <div class="legend-scale">
+              <div class="legend-cell level-0"></div>
+              <div class="legend-cell level-1"></div>
+              <div class="legend-cell level-2"></div>
+              <div class="legend-cell level-3"></div>
+            </div>
+            <span>Больше</span>
+          </div>
+        </div>
+
+        <div class="analytics-card achievements">
+          <div class="card-header">
+            <span class="card-title">Достижения</span>
+          </div>
+          <div class="badges-list">
+            <div 
+              v-for="badge in habitBadges" 
+              :key="badge.id"
+              class="badge-item"
+              :class="{ unlocked: badge.unlocked, locked: !badge.unlocked }"
+            >
+              <span class="badge-icon">{{ badge.icon }}</span>
+              <div class="badge-info">
+                <span class="badge-name">{{ badge.name }}</span>
+                <span class="badge-desc">{{ badge.description }}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -309,8 +397,10 @@
           
           <div class="modal-content">
             <div class="settings-section">
-              <h4>Режим сложности</h4>
-              <p class="settings-desc">Определяет, как строго система будет относиться к пропущенным привычкам</p>
+              <div class="section-header">
+                <h4>Режим сложности</h4>
+                <span class="section-hint">Выберите подходящий уровень</span>
+              </div>
               
               <div class="difficulty-options">
                 <button 
@@ -322,6 +412,10 @@
                   <div class="diff-info">
                     <span class="diff-name">Мягкий</span>
                     <span class="diff-desc">Только награды, без штрафов</span>
+                    <span class="diff-details">Идеально для начинающих. Получайте XP за выполненные привычки без риска потерять прогресс.</span>
+                  </div>
+                  <div class="diff-check" v-if="gameSettings.difficultyMode === 'soft'">
+                    <Check :size="16" :stroke-width="2.5" />
                   </div>
                 </button>
                 
@@ -334,6 +428,10 @@
                   <div class="diff-info">
                     <span class="diff-name">Сбалансированный</span>
                     <span class="diff-desc">Штрафы 50% от награды</span>
+                    <span class="diff-details">Баланс мотивации и ответственности. Пропуск привычки снимает половину XP награды. Амнистия 1 раз в неделю.</span>
+                  </div>
+                  <div class="diff-check" v-if="gameSettings.difficultyMode === 'balanced'">
+                    <Check :size="16" :stroke-width="2.5" />
                   </div>
                 </button>
                 
@@ -346,51 +444,84 @@
                   <div class="diff-info">
                     <span class="diff-name">Хардкор</span>
                     <span class="diff-desc">Штрафы равны награде</span>
+                    <span class="diff-details">Максимальная ответственность. Пропуск = полный штраф. Быстрый прогресс при дисциплине, высокий риск при срывах.</span>
+                  </div>
+                  <div class="diff-check" v-if="gameSettings.difficultyMode === 'hardcore'">
+                    <Check :size="16" :stroke-width="2.5" />
                   </div>
                 </button>
               </div>
             </div>
             
             <div class="settings-section">
-              <h4>Штрафы</h4>
+              <div class="section-header">
+                <h4>Санкции</h4>
+                <span class="section-hint">Включите для дополнительной мотивации</span>
+              </div>
+              <p class="settings-info">
+                <Info :size="14" :stroke-width="1.5" />
+                Штрафы снимают XP, но ваш баланс никогда не уйдёт ниже 0
+              </p>
               
-              <label class="toggle-row">
-                <span>Штрафы за пропуск привычек</span>
-                <input type="checkbox" v-model="gameSettings.penaltiesEnabled" @change="saveGameSettings" />
-                <span class="toggle"></span>
-              </label>
-              
-              <label class="toggle-row">
-                <span>Штрафы за дневник</span>
-                <input type="checkbox" v-model="gameSettings.journalPenalty" @change="saveGameSettings" />
-                <span class="toggle"></span>
-              </label>
-              
-              <label class="toggle-row">
-                <span>Штрафы за планирование</span>
-                <input type="checkbox" v-model="gameSettings.planningPenalty" @change="saveGameSettings" />
-                <span class="toggle"></span>
-              </label>
+              <div class="toggle-group">
+                <label class="toggle-row">
+                  <div class="toggle-info">
+                    <span class="toggle-label">Штрафы за пропуск привычек</span>
+                    <span class="toggle-hint">Снимает XP если запланированная привычка не выполнена</span>
+                  </div>
+                  <input type="checkbox" v-model="gameSettings.penaltiesEnabled" @change="saveGameSettings" />
+                  <span class="toggle"></span>
+                </label>
+                
+                <label class="toggle-row">
+                  <div class="toggle-info">
+                    <span class="toggle-label">Штрафы за дневник</span>
+                    <span class="toggle-hint">Снимает XP если дневник не заполнен за день</span>
+                  </div>
+                  <input type="checkbox" v-model="gameSettings.journalPenalty" @change="saveGameSettings" />
+                  <span class="toggle"></span>
+                </label>
+                
+                <label class="toggle-row">
+                  <div class="toggle-info">
+                    <span class="toggle-label">Штрафы за планирование</span>
+                    <span class="toggle-hint">Снимает XP если нет плана на следующий день</span>
+                  </div>
+                  <input type="checkbox" v-model="gameSettings.planningPenalty" @change="saveGameSettings" />
+                  <span class="toggle"></span>
+                </label>
+              </div>
             </div>
             
             <div class="settings-section">
-              <h4>AI-коуч</h4>
+              <div class="section-header">
+                <h4>AI-коуч</h4>
+                <span class="section-hint">Персональный помощник</span>
+              </div>
               
-              <label class="toggle-row">
-                <span>Подсказки и напоминания</span>
-                <input type="checkbox" v-model="gameSettings.aiCoachEnabled" @change="saveGameSettings" />
-                <span class="toggle"></span>
-              </label>
+              <div class="toggle-group">
+                <label class="toggle-row">
+                  <div class="toggle-info">
+                    <span class="toggle-label">Подсказки и напоминания</span>
+                    <span class="toggle-hint">Получайте советы, мотивацию и напоминания от AI-ментора</span>
+                  </div>
+                  <input type="checkbox" v-model="gameSettings.aiCoachEnabled" @change="saveGameSettings" />
+                  <span class="toggle"></span>
+                </label>
+              </div>
               
               <div class="amnesty-info" v-if="gameSettings.penaltiesEnabled">
                 <Gift :size="18" :stroke-width="1.5" />
-                <span>Амнистия: {{ weeklyAmnestyAvailable ? '1 раз в неделю' : 'Использована' }}</span>
+                <div class="amnesty-content">
+                  <span class="amnesty-title">Амнистия</span>
+                  <span class="amnesty-desc">{{ weeklyAmnestyAvailable ? 'Доступна 1 раз в неделю — отменяет все штрафы за день' : 'Использована на этой неделе' }}</span>
+                </div>
                 <button 
                   v-if="weeklyAmnestyAvailable" 
                   class="btn btn-sm btn-secondary"
                   @click="useAmnesty"
                 >
-                  Использовать
+                  Активировать
                 </button>
               </div>
             </div>
@@ -413,7 +544,7 @@ import { useToastStore } from '../stores/toast'
 import { DEBUG_MODE } from '@/config/settings.js'
 import { 
   Flame, Plus, Zap, CheckCircle, Sparkles, Shield, Bot,
-  Check, Pencil, X, Trash2, Settings, Gift, Archive
+  Check, Pencil, X, Trash2, Settings, Gift, Archive, Info, TrendingUp, Calendar, Award
 } from 'lucide-vue-next'
 
 const appStore = useAppStore()
@@ -529,6 +660,99 @@ function isScheduledForDay(habit, dayKey) {
   return habit.scheduleDays?.includes(dayKey)
 }
 
+function getCompletionForDate(dateStr) {
+  const dayOfWeek = new Date(dateStr).getDay()
+  const scheduledForDay = allHabits.value.filter(h => isScheduledForDay(h, dayOfWeek))
+  const completedIds = appStore.habitLog[dateStr] || []
+  const completed = scheduledForDay.filter(h => completedIds.includes(h.id)).length
+  return { completed, total: scheduledForDay.length }
+}
+
+const last14Days = computed(() => {
+  const days = []
+  const today = new Date()
+  for (let i = 13; i >= 0; i--) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - i)
+    const dateStr = date.toISOString().split('T')[0]
+    const { completed, total } = getCompletionForDate(dateStr)
+    days.push({ date: dateStr, completed, total })
+  }
+  return days
+})
+
+const weekCompletionRate = computed(() => {
+  let totalCompleted = 0
+  let totalScheduled = 0
+  const today = new Date()
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - i)
+    const dateStr = date.toISOString().split('T')[0]
+    const { completed, total } = getCompletionForDate(dateStr)
+    totalCompleted += completed
+    totalScheduled += total
+  }
+  return totalScheduled > 0 ? Math.round((totalCompleted / totalScheduled) * 100) : 0
+})
+
+const monthCompletionRate = computed(() => {
+  let totalCompleted = 0
+  let totalScheduled = 0
+  const today = new Date()
+  for (let i = 0; i < 30; i++) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - i)
+    const dateStr = date.toISOString().split('T')[0]
+    const { completed, total } = getCompletionForDate(dateStr)
+    totalCompleted += completed
+    totalScheduled += total
+  }
+  return totalScheduled > 0 ? Math.round((totalCompleted / totalScheduled) * 100) : 0
+})
+
+const calendarWeeks = computed(() => {
+  const weeks = []
+  const today = new Date()
+  for (let w = 3; w >= 0; w--) {
+    const weekDays = []
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(today)
+      date.setDate(date.getDate() - (w * 7 + (6 - d)))
+      const dateStr = date.toISOString().split('T')[0]
+      const { completed, total } = getCompletionForDate(dateStr)
+      weekDays.push({ date: dateStr, completed, total })
+    }
+    weeks.push({ weekNum: 3 - w, days: weekDays })
+  }
+  return weeks
+})
+
+function getHeatmapClass(day) {
+  if (day.total === 0) return 'level-0'
+  const rate = day.completed / day.total
+  if (rate === 0) return 'level-0'
+  if (rate < 0.5) return 'level-1'
+  if (rate < 1) return 'level-2'
+  return 'level-3'
+}
+
+function formatCalendarDate(dateStr) {
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+}
+
+const habitBadges = computed(() => {
+  const streak = habitStreak.value
+  const badges = [
+    { id: 'week', icon: '🔥', name: '7 дней подряд', description: 'Неделя без пропусков', unlocked: streak >= 7 },
+    { id: 'fortnight', icon: '⚡', name: '14 дней подряд', description: 'Две недели дисциплины', unlocked: streak >= 14 },
+    { id: 'month', icon: '🏆', name: '30 дней подряд', description: 'Месяц стабильности', unlocked: streak >= 30 },
+    { id: 'perfectWeek', icon: '💎', name: 'Идеальная неделя', description: '100% выполнение за 7 дней', unlocked: weekCompletionRate.value === 100 },
+  ]
+  return badges
+})
+
 function isScheduledForToday(habit) {
   const today = new Date().getDay()
   return isScheduledForDay(habit, today)
@@ -569,7 +793,7 @@ function pluralizeDaysWord(n) {
 
 function toggleHabitCompletion(habit) {
   if (!isScheduledForToday(habit)) {
-    toast.show('Эта привычка не запланирована на сегодня', 'info')
+    toast.showToast({ title: 'Эта привычка не запланирована на сегодня', type: 'info' })
     return
   }
   
@@ -661,10 +885,10 @@ function saveHabit() {
   
   if (editingHabit.value) {
     appStore.updateHabit(editingHabit.value.id, habitData)
-    toast.show('Привычка обновлена', 'success')
+    toast.showToast({ title: 'Привычка обновлена', type: 'success' })
   } else {
     appStore.addHabit(habitData)
-    toast.show('Привычка создана', 'success')
+    toast.showToast({ title: 'Привычка создана', type: 'success' })
     
     if (allHabits.value.length === 0 && gameSettings.value.aiCoachEnabled) {
       coachHint.value = 'Отлично! Первый шаг сделан. Старайтесь выполнять привычку каждый день — так она закрепится быстрее.'
@@ -677,20 +901,20 @@ function saveHabit() {
 function deleteHabit() {
   if (editingHabit.value) {
     appStore.removeHabit(editingHabit.value.id)
-    toast.show('Привычка удалена', 'info')
+    toast.showToast({ title: 'Привычка удалена', type: 'info' })
     closeModal()
   }
 }
 
 function archiveHabit(habit) {
   appStore.updateHabit(habit.id, { archived: true })
-  toast.show('Привычка архивирована', 'info')
+  toast.showToast({ title: 'Привычка архивирована', type: 'info' })
 }
 
 function confirmDeleteHabit(habit) {
   if (confirm(`Удалить привычку "${habit.name}"?`)) {
     appStore.removeHabit(habit.id)
-    toast.show('Привычка удалена', 'info')
+    toast.showToast({ title: 'Привычка удалена', type: 'info' })
   }
 }
 
@@ -725,7 +949,7 @@ function loadGameSettings() {
 function useAmnesty() {
   gameSettings.value.weeklyAmnestyUsed = new Date().toISOString()
   saveGameSettings()
-  toast.show('Амнистия активирована! Штрафы за сегодня отменены.', 'success')
+  toast.showToast({ title: 'Амнистия активирована!', message: 'Штрафы за сегодня отменены', type: 'success' })
 }
 
 onMounted(() => {
@@ -1074,6 +1298,305 @@ onMounted(() => {
 .btn-icon.danger:hover {
   background: rgba(239, 68, 68, 0.1);
   color: #ef4444;
+}
+
+.stat-item.clickable {
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.stat-item.clickable:hover {
+  border-color: var(--primary-color);
+  background: rgba(124, 58, 237, 0.05);
+}
+
+.stat-action {
+  margin-left: auto;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
+.stat-item.clickable:hover .stat-action {
+  color: var(--primary-color);
+}
+
+.analytics-section {
+  margin-bottom: 1.5rem;
+}
+
+.analytics-header {
+  margin-bottom: 1rem;
+}
+
+.analytics-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.analytics-header h3 svg {
+  color: var(--primary-color);
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.analytics-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+}
+
+.analytics-card .card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.analytics-card .card-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.analytics-card .card-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.completion-stats {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.completion-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.completion-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.completion-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.trend-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 40px;
+}
+
+.trend-bar {
+  flex: 1;
+  min-height: 4px;
+  background: var(--border-color);
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.trend-bar.filled {
+  background: var(--primary-color);
+}
+
+.trend-bar.partial {
+  background: rgba(124, 58, 237, 0.5);
+}
+
+.heatmap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.heatmap-row {
+  display: flex;
+  gap: 3px;
+}
+
+.heatmap-cell {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  background: var(--bg-secondary);
+  transition: all 0.2s ease;
+}
+
+.heatmap-cell.level-0 { background: var(--bg-secondary); }
+.heatmap-cell.level-1 { background: rgba(34, 197, 94, 0.3); }
+.heatmap-cell.level-2 { background: rgba(34, 197, 94, 0.6); }
+.heatmap-cell.level-3 { background: #22c55e; }
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.legend-scale {
+  display: flex;
+  gap: 2px;
+}
+
+.legend-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.legend-cell.level-0 { background: var(--bg-secondary); }
+.legend-cell.level-1 { background: rgba(34, 197, 94, 0.3); }
+.legend-cell.level-2 { background: rgba(34, 197, 94, 0.6); }
+.legend-cell.level-3 { background: #22c55e; }
+
+.badges-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.badge-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  transition: all 0.2s ease;
+}
+
+.badge-item.unlocked {
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.badge-item.locked {
+  opacity: 0.5;
+}
+
+.badge-icon {
+  font-size: 1.25rem;
+}
+
+.badge-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.badge-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.badge-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.section-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.settings-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(124, 58, 237, 0.05);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.settings-info svg {
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.toggle-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.toggle-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.toggle-label {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.toggle-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+.diff-details {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+  line-height: 1.4;
+}
+
+.diff-check {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #22c55e;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.amnesty-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.amnesty-title {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.amnesty-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
 }
 
 .empty-state {
