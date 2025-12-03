@@ -1244,7 +1244,13 @@ async function updateTaskDateWithBackend(task, newDate) {
     })
     console.log('[Planning] Successfully updated step date on backend')
     
-    // Reload weekly steps data to reflect changes
+    // 1. Local sync: update date in goals block
+    syncStepToGoalsBlock(goalId, stepId, { date: newDate })
+    
+    // 2. Reload goals to update headers
+    await refreshGoalsAfterCalendarChange()
+    
+    // 3. Reload weekly steps data to reflect changes
     await loadWeeklySteps()
   } catch (error) {
     console.error('[Planning] Error updating task date on backend:', error)
@@ -1685,6 +1691,12 @@ async function toggleStepComplete(goal, step) {
           is_complete: newCompleted
         }]
       })
+      
+      // Bidirectional sync: update calendar if step is shown there
+      syncStepToCalendar(goal.backendId, step.backendId, { completed: newCompleted })
+      
+      // Reload calendar to refresh
+      await loadWeeklySteps()
     } catch (error) {
       console.error('[Planning] Error syncing step completion to backend:', error)
     }
@@ -1945,6 +1957,18 @@ async function updateScheduledStep(goalId, stepId, field, value) {
         }
         
         await updateGoalSteps({ goals_steps_data: [updateData] })
+        
+        // Bidirectional sync: update calendar if step is shown there
+        const syncChanges = {}
+        if (field === 'priority') {
+          syncChanges.priority = value
+        } else if (field === 'timeEstimate') {
+          syncChanges.timeEstimate = value
+        }
+        syncStepToCalendar(goal.backendId, step.backendId, syncChanges)
+        
+        // Reload calendar to refresh
+        await loadWeeklySteps()
       } catch (error) {
         console.error('[Planning] Error syncing step field to backend:', error)
       }
@@ -2005,6 +2029,14 @@ async function scheduleStep(goalId, step, dateStr) {
           dt: dateStr || '1700-01-01'  // Backend workaround: use old date instead of null
         }]
       })
+      
+      // Bidirectional sync: update or remove from calendar
+      if (dateStr) {
+        syncStepToCalendar(goal.backendId, step.backendId, { date: dateStr })
+      }
+      
+      // Reload calendar to refresh (handles both add and remove)
+      await loadWeeklySteps()
     } catch (error) {
       console.error('[Planning] Error syncing step date to backend:', error)
     }
@@ -2046,7 +2078,13 @@ async function scheduleStepWithBackend(goalId, stepId, stepTitle, goal, dateStr)
     })
     console.log('[Planning] Successfully scheduled step on backend')
     
-    // Reload weekly steps data to reflect changes
+    // 1. Local sync: update date in goals block
+    syncStepToGoalsBlock(backendGoalId, backendStepId, { date: dateStr })
+    
+    // 2. Reload goals to update headers
+    await refreshGoalsAfterCalendarChange()
+    
+    // 3. Reload weekly steps data to reflect changes
     await loadWeeklySteps()
   } catch (error) {
     console.error('[Planning] Error scheduling step on backend:', error)
