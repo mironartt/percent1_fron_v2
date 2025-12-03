@@ -1682,6 +1682,11 @@ function takeStepsSnapshot() {
 function getChangedSteps(currentSteps) {
   const changedSteps = []
   
+  // DEBUG: Log snapshot and current steps for comparison
+  console.log('[GoalEdit] getChangedSteps DEBUG:')
+  console.log('  Snapshot:', stepsSnapshot.map(s => ({ id: s.id, order: s.order, title: s.title?.substring(0, 20) })))
+  console.log('  Current:', currentSteps.map(s => ({ id: s.id, order: s.order, title: s.title?.substring(0, 20) })))
+  
   currentSteps.forEach((step) => {
     const snapshot = stepsSnapshot.find(s => s.id === step.id)
     
@@ -1700,7 +1705,10 @@ function getChangedSteps(currentSteps) {
       if ((step.priority || '') !== snapshot.priority) changes.push('priority')
       if ((step.timeEstimate || '') !== snapshot.timeEstimate) changes.push('time_duration')
       if ((step.scheduledDate || '') !== snapshot.scheduledDate) changes.push('dt')
-      if (step.order !== snapshot.order) changes.push('order')
+      if (step.order !== snapshot.order) {
+        console.log(`  [ORDER DIFF] step ${step.id}: current=${step.order} (${typeof step.order}), snapshot=${snapshot.order} (${typeof snapshot.order})`)
+        changes.push('order')
+      }
       if ((step.completed || false) !== snapshot.completed) changes.push('is_complete')
       
       if (changes.length > 0) {
