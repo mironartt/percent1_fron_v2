@@ -834,18 +834,19 @@ function getOriginalIndex(step) {
 let filterDebounceTimer = null
 let previousHasFilters = false
 
-watch([searchQuery, filterStatus, filterPriority, sortBy], () => {
+watch([searchQuery, filterStatus, filterPriority, sortBy, sortDirection], () => {
   stepsDisplayLimit.value = 10
   
   // Debounce for search query, immediate for other filters
   if (filterDebounceTimer) clearTimeout(filterDebounceTimer)
   
-  const hasFilters = searchQuery.value || filterStatus.value || filterPriority.value || sortBy.value !== 'order'
-  const filtersCleared = previousHasFilters && !hasFilters
+  const hasFiltersOrSort = searchQuery.value || filterStatus.value || filterPriority.value || 
+    sortBy.value !== 'order' || sortDirection.value !== 'asc'
+  const filtersCleared = previousHasFilters && !hasFiltersOrSort
   
   if (goalBackendId.value) {
-    // Always reload: when filters active, when filters cleared, or when sort changed
-    const needsReload = hasFilters || filtersCleared
+    // Always reload: when filters/sort active, when filters cleared, or when sort changed
+    const needsReload = hasFiltersOrSort || filtersCleared
     
     if (needsReload) {
       // Shorter debounce for non-search filters, longer for search
@@ -857,7 +858,7 @@ watch([searchQuery, filterStatus, filterPriority, sortBy], () => {
     }
   }
   
-  previousHasFilters = hasFilters
+  previousHasFilters = hasFiltersOrSort
 })
 
 // Map frontend sort keys to backend order_by values
