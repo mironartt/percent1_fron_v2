@@ -93,7 +93,12 @@
             <h3>Декомпозиция на шаги</h3>
             <span class="steps-count">
               {{ goalForm.steps.filter(s => !s.isNew).length }}
-              <template v-if="totalStepsFromBackend > 0"> из {{ totalStepsFromBackend }}</template>
+              <template v-if="totalFilteredSteps > 0 && totalFilteredSteps !== totalStepsFromBackend">
+                из {{ totalFilteredSteps }} (всего {{ totalStepsFromBackend }})
+              </template>
+              <template v-else-if="totalStepsFromBackend > 0">
+                из {{ totalStepsFromBackend }}
+              </template>
               шагов
             </span>
           </div>
@@ -937,6 +942,7 @@ async function loadStepsWithFilters() {
     if (result.status === 'ok' && result.data) {
       // Update pagination info (reset to page 1 on filter/sort change)
       totalStepsFromBackend.value = result.data.total_items || result.data.goal_data?.total_data?.total_steps || 0
+      totalFilteredSteps.value = result.data.total_filtered_items || totalStepsFromBackend.value
       totalStepsPages.value = result.data.total_pages || 1
       stepsPageSize.value = result.data.page_size || 6
       currentStepsPage.value = 1
@@ -1154,7 +1160,8 @@ const isLoadingSteps = ref(false)
 const stepsLoadedFromBackend = ref(false)
 
 // Steps pagination from backend
-const totalStepsFromBackend = ref(0)
+const totalStepsFromBackend = ref(0)      // total_items (всего без фильтров)
+const totalFilteredSteps = ref(0)         // total_filtered_items (с учётом фильтров)
 const currentStepsPage = ref(1)
 const stepsPageSize = ref(6)
 const totalStepsPages = ref(1)
@@ -1178,12 +1185,13 @@ const hasMoreStepsToLoad = computed(() => {
 })
 
 const remainingStepsToLoadCount = computed(() => {
-  // Calculate remaining based on total and pages already loaded
+  // Calculate remaining based on filtered total and pages already loaded
+  const total = totalFilteredSteps.value || totalStepsFromBackend.value
   const loadedPagesCount = currentStepsPage.value
   const alreadyLoadedCount = loadedPagesCount * stepsPageSize.value
   // On last page there might be fewer items than page_size, so cap at total
-  const effectiveLoaded = Math.min(alreadyLoadedCount, totalStepsFromBackend.value)
-  return Math.max(0, totalStepsFromBackend.value - effectiveLoaded)
+  const effectiveLoaded = Math.min(alreadyLoadedCount, total)
+  return Math.max(0, total - effectiveLoaded)
 })
 
 // Load steps from backend
@@ -1220,6 +1228,7 @@ async function loadStepsFromBackend(page = 1, append = false) {
     if (result.status === 'ok' && result.data) {
       // Update pagination info
       totalStepsFromBackend.value = result.data.total_items || result.data.goal_data?.total_data?.total_steps || 0
+      totalFilteredSteps.value = result.data.total_filtered_items || totalStepsFromBackend.value
       totalStepsPages.value = result.data.total_pages || 1
       stepsPageSize.value = result.data.page_size || 6
       currentStepsPage.value = page
