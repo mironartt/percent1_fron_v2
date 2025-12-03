@@ -730,10 +730,9 @@
                 <div class="filter-group">
                   <select v-model="filterStatus" class="filter-select">
                     <option value="">Все статусы</option>
-                    <option value="scheduled">Запланированы</option>
-                    <option value="unscheduled">Не запланированы</option>
-                    <option value="partial">Частично запланированы</option>
-                    <option value="full">Полностью запланированы</option>
+                    <option value="work">В работе</option>
+                    <option value="complete">Завершенные</option>
+                    <option value="unstatus">Не оценённые</option>
                   </select>
                 </div>
                 <button 
@@ -1245,24 +1244,8 @@ const filteredGoalsWithSteps = computed(() => {
       return false
     }
     
-    // Status filter (based on goal progress or scheduled status)
-    if (filterStatus.value) {
-      const scheduledCount = getScheduledStepsCount(goal)
-      const totalSteps = getUncompletedSteps(goal).length
-      
-      if (filterStatus.value === 'scheduled' && scheduledCount === 0) {
-        return false
-      }
-      if (filterStatus.value === 'unscheduled' && scheduledCount > 0) {
-        return false
-      }
-      if (filterStatus.value === 'partial' && (scheduledCount === 0 || scheduledCount >= totalSteps)) {
-        return false
-      }
-      if (filterStatus.value === 'full' && scheduledCount < totalSteps) {
-        return false
-      }
-    }
+    // Status filter is now server-side (work/complete/unstatus)
+    // No client-side filtering needed - data is already filtered by backend
     
     // Week filter - goals with steps that intersect with current week
     if (filterThisWeek.value) {
@@ -1521,11 +1504,7 @@ function loadFiltersFromUrl() {
   if (route.query.week === '1') filterThisWeek.value = true
 }
 
-// Watch filters and update URL (with debounce effect via check in updateUrlParams)
-watch([searchQuery, filterSphere, filterStatus, filterThisWeek], () => {
-  updateUrlParams()
-  resetPagination()
-})
+// Note: Filter watching is now handled by onFilterChange and searchQuery watcher in loadGoalsFromBackend section
 
 // Format date for step display - includes day of week for dates outside current week
 function formatStepDate(goalId, stepId) {
@@ -2207,21 +2186,47 @@ function setupDemoData() {
 // Loading state
 const isLoadingGoals = ref(false)
 
-// Load goals with steps from backend
+// Load goals with steps from backend with filters
 async function loadGoalsFromBackend() {
   if (isLoadingGoals.value) return
   
   isLoadingGoals.value = true
   
   try {
-    // Load goals with steps data for planning
-    // Using status_filter=work to get only goals "in work"
-    const result = await store.loadGoalsFromBackend({
+    // Build params with filters
+    const params = {
       with_steps_data: true,
       order_by: 'date_created',
-      order_direction: 'desc',
-      status_filter: 'work' // Only goals in work - using correct API param name
-    })
+      order_direction: 'desc'
+    }
+    
+    // Add status filter only if specified (like GoalsBank.vue)
+    if (filterStatus.value) {
+      params.status_filter = filterStatus.value
+    }
+    // When empty, don't set status_filter - returns all goals
+    
+    // Add sphere/category filter
+    if (filterSphere.value) {
+      const backendCategory = store.categoryFrontendToBackend[filterSphere.value]
+      if (backendCategory) {
+        params.category_filter = backendCategory
+      }
+    }
+    
+    // Add text search filter (min 3 characters)
+    if (searchQuery.value && searchQuery.value.length >= 3) {
+      params.query_filter = searchQuery.value
+    }
+    
+    // Add result_week_data flag when "This week" filter is active
+    if (filterThisWeek.value) {
+      params.result_week_data = true
+    }
+    
+    console.log('[Planning] Loading goals with params:', params)
+    
+    const result = await store.loadGoalsFromBackend(params)
     
     if (result.success) {
       console.log('[Planning] Loaded goals from backend, count:', result.count || store.goals.length)
@@ -2235,6 +2240,43 @@ async function loadGoalsFromBackend() {
     isLoadingGoals.value = false
   }
 }
+
+// Debounce timer for filter changes
+let filterDebounceTimer = null
+
+// Reload data when filters change
+function onFilterChange() {
+  if (filterDebounceTimer) {
+    clearTimeout(filterDebounceTimer)
+  }
+  
+  filterDebounceTimer = setTimeout(() => {
+    resetPagination()
+    updateUrlParams()
+    loadGoalsFromBackend()
+  }, 300)
+}
+
+// Watch filters and reload data
+watch([filterSphere, filterStatus, filterThisWeek], () => {
+  onFilterChange()
+})
+
+// Watch search query with longer debounce
+watch(searchQuery, (newVal) => {
+  if (filterDebounceTimer) {
+    clearTimeout(filterDebounceTimer)
+  }
+  
+  // Only search if 3+ characters or empty (reset)
+  if (newVal.length >= 3 || newVal.length === 0) {
+    filterDebounceTimer = setTimeout(() => {
+      resetPagination()
+      updateUrlParams()
+      loadGoalsFromBackend()
+    }, 500)
+  }
+})
 
 onMounted(async () => {
   console.log('[Planning] onMounted - goals count:', store.goals.length)
