@@ -717,6 +717,44 @@ export async function deleteDiaryEntry(diaryId) {
   })
 }
 
+// ==================== PLANNING API ====================
+
+/**
+ * Получить запланированные шаги по диапазону дат
+ * @param {object} params - Параметры запроса
+ * @param {string} params.date_from - Начальная дата (YYYY-MM-DD)
+ * @param {string} params.date_to - Конечная дата (YYYY-MM-DD)
+ * @returns {Promise<object>} - Данные по дням с шагами
+ * 
+ * Response format:
+ * {
+ *   status: 'ok',
+ *   data: {
+ *     date_from: 'YYYY-MM-DD',
+ *     date_to: 'YYYY-MM-DD',
+ *     result_week_data: [
+ *       {
+ *         date: 'YYYY-MM-DD',
+ *         steps_data: [...],
+ *         total_steps: number,
+ *         total_complete: number,
+ *         total_uncomplete: number,
+ *         complete_percent: number
+ *       },
+ *       ...
+ *     ]
+ *   }
+ * }
+ */
+export async function getPlannedSteps(params) {
+  const requestData = {
+    date_from: params.date_from,
+    date_to: params.date_to
+  }
+  
+  return request('POST', '/api/rest/front/app/goals/steps/planned/get/', requestData)
+}
+
 // Экспорт API как объекта для удобства
 export const api = {
   request,
@@ -756,7 +794,9 @@ export const api = {
   getDiaryEntries,
   updateDiaryEntry,
   createDiaryEntry,
-  deleteDiaryEntry
+  deleteDiaryEntry,
+  // Planning API
+  getPlannedSteps
 }
 
 export default api

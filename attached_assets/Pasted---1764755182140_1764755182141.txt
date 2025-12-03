@@ -1,0 +1,415 @@
+Хорошо. Теперь идет дальше по доработке данной страницы.
+Ниже я предоставлю тебе много данных, проанализируй из и составь план твоих работ по проделыванию указанного.
+После моего ознакомления дальше решим, будем делать или будут правки в плане.
+
+
+Добавлен эндпоинт: `/api/rest/front/app/goals/steps/planned/get/` - получение данных по шагам в рамках указанного временного интервала для планировщика.
+На вход ожидает, пример:
+```
+// Основной запрос к API
+function callApi() {
+    const url = 'http://127.0.0.1:8017/api/rest/front/app/goals/steps/planned/get/';
+    const data = {
+        "date_from": "2025-12-02",
+        "date_to": "2025-12-10"
+    };
+    const headers = {
+        "Content-Type": "application/json"
+    };
+
+    // Добавляем CSRF токен в заголовки
+    const csrftoken = getCookie('csrftoken');
+    if (csrftoken) {
+        headers['X-CSRFToken'] = csrftoken;
+    }
+
+    return fetch(url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: headers,
+            body: JSON.stringify(data),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Response:', data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// Использование: сначала инициализируем CSRF, потом вызываем эндпоинт
+initCsrf()
+    .then(() => callApi())
+    .catch(console.error);
+```
+Пример ответа:
+```
+{
+  "status" : "ok",
+  "data" : {
+    "date_from" : "2025-12-01",
+    "date_to" : "2025-12-07",
+    "result_week_data" : [ {
+      "date" : "2025-12-01",
+      "steps_data" : [ ],
+      "total_steps" : 0,
+      "total_complete" : 0,
+      "total_uncomplete" : 0,
+      "complete_percent" : 0
+    }, {
+      "date" : "2025-12-02",
+      "steps_data" : [ {
+        "goal_id" : 23,
+        "goal_title" : "Улучшить финансовую дисциплину",
+        "goal_category" : "welfare",
+        "goal_status" : "work",
+        "goal_score" : "true",
+        "goal_date_created" : "2025-12-02 15:29:10",
+        "step_id" : 18,
+        "step_title" : "Проверить корректность формул",
+        "step_description" : "Обязательно протестировать расчёты",
+        "step_priority" : "attention",
+        "step_time_duration" : "four",
+        "step_dt" : "2025-12-02",
+        "step_order" : 22,
+        "step_is_complete" : false,
+        "step_date_completed" : null,
+        "step_date_created" : "2025-12-01 16:12:22"
+      }, {
+        "goal_id" : 23,
+        "goal_title" : "Улучшить финансовую дисциплину",
+        "goal_category" : "welfare",
+        "goal_status" : "work",
+        "goal_score" : "true",
+        "goal_date_created" : "2025-12-02 15:29:10",
+        "step_id" : 102,
+        "step_title" : "Проверить корректность формул2",
+        "step_description" : "Обязательно протестировать расчёты",
+        "step_priority" : "attention",
+        "step_time_duration" : "four",
+        "step_dt" : "2025-12-02",
+        "step_order" : 19,
+        "step_is_complete" : false,
+        "step_date_completed" : null,
+        "step_date_created" : "2025-12-02 08:50:15"
+      }, {
+        "goal_id" : 23,
+        "goal_title" : "Улучшить финансовую дисциплину",
+        "goal_category" : "welfare",
+        "goal_status" : "work",
+        "goal_score" : "true",
+        "goal_date_created" : "2025-12-02 15:29:10",
+        "step_id" : 100,
+        "step_title" : "Создать шаблон документа3",
+        "step_description" : "Определить структуру файла",
+        "step_priority" : "important",
+        "step_time_duration" : "two",
+        "step_dt" : "2025-12-02",
+        "step_order" : 7,
+        "step_is_complete" : false,
+        "step_date_completed" : null,
+        "step_date_created" : "2025-12-02 08:50:15"
+      }, {
+        "goal_id" : 23,
+        "goal_title" : "Улучшить финансовую дисциплину",
+        "goal_category" : "welfare",
+        "goal_status" : "work",
+        "goal_score" : "true",
+        "goal_date_created" : "2025-12-02 15:29:10",
+        "step_id" : 77,
+        "step_title" : "Проверить корректность формул",
+        "step_description" : "Обязательно протестировать расчёты",
+        "step_priority" : "attention",
+        "step_time_duration" : "four",
+        "step_dt" : "2025-12-02",
+        "step_order" : 23,
+        "step_is_complete" : false,
+        "step_date_completed" : null,
+        "step_date_created" : "2025-12-02 08:48:28"
+      }, {
+        "goal_id" : 23,
+        "goal_title" : "Улучшить финансовую дисциплину",
+        "goal_category" : "welfare",
+        "goal_status" : "work",
+        "goal_score" : "true",
+        "goal_date_created" : "2025-12-02 15:29:10",
+        "step_id" : 76,
+        "step_title" : "Настроить оформление",
+        "step_description" : "Использовать фирменные стили",
+        "step_priority" : "optional",
+        "step_time_duration" : null,
+        "step_dt" : "2025-12-02",
+        "step_order" : 12,
+        "step_is_complete" : false,
+        "step_date_completed" : null,
+        "step_date_created" : "2025-12-02 08:48:28"
+      }, {
+        "goal_id" : 23,
+        "goal_title" : "Улучшить финансовую дисциплину",
+        "goal_category" : "welfare",
+        "goal_status" : "work",
+        "goal_score" : "true",
+        "goal_date_created" : "2025-12-02 15:29:10",
+        "step_id" : 79,
+        "step_title" : "Ожидание результатов",
+        "step_description" : "Ожидание ответа",
+        "step_priority" : null,
+        "step_time_duration" : null,
+        "step_dt" : "2025-12-02",
+        "step_order" : 13,
+        "step_is_complete" : false,
+        "step_date_completed" : null,
+        "step_date_created" : "2025-12-02 08:48:28"
+      }, {
+        "goal_id" : 23,
+        "goal_title" : "Улучшить финансовую дисциплину",
+        "goal_category" : "welfare",
+        "goal_status" : "work",
+        "goal_score" : "true",
+        "goal_date_created" : "2025-12-02 15:29:10",
+        "step_id" : 128,
+        "step_title" : "Отправить результат на проверку",
+        "step_description" : "Передать ответственному",
+        "step_priority" : "optional",
+        "step_time_duration" : "three",
+        "step_dt" : "2025-12-02",
+        "step_order" : 4,
+        "step_is_complete" : false,
+        "step_date_completed" : null,
+        "step_date_created" : "2025-12-02 08:51:02"
+      } ],
+      "total_steps" : 7,
+      "total_complete" : 0,
+      "total_uncomplete" : 7,
+      "complete_percent" : 0
+    }, {
+      "date" : "2025-12-03",
+      "steps_data" : [ {
+        "goal_id" : 23,
+        "goal_title" : "Улучшить финансовую дисциплину",
+        "goal_category" : "welfare",
+        "goal_status" : "work",
+        "goal_score" : "true",
+        "goal_date_created" : "2025-12-02 15:29:10",
+        "step_id" : 126,
+        "step_title" : "Настроить оформление",
+        "step_description" : "Использовать фирменные стили",
+        "step_priority" : "optional",
+        "step_time_duration" : null,
+        "step_dt" : "2025-12-03",
+        "step_order" : 11,
+        "step_is_complete" : false,
+        "step_date_completed" : null,
+        "step_date_created" : "2025-12-02 08:51:02"
+      }, {
+        "goal_id" : 23,
+        "goal_title" : "Улучшить финансовую дисциплину",
+        "goal_category" : "welfare",
+        "goal_status" : "work",
+        "goal_score" : "true",
+        "goal_date_created" : "2025-12-02 15:29:10",
+        "step_id" : 127,
+        "step_title" : "Проверить корректность формул1",
+        "step_description" : "Обязательно протестировать расчёты",
+        "step_priority" : "attention",
+        "step_time_duration" : "four",
+        "step_dt" : "2025-12-03",
+        "step_order" : 15,
+        "step_is_complete" : false,
+        "step_date_completed" : null,
+        "step_date_created" : "2025-12-02 08:51:02"
+      } ],
+      "total_steps" : 2,
+      "total_complete" : 0,
+      "total_uncomplete" : 2,
+      "complete_percent" : 0
+    }, {
+      "date" : "2025-12-04",
+      "steps_data" : [ {
+        "goal_id" : 23,
+        "goal_title" : "Улучшить финансовую дисциплину",
+        "goal_category" : "welfare",
+        "goal_status" : "work",
+        "goal_score" : "true",
+        "goal_date_created" : "2025-12-02 15:29:10",
+        "step_id" : 129,
+        "step_title" : "Ожидание результатов",
+        "step_description" : "Ожидание ответа",
+        "step_priority" : "optional",
+        "step_time_duration" : null,
+        "step_dt" : "2025-12-04",
+        "step_order" : 0,
+        "step_is_complete" : false,
+        "step_date_completed" : null,
+        "step_date_created" : "2025-12-02 08:51:02"
+      } ],
+      "total_steps" : 1,
+      "total_complete" : 0,
+      "total_uncomplete" : 1,
+      "complete_percent" : 0
+    }, {
+      "date" : "2025-12-05",
+      "steps_data" : [ {
+        "goal_id" : 23,
+        "goal_title" : "Улучшить финансовую дисциплину",
+        "goal_category" : "welfare",
+        "goal_status" : "work",
+        "goal_score" : "true",
+        "goal_date_created" : "2025-12-02 15:29:10",
+        "step_id" : 125,
+        "step_title" : "Создать шаблон документа4",
+        "step_description" : "Определить структуру файла",
+        "step_priority" : "important",
+        "step_time_duration" : "two",
+        "step_dt" : "2025-12-05",
+        "step_order" : 14,
+        "step_is_complete" : true,
+        "step_date_completed" : "2025-12-03 05:01:49",
+        "step_date_created" : "2025-12-02 08:51:02"
+      } ],
+      "total_steps" : 1,
+      "total_complete" : 1,
+      "total_uncomplete" : 0,
+      "complete_percent" : 100
+    }, {
+      "date" : "2025-12-06",
+      "steps_data" : [ {
+        "goal_id" : 23,
+        "goal_title" : "Улучшить финансовую дисциплину",
+        "goal_category" : "welfare",
+        "goal_status" : "work",
+        "goal_score" : "true",
+        "goal_date_created" : "2025-12-02 15:29:10",
+        "step_id" : 17,
+        "step_title" : "Настроить оформление4",
+        "step_description" : "Использовать фирменные стили",
+        "step_priority" : "attention",
+        "step_time_duration" : null,
+        "step_dt" : "2025-12-06",
+        "step_order" : 16,
+        "step_is_complete" : false,
+        "step_date_completed" : null,
+        "step_date_created" : "2025-12-01 16:12:22"
+      }, {
+        "goal_id" : 23,
+        "goal_title" : "Улучшить финансовую дисциплину",
+        "goal_category" : "welfare",
+        "goal_status" : "work",
+        "goal_score" : "true",
+        "goal_date_created" : "2025-12-02 15:29:10",
+        "step_id" : 16,
+        "step_title" : "Создать шаблон документа1",
+        "step_description" : "Определить структуру файла",
+        "step_priority" : "important",
+        "step_time_duration" : "two",
+        "step_dt" : "2025-12-06",
+        "step_order" : 9,
+        "step_is_complete" : false,
+        "step_date_completed" : null,
+        "step_date_created" : "2025-12-01 16:12:22"
+      } ],
+      "total_steps" : 2,
+      "total_complete" : 0,
+      "total_uncomplete" : 2,
+      "complete_percent" : 0
+    }, {
+      "date" : "2025-12-07",
+      "steps_data" : [ {
+        "goal_id" : 23,
+        "goal_title" : "Улучшить финансовую дисциплину",
+        "goal_category" : "welfare",
+        "goal_status" : "work",
+        "goal_score" : "true",
+        "goal_date_created" : "2025-12-02 15:29:10",
+        "step_id" : 19,
+        "step_title" : "Отправить результат на проверку",
+        "step_description" : "Передать ответственному",
+        "step_priority" : "optional",
+        "step_time_duration" : "one",
+        "step_dt" : "2025-12-07",
+        "step_order" : 10,
+        "step_is_complete" : false,
+        "step_date_completed" : null,
+        "step_date_created" : "2025-12-01 16:12:22"
+      } ],
+      "total_steps" : 1,
+      "total_complete" : 0,
+      "total_uncomplete" : 1,
+      "complete_percent" : 0
+    } ]
+  }
+}
+```
+Сериализатор ответа (чтобы понимать что значат поля и их типы):
+```
+class WeekStepsDataGetGoalsDetailPlannedDataResponseSerializer(BaseSerializer):
+    goal_id = RestIntegerField(help_text='ID цели', example=1, required=True, min_value=1)
+    goal_title = RestCharField(required=True, max_length=500, help_text="Название цели", example="Выучить английский язык")
+    goal_category = RestChoiceField(choices=user_data.CATEGORY_CHOICES, required=False, allow_null=True, allow_blank=True, help_text="Категория цели", example="hobby")
+    goal_status = RestChoiceField(choices=user_data.GOAL_STATUSES, required=False, allow_null=True, help_text="Статус цели", example="work")
+    goal_score = RestChoiceField(choices=user_data.GOAL_TYPES, required=False, allow_null=True, allow_blank=True, help_text="Оценка цели _(истинная/ложная)_", example="true")
+    goal_date_created = RestDateTimeField(required=False, help_text="Дата создания цели", format="%Y-%m-%d %H:%M:%S", example="2023-08-27 15:43:45")
+
+    step_id = RestIntegerField(help_text='ID шага', example=1, required=True, min_value=1)
+    step_title = RestCharField(required=True, max_length=500, help_text="Название шага", example="Выучить английский язык")
+    step_description = RestCharField(required=True, max_length=10000, help_text="Описание шага", example="Выучить английский язык")
+    step_priority = RestChoiceField(choices=user_data.STEP_PRIORITY_CHOICES, required=False, allow_null=True, allow_blank=True, help_text="Приоритет шага", example="planned")
+    step_time_duration = RestChoiceField(choices=user_data.STEP_TIME_CHOICES, required=False, allow_null=True, allow_blank=True, help_text="Временный интервал шага", example="planned")
+    step_dt = RestDateField(required=False, allow_null=True, help_text="Запланированная дата выполнения (формат: 'YYYY-MM-DD').", example="2024-10-10", format="%Y-%m-%d")
+    step_order = RestIntegerField(help_text='Порядковый номер шага (для сортировки по выбранному пользователю формату)', example=1, required=True, allow_null=False, min_value=1)
+    step_is_complete = RestBooleanField(required=False, allow_null=True, help_text='Шаг выполнен', example=False)
+    step_date_created = RestDateTimeField(required=False, help_text="Дата создания шага", format="%Y-%m-%d %H:%M:%S", example="2023-08-27 15:43:45")
+    step_date_completed = RestDateTimeField(required=False, help_text="Дата завершения шага", format="%Y-%m-%d %H:%M:%S", example="2023-08-27 15:43:45")
+
+
+class WeekDataGetGoalsDetailPlannedDataResponseSerializer(BaseSerializer):
+    date = RestDateField(required=False, allow_null=True, help_text="Дата (формат: 'YYYY-MM-DD').", example="2024-10-10", format="%Y-%m-%d")
+    steps_data = RestListField(child=WeekStepsDataGetGoalsDetailPlannedDataResponseSerializer(), required=True, help_text='Данные по шагам в рамках указанного дня', example_count=1)
+    total_steps = RestIntegerField(help_text='Всего шагов за указанный день', example=1, required=False, min_value=0)
+    complete_steps = RestIntegerField(help_text='Выполнено шагов за указанный день _(штук)_', example=1, required=False, min_value=0)
+    uncomplete_steps = RestIntegerField(help_text='Выполнено НЕ шагов за указанный день _(штук)_', example=1, required=False, min_value=0)
+    complete_percent = RestIntegerField(help_text='Процент выполненных шагов за указанный день _(процент)_', example=1, required=False, min_value=0)
+
+
+class DataGetGoalsDetailPlannedDataResponseSerializer(BaseSerializer):
+    date_from = RestDateField(required=False, allow_null=True, help_text="Дата начала отрезка по которому возвращаются данные (формат: 'YYYY-MM-DD').", example="2024-10-10", format="%Y-%m-%d")
+    date_to = RestDateField(required=False, allow_null=True, help_text="Дата окончания отрезка по которому возвращаются данные (формат: 'YYYY-MM-DD').", example="2024-10-10", format="%Y-%m-%d")
+    result_week_data = RestListField(child=WeekDataGetGoalsDetailPlannedDataResponseSerializer(), required=True, help_text='Данные по шагам в рамках указанного интервала', example_count=7)
+
+
+class GetGoalsDetailPlannedDataResponseSerializer(BaseSerializer):
+    """
+    Шаги цели - получение данных
+    """
+    status = RestChoiceField(required=False, choices=['ok', 'error'], help_text='str: Статус ответа ("ok" или "error")')
+    data = DataGetGoalsDetailPlannedDataResponseSerializer(required=False, help_text="Блок с данными ответа по эндпоинту")
+```
+
+Описание из доки для данного эндпоинта:
+```
+Получение данных по запланированным шагам _(раздел "планирование")_.
+На вход ожидает:
+- `date_from` - Дата начала отрезка (формат: `'YYYY-MM-DD'`).
+- `date_to`   - Дата окончания отрезка (формат: `'YYYY-MM-DD'`).
+
+Можно не указывать `date_from` и `date_to`, в таком случае будет использоваться текущая неделя.
+Если будет указан один из параметров (или `date_from` или `date_to`), то интервал будет преобразован в начало и конец недели указанной одной из дат.
+Дата начала интервала не может быть старше даты окончания интервала _(т.е. `2025-10-01` не может быть `date_to`, если `date_from=2025-10-05`)_.
+```
+
+Как использовать: при открытие страницы "планировщик", нужно делать запрос к данному эндпоинту, и на основание ответа от него заполнять данными дни в центрально блоке страницы: "План на неделю".
+Соответственно если юзер будет листать недели, то нужно каждый раз делать запрос на бэк, с нужными датами, и отрисовывать его ответ.
+
+----
+
+Также в нижнем блоке (страница та же: "планирование") в "Цели и шаги", есть фильтр "Эта неделя".
+По клику по нему нужно отправлять запрос на `'/api/rest/front/app/goals/get/'`, но в запросе дополнительно указывать флаг: `with_steps_on_current_week`.
+Это флаг:
+```
+# сериализатор на бэке
+with_steps_on_current_week = RestBooleanField(required=False, allow_null=True, help_text='Получить данные о целях, у которых есть шаги запланированные на данную неделю')
+```
+Т.е. он также вернет цели и первую страницу их шагов. Но будут лишь цели, у которых в шагах есть шаги с `dt` (запланированные) в рамках текущей недели.
+
+Остальные фильтры для целей, это: текстовой поиск, фильтр по категориям, и фильтр по статусам, должны работать аналогично как и на странице "банк целей"

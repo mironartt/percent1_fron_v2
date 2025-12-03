@@ -222,6 +222,23 @@ export const useAppStore = defineStore('app', () => {
    * @param {Array} backendGoals - Цели из бэкенда
    * @param {boolean} append - Добавить к существующим данным или заменить
    */
+  // Маппинг time_duration: backend → frontend
+  const timeDurationBackendToFrontend = {
+    'half': '30min',
+    'one': '1h',
+    'two': '2h',
+    'three': '3h',
+    'four': '4h'
+  }
+  
+  const timeDurationFrontendToBackend = {
+    '30min': 'half',
+    '1h': 'one',
+    '2h': 'two',
+    '3h': 'three',
+    '4h': 'four'
+  }
+  
   function syncGoalsFromBackend(backendGoals, append = false) {
     const syncedGoals = backendGoals.map(g => ({
       id: String(g.goal_id),
@@ -266,7 +283,7 @@ export const useAppStore = defineStore('app', () => {
         title: s.title,
         description: s.description || '',
         priority: s.priority || null,
-        timeEstimate: s.time_duration || null,
+        timeEstimate: timeDurationBackendToFrontend[s.time_duration] || s.time_duration || null,
         date: s.dt || null,
         order: s.order,
         completed: s.is_complete || false,
@@ -513,6 +530,13 @@ export const useAppStore = defineStore('app', () => {
         telegram_bot_link: userData.telegram_bot_link || ''
       }
       
+      if (userData.finish_onboarding) {
+        onboarding.value.completed = true
+        if (DEBUG_MODE) {
+          console.log('[Store] Synced onboarding.completed = true from user.finish_onboarding')
+        }
+      }
+      
       if (DEBUG_MODE) {
         console.log('[Store] User set:', {
           id: user.value.id,
@@ -542,6 +566,14 @@ export const useAppStore = defineStore('app', () => {
       finish_minitask: false,
       telegram_bot_link: ''
     }
+  }
+  
+  function setUserFinishOnboarding(value) {
+    user.value.finish_onboarding = value
+    if (DEBUG_MODE) {
+      console.log('[Store] User finish_onboarding set to:', value)
+    }
+    saveToLocalStorage()
   }
   
   const isAuthenticated = computed(() => user.value.is_authenticated)
@@ -1358,6 +1390,42 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
+  // Update goal's totalStepsData by backend ID (for Planning calendar sync)
+  function updateGoalTotalStepsData(backendId, totalStepsData) {
+    const goal = goals.value.find(g => g.backendId === backendId)
+    if (goal) {
+      goal.totalStepsData = totalStepsData
+      goal.progress = totalStepsData?.complete_percent || goal.progress || 0
+      
+      if (DEBUG_MODE) {
+        console.log('[Store] Updated goal totalStepsData:', goal.title, totalStepsData)
+      }
+      
+      saveToLocalStorage()
+      return true
+    }
+    return false
+  }
+
+  // Update step in goal by backend IDs (for Planning calendar sync)
+  function updateGoalStepByBackendId(goalBackendId, stepBackendId, updates) {
+    const goal = goals.value.find(g => g.backendId === goalBackendId)
+    if (goal && goal.steps) {
+      const step = goal.steps.find(s => s.backendId === stepBackendId)
+      if (step) {
+        Object.assign(step, updates)
+        
+        if (DEBUG_MODE) {
+          console.log('[Store] Updated step by backendId:', step.title, updates)
+        }
+        
+        saveToLocalStorage()
+        return true
+      }
+    }
+    return false
+  }
+
   function deleteGoal(goalId) {
     const index = goals.value.findIndex(g => g.id === goalId)
     if (index !== -1) {
@@ -1468,6 +1536,15 @@ export const useAppStore = defineStore('app', () => {
       console.log('[Store] Loading onboarding data from backend...')
     }
     
+    if (user.value.finish_onboarding) {
+      if (DEBUG_MODE) {
+        console.log('[Store] Skipping onboarding load - user.finish_onboarding is true')
+      }
+      onboarding.value.completed = true
+      onboarding.value.loading = false
+      return onboarding.value
+    }
+    
     onboarding.value.loading = true
     
     try {
@@ -1476,8 +1553,10 @@ export const useAppStore = defineStore('app', () => {
       if (result.status === 'ok' && result.data) {
         const data = result.data
         
+        const isCompleted = data.is_complete ?? user.value.finish_onboarding ?? false
+        
         onboarding.value = {
-          completed: data.is_complete ?? false,
+          completed: isCompleted,
           loading: false,
           stepCompleted: data.step_completed ?? 0,
           data: {
@@ -2688,6 +2767,7 @@ export const useAppStore = defineStore('app', () => {
     userLoading,
     setUser,
     clearUser,
+    setUserFinishOnboarding,
     isAuthenticated,
     displayName,
     
@@ -2756,6 +2836,8 @@ export const useAppStore = defineStore('app', () => {
     addGoal,
     updateGoal,
     updateGoalStep,
+    updateGoalTotalStepsData,
+    updateGoalStepByBackendId,
     deleteGoal,
     updateWeeklyPlan,
     updateDailyPlan,
@@ -2867,6 +2949,10 @@ export const useAppStore = defineStore('app', () => {
     loadGlobalData,
     categoryBackendToFrontend,
     categoryFrontendToBackend,
+    
+    // Time duration mapping
+    timeDurationBackendToFrontend,
+    timeDurationFrontendToBackend,
     
     // Goals API (загрузка и синхронизация целей)
     goalsApiData,

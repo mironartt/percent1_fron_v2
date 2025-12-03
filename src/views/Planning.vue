@@ -309,6 +309,7 @@
                           <option value="30min">30 мин</option>
                           <option value="1h">1 час</option>
                           <option value="2h">2 часа</option>
+                          <option value="3h">3 часа</option>
                           <option value="4h">4 часа</option>
                         </select>
                         <select 
@@ -726,15 +727,6 @@
                     </option>
                   </select>
                 </div>
-                <div class="filter-group">
-                  <select v-model="filterStatus" class="filter-select">
-                    <option value="">Все статусы</option>
-                    <option value="scheduled">Запланированы</option>
-                    <option value="unscheduled">Не запланированы</option>
-                    <option value="partial">Частично запланированы</option>
-                    <option value="full">Полностью запланированы</option>
-                  </select>
-                </div>
                 <button 
                   class="btn btn-sm"
                   :class="{ 'btn-primary': filterThisWeek, 'btn-outline': !filterThisWeek }"
@@ -745,7 +737,7 @@
                   Эта неделя
                 </button>
                 <button 
-                  v-if="searchQuery || filterSphere || filterStatus || filterThisWeek" 
+                  v-if="searchQuery || filterSphere || filterThisWeek" 
                   class="btn btn-sm btn-ghost"
                   @click="clearFilters"
                 >
@@ -794,7 +786,15 @@
                     <span class="goal-progress">{{ getGoalProgress(goal) }}%</span>
                   </div>
                 </div>
-                <div class="steps-list" v-show="expandedGoals[goal.id]" :class="{ 'has-scroll': (goal.steps || []).length > 6 }">
+                <div 
+                  class="steps-list" 
+                  v-show="expandedGoals[goal.id]" 
+                  :data-steps-list="goal.id"
+                  :class="{ 
+                    'has-scroll': stepsContainerHeights[goal.id]
+                  }"
+                  :style="getStepsListStyle(goal)"
+                >
                   <div 
                     v-for="step in getVisibleSteps(goal)" 
                     :key="step.id"
@@ -847,6 +847,7 @@
                         <option value="30min">30м</option>
                         <option value="1h">1ч</option>
                         <option value="2h">2ч</option>
+                        <option value="3h">3ч</option>
                         <option value="4h">4ч</option>
                       </select>
                       <select 
@@ -954,7 +955,6 @@ const weekOffset = ref(0)
 // Filter state
 const searchQuery = ref('')
 const filterSphere = ref('')
-const filterStatus = ref('')
 const filterThisWeek = ref(false)
 
 // Pagination state
@@ -962,6 +962,11 @@ const goalsDisplayLimit = ref(10)
 const stepsDisplayLimits = ref({})
 const stepsLoadingForGoal = ref({})
 const stepsPageForGoal = ref({})
+const stepsContainerHeights = ref({}) // Fixed heights for steps containers after pagination
+
+// Weekly planner data from backend API
+const weeklyStepsData = ref([]) // Data from /goals/steps/planned/get/
+const weeklyStepsLoading = ref(false)
 
 // Step filters per goal (each goal can have its own filters)
 const stepsFilters = ref({})
@@ -1126,14 +1131,17 @@ function handleDayDragLeave() {
   dragOverDay.value = null
 }
 
-function handleDayDrop(event, dayDate) {
+async function handleDayDrop(event, dayDate) {
   if (draggedStep.value) {
     event.preventDefault()
     console.log('[Planning] Drop step:', draggedStep.value.stepTitle, 'on day:', dayDate)
-    scheduleStep(draggedStep.value.goalId, { 
-      id: draggedStep.value.stepId, 
-      title: draggedStep.value.stepTitle 
-    }, dayDate)
+    await scheduleStepWithBackend(
+      draggedStep.value.goalId, 
+      draggedStep.value.stepId, 
+      draggedStep.value.stepTitle,
+      draggedStep.value.goal,
+      dayDate
+    )
     handleStepDragEnd()
   }
 }
@@ -1156,7 +1164,13 @@ function updateNotification(key, value) {
 
 function handleDragStart(task) {
   draggedTaskId.value = task.id
-  draggedTask.value = task
+  // For backend tasks, keep the original goalId/stepId for API calls
+  draggedTask.value = {
+    ...task,
+    // Ensure we have backend IDs for API calls
+    backendGoalId: task.goalId,
+    backendStepId: task.stepId
+  }
 }
 
 function handleDragEnd() {
@@ -1176,33 +1190,61 @@ function handleDragLeave() {
   dragOverDay.value = null
 }
 
-function handleDrop(newDate) {
+async function handleDrop(newDate) {
   // Handle step drag from goals section
   if (draggedStep.value) {
     console.log('[Planning] Drop step:', draggedStep.value.stepTitle, 'on day:', newDate)
-    scheduleStep(draggedStep.value.goalId, { 
-      id: draggedStep.value.stepId, 
-      title: draggedStep.value.stepTitle 
-    }, newDate)
+    await scheduleStepWithBackend(
+      draggedStep.value.goalId, 
+      draggedStep.value.stepId, 
+      draggedStep.value.stepTitle,
+      draggedStep.value.goal,
+      newDate
+    )
     handleStepDragEnd()
     return
   }
   
-  // Handle task drag between days
+  // Handle task drag between days (from weekly calendar)
   if (draggedTask.value && draggedTask.value.scheduledDate !== newDate) {
-    updateTaskDate(draggedTask.value.id, newDate)
+    await updateTaskDateWithBackend(draggedTask.value, newDate)
   }
   handleDragEnd()
 }
 
-function updateTaskDate(taskId, newDate) {
-  const plan = currentPlan.value
-  if (!plan) return
+async function updateTaskDateWithBackend(task, newDate) {
+  console.log('[Planning] Updating task date:', task.stepTitle, 'to', newDate)
   
-  const task = plan.scheduledTasks.find(t => t.id === taskId)
-  if (task) {
-    task.scheduledDate = newDate
-    store.saveToLocalStorage()
+  // Get backend IDs from the task (already stored as goalId/stepId from backend data)
+  const goalId = task.backendGoalId || task.goalId
+  const stepId = task.backendStepId || task.stepId
+  
+  if (!goalId || !stepId) {
+    console.error('[Planning] Missing goalId or stepId for task:', task)
+    return
+  }
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: goalId,
+        step_id: stepId,
+        dt: newDate
+      }]
+    })
+    console.log('[Planning] Successfully updated step date on backend')
+    
+    // 1. Local sync: update date in goals block
+    syncStepToGoalsBlock(goalId, stepId, { date: newDate })
+    
+    // 2. Reload goals to update headers
+    await refreshGoalsAfterCalendarChange()
+    
+    // 3. Reload weekly steps data to reflect changes
+    await loadWeeklySteps()
+  } catch (error) {
+    console.error('[Planning] Error updating task date on backend:', error)
   }
 }
 
@@ -1234,24 +1276,8 @@ const filteredGoalsWithSteps = computed(() => {
       return false
     }
     
-    // Status filter (based on goal progress or scheduled status)
-    if (filterStatus.value) {
-      const scheduledCount = getScheduledStepsCount(goal)
-      const totalSteps = getUncompletedSteps(goal).length
-      
-      if (filterStatus.value === 'scheduled' && scheduledCount === 0) {
-        return false
-      }
-      if (filterStatus.value === 'unscheduled' && scheduledCount > 0) {
-        return false
-      }
-      if (filterStatus.value === 'partial' && (scheduledCount === 0 || scheduledCount >= totalSteps)) {
-        return false
-      }
-      if (filterStatus.value === 'full' && scheduledCount < totalSteps) {
-        return false
-      }
-    }
+    // Status filter is now server-side (work/complete/unstatus)
+    // No client-side filtering needed - data is already filtered by backend
     
     // Week filter - goals with steps that intersect with current week
     if (filterThisWeek.value) {
@@ -1310,8 +1336,27 @@ function remainingStepsCount(goal) {
 }
 
 function loadMoreSteps(goalId) {
+  // Capture current container height BEFORE showing more steps
+  captureStepsContainerHeight(goalId)
+  
   const currentLimit = stepsDisplayLimits.value[goalId] || 6
   stepsDisplayLimits.value[goalId] = currentLimit + 6
+}
+
+// Get style for steps list container - fixed height after pagination
+function getStepsListStyle(goal) {
+  const fixedHeight = stepsContainerHeights.value[goal.id]
+  
+  // If height was captured before pagination, use it to create fixed container with scroll
+  if (fixedHeight) {
+    return { 
+      maxHeight: `${fixedHeight}px`,
+      overflowY: 'auto'
+    }
+  }
+  
+  // No fixed height yet - let container expand naturally for initial 6 steps
+  return {}
 }
 
 // Get total steps count from backend totalStepsData
@@ -1352,9 +1397,25 @@ function getRemainingStepsToLoad(goal) {
   return Math.max(0, totalSteps - loadedSteps)
 }
 
+// Capture current height of steps list before pagination
+function captureStepsContainerHeight(goalId) {
+  // Only capture if not already captured
+  if (stepsContainerHeights.value[goalId]) return
+  
+  const container = document.querySelector(`[data-steps-list="${goalId}"]`)
+  if (container) {
+    const height = container.offsetHeight
+    stepsContainerHeights.value[goalId] = height
+    console.log('[Planning] Captured steps container height for goal', goalId, ':', height)
+  }
+}
+
 // Load more steps from backend API
 async function loadMoreStepsFromBackend(goal) {
   if (!goal.backendId || stepsLoadingForGoal.value[goal.backendId]) return
+  
+  // Capture current container height BEFORE loading more steps
+  captureStepsContainerHeight(goal.id)
   
   stepsLoadingForGoal.value[goal.backendId] = true
   
@@ -1418,7 +1479,6 @@ async function loadMoreStepsFromBackend(goal) {
 function clearFilters() {
   searchQuery.value = ''
   filterSphere.value = ''
-  filterStatus.value = ''
   filterThisWeek.value = false
   resetPagination()
   updateUrlParams()
@@ -1428,6 +1488,7 @@ function clearFilters() {
 function resetPagination() {
   goalsDisplayLimit.value = 10
   stepsDisplayLimits.value = {}
+  stepsContainerHeights.value = {} // Reset fixed heights
 }
 
 // URL parameter sync
@@ -1447,12 +1508,6 @@ function updateUrlParams() {
     delete newQuery.sphere
   }
   
-  if (filterStatus.value) {
-    newQuery.status = filterStatus.value
-  } else {
-    delete newQuery.status
-  }
-  
   if (filterThisWeek.value) {
     newQuery.week = '1'
   } else {
@@ -1470,25 +1525,32 @@ function updateUrlParams() {
 function loadFiltersFromUrl() {
   if (route.query.search) searchQuery.value = route.query.search
   if (route.query.sphere) filterSphere.value = route.query.sphere
-  if (route.query.status) filterStatus.value = route.query.status
   if (route.query.week === '1') filterThisWeek.value = true
 }
 
-// Watch filters and update URL (with debounce effect via check in updateUrlParams)
-watch([searchQuery, filterSphere, filterStatus, filterThisWeek], () => {
-  updateUrlParams()
-  resetPagination()
-})
+// Note: Filter watching is now handled by onFilterChange and searchQuery watcher in loadGoalsFromBackend section
 
-// Format date for step display
+// Format date for step display - includes day of week for dates outside current week
 function formatStepDate(goalId, stepId) {
   const date = getScheduledDate(goalId, stepId)
   if (!date) return ''
   
-  const dateObj = new Date(date)
-  const day = dateObj.getDate()
-  const month = dateObj.toLocaleDateString('ru-RU', { month: 'short' })
-  return `${day} ${month}`
+  // Parse date parts directly to avoid timezone issues
+  // Date format is "YYYY-MM-DD"
+  const [year, month, day] = date.split('-').map(Number)
+  const dateObj = new Date(year, month - 1, day) // month is 0-indexed
+  const dayNum = dateObj.getDate()
+  const monthStr = dateObj.toLocaleDateString('ru-RU', { month: 'short' })
+  
+  // Check if date is within current week - if not, show day of week
+  const isInCurrentWeek = weekDays.value.some(d => d.date === date)
+  if (!isInCurrentWeek) {
+    const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
+    const dayOfWeek = dayNames[dateObj.getDay()]
+    return `${dayNum} ${monthStr} ${dayOfWeek}`
+  }
+  
+  return `${dayNum} ${monthStr}`
 }
 
 const expandedGoals = ref({})
@@ -1612,21 +1674,35 @@ async function toggleStepComplete(goal, step) {
           is_complete: newCompleted
         }]
       })
+      
+      // Bidirectional sync: update calendar if step is shown there
+      syncStepToCalendar(goal.backendId, step.backendId, { completed: newCompleted })
+      
+      // Reload calendar to refresh
+      await loadWeeklySteps()
     } catch (error) {
       console.error('[Planning] Error syncing step completion to backend:', error)
     }
   }
 }
 
+// Format date as YYYY-MM-DD in local timezone (avoids UTC conversion issues)
+function formatDateLocal(date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 const weekDays = computed(() => {
   const days = []
   const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  today.setHours(12, 0, 0, 0) // Use noon to avoid DST issues
   const dayOfWeek = today.getDay()
   const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
   const monday = new Date(today)
   monday.setDate(today.getDate() + mondayOffset + (weekOffset.value * 7))
-  monday.setHours(0, 0, 0, 0)
+  monday.setHours(12, 0, 0, 0)
   
   const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
   const fullNames = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
@@ -1634,9 +1710,8 @@ const weekDays = computed(() => {
   for (let i = 0; i < 7; i++) {
     const date = new Date(monday)
     date.setDate(monday.getDate() + i)
-    date.setHours(0, 0, 0, 0)
     days.push({
-      date: date.toISOString().split('T')[0],
+      date: formatDateLocal(date),
       dayNum: date.getDate(),
       shortName: dayNames[i],
       label: fullNames[i],
@@ -1677,7 +1752,7 @@ const weekRangeText = computed(() => {
 })
 
 function isToday(dateStr) {
-  return dateStr === new Date().toISOString().split('T')[0]
+  return dateStr === formatDateLocal(new Date())
 }
 
 const currentPlan = computed(() => {
@@ -1716,7 +1791,7 @@ const currentStreak = computed(() => {
   for (let i = 0; i < 30; i++) {
     const checkDate = new Date(today)
     checkDate.setDate(today.getDate() - i)
-    const dateStr = checkDate.toISOString().split('T')[0]
+    const dateStr = formatDateLocal(checkDate)
     
     const dayTasks = scheduledTasks.value.filter(t => t.scheduledDate === dateStr)
     if (dayTasks.length === 0) {
@@ -1735,9 +1810,47 @@ const currentStreak = computed(() => {
   return streak
 })
 
-const priorityOrder = { critical: 0, desirable: 1, attention: 2, optional: 3, '': 4 }
+const priorityOrder = { critical: 0, important: 0, desirable: 1, attention: 2, optional: 3, '': 4 }
+
+// Map backend time_duration to frontend timeEstimate
+const timeDurationMap = { 'half': '30min', 'one': '1h', 'two': '2h', 'three': '3h', 'four': '4h' }
+
+// Map backend priority to frontend priority
+// Backend: critical, important, attention, optional
+// Frontend: critical, desirable, attention, optional
+const priorityBackendToFrontend = { 'critical': 'critical', 'important': 'desirable', 'attention': 'attention', 'optional': 'optional' }
+
+// Map frontend priority to backend priority (reverse mapping)
+const priorityFrontendToBackend = { 'critical': 'critical', 'desirable': 'important', 'attention': 'attention', 'optional': 'optional' }
 
 function getTasksForDay(dateStr) {
+  // First check weeklyStepsData from backend API
+  const dayData = weeklyStepsData.value.find(d => d.date === dateStr)
+  if (dayData && dayData.steps_data && dayData.steps_data.length > 0) {
+    // Transform backend format to UI format
+    return dayData.steps_data
+      .map(step => ({
+        id: `backend-${step.step_id}`,
+        goalId: step.goal_id,
+        stepId: step.step_id,
+        stepTitle: step.step_title,
+        goalTitle: step.goal_title,
+        goalCategory: step.goal_category,
+        scheduledDate: step.step_dt,
+        timeEstimate: timeDurationMap[step.step_time_duration] || '',
+        priority: priorityBackendToFrontend[step.step_priority] || step.step_priority || '',
+        completed: step.step_is_complete || false,
+        order: step.step_order,
+        description: step.step_description
+      }))
+      .sort((a, b) => {
+        const priorityA = priorityOrder[a.priority] ?? 4
+        const priorityB = priorityOrder[b.priority] ?? 4
+        return priorityA - priorityB
+      })
+  }
+  
+  // Fallback to local scheduledTasks if no backend data
   return scheduledTasks.value
     .filter(t => t.scheduledDate === dateStr)
     .sort((a, b) => {
@@ -1748,7 +1861,7 @@ function getTasksForDay(dateStr) {
 }
 
 function getTotalTimeForDay(dateStr) {
-  const timeValues = { '30min': 30, '1h': 60, '2h': 120, '4h': 240 }
+  const timeValues = { '30min': 30, '1h': 60, '2h': 120, '3h': 180, '4h': 240 }
   const tasks = getTasksForDay(dateStr)
   const totalMinutes = tasks.reduce((sum, task) => {
     return sum + (timeValues[task.timeEstimate] || 0)
@@ -1762,22 +1875,47 @@ function getTotalTimeForDay(dateStr) {
 }
 
 function isStepScheduled(goalId, stepId) {
-  return scheduledTasks.value.some(t => t.goalId === goalId && t.stepId === stepId)
+  // Проверяем в scheduledTasks
+  const inScheduled = scheduledTasks.value.some(t => t.goalId === goalId && t.stepId === stepId)
+  if (inScheduled) return true
+  
+  // Проверяем в данных шага (из backend)
+  const goal = goals.value.find(g => g.id === goalId)
+  const step = goal?.steps?.find(s => s.id === stepId)
+  return !!step?.date
 }
 
 function getScheduledDate(goalId, stepId) {
+  // Сначала проверяем в scheduledTasks (локальные изменения)
   const task = scheduledTasks.value.find(t => t.goalId === goalId && t.stepId === stepId)
-  return task?.scheduledDate || ''
+  if (task?.scheduledDate) return task.scheduledDate
+  
+  // Затем проверяем в данных шага (из backend)
+  const goal = goals.value.find(g => g.id === goalId)
+  const step = goal?.steps?.find(s => s.id === stepId)
+  return step?.date || ''
 }
 
 function getScheduledTimeEstimate(goalId, stepId) {
+  // Сначала проверяем в scheduledTasks (локальные изменения)
   const task = scheduledTasks.value.find(t => t.goalId === goalId && t.stepId === stepId)
-  return task?.timeEstimate || ''
+  if (task?.timeEstimate) return task.timeEstimate
+  
+  // Затем проверяем в данных шага (из backend)
+  const goal = goals.value.find(g => g.id === goalId)
+  const step = goal?.steps?.find(s => s.id === stepId)
+  return step?.timeEstimate || ''
 }
 
 function getScheduledPriority(goalId, stepId) {
+  // Сначала проверяем в scheduledTasks (локальные изменения)
   const task = scheduledTasks.value.find(t => t.goalId === goalId && t.stepId === stepId)
-  return task?.priority || ''
+  if (task?.priority) return task.priority
+  
+  // Затем проверяем в данных шага (из backend)
+  const goal = goals.value.find(g => g.id === goalId)
+  const step = goal?.steps?.find(s => s.id === stepId)
+  return step?.priority || ''
 }
 
 async function updateScheduledStep(goalId, stepId, field, value) {
@@ -1800,13 +1938,28 @@ async function updateScheduledStep(goalId, stepId, field, value) {
         const updateData = { goal_id: goal.backendId, step_id: step.backendId }
         
         if (field === 'priority') {
-          updateData.priority = value || null
+          // Convert frontend priority to backend format
+          updateData.priority = priorityFrontendToBackend[value] || value || null
         } else if (field === 'timeEstimate') {
-          const timeMap = { '30min': 'half', '1h': 'one', '2h': 'two', '4h': 'four' }
+          const timeMap = { '30min': 'half', '1h': 'one', '2h': 'two', '3h': 'three', '4h': 'four' }
           updateData.time_duration = timeMap[value] || null
         }
         
         await updateGoalSteps({ goals_steps_data: [updateData] })
+        
+        // Bidirectional sync: update calendar if step is shown there
+        // For calendar, use backend format for priority (step_priority field)
+        const syncChanges = {}
+        if (field === 'priority') {
+          // Calendar uses backend priority format in step_priority
+          syncChanges.priority = priorityFrontendToBackend[value] || value
+        } else if (field === 'timeEstimate') {
+          syncChanges.timeEstimate = value
+        }
+        syncStepToCalendar(goal.backendId, step.backendId, syncChanges)
+        
+        // Reload calendar to refresh
+        await loadWeeklySteps()
       } catch (error) {
         console.error('[Planning] Error syncing step field to backend:', error)
       }
@@ -1864,12 +2017,68 @@ async function scheduleStep(goalId, step, dateStr) {
         goals_steps_data: [{
           goal_id: goal.backendId,
           step_id: step.backendId,
-          dt: dateStr || null
+          dt: dateStr || '1700-01-01'  // Backend workaround: use old date instead of null
         }]
       })
+      
+      // Bidirectional sync: update or remove from calendar
+      if (dateStr) {
+        syncStepToCalendar(goal.backendId, step.backendId, { date: dateStr })
+      }
+      
+      // Reload calendar to refresh (handles both add and remove)
+      await loadWeeklySteps()
     } catch (error) {
       console.error('[Planning] Error syncing step date to backend:', error)
     }
+  }
+}
+
+// Schedule step from "Goals and Steps" block with backend sync
+async function scheduleStepWithBackend(goalId, stepId, stepTitle, goal, dateStr) {
+  console.log('[Planning] scheduleStepWithBackend:', { goalId, stepId, stepTitle, dateStr })
+  
+  // Get backend IDs - could be from goal object or directly if dragged from backend data
+  let backendGoalId = goal?.backendId || goalId
+  let backendStepId = null
+  
+  // Find step's backendId from goal's steps array
+  if (goal?.steps) {
+    const step = goal.steps.find(s => s.id === stepId || s.backendId === stepId)
+    backendStepId = step?.backendId || stepId
+  } else {
+    // If no goal object, assume stepId is already backend ID
+    backendStepId = stepId
+  }
+  
+  console.log('[Planning] Backend IDs:', { backendGoalId, backendStepId })
+  
+  if (!backendGoalId || !backendStepId) {
+    console.error('[Planning] Missing backend IDs for scheduling')
+    return
+  }
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: backendGoalId,
+        step_id: backendStepId,
+        dt: dateStr
+      }]
+    })
+    console.log('[Planning] Successfully scheduled step on backend')
+    
+    // 1. Local sync: update date in goals block
+    syncStepToGoalsBlock(backendGoalId, backendStepId, { date: dateStr })
+    
+    // 2. Reload goals to update headers
+    await refreshGoalsAfterCalendarChange()
+    
+    // 3. Reload weekly steps data to reflect changes
+    await loadWeeklySteps()
+  } catch (error) {
+    console.error('[Planning] Error scheduling step on backend:', error)
   }
 }
 
@@ -1882,7 +2091,152 @@ function unscheduleStep(goalId, stepId) {
   }
 }
 
+// Synchronous refresh of goals after calendar changes
+async function refreshGoalsAfterCalendarChange() {
+  console.log('[Planning] Refreshing goals after calendar change...')
+  try {
+    // Use store method to reload goals - this handles all syncing properly
+    const params = {
+      with_steps_data: true,
+      page: 1,
+      per_page: 100
+    }
+    
+    if (filterSphere.value) {
+      params.category_filter = filterSphere.value
+    }
+    
+    await store.loadGoalsFromBackend(params, false)
+    console.log('[Planning] Goals refreshed successfully')
+  } catch (error) {
+    console.error('[Planning] Error refreshing goals:', error)
+  }
+}
+
+// Local sync: update step in weeklyStepsData (calendar) when changed
+// Calendar uses backend format: step_priority (important/desirable/etc), step_time_duration (half/one/etc)
+function syncStepToCalendar(goalId, stepId, changes) {
+  const timeToBackend = { '30min': 'half', '1h': 'one', '2h': 'two', '3h': 'three', '4h': 'four' }
+  
+  for (const dayData of weeklyStepsData.value) {
+    if (!dayData.steps_data) continue
+    const step = dayData.steps_data.find(s => s.goal_id === goalId && s.step_id === stepId)
+    if (step) {
+      if (changes.completed !== undefined) {
+        step.step_is_complete = changes.completed
+      }
+      if (changes.date !== undefined) {
+        step.step_dt = changes.date
+      }
+      if (changes.priority !== undefined) {
+        // Priority is already in backend format when passed from updateScheduledStep
+        step.step_priority = changes.priority
+      }
+      if (changes.timeEstimate !== undefined) {
+        // Convert frontend timeEstimate to backend format
+        step.step_time_duration = timeToBackend[changes.timeEstimate] || changes.timeEstimate
+      }
+      console.log('[Planning] Synced step to calendar:', step.step_title, changes)
+      return true
+    }
+  }
+  return false
+}
+
+// Local sync: update step in store.goals (goals block) when changed
+// Goals block uses frontend format: priority (critical/desirable/etc), timeEstimate (30min/1h/etc)
+function syncStepToGoalsBlock(goalId, stepId, changes) {
+  const goal = store.goals.find(g => g.backendId === goalId)
+  if (!goal || !goal.steps) return false
+  
+  const step = goal.steps.find(s => s.backendId === stepId)
+  if (!step) return false
+  
+  if (changes.completed !== undefined) {
+    step.completed = changes.completed
+  }
+  if (changes.date !== undefined) {
+    step.date = changes.date
+  }
+  if (changes.priority !== undefined) {
+    // Convert backend priority to frontend format if needed
+    step.priority = priorityBackendToFrontend[changes.priority] || changes.priority
+  }
+  if (changes.timeEstimate !== undefined) {
+    // Convert backend time_duration to frontend format if needed
+    step.timeEstimate = timeDurationMap[changes.timeEstimate] || changes.timeEstimate
+  }
+  
+  console.log('[Planning] Synced step to goals block:', step.title, changes)
+  return true
+}
+
 async function toggleTaskComplete(taskId) {
+  // For backend tasks, taskId has format "backend-{stepId}"
+  const isBackendTask = taskId.toString().startsWith('backend-')
+  
+  if (isBackendTask) {
+    // Find the task in weeklyStepsData
+    let taskData = null
+    for (const dayData of weeklyStepsData.value) {
+      const found = dayData.steps_data?.find(s => `backend-${s.step_id}` === taskId)
+      if (found) {
+        taskData = found
+        break
+      }
+    }
+    
+    if (taskData) {
+      const newCompleted = !taskData.step_is_complete
+      console.log('[Planning] Toggling backend task completion:', taskData.step_title, '→', newCompleted)
+      
+      // XP logic
+      if (newCompleted) {
+        xpStore.awardXP(XP_REWARDS.FOCUS_TASK_COMPLETED, 'focus_task_completed', { 
+          taskId: taskId, 
+          taskTitle: taskData.step_title 
+        })
+      } else {
+        const lastEvent = xpStore.xpHistory.find(
+          e => e.source === 'focus_task_completed' && 
+               e.metadata?.taskId === taskId &&
+               new Date(e.timestamp).toDateString() === new Date().toDateString()
+        )
+        if (lastEvent) {
+          xpStore.revokeXP(lastEvent.id)
+        }
+      }
+      
+      try {
+        const { updateGoalSteps } = await import('@/services/api.js')
+        await updateGoalSteps({
+          goals_steps_data: [{
+            goal_id: taskData.goal_id,
+            step_id: taskData.step_id,
+            is_complete: newCompleted
+          }]
+        })
+        console.log('[Planning] Successfully toggled completion on backend')
+        
+        // 1. Local sync: update calendar data
+        syncStepToCalendar(taskData.goal_id, taskData.step_id, { completed: newCompleted })
+        
+        // 2. Local sync: update goals block
+        syncStepToGoalsBlock(taskData.goal_id, taskData.step_id, { completed: newCompleted })
+        
+        // 3. Reload goals from backend to update headers (counts, percents)
+        await refreshGoalsAfterCalendarChange()
+        
+        // 4. Also reload weekly steps to stay in sync
+        await loadWeeklySteps()
+      } catch (error) {
+        console.error('[Planning] Error toggling task completion:', error)
+      }
+    }
+    return
+  }
+  
+  // Handle local tasks (legacy)
   const plan = currentPlan.value
   if (!plan) return
   
@@ -1931,7 +2285,51 @@ async function toggleTaskComplete(taskId) {
   }
 }
 
-function removeTask(taskId) {
+async function removeTask(taskId) {
+  // For backend tasks, taskId has format "backend-{stepId}"
+  const isBackendTask = taskId.toString().startsWith('backend-')
+  
+  if (isBackendTask) {
+    // Find the task in weeklyStepsData
+    let taskToRemove = null
+    for (const dayData of weeklyStepsData.value) {
+      const found = dayData.steps_data?.find(s => `backend-${s.step_id}` === taskId)
+      if (found) {
+        taskToRemove = found
+        break
+      }
+    }
+    
+    if (taskToRemove) {
+      console.log('[Planning] Removing backend task from calendar:', taskToRemove.step_title)
+      
+      try {
+        const { updateGoalSteps } = await import('@/services/api.js')
+        await updateGoalSteps({
+          goals_steps_data: [{
+            goal_id: taskToRemove.goal_id,
+            step_id: taskToRemove.step_id,
+            dt: '1700-01-01'  // Backend workaround: use old date instead of null to remove from calendar
+          }]
+        })
+        console.log('[Planning] Successfully removed step from calendar on backend')
+        
+        // 1. Local sync: update goals block (clear date)
+        syncStepToGoalsBlock(taskToRemove.goal_id, taskToRemove.step_id, { date: null })
+        
+        // 2. Reload goals from backend to update headers
+        await refreshGoalsAfterCalendarChange()
+        
+        // 3. Reload weekly steps to reflect removal
+        await loadWeeklySteps()
+      } catch (error) {
+        console.error('[Planning] Error removing task from calendar:', error)
+      }
+    }
+    return
+  }
+  
+  // Handle local tasks (legacy)
   const plan = currentPlan.value
   if (plan) {
     const taskToDelete = plan.scheduledTasks.find(t => t.id === taskId)
@@ -2090,7 +2488,7 @@ function setupDemoData() {
     const getDateStr = (offset) => {
       const d = new Date(monday)
       d.setDate(monday.getDate() + offset)
-      return d.toISOString().split('T')[0]
+      return formatDateLocal(d)
     }
     
     const demoTasks = [
@@ -2116,21 +2514,86 @@ function setupDemoData() {
 // Loading state
 const isLoadingGoals = ref(false)
 
-// Load goals with steps from backend
+// Load weekly steps data from backend API for the week planner
+async function loadWeeklySteps() {
+  if (weeklyStepsLoading.value) return
+  
+  // Get week date range based on weekOffset
+  const today = new Date()
+  today.setHours(12, 0, 0, 0)
+  const dayOfWeek = today.getDay()
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+  const monday = new Date(today)
+  monday.setDate(today.getDate() + mondayOffset + (weekOffset.value * 7))
+  monday.setHours(12, 0, 0, 0)
+  
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  
+  const dateFrom = formatDateLocal(monday)
+  const dateTo = formatDateLocal(sunday)
+  
+  console.log('[Planning] Loading weekly steps for:', dateFrom, 'to', dateTo)
+  
+  weeklyStepsLoading.value = true
+  
+  try {
+    const { getPlannedSteps } = await import('@/services/api.js')
+    const response = await getPlannedSteps({
+      date_from: dateFrom,
+      date_to: dateTo
+    })
+    
+    if (response.status === 'ok' && response.data?.result_week_data) {
+      weeklyStepsData.value = response.data.result_week_data
+      console.log('[Planning] Loaded weekly steps data:', weeklyStepsData.value.length, 'days')
+    } else {
+      console.warn('[Planning] Unexpected response format:', response)
+      weeklyStepsData.value = []
+    }
+  } catch (error) {
+    console.error('[Planning] Error loading weekly steps:', error)
+    weeklyStepsData.value = []
+  } finally {
+    weeklyStepsLoading.value = false
+  }
+}
+
+// Load goals with steps from backend with filters
 async function loadGoalsFromBackend() {
   if (isLoadingGoals.value) return
   
   isLoadingGoals.value = true
   
   try {
-    // Load goals with steps data for planning
-    // Using status_filter=work to get only goals "in work"
-    const result = await store.loadGoalsFromBackend({
+    // Build params with filters
+    const params = {
       with_steps_data: true,
       order_by: 'date_created',
-      order_direction: 'desc',
-      status_filter: 'work' // Only goals in work - using correct API param name
-    })
+      order_direction: 'desc'
+    }
+    
+    // Add sphere/category filter
+    if (filterSphere.value) {
+      const backendCategory = store.categoryFrontendToBackend[filterSphere.value]
+      if (backendCategory) {
+        params.category_filter = backendCategory
+      }
+    }
+    
+    // Add text search filter (min 3 characters)
+    if (searchQuery.value && searchQuery.value.length >= 3) {
+      params.query_filter = searchQuery.value
+    }
+    
+    // Add result_week_data flag when "This week" filter is active
+    if (filterThisWeek.value) {
+      params.result_week_data = true
+    }
+    
+    console.log('[Planning] Loading goals with params:', params)
+    
+    const result = await store.loadGoalsFromBackend(params)
     
     if (result.success) {
       console.log('[Planning] Loaded goals from backend, count:', result.count || store.goals.length)
@@ -2145,6 +2608,48 @@ async function loadGoalsFromBackend() {
   }
 }
 
+// Debounce timer for filter changes
+let filterDebounceTimer = null
+
+// Reload data when filters change
+function onFilterChange() {
+  if (filterDebounceTimer) {
+    clearTimeout(filterDebounceTimer)
+  }
+  
+  filterDebounceTimer = setTimeout(() => {
+    resetPagination()
+    updateUrlParams()
+    loadGoalsFromBackend()
+  }, 300)
+}
+
+// Watch filters and reload data
+watch([filterSphere, filterThisWeek], () => {
+  onFilterChange()
+})
+
+// Watch search query with longer debounce
+watch(searchQuery, (newVal) => {
+  if (filterDebounceTimer) {
+    clearTimeout(filterDebounceTimer)
+  }
+  
+  // Only search if 3+ characters or empty (reset)
+  if (newVal.length >= 3 || newVal.length === 0) {
+    filterDebounceTimer = setTimeout(() => {
+      resetPagination()
+      updateUrlParams()
+      loadGoalsFromBackend()
+    }, 500)
+  }
+})
+
+// Watch weekOffset to reload weekly steps when navigating weeks
+watch(weekOffset, () => {
+  loadWeeklySteps()
+})
+
 onMounted(async () => {
   console.log('[Planning] onMounted - goals count:', store.goals.length)
   console.log('[Planning] onMounted - goalsWithSteps:', goalsWithSteps.value.length)
@@ -2154,6 +2659,9 @@ onMounted(async () => {
   
   // Load goals from backend first
   await loadGoalsFromBackend()
+  
+  // Load weekly steps data for the week planner
+  await loadWeeklySteps()
   
   ensureWeekPlan()
   setupDemoData()
@@ -3351,9 +3859,8 @@ onMounted(async () => {
   overflow-y: auto;
 }
 
-/* Steps list with scroll (5 шагов видимых) */
+/* Steps list with scroll - applies after pagination, height is set via inline style */
 .steps-list.has-scroll {
-  max-height: calc(5 * 44px + 50px);
   overflow-y: auto;
 }
 
