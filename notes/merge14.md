@@ -48,21 +48,26 @@ Synchronous reload of goals from backend after calendar changes.
 
 ### Priority Mapping
 
+Backend uses: `critical`, `important`, `attention`, `optional`
+Frontend uses: `critical`, `desirable`, `attention`, `optional`
+
+The only difference is `important` (backend) ↔ `desirable` (frontend) for the "Важно" priority.
+
 ```javascript
 // Backend → Frontend
 const priorityBackendToFrontend = {
-  'important': 'critical',
-  'desirable': 'desirable',
-  'attention': 'attention',
-  'optional': 'optional'
+  'critical': 'critical',      // Критично → Критично
+  'important': 'desirable',    // Важно (backend) → desirable (frontend)
+  'attention': 'attention',    // Внимание → Внимание
+  'optional': 'optional'       // Опционально → Опционально
 }
 
 // Frontend → Backend
 const priorityFrontendToBackend = {
-  'critical': 'important',
-  'desirable': 'desirable',
-  'attention': 'attention',
-  'optional': 'optional'
+  'critical': 'critical',      // critical → Критично
+  'desirable': 'important',    // desirable → Важно (backend)
+  'attention': 'attention',    // attention → Внимание
+  'optional': 'optional'       // optional → Опционально
 }
 ```
 
@@ -197,12 +202,23 @@ User drags step from goals block to calendar day
 
 ## Priority Colors Reference
 
-| Priority | Frontend Value | Backend Value | Color |
-|----------|---------------|---------------|-------|
-| Critical | critical | important | Red (#ef4444) |
-| Important | desirable | desirable | Orange (#f97316) |
-| Attention | attention | attention | Yellow (#eab308) |
-| Optional | optional | optional | Blue (#3b82f6) |
+| Label (RU) | Frontend Value | Backend Value | Color |
+|------------|---------------|---------------|-------|
+| Критично | critical | critical | Red (#ef4444) |
+| Важно | desirable | important | Orange (#f97316) |
+| Внимание | attention | attention | Yellow (#eab308) |
+| Опционально | optional | optional | Blue (#3b82f6) |
+
+## Status Filter Removed
+
+The status filter was removed from the "Goals and Steps" block in Planning module.
+Goals are now displayed without status filtering (shows all goals).
+
+**Removed:**
+- `filterStatus` ref variable
+- Status filter `<select>` UI element
+- Related URL parameter sync
+- Filter condition in watch/clearFilters
 
 ## API Endpoints Used
 

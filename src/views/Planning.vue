@@ -727,14 +727,6 @@
                     </option>
                   </select>
                 </div>
-                <div class="filter-group">
-                  <select v-model="filterStatus" class="filter-select">
-                    <option value="">Все статусы</option>
-                    <option value="work">В работе</option>
-                    <option value="complete">Завершенные</option>
-                    <option value="unstatus">Не оценённые</option>
-                  </select>
-                </div>
                 <button 
                   class="btn btn-sm"
                   :class="{ 'btn-primary': filterThisWeek, 'btn-outline': !filterThisWeek }"
@@ -745,7 +737,7 @@
                   Эта неделя
                 </button>
                 <button 
-                  v-if="searchQuery || filterSphere || filterStatus || filterThisWeek" 
+                  v-if="searchQuery || filterSphere || filterThisWeek" 
                   class="btn btn-sm btn-ghost"
                   @click="clearFilters"
                 >
@@ -963,7 +955,6 @@ const weekOffset = ref(0)
 // Filter state
 const searchQuery = ref('')
 const filterSphere = ref('')
-const filterStatus = ref('')
 const filterThisWeek = ref(false)
 
 // Pagination state
@@ -1488,7 +1479,6 @@ async function loadMoreStepsFromBackend(goal) {
 function clearFilters() {
   searchQuery.value = ''
   filterSphere.value = ''
-  filterStatus.value = ''
   filterThisWeek.value = false
   resetPagination()
   updateUrlParams()
@@ -1518,12 +1508,6 @@ function updateUrlParams() {
     delete newQuery.sphere
   }
   
-  if (filterStatus.value) {
-    newQuery.status = filterStatus.value
-  } else {
-    delete newQuery.status
-  }
-  
   if (filterThisWeek.value) {
     newQuery.week = '1'
   } else {
@@ -1541,7 +1525,6 @@ function updateUrlParams() {
 function loadFiltersFromUrl() {
   if (route.query.search) searchQuery.value = route.query.search
   if (route.query.sphere) filterSphere.value = route.query.sphere
-  if (route.query.status) filterStatus.value = route.query.status
   if (route.query.week === '1') filterThisWeek.value = true
 }
 
@@ -1833,10 +1816,12 @@ const priorityOrder = { critical: 0, important: 0, desirable: 1, attention: 2, o
 const timeDurationMap = { 'half': '30min', 'one': '1h', 'two': '2h', 'three': '3h', 'four': '4h' }
 
 // Map backend priority to frontend priority
-const priorityBackendToFrontend = { 'important': 'critical', 'desirable': 'desirable', 'attention': 'attention', 'optional': 'optional' }
+// Backend: critical, important, attention, optional
+// Frontend: critical, desirable, attention, optional
+const priorityBackendToFrontend = { 'critical': 'critical', 'important': 'desirable', 'attention': 'attention', 'optional': 'optional' }
 
 // Map frontend priority to backend priority (reverse mapping)
-const priorityFrontendToBackend = { 'critical': 'important', 'desirable': 'desirable', 'attention': 'attention', 'optional': 'optional' }
+const priorityFrontendToBackend = { 'critical': 'critical', 'desirable': 'important', 'attention': 'attention', 'optional': 'optional' }
 
 function getTasksForDay(dateStr) {
   // First check weeklyStepsData from backend API
@@ -2119,9 +2104,6 @@ async function refreshGoalsAfterCalendarChange() {
     
     if (filterSphere.value) {
       params.category_filter = filterSphere.value
-    }
-    if (filterStatus.value) {
-      params.status_filter = filterStatus.value
     }
     
     await store.loadGoalsFromBackend(params, false)
@@ -2591,12 +2573,6 @@ async function loadGoalsFromBackend() {
       order_direction: 'desc'
     }
     
-    // Add status filter only if specified (like GoalsBank.vue)
-    if (filterStatus.value) {
-      params.status_filter = filterStatus.value
-    }
-    // When empty, don't set status_filter - returns all goals
-    
     // Add sphere/category filter
     if (filterSphere.value) {
       const backendCategory = store.categoryFrontendToBackend[filterSphere.value]
@@ -2649,7 +2625,7 @@ function onFilterChange() {
 }
 
 // Watch filters and reload data
-watch([filterSphere, filterStatus, filterThisWeek], () => {
+watch([filterSphere, filterThisWeek], () => {
   onFilterChange()
 })
 

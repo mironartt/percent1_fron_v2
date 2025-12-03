@@ -51,8 +51,13 @@
   - `syncStepToCalendar(goalId, stepId, changes)` - updates calendar data
   - `syncStepToGoalsBlock(goalId, stepId, changes)` - updates goals data
   - `refreshGoalsAfterCalendarChange()` - reloads goals from backend
-- **Priority Mapping**: frontend↔backend conversion: critical↔important, desirable↔desirable
+- **Priority Mapping**: 
+  - critical↔critical (Критично)
+  - desirable↔important (Важно) - единственное отличие!
+  - attention↔attention (Внимание)
+  - optional↔optional (Опционально)
 - **Time Mapping**: frontend↔backend conversion: 30min↔half, 1h↔one, 2h↔two, 3h↔three, 4h↔four
+- **Status Filter Removed**: Фильтр статуса удалён из блока "Цели и шаги"
 
 ## Overview
 The OnePercent MVP is a Vue 3 + Vite application for personal life management and goal tracking, inspired by the "1% improvement" philosophy. It features a Balanced Scorecard (SSP) module for life balance assessment and a Goals Bank for structured goal setting. The project provides a guided, multi-step workflow for personal development, leveraging interactive UI components and an AI Mentor for user engagement, integrating with a Django REST API backend for authentication. The business vision is to empower users with tools for self-improvement, fostering consistent growth and offering a market-leading platform for personal development.
