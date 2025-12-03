@@ -347,6 +347,7 @@
                     ['priority-' + step.priority]: step.priority && !step.completed
                   }"
                   :style="step.priority && !step.completed ? { '--priority-color': getPriorityColor(step.priority) } : {}"
+                  @focusout="handleNewStepFocusOut(step, $event)"
                 >
                   <!-- Левая колонка: drag-handle, checkbox, delete -->
                   <div class="step-actions-column">
@@ -358,7 +359,7 @@
                       <input 
                         type="checkbox"
                         :checked="step.completed"
-                        @change="toggleStepCompletion(getOriginalIndex(step))"
+                        @change="updateStep(getOriginalIndex(step), 'completed', !step.completed)"
                         class="step-checkbox"
                         :id="`new-step-checkbox-${step.id}`"
                       />
@@ -375,7 +376,7 @@
                     <button 
                       class="btn-icon btn-icon-danger step-delete-btn"
                       @click="removeStep(getOriginalIndex(step))"
-                      title="Удалить шаг"
+                      title="Удалить шаблон"
                     >
                       <X :size="14" :stroke-width="2" />
                     </button>
@@ -388,7 +389,7 @@
                       type="text"
                       :value="step.title"
                       @input="updateStep(getOriginalIndex(step), 'title', $event.target.value)"
-                      @blur="autoSave"
+                      @keydown.enter="saveNewStep(step)"
                       class="step-input"
                       :class="{ 'completed-text': step.completed }"
                       :placeholder="`Введите название нового шага`"
@@ -399,7 +400,7 @@
                       <!-- Приоритет -->
                       <select 
                         :value="step.priority || ''"
-                        @change="updateStepAndSave(getOriginalIndex(step), 'priority', $event.target.value)"
+                        @change="updateStep(getOriginalIndex(step), 'priority', $event.target.value)"
                         class="step-param-select priority-select-sm"
                         :class="'priority-' + (step.priority || 'none')"
                         title="Приоритет"
@@ -414,7 +415,7 @@
                       <!-- Время -->
                       <select 
                         :value="step.timeEstimate || ''"
-                        @change="updateStepAndSave(getOriginalIndex(step), 'timeEstimate', $event.target.value)"
+                        @change="updateStep(getOriginalIndex(step), 'timeEstimate', $event.target.value)"
                         class="step-param-select time-select-sm"
                         title="Время на выполнение"
                       >
@@ -431,10 +432,20 @@
                       <input 
                         type="date"
                         :value="step.scheduledDate || ''"
-                        @change="updateStepAndSave(getOriginalIndex(step), 'scheduledDate', $event.target.value)"
+                        @change="updateStep(getOriginalIndex(step), 'scheduledDate', $event.target.value)"
                         class="step-param-select date-input-sm"
                         title="Запланировать на дату"
                       />
+                      
+                      <!-- Кнопка добавления -->
+                      <button 
+                        class="btn btn-primary btn-sm save-new-step-btn"
+                        @click="saveNewStep(step)"
+                        title="Добавить шаг"
+                      >
+                        <Check :size="14" />
+                        Добавить
+                      </button>
                     </div>
                     
                     <!-- Комментарий -->
@@ -442,7 +453,6 @@
                       <textarea 
                         :value="step.comment || ''"
                         @input="handleCommentInput(getOriginalIndex(step), $event)"
-                        @blur="autoSave"
                         class="step-comment-input"
                         :placeholder="'Комментарий к шагу (необязательно)'"
                         rows="1"
@@ -1433,7 +1443,51 @@ function addStep() {
   goalForm.value.steps.push(newStep)
   
   // НЕ изменяем stepsDisplayLimit — новые шаги отображаются отдельно внизу
-  // НЕ сохраняем пустой шаг — сохранение произойдёт когда пользователь введёт название
+  // НЕ сохраняем пустой шаг — сохранение произойдёт по кнопке "Добавить"
+  
+  // Auto-scroll к новому шаблону
+  nextTick(() => {
+    const newStepEl = document.querySelector('.new-step-card:last-child')
+    if (newStepEl) {
+      newStepEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      // Фокус на поле ввода названия
+      const titleInput = newStepEl.querySelector('.step-input')
+      if (titleInput) titleInput.focus()
+    }
+  })
+}
+
+// Сохранить новый шаг (кнопка "Добавить")
+function saveNewStep(step) {
+  // Валидация: нельзя создать шаг с пустым названием
+  if (!step.title?.trim()) {
+    showToast('Введите название шага', 'error')
+    return
+  }
+  
+  // Убираем флаг isNew - шаг готов к сохранению
+  step.isNew = false
+  
+  // Сохраняем
+  flushSave(true)
+}
+
+// Обработка focusout со всего шаблона нового шага
+function handleNewStepFocusOut(step, event) {
+  // Проверяем, остаётся ли фокус внутри этого же шаблона
+  const stepCard = event.currentTarget
+  const relatedTarget = event.relatedTarget
+  
+  // Если фокус уходит внутрь этого же шаблона - игнорируем
+  if (relatedTarget && stepCard.contains(relatedTarget)) {
+    return
+  }
+  
+  // Фокус ушёл полностью с шаблона
+  // Если есть название - сохраняем автоматически
+  if (step.title?.trim()) {
+    saveNewStep(step)
+  }
 }
 
 function handleDragStart(index, event) {
@@ -2495,6 +2549,21 @@ function formatDate(dateString) {
   font-size: 0.625rem;
   padding: 0.125rem 0.375rem;
   min-width: auto;
+}
+
+/* Кнопка добавления нового шага */
+.save-new-step-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.save-new-step-btn:hover {
+  transform: translateY(-1px);
 }
 
 .step-main {
