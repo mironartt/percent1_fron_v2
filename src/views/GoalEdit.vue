@@ -154,9 +154,10 @@
                 <select v-model="sortBy" class="filter-select sort-select">
                   <option value="order">По порядку</option>
                   <option value="priority">По приоритету</option>
-                  <option value="status">По статусу</option>
-                  <option value="time">По времени</option>
-                  <option value="date">По дате</option>
+                  <option value="is_complete">По результату</option>
+                  <option value="time_duration">По времени</option>
+                  <option value="date_created">По дате создания</option>
+                  <option value="title">По названию</option>
                 </select>
                 <button 
                   class="btn-icon sort-direction-btn"
@@ -867,16 +868,11 @@ watch([searchQuery, filterStatus, filterPriority, sortBy, sortDirection], () => 
 })
 
 // Map frontend sort keys to backend order_by values
-// Backend supports: order, date_created, priority
+// Backend supports: order, date_created, title, status, priority, time_duration, is_complete
 function mapSortToBackend(sortKey) {
-  const sortMap = {
-    'order': 'order',
-    'priority': 'priority',
-    'time': 'order', // time sorting not supported by backend, fallback to order
-    'date': 'date_created',
-    'status': 'order' // status sorting not supported by backend, fallback to order
-  }
-  return sortMap[sortKey] || 'order'
+  // Frontend now uses same keys as backend, just pass through
+  const validKeys = ['order', 'date_created', 'title', 'status', 'priority', 'time_duration', 'is_complete']
+  return validKeys.includes(sortKey) ? sortKey : 'order'
 }
 
 // Map frontend priority values to backend values
