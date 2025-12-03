@@ -1122,7 +1122,11 @@ export const useAppStore = defineStore('app', () => {
       name: habit.name,
       icon: habit.icon || '✨',
       xpReward: habit.xpReward || 5,
+      xpPenalty: habit.xpPenalty || 0,
       description: habit.description || '',
+      frequencyType: habit.frequencyType || 'daily',
+      scheduleDays: habit.scheduleDays || [0, 1, 2, 3, 4, 5, 6],
+      reminderTime: habit.reminderTime || null,
       createdAt: new Date().toISOString(),
       archived: false,
       isDefault: false
@@ -1131,7 +1135,7 @@ export const useAppStore = defineStore('app', () => {
     habits.value.push(newHabit)
     
     if (DEBUG_MODE) {
-      console.log('[Store] Habit added:', newHabit.name)
+      console.log('[Store] Habit added:', newHabit.name, { frequencyType: newHabit.frequencyType, scheduleDays: newHabit.scheduleDays })
     }
     
     saveToLocalStorage()

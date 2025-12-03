@@ -101,6 +101,7 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite with a pr
 - **XP/Gamification System**: Complete extrinsic motivation system with XP economy (habits +5, focus tasks +10, goal steps +25, goals +150 XP), reward wishlist, daily progress tracking, profile statistics page. Uses separate `xp.js` Pinia store for decoupled state management.
 - **Profile Page**: User statistics with XP balance, lifetime earned, habit/journal streaks, XP history timeline, and integrated reward wishlist management.
 - **Habit Tracker**: Dashboard-integrated habit completion widget with "+X XP" micro-feedback animations and customizable habits via modal manager.
+- **Habits Page** (/app/habits): Full habit management with scheduling by day of week, gamification settings (soft/balanced/hardcore modes), XP penalties for missed habits. Supports frequencyType (daily/weekdays/weekends/custom), scheduleDays array, and optional XP penalty per habit.
 
 ### System Design Choices
 The application uses a modular structure with dedicated components, services, views, router, and stores. Pinia manages state with persistence and reactivity. The system prioritizes user guidance, visual feedback, and a clean interface. The AI Mentor is a central value proposition. Backend synchronization provides immediate UI feedback and reliable data persistence.

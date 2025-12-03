@@ -1,19 +1,19 @@
 <template>
   <div class="habit-tracker">
     <div class="habit-header">
-      <div class="habit-title">
+      <router-link to="/app/habits" class="habit-title">
         <Flame :size="18" :stroke-width="1.5" />
         <span>Привычки</span>
-        <span class="habit-count">{{ completedCount }}/{{ totalCount }}</span>
-      </div>
-      <button class="btn-icon" @click="$emit('manage')" title="Управление привычками">
-        <Settings :size="16" :stroke-width="1.5" />
-      </button>
+        <span class="habit-count">{{ completedCount }}/{{ scheduledCount }}</span>
+      </router-link>
+      <router-link to="/app/habits" class="btn-icon" title="Управление привычками">
+        <ChevronRight :size="16" :stroke-width="1.5" />
+      </router-link>
     </div>
 
-    <div class="habits-list">
+    <div class="habits-list" v-if="scheduledHabits.length > 0">
       <div 
-        v-for="habit in todayHabits" 
+        v-for="habit in scheduledHabits" 
         :key="habit.id"
         class="habit-item"
         :class="{ completed: habit.completed }"
@@ -32,6 +32,14 @@
       </div>
     </div>
 
+    <div v-else class="empty-habits">
+      <p>Нет привычек на сегодня</p>
+      <router-link to="/app/habits" class="add-link">
+        <Plus :size="14" :stroke-width="1.5" />
+        Добавить
+      </router-link>
+    </div>
+
     <div v-if="habitStreak > 0" class="streak-info">
       <Zap :size="14" :stroke-width="1.5" />
       <span>{{ habitStreak }} {{ pluralizeDays(habitStreak) }} подряд</span>
@@ -43,18 +51,32 @@
 import { ref, computed } from 'vue'
 import { useAppStore } from '../stores/app'
 import { useXpStore, XP_REWARDS } from '../stores/xp'
-import { Flame, Settings, Check, Zap } from 'lucide-vue-next'
-
-const emit = defineEmits(['manage'])
+import { Flame, Check, Zap, ChevronRight, Plus } from 'lucide-vue-next'
 
 const appStore = useAppStore()
 const xpStore = useXpStore()
 
 const showXP = ref(null)
 
-const todayHabits = computed(() => appStore.todayHabits)
-const completedCount = computed(() => appStore.todayHabitsCompleted)
-const totalCount = computed(() => appStore.todayHabitsTotal)
+const todayDayOfWeek = new Date().getDay()
+
+function isScheduledForToday(habit) {
+  if (!habit.frequencyType || habit.frequencyType === 'daily') return true
+  if (habit.frequencyType === 'weekdays') return todayDayOfWeek >= 1 && todayDayOfWeek <= 5
+  if (habit.frequencyType === 'weekends') return todayDayOfWeek === 0 || todayDayOfWeek === 6
+  return habit.scheduleDays?.includes(todayDayOfWeek) ?? true
+}
+
+const scheduledHabits = computed(() => {
+  return appStore.todayHabits.filter(h => isScheduledForToday(h))
+})
+
+const completedCount = computed(() => {
+  return scheduledHabits.value.filter(h => h.completed).length
+})
+
+const scheduledCount = computed(() => scheduledHabits.value.length)
+
 const habitStreak = computed(() => appStore.habitStreak)
 
 function handleToggle(habit) {
@@ -113,10 +135,16 @@ function pluralizeDays(n) {
   gap: 0.5rem;
   font-weight: 600;
   color: var(--text-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.habit-title:hover {
+  color: var(--primary-color);
 }
 
 .habit-title svg {
-  color: var(--primary-color);
+  color: #f97316;
 }
 
 .habit-count {
@@ -133,11 +161,14 @@ function pluralizeDays(n) {
   cursor: pointer;
   color: var(--text-secondary);
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-icon:hover {
   background: var(--bg-secondary);
-  color: var(--text-primary);
+  color: var(--primary-color);
 }
 
 .habits-list {
@@ -240,6 +271,31 @@ function pluralizeDays(n) {
 .xp-fade-leave-to {
   opacity: 0;
   transform: translateY(-10px);
+}
+
+.empty-habits {
+  text-align: center;
+  padding: 1rem;
+}
+
+.empty-habits p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0 0 0.75rem 0;
+}
+
+.add-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--primary-color);
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.add-link:hover {
+  text-decoration: underline;
 }
 
 .streak-info {
