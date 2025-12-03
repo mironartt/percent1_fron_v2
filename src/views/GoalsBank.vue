@@ -1,7 +1,13 @@
 <template>
   <div class="goals-bank-container">
-    <!-- Empty State - First Visit -->
-    <div v-if="showEmptyState" class="empty-state-section">
+    <!-- Loading State -->
+    <div v-if="isGoalsLoading && !isGoalsLoaded" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Загрузка целей...</p>
+    </div>
+
+    <!-- Empty State - First Visit (show onboarding if no goals) -->
+    <div v-else-if="showEmptyState" class="empty-state-section">
       <div class="empty-state-card card">
         <div class="empty-icon">🏦</div>
         <h1>Банк целей</h1>
@@ -1184,8 +1190,19 @@ const newGoal = ref({
   status: null
 })
 
+// API loading state
+const isGoalsLoading = computed(() => goalsApiData.value?.loading ?? false)
+const isGoalsLoaded = computed(() => goalsApiData.value?.loaded ?? false)
+
+// Show empty state (onboarding) only when:
+// 1. Goals are loaded from backend
+// 2. Backend returned 0 goals
+// 3. Lesson is not currently in progress
 const showEmptyState = computed(() => {
-  return false
+  if (lessonStarted.value) return false
+  if (!isGoalsLoaded.value) return false
+  const totalItems = apiPagination.value?.totalItems ?? 0
+  return totalItems === 0 && rawIdeas.value.length === 0
 })
 
 // Check if any filters are active
@@ -1193,8 +1210,14 @@ const hasActiveFilters = computed(() => {
   return !!(filterSphere.value || filterStatus.value || searchQuery.value)
 })
 
+// Show summary (main goals table) when:
+// 1. There are goals from backend, OR
+// 2. Lesson is started (user is creating goals)
 const showSummary = computed(() => {
-  return !!completedAt.value && !addingNewGoal.value
+  if (lessonStarted.value) return false
+  if (!isGoalsLoaded.value) return false
+  const totalItems = apiPagination.value?.totalItems ?? 0
+  return totalItems > 0 || rawIdeas.value.length > 0
 })
 
 const transferredGoals = computed(() => {
@@ -2230,6 +2253,30 @@ onMounted(async () => {
   max-width: 1400px;
   margin: 0 auto;
   padding-bottom: 2rem;
+}
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  gap: 1rem;
+  color: var(--text-secondary);
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* Empty State Styles */

@@ -214,6 +214,51 @@ const shouldShowOnboarding = computed(() => {
 
 ---
 
+## 6. Онбординг Банка Целей (GoalsBank.vue)
+
+### Требование
+"Онбординг банка целей" (3-шаговый урок с "Формирование банка целей") должен показываться ТОЛЬКО если `/api/rest/front/app/goals/get/` возвращает 0 целей.
+
+### Реализация
+
+```javascript
+// API loading state
+const isGoalsLoading = computed(() => goalsApiData.value?.loading ?? false)
+const isGoalsLoaded = computed(() => goalsApiData.value?.loaded ?? false)
+
+// Show empty state (onboarding) only when:
+// 1. Goals are loaded from backend
+// 2. Backend returned 0 goals
+// 3. Lesson is not currently in progress
+const showEmptyState = computed(() => {
+  if (lessonStarted.value) return false
+  if (!isGoalsLoaded.value) return false
+  const totalItems = apiPagination.value?.totalItems ?? 0
+  return totalItems === 0 && rawIdeas.value.length === 0
+})
+
+// Show summary (main goals table) when:
+// 1. There are goals from backend, OR
+// 2. Lesson is started (user is creating goals)
+const showSummary = computed(() => {
+  if (lessonStarted.value) return false
+  if (!isGoalsLoaded.value) return false
+  const totalItems = apiPagination.value?.totalItems ?? 0
+  return totalItems > 0 || rawIdeas.value.length > 0
+})
+```
+
+### Логика отображения
+
+| Состояние | Что показывается |
+|-----------|-----------------|
+| `isGoalsLoading && !isGoalsLoaded` | Спиннер загрузки |
+| `showEmptyState` | Онбординг (3 шага урока) |
+| `showSummary` | Таблица целей с фильтрами |
+| `lessonStarted` | Режим урока (шаги 1-3) |
+
+---
+
 ## Связанные файлы
 
 | Файл | Роль |
@@ -222,5 +267,6 @@ const shouldShowOnboarding = computed(() => {
 | `src/stores/app.js` | State management, shouldShowOnboarding |
 | `src/views/Dashboard.vue` | Conditional render OnboardingAI vs content |
 | `src/components/PlanReview.vue` | Overlay для подтверждения AI-целей |
+| `src/views/GoalsBank.vue` | Банк целей с условным онбордингом |
 | `src/router/index.js` | Auth guards, checkUserAuth() |
 | `src/services/api.js` | updateOnboardingData() |
