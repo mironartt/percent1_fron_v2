@@ -36,6 +36,24 @@
   - Fixed `formatStepDate()` to parse date parts directly
   - Fixed `isToday()`, `currentStreak`, and demo task generation
 
+### Bidirectional Calendar ↔ Goals Block Sync
+- **Feature**: Complete bidirectional synchronization between weekly calendar and "Goals and Steps" block
+- **Calendar → Goals Block**:
+  - Drag step to different day → updates date in goals block
+  - Remove step from calendar → clears date in goals block
+  - Toggle completion → updates status in goals block
+- **Goals Block → Calendar**:
+  - Toggle completion → updates status in calendar
+  - Change date → adds/removes step from calendar
+  - Change priority → updates color in calendar
+  - Change time estimate → updates time badge in calendar
+- **Implementation**:
+  - `syncStepToCalendar(goalId, stepId, changes)` - updates calendar data
+  - `syncStepToGoalsBlock(goalId, stepId, changes)` - updates goals data
+  - `refreshGoalsAfterCalendarChange()` - reloads goals from backend
+- **Priority Mapping**: frontend↔backend conversion: critical↔important, desirable↔desirable
+- **Time Mapping**: frontend↔backend conversion: 30min↔half, 1h↔one, 2h↔two, 3h↔three, 4h↔four
+
 ## Overview
 The OnePercent MVP is a Vue 3 + Vite application for personal life management and goal tracking, inspired by the "1% improvement" philosophy. It features a Balanced Scorecard (SSP) module for life balance assessment and a Goals Bank for structured goal setting. The project provides a guided, multi-step workflow for personal development, leveraging interactive UI components and an AI Mentor for user engagement, integrating with a Django REST API backend for authentication. The business vision is to empower users with tools for self-improvement, fostering consistent growth and offering a market-leading platform for personal development.
 

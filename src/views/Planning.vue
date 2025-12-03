@@ -1833,7 +1833,10 @@ const priorityOrder = { critical: 0, important: 0, desirable: 1, attention: 2, o
 const timeDurationMap = { 'half': '30min', 'one': '1h', 'two': '2h', 'three': '3h', 'four': '4h' }
 
 // Map backend priority to frontend priority
-const priorityBackendToFrontend = { 'important': 'critical', 'attention': 'attention', 'optional': 'optional' }
+const priorityBackendToFrontend = { 'important': 'critical', 'desirable': 'desirable', 'attention': 'attention', 'optional': 'optional' }
+
+// Map frontend priority to backend priority (reverse mapping)
+const priorityFrontendToBackend = { 'critical': 'important', 'desirable': 'desirable', 'attention': 'attention', 'optional': 'optional' }
 
 function getTasksForDay(dateStr) {
   // First check weeklyStepsData from backend API
@@ -1950,7 +1953,8 @@ async function updateScheduledStep(goalId, stepId, field, value) {
         const updateData = { goal_id: goal.backendId, step_id: step.backendId }
         
         if (field === 'priority') {
-          updateData.priority = value || null
+          // Convert frontend priority to backend format
+          updateData.priority = priorityFrontendToBackend[value] || value || null
         } else if (field === 'timeEstimate') {
           const timeMap = { '30min': 'half', '1h': 'one', '2h': 'two', '3h': 'three', '4h': 'four' }
           updateData.time_duration = timeMap[value] || null
@@ -1959,9 +1963,11 @@ async function updateScheduledStep(goalId, stepId, field, value) {
         await updateGoalSteps({ goals_steps_data: [updateData] })
         
         // Bidirectional sync: update calendar if step is shown there
+        // For calendar, use backend format for priority (step_priority field)
         const syncChanges = {}
         if (field === 'priority') {
-          syncChanges.priority = value
+          // Calendar uses backend priority format in step_priority
+          syncChanges.priority = priorityFrontendToBackend[value] || value
         } else if (field === 'timeEstimate') {
           syncChanges.timeEstimate = value
         }
@@ -2126,7 +2132,10 @@ async function refreshGoalsAfterCalendarChange() {
 }
 
 // Local sync: update step in weeklyStepsData (calendar) when changed
+// Calendar uses backend format: step_priority (important/desirable/etc), step_time_duration (half/one/etc)
 function syncStepToCalendar(goalId, stepId, changes) {
+  const timeToBackend = { '30min': 'half', '1h': 'one', '2h': 'two', '3h': 'three', '4h': 'four' }
+  
   for (const dayData of weeklyStepsData.value) {
     if (!dayData.steps_data) continue
     const step = dayData.steps_data.find(s => s.goal_id === goalId && s.step_id === stepId)
@@ -2138,10 +2147,12 @@ function syncStepToCalendar(goalId, stepId, changes) {
         step.step_dt = changes.date
       }
       if (changes.priority !== undefined) {
+        // Priority is already in backend format when passed from updateScheduledStep
         step.step_priority = changes.priority
       }
       if (changes.timeEstimate !== undefined) {
-        step.step_time_duration = changes.timeEstimate
+        // Convert frontend timeEstimate to backend format
+        step.step_time_duration = timeToBackend[changes.timeEstimate] || changes.timeEstimate
       }
       console.log('[Planning] Synced step to calendar:', step.step_title, changes)
       return true
@@ -2151,6 +2162,7 @@ function syncStepToCalendar(goalId, stepId, changes) {
 }
 
 // Local sync: update step in store.goals (goals block) when changed
+// Goals block uses frontend format: priority (critical/desirable/etc), timeEstimate (30min/1h/etc)
 function syncStepToGoalsBlock(goalId, stepId, changes) {
   const goal = store.goals.find(g => g.backendId === goalId)
   if (!goal || !goal.steps) return false
@@ -2165,10 +2177,12 @@ function syncStepToGoalsBlock(goalId, stepId, changes) {
     step.date = changes.date
   }
   if (changes.priority !== undefined) {
-    step.priority = changes.priority
+    // Convert backend priority to frontend format if needed
+    step.priority = priorityBackendToFrontend[changes.priority] || changes.priority
   }
   if (changes.timeEstimate !== undefined) {
-    step.timeEstimate = changes.timeEstimate
+    // Convert backend time_duration to frontend format if needed
+    step.timeEstimate = timeDurationMap[changes.timeEstimate] || changes.timeEstimate
   }
   
   console.log('[Planning] Synced step to goals block:', step.title, changes)
