@@ -352,22 +352,55 @@ if (isBackendTask) {
     }]
   })
   await loadWeeklySteps()
+  
+  // Асинхронное обновление заголовков целей
+  refreshGoalHeadersAsync(taskData.step_id, { completed: newCompleted })
+}
+```
+
+### Асинхронное обновление заголовков целей
+
+Функция `refreshGoalHeadersAsync()` выполняет фоновый запрос для обновления данных в шапках целей (счётчики, прогресс):
+
+```javascript
+async function refreshGoalHeadersAsync(changedStepId, stepChanges) {
+  const response = await getGoals({ with_steps_data: true, ... })
+  
+  response.data.results.forEach(backendGoal => {
+    const localGoal = goals.value.find(g => g.backendId === backendGoal.id)
+    if (localGoal) {
+      // Обновляем заголовки
+      localGoal.stepsCount = backendGoal.steps_count
+      localGoal.completedStepsCount = backendGoal.completed_steps_count
+      localGoal.plannedStepsCount = backendGoal.planned_steps_count
+      localGoal.progress = backendGoal.progress
+      
+      // Если шаг есть в уже загруженных - применяем изменения локально
+      if (changedStepId && localGoal.steps) {
+        const step = localGoal.steps.find(s => s.backendId === changedStepId)
+        if (step) Object.assign(step, stepChanges)
+      }
+    }
+  })
 }
 ```
 
 ### Удаление из календаря (крестик)
 
-Функция `removeTask()` отправляет `dt: null`:
+Функция `removeTask()` отправляет `dt: '1700-01-01'` (workaround, т.к. бэкенд не принимает null):
 ```javascript
 if (isBackendTask) {
   await updateGoalSteps({
     goals_steps_data: [{
       goal_id: taskToRemove.goal_id,
       step_id: taskToRemove.step_id,
-      dt: null  // Убираем дату = удаляем из календаря
+      dt: '1700-01-01'  // Workaround: бэкенд не принимает null
     }]
   })
   await loadWeeklySteps()
+  
+  // Асинхронное обновление заголовков целей
+  refreshGoalHeadersAsync(taskToRemove.step_id, { scheduledDate: null })
 }
 ```
 

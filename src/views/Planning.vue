@@ -2002,7 +2002,7 @@ async function scheduleStep(goalId, step, dateStr) {
         goals_steps_data: [{
           goal_id: goal.backendId,
           step_id: step.backendId,
-          dt: dateStr || null
+          dt: dateStr || '1700-01-01'  // Backend workaround: use old date instead of null
         }]
       })
     } catch (error) {
@@ -2062,6 +2062,58 @@ function unscheduleStep(goalId, stepId) {
   }
 }
 
+// Async refresh goal headers after step changes (without reloading steps)
+async function refreshGoalHeadersAsync(changedStepId, stepChanges) {
+  try {
+    const { getGoals } = await import('@/services/api.js')
+    
+    // Build request params matching current filters
+    const params = {
+      with_steps_data: true,
+      page: 1,
+      per_page: 100
+    }
+    
+    if (filterSphere.value) {
+      params.category_filter = filterSphere.value
+    }
+    if (filterStatus.value) {
+      params.status_filter = filterStatus.value
+    }
+    if (filterThisWeek.value) {
+      params.result_week_data = true
+    }
+    
+    const response = await getGoals(params)
+    console.log('[Planning] Refreshed goal headers async')
+    
+    if (response?.data?.results) {
+      // Update goal headers without replacing steps
+      response.data.results.forEach(backendGoal => {
+        const localGoal = goals.value.find(g => g.backendId === backendGoal.id)
+        if (localGoal) {
+          // Update header fields
+          localGoal.stepsCount = backendGoal.steps_count || 0
+          localGoal.completedStepsCount = backendGoal.completed_steps_count || 0
+          localGoal.plannedStepsCount = backendGoal.planned_steps_count || 0
+          localGoal.progress = backendGoal.progress || 0
+          
+          // If this goal contains the changed step, update it locally
+          if (changedStepId && stepChanges && localGoal.steps) {
+            const stepToUpdate = localGoal.steps.find(s => s.backendId === changedStepId)
+            if (stepToUpdate) {
+              console.log('[Planning] Updating local step:', changedStepId, stepChanges)
+              Object.assign(stepToUpdate, stepChanges)
+            }
+          }
+        }
+      })
+    }
+  } catch (error) {
+    console.error('[Planning] Error refreshing goal headers:', error)
+  }
+}
+
 async function toggleTaskComplete(taskId) {
   // For backend tasks, taskId has format "backend-{stepId}"
   const isBackendTask = taskId.toString().startsWith('backend-')
@@ -2111,6 +2163,9 @@ async function toggleTaskComplete(taskId) {
         
         // Reload weekly steps data to reflect changes
         await loadWeeklySteps()
+        
+        // Async refresh goal headers (don't await - runs in background)
+        refreshGoalHeadersAsync(taskData.step_id, { completed: newCompleted })
       } catch (error) {
         console.error('[Planning] Error toggling task completion:', error)
       }
@@ -2191,13 +2246,16 @@ async function removeTask(taskId) {
           goals_steps_data: [{
             goal_id: taskToRemove.goal_id,
             step_id: taskToRemove.step_id,
-            dt: null  // Remove from calendar by clearing the date
+            dt: '1700-01-01'  // Backend workaround: use old date instead of null to remove from calendar
           }]
         })
         console.log('[Planning] Successfully removed step from calendar on backend')
         
         // Reload weekly steps data to reflect changes
         await loadWeeklySteps()
+        
+        // Async refresh goal headers (don't await - runs in background)
+        refreshGoalHeadersAsync(taskToRemove.step_id, { scheduledDate: null })
       } catch (error) {
         console.error('[Planning] Error removing task from calendar:', error)
       }
