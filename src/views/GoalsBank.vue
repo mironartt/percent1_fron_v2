@@ -4820,21 +4820,20 @@ onMounted(async () => {
   
   .goals-table-section .status-row {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     gap: 0.5rem;
     flex-wrap: wrap;
   }
   
-  .goals-table-section .status-row .status-badge {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.8125rem;
-    line-height: 1.2;
-  }
-  
+  .goals-table-section .status-row .status-badge,
   .goals-table-section .status-row .goal-sphere-badge-new {
+    display: inline-flex;
+    align-items: center;
     padding: 0.375rem 0.75rem;
     font-size: 0.8125rem;
-    line-height: 1.2;
+    line-height: 1;
+    margin: 0;
+    vertical-align: middle;
   }
   
   .goals-table-section .goals-table .col-goal {
