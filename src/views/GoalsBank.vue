@@ -285,32 +285,42 @@
                       >
                         <MoreVertical :size="16" :stroke-width="2" />
                       </button>
-                      <div 
-                        v-if="openActionsDropdown === goal.id" 
-                        class="dropdown-menu"
-                        @click.stop
-                      >
-                        <button class="dropdown-item" @click="openEditModal(goal); closeActionsDropdown()">
-                          <Edit2 :size="14" :stroke-width="2" />
-                          Редактировать
-                        </button>
-                        <button 
-                          v-if="goal.status === 'validated'"
-                          class="dropdown-item" 
-                          @click="goToDecompose(goal.id); closeActionsDropdown()"
+                      <Teleport to="body">
+                        <div 
+                          v-if="openActionsDropdown === goal.id" 
+                          class="dropdown-overlay"
+                          @click="closeActionsDropdown()"
+                        ></div>
+                        <div 
+                          v-if="openActionsDropdown === goal.id" 
+                          class="dropdown-menu-mobile"
+                          @click.stop
                         >
-                          <GitBranch :size="14" :stroke-width="2" />
-                          Декомпозировать
-                        </button>
-                        <button 
-                          v-if="isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
-                          class="dropdown-item dropdown-item-danger" 
-                          @click="removeFromWorkBySourceId(goal.id); closeActionsDropdown()"
-                        >
-                          <X :size="14" :stroke-width="2" />
-                          Убрать из работы
-                        </button>
-                      </div>
+                          <button class="dropdown-item" @click="openEditModal(goal); closeActionsDropdown()">
+                            <Edit2 :size="18" :stroke-width="2" />
+                            Редактировать
+                          </button>
+                          <button 
+                            v-if="goal.status === 'validated'"
+                            class="dropdown-item" 
+                            @click="goToDecompose(goal.id); closeActionsDropdown()"
+                          >
+                            <GitBranch :size="18" :stroke-width="2" />
+                            Декомпозировать
+                          </button>
+                          <button 
+                            v-if="isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
+                            class="dropdown-item dropdown-item-danger" 
+                            @click="removeFromWorkBySourceId(goal.id); closeActionsDropdown()"
+                          >
+                            <X :size="18" :stroke-width="2" />
+                            Убрать из работы
+                          </button>
+                          <button class="dropdown-item dropdown-item-cancel" @click="closeActionsDropdown()">
+                            Отмена
+                          </button>
+                        </div>
+                      </Teleport>
                     </div>
                   </div>
                 </td>
@@ -4917,47 +4927,6 @@ onMounted(async () => {
     min-height: 36px;
   }
   
-  .mobile-actions-dropdown .dropdown-menu {
-    position: absolute;
-    right: 0;
-    bottom: 100%;
-    margin-bottom: 4px;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
-    min-width: 160px;
-    z-index: 1000;
-    padding: 0.25rem;
-  }
-  
-  .mobile-actions-dropdown .dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    width: 100%;
-    padding: 0.625rem 0.75rem;
-    border: none;
-    background: none;
-    font-size: 0.875rem;
-    color: var(--text-primary);
-    border-radius: 6px;
-    cursor: pointer;
-    text-align: left;
-  }
-  
-  .mobile-actions-dropdown .dropdown-item:hover {
-    background: var(--bg-secondary);
-  }
-  
-  .mobile-actions-dropdown .dropdown-item-danger {
-    color: #ef4444;
-  }
-  
-  .mobile-actions-dropdown .dropdown-item-danger:hover {
-    background: rgba(239, 68, 68, 0.1);
-  }
-  
   .pagination {
     flex-wrap: wrap;
     justify-content: center;
@@ -4970,6 +4939,72 @@ onMounted(async () => {
     order: -1;
     margin-bottom: 0.5rem;
   }
+}
+
+/* Mobile Action Sheet Styles */
+.dropdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 9998;
+}
+
+.dropdown-menu-mobile {
+  position: fixed;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  background: var(--bg-primary);
+  border-radius: 16px;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.25);
+  z-index: 9999;
+  padding: 0.5rem;
+  animation: slideUpSheet 0.25s ease-out;
+}
+
+@keyframes slideUpSheet {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.dropdown-menu-mobile .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  background: none;
+  font-size: 1rem;
+  color: var(--text-primary);
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.dropdown-menu-mobile .dropdown-item:active {
+  background: var(--bg-secondary);
+}
+
+.dropdown-menu-mobile .dropdown-item-danger {
+  color: #ef4444;
+}
+
+.dropdown-menu-mobile .dropdown-item-cancel {
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+  color: var(--text-secondary);
+  justify-content: center;
 }
 
 /* Edit Modal Styles */
