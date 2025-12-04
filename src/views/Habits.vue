@@ -354,27 +354,29 @@
                 class="form-input name-input-full"
                 placeholder="Название привычки"
               />
-              <div class="xp-badge">
-                <Sparkles :size="14" :stroke-width="1.5" />
-                <span class="xp-value">+{{ formData.xpReward }}</span>
-                <span class="xp-suffix">XP</span>
-              </div>
             </div>
             
-            <div class="xp-slider-row" v-if="showXpSlider">
+            <div class="xp-slider-row">
               <label class="slider-label">Награда за выполнение</label>
               <div class="xp-slider-control">
                 <input 
                   type="range" 
                   v-model.number="formData.xpReward"
                   min="1"
-                  max="50"
+                  max="100"
                   step="1"
                   class="xp-slider"
                 />
-                <span class="xp-slider-value">{{ formData.xpReward }} XP</span>
+                <span class="xp-slider-value">+{{ formData.xpReward }} XP</span>
               </div>
             </div>
+            
+            <textarea 
+              v-model="formData.description"
+              class="form-input description-input"
+              rows="2"
+              placeholder="Зачем вам эта привычка? (опционально)"
+            />
             
             <div class="schedule-compact">
               <div class="schedule-presets">
@@ -405,7 +407,7 @@
                   v-for="day in weekDaysConfig" 
                   :key="day.key"
                   class="day-btn-compact"
-                  :class="{ active: formData.scheduleDays.includes(day.key) }"
+                  :class="{ active: isDayActiveBySchedule(day.key) }"
                   @click="toggleDayManual(day.key)"
                 >
                   {{ day.short }}
@@ -413,40 +415,15 @@
               </div>
             </div>
             
-            <div class="optional-actions">
+            <div class="optional-actions" v-if="gameSettings.difficultyMode !== 'soft'">
               <button 
-                v-if="!showDescriptionField && !formData.description"
-                class="btn-link optional-btn"
-                @click="showDescriptionField = true"
-              >
-                <Plus :size="14" :stroke-width="1.5" />
-                Добавить описание
-              </button>
-              <button 
-                v-if="!showXpSlider"
-                class="btn-link optional-btn"
-                @click="showXpSlider = true"
-              >
-                <Sparkles :size="14" :stroke-width="1.5" />
-                Настроить XP
-              </button>
-              <button 
-                v-if="!showPenaltyField && gameSettings.difficultyMode !== 'soft'"
+                v-if="!showPenaltyField"
                 class="btn-link optional-btn penalty"
                 @click="showPenaltyField = true"
               >
                 <Minus :size="14" :stroke-width="1.5" />
                 Настроить штраф
               </button>
-            </div>
-            
-            <div class="optional-fields" v-if="showDescriptionField || formData.description">
-              <textarea 
-                v-model="formData.description"
-                class="form-input description-input"
-                rows="2"
-                placeholder="Зачем вам эта привычка?"
-              />
             </div>
             
             <div class="penalty-field" v-if="showPenaltyField && gameSettings.difficultyMode !== 'soft'">
@@ -1409,6 +1386,21 @@ function toggleDay(dayKey) {
 function toggleDayManual(dayKey) {
   formData.value.frequencyType = 'custom'
   toggleDay(dayKey)
+}
+
+function isDayActiveBySchedule(dayKey) {
+  const freqType = formData.value.frequencyType
+  if (freqType === 'daily') {
+    return true
+  } else if (freqType === 'weekdays') {
+    return dayKey >= 1 && dayKey <= 5
+  } else if (freqType === 'weekends') {
+    return dayKey === 0 || dayKey === 6
+  } else if (freqType === 'custom') {
+    const days = formData.value.scheduleDays
+    return Array.isArray(days) && days.includes(dayKey)
+  }
+  return false
 }
 
 function saveHabit() {
@@ -3133,23 +3125,24 @@ onMounted(() => {
 .icon-picker-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  gap: 6px;
+  flex-wrap: nowrap;
   margin-bottom: 0.75rem;
 }
 
 .icon-pick-btn {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   background: var(--bg-secondary);
   border: 2px solid transparent;
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .icon-pick-btn:hover {
