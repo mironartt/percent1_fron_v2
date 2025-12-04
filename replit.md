@@ -2,6 +2,18 @@
 
 ## Recent Changes (December 2025)
 
+### AI Onboarding Goals Backend Sync (December 2025)
+- **Issue**: Goals and steps from AI onboarding were saved only to localStorage, not synced to backend
+- **Fix**: `confirmAIRecommendations()` now:
+  1. First sends goals to backend via `updateGoals` API with `score: 'true'` and `status: 'work'`
+  2. Validates that backend returns correct number of IDs
+  3. Only then creates local goals with received `backendId`
+  4. Sends all steps via `updateGoalSteps` API
+  5. Updates step `backendId` from response
+  6. Shows toast error and keeps modal open on failure for retry
+- **PlanReview.vue**: Updated with `isConfirming` loading state and proper async handling
+- **Result**: Goals from onboarding appear in Goals Bank with "В работе" status
+
 ### Bug Fix: Infinite Onboarding Loop
 - **Issue**: After completing onboarding and confirming AI goals in PlanReview, users would see "Ваши первые цели" screen again
 - **Root Cause**: `completeOnboarding()` in OnboardingAI.vue only updated local state but never called backend to set `is_complete=true` and `finish_onboarding=true`. After any auth refresh, backend returned `finish_onboarding=false`, triggering onboarding again
