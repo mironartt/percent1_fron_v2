@@ -2618,26 +2618,6 @@ function undoDeleteTask() {
   }
 }
 
-function formatTimeEstimate(estimate) {
-  const labels = {
-    '30min': '30 мин',
-    '1h': '1 час',
-    '2h': '2 часа',
-    '4h': '4 часа'
-  }
-  return labels[estimate] || estimate
-}
-
-function formatTimeShort(estimate) {
-  const labels = {
-    '30min': '30м',
-    '1h': '1ч',
-    '2h': '2ч',
-    '4h': '4ч'
-  }
-  return labels[estimate] || estimate
-}
-
 const priorityOptions = [
   { value: 'critical', label: 'Критично', color: '#ef4444' },
   { value: 'desirable', label: 'Важно', color: '#f97316' },
@@ -2648,11 +2628,6 @@ const priorityOptions = [
 function getPriorityColor(priority) {
   const option = priorityOptions.find(p => p.value === priority)
   return option ? option.color : '#9ca3af'
-}
-
-function getPriorityLabel(priority) {
-  const option = priorityOptions.find(p => p.value === priority)
-  return option ? option.label : 'Опционально'
 }
 
 function pluralize(n, one, few, many) {
