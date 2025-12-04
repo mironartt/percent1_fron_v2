@@ -139,7 +139,7 @@
             <thead>
               <tr>
                 <th class="col-status">Статус</th>
-                <th class="col-goal">Цель / Идея</th>
+                <th class="col-goal">Цель</th>
                 <th class="col-why">Почему для меня это важно?</th>
                 <th class="col-actions">Действия</th>
               </tr>
