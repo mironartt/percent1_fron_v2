@@ -202,16 +202,17 @@
                 </td>
                 <td class="col-actions">
                   <div class="actions-cell">
+                    <!-- Desktop: all buttons inline -->
                     <button 
-                      class="btn-icon btn-icon-edit"
+                      class="btn-icon btn-icon-edit desktop-only"
                       @click.stop="openEditModal(goal)"
                       title="Редактировать"
                     >
                       <Edit2 :size="16" :stroke-width="2" />
                     </button>
                     <button 
-                      v-if="goal.status === 'validated' && (isGoalTransferred(goal.id) || !isGoalTransferred(goal.id))"
-                      class="btn-icon btn-icon-decompose hide-mobile-secondary"
+                      v-if="goal.status === 'validated'"
+                      class="btn-icon btn-icon-decompose desktop-only"
                       @click.stop="goToDecompose(goal.id)"
                       title="Декомпозировать"
                     >
@@ -219,7 +220,7 @@
                     </button>
                     <button 
                       v-if="goal.status === 'validated' && !isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
-                      class="btn-icon btn-icon-primary"
+                      class="btn-icon btn-icon-primary desktop-only"
                       @click.stop="takeGoalToWork(goal)"
                       title="Взять в работу"
                     >
@@ -227,7 +228,7 @@
                     </button>
                     <button 
                       v-if="isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
-                      class="btn-icon btn-icon-success"
+                      class="btn-icon btn-icon-success desktop-only"
                       @click.stop="completeGoalFromBank(goal)"
                       title="Завершить цель"
                     >
@@ -235,7 +236,7 @@
                     </button>
                     <button 
                       v-if="isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
-                      class="btn-icon btn-icon-danger"
+                      class="btn-icon btn-icon-danger desktop-only"
                       @click.stop="removeFromWorkBySourceId(goal.id)"
                       title="Убрать из работы"
                     >
@@ -243,12 +244,74 @@
                     </button>
                     <button 
                       v-if="isGoalCompleted(goal.id)"
-                      class="btn-icon btn-icon-secondary"
+                      class="btn-icon btn-icon-secondary desktop-only"
                       @click.stop="returnToWork(goal.id)"
                       title="Вернуть в работу"
                     >
                       <RotateCcw :size="16" :stroke-width="2" />
                     </button>
+                    
+                    <!-- Mobile: primary action + dropdown -->
+                    <button 
+                      v-if="goal.status === 'validated' && !isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
+                      class="btn-icon btn-icon-primary mobile-only"
+                      @click.stop="takeGoalToWork(goal)"
+                      title="Взять в работу"
+                    >
+                      <Plus :size="16" :stroke-width="2" />
+                    </button>
+                    <button 
+                      v-if="isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
+                      class="btn-icon btn-icon-success mobile-only"
+                      @click.stop="completeGoalFromBank(goal)"
+                      title="Завершить"
+                    >
+                      <Check :size="16" :stroke-width="2" />
+                    </button>
+                    <button 
+                      v-if="isGoalCompleted(goal.id)"
+                      class="btn-icon btn-icon-secondary mobile-only"
+                      @click.stop="returnToWork(goal.id)"
+                      title="Вернуть"
+                    >
+                      <RotateCcw :size="16" :stroke-width="2" />
+                    </button>
+                    
+                    <div class="mobile-actions-dropdown mobile-only">
+                      <button 
+                        class="btn-icon btn-icon-more"
+                        @click.stop="toggleActionsDropdown(goal.id)"
+                        title="Ещё"
+                      >
+                        <MoreVertical :size="16" :stroke-width="2" />
+                      </button>
+                      <div 
+                        v-if="openActionsDropdown === goal.id" 
+                        class="dropdown-menu"
+                        @click.stop
+                      >
+                        <button class="dropdown-item" @click="openEditModal(goal); closeActionsDropdown()">
+                          <Edit2 :size="14" :stroke-width="2" />
+                          Редактировать
+                        </button>
+                        <button 
+                          v-if="goal.status === 'validated'"
+                          class="dropdown-item" 
+                          @click="goToDecompose(goal.id); closeActionsDropdown()"
+                        >
+                          <GitBranch :size="14" :stroke-width="2" />
+                          Декомпозировать
+                        </button>
+                        <button 
+                          v-if="isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
+                          class="dropdown-item dropdown-item-danger" 
+                          @click="removeFromWorkBySourceId(goal.id); closeActionsDropdown()"
+                        >
+                          <X :size="14" :stroke-width="2" />
+                          Убрать из работы
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </td>
               </tr>
@@ -611,7 +674,8 @@ import {
   ChevronUp,
   BookOpen,
   HelpCircle,
-  Filter
+  Filter,
+  MoreVertical
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -828,6 +892,19 @@ const rejectedPercent = computed(() => rawIdeas.value.length > 0 ? (rejectedCoun
 
 const expandedGoalId = ref(null)
 const expandedSummaryGoalId = ref(null)
+const openActionsDropdown = ref(null)
+
+function toggleActionsDropdown(goalId) {
+  if (openActionsDropdown.value === goalId) {
+    openActionsDropdown.value = null
+  } else {
+    openActionsDropdown.value = goalId
+  }
+}
+
+function closeActionsDropdown() {
+  openActionsDropdown.value = null
+}
 
 function getWhyImportant(goal) {
   if (goal.threeWhys?.why1) {
@@ -2396,6 +2473,19 @@ onMounted(async () => {
   gap: 0.25rem;
   justify-content: center;
   align-items: center;
+}
+
+/* Mobile/Desktop visibility */
+.mobile-only {
+  display: none !important;
+}
+
+.desktop-only {
+  display: flex;
+}
+
+.mobile-actions-dropdown {
+  display: none;
 }
 
 .btn-icon {
@@ -4803,8 +4893,17 @@ onMounted(async () => {
     display: none;
   }
   
-  .hide-mobile-secondary {
+  .desktop-only {
     display: none !important;
+  }
+  
+  .mobile-only {
+    display: flex !important;
+  }
+  
+  .mobile-actions-dropdown {
+    display: flex !important;
+    position: relative;
   }
   
   .actions-cell {
@@ -4814,6 +4913,46 @@ onMounted(async () => {
   .goals-table-section .actions-cell .btn-icon {
     min-width: 36px;
     min-height: 36px;
+  }
+  
+  .mobile-actions-dropdown .dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 160px;
+    z-index: 100;
+    padding: 0.25rem;
+  }
+  
+  .mobile-actions-dropdown .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    border: none;
+    background: none;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+  }
+  
+  .mobile-actions-dropdown .dropdown-item:hover {
+    background: var(--bg-secondary);
+  }
+  
+  .mobile-actions-dropdown .dropdown-item-danger {
+    color: #ef4444;
+  }
+  
+  .mobile-actions-dropdown .dropdown-item-danger:hover {
+    background: rgba(239, 68, 68, 0.1);
   }
   
   .pagination {
