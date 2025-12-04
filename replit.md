@@ -81,6 +81,8 @@ The application employs a guided, multi-step workflow for core modules. It featu
   - Mobile (<1024px): Floating button triggers drawer overlay from right
   - State management: `mentorPanelCollapsed` (desktop) and `mentorMobileOpen` (mobile) are independent
   - Drawer auto-closes on route change; collapse button closes drawer on mobile
+  - **Session State**: Panel open by default each session (not persisted to localStorage); if user closes, stays closed until session ends
+  - **Unread Badge**: `unreadMentorCount` increments when assistant message arrives while panel hidden; `mentorIsMobile` flag determines check (desktop: `mentorPanelCollapsed`, mobile: `!mentorMobileOpen`); badge resets on panel open
 
 ### Technical Implementations
 The frontend is built with Vue 3 (Composition API, script setup), Vite with a proxy to the Django backend, Vue Router for navigation with authentication guards, and Pinia for state management with localStorage persistence. A custom Django-style configuration system (`settings.js` + `local_settings.js`) is used. Authentication is cookie-based with CSRF protection.
