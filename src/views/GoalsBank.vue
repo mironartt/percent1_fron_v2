@@ -375,7 +375,13 @@
             </div>
 
             <div class="validation-section">
-              <div class="validation-label">Оценка цели:</div>
+              <div class="validation-label">
+                Оценка цели:
+                <span class="tooltip-wrapper">
+                  <HelpCircle :size="16" :stroke-width="2" class="help-icon" />
+                  <span class="tooltip-text">Истинная цель отвечает на вопросы «почему важно?» и «как изменит жизнь?». Ложная — навязана извне или не ведёт к переменам.</span>
+                </span>
+              </div>
               <div class="validation-buttons">
                 <button 
                   class="btn btn-validation btn-true-goal"
@@ -507,7 +513,13 @@
             </div>
 
             <div class="validation-section">
-              <div class="validation-label">Оценка цели:</div>
+              <div class="validation-label">
+                Оценка цели:
+                <span class="tooltip-wrapper">
+                  <HelpCircle :size="16" :stroke-width="2" class="help-icon" />
+                  <span class="tooltip-text">Истинная цель отвечает на вопросы «почему важно?» и «как изменит жизнь?». Ложная — навязана извне или не ведёт к переменам.</span>
+                </span>
+              </div>
               <div class="validation-buttons">
                 <button 
                   class="btn btn-validation btn-true-goal"
@@ -583,7 +595,8 @@ import {
   Search,
   GitBranch,
   ChevronUp,
-  BookOpen
+  BookOpen,
+  HelpCircle
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -4740,6 +4753,63 @@ onMounted(async () => {
   font-weight: 500;
   color: var(--text-secondary);
   margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+}
+
+.help-icon {
+  color: var(--text-tertiary);
+  opacity: 0.7;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.tooltip-wrapper:hover .help-icon {
+  opacity: 1;
+  color: var(--primary-color);
+}
+
+.tooltip-text {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  transition: opacity 0.2s, visibility 0.2s;
+}
+
+.tooltip-text::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--border-color);
+}
+
+.tooltip-wrapper:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
 }
 
 .validation-buttons {
