@@ -4756,6 +4756,8 @@ onMounted(async () => {
     border-radius: var(--radius-md);
     padding: 1rem;
     gap: 0.75rem;
+    position: relative;
+    overflow: visible;
   }
   
   .goals-table-section .goals-table tbody tr:hover {
@@ -4918,13 +4920,14 @@ onMounted(async () => {
   .mobile-actions-dropdown .dropdown-menu {
     position: absolute;
     right: 0;
-    top: 100%;
+    bottom: 100%;
+    margin-bottom: 4px;
     background: var(--bg-primary);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
     min-width: 160px;
-    z-index: 100;
+    z-index: 1000;
     padding: 0.25rem;
   }
   
