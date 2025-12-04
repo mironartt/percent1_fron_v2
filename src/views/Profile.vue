@@ -535,4 +535,32 @@ function formatTime(timestamp) {
   color: var(--text-muted);
   white-space: nowrap;
 }
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .xp-display {
+    text-align: left;
+    width: 100%;
+  }
+  
+  .xp-balance {
+    justify-content: flex-start;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .stat-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+}
 </style>

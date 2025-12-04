@@ -772,4 +772,28 @@ function onEntrySaved() {
   justify-content: center;
   gap: 0.5rem;
 }
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .today-cta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .today-cta .btn {
+    width: 100%;
+  }
+  
+  .cta-content {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+  
+  .header-stats {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
 </style>

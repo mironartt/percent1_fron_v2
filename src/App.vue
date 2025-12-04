@@ -108,6 +108,7 @@ const appClasses = computed(() => ({
   #app.has-sidebar.sidebar-collapsed .main-content {
     margin-left: 0;
     padding: 1rem;
+    overflow-x: hidden;
   }
 }
 
