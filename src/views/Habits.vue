@@ -1558,15 +1558,9 @@ onMounted(() => {
 
 .stats-bar {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 1rem;
   margin-bottom: 1.5rem;
-}
-
-@media (max-width: 640px) {
-  .stats-bar {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 .stat-item {
@@ -3673,10 +3667,16 @@ onMounted(() => {
   justify-content: space-between;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .header-content {
     flex-direction: column;
     align-items: stretch;
+  }
+  
+  .header-content .btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.875rem 1rem;
   }
   
   .icon-grid {
@@ -3692,12 +3692,78 @@ onMounted(() => {
     text-align: center;
   }
   
+  .tabs-navigation {
+    width: 100%;
+  }
+  
+  .tabs-navigation .tab-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 0.875rem;
+    min-height: 44px;
+  }
+  
   .habit-schedule {
     display: none;
   }
   
   .week-header {
     display: none;
+  }
+  
+  .stat-item {
+    padding: 0.875rem;
+    min-height: 60px;
+  }
+  
+  .stat-item .settings-cta {
+    display: none;
+  }
+  
+  .stat-action-hint {
+    display: none;
+  }
+  
+  .habit-card {
+    padding: 0.875rem 1rem;
+    gap: 0.75rem;
+  }
+  
+  .habit-actions {
+    gap: 0.5rem;
+  }
+  
+  .btn-icon {
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0.625rem;
+  }
+  
+  .btn-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .habit-check-btn {
+    min-width: 40px;
+    min-height: 40px;
+  }
+  
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .completion-stats {
+    flex-direction: row;
+    gap: 1.5rem;
+  }
+  
+  .empty-state h2 {
+    font-size: 1.25rem;
+  }
+  
+  .empty-state p {
+    font-size: 0.9rem;
   }
 }
 </style>
