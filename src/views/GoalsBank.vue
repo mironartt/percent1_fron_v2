@@ -169,26 +169,33 @@
                 }"
               >
                 <td class="col-status">
-                  <span v-if="isGoalCompleted(goal.id)" class="status-badge completed">
-                    Завершена
-                  </span>
-                  <span v-else-if="isGoalTransferred(goal.id)" class="status-badge in-work">
-                    В работе
-                  </span>
-                  <span v-else-if="goal.status === 'validated'" class="status-badge available">
-                    Не в работе
-                  </span>
-                  <span v-else-if="goal.status === 'rejected'" class="status-badge rejected">
-                    Отклонена
-                  </span>
-                  <span v-else class="status-badge raw">
-                    Не оценена
-                  </span>
+                  <div class="status-row">
+                    <span v-if="isGoalCompleted(goal.id)" class="status-badge completed">
+                      Завершена
+                    </span>
+                    <span v-else-if="isGoalTransferred(goal.id)" class="status-badge in-work">
+                      В работе
+                    </span>
+                    <span v-else-if="goal.status === 'validated'" class="status-badge available">
+                      Не в работе
+                    </span>
+                    <span v-else-if="goal.status === 'rejected'" class="status-badge rejected">
+                      Отклонена
+                    </span>
+                    <span v-else class="status-badge raw">
+                      Не оценена
+                    </span>
+                    <span class="goal-sphere-badge-new mobile-only" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
+                      <component :is="getSphereIcon(goal.sphereId)" :size="12" :stroke-width="2" />
+                      {{ getSphereNameOnly(goal.sphereId) }}
+                      <AlertTriangle v-if="isWeakSphere(goal.sphereId)" :size="10" class="weak-indicator" title="Проседающая сфера" />
+                    </span>
+                  </div>
                 </td>
                 <td class="col-goal">
                   <div class="goal-cell">
                     <span class="goal-text line-clamp-2" :title="goal.text">{{ goal.text }}</span>
-                    <span class="goal-sphere-badge-new" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
+                    <span class="goal-sphere-badge-new desktop-only" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
                       <component :is="getSphereIcon(goal.sphereId)" :size="14" :stroke-width="2" />
                       {{ getSphereNameOnly(goal.sphereId) }}
                       <AlertTriangle v-if="isWeakSphere(goal.sphereId)" :size="12" class="weak-indicator" title="Проседающая сфера" />
@@ -4796,6 +4803,18 @@ onMounted(async () => {
     width: 100%;
     text-align: left;
     order: -1;
+  }
+  
+  .goals-table-section .status-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .goals-table-section .status-row .goal-sphere-badge-new {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
   }
   
   .goals-table-section .goals-table .col-goal {
