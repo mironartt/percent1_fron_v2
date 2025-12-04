@@ -108,6 +108,7 @@ const appClasses = computed(() => ({
   #app.has-sidebar.sidebar-collapsed .main-content {
     margin-left: 0;
     padding: 1rem;
+    overflow-x: hidden;
   }
 }
 
@@ -136,6 +137,16 @@ const appClasses = computed(() => ({
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+</style>
+
+<style>
+/* Global styles for mobile header spacing */
+@media (max-width: 768px) {
+  .page-header h1,
+  .section-header h1 {
+    margin-left: 2.5rem;
   }
 }
 </style>

@@ -1,7 +1,7 @@
 # OnePercent MVP
 
 ## Overview
-The OnePercent MVP is a Vue 3 + Vite application for personal life management and goal tracking, inspired by the "1% improvement" philosophy. It features a Balanced Scorecard (SSP) module for life balance assessment and a Goals Bank for structured goal setting. The project provides a guided, multi-step workflow for personal development, leveraging interactive UI components and an AI Mentor for user engagement, integrating with a Django REST API backend for authentication. The business vision is to empower users with tools for self-improvement, fostering consistent growth and offering a market-leading platform for personal development.
+The OnePercent MVP is a Vue 3 + Vite application for personal life management and goal tracking, inspired by the "1% improvement" philosophy. Its core purpose is to empower users with tools for self-improvement, fostering consistent growth. Key capabilities include a Balanced Scorecard (SSP) module for life balance assessment and a Goals Bank for structured goal setting, offering a guided, multi-step workflow. The project integrates an AI Mentor for user engagement and leverages a Django REST API backend for data persistence and authentication. The business vision is to establish a market-leading platform for personal development.
 
 ## User Preferences
 I prefer simple language and iterative development. Ask before making major changes. I prefer detailed explanations. Do not make changes to the folder `Z`. Do not make changes to the file `Y`.
@@ -11,8 +11,9 @@ I prefer simple language and iterative development. Ask before making major chan
 ### UI/UX Decisions
 The application employs a guided, multi-step workflow for core modules. It features an interactive "Wheel of Life," a collapsible sidebar, dark/light theme, responsive design, and a consistent color priority system. Lucide Vue Next provides minimalist line icons. Mobile responsiveness is a key design consideration, with a primary breakpoint at 768px, hamburger menus for mobile navigation, and adaptive layouts for components like the MentorWidget and modals. A global MentorPanel ensures a unified experience across devices, with independent state management for desktop and mobile views.
 
+
 ### Technical Implementations
-The frontend is built with Vue 3 (Composition API, script setup), Vite with a proxy to the Django backend, Vue Router for navigation with authentication guards, and Pinia for state management with localStorage persistence. A custom Django-style configuration system (`settings.js` + `local_settings.js`) is used. Authentication is cookie-based with CSRF protection.
+The frontend is built with Vue 3 (Composition API, script setup), Vite (with proxy to Django backend), Vue Router (with authentication guards), and Pinia for state management (with localStorage persistence). A custom Django-style configuration system (`settings.js` + `local_settings.js`) is used. Authentication is cookie-based with CSRF protection.
 
 ### Feature Specifications
 - **SSP Module**: A 4-step guided flow for life balance assessment with a redesigned Wheel of Life, color-coded reflection accordions, and inline editing.

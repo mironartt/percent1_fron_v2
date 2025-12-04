@@ -373,8 +373,10 @@ function onEntrySaved() {
 <style scoped>
 .journal-history {
   max-width: 900px;
+  width: 100%;
   margin: 0 auto;
   padding: 0 1.5rem;
+  box-sizing: border-box;
 }
 
 .page-header {
@@ -769,5 +771,29 @@ function onEntrySaved() {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .today-cta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .today-cta .btn {
+    width: 100%;
+  }
+  
+  .cta-content {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+  
+  .header-stats {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
 }
 </style>

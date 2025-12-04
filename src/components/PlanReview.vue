@@ -178,9 +178,9 @@
         <button class="btn btn-secondary" @click="skipAll">
           Пропустить всё
         </button>
-        <button class="btn btn-primary" @click="confirmPlan" :disabled="acceptedCount === 0">
+        <button class="btn btn-primary" @click="confirmPlan" :disabled="acceptedCount === 0 || isConfirming">
           <Check :size="18" />
-          Добавить цели ({{ acceptedCount }})
+          {{ isConfirming ? 'Сохранение...' : `Добавить цели (${acceptedCount})` }}
         </button>
       </div>
     </div>
@@ -224,6 +224,8 @@ const editForm = ref({
 const stepEditForm = ref({
   title: ''
 })
+
+const isConfirming = ref(false)
 
 const sphereColors = {
   wealth: '#10b981',
@@ -344,10 +346,17 @@ function skipAll() {
   emit('close')
 }
 
-function confirmPlan() {
-  store.confirmAIRecommendations()
-  emit('confirmed')
-  emit('close')
+async function confirmPlan() {
+  isConfirming.value = true
+  try {
+    const result = await store.confirmAIRecommendations()
+    if (result.success) {
+      emit('confirmed')
+      emit('close')
+    }
+  } finally {
+    isConfirming.value = false
+  }
 }
 </script>
 
