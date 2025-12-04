@@ -965,6 +965,8 @@ export const useAppStore = defineStore('app', () => {
 
   const mentorPanelCollapsed = ref(false)
   const mentorMobileOpen = ref(false)
+  const mentorIsMobile = ref(false)
+  const unreadMentorCount = ref(0)
 
   function toggleMentorPanel(forceState) {
     if (typeof forceState === 'boolean') {
@@ -972,19 +974,40 @@ export const useAppStore = defineStore('app', () => {
     } else {
       mentorPanelCollapsed.value = !mentorPanelCollapsed.value
     }
-    saveToLocalStorage()
+    if (!mentorPanelCollapsed.value) {
+      unreadMentorCount.value = 0
+    }
   }
 
   function openMentorMobile() {
     mentorMobileOpen.value = true
+    unreadMentorCount.value = 0
   }
 
   function closeMentorMobile() {
     mentorMobileOpen.value = false
   }
 
+  function setMentorIsMobile(isMobile) {
+    mentorIsMobile.value = isMobile
+  }
+
+  function incrementUnreadMentor() {
+    const panelHidden = mentorIsMobile.value 
+      ? !mentorMobileOpen.value 
+      : mentorPanelCollapsed.value
+    if (panelHidden) {
+      unreadMentorCount.value++
+    }
+  }
+
+  function clearUnreadMentor() {
+    unreadMentorCount.value = 0
+  }
+
   function openMentorChat() {
     mentor.value.isOpen = true
+    unreadMentorCount.value = 0
     if (!firstSteps.value.chat_mentor) {
       completeFirstStep('chat_mentor')
     }
@@ -1003,6 +1026,9 @@ export const useAppStore = defineStore('app', () => {
       timestamp: new Date().toISOString()
     })
     mentor.value.lastActivity = new Date().toISOString()
+    if (message.role === 'assistant') {
+      incrementUnreadMentor()
+    }
     saveToLocalStorage()
   }
 
@@ -1478,7 +1504,6 @@ export const useAppStore = defineStore('app', () => {
       journal: journal.value,
       firstSteps: firstSteps.value,
       mentor: mentor.value,
-      mentorPanelCollapsed: mentorPanelCollapsed.value,
       aiRecommendedGoals: aiRecommendedGoals.value,
       showPlanReview: showPlanReview.value,
       habits: habits.value,
@@ -1516,7 +1541,6 @@ export const useAppStore = defineStore('app', () => {
         if (parsed.journal) journal.value = { ...journal.value, ...parsed.journal }
         if (parsed.firstSteps) firstSteps.value = { ...firstSteps.value, ...parsed.firstSteps }
         if (parsed.mentor) mentor.value = { ...mentor.value, ...parsed.mentor }
-        if (parsed.mentorPanelCollapsed !== undefined) mentorPanelCollapsed.value = parsed.mentorPanelCollapsed
         if (parsed.aiRecommendedGoals) aiRecommendedGoals.value = parsed.aiRecommendedGoals
         if (parsed.showPlanReview !== undefined) showPlanReview.value = parsed.showPlanReview
         if (parsed.habits) habits.value = parsed.habits
@@ -2820,15 +2844,20 @@ export const useAppStore = defineStore('app', () => {
     mentor,
     mentorPanelCollapsed,
     mentorMobileOpen,
+    unreadMentorCount,
+    mentorIsMobile,
     toggleMentorPanel,
     openMentorMobile,
     closeMentorMobile,
+    setMentorIsMobile,
     openMentorChat,
     closeMentorChat,
     addMentorMessage,
     sendMentorMessage,
     clearMentorMessages,
     setMentorMode,
+    incrementUnreadMentor,
+    clearUnreadMentor,
     
     // Actions
     updateSphere,
