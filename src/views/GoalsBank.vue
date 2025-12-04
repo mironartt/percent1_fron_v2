@@ -265,10 +265,10 @@
       </div>
 
       <div class="summary-actions">
-        <button class="btn btn-primary btn-lg" @click="goToPlanning">
+        <button class="btn btn-secondary" @click="goToPlanning">
           <Calendar :size="18" :stroke-width="2" /> Запланировать задачу
         </button>
-        <button class="btn btn-secondary" @click="addNewGoal">
+        <button class="btn btn-primary btn-lg" @click="addNewGoal">
           <Plus :size="16" :stroke-width="2" /> Добавить новую цель
         </button>
       </div>
