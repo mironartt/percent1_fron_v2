@@ -315,27 +315,24 @@
           </div>
           
           <div class="modal-content">
-            <div class="habit-name-row">
-              <button class="icon-picker-btn" @click="showIconPicker = !showIconPicker">
-                {{ formData.icon }}
+            <div class="icon-picker-row">
+              <button 
+                v-for="icon in quickIcons" 
+                :key="icon"
+                class="icon-pick-btn"
+                :class="{ selected: formData.icon === icon }"
+                @click="formData.icon = icon"
+              >
+                {{ icon }}
               </button>
-              <input 
-                v-model="formData.name"
-                type="text"
-                class="form-input name-input"
-                placeholder="Название привычки"
-              />
-              <div class="xp-inline">
-                <Sparkles :size="14" :stroke-width="1.5" />
-                <input 
-                  v-model.number="formData.xpReward"
-                  type="number"
-                  min="1"
-                  max="100"
-                  class="xp-input-mini"
-                />
-                <span class="xp-suffix">XP</span>
-              </div>
+              <button 
+                class="icon-pick-btn more-btn"
+                :class="{ active: showIconPicker }"
+                @click="showIconPicker = !showIconPicker"
+                title="Ещё иконки"
+              >
+                <Ellipsis :size="16" :stroke-width="1.5" />
+              </button>
             </div>
             
             <div class="icon-grid-dropdown" v-if="showIconPicker">
@@ -348,6 +345,35 @@
               >
                 {{ icon }}
               </button>
+            </div>
+            
+            <div class="habit-name-row">
+              <input 
+                v-model="formData.name"
+                type="text"
+                class="form-input name-input-full"
+                placeholder="Название привычки"
+              />
+              <div class="xp-badge">
+                <Sparkles :size="14" :stroke-width="1.5" />
+                <span class="xp-value">+{{ formData.xpReward }}</span>
+                <span class="xp-suffix">XP</span>
+              </div>
+            </div>
+            
+            <div class="xp-slider-row" v-if="showXpSlider">
+              <label class="slider-label">Награда за выполнение</label>
+              <div class="xp-slider-control">
+                <input 
+                  type="range" 
+                  v-model.number="formData.xpReward"
+                  min="1"
+                  max="50"
+                  step="1"
+                  class="xp-slider"
+                />
+                <span class="xp-slider-value">{{ formData.xpReward }} XP</span>
+              </div>
             </div>
             
             <div class="schedule-compact">
@@ -387,7 +413,34 @@
               </div>
             </div>
             
-            <div class="optional-fields" v-if="showAdvancedOptions || formData.description">
+            <div class="optional-actions">
+              <button 
+                v-if="!showDescriptionField && !formData.description"
+                class="btn-link optional-btn"
+                @click="showDescriptionField = true"
+              >
+                <Plus :size="14" :stroke-width="1.5" />
+                Добавить описание
+              </button>
+              <button 
+                v-if="!showXpSlider"
+                class="btn-link optional-btn"
+                @click="showXpSlider = true"
+              >
+                <Sparkles :size="14" :stroke-width="1.5" />
+                Настроить XP
+              </button>
+              <button 
+                v-if="!showPenaltyField && gameSettings.difficultyMode !== 'soft'"
+                class="btn-link optional-btn penalty"
+                @click="showPenaltyField = true"
+              >
+                <Minus :size="14" :stroke-width="1.5" />
+                Настроить штраф
+              </button>
+            </div>
+            
+            <div class="optional-fields" v-if="showDescriptionField || formData.description">
               <textarea 
                 v-model="formData.description"
                 class="form-input description-input"
@@ -396,13 +449,23 @@
               />
             </div>
             
-            <button 
-              v-if="!showAdvancedOptions && !formData.description"
-              class="btn-link add-description"
-              @click="showAdvancedOptions = true"
-            >
-              + Добавить описание
-            </button>
+            <div class="penalty-field" v-if="showPenaltyField && gameSettings.difficultyMode !== 'soft'">
+              <label class="slider-label">
+                <CircleAlert :size="14" :stroke-width="1.5" />
+                Штраф за пропуск
+              </label>
+              <div class="xp-slider-control">
+                <input 
+                  type="range" 
+                  v-model.number="formData.xpPenalty"
+                  min="0"
+                  max="50"
+                  step="1"
+                  class="xp-slider penalty"
+                />
+                <span class="xp-slider-value penalty">-{{ formData.xpPenalty }} XP</span>
+              </div>
+            </div>
           </div>
           
           <div class="modal-footer compact">
@@ -772,7 +835,8 @@ import { useToastStore } from '../stores/toast'
 import { DEBUG_MODE } from '@/config/settings.js'
 import { 
   Flame, Plus, Minus, Zap, CheckCircle, Sparkles, Shield, Bot,
-  Check, Pencil, X, Trash2, Settings, Gift, Archive, Info, TrendingUp, Calendar, Award
+  Check, Pencil, X, Trash2, Settings, Gift, Archive, Info, TrendingUp, Calendar, Award,
+  Ellipsis, CircleAlert
 } from 'lucide-vue-next'
 
 const appStore = useAppStore()
@@ -790,6 +854,11 @@ const showAdvancedOptions = ref(false)
 const showStreakModal = ref(false)
 const showTodayModal = ref(false)
 const showXpModal = ref(false)
+const showDescriptionField = ref(false)
+const showXpSlider = ref(false)
+const showPenaltyField = ref(false)
+
+const quickIcons = ['🔥', '💪', '📖', '🧘', '💧', '🏃', '🍎', '😴']
 
 const weekDaysConfig = [
   { key: 1, name: 'Понедельник', short: 'Пн' },
@@ -1296,6 +1365,10 @@ function openAddModal() {
     scheduleDays: [1, 2, 3, 4, 5, 6, 0],
     reminderTime: ''
   }
+  showDescriptionField.value = false
+  showXpSlider.value = false
+  showPenaltyField.value = false
+  showIconPicker.value = false
   showModal.value = true
 }
 
@@ -1319,6 +1392,9 @@ function closeModal() {
   editingHabit.value = null
   showIconPicker.value = false
   showAdvancedOptions.value = false
+  showDescriptionField.value = false
+  showXpSlider.value = false
+  showPenaltyField.value = false
 }
 
 function toggleDay(dayKey) {
@@ -3054,74 +3130,209 @@ onMounted(() => {
   padding: 1rem 1.25rem;
 }
 
+.icon-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.icon-pick-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  background: var(--bg-secondary);
+  border: 2px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-pick-btn:hover {
+  background: rgba(124, 58, 237, 0.1);
+  transform: scale(1.1);
+}
+
+.icon-pick-btn.selected {
+  border-color: var(--primary-color);
+  background: rgba(124, 58, 237, 0.15);
+}
+
+.icon-pick-btn.more-btn {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+}
+
+.icon-pick-btn.more-btn:hover,
+.icon-pick-btn.more-btn.active {
+  color: var(--primary-color);
+  background: rgba(124, 58, 237, 0.1);
+}
+
 .habit-name-row {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
-.icon-picker-btn {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  background: var(--bg-secondary);
-  border: 2px solid var(--border-color);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.icon-picker-btn:hover {
-  border-color: var(--primary-color);
-  background: rgba(124, 58, 237, 0.05);
-}
-
-.modal-compact .name-input {
+.name-input-full {
   flex: 1;
   font-size: 1rem;
   font-weight: 500;
   padding: 0.75rem 1rem;
-}
-
-.xp-inline {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.5rem 0.75rem;
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-
-.xp-inline svg {
-  color: var(--primary-color);
-}
-
-.xp-input-mini {
-  width: 40px;
-  padding: 0.25rem 0.35rem;
   border: 1px solid var(--border-color);
-  border-radius: 4px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  text-align: center;
+  border-radius: 10px;
   background: var(--card-bg);
   color: var(--text-primary);
 }
 
-.xp-input-mini:focus {
+.name-input-full:focus {
   outline: none;
   border-color: var(--primary-color);
 }
 
-.xp-suffix {
-  font-size: 0.8rem;
+.xp-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(124, 58, 237, 0.05));
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  border-radius: 8px;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.xp-badge:hover {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(124, 58, 237, 0.1));
+}
+
+.xp-badge svg {
+  color: var(--primary-color);
+}
+
+.xp-badge .xp-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.xp-badge .xp-suffix {
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--text-muted);
+}
+
+.xp-slider-row {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+}
+
+.slider-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.xp-slider-control {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.xp-slider {
+  flex: 1;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--border-color);
+  border-radius: 3px;
+  outline: none;
+}
+
+.xp-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--primary-color);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.xp-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.xp-slider.penalty::-webkit-slider-thumb {
+  background: #ef4444;
+}
+
+.xp-slider-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  min-width: 50px;
+  text-align: right;
+}
+
+.xp-slider-value.penalty {
+  color: #ef4444;
+}
+
+.optional-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.optional-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  padding: 0.35rem 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.optional-btn:hover {
+  color: var(--primary-color);
+}
+
+.optional-btn.penalty {
+  color: var(--text-muted);
+}
+
+.optional-btn.penalty:hover {
+  color: #ef4444;
+}
+
+.penalty-field {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-radius: 10px;
+}
+
+.penalty-field .slider-label {
+  color: #ef4444;
 }
 
 .icon-grid-dropdown {
