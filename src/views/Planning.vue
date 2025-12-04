@@ -4636,16 +4636,34 @@ onMounted(async () => {
   
   .calendar-grid,
   .calendar-grid-full {
-    grid-template-columns: repeat(7, 1fr);
-    gap: 0.5rem;
-    overflow-x: auto;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .calendar-grid-5 {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .calendar-grid-2 {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
   
   .calendar-day,
   .calendar-day-full {
-    min-width: 100px;
-    min-height: 100px;
-    padding: 0.5rem;
+    min-height: auto;
+    padding: 0.75rem;
+  }
+  
+  .calendar-day .day-header,
+  .calendar-day-full .day-header-full {
+    margin-bottom: 0.5rem;
+  }
+  
+  .day-tasks,
+  .day-tasks-full {
+    min-height: 60px;
   }
   
   .scheduled-task .task-title,
@@ -4655,6 +4673,29 @@ onMounted(async () => {
   
   .task-info .task-goal {
     font-size: 0.75rem;
+  }
+  
+  .empty-day {
+    min-height: 50px;
+  }
+  
+  .weekend-section {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+  }
+  
+  .calendar-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .calendar-header-row h3 {
+    font-size: 1rem;
+  }
+  
+  .drag-hint {
+    display: none;
   }
 }
 
