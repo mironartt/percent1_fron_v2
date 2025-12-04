@@ -139,3 +139,12 @@ const appClasses = computed(() => ({
   }
 }
 </style>
+
+<style>
+/* Global styles for mobile header spacing */
+@media (max-width: 768px) {
+  .page-header h1 {
+    margin-left: 2.5rem;
+  }
+}
+</style>
