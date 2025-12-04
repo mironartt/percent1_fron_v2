@@ -81,43 +81,57 @@
         
         <!-- Фильтры -->
         <div class="goals-filters">
-          <div class="filter-group search-group">
-            <div class="search-input-wrapper">
-              <Search :size="16" :stroke-width="2" class="search-icon" />
-              <input 
-                v-model="searchQuery"
-                type="text"
-                class="search-input"
-                placeholder="Поиск по названию и содержанию..."
-                @input="onSearchInput"
-              />
+          <!-- Mobile: Toggle button -->
+          <button 
+            class="mobile-filters-toggle"
+            @click="toggleMobileFilters"
+          >
+            <Filter :size="16" />
+            <span>Фильтры</span>
+            <span v-if="activeFiltersCount > 0" class="filters-badge">{{ activeFiltersCount }}</span>
+            <ChevronDown :size="16" class="toggle-chevron" :class="{ open: mobileFiltersOpen }" />
+          </button>
+          
+          <!-- Desktop: Always visible / Mobile: Collapsible -->
+          <div class="filter-content" :class="{ 'mobile-open': mobileFiltersOpen }">
+            <div class="filter-row">
+              <div class="filter-group search-group">
+                <div class="search-input-wrapper">
+                  <Search :size="16" :stroke-width="2" class="search-icon" />
+                  <input 
+                    v-model="searchQuery"
+                    type="text"
+                    class="search-input"
+                    placeholder="Поиск по названию..."
+                    @input="onSearchInput"
+                  />
+                </div>
+              </div>
+              <div class="filter-group">
+                <select v-model="filterSphere" class="filter-select" @change="onFilterChange">
+                  <option value="">Все сферы</option>
+                  <option v-for="sphere in lifeSpheres" :key="sphere.id" :value="sphere.id">
+                    {{ sphere.icon }} {{ sphere.name }}
+                  </option>
+                </select>
+              </div>
+              <div class="filter-group">
+                <select v-model="filterStatus" class="filter-select" @change="onFilterChange">
+                  <option value="">Все статусы</option>
+                  <option value="work">В работе</option>
+                  <option value="complete">Завершенные</option>
+                  <option value="unstatus">Не оценённые</option>
+                </select>
+              </div>
+              <button 
+                v-if="filterSphere || filterStatus || searchQuery" 
+                class="btn btn-sm btn-ghost"
+                @click="clearFilters"
+              >
+                ✕ Сбросить
+              </button>
             </div>
           </div>
-          <div class="filter-group">
-            <label class="filter-label">Сфера:</label>
-            <select v-model="filterSphere" class="filter-select" @change="onFilterChange">
-              <option value="">Все сферы</option>
-              <option v-for="sphere in lifeSpheres" :key="sphere.id" :value="sphere.id">
-                {{ sphere.icon }} {{ sphere.name }}
-              </option>
-            </select>
-          </div>
-          <div class="filter-group">
-            <label class="filter-label">Статус:</label>
-            <select v-model="filterStatus" class="filter-select" @change="onFilterChange">
-              <option value="">Все статусы</option>
-              <option value="work">В работе</option>
-              <option value="complete">Завершенные</option>
-              <option value="unstatus">Не оценённые</option>
-            </select>
-          </div>
-          <button 
-            v-if="filterSphere || filterStatus || searchQuery" 
-            class="btn btn-sm btn-ghost"
-            @click="clearFilters"
-          >
-            ✕ Сбросить
-          </button>
         </div>
 
         <div class="goals-table-wrapper" :class="{ 'has-scroll': filteredGoals.length > 6 }">
@@ -596,7 +610,8 @@ import {
   GitBranch,
   ChevronUp,
   BookOpen,
-  HelpCircle
+  HelpCircle,
+  Filter
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -693,6 +708,21 @@ const showEmptyState = computed(() => {
 // Check if any filters are active
 const hasActiveFilters = computed(() => {
   return !!(filterSphere.value || filterStatus.value || searchQuery.value)
+})
+
+// Mobile filters toggle
+const mobileFiltersOpen = ref(false)
+
+function toggleMobileFilters() {
+  mobileFiltersOpen.value = !mobileFiltersOpen.value
+}
+
+const activeFiltersCount = computed(() => {
+  let count = 0
+  if (filterSphere.value) count++
+  if (filterStatus.value) count++
+  if (searchQuery.value) count++
+  return count
 })
 
 // Show summary (main goals table) when:
@@ -1807,7 +1837,7 @@ onMounted(async () => {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 1rem;
   margin-bottom: 2rem;
 }
@@ -1963,14 +1993,26 @@ onMounted(async () => {
 }
 
 .goals-filters {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
   margin-bottom: 1rem;
+}
+
+.goals-filters .filter-content {
+  display: block;
+  padding: 1rem;
+}
+
+.goals-filters .filter-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   flex-wrap: wrap;
+}
+
+/* Mobile filters toggle button - hidden on desktop */
+.mobile-filters-toggle {
+  display: none;
 }
 
 .filter-group {
@@ -4515,35 +4557,86 @@ onMounted(async () => {
     font-size: 0.875rem;
   }
   
+  /* Mobile filters */
+  .mobile-filters-toggle {
+    display: flex !important;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .mobile-filters-toggle:hover {
+    background: var(--bg-tertiary);
+  }
+  
+  .mobile-filters-toggle .toggle-chevron {
+    margin-left: auto;
+    transition: transform 0.2s ease;
+  }
+  
+  .mobile-filters-toggle .toggle-chevron.open {
+    transform: rotate(180deg);
+  }
+  
+  .filters-badge {
+    background: var(--primary-color);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.4rem;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+  }
+  
   .goals-filters {
+    padding: 0;
+  }
+  
+  .goals-filters .filter-content {
+    display: none;
+    padding: 1rem;
+    border-top: 1px solid var(--border-color);
+  }
+  
+  .goals-filters .filter-content.mobile-open {
+    display: block;
+  }
+  
+  .goals-filters .filter-row {
     flex-direction: column;
-    align-items: stretch;
     gap: 0.75rem;
-    padding: 0.75rem;
   }
   
   .filter-group {
     width: 100%;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.375rem;
   }
   
   .filter-group.search-group {
     min-width: unset;
   }
   
-  .filter-label {
-    font-size: 0.75rem;
-  }
-  
-  .filter-select {
+  .filter-select,
+  .search-input {
     width: 100%;
     padding: 0.625rem;
   }
   
   .search-input {
-    padding: 0.625rem 0.625rem 0.625rem 2.25rem;
+    padding-left: 2.25rem;
+  }
+  
+  .goals-filters .filter-row .btn {
+    width: 100%;
+    justify-content: center;
   }
   
   .goals-table-section .goals-table-wrapper {
@@ -4618,8 +4711,20 @@ onMounted(async () => {
     display: flex;
     justify-content: flex-start;
     gap: 0.5rem;
-    padding-top: 0.5rem;
+    padding-top: 0.75rem;
     border-top: 1px solid var(--border-color);
+  }
+  
+  /* Larger touch targets for mobile */
+  .goals-table-section .actions-cell .btn-icon {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+  }
+  
+  .goals-table-section .actions-cell .btn-icon svg {
+    width: 18px;
+    height: 18px;
   }
   
   .goals-table-section .goal-cell {
