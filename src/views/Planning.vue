@@ -531,9 +531,74 @@
             </div>
           </header>
 
+          <!-- Mobile Week View -->
+          <div class="mobile-week-view card">
+            <div class="mobile-days-strip">
+              <button 
+                v-for="day in weekDays" 
+                :key="day.date"
+                class="mobile-day-btn"
+                :class="{ 
+                  active: selectedMobileDay === day.date,
+                  today: isToday(day.date),
+                  'has-tasks': getTasksForDay(day.date).length > 0
+                }"
+                @click="selectMobileDay(day.date)"
+              >
+                <span class="mobile-day-name">{{ day.shortName }}</span>
+                <span class="mobile-day-num">{{ day.dayNum }}</span>
+                <span v-if="getTasksForDay(day.date).length > 0" class="mobile-day-dot"></span>
+              </button>
+            </div>
+            
+            <div class="mobile-day-content" v-if="selectedMobileDay">
+              <div class="mobile-day-header">
+                <h3>{{ getMobileDayTitle(selectedMobileDay) }}</h3>
+                <span v-if="getTotalTimeForDay(selectedMobileDay)" class="day-time-badge">
+                  {{ getTotalTimeForDay(selectedMobileDay) }}
+                </span>
+              </div>
+              
+              <div class="mobile-day-tasks">
+                <div 
+                  v-for="task in getTasksForDay(selectedMobileDay)" 
+                  :key="task.id"
+                  class="mobile-task-card"
+                  :class="[
+                    { completed: task.completed },
+                    'priority-' + (task.priority || 'optional')
+                  ]"
+                >
+                  <button 
+                    class="mobile-task-checkbox" 
+                    :class="{ completed: task.completed }"
+                    @click="toggleTaskComplete(task.id)"
+                  >
+                    <Check v-if="task.completed" :size="14" />
+                  </button>
+                  <div class="mobile-task-info">
+                    <span class="mobile-task-title">{{ task.stepTitle }}</span>
+                    <span class="mobile-task-goal">{{ task.goalTitle }}</span>
+                  </div>
+                  <button 
+                    class="mobile-task-remove"
+                    @click="removeTask(task.id)"
+                  >
+                    ✕
+                  </button>
+                </div>
+                
+                <div v-if="getTasksForDay(selectedMobileDay).length === 0" class="mobile-empty-day">
+                  <Calendar :size="32" class="empty-icon" />
+                  <p>Нет задач на этот день</p>
+                  <span class="empty-hint">Добавьте задачи из списка целей ниже</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
-          <!-- Week Calendar - Workdays (5 days) -->
-          <div class="week-calendar-full card">
+          <!-- Week Calendar - Workdays (5 days) - Desktop only -->
+          <div class="week-calendar-full card desktop-only">
             <div class="calendar-header-row">
               <h3>План на неделю <span class="drag-hint">Перетаскивайте задачи между днями</span></h3>
               <button 
@@ -951,6 +1016,35 @@ const lessonCompleted = computed(() => true)
 const currentStep = computed(() => store.planningModule.currentStep)
 
 const weekOffset = ref(0)
+
+// Mobile day selection
+const selectedMobileDay = ref(null)
+const isMobile = ref(false)
+
+function checkMobile() {
+  isMobile.value = window.innerWidth <= 768
+}
+
+function selectMobileDay(date) {
+  selectedMobileDay.value = date
+}
+
+function initSelectedDay() {
+  if (weekDays.value && weekDays.value.length > 0) {
+    const today = new Date().toISOString().split('T')[0]
+    const todayDay = weekDays.value.find(d => d.date === today)
+    selectedMobileDay.value = todayDay ? todayDay.date : weekDays.value[0].date
+  }
+}
+
+function getMobileDayTitle(dateStr) {
+  const day = weekDays.value.find(d => d.date === dateStr)
+  if (!day) return ''
+  const date = new Date(dateStr)
+  const monthNames = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 
+                      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
+  return `${day.label}, ${day.dayNum} ${monthNames[date.getMonth()]}`
+}
 
 // Filter state
 const searchQuery = ref('')
@@ -2657,11 +2751,18 @@ onMounted(async () => {
     console.log('[Planning] Goal:', g.title, 'status:', g.status, 'steps:', g.steps?.length || 0)
   })
   
+  // Initialize mobile detection
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+  
   // Load goals from backend first
   await loadGoalsFromBackend()
   
   // Load weekly steps data for the week planner
   await loadWeeklySteps()
+  
+  // Initialize selected day for mobile view
+  initSelectedDay()
   
   ensureWeekPlan()
   setupDemoData()
@@ -4697,6 +4798,255 @@ onMounted(async () => {
   .drag-hint {
     display: none;
   }
+  
+  /* Hide desktop calendar on mobile */
+  .desktop-only {
+    display: none !important;
+  }
+  
+  /* Show mobile view */
+  .mobile-week-view {
+    display: block !important;
+  }
+}
+
+/* Mobile Week View Styles */
+.mobile-week-view {
+  display: none;
+  padding: 0;
+  overflow: hidden;
+}
+
+.mobile-days-strip {
+  display: flex;
+  gap: 0;
+  padding: 0.75rem;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-color);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-day-btn {
+  flex: 1;
+  min-width: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.25rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.mobile-day-btn:hover {
+  background: var(--bg-secondary);
+}
+
+.mobile-day-btn.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+.mobile-day-btn.today:not(.active) {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.mobile-day-btn.today .mobile-day-num {
+  font-weight: 700;
+}
+
+.mobile-day-name {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.mobile-day-btn.active .mobile-day-name {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.mobile-day-num {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mobile-day-btn.active .mobile-day-num {
+  color: white;
+}
+
+.mobile-day-dot {
+  position: absolute;
+  bottom: 4px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--primary-color);
+}
+
+.mobile-day-btn.active .mobile-day-dot {
+  background: white;
+}
+
+.mobile-day-content {
+  padding: 1rem;
+}
+
+.mobile-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.mobile-day-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.day-time-badge {
+  font-size: 0.8rem;
+  color: var(--primary-color);
+  background: rgba(99, 102, 241, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+}
+
+.mobile-day-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mobile-task-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--border-color);
+}
+
+.mobile-task-card.priority-important {
+  border-left-color: #ef4444;
+}
+
+.mobile-task-card.priority-desirable {
+  border-left-color: #f59e0b;
+}
+
+.mobile-task-card.priority-optional {
+  border-left-color: #6b7280;
+}
+
+.mobile-task-card.completed {
+  opacity: 0.6;
+}
+
+.mobile-task-card.completed .mobile-task-title {
+  text-decoration: line-through;
+}
+
+.mobile-task-checkbox {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.mobile-task-checkbox:hover {
+  border-color: var(--primary-color);
+}
+
+.mobile-task-checkbox.completed {
+  background: var(--success-color);
+  border-color: var(--success-color);
+  color: white;
+}
+
+.mobile-task-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-task-title {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.mobile-task-goal {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-task-remove {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.mobile-task-remove:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.mobile-empty-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--text-tertiary);
+}
+
+.mobile-empty-day .empty-icon {
+  margin-bottom: 0.75rem;
+  opacity: 0.5;
+}
+
+.mobile-empty-day p {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin: 0 0 0.25rem 0;
+}
+
+.mobile-empty-day .empty-hint {
+  font-size: 0.85rem;
 }
 
 .undo-toast {
