@@ -4850,7 +4850,7 @@ onMounted(async () => {
   .goals-table-section .goals-table .col-actions {
     width: 100%;
     display: flex;
-    justify-content: flex-start;
+    justify-content: flex-end;
     gap: 0.5rem;
     padding-top: 0.75rem;
     border-top: 1px solid var(--border-color);
