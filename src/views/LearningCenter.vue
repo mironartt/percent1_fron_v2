@@ -13,6 +13,11 @@
       </div>
     </header>
 
+    <div class="wip-banner">
+      <Construction :size="20" :stroke-width="1.5" />
+      <span>Раздел дорабатывается</span>
+    </div>
+
     <div class="lessons-grid">
       <div 
         v-for="lesson in lessons" 
@@ -107,7 +112,8 @@ import {
   X,
   Award,
   Bot,
-  Compass
+  Compass,
+  Construction
 } from 'lucide-vue-next'
 
 const showLessonModal = ref(false)
@@ -708,6 +714,23 @@ function markLessonComplete() {
 .modal-enter-from .lesson-modal,
 .modal-leave-to .lesson-modal {
   transform: scale(0.95) translateY(20px);
+}
+
+.wip-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.1));
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: var(--radius-lg);
+  color: #b45309;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+}
+
+:root.dark .wip-banner {
+  color: #fbbf24;
 }
 
 @media (max-width: 640px) {
