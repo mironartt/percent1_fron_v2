@@ -1,64 +1,5 @@
 # OnePercent MVP
 
-## Recent Changes (December 2025)
-
-### Bug Fix: Infinite Onboarding Loop
-- **Issue**: After completing onboarding and confirming AI goals in PlanReview, users would see "Ваши первые цели" screen again
-- **Root Cause**: `completeOnboarding()` in OnboardingAI.vue only updated local state but never called backend to set `is_complete=true` and `finish_onboarding=true`. After any auth refresh, backend returned `finish_onboarding=false`, triggering onboarding again
-- **Fix**: Added `store.completeOnboardingWithBackend()` call in OnboardingAI.vue before local state update
-- **Fallback**: Added `setUserFinishOnboarding()` function to set flag locally on backend error, preventing loop
-- **Files Changed**: `src/components/OnboardingAI.vue`, `src/stores/app.js`
-
-### Goals Bank Backend Sync
-- Goals from 3-step onboarding lesson now batch-save to backend via `/api/rest/front/app/goals/update/`
-- `completeGoalsBankHandler()` modified to send all goals without backendId and update local IDs from response
-
-### Planning Module Step Data Fix
-- **Issue**: Backend step data (priority, dt, time_duration, status) was not displaying in Planning page UI
-- **Root Cause**: `getScheduledDate/Priority/TimeEstimate` functions only checked scheduledTasks array, ignoring step object data
-- **Fix**: Functions now first check scheduledTasks for local changes, then fallback to step object data from backend
-- **Time Duration Mapping**: Added complete backend↔frontend conversion: 'half'↔'30min', 'one'↔'1h', 'two'↔'2h', 'three'↔'3h', 'four'↔'4h'
-
-### Planning Pagination Height Fix (Updated)
-- **Issue**: When loading more steps, container height would snap back or expand dynamically - user wanted fixed height with scroll
-- **Root Cause**: Previous implementation dynamically expanded height instead of fixing it
-- **Fix**: Implemented GoalEdit.vue-style pagination:
-  - `stepsContainerHeights` ref stores captured height per goal
-  - `captureStepsContainerHeight()` captures height BEFORE loading more steps
-  - `getStepsListStyle()` applies fixed maxHeight after pagination click
-  - Container becomes scrollable with fixed height after "Ещё X шагов" click
-
-### Planning Date Timezone Fix
-- **Issue**: Day selector showed wrong day of week (e.g., "Вс" instead of "Сб" for December 6)
-- **Root Cause**: `toISOString().split('T')[0]` converts to UTC, shifting dates in some timezones
-- **Fix**: Added `formatDateLocal()` helper that formats dates as YYYY-MM-DD in local timezone
-  - Updated `weekDays` computed to use local formatting
-  - Fixed `formatStepDate()` to parse date parts directly
-  - Fixed `isToday()`, `currentStreak`, and demo task generation
-
-### Bidirectional Calendar ↔ Goals Block Sync
-- **Feature**: Complete bidirectional synchronization between weekly calendar and "Goals and Steps" block
-- **Calendar → Goals Block**:
-  - Drag step to different day → updates date in goals block
-  - Remove step from calendar → clears date in goals block
-  - Toggle completion → updates status in goals block
-- **Goals Block → Calendar**:
-  - Toggle completion → updates status in calendar
-  - Change date → adds/removes step from calendar
-  - Change priority → updates color in calendar
-  - Change time estimate → updates time badge in calendar
-- **Implementation**:
-  - `syncStepToCalendar(goalId, stepId, changes)` - updates calendar data
-  - `syncStepToGoalsBlock(goalId, stepId, changes)` - updates goals data
-  - `refreshGoalsAfterCalendarChange()` - reloads goals from backend
-- **Priority Mapping**: 
-  - critical↔critical (Критично)
-  - desirable↔important (Важно) - единственное отличие!
-  - attention↔attention (Внимание)
-  - optional↔optional (Опционально)
-- **Time Mapping**: frontend↔backend conversion: 30min↔half, 1h↔one, 2h↔two, 3h↔three, 4h↔four
-- **Status Filter Removed**: Фильтр статуса удалён из блока "Цели и шаги"
-
 ## Overview
 The OnePercent MVP is a Vue 3 + Vite application for personal life management and goal tracking, inspired by the "1% improvement" philosophy. It features a Balanced Scorecard (SSP) module for life balance assessment and a Goals Bank for structured goal setting. The project provides a guided, multi-step workflow for personal development, leveraging interactive UI components and an AI Mentor for user engagement, integrating with a Django REST API backend for authentication. The business vision is to empower users with tools for self-improvement, fostering consistent growth and offering a market-leading platform for personal development.
 
@@ -68,19 +9,7 @@ I prefer simple language and iterative development. Ask before making major chan
 ## System Architecture
 
 ### UI/UX Decisions
-The application employs a guided, multi-step workflow for core modules. It features an interactive "Wheel of Life," a collapsible sidebar, dark/light theme, responsive design, and a consistent color priority system. Lucide Vue Next provides minimalist line icons.
-
-**Mobile Responsiveness (December 2025)**:
-- Primary breakpoint: 768px for mobile/desktop switch
-- Sidebar: Hamburger menu on mobile with overlay, auto-close on route change, always expanded (never collapsed) on mobile
-- FirstSteps: Vertical layout below 480px with reduced sizes
-- MentorWidget: Reduced height, stacked quick prompts on mobile
-- PlanReview/OnboardingAI: Full-width modals below 640px
-- **Global MentorPanel**: Available on all /app/* pages with unified desktop/mobile experience:
-  - Desktop (≥1024px): Fixed right panel with collapse/expand toggle
-  - Mobile (<1024px): Floating button triggers drawer overlay from right
-  - State management: `mentorPanelCollapsed` (desktop) and `mentorMobileOpen` (mobile) are independent
-  - Drawer auto-closes on route change; collapse button closes drawer on mobile
+The application employs a guided, multi-step workflow for core modules. It features an interactive "Wheel of Life," a collapsible sidebar, dark/light theme, responsive design, and a consistent color priority system. Lucide Vue Next provides minimalist line icons. Mobile responsiveness is a key design consideration, with a primary breakpoint at 768px, hamburger menus for mobile navigation, and adaptive layouts for components like the MentorWidget and modals. A global MentorPanel ensures a unified experience across devices, with independent state management for desktop and mobile views.
 
 ### Technical Implementations
 The frontend is built with Vue 3 (Composition API, script setup), Vite with a proxy to the Django backend, Vue Router for navigation with authentication guards, and Pinia for state management with localStorage persistence. A custom Django-style configuration system (`settings.js` + `local_settings.js`) is used. Authentication is cookie-based with CSRF protection.
@@ -89,51 +18,21 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite with a pr
 - **SSP Module**: A 4-step guided flow for life balance assessment with a redesigned Wheel of Life, color-coded reflection accordions, and inline editing.
 - **Goals Bank Module**: A 3-step workflow for goal validation, filtering, and transfer, including an inline editing modal.
 - **Decomposition Module**: Facilitates breaking down goals into actionable steps, with step persistence, ID-based tracking, backend pagination for steps, and inline goal editing with backend sync.
-- **Planning Module**: Simplified design with goal-level accordion view, comprehensive filters (text, sphere, status), and week navigation. Unified filter block with GoalsBank.vue - uses same status_filter values (work/complete/unstatus). Loads goals with `with_steps_data: true` from backend API. When "This Week" filter active, adds `result_week_data: true` flag. Steps display directly from backend data. New API: `getPlannedSteps(date_from, date_to)` for `/goals/steps/planned/get/` endpoint. **Synchronized with Dashboard** via `todayScheduledTasks` computed getter.
+- **Planning Module**: Simplified design with goal-level accordion view, comprehensive filters, week navigation, and synchronization with the Dashboard. It loads goals with step data and uses a dedicated API endpoint for planned steps.
 - **Authentication**: Integrates with the Django backend for user login, registration, and logout, supporting Telegram authentication.
-- **Onboarding (AI-Powered)**: A 5-step onboarding process with integrated SSP diagnosis, AI analysis, and auto-generated personalized GOALS with steps based on weak life spheres. Includes post-onboarding Goals Review System (PlanReview component).
-- **AI Mentor**: A personalized coach providing contextual help and analysis via a Dashboard Widget (full chat interface) and a Floating Button (contextual hints). Features a demo mode with planned OpenAI integration and user settings for interaction style.
+- **Onboarding (AI-Powered)**: A 5-step process with integrated SSP diagnosis, AI analysis, and auto-generated personalized goals and steps. Includes a post-onboarding Goals Review System.
+- **AI Mentor**: A personalized coach providing contextual help and analysis via a Dashboard Widget (full chat interface) and a Floating Button (contextual hints). Features a demo mode with planned OpenAI integration.
 - **First Steps**: A 7-step checklist guiding users through initial actions, with auto-completion triggers and personalized AI Mentor encouragement.
 - **Learning Center**: A dedicated page containing all tutorial content, with progress tracking for lessons.
-- **Dashboard ("День пользователя")**: Redesigned for daily retention, featuring a context-aware header, "Focus of the Day," compact habit tracker (Journal, Balance score), evening reflection, AI Mentor CTA, and quick navigation links. 2-column grid layout with Goals widget showing top-3 active goals.
+- **Dashboard ("День пользователя")**: Redesigned for daily retention, featuring a context-aware header, "Focus of the Day," compact habit tracker, evening reflection, AI Mentor CTA, and quick navigation links.
 - **Journal/Diary Module**: Daily reflection feature with 4 questions, AI coach responses (demo mode), streak tracking, calendar history view, and full backend synchronization with optimistic UI updates.
-- **Goal Details Page**: Provides full step management with drag & drop, step parameters (priority, estimate, date, status), filtering, sorting, and pagination. Includes modal editing for goal details. Uses `onBeforeRouteLeave` guard and `flushSave()` to ensure step changes are saved before navigation.
-- **XP/Gamification System**: Complete extrinsic motivation system with XP economy (habits +5, focus tasks +10, goal steps +25, goals +150 XP), reward wishlist, daily progress tracking, profile statistics page. Uses separate `xp.js` Pinia store for decoupled state management.
-- **Profile Page**: User statistics with XP balance, lifetime earned, habit/journal streaks, XP history timeline, and integrated reward wishlist management.
-- **Habit Tracker**: Dashboard-integrated habit completion widget with "+X XP" micro-feedback animations and customizable habits via modal manager.
-- **Habits Page** (/app/habits): Full habit management with scheduling by day of week, gamification settings (soft/balanced/hardcore/custom modes), XP penalties for missed habits. Supports frequencyType (daily/weekdays/weekends/custom), scheduleDays array, and optional XP penalty per habit.
-  - **Tabbed Interface**: "Трекер" (habit tracker) and "Аналитика" (detailed analytics per habit)
-  - **Custom Difficulty Mode**: User-configurable penalty percent (0-150%) and amnesty count (0-7) via sliders
-  - **Improved Modal UX**: Sections for Icon+Name, Description, XP Settings (reward/penalty), Schedule with day selector
-  - **Day Visualization**: Letters (П,В,С,Ч,П,С,В) embedded in schedule-day cards instead of separate week-header
-  - **Per-Habit Analytics**: Individual streak, completion rate, trends, and AI insights for each habit
+- **Goal Details Page**: Provides full step management with drag & drop, step parameters (priority, estimate, date, status), filtering, sorting, and pagination. Includes modal editing for goal details and ensures changes are saved before navigation.
+- **XP/Gamification System**: Complete extrinsic motivation system with XP economy for habits, focus tasks, goal steps, and goals. Includes a reward wishlist, daily progress tracking, and a profile statistics page.
+- **Habit Tracker**: Dashboard-integrated habit completion widget with "+X XP" micro-feedback animations and customizable habits via a modal manager. The dedicated Habits Page offers full habit management with scheduling, gamification settings (soft/balanced/hardcore/custom modes), XP penalties, and per-habit analytics. A redesigned habits modal includes an icon picker, adaptive XP badge, and collapsible optional fields.
+- **Bidirectional Calendar ↔ Goals Block Sync**: Enables synchronization of step dates, completion status, priority, and time estimates between the weekly calendar and the "Goals and Steps" block.
 
 ### System Design Choices
-The application uses a modular structure with dedicated components, services, views, router, and stores. Pinia manages state with persistence and reactivity. The system prioritizes user guidance, visual feedback, and a clean interface. The AI Mentor is a central value proposition. Backend synchronization provides immediate UI feedback and reliable data persistence.
-
-### Backend Sync Patterns (Dec 2025)
-- **Goal Routing with backendId**: URL `/app/goals/<backendId>` uses backend ID directly
-  - GoalsBank.vue `goToDecompose()` navigates with `backendId` from rawIdeas
-  - GoalEdit.vue uses `goalBackendId = route.params.id` for all API calls
-  - Goal data found by matching `backendId` in store.goals or rawIdeas
-- **Race Condition Prevention**: Components capture current ID before async calls and verify it hasn't changed before applying response data (GoalEdit.vue uses `currentBackendId` check)
-- **Steps Loading Protection**: `stepsLoadedFromBackend` flag prevents `loadGoalData()` from overwriting backend-loaded steps with empty store data
-- **Journal Today Entry Tracking**: `hasTodayEntryFromBackend` tracks actual backend state separately from filtered UI display
-- **Optimistic UI Updates**: UI updates immediately, then syncs with backend; errors logged without blocking user flow
-- **API Pagination with Append**: 
-  - `store.loadGoalsFromBackend(params, append)` accepts `append` flag
-  - When `append=true`: new goals added to existing list (deduplicated by backendId)
-  - When `append=false`: data replaced (for filters/initial load)
-  - `remainingGoalsCount` computed from `totalFilteredItems - rawIdeas.length`
-- **Optimized Step Sync (GoalEdit)**:
-  - `stepsSnapshot` tracks step state after load
-  - `getChangedSteps()` compares and identifies changed steps/fields
-  - `syncStepsToBackend()` sends only changed steps with changed fields
-  - Priority mapping: frontend 'desirable' ↔ backend 'important'
-- **API Field Naming**:
-  - Goals: `category_filter`, `status_filter`, `query_filter`
-  - Steps: `result_filter` (complete/uncomplete), `priority_filter`, `query_filter`
-  - Sort: backend supports `order`, `date_created`, `priority`
+The application uses a modular structure with dedicated components, services, views, router, and stores. Pinia manages state with persistence and reactivity. The system prioritizes user guidance, visual feedback, and a clean interface. The AI Mentor is a central value proposition. Backend synchronization provides immediate UI feedback and reliable data persistence, employing patterns like goal routing with `backendId`, race condition prevention, optimized step synchronization, and API pagination with append functionality.
 
 ## External Dependencies
 - **Django REST API Backend**: Provides user authentication, profile management, SSP data, goals bank, decomposition, planning, onboarding, and journal services.
