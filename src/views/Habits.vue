@@ -3689,21 +3689,22 @@ onMounted(() => {
   }
   
   .icon-picker-row {
-    gap: 4px;
+    gap: 2px;
     justify-content: space-between;
   }
   
   .icon-pick-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 1rem;
+    width: 28px;
+    height: 28px;
+    font-size: 0.9rem;
     border-radius: 6px;
+    border-width: 1.5px;
   }
   
   .icon-pick-btn.more-btn {
-    font-size: 0.875rem;
-    font-weight: 600;
-    letter-spacing: -1px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
   }
   
   .icon-grid {
