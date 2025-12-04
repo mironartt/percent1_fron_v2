@@ -10,7 +10,10 @@
     <div class="settings-grid">
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">👤 Профиль</h3>
+          <h3 class="card-title">
+            <User :size="18" :stroke-width="1.5" class="card-icon" />
+            Профиль
+          </h3>
         </div>
         <div class="card-body">
           <div class="form-group">
@@ -38,7 +41,10 @@
 
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">💳 Подписка и оплата</h3>
+          <h3 class="card-title">
+            <CreditCard :size="18" :stroke-width="1.5" class="card-icon" />
+            Подписка и оплата
+          </h3>
         </div>
         <div class="card-body">
           <div class="subscription-status">
@@ -70,7 +76,10 @@
 
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">🔔 Уведомления</h3>
+          <h3 class="card-title">
+            <Bell :size="18" :stroke-width="1.5" class="card-icon" />
+            Уведомления
+          </h3>
         </div>
         <div class="card-body">
           <div class="setting-item">
@@ -108,7 +117,7 @@
       <div class="card">
         <div class="card-header">
           <h3 class="card-title">
-            <Bot :size="18" :stroke-width="1.5" style="display: inline; vertical-align: middle; margin-right: 6px;" />
+            <Bot :size="18" :stroke-width="1.5" class="card-icon" />
             AI Ментор
           </h3>
         </div>
@@ -158,7 +167,10 @@
 
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">📝 Мой старт (онбординг)</h3>
+          <h3 class="card-title">
+            <FileText :size="18" :stroke-width="1.5" class="card-icon" />
+            Мой старт (онбординг)
+          </h3>
         </div>
         <div class="card-body">
           <div v-if="onboardingData" class="onboarding-data">
@@ -212,7 +224,10 @@
 
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">⚙️ Дополнительно</h3>
+          <h3 class="card-title">
+            <Settings :size="18" :stroke-width="1.5" class="card-icon" />
+            Дополнительно
+          </h3>
         </div>
         <div class="card-body">
           <div class="setting-item">
@@ -248,7 +263,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
-import { Bot, Sparkles, MessageCircle, VolumeX } from 'lucide-vue-next'
+import { Bot, Sparkles, MessageCircle, VolumeX, User, CreditCard, Bell, FileText, Settings } from 'lucide-vue-next'
 
 const router = useRouter()
 const store = useAppStore()
@@ -322,6 +337,17 @@ function goToTelegramSettings() {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-icon {
+  color: var(--primary-color);
+  flex-shrink: 0;
 }
 
 .subscription-status {
