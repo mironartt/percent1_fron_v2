@@ -39,7 +39,7 @@
       </header>
 
       <div class="summary-grid">
-        <div class="summary-card card">
+        <div class="summary-card card hide-mobile">
           <div class="summary-icon summary-icon-ideas">
             <Lightbulb :size="18" :stroke-width="2" />
           </div>
@@ -55,7 +55,7 @@
           <div class="summary-label">Истинных целей</div>
         </div>
 
-        <div class="summary-card card">
+        <div class="summary-card card hide-mobile">
           <div class="summary-icon summary-icon-rejected">
             <XCircle :size="18" :stroke-width="2" />
           </div>
@@ -74,7 +74,7 @@
 
       <!-- Единая таблица целей -->
       <div class="goals-table-section card" v-if="rawIdeas.length > 0 || hasActiveFilters">
-        <div class="table-header">
+        <div class="table-header hide-mobile">
           <h3>Банк идей и целей</h3>
           <p class="section-hint">Все ваши цели и идеи</p>
         </div>
@@ -211,7 +211,7 @@
                     </button>
                     <button 
                       v-if="goal.status === 'validated' && (isGoalTransferred(goal.id) || !isGoalTransferred(goal.id))"
-                      class="btn-icon btn-icon-decompose"
+                      class="btn-icon btn-icon-decompose hide-mobile-secondary"
                       @click.stop="goToDecompose(goal.id)"
                       title="Декомпозировать"
                     >
@@ -4769,16 +4769,51 @@ onMounted(async () => {
   }
   
   .summary-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
   }
   
   .summary-card {
-    padding: 1rem;
+    padding: 0.75rem;
+  }
+  
+  .summary-card.hide-mobile {
+    display: none;
   }
   
   .summary-value {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
+  }
+  
+  .summary-label {
+    font-size: 0.7rem;
+  }
+  
+  .summary-icon {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .summary-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .table-header.hide-mobile {
+    display: none;
+  }
+  
+  .hide-mobile-secondary {
+    display: none !important;
+  }
+  
+  .actions-cell {
+    gap: 0.25rem;
+  }
+  
+  .goals-table-section .actions-cell .btn-icon {
+    min-width: 36px;
+    min-height: 36px;
   }
   
   .pagination {
