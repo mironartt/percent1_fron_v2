@@ -360,9 +360,9 @@
 
       <div class="summary-actions">
         <button class="btn btn-secondary" @click="goToPlanning">
-          <Calendar :size="18" :stroke-width="2" /> Запланировать задачу
+          <Calendar :size="16" :stroke-width="2" /> Запланировать задачу
         </button>
-        <button class="btn btn-primary btn-lg" @click="addNewGoal">
+        <button class="btn btn-primary" @click="addNewGoal">
           <Plus :size="16" :stroke-width="2" /> Добавить новую цель
         </button>
       </div>
@@ -3564,6 +3564,19 @@ onMounted(async () => {
 @media (max-width: 768px) {
   .summary-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .summary-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0 1rem;
+  }
+  
+  .summary-actions .btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    font-size: 0.9375rem;
   }
 }
 
