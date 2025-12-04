@@ -331,7 +331,7 @@
                 @click="showIconPicker = !showIconPicker"
                 title="Ещё иконки"
               >
-                <Ellipsis :size="16" :stroke-width="1.5" />
+                ...
               </button>
             </div>
             
@@ -3677,6 +3677,33 @@ onMounted(() => {
     width: 100%;
     justify-content: center;
     padding: 0.875rem 1rem;
+  }
+  
+  .modal-compact {
+    margin: 0.5rem;
+    max-width: calc(100vw - 1rem);
+  }
+  
+  .modal-compact .modal-content {
+    padding: 1rem;
+  }
+  
+  .icon-picker-row {
+    gap: 4px;
+    justify-content: space-between;
+  }
+  
+  .icon-pick-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+    border-radius: 6px;
+  }
+  
+  .icon-pick-btn.more-btn {
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: -1px;
   }
   
   .icon-grid {
