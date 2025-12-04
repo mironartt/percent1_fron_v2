@@ -211,8 +211,10 @@ function formatTime(timestamp) {
 <style scoped>
 .profile-page {
   max-width: 800px;
+  width: 100%;
   margin: 0 auto;
   padding: 1.5rem;
+  box-sizing: border-box;
 }
 
 .profile-header {
@@ -532,5 +534,33 @@ function formatTime(timestamp) {
   font-size: 0.75rem;
   color: var(--text-muted);
   white-space: nowrap;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .xp-display {
+    text-align: left;
+    width: 100%;
+  }
+  
+  .xp-balance {
+    justify-content: flex-start;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .stat-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
 }
 </style>

@@ -6,45 +6,29 @@
       <p>Загрузка целей...</p>
     </div>
 
-    <!-- Empty State - First Visit (show onboarding if no goals) -->
+    <!-- Empty State - No goals yet -->
     <div v-else-if="showEmptyState" class="empty-state-section">
       <div class="empty-state-card card">
-        <div class="empty-icon">🏦</div>
+        <div class="empty-icon">
+          <Target :size="48" :stroke-width="1.5" />
+        </div>
         <h1>Банк целей</h1>
         <p class="subtitle">
-          Систематизируй свои желания и выбери приоритеты для достижения
+          Здесь хранятся все ваши идеи, желания и цели для достижения
         </p>
         
-        <div class="lesson-info">
-          <h3>Что вас ждёт в уроке:</h3>
-          <div class="lesson-steps">
-            <div class="lesson-step">
-              <span class="step-num">1</span>
-              <div>
-                <strong>Банк идей</strong>
-                <p>Запишите все свои желания, мечты и цели без фильтрации</p>
-              </div>
-            </div>
-            <div class="lesson-step">
-              <span class="step-num">2</span>
-              <div>
-                <strong>Проверка</strong>
-                <p>Отфильтруйте истинные цели от ложных через правило "3 Почему"</p>
-              </div>
-            </div>
-            <div class="lesson-step">
-              <span class="step-num">3</span>
-              <div>
-                <strong>Ключевые цели</strong>
-                <p>Выберите 1-3 цели для немедленного фокуса</p>
-              </div>
-            </div>
-          </div>
+        <div class="empty-actions">
+          <button class="btn btn-primary btn-lg" @click="addNewGoal">
+            <Plus :size="20" :stroke-width="2" />
+            Добавить первую цель
+          </button>
         </div>
-
-        <button class="btn btn-primary btn-lg" @click="startLesson">
-          ✨ Начать урок
-        </button>
+        
+        <div class="learning-hint">
+          <BookOpen :size="16" :stroke-width="1.5" />
+          <span>Не знаете с чего начать? Изучите </span>
+          <router-link to="/app/learning" class="learning-link">урок "Постановка целей"</router-link>
+        </div>
       </div>
     </div>
 
@@ -281,523 +265,13 @@
       </div>
 
       <div class="summary-actions">
-        <button class="btn btn-primary btn-lg" @click="goToPlanning">
+        <button class="btn btn-secondary" @click="goToPlanning">
           <Calendar :size="18" :stroke-width="2" /> Запланировать задачу
         </button>
-        <button class="btn btn-secondary" @click="addNewGoal">
+        <button class="btn btn-primary btn-lg" @click="addNewGoal">
           <Plus :size="16" :stroke-width="2" /> Добавить новую цель
         </button>
       </div>
-    </div>
-
-    <!-- Lesson Mode - In Progress -->
-    <div v-else class="lesson-mode">
-      <div class="progress-bar">
-        <div 
-          v-for="(step, index) in steps" 
-          :key="index"
-          class="progress-step"
-          :class="{ 
-            active: currentStep === index + 1, 
-            completed: currentStep > index + 1 
-          }"
-          @click="goToStep(index + 1)"
-        >
-          <div class="step-number">{{ index + 1 }}</div>
-          <div class="step-label">{{ step }}</div>
-        </div>
-      </div>
-
-    <!-- Step 1: Формирование банка целей -->
-    <div v-if="currentStep === 1" class="step-content">
-      <div class="step-section">
-        <header class="section-header">
-          <h1>Формирование банка целей</h1>
-          <p class="subtitle">
-            Запиши все идеи, желания, мечты, цели, хотелки для каждой сферы.
-            <strong>Не фильтруй, не рационализируй.</strong>
-          </p>
-        </header>
-
-        <div class="instruction-card card">
-          <div class="instruction-icon">
-            <Lightbulb :size="24" :stroke-width="2" />
-          </div>
-          <div>
-            <h3>Как заполнять?</h3>
-            <ul>
-              <li>Записывай всё подряд — желания, мечты, цели</li>
-              <li>Ничего не удаляй и не структурируй</li>
-              <li>Это сырая база для декомпозиции на следующих этапах</li>
-              <li>Формулируй: <strong>что хочу</strong> + <strong>почему это важно для меня</strong></li>
-            </ul>
-          </div>
-        </div>
-
-        <!-- Weak spheres alert -->
-        <div v-if="weakSpheres.length > 0" class="weak-spheres-alert card">
-          <div class="alert-icon">
-            <AlertTriangle :size="20" :stroke-width="2" />
-          </div>
-          <div class="alert-content">
-            <h4>Обратите внимание на сферы роста</h4>
-            <p>По результатам ССП эти сферы требуют особого внимания:</p>
-            <div class="weak-spheres-list">
-              <span 
-                v-for="sphere in weakSpheres" 
-                :key="sphere.id"
-                class="weak-sphere-tag"
-                :style="{ '--sphere-color': getSphereColor(sphere.id) }"
-                @click="selectWeakSphere(sphere.id)"
-              >
-                <component :is="getSphereIcon(sphere.id)" :size="14" :stroke-width="2" />
-                {{ getSphereNameOnly(sphere.id) }} ({{ sphere.score }}/10)
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div class="goals-table-container">
-          <div class="table-header-actions">
-            <h3 class="table-title">Банк идей и целей на жизнь</h3>
-          </div>
-          
-          <!-- Ideas Helper Prompt - More Prominent -->
-          <div class="ideas-prompt card" @click="toggleIdeasHelper">
-            <div class="ideas-prompt-icon">
-              <Sparkles :size="20" :stroke-width="2" />
-            </div>
-            <div class="ideas-prompt-content">
-              <span class="ideas-prompt-title">Нужны идеи для целей?</span>
-              <span class="ideas-prompt-subtitle">Посмотрите примеры целей по сферам жизни</span>
-            </div>
-            <div class="ideas-prompt-arrow">
-              <ChevronRight :size="20" />
-            </div>
-          </div>
-
-          <!-- Ideas Helper Modal -->
-          <transition name="fade">
-            <div v-if="showIdeasHelper" class="ideas-helper card">
-              <div class="ideas-helper-header">
-                <h4><Lightbulb :size="18" :stroke-width="2" /> Примеры целей по сферам</h4>
-                <button class="btn-close" @click="showIdeasHelper = false"><X :size="16" /></button>
-              </div>
-              <div class="ideas-helper-content">
-                <div v-for="sphere in lifeSpheres" :key="sphere.id" class="sphere-examples">
-                  <div class="sphere-examples-header" :style="{ '--sphere-color': getSphereColor(sphere.id) }">
-                    <component :is="getSphereIcon(sphere.id)" :size="16" :stroke-width="2" />
-                    <span>{{ getSphereNameOnly(sphere.id) }}</span>
-                  </div>
-                  <div class="example-goals">
-                    <div 
-                      v-for="(example, idx) in getGoalExamples(sphere.id)" 
-                      :key="idx"
-                      class="example-goal"
-                      @click="addExampleGoal(sphere.id, example)"
-                    >
-                      <span class="example-text">{{ example }}</span>
-                      <Plus :size="14" class="add-icon" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </transition>
-          
-          <div class="add-idea-section">
-            <select v-model="newIdea.sphereId" class="form-select sphere-select" :class="{ 'weak-sphere-selected': isWeakSphere(newIdea.sphereId) }">
-              <option value="">Выбери сферу</option>
-              <option 
-                v-for="sphere in lifeSpheres" 
-                :key="sphere.id" 
-                :value="sphere.id"
-              >
-                {{ getSphereNameOnly(sphere.id) }}
-              </option>
-            </select>
-            <input 
-              v-model="newIdea.text"
-              type="text"
-              class="form-input"
-              placeholder="Цель/Идея (что хочу)"
-              @keyup.enter="addNewIdea"
-            />
-            <button class="btn btn-primary add-idea-btn" @click="addNewIdea">
-              <Plus :size="16" :stroke-width="2" />
-              Добавить
-            </button>
-          </div>
-
-          <!-- Grouped by spheres -->
-          <div class="goals-grouped" v-if="rawIdeas.length > 0">
-            <div 
-              v-for="sphereGroup in ideasBySphere" 
-              :key="sphereGroup.sphere.id"
-              class="sphere-group"
-              :class="{ 'weak': isWeakSphere(sphereGroup.sphere.id) }"
-            >
-              <div class="sphere-group-header" :style="{ '--sphere-color': getSphereColor(sphereGroup.sphere.id) }">
-                <span class="sphere-group-name">
-                  <component :is="getSphereIcon(sphereGroup.sphere.id)" :size="18" :stroke-width="2" class="sphere-group-icon" />
-                  {{ getSphereNameOnly(sphereGroup.sphere.id) }}
-                  <span v-if="isWeakSphere(sphereGroup.sphere.id)" class="weak-badge">Сфера роста</span>
-                </span>
-                <span class="sphere-group-count">{{ sphereGroup.ideas.length }} целей</span>
-              </div>
-              <div class="sphere-group-ideas">
-                <div 
-                  v-for="idea in sphereGroup.ideas" 
-                  :key="idea.id"
-                  class="idea-card"
-                  :class="{ validated: idea.status === 'validated', rejected: idea.status === 'rejected' }"
-                >
-                  <div class="idea-card-content">
-                    <input 
-                      :value="idea.text"
-                      @input="updateIdea(idea.id, { text: $event.target.value })"
-                      class="idea-input"
-                      placeholder="Цель..."
-                    />
-                  </div>
-                  <div class="idea-card-actions">
-                    <span class="status-indicator" :class="idea.status" v-if="idea.status && idea.status !== 'raw'">
-                      <CheckCircle v-if="idea.status === 'validated'" :size="16" class="status-icon validated" />
-                      <XCircle v-else :size="16" class="status-icon rejected" />
-                    </span>
-                    <button 
-                      class="btn-icon delete"
-                      @click="deleteIdea(idea.id)"
-                      title="Удалить"
-                    >
-                      <Trash2 :size="16" :stroke-width="2" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div v-else class="empty-table">
-            <p>Пока нет целей. Начните добавлять свои идеи и желания!</p>
-            <p class="hint">Нажмите "Нужны идеи?" для примеров целей</p>
-          </div>
-        </div>
-
-        <div class="step-actions">
-          <div class="ideas-count">
-            Добавлено идей: <strong>{{ rawIdeas.length }}</strong>
-          </div>
-          <button 
-            class="btn btn-primary btn-lg" 
-            @click="nextStep"
-            :disabled="!canProceedToStep(2)"
-          >
-            Перейти к проверке целей →
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 2: Проверка целей -->
-    <div v-if="currentStep === 2" class="step-content">
-      <div class="step-section">
-        <header class="section-header">
-          <h1>Проверка целей</h1>
-          <p class="subtitle">
-            Проверь каждую цель с помощью правила "3 Почему" и отсей ложные цели
-          </p>
-        </header>
-
-        <div class="step-2-layout">
-          <div class="step-2-main">
-            <div class="filters-block card">
-              <h3><AlertTriangle :size="18" :stroke-width="2" class="header-icon warning" /> Убери следующие типы целей:</h3>
-              <div class="filter-types">
-                <div class="filter-type">
-                  <div class="filter-icon-wrapper social">
-                    <Eye :size="20" :stroke-width="2" />
-                  </div>
-                  <div>
-                    <strong>Социально-приемлемые цели</strong>
-                    <p>"Чтобы выглядело правильно" перед другими</p>
-                  </div>
-                </div>
-                <div class="filter-type">
-                  <div class="filter-icon-wrapper others">
-                    <UserX :size="20" :stroke-width="2" />
-                  </div>
-                  <div>
-                    <strong>Чужие цели</strong>
-                    <p>Взятые у авторитетов или окружения</p>
-                  </div>
-                </div>
-                <div class="filter-type">
-                  <div class="filter-icon-wrapper surrogate">
-                    <Target :size="20" :stroke-width="2" />
-                  </div>
-                  <div>
-                    <strong>Суррогаты</strong>
-                    <p>Цели, не ведущие к реальному результату</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="three-whys-instruction card">
-              <h3><CheckCircle :size="18" :stroke-width="2" class="header-icon success" /> Проверка цели</h3>
-              <p>Для каждой цели ответь на два вопроса:</p>
-              <ol>
-                <li><strong>Почему для меня это важно?</strong></li>
-                <li><strong>Как эта цель поможет выйти на новый уровень?</strong></li>
-              </ol>
-            </div>
-
-            <!-- Validation Progress Bar -->
-            <div class="validation-progress card">
-          <div class="progress-header">
-            <span class="progress-title">Прогресс проверки</span>
-            <span class="progress-count">{{ checkedCount }} из {{ rawIdeas.length }} целей проверено</span>
-          </div>
-          <div class="progress-track">
-            <div 
-              class="progress-fill validated" 
-              :style="{ width: validatedPercent + '%' }"
-            ></div>
-            <div 
-              class="progress-fill rejected" 
-              :style="{ width: rejectedPercent + '%', left: validatedPercent + '%' }"
-            ></div>
-          </div>
-          <div class="progress-legend">
-            <span class="legend-item validated"><CheckCircle :size="14" :stroke-width="2" /> Истинных: {{ validatedCount }}</span>
-            <span class="legend-item rejected"><XCircle :size="14" :stroke-width="2" /> Ложных: {{ rejectedCount }}</span>
-            <span class="legend-item pending"><Clock :size="14" :stroke-width="2" /> Осталось: {{ uncheckedCount }}</span>
-          </div>
-        </div>
-
-        <div class="validation-list compact">
-          <div 
-            v-for="idea in rawIdeas" 
-            :key="idea.id"
-            class="validation-card-compact card"
-            :class="{ 
-              validated: idea.status === 'validated', 
-              rejected: idea.status === 'rejected',
-              expanded: expandedGoalId === idea.id
-            }"
-          >
-            <div 
-              class="validation-header-compact"
-              @click="toggleGoalExpansion(idea.id)"
-            >
-              <div class="goal-info-compact">
-                <span class="expand-icon">
-                  <ChevronDown v-if="expandedGoalId === idea.id" :size="16" :stroke-width="2" />
-                  <ChevronRight v-else :size="16" :stroke-width="2" />
-                </span>
-                <span class="sphere-badge-small" :style="{ '--sphere-color': getSphereColor(idea.sphereId) }">
-                  <component :is="getSphereIcon(idea.sphereId)" :size="14" :stroke-width="2" />
-                  {{ getSphereNameOnly(idea.sphereId) }}
-                </span>
-                <h4>{{ idea.goal || idea.text || 'Без названия' }}</h4>
-              </div>
-              <div class="goal-status-indicator">
-                <span v-if="idea.status === 'validated'" class="status-badge validated"><CheckCircle :size="14" :stroke-width="2" /> Истинная</span>
-                <span v-else-if="idea.status === 'rejected'" class="status-badge rejected"><XCircle :size="14" :stroke-width="2" /> Ложная</span>
-                <span v-else class="status-badge pending"><Clock :size="14" :stroke-width="2" /> Не проверена</span>
-              </div>
-            </div>
-
-            <transition name="expand">
-              <div v-if="expandedGoalId === idea.id" class="validation-dropdown">
-                <p class="why-important-compact" v-if="idea.whyImportant">
-                  <strong>Почему важно:</strong> {{ idea.whyImportant }}
-                </p>
-
-                <div class="three-whys-form-compact">
-                  <div class="why-field-compact">
-                    <label>1. Почему для меня это важно?</label>
-                    <textarea 
-                      :value="idea.threeWhys?.why1 || ''"
-                      @input="updateIdeaWhys(idea.id, 'why1', $event.target.value)"
-                      rows="2"
-                      placeholder="Напиши свой ответ..."
-                    ></textarea>
-                  </div>
-                  <div class="why-field-compact">
-                    <label>2. Как эта цель поможет выйти на новый уровень?</label>
-                    <textarea 
-                      :value="idea.threeWhys?.why2 || ''"
-                      @input="updateIdeaWhys(idea.id, 'why2', $event.target.value)"
-                      rows="2"
-                      placeholder="Напиши свой ответ..."
-                    ></textarea>
-                  </div>
-                </div>
-
-                <div class="validation-buttons">
-                  <button 
-                    class="btn btn-lg"
-                    :class="idea.status === 'validated' ? 'btn-success' : 'btn-outline-success'"
-                    @click.stop="validateGoal(idea.id, true)"
-                  >
-                    <CheckCircle :size="16" :stroke-width="2" /> Это истинная цель
-                  </button>
-                  <button 
-                    class="btn btn-lg"
-                    :class="idea.status === 'rejected' ? 'btn-danger' : 'btn-outline-danger'"
-                    @click.stop="validateGoal(idea.id, false)"
-                  >
-                    <XCircle :size="16" :stroke-width="2" /> Это ложная цель
-                  </button>
-                </div>
-              </div>
-            </transition>
-          </div>
-        </div>
-
-            <div class="step-actions">
-              <button class="btn btn-secondary" @click="prevStep">
-                ← Назад
-              </button>
-              <button 
-                class="btn btn-primary btn-lg" 
-                @click="nextStep"
-                :disabled="!canProceedToStep(3)"
-              >
-                Выбрать ключевые цели →
-              </button>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 3: Выбор ключевых целей -->
-    <div v-if="currentStep === 3" class="step-content">
-      <div class="step-section">
-        <header class="section-header">
-          <h1>Выбор ключевых целей</h1>
-          <p class="subtitle">
-            Выбери 1–3 цели из истинных для выполнения в ближайшее время
-          </p>
-        </header>
-
-        <div class="key-goals-instruction card">
-          <h3><Sparkles :size="18" :stroke-width="2" class="header-icon accent" /> Как выбрать цели для фокуса:</h3>
-          <ul>
-            <li><strong>Реально зажигают</strong> — вызывают энтузиазм и желание действовать</li>
-            <li><strong>Достижимы сейчас</strong> — есть ресурсы и время для работы над ними</li>
-            <li><strong>Максимум 3 цели</strong> — лучше меньше, но качественнее</li>
-          </ul>
-        </div>
-
-        <!-- Recommendations for weak spheres -->
-        <div v-if="weakSphereGoals.length > 0" class="recommendations-block card">
-          <h3><Lightbulb :size="18" :stroke-width="2" class="header-icon warning" /> Рекомендуем обратить внимание</h3>
-          <p>Эти цели относятся к вашим сферам роста (по результатам ССП):</p>
-          <div class="recommended-goals">
-            <div 
-              v-for="goal in weakSphereGoals" 
-              :key="goal.id"
-              class="recommended-goal"
-              :class="{ selected: isGoalSelected(goal.id) }"
-              @click="toggleGoalSelection(goal.id)"
-            >
-              <span class="rec-checkbox">
-                <CheckSquare v-if="isGoalSelected(goal.id)" :size="18" :stroke-width="2" />
-                <Square v-else :size="18" :stroke-width="2" />
-              </span>
-              <span class="rec-sphere" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
-                <component :is="getSphereIcon(goal.sphereId)" :size="14" :stroke-width="2" />
-                {{ getSphereNameOnly(goal.sphereId) }}
-              </span>
-              <span class="rec-text">{{ goal.text }}</span>
-              <span class="rec-badge"><AlertTriangle :size="12" :stroke-width="2" /> Сфера роста</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="select-goals-section card">
-          <h3><ClipboardList :size="18" :stroke-width="2" class="header-icon primary" /> Ключевые цели</h3>
-          <p class="select-hint">Отметь от 1 до 3 целей, над которыми будешь работать в ближайшее время</p>
-          
-          <div class="selectable-goals-list">
-            <div 
-              v-for="goal in validatedGoals" 
-              :key="goal.id" 
-              class="selectable-goal-item"
-              :class="{ selected: isGoalSelected(goal.id), 'weak-sphere': isWeakSphere(goal.sphereId) }"
-              @click="toggleGoalSelection(goal.id)"
-            >
-              <div class="goal-checkbox">
-                <CheckSquare v-if="isGoalSelected(goal.id)" :size="20" :stroke-width="2" class="checkbox-checked" />
-                <Square v-else :size="20" :stroke-width="2" class="checkbox-unchecked" />
-              </div>
-              <div class="goal-content">
-                <div class="goal-header-row">
-                  <span class="sphere-badge" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
-                    <component :is="getSphereIcon(goal.sphereId)" :size="14" :stroke-width="2" />
-                    {{ getSphereNameOnly(goal.sphereId) }}
-                  </span>
-                  <span v-if="isWeakSphere(goal.sphereId)" class="weak-indicator"><AlertTriangle :size="14" :stroke-width="2" /></span>
-                </div>
-                <span class="goal-text">{{ goal.text }}</span>
-                <span class="goal-why" v-if="goal.whyImportant">{{ goal.whyImportant }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="selection-counter">
-            Выбрано: <strong>{{ selectedGoalsCount }}</strong> / 3
-          </div>
-        </div>
-
-        <!-- Preview of what happens next -->
-        <div class="next-steps-preview card" v-if="selectedGoalsCount > 0">
-          <h3><ListChecks :size="18" :stroke-width="2" class="header-icon primary" /> Что будет дальше</h3>
-          <div class="preview-content">
-            <div class="preview-step">
-              <span class="preview-icon step-1">1</span>
-              <div>
-                <strong>Цели сохранятся</strong>
-                <p>{{ selectedGoalsCount }} {{ selectedGoalsCount === 1 ? 'цель будет добавлена' : 'цели будут добавлены' }} в систему</p>
-              </div>
-            </div>
-            <div class="preview-step">
-              <span class="preview-icon step-2">2</span>
-              <div>
-                <strong>Запланируйте первую задачу</strong>
-                <p>Вы перейдете в Планирование недели</p>
-              </div>
-            </div>
-            <div class="preview-step">
-              <span class="preview-icon step-3">3</span>
-              <div>
-                <strong>Выполняйте и отмечайте</strong>
-                <p>Ежедневно выполняйте задачи и следите за прогрессом</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="step-actions">
-          <button class="btn btn-secondary" @click="prevStep">
-            ← Назад
-          </button>
-          <button 
-            class="btn btn-primary btn-lg" 
-            @click="completeGoalsBankHandler"
-            :disabled="selectedGoalsCount < 1"
-          >
-            <CheckCircle :size="16" :stroke-width="2" /> Завершить и сохранить
-          </button>
-        </div>
-      </div>
-    </div>
-
     </div>
 
     <!-- Floating Action Bar -->
@@ -901,7 +375,13 @@
             </div>
 
             <div class="validation-section">
-              <div class="validation-label">Оценка цели:</div>
+              <div class="validation-label">
+                Оценка цели:
+                <span class="tooltip-wrapper">
+                  <HelpCircle :size="16" :stroke-width="2" class="help-icon" />
+                  <span class="tooltip-text">Истинная цель отвечает на вопросы «почему важно?» и «как изменит жизнь?». Ложная — навязана извне или не ведёт к переменам.</span>
+                </span>
+              </div>
               <div class="validation-buttons">
                 <button 
                   class="btn btn-validation btn-true-goal"
@@ -1033,7 +513,13 @@
             </div>
 
             <div class="validation-section">
-              <div class="validation-label">Оценка цели:</div>
+              <div class="validation-label">
+                Оценка цели:
+                <span class="tooltip-wrapper">
+                  <HelpCircle :size="16" :stroke-width="2" class="help-icon" />
+                  <span class="tooltip-text">Истинная цель отвечает на вопросы «почему важно?» и «как изменит жизнь?». Ложная — навязана извне или не ведёт к переменам.</span>
+                </span>
+              </div>
               <div class="validation-buttons">
                 <button 
                   class="btn btn-validation btn-true-goal"
@@ -1108,7 +594,9 @@ import {
   Calendar,
   Search,
   GitBranch,
-  ChevronUp
+  ChevronUp,
+  BookOpen,
+  HelpCircle
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -1141,9 +629,6 @@ const store = useAppStore()
 const router = useRouter()
 const route = useRoute()
 
-const steps = ['Банк идей', 'Проверка', 'Ключевые цели']
-const currentStep = computed(() => store.goalsBank.currentStep)
-
 const lifeSpheres = computed(() => store.lifeSpheres)
 const rawIdeas = computed(() => store.goalsBank.rawIdeas)
 const keyGoals = computed(() => store.goalsBank.keyGoals)
@@ -1167,7 +652,6 @@ const currentPage = ref(1)
 const totalPages = computed(() => apiPagination.value.totalPages || 1)
 const hasMorePages = computed(() => currentPage.value < totalPages.value)
 
-const lessonStarted = ref(false)
 const addingNewGoal = ref(false)
 const filterSphere = ref('')
 const filterStatus = ref('')
@@ -1190,17 +674,18 @@ const newGoal = ref({
   status: null
 })
 
-// API loading state
+// API loading state  
+const loadAttempted = ref(false)
 const isGoalsLoading = computed(() => goalsApiData.value?.loading ?? false)
 const isGoalsLoaded = computed(() => goalsApiData.value?.loaded ?? false)
+const hasLoadedOrFinished = computed(() => isGoalsLoaded.value || (loadAttempted.value && !isGoalsLoading.value))
 
-// Show empty state (onboarding) only when:
-// 1. Goals are loaded from backend
-// 2. Backend returned 0 goals
-// 3. Lesson is not currently in progress
+// Show empty state when:
+// 1. Loading finished (successfully or with error)
+// 2. No goals from backend or local storage
 const showEmptyState = computed(() => {
-  if (lessonStarted.value) return false
-  if (!isGoalsLoaded.value) return false
+  if (isGoalsLoading.value) return false
+  if (!hasLoadedOrFinished.value) return false
   const totalItems = apiPagination.value?.totalItems ?? 0
   return totalItems === 0 && rawIdeas.value.length === 0
 })
@@ -1211,11 +696,10 @@ const hasActiveFilters = computed(() => {
 })
 
 // Show summary (main goals table) when:
-// 1. There are goals from backend, OR
-// 2. Lesson is started (user is creating goals)
+// 1. Loading finished AND there are goals
 const showSummary = computed(() => {
-  if (lessonStarted.value) return false
-  if (!isGoalsLoaded.value) return false
+  if (isGoalsLoading.value) return false
+  if (!hasLoadedOrFinished.value) return false
   const totalItems = apiPagination.value?.totalItems ?? 0
   return totalItems > 0 || rawIdeas.value.length > 0
 })
@@ -1235,14 +719,6 @@ const formatCompletedDate = computed(() => {
     year: 'numeric'
   })
 })
-
-function startLesson() {
-  store.goalsBank.rawIdeas = []
-  store.goalsBank.currentStep = 1
-  store.goalsBank.completedAt = null
-  store.saveToLocalStorage()
-  lessonStarted.value = true
-}
 
 function goToDecomposition() {
   router.push('/app/goals')
@@ -1309,14 +785,6 @@ async function saveNewGoal() {
 
 function selectNewGoalValidationStatus(isValid) {
   newGoal.value.status = isValid ? 'validated' : 'rejected'
-}
-
-function restartLesson() {
-  if (confirm('Вы уверены? Все данные урока будут сброшены.')) {
-    store.resetGoalsBank()
-    lessonStarted.value = false
-    addingNewGoal.value = false
-  }
 }
 
 const validatedGoals = computed(() => rawIdeas.value.filter(i => i.status === 'validated'))
@@ -1469,6 +937,7 @@ async function loadGoalsWithFilters(page = 1, append = false) {
     console.error('[GoalsBank] Error loading goals with filters:', error)
   } finally {
     isLoadingGoals.value = false
+    loadAttempted.value = true
   }
 }
 
@@ -1793,39 +1262,6 @@ function toggleGoalSelection(goalId) {
     if (selectedGoalIds.value.length < 3) {
       selectedGoalIds.value.push(goalId)
     }
-  }
-}
-
-function canProceedToStep(step) {
-  if (step === 1) return true
-  if (step === 2) return rawIdeas.value.length > 0
-  if (step === 3) return validatedCount.value > 0
-  return false
-}
-
-function nextStep() {
-  const nextStepNum = currentStep.value + 1
-  if (nextStepNum <= 3 && canProceedToStep(nextStepNum)) {
-    store.setGoalsBankStep(nextStepNum)
-  }
-}
-
-function prevStep() {
-  if (currentStep.value > 1) {
-    store.setGoalsBankStep(currentStep.value - 1)
-  }
-}
-
-function goToStep(step) {
-  if (step < currentStep.value) {
-    store.setGoalsBankStep(step)
-  } else if (step > currentStep.value) {
-    for (let s = currentStep.value + 1; s <= step; s++) {
-      if (!canProceedToStep(s)) {
-        return
-      }
-    }
-    store.setGoalsBankStep(step)
   }
 }
 
@@ -2227,6 +1663,7 @@ async function loadGoals() {
     console.error('[GoalsBank] Error loading goals:', error)
   } finally {
     isLoadingGoals.value = false
+    loadAttempted.value = true
   }
 }
 
@@ -2309,54 +1746,43 @@ onMounted(async () => {
   font-size: 1.1rem;
 }
 
-.lesson-info {
-  text-align: left;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.lesson-info h3 {
-  font-size: 1rem;
-  margin-bottom: 1rem;
-}
-
-.lesson-steps {
+.empty-state-card .empty-icon {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  color: var(--primary-color);
 }
 
-.lesson-step {
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
+.empty-actions {
+  margin-bottom: 1.5rem;
 }
 
-.lesson-step .step-num {
-  width: 28px;
-  height: 28px;
-  background: var(--primary-color);
-  color: white;
-  border-radius: 50%;
+.empty-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.learning-hint {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.875rem;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.lesson-step strong {
-  display: block;
-  margin-bottom: 0.25rem;
-}
-
-.lesson-step p {
-  font-size: 0.875rem;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
   color: var(--text-secondary);
-  margin: 0;
+  font-size: 0.9rem;
+}
+
+.learning-hint .learning-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.learning-hint .learning-link:hover {
+  text-decoration: underline;
 }
 
 /* Summary Styles */
@@ -3979,66 +3405,6 @@ onMounted(async () => {
   border-left: 3px solid var(--warning-color);
 }
 
-/* Next Steps Preview */
-.next-steps-preview {
-  margin-bottom: 2rem;
-  background: rgba(139, 92, 246, 0.05);
-  border: 1px solid rgba(139, 92, 246, 0.2);
-}
-
-.next-steps-preview h3 {
-  margin-bottom: 1.5rem;
-  color: var(--primary-color);
-}
-
-.preview-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.preview-step {
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
-}
-
-.preview-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  font-size: 0.875rem;
-  font-weight: 600;
-  flex-shrink: 0;
-  color: white;
-}
-
-.preview-icon.step-1 {
-  background: var(--primary-color);
-}
-
-.preview-icon.step-2 {
-  background: #8b5cf6;
-}
-
-.preview-icon.step-3 {
-  background: var(--success-color);
-}
-
-.preview-step strong {
-  display: block;
-  margin-bottom: 0.25rem;
-}
-
-.preview-step p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-}
-
 .summary-actions {
   display: flex;
   justify-content: center;
@@ -4050,79 +3416,6 @@ onMounted(async () => {
   .summary-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-}
-
-.progress-bar {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 3rem;
-  padding: 0 2rem;
-}
-
-.progress-step {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-  cursor: pointer;
-  opacity: 0.5;
-  transition: all 0.3s ease;
-}
-
-.progress-step.active,
-.progress-step.completed {
-  opacity: 1;
-}
-
-.progress-step::after {
-  content: '';
-  position: absolute;
-  top: 20px;
-  right: 50%;
-  width: 100%;
-  height: 2px;
-  background: var(--border-color);
-  z-index: 0;
-}
-
-.progress-step:first-child::after {
-  display: none;
-}
-
-.progress-step.completed::after {
-  background: var(--primary-color);
-}
-
-.step-number {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--bg-tertiary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 1.1rem;
-  z-index: 1;
-  transition: all 0.3s ease;
-}
-
-.progress-step.active .step-number {
-  background: var(--primary-color);
-  color: white;
-}
-
-.progress-step.completed .step-number {
-  background: var(--success-color);
-  color: white;
-}
-
-.step-label {
-  margin-top: 0.75rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  text-align: center;
 }
 
 .section-header {
@@ -4140,35 +3433,6 @@ onMounted(async () => {
   font-size: 1.1rem;
   max-width: 700px;
   margin: 0 auto;
-}
-
-.instruction-card {
-  display: flex;
-  gap: 1.5rem;
-  align-items: flex-start;
-  margin-bottom: 2rem;
-}
-
-.instruction-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  background: rgba(245, 158, 11, 0.1);
-  border-radius: var(--radius-md);
-  color: #f59e0b;
-  flex-shrink: 0;
-}
-
-.instruction-card h3 {
-  margin-bottom: 0.75rem;
-}
-
-.instruction-card ul {
-  margin: 0;
-  padding-left: 1.5rem;
-  line-height: 1.8;
 }
 
 .goals-table-container {
@@ -5489,6 +4753,63 @@ onMounted(async () => {
   font-weight: 500;
   color: var(--text-secondary);
   margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+}
+
+.help-icon {
+  color: var(--text-tertiary);
+  opacity: 0.7;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.tooltip-wrapper:hover .help-icon {
+  opacity: 1;
+  color: var(--primary-color);
+}
+
+.tooltip-text {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  transition: opacity 0.2s, visibility 0.2s;
+}
+
+.tooltip-text::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--border-color);
+}
+
+.tooltip-wrapper:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
 }
 
 .validation-buttons {
@@ -5809,26 +5130,10 @@ onMounted(async () => {
     font-size: 0.9375rem;
   }
   
-  .lesson-info {
-    padding: 1rem;
-  }
-  
-  .lesson-step {
-    gap: 0.75rem;
-  }
-  
-  .lesson-step .step-num {
-    width: 24px;
-    height: 24px;
-    font-size: 0.75rem;
-  }
-  
-  .lesson-step strong {
-    font-size: 0.9375rem;
-  }
-  
-  .lesson-step p {
-    font-size: 0.8125rem;
+  .learning-hint {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.25rem;
   }
   
   .sphere-select-grid {
@@ -5844,28 +5149,6 @@ onMounted(async () => {
   .modal-footer-right {
     width: 100%;
     justify-content: center;
-  }
-  
-  .progress-bar {
-    gap: 0.25rem;
-  }
-  
-  .step-label {
-    font-size: 0.625rem;
-  }
-  
-  .step-number {
-    width: 28px;
-    height: 28px;
-    font-size: 0.75rem;
-  }
-  
-  .step-content h2 {
-    font-size: 1.25rem;
-  }
-  
-  .section-hint {
-    font-size: 0.875rem;
   }
 }
 </style>

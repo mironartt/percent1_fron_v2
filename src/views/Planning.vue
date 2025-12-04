@@ -755,9 +755,9 @@
             </div>
             
             <div v-if="goalsWithSteps.length === 0" class="empty-goals card">
-              <p>У вас пока нет целей с шагами.</p>
+              <p>У вас пока нет целей в работе. Перейдите в банк целей, возьмите цель в работу и декомпозируйте её.</p>
               <button class="btn btn-primary" @click="goToDecomposition">
-                Перейти к декомпозиции
+                Перейти в банк целей
               </button>
             </div>
             

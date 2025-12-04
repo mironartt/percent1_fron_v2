@@ -12,15 +12,17 @@
       @click="toggleMobile"
     >
       <Bot :size="24" :stroke-width="1.5" />
+      <span v-if="unreadCount > 0" class="unread-badge">{{ unreadCount }}</span>
     </button>
     
     <div :class="['mentor-panel', { collapsed: isCollapsed && !isMobile, 'mobile-open': isMobileOpen }]">
       <div v-if="isCollapsed && !isMobile" class="collapsed-content" @click="togglePanel">
         <div class="collapsed-avatar">
           <Bot :size="20" :stroke-width="1.5" />
+          <span v-if="unreadCount > 0" class="unread-badge-collapsed">{{ unreadCount }}</span>
         </div>
         <span class="collapsed-label">AI Ментор</span>
-        <div class="collapsed-indicator" :class="{ 'has-messages': messages.length > 0 }">
+        <div class="collapsed-indicator" :class="{ 'has-messages': messages.length > 0 || unreadCount > 0 }">
           <MessageCircle :size="14" :stroke-width="1.5" />
         </div>
         <ChevronLeft :size="16" :stroke-width="1.5" class="collapsed-arrow" />
@@ -156,9 +158,11 @@ const isMobile = ref(false)
 const messages = computed(() => store.mentor.messages)
 const isCollapsed = computed(() => store.mentorPanelCollapsed)
 const isMobileOpen = computed(() => store.mentorMobileOpen)
+const unreadCount = computed(() => store.unreadMentorCount)
 
 function checkMobile() {
   isMobile.value = window.innerWidth < 1024
+  store.setMentorIsMobile(isMobile.value)
   if (!isMobile.value) {
     store.closeMentorMobile()
     document.body.style.overflow = ''
@@ -430,6 +434,53 @@ onUnmounted(() => {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
+.unread-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: #ef4444;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+  animation: pulse-badge 2s ease-in-out infinite;
+}
+
+.unread-badge-collapsed {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: #ef4444;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+  animation: pulse-badge 2s ease-in-out infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
 .mentor-panel {
   position: fixed;
   top: 0;
@@ -461,6 +512,7 @@ onUnmounted(() => {
 }
 
 .collapsed-avatar {
+  position: relative;
   width: 40px;
   height: 40px;
   border-radius: 50%;
