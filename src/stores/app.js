@@ -1810,51 +1810,177 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  function confirmAIRecommendations() {
+  async function confirmAIRecommendations() {
     const acceptedGoals = aiRecommendedGoals.value.filter(g => g.status === 'accepted')
     
     if (DEBUG_MODE) {
       console.log('[Store] Confirming AI goal recommendations:', acceptedGoals.length)
     }
     
-    acceptedGoals.forEach(aiGoal => {
-      const newGoal = {
-        id: `goal-ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        title: aiGoal.title,
-        description: aiGoal.description || '',
-        sphereId: aiGoal.sphereId,
-        threeWhys: {
-          whyImportant: aiGoal.whyImportant || 'Рекомендовано AI на основе анализа',
-          why2: aiGoal.why2 || ''
-        },
-        steps: aiGoal.steps.map((step, index) => ({
-          id: `step-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
-          title: step.title,
-          order: index + 1,
-          completed: false,
-          priority: step.priority || 'none',
-          estimate: step.estimate || '',
-          dueDate: step.dueDate || null
-        })),
-        progress: 0,
-        status: 'active',
-        source: 'ai_onboarding',
-        createdAt: new Date().toISOString()
-      }
-      
-      goals.value.push(newGoal)
-      
-      if (DEBUG_MODE) {
-        console.log('[Store] AI goal added:', newGoal.title, 'with', newGoal.steps.length, 'steps')
-      }
-    })
+    if (acceptedGoals.length === 0) {
+      showPlanReview.value = false
+      aiRecommendedGoals.value = []
+      saveToLocalStorage()
+      return { success: true, count: 0 }
+    }
     
-    showPlanReview.value = false
-    aiRecommendedGoals.value = []
-    saveToLocalStorage()
+    const goalsData = acceptedGoals.map(aiGoal => ({
+      goal_id: null,
+      title: aiGoal.title,
+      category: categoryFrontendToBackend[aiGoal.sphereId] || aiGoal.sphereId || 'welfare',
+      score: 'true',
+      status: 'work',
+      why_important: aiGoal.whyImportant || 'Рекомендовано AI на основе анализа',
+      why_give_me: aiGoal.why2 || '',
+      why_about_me: ''
+    }))
     
     if (DEBUG_MODE) {
-      console.log('[Store] AI goals added to goals bank:', acceptedGoals.length)
+      console.log('[Store] Sending AI goals to backend:', goalsData)
+    }
+    
+    try {
+      const goalsResult = await updateGoals({ goals_data: goalsData })
+      
+      if (goalsResult.status !== 'ok' || !goalsResult.data?.created_goals_ids) {
+        if (DEBUG_MODE) {
+          console.warn('[Store] Failed to create AI goals on backend:', goalsResult)
+        }
+        const toastStore = useToastStore()
+        toastStore.error('Не удалось сохранить цели. Попробуйте ещё раз.')
+        return { success: false, error: 'Backend error' }
+      }
+      
+      const createdIds = goalsResult.data.created_goals_ids
+      
+      if (!createdIds || createdIds.length === 0) {
+        if (DEBUG_MODE) {
+          console.warn('[Store] No goal IDs returned from backend')
+        }
+        const toastStore = useToastStore()
+        toastStore.error('Сервер не вернул ID целей. Попробуйте ещё раз.')
+        return { success: false, error: 'No IDs returned' }
+      }
+      
+      if (createdIds.length !== acceptedGoals.length) {
+        if (DEBUG_MODE) {
+          console.warn('[Store] Mismatch: expected', acceptedGoals.length, 'IDs, got', createdIds.length)
+        }
+        const toastStore = useToastStore()
+        toastStore.error('Не все цели были сохранены. Попробуйте ещё раз.')
+        return { success: false, error: 'ID count mismatch' }
+      }
+      
+      if (DEBUG_MODE) {
+        console.log('[Store] AI goals created on backend, IDs:', createdIds)
+      }
+      
+      const createdGoals = []
+      
+      acceptedGoals.forEach((aiGoal, index) => {
+        const backendId = createdIds[index]
+        if (!backendId) return
+        
+        const localId = `goal-ai-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`
+        const newGoal = {
+          id: localId,
+          backendId: backendId,
+          title: aiGoal.title,
+          description: aiGoal.description || '',
+          sphereId: aiGoal.sphereId,
+          threeWhys: {
+            whyImportant: aiGoal.whyImportant || 'Рекомендовано AI на основе анализа',
+            why2: aiGoal.why2 || ''
+          },
+          steps: aiGoal.steps.map((step, stepIndex) => ({
+            id: `step-${Date.now()}-${stepIndex}-${Math.random().toString(36).substr(2, 9)}`,
+            title: step.title,
+            order: stepIndex + 1,
+            completed: false,
+            priority: step.priority || 'none',
+            estimate: step.estimate || '',
+            dueDate: step.dueDate || null
+          })),
+          progress: 0,
+          status: 'active',
+          workStatus: 'work',
+          source: 'ai_onboarding',
+          createdAt: new Date().toISOString()
+        }
+        
+        goals.value.push(newGoal)
+        createdGoals.push({ backendId, newGoal, aiGoal })
+        
+        if (DEBUG_MODE) {
+          console.log('[Store] AI goal added:', newGoal.title, 'with backendId:', backendId)
+        }
+      })
+      
+      const allStepsData = []
+      createdGoals.forEach(({ backendId, newGoal }) => {
+        newGoal.steps.forEach((step, stepIndex) => {
+          allStepsData.push({
+            goal_id: backendId,
+            step_id: null,
+            title: step.title,
+            order: stepIndex + 1,
+            is_complete: false,
+            priority: step.priority === 'none' ? null : step.priority,
+            time_duration: timeDurationFrontendToBackend[step.estimate] || null,
+            dt: step.dueDate || null
+          })
+        })
+      })
+      
+      if (allStepsData.length > 0) {
+        if (DEBUG_MODE) {
+          console.log('[Store] Sending AI goal steps to backend:', allStepsData.length)
+        }
+        
+        try {
+          const stepsResult = await updateGoalSteps({ goals_steps_data: allStepsData })
+          
+          if (stepsResult.status === 'ok' && stepsResult.data?.created_steps) {
+            const createdSteps = stepsResult.data.created_steps
+            
+            if (DEBUG_MODE) {
+              console.log('[Store] AI goal steps created on backend:', createdSteps.length)
+            }
+            
+            createdSteps.forEach(stepInfo => {
+              const goal = goals.value.find(g => g.backendId === stepInfo.goal_id)
+              if (goal) {
+                const step = goal.steps.find(s => s.order === stepInfo.order)
+                if (step) {
+                  step.backendId = stepInfo.step_id
+                }
+              }
+            })
+          }
+        } catch (stepsError) {
+          if (DEBUG_MODE) {
+            console.error('[Store] Error creating steps on backend:', stepsError)
+          }
+        }
+      }
+      
+      showPlanReview.value = false
+      aiRecommendedGoals.value = []
+      saveToLocalStorage()
+      
+      if (DEBUG_MODE) {
+        console.log('[Store] AI goals confirmed successfully:', createdGoals.length)
+      }
+      
+      return { success: true, count: createdGoals.length }
+      
+    } catch (error) {
+      if (DEBUG_MODE) {
+        console.error('[Store] Error syncing AI goals to backend:', error)
+      }
+      const toastStore = useToastStore()
+      toastStore.error('Ошибка сохранения целей. Попробуйте ещё раз.')
+      return { success: false, error: error.message }
     }
   }
 
