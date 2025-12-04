@@ -4812,9 +4812,16 @@ onMounted(async () => {
     flex-wrap: wrap;
   }
   
+  .goals-table-section .status-row .status-badge {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+    line-height: 1.2;
+  }
+  
   .goals-table-section .status-row .goal-sphere-badge-new {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+    line-height: 1.2;
   }
   
   .goals-table-section .goals-table .col-goal {
