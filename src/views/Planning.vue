@@ -529,29 +529,6 @@
                 Сегодня
               </button>
             </div>
-            <div class="view-mode-tabs desktop-only">
-              <button 
-                class="view-tab" 
-                :class="{ active: viewMode === 'workdays' }"
-                @click="viewMode = 'workdays'; focusedDay = null"
-              >
-                5 дней
-              </button>
-              <button 
-                class="view-tab" 
-                :class="{ active: viewMode === 'week' }"
-                @click="viewMode = 'week'; focusedDay = null"
-              >
-                7 дней
-              </button>
-              <button 
-                class="view-tab" 
-                :class="{ active: viewMode === 'day' }"
-                @click="setDayView"
-              >
-                День
-              </button>
-            </div>
           </header>
 
           <!-- Mobile Week View -->
@@ -624,20 +601,58 @@
           <div class="week-calendar-full card desktop-only">
             <div class="calendar-header-row" v-if="viewMode !== 'day'">
               <h3>План на неделю <span class="drag-hint">Перетаскивайте задачи между днями</span></h3>
-              <button 
-                v-if="viewMode === 'workdays'"
-                class="btn btn-sm btn-outline weekend-toggle"
-                @click="showWeekend = !showWeekend"
-              >
-                {{ showWeekend ? 'Скрыть выходные' : 'Выходные' }}
-                <span v-if="weekendTasksCount > 0" class="weekend-badge">{{ weekendTasksCount }}</span>
-              </button>
+              <div class="view-mode-tabs">
+                <button 
+                  class="view-tab" 
+                  :class="{ active: viewMode === 'workdays' }"
+                  @click="viewMode = 'workdays'; focusedDay = null"
+                >
+                  5 дней
+                </button>
+                <button 
+                  class="view-tab" 
+                  :class="{ active: viewMode === 'week' }"
+                  @click="viewMode = 'week'; focusedDay = null"
+                >
+                  7 дней
+                </button>
+                <button 
+                  class="view-tab" 
+                  :class="{ active: viewMode === 'day' }"
+                  @click="setDayView"
+                >
+                  День
+                </button>
+              </div>
             </div>
             <div class="calendar-header-row" v-else>
               <div class="day-view-nav">
                 <button class="btn btn-icon-nav" @click="navigateFocusedDay(-1)" title="Предыдущий день">←</button>
                 <h3>{{ getFocusedDayTitle() }}</h3>
                 <button class="btn btn-icon-nav" @click="navigateFocusedDay(1)" title="Следующий день">→</button>
+              </div>
+              <div class="view-mode-tabs">
+                <button 
+                  class="view-tab" 
+                  :class="{ active: viewMode === 'workdays' }"
+                  @click="viewMode = 'workdays'; focusedDay = null"
+                >
+                  5 дней
+                </button>
+                <button 
+                  class="view-tab" 
+                  :class="{ active: viewMode === 'week' }"
+                  @click="viewMode = 'week'; focusedDay = null"
+                >
+                  7 дней
+                </button>
+                <button 
+                  class="view-tab" 
+                  :class="{ active: viewMode === 'day' }"
+                  @click="setDayView"
+                >
+                  День
+                </button>
               </div>
             </div>
             <div :class="getCalendarGridClass()">
@@ -717,91 +732,6 @@
                   </div>
                   <div v-if="getTasksForDay(day.date).length === 0" class="empty-day drop-zone">
                     Перетащите сюда
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Weekend section (collapsible) -->
-            <div v-if="showWeekend && viewMode === 'workdays'" class="weekend-section">
-              <div class="calendar-grid-2">
-                <div 
-                  v-for="day in weekendDays" 
-                  :key="day.date"
-                  class="calendar-day-full weekend-day"
-                  :class="{ 
-                    today: isToday(day.date),
-                    'drag-over': dragOverDay === day.date
-                  }"
-                  @dragover.prevent="handleDragOver(day.date)"
-                  @dragleave="handleDragLeave"
-                  @drop="handleDrop(day.date)"
-                >
-                  <div class="day-header-full">
-                    <div class="day-header-left">
-                      <span class="day-name">{{ day.label }}</span>
-                      <span class="tasks-count" v-if="getTasksForDay(day.date).length > 0">
-                        {{ getTasksForDay(day.date).length }}
-                      </span>
-                    </div>
-                    <div class="day-header-right">
-                      <span class="day-load-indicator" :class="'load-' + getDayLoadLevel(day.date)"></span>
-                      <span v-if="getTotalTimeForDay(day.date)" class="day-time-total">{{ getTotalTimeForDay(day.date) }}</span>
-                      <button class="quick-add-btn" @click="scrollToGoals" title="Добавить задачу">
-                        <Plus :size="14" />
-                      </button>
-                    </div>
-                  </div>
-                  <div class="day-tasks-full">
-                    <div 
-                      v-for="task in getTasksForDay(day.date)" 
-                      :key="task.id"
-                      class="task-card has-tooltip"
-                      :class="[
-                        { completed: task.completed, dragging: draggedTaskId === task.id },
-                        'priority-' + (task.priority || 'optional')
-                      ]"
-                      :data-tooltip="`${task.stepTitle}\n${task.goalTitle}\n${getPriorityLabel(task.priority)}${task.timeEstimate ? ' • ' + formatTimeEstimate(task.timeEstimate) : ''}`"
-                      draggable="true"
-                      @dragstart="handleDragStart(task)"
-                      @dragend="handleDragEnd"
-                    >
-                      <button 
-                        class="sphere-toggle-btn" 
-                        :class="{ completed: task.completed }"
-                        :style="{ 
-                          '--sphere-color': getSphereColor(getSphereIdFromGoal(task.goalId)),
-                          '--sphere-bg': getSphereColor(getSphereIdFromGoal(task.goalId)) + '20'
-                        }"
-                        :title="task.completed ? 'Отменить выполнение' : 'Отметить выполненной'"
-                        @click.stop="toggleTaskComplete(task.id)"
-                      >
-                        <component 
-                          v-if="!task.completed" 
-                          :is="getSphereIcon(getSphereIdFromGoal(task.goalId))" 
-                          :size="14" 
-                          class="sphere-icon"
-                        />
-                        <Check v-else :size="14" class="check-icon" />
-                      </button>
-                      <div class="task-info">
-                        <span class="task-step" :title="task.stepTitle">{{ task.stepTitle }}</span>
-                        <span class="task-goal" :title="task.goalTitle">{{ task.goalTitle }}</span>
-                      </div>
-                      <div class="task-meta">
-                        <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeEstimate(task.timeEstimate) }}</span>
-                      </div>
-                      <button 
-                        class="btn-icon remove-sm"
-                        @click.stop="removeTask(task.id)"
-                        title="Удалить"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                    <div v-if="getTasksForDay(day.date).length === 0" class="empty-day drop-zone">
-                      Перетащите сюда
-                    </div>
                   </div>
                 </div>
               </div>
@@ -1896,14 +1826,8 @@ const weekDays = computed(() => {
 })
 
 const workDays = computed(() => weekDays.value.slice(0, 5))
-const weekendDays = computed(() => weekDays.value.slice(5, 7))
-const showWeekend = ref(false)
 const viewMode = ref('week') // 'week' | 'workdays' | 'day'
 const focusedDay = ref(null)
-
-const weekendTasksCount = computed(() => {
-  return weekendDays.value.reduce((sum, day) => sum + getTasksForDay(day.date).length, 0)
-})
 
 const isCurrentWeek = computed(() => weekOffset.value === 0)
 
