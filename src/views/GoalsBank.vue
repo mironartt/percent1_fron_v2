@@ -39,7 +39,7 @@
       </header>
 
       <div class="summary-grid">
-        <div class="summary-card card">
+        <div class="summary-card card hide-mobile">
           <div class="summary-icon summary-icon-ideas">
             <Lightbulb :size="18" :stroke-width="2" />
           </div>
@@ -55,7 +55,7 @@
           <div class="summary-label">Истинных целей</div>
         </div>
 
-        <div class="summary-card card">
+        <div class="summary-card card hide-mobile">
           <div class="summary-icon summary-icon-rejected">
             <XCircle :size="18" :stroke-width="2" />
           </div>
@@ -74,50 +74,64 @@
 
       <!-- Единая таблица целей -->
       <div class="goals-table-section card" v-if="rawIdeas.length > 0 || hasActiveFilters">
-        <div class="table-header">
+        <div class="table-header hide-mobile">
           <h3>Банк идей и целей</h3>
           <p class="section-hint">Все ваши цели и идеи</p>
         </div>
         
         <!-- Фильтры -->
         <div class="goals-filters">
-          <div class="filter-group search-group">
-            <div class="search-input-wrapper">
-              <Search :size="16" :stroke-width="2" class="search-icon" />
-              <input 
-                v-model="searchQuery"
-                type="text"
-                class="search-input"
-                placeholder="Поиск по названию и содержанию..."
-                @input="onSearchInput"
-              />
+          <!-- Mobile: Toggle button -->
+          <button 
+            class="mobile-filters-toggle"
+            @click="toggleMobileFilters"
+          >
+            <Filter :size="16" />
+            <span>Фильтры</span>
+            <span v-if="activeFiltersCount > 0" class="filters-badge">{{ activeFiltersCount }}</span>
+            <ChevronDown :size="16" class="toggle-chevron" :class="{ open: mobileFiltersOpen }" />
+          </button>
+          
+          <!-- Desktop: Always visible / Mobile: Collapsible -->
+          <div class="filter-content" :class="{ 'mobile-open': mobileFiltersOpen }">
+            <div class="filter-row">
+              <div class="filter-group search-group">
+                <div class="search-input-wrapper">
+                  <Search :size="16" :stroke-width="2" class="search-icon" />
+                  <input 
+                    v-model="searchQuery"
+                    type="text"
+                    class="search-input"
+                    placeholder="Поиск по названию..."
+                    @input="onSearchInput"
+                  />
+                </div>
+              </div>
+              <div class="filter-group">
+                <select v-model="filterSphere" class="filter-select" @change="onFilterChange">
+                  <option value="">Все сферы</option>
+                  <option v-for="sphere in lifeSpheres" :key="sphere.id" :value="sphere.id">
+                    {{ sphere.icon }} {{ sphere.name }}
+                  </option>
+                </select>
+              </div>
+              <div class="filter-group">
+                <select v-model="filterStatus" class="filter-select" @change="onFilterChange">
+                  <option value="">Все статусы</option>
+                  <option value="work">В работе</option>
+                  <option value="complete">Завершенные</option>
+                  <option value="unstatus">Не оценённые</option>
+                </select>
+              </div>
+              <button 
+                v-if="filterSphere || filterStatus || searchQuery" 
+                class="btn btn-sm btn-ghost"
+                @click="clearFilters"
+              >
+                ✕ Сбросить
+              </button>
             </div>
           </div>
-          <div class="filter-group">
-            <label class="filter-label">Сфера:</label>
-            <select v-model="filterSphere" class="filter-select" @change="onFilterChange">
-              <option value="">Все сферы</option>
-              <option v-for="sphere in lifeSpheres" :key="sphere.id" :value="sphere.id">
-                {{ sphere.icon }} {{ sphere.name }}
-              </option>
-            </select>
-          </div>
-          <div class="filter-group">
-            <label class="filter-label">Статус:</label>
-            <select v-model="filterStatus" class="filter-select" @change="onFilterChange">
-              <option value="">Все статусы</option>
-              <option value="work">В работе</option>
-              <option value="complete">Завершенные</option>
-              <option value="unstatus">Не оценённые</option>
-            </select>
-          </div>
-          <button 
-            v-if="filterSphere || filterStatus || searchQuery" 
-            class="btn btn-sm btn-ghost"
-            @click="clearFilters"
-          >
-            ✕ Сбросить
-          </button>
         </div>
 
         <div class="goals-table-wrapper" :class="{ 'has-scroll': filteredGoals.length > 6 }">
@@ -125,7 +139,7 @@
             <thead>
               <tr>
                 <th class="col-status">Статус</th>
-                <th class="col-goal">Цель / Идея</th>
+                <th class="col-goal">Цель</th>
                 <th class="col-why">Почему для меня это важно?</th>
                 <th class="col-actions">Действия</th>
               </tr>
@@ -155,26 +169,33 @@
                 }"
               >
                 <td class="col-status">
-                  <span v-if="isGoalCompleted(goal.id)" class="status-badge completed">
-                    Завершена
-                  </span>
-                  <span v-else-if="isGoalTransferred(goal.id)" class="status-badge in-work">
-                    В работе
-                  </span>
-                  <span v-else-if="goal.status === 'validated'" class="status-badge available">
-                    Не в работе
-                  </span>
-                  <span v-else-if="goal.status === 'rejected'" class="status-badge rejected">
-                    Отклонена
-                  </span>
-                  <span v-else class="status-badge raw">
-                    Не оценена
-                  </span>
+                  <div class="status-row">
+                    <span v-if="isGoalCompleted(goal.id)" class="status-badge completed">
+                      Завершена
+                    </span>
+                    <span v-else-if="isGoalTransferred(goal.id)" class="status-badge in-work">
+                      В работе
+                    </span>
+                    <span v-else-if="goal.status === 'validated'" class="status-badge available">
+                      Не в работе
+                    </span>
+                    <span v-else-if="goal.status === 'rejected'" class="status-badge rejected">
+                      Отклонена
+                    </span>
+                    <span v-else class="status-badge raw">
+                      Не оценена
+                    </span>
+                    <span class="goal-sphere-badge-new mobile-only" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
+                      <component :is="getSphereIcon(goal.sphereId)" :size="12" :stroke-width="2" />
+                      {{ getSphereNameOnly(goal.sphereId) }}
+                      <AlertTriangle v-if="isWeakSphere(goal.sphereId)" :size="10" class="weak-indicator" title="Проседающая сфера" />
+                    </span>
+                  </div>
                 </td>
                 <td class="col-goal">
                   <div class="goal-cell">
                     <span class="goal-text line-clamp-2" :title="goal.text">{{ goal.text }}</span>
-                    <span class="goal-sphere-badge-new" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
+                    <span class="goal-sphere-badge-new desktop-only" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
                       <component :is="getSphereIcon(goal.sphereId)" :size="14" :stroke-width="2" />
                       {{ getSphereNameOnly(goal.sphereId) }}
                       <AlertTriangle v-if="isWeakSphere(goal.sphereId)" :size="12" class="weak-indicator" title="Проседающая сфера" />
@@ -188,16 +209,17 @@
                 </td>
                 <td class="col-actions">
                   <div class="actions-cell">
+                    <!-- Desktop: all buttons inline -->
                     <button 
-                      class="btn-icon btn-icon-edit"
+                      class="btn-icon btn-icon-edit desktop-only"
                       @click.stop="openEditModal(goal)"
                       title="Редактировать"
                     >
                       <Edit2 :size="16" :stroke-width="2" />
                     </button>
                     <button 
-                      v-if="goal.status === 'validated' && (isGoalTransferred(goal.id) || !isGoalTransferred(goal.id))"
-                      class="btn-icon btn-icon-decompose"
+                      v-if="goal.status === 'validated'"
+                      class="btn-icon btn-icon-decompose desktop-only"
                       @click.stop="goToDecompose(goal.id)"
                       title="Декомпозировать"
                     >
@@ -205,7 +227,7 @@
                     </button>
                     <button 
                       v-if="goal.status === 'validated' && !isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
-                      class="btn-icon btn-icon-primary"
+                      class="btn-icon btn-icon-primary desktop-only"
                       @click.stop="takeGoalToWork(goal)"
                       title="Взять в работу"
                     >
@@ -213,7 +235,7 @@
                     </button>
                     <button 
                       v-if="isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
-                      class="btn-icon btn-icon-success"
+                      class="btn-icon btn-icon-success desktop-only"
                       @click.stop="completeGoalFromBank(goal)"
                       title="Завершить цель"
                     >
@@ -221,7 +243,7 @@
                     </button>
                     <button 
                       v-if="isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
-                      class="btn-icon btn-icon-danger"
+                      class="btn-icon btn-icon-danger desktop-only"
                       @click.stop="removeFromWorkBySourceId(goal.id)"
                       title="Убрать из работы"
                     >
@@ -229,12 +251,84 @@
                     </button>
                     <button 
                       v-if="isGoalCompleted(goal.id)"
-                      class="btn-icon btn-icon-secondary"
+                      class="btn-icon btn-icon-secondary desktop-only"
                       @click.stop="returnToWork(goal.id)"
                       title="Вернуть в работу"
                     >
                       <RotateCcw :size="16" :stroke-width="2" />
                     </button>
+                    
+                    <!-- Mobile: primary action + dropdown -->
+                    <button 
+                      v-if="goal.status === 'validated' && !isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
+                      class="btn-icon btn-icon-primary mobile-only"
+                      @click.stop="takeGoalToWork(goal)"
+                      title="Взять в работу"
+                    >
+                      <Plus :size="16" :stroke-width="2" />
+                    </button>
+                    <button 
+                      v-if="isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
+                      class="btn-icon btn-icon-success mobile-only"
+                      @click.stop="completeGoalFromBank(goal)"
+                      title="Завершить"
+                    >
+                      <Check :size="16" :stroke-width="2" />
+                    </button>
+                    <button 
+                      v-if="isGoalCompleted(goal.id)"
+                      class="btn-icon btn-icon-secondary mobile-only"
+                      @click.stop="returnToWork(goal.id)"
+                      title="Вернуть"
+                    >
+                      <RotateCcw :size="16" :stroke-width="2" />
+                    </button>
+                    
+                    <div class="mobile-actions-dropdown mobile-only">
+                      <button 
+                        class="btn-icon btn-icon-more"
+                        @click.stop="toggleActionsDropdown(goal.id)"
+                        title="Ещё"
+                      >
+                        <MoreVertical :size="16" :stroke-width="2" />
+                      </button>
+                      <Teleport to="body">
+                        <div 
+                          v-if="openActionsDropdown === goal.id" 
+                          class="dropdown-overlay"
+                          @click="closeActionsDropdown()"
+                        ></div>
+                        <div 
+                          v-if="openActionsDropdown === goal.id" 
+                          class="dropdown-menu-mobile"
+                          @click.stop
+                        >
+                          <button class="dropdown-item" @click="openEditModal(goal); closeActionsDropdown()">
+                            <Edit2 :size="18" :stroke-width="2" />
+                            Редактировать
+                          </button>
+                          <button 
+                            v-if="goal.status === 'validated'"
+                            class="dropdown-item" 
+                            @click="goToDecompose(goal.id); closeActionsDropdown()"
+                          >
+                            <GitBranch :size="18" :stroke-width="2" />
+                            Декомпозировать
+                          </button>
+                          <button 
+                            v-if="isGoalTransferred(goal.id) && !isGoalCompleted(goal.id)"
+                            class="dropdown-item dropdown-item-danger" 
+                            @click="removeFromWorkBySourceId(goal.id); closeActionsDropdown()"
+                          >
+                            <X :size="18" :stroke-width="2" />
+                            Убрать из работы
+                          </button>
+                          <button class="dropdown-item dropdown-item-cancel" @click="closeActionsDropdown()">
+                            Отмена
+                          </button>
+                        </div>
+                      </Teleport>
+                    </div>
                   </div>
                 </td>
               </tr>
@@ -266,9 +360,9 @@
 
       <div class="summary-actions">
         <button class="btn btn-secondary" @click="goToPlanning">
-          <Calendar :size="18" :stroke-width="2" /> Запланировать задачу
+          <Calendar :size="16" :stroke-width="2" /> Запланировать задачу
         </button>
-        <button class="btn btn-primary btn-lg" @click="addNewGoal">
+        <button class="btn btn-primary" @click="addNewGoal">
           <Plus :size="16" :stroke-width="2" /> Добавить новую цель
         </button>
       </div>
@@ -596,7 +690,9 @@ import {
   GitBranch,
   ChevronUp,
   BookOpen,
-  HelpCircle
+  HelpCircle,
+  Filter,
+  MoreVertical
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -693,6 +789,21 @@ const showEmptyState = computed(() => {
 // Check if any filters are active
 const hasActiveFilters = computed(() => {
   return !!(filterSphere.value || filterStatus.value || searchQuery.value)
+})
+
+// Mobile filters toggle
+const mobileFiltersOpen = ref(false)
+
+function toggleMobileFilters() {
+  mobileFiltersOpen.value = !mobileFiltersOpen.value
+}
+
+const activeFiltersCount = computed(() => {
+  let count = 0
+  if (filterSphere.value) count++
+  if (filterStatus.value) count++
+  if (searchQuery.value) count++
+  return count
 })
 
 // Show summary (main goals table) when:
@@ -798,6 +909,19 @@ const rejectedPercent = computed(() => rawIdeas.value.length > 0 ? (rejectedCoun
 
 const expandedGoalId = ref(null)
 const expandedSummaryGoalId = ref(null)
+const openActionsDropdown = ref(null)
+
+function toggleActionsDropdown(goalId) {
+  if (openActionsDropdown.value === goalId) {
+    openActionsDropdown.value = null
+  } else {
+    openActionsDropdown.value = goalId
+  }
+}
+
+function closeActionsDropdown() {
+  openActionsDropdown.value = null
+}
 
 function getWhyImportant(goal) {
   if (goal.threeWhys?.why1) {
@@ -1807,7 +1931,7 @@ onMounted(async () => {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 1rem;
   margin-bottom: 2rem;
 }
@@ -1963,14 +2087,26 @@ onMounted(async () => {
 }
 
 .goals-filters {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
   margin-bottom: 1rem;
+}
+
+.goals-filters .filter-content {
+  display: block;
+  padding: 1rem;
+}
+
+.goals-filters .filter-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   flex-wrap: wrap;
+}
+
+/* Mobile filters toggle button - hidden on desktop */
+.mobile-filters-toggle {
+  display: none;
 }
 
 .filter-group {
@@ -2354,6 +2490,19 @@ onMounted(async () => {
   gap: 0.25rem;
   justify-content: center;
   align-items: center;
+}
+
+/* Mobile/Desktop visibility */
+.mobile-only {
+  display: none !important;
+}
+
+.desktop-only {
+  display: flex;
+}
+
+.mobile-actions-dropdown {
+  display: none;
 }
 
 .btn-icon {
@@ -3415,6 +3564,19 @@ onMounted(async () => {
 @media (max-width: 768px) {
   .summary-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .summary-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0 1rem;
+  }
+  
+  .summary-actions .btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    font-size: 0.9375rem;
   }
 }
 
@@ -4515,35 +4677,86 @@ onMounted(async () => {
     font-size: 0.875rem;
   }
   
+  /* Mobile filters */
+  .mobile-filters-toggle {
+    display: flex !important;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .mobile-filters-toggle:hover {
+    background: var(--bg-tertiary);
+  }
+  
+  .mobile-filters-toggle .toggle-chevron {
+    margin-left: auto;
+    transition: transform 0.2s ease;
+  }
+  
+  .mobile-filters-toggle .toggle-chevron.open {
+    transform: rotate(180deg);
+  }
+  
+  .filters-badge {
+    background: var(--primary-color);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.4rem;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+  }
+  
   .goals-filters {
+    padding: 0;
+  }
+  
+  .goals-filters .filter-content {
+    display: none;
+    padding: 1rem;
+    border-top: 1px solid var(--border-color);
+  }
+  
+  .goals-filters .filter-content.mobile-open {
+    display: block;
+  }
+  
+  .goals-filters .filter-row {
     flex-direction: column;
-    align-items: stretch;
     gap: 0.75rem;
-    padding: 0.75rem;
   }
   
   .filter-group {
     width: 100%;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.375rem;
   }
   
   .filter-group.search-group {
     min-width: unset;
   }
   
-  .filter-label {
-    font-size: 0.75rem;
-  }
-  
-  .filter-select {
+  .filter-select,
+  .search-input {
     width: 100%;
     padding: 0.625rem;
   }
   
   .search-input {
-    padding: 0.625rem 0.625rem 0.625rem 2.25rem;
+    padding-left: 2.25rem;
+  }
+  
+  .goals-filters .filter-row .btn {
+    width: 100%;
+    justify-content: center;
   }
   
   .goals-table-section .goals-table-wrapper {
@@ -4573,6 +4786,8 @@ onMounted(async () => {
     border-radius: var(--radius-md);
     padding: 1rem;
     gap: 0.75rem;
+    position: relative;
+    overflow: visible;
   }
   
   .goals-table-section .goals-table tbody tr:hover {
@@ -4603,6 +4818,24 @@ onMounted(async () => {
     order: -1;
   }
   
+  .goals-table-section .status-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .goals-table-section .status-row .status-badge,
+  .goals-table-section .status-row .goal-sphere-badge-new {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+    line-height: 1;
+    margin: 0;
+    vertical-align: middle;
+  }
+  
   .goals-table-section .goals-table .col-goal {
     width: 100%;
   }
@@ -4616,10 +4849,22 @@ onMounted(async () => {
   .goals-table-section .goals-table .col-actions {
     width: 100%;
     display: flex;
-    justify-content: flex-start;
+    justify-content: flex-end;
     gap: 0.5rem;
-    padding-top: 0.5rem;
+    padding-top: 0.75rem;
     border-top: 1px solid var(--border-color);
+  }
+  
+  /* Larger touch targets for mobile */
+  .goals-table-section .actions-cell .btn-icon {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+  }
+  
+  .goals-table-section .actions-cell .btn-icon svg {
+    width: 18px;
+    height: 18px;
   }
   
   .goals-table-section .goal-cell {
@@ -4664,16 +4909,60 @@ onMounted(async () => {
   }
   
   .summary-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
   }
   
   .summary-card {
-    padding: 1rem;
+    padding: 0.75rem;
+  }
+  
+  .summary-card.hide-mobile {
+    display: none;
   }
   
   .summary-value {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
+  }
+  
+  .summary-label {
+    font-size: 0.7rem;
+  }
+  
+  .summary-icon {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .summary-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .table-header.hide-mobile {
+    display: none;
+  }
+  
+  .desktop-only {
+    display: none !important;
+  }
+  
+  .mobile-only {
+    display: flex !important;
+  }
+  
+  .mobile-actions-dropdown {
+    display: flex !important;
+    position: relative;
+  }
+  
+  .actions-cell {
+    gap: 0.25rem;
+  }
+  
+  .goals-table-section .actions-cell .btn-icon {
+    min-width: 36px;
+    min-height: 36px;
   }
   
   .pagination {
@@ -4688,6 +4977,72 @@ onMounted(async () => {
     order: -1;
     margin-bottom: 0.5rem;
   }
+}
+
+/* Mobile Action Sheet Styles */
+.dropdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 9998;
+}
+
+.dropdown-menu-mobile {
+  position: fixed;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  background: var(--bg-primary);
+  border-radius: 16px;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.25);
+  z-index: 9999;
+  padding: 0.5rem;
+  animation: slideUpSheet 0.25s ease-out;
+}
+
+@keyframes slideUpSheet {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.dropdown-menu-mobile .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  background: none;
+  font-size: 1rem;
+  color: var(--text-primary);
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.dropdown-menu-mobile .dropdown-item:active {
+  background: var(--bg-secondary);
+}
+
+.dropdown-menu-mobile .dropdown-item-danger {
+  color: #ef4444;
+}
+
+.dropdown-menu-mobile .dropdown-item-cancel {
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+  color: var(--text-secondary);
+  justify-content: center;
 }
 
 /* Edit Modal Styles */
