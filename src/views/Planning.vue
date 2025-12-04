@@ -529,6 +529,29 @@
                 Сегодня
               </button>
             </div>
+            <div class="view-mode-tabs desktop-only">
+              <button 
+                class="view-tab" 
+                :class="{ active: viewMode === 'workdays' }"
+                @click="viewMode = 'workdays'; focusedDay = null"
+              >
+                5 дней
+              </button>
+              <button 
+                class="view-tab" 
+                :class="{ active: viewMode === 'week' }"
+                @click="viewMode = 'week'; focusedDay = null"
+              >
+                7 дней
+              </button>
+              <button 
+                class="view-tab" 
+                :class="{ active: viewMode === 'day' }"
+                @click="setDayView"
+              >
+                День
+              </button>
+            </div>
           </header>
 
           <!-- Mobile Week View -->
@@ -597,11 +620,12 @@
             </div>
           </div>
 
-          <!-- Week Calendar - Workdays (5 days) - Desktop only -->
+          <!-- Week Calendar - Desktop only -->
           <div class="week-calendar-full card desktop-only">
-            <div class="calendar-header-row">
+            <div class="calendar-header-row" v-if="viewMode !== 'day'">
               <h3>План на неделю <span class="drag-hint">Перетаскивайте задачи между днями</span></h3>
               <button 
+                v-if="viewMode === 'workdays'"
                 class="btn btn-sm btn-outline weekend-toggle"
                 @click="showWeekend = !showWeekend"
               >
@@ -609,9 +633,16 @@
                 <span v-if="weekendTasksCount > 0" class="weekend-badge">{{ weekendTasksCount }}</span>
               </button>
             </div>
-            <div class="calendar-grid-5">
+            <div class="calendar-header-row" v-else>
+              <div class="day-view-nav">
+                <button class="btn btn-icon-nav" @click="navigateFocusedDay(-1)" title="Предыдущий день">←</button>
+                <h3>{{ getFocusedDayTitle() }}</h3>
+                <button class="btn btn-icon-nav" @click="navigateFocusedDay(1)" title="Следующий день">→</button>
+              </div>
+            </div>
+            <div :class="getCalendarGridClass()">
               <div 
-                v-for="day in workDays" 
+                v-for="day in displayDays" 
                 :key="day.date"
                 class="calendar-day-full"
                 :class="{ 
@@ -629,17 +660,24 @@
                       {{ getTasksForDay(day.date).length }}
                     </span>
                   </div>
-                  <span v-if="getTotalTimeForDay(day.date)" class="day-time-total">{{ getTotalTimeForDay(day.date) }}</span>
+                  <div class="day-header-right">
+                    <span class="day-load-indicator" :class="'load-' + getDayLoadLevel(day.date)"></span>
+                    <span v-if="getTotalTimeForDay(day.date)" class="day-time-total">{{ getTotalTimeForDay(day.date) }}</span>
+                    <button class="quick-add-btn" @click="scrollToGoals" title="Добавить задачу">
+                      <Plus :size="14" />
+                    </button>
+                  </div>
                 </div>
                 <div class="day-tasks-full">
                   <div 
                     v-for="task in getTasksForDay(day.date)" 
                     :key="task.id"
-                    class="task-card"
+                    class="task-card has-tooltip"
                     :class="[
                       { completed: task.completed, dragging: draggedTaskId === task.id },
                       'priority-' + (task.priority || 'optional')
                     ]"
+                    :data-tooltip="`${task.stepTitle}\n${task.goalTitle}\n${getPriorityLabel(task.priority)}${task.timeEstimate ? ' • ' + formatTimeEstimate(task.timeEstimate) : ''}`"
                     draggable="true"
                     @dragstart="handleDragStart(task)"
                     @dragend="handleDragEnd"
@@ -666,6 +704,9 @@
                       <span class="task-step" :title="task.stepTitle">{{ task.stepTitle }}</span>
                       <span class="task-goal" :title="task.goalTitle">{{ task.goalTitle }}</span>
                     </div>
+                    <div class="task-meta">
+                      <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeEstimate(task.timeEstimate) }}</span>
+                    </div>
                     <button 
                       class="btn-icon remove-sm"
                       @click.stop="removeTask(task.id)"
@@ -682,7 +723,7 @@
             </div>
             
             <!-- Weekend section (collapsible) -->
-            <div v-if="showWeekend" class="weekend-section">
+            <div v-if="showWeekend && viewMode === 'workdays'" class="weekend-section">
               <div class="calendar-grid-2">
                 <div 
                   v-for="day in weekendDays" 
@@ -703,17 +744,24 @@
                         {{ getTasksForDay(day.date).length }}
                       </span>
                     </div>
-                    <span v-if="getTotalTimeForDay(day.date)" class="day-time-total">{{ getTotalTimeForDay(day.date) }}</span>
+                    <div class="day-header-right">
+                      <span class="day-load-indicator" :class="'load-' + getDayLoadLevel(day.date)"></span>
+                      <span v-if="getTotalTimeForDay(day.date)" class="day-time-total">{{ getTotalTimeForDay(day.date) }}</span>
+                      <button class="quick-add-btn" @click="scrollToGoals" title="Добавить задачу">
+                        <Plus :size="14" />
+                      </button>
+                    </div>
                   </div>
                   <div class="day-tasks-full">
                     <div 
                       v-for="task in getTasksForDay(day.date)" 
                       :key="task.id"
-                      class="task-card"
+                      class="task-card has-tooltip"
                       :class="[
                         { completed: task.completed, dragging: draggedTaskId === task.id },
                         'priority-' + (task.priority || 'optional')
                       ]"
+                      :data-tooltip="`${task.stepTitle}\n${task.goalTitle}\n${getPriorityLabel(task.priority)}${task.timeEstimate ? ' • ' + formatTimeEstimate(task.timeEstimate) : ''}`"
                       draggable="true"
                       @dragstart="handleDragStart(task)"
                       @dragend="handleDragEnd"
@@ -739,6 +787,9 @@
                       <div class="task-info">
                         <span class="task-step" :title="task.stepTitle">{{ task.stepTitle }}</span>
                         <span class="task-goal" :title="task.goalTitle">{{ task.goalTitle }}</span>
+                      </div>
+                      <div class="task-meta">
+                        <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeEstimate(task.timeEstimate) }}</span>
                       </div>
                       <button 
                         class="btn-icon remove-sm"
@@ -1016,7 +1067,8 @@ import {
   Filter,
   Circle,
   CheckCircle,
-  ChevronDown
+  ChevronDown,
+  Plus
 } from 'lucide-vue-next'
 
 const store = useAppStore()
@@ -1846,6 +1898,8 @@ const weekDays = computed(() => {
 const workDays = computed(() => weekDays.value.slice(0, 5))
 const weekendDays = computed(() => weekDays.value.slice(5, 7))
 const showWeekend = ref(false)
+const viewMode = ref('week') // 'week' | 'workdays' | 'day'
+const focusedDay = ref(null)
 
 const weekendTasksCount = computed(() => {
   return weekendDays.value.reduce((sum, day) => sum + getTasksForDay(day.date).length, 0)
@@ -1994,6 +2048,91 @@ function getTotalTimeForDay(dateStr) {
   const hours = Math.floor(totalMinutes / 60)
   const minutes = totalMinutes % 60
   return minutes > 0 ? `${hours}ч${minutes}м` : `${hours}ч`
+}
+
+function getDayLoadLevel(dateStr) {
+  const tasks = getTasksForDay(dateStr)
+  const count = tasks.length
+  if (count === 0) return 'empty'
+  if (count <= 2) return 'light'
+  if (count <= 4) return 'normal'
+  return 'heavy'
+}
+
+function formatTimeEstimate(time) {
+  const labels = {
+    '30min': '30м',
+    '1h': '1ч',
+    '2h': '2ч',
+    '3h': '3ч',
+    '4h': '4ч'
+  }
+  return labels[time] || time
+}
+
+function scrollToGoals() {
+  const goalsSection = document.querySelector('.goals-section')
+  if (goalsSection) {
+    goalsSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+}
+
+function getPriorityLabel(priority) {
+  const labels = {
+    'critical': 'Критично',
+    'important': 'Важно',
+    'desirable': 'Желательно',
+    'optional': 'По возможности'
+  }
+  return labels[priority] || 'Без приоритета'
+}
+
+function setDayView() {
+  viewMode.value = 'day'
+  const today = new Date().toISOString().split('T')[0]
+  const todayInWeek = weekDays.value.find(d => d.date === today)
+  focusedDay.value = todayInWeek ? todayInWeek.date : weekDays.value[0].date
+}
+
+function focusOnDay(date) {
+  viewMode.value = 'day'
+  focusedDay.value = date
+}
+
+const displayDays = computed(() => {
+  if (viewMode.value === 'day' && focusedDay.value) {
+    return weekDays.value.filter(d => d.date === focusedDay.value)
+  }
+  if (viewMode.value === 'workdays') {
+    return workDays.value
+  }
+  return weekDays.value // 'week' mode
+})
+
+function getCalendarGridClass() {
+  if (viewMode.value === 'day') return 'calendar-grid-1'
+  if (viewMode.value === 'workdays') return 'calendar-grid-5'
+  return 'calendar-grid-7'
+}
+
+function navigateFocusedDay(direction) {
+  const currentIndex = weekDays.value.findIndex(d => d.date === focusedDay.value)
+  const newIndex = currentIndex + direction
+  if (newIndex >= 0 && newIndex < weekDays.value.length) {
+    focusedDay.value = weekDays.value[newIndex].date
+  } else if (newIndex < 0) {
+    prevWeek()
+    setTimeout(() => { focusedDay.value = weekDays.value[6].date }, 100)
+  } else {
+    nextWeek()
+    setTimeout(() => { focusedDay.value = weekDays.value[0].date }, 100)
+  }
+}
+
+function getFocusedDayTitle() {
+  const day = weekDays.value.find(d => d.date === focusedDay.value)
+  if (!day) return ''
+  return getMobileDayTitle(day.date)
 }
 
 function isStepScheduled(goalId, stepId) {
@@ -4393,6 +4532,65 @@ onMounted(async () => {
   gap: 0.75rem;
 }
 
+.calendar-grid-7 {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.calendar-grid-1 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+.calendar-grid-1 .calendar-day-full {
+  min-height: 300px;
+}
+
+.view-mode-tabs {
+  display: flex;
+  gap: 0.25rem;
+  background: var(--bg-tertiary);
+  padding: 0.25rem;
+  border-radius: var(--radius-md);
+  margin-top: 0.75rem;
+}
+
+.view-tab {
+  padding: 0.4rem 0.75rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-tab:hover {
+  color: var(--text-primary);
+}
+
+.view-tab.active {
+  background: var(--bg-primary);
+  color: var(--primary-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.day-view-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.day-view-nav h3 {
+  margin: 0;
+  min-width: 200px;
+  text-align: center;
+}
+
 .calendar-grid-2 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -4427,6 +4625,16 @@ onMounted(async () => {
 
 .calendar-day-full.today {
   border: 2px solid var(--primary-color);
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.08) 0%, transparent 100%);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.2);
+}
+
+.calendar-day-full.today .day-header-full {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.calendar-day-full.today .day-name {
+  color: var(--primary-color);
 }
 
 .day-header-full {
@@ -4443,9 +4651,98 @@ onMounted(async () => {
   gap: 0.5rem;
 }
 
+.day-header-full .day-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .day-header-full .day-name {
   font-weight: 600;
   font-size: 0.8rem;
+}
+
+.day-load-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.day-load-indicator.load-empty {
+  background: var(--border-color);
+  opacity: 0.5;
+}
+
+.day-load-indicator.load-light {
+  background: #22c55e;
+}
+
+.day-load-indicator.load-normal {
+  background: #f59e0b;
+}
+
+.day-load-indicator.load-heavy {
+  background: #ef4444;
+}
+
+.quick-add-btn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+.calendar-day-full:hover .quick-add-btn {
+  opacity: 1;
+}
+
+.quick-add-btn:hover {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.task-card.has-tooltip {
+  position: relative;
+}
+
+.task-card.has-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  white-space: pre-line;
+  color: var(--text-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+  z-index: 100;
+  min-width: 150px;
+  max-width: 250px;
+  text-align: left;
+  pointer-events: none;
+}
+
+.task-card.has-tooltip:hover::after {
+  opacity: 1;
+  visibility: visible;
 }
 
 .tasks-count {
@@ -4526,6 +4823,24 @@ onMounted(async () => {
 
 .task-card[draggable="true"]:active {
   cursor: grabbing;
+}
+
+.task-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.task-time-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  padding: 0.15rem 0.35rem;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
 }
 
 .sphere-icon-wrapper {
