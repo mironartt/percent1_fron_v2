@@ -211,8 +211,10 @@ function formatTime(timestamp) {
 <style scoped>
 .profile-page {
   max-width: 800px;
+  width: 100%;
   margin: 0 auto;
   padding: 1.5rem;
+  box-sizing: border-box;
 }
 
 .profile-header {

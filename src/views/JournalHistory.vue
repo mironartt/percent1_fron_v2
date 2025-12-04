@@ -373,8 +373,10 @@ function onEntrySaved() {
 <style scoped>
 .journal-history {
   max-width: 900px;
+  width: 100%;
   margin: 0 auto;
   padding: 0 1.5rem;
+  box-sizing: border-box;
 }
 
 .page-header {
