@@ -772,42 +772,56 @@
             
             <!-- Filters Section -->
             <div class="goals-filters card">
-              <div class="filter-row">
-                <div class="filter-group search-group">
-                  <div class="search-input-wrapper">
-                    <Search :size="16" class="search-icon" />
-                    <input 
-                      v-model="searchQuery"
-                      type="text"
-                      class="search-input"
-                      placeholder="Поиск по целям и шагам..."
-                    />
+              <!-- Mobile: Toggle button -->
+              <button 
+                class="mobile-filters-toggle"
+                @click="toggleMobileFilters"
+              >
+                <Filter :size="16" />
+                <span>Фильтры</span>
+                <span v-if="activeFiltersCount > 0" class="filters-badge">{{ activeFiltersCount }}</span>
+                <ChevronDown :size="16" class="toggle-chevron" :class="{ open: mobileFiltersOpen }" />
+              </button>
+              
+              <!-- Desktop: Always visible / Mobile: Collapsible -->
+              <div class="filter-content" :class="{ 'mobile-open': mobileFiltersOpen }">
+                <div class="filter-row">
+                  <div class="filter-group search-group">
+                    <div class="search-input-wrapper">
+                      <Search :size="16" class="search-icon" />
+                      <input 
+                        v-model="searchQuery"
+                        type="text"
+                        class="search-input"
+                        placeholder="Поиск по целям и шагам..."
+                      />
+                    </div>
                   </div>
+                  <div class="filter-group">
+                    <select v-model="filterSphere" class="filter-select">
+                      <option value="">Все сферы</option>
+                      <option v-for="sphere in lifeSpheres" :key="sphere.id" :value="sphere.id">
+                        {{ sphere.icon }} {{ sphere.name }}
+                      </option>
+                    </select>
+                  </div>
+                  <button 
+                    class="btn btn-sm"
+                    :class="{ 'btn-primary': filterThisWeek, 'btn-outline': !filterThisWeek }"
+                    @click="filterThisWeek = !filterThisWeek"
+                    title="Показать цели с шагами на текущей неделе"
+                  >
+                    <Calendar :size="14" />
+                    Эта неделя
+                  </button>
+                  <button 
+                    v-if="searchQuery || filterSphere || filterThisWeek" 
+                    class="btn btn-sm btn-ghost"
+                    @click="clearFilters"
+                  >
+                    ✕ Сбросить
+                  </button>
                 </div>
-                <div class="filter-group">
-                  <select v-model="filterSphere" class="filter-select">
-                    <option value="">Все сферы</option>
-                    <option v-for="sphere in lifeSpheres" :key="sphere.id" :value="sphere.id">
-                      {{ sphere.icon }} {{ sphere.name }}
-                    </option>
-                  </select>
-                </div>
-                <button 
-                  class="btn btn-sm"
-                  :class="{ 'btn-primary': filterThisWeek, 'btn-outline': !filterThisWeek }"
-                  @click="filterThisWeek = !filterThisWeek"
-                  title="Показать цели с шагами на текущей неделе"
-                >
-                  <Calendar :size="14" />
-                  Эта неделя
-                </button>
-                <button 
-                  v-if="searchQuery || filterSphere || filterThisWeek" 
-                  class="btn btn-sm btn-ghost"
-                  @click="clearFilters"
-                >
-                  ✕ Сбросить
-                </button>
               </div>
               <div class="filter-stats" v-if="goalsWithSteps.length > 0">
                 <span class="filter-count">
@@ -1001,7 +1015,8 @@ import {
   Search,
   Filter,
   Circle,
-  CheckCircle
+  CheckCircle,
+  ChevronDown
 } from 'lucide-vue-next'
 
 const store = useAppStore()
@@ -1020,10 +1035,23 @@ const weekOffset = ref(0)
 // Mobile day selection
 const selectedMobileDay = ref(null)
 const isMobile = ref(false)
+const mobileFiltersOpen = ref(false)
 
 function checkMobile() {
   isMobile.value = window.innerWidth <= 768
 }
+
+function toggleMobileFilters() {
+  mobileFiltersOpen.value = !mobileFiltersOpen.value
+}
+
+const activeFiltersCount = computed(() => {
+  let count = 0
+  if (searchQuery.value) count++
+  if (filterSphere.value) count++
+  if (filterThisWeek.value) count++
+  return count
+})
 
 function selectMobileDay(date) {
   selectedMobileDay.value = date
@@ -3948,6 +3976,11 @@ onMounted(async () => {
   color: var(--text-secondary);
 }
 
+/* Mobile filters toggle button - hidden on desktop */
+.mobile-filters-toggle {
+  display: none;
+}
+
 /* Goals list wrapper with scroll */
 .goals-list-wrapper {
   display: flex;
@@ -4808,6 +4841,88 @@ onMounted(async () => {
   .mobile-week-view {
     display: block !important;
   }
+  
+  /* Mobile filters */
+  .mobile-filters-toggle {
+    display: flex !important;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .mobile-filters-toggle:hover {
+    background: var(--bg-secondary);
+  }
+  
+  .mobile-filters-toggle .toggle-chevron {
+    margin-left: auto;
+    transition: transform 0.2s ease;
+  }
+  
+  .mobile-filters-toggle .toggle-chevron.open {
+    transform: rotate(180deg);
+  }
+  
+  .filters-badge {
+    background: var(--primary-color);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.4rem;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+  }
+  
+  .goals-filters {
+    padding: 0;
+  }
+  
+  .goals-filters .filter-content {
+    display: none;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .goals-filters .filter-content.mobile-open {
+    display: block;
+  }
+  
+  .goals-filters .filter-row {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .goals-filters .filter-group,
+  .goals-filters .search-group {
+    width: 100%;
+    max-width: none;
+  }
+  
+  .goals-filters .filter-select,
+  .goals-filters .search-input {
+    width: 100%;
+  }
+  
+  .goals-filters .filter-row .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .goals-filters .filter-stats {
+    padding: 0.75rem 1rem;
+    margin-top: 0;
+    border-top: none;
+  }
 }
 
 /* Mobile Week View Styles */
@@ -4823,8 +4938,6 @@ onMounted(async () => {
   padding: 0.75rem;
   background: var(--bg-tertiary);
   border-bottom: 1px solid var(--border-color);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 .mobile-day-btn {
