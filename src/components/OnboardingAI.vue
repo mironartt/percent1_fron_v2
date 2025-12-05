@@ -1494,19 +1494,7 @@ async function completeOnboarding() {
   }
   
   .stat-card.primary {
-    grid-column: 1 / -1;
-    padding: 1rem;
-    flex-direction: row;
-    justify-content: center;
-    gap: 0.75rem;
-  }
-  
-  .stat-card.primary .stat-value {
-    font-size: 1.75rem;
-  }
-  
-  .stat-card.primary .stat-label {
-    font-size: 0.85rem;
+    display: none;
   }
   
   .stat-icon {
