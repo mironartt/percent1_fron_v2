@@ -347,37 +347,8 @@ async function loadTelegramAuthData() {
 /**
  * Обработчик клика по кнопке Telegram
  */
-async function handleTelegramRegister() {
-  if (isTelegramLoading.value) return
-  
-  isTelegramLoading.value = true
-  apiError.value = ''
-  
-  try {
-    // Если ссылка ещё не загружена - загружаем
-    if (!telegramAuthLink.value) {
-      const result = await api.getGlobalData()
-      
-      if (result.status === 'ok' && result.data) {
-        telegramAuthLink.value = result.data.t_auth_link || ''
-        telegramCallbackUrl.value = result.data.t_auth_callback_url || ''
-      } else {
-        throw new Error('Не удалось получить ссылку для авторизации')
-      }
-    }
-    
-    if (telegramAuthLink.value) {
-      // Переходим на страницу авторизации Telegram
-      window.location.href = telegramAuthLink.value
-    } else {
-      apiError.value = 'Авторизация через Telegram временно недоступна'
-      isTelegramLoading.value = false
-    }
-  } catch (error) {
-    console.error('[Telegram Auth] Error:', error)
-    apiError.value = 'Ошибка при подключении к Telegram'
-    isTelegramLoading.value = false
-  }
+function handleTelegramRegister() {
+  window.open('https://t.me/Percent_One_bot', '_blank')
 }
 
 onMounted(async () => {
