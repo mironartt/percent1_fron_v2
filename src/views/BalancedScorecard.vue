@@ -1170,7 +1170,7 @@ watch(() => route.query.spp_step, () => {
 }
 
 .summary-section-main .section-header {
-  text-align: left;
+  text-align: center;
   padding-top: 2rem;
   margin-bottom: 1.5rem;
 }
