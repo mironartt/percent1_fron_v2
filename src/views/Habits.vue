@@ -299,9 +299,6 @@
           
           <div class="habit-row-bottom">
             <span class="frequency-badge">{{ getFrequencyLabel(habit) }}</span>
-            <span v-if="habit.xpPenalty && gameSettings.penaltiesEnabled" class="xp-badge negative">
-              -{{ habit.xpPenalty }} XP
-            </span>
             <div class="habit-schedule-inline clickable-schedule" @click.stop>
               <div 
                 v-for="day in weekDays" 
