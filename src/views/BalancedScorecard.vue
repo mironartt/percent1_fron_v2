@@ -2917,9 +2917,8 @@ watch(() => route.query.spp_step, () => {
   }
   
   .reflection-summary h3 {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     margin-bottom: 12px;
-    font-weight: 600;
   }
   
   .accordion-item {
@@ -2927,28 +2926,26 @@ watch(() => route.query.spp_step, () => {
   }
   
   .accordion-header {
-    padding: 12px 14px;
+    padding: 10px 12px;
   }
   
   .sphere-icon-wrapper {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
   }
   
   .sphere-icon-wrapper svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
   }
   
   .sphere-title-info h2 {
-    font-size: 1.1rem;
-    font-weight: 600;
+    font-size: 1rem;
   }
   
   .score-badge-neutral {
-    font-size: 0.9rem;
-    padding: 3px 8px;
-    font-weight: 600;
+    font-size: 0.8rem;
+    padding: 2px 6px;
   }
 }
 
@@ -2971,15 +2968,15 @@ watch(() => route.query.spp_step, () => {
   }
   
   .accordion-header {
-    padding: 10px 12px;
+    padding: 8px 10px;
   }
   
   .sphere-title-info h2 {
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
   
   .score-badge-neutral {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
   }
 }
 </style>
