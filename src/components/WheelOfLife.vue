@@ -308,8 +308,29 @@ function startDrag(event, sphere, index) {
 
 @media (max-width: 768px) {
   .sphere-label {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    paint-order: stroke fill;
+    stroke: white;
+    stroke-width: 3px;
+    stroke-linejoin: round;
+  }
+  
+  .wheel-of-life {
+    min-width: 280px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sphere-label {
     font-size: 11px;
     letter-spacing: 1px;
+    stroke-width: 2.5px;
+  }
+  
+  .drag-handle {
+    r: 8;
   }
 }
 </style>

@@ -2669,4 +2669,129 @@ watch(() => route.query.spp_step, () => {
     justify-content: center;
   }
 }
+
+/* Mobile optimizations for Summary section */
+@media (max-width: 768px) {
+  .summary-section-main {
+    gap: 12px;
+    padding: 0 8px;
+  }
+  
+  .summary-section-main .section-header {
+    margin-bottom: 8px;
+    padding: 0;
+  }
+  
+  .summary-section-main .section-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .wheel-summary h3 {
+    display: none;
+  }
+  
+  .wheel-summary {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .wheel-visualization {
+    padding: 8px 0;
+    max-width: 320px;
+  }
+  
+  .summary-stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  
+  .summary-stat-compact {
+    padding: 10px;
+    min-width: unset;
+  }
+  
+  .summary-stat-compact:last-child {
+    grid-column: span 2;
+  }
+  
+  .stat-icon-wrapper {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .stat-value {
+    font-size: 1.1rem;
+  }
+  
+  .stat-value-text {
+    font-size: 0.85rem;
+  }
+  
+  .stat-label {
+    font-size: 0.7rem;
+  }
+  
+  .reflection-summary {
+    padding: 12px;
+  }
+  
+  .reflection-summary h3 {
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+  
+  .accordion-item {
+    margin-bottom: 8px;
+  }
+  
+  .accordion-header {
+    padding: 10px 12px;
+  }
+  
+  .sphere-icon-wrapper {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .sphere-icon-wrapper svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .sphere-title-info h2 {
+    font-size: 0.95rem;
+  }
+  
+  .score-badge-neutral {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .summary-section-main .section-header h1 {
+    font-size: 1.25rem;
+  }
+  
+  .summary-stats-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .summary-stat-compact:last-child {
+    grid-column: span 1;
+  }
+  
+  .wheel-visualization {
+    max-width: 280px;
+  }
+  
+  .accordion-header {
+    padding: 8px 10px;
+  }
+  
+  .sphere-title-info h2 {
+    font-size: 0.9rem;
+  }
+}
 </style>
