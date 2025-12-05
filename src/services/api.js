@@ -283,6 +283,20 @@ export async function register(first_name, email, password1, password2) {
 }
 
 /**
+ * Завершение регистрации через Telegram (заполнение email и пароля)
+ * @param {string} email - Email пользователя
+ * @param {string} password1 - Пароль
+ * @param {string} password2 - Подтверждение пароля
+ */
+export async function completeTelegramRegistration(email, password1, password2) {
+  return request('POST', '/api/rest/front/registration/fill-data/', {
+    email,
+    password1,
+    password2
+  })
+}
+
+/**
  * Выход из системы
  */
 export async function logout() {
