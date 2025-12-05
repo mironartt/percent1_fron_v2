@@ -807,7 +807,7 @@ async function confirmPlan() {
 
 .modal-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 0.75rem;
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--border-color);
@@ -833,7 +833,7 @@ async function confirmPlan() {
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--primary-hover);
+  background: #5b5fc7;
 }
 
 .btn-primary:disabled {
