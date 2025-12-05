@@ -53,6 +53,14 @@
         opacity="0.5"
       />
 
+      <!-- Center white circle -->
+      <circle
+        :cx="center"
+        :cy="center"
+        :r="centerRadius"
+        fill="white"
+      />
+
       <!-- Sphere segments (filled based on score) -->
       <path
         v-for="(sphere, index) in spheres"
@@ -138,6 +146,7 @@ const svgSize = 700
 const center = svgSize / 2
 const outerRadius = 320
 const gridRadius = 240
+const centerRadius = 24
 const labelRadius = (gridRadius + outerRadius) / 2 + 15
 
 const selectedSphere = ref(null)

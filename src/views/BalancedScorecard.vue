@@ -2803,11 +2803,11 @@ watch(() => route.query.spp_step, () => {
   }
   
   .wheel-summary {
-    padding: 16px 0;
+    padding: 0;
     margin: 0 0 12px 0;
-    background: white;
+    background: transparent;
     border: none;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    box-shadow: none;
     border-radius: 0;
     width: 100vw;
     position: relative;
@@ -2816,9 +2816,9 @@ watch(() => route.query.spp_step, () => {
   }
   
   .wheel-summary.card {
-    background: white;
+    background: transparent;
     border: none;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    box-shadow: none;
   }
   
   .btn-edit-wheel-icon {
