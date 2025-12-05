@@ -3749,22 +3749,30 @@ onMounted(() => {
 .habits-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 1rem;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  padding: 1rem;
 }
 
 .habit-card {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding: 0.875rem 1rem;
-  background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
+  padding-bottom: 1rem;
+  background: transparent;
+  border-bottom: 1px solid var(--border-color);
   transition: all 0.2s ease;
 }
 
+.habit-card:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
 .habit-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  background: rgba(124, 58, 237, 0.02);
 }
 
 .habit-card:hover .habit-schedule-inline {
@@ -3802,8 +3810,7 @@ onMounted(() => {
 }
 
 .habit-card.completed {
-  background: rgba(34, 197, 94, 0.08);
-  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.05);
 }
 
 .habit-card.not-scheduled {
