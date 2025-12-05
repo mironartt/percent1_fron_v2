@@ -30,7 +30,7 @@
         :cx="center"
         :cy="center"
         :r="outerRadius"
-        fill="var(--wheel-bg, #f8f9fa)"
+        fill="var(--wheel-bg, #ffffff)"
         stroke="var(--border-color)"
         stroke-width="1"
       />
