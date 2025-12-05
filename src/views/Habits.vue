@@ -179,7 +179,7 @@
         <div class="habit-analytics-list">
           <div v-for="habit in allHabits" :key="habit.id" class="habit-analytics-item">
             <div class="habit-analytics-header">
-              <span class="habit-icon-small">{{ habit.icon }}</span>
+              <span class="habit-icon-small">{{ getIconEmoji(habit.icon) }}</span>
               <span class="habit-name-small">{{ habit.name }}</span>
               <span class="habit-streak-badge">
                 <Zap :size="12" :stroke-width="1.5" />
@@ -237,7 +237,7 @@
                 <Check v-if="isHabitCompletedToday(habit)" :size="14" :stroke-width="2.5" />
               </div>
             </div>
-            <span class="habit-icon">{{ habit.icon }}</span>
+            <span class="habit-icon">{{ getIconEmoji(habit.icon) }}</span>
             <div class="habit-info">
               <span class="habit-name">{{ habit.name }}</span>
               <div class="habit-meta">
@@ -318,12 +318,12 @@
             <div class="icon-picker-row">
               <button 
                 v-for="icon in quickIcons" 
-                :key="icon"
+                :key="icon.name"
                 class="icon-pick-btn"
-                :class="{ selected: formData.icon === icon }"
-                @click="formData.icon = icon"
+                :class="{ selected: formData.icon === icon.name }"
+                @click="formData.icon = icon.name"
               >
-                {{ icon }}
+                {{ icon.emoji }}
               </button>
               <button 
                 class="icon-pick-btn more-btn"
@@ -331,19 +331,19 @@
                 @click="showIconPicker = !showIconPicker"
                 title="Ещё иконки"
               >
-                ...
+                <Ellipsis :size="16" :stroke-width="1.5" />
               </button>
             </div>
             
             <div class="icon-grid-dropdown" v-if="showIconPicker">
               <button 
-                v-for="icon in habitIcons" 
-                :key="icon"
+                v-for="icon in moreIcons" 
+                :key="icon.name"
                 class="icon-option"
-                :class="{ selected: formData.icon === icon }"
-                @click="formData.icon = icon; showIconPicker = false"
+                :class="{ selected: formData.icon === icon.name }"
+                @click="formData.icon = icon.name; showIconPicker = false"
               >
-                {{ icon }}
+                {{ icon.emoji }}
               </button>
             </div>
             
@@ -373,7 +373,7 @@
             
             <textarea 
               v-model="formData.description"
-              class="form-input description-input"
+              class="form-input description-input description-spacing"
               rows="2"
               placeholder="Зачем вам эта привычка? (опционально)"
             />
@@ -436,7 +436,7 @@
                   type="range" 
                   v-model.number="formData.xpPenalty"
                   min="0"
-                  max="50"
+                  max="100"
                   step="1"
                   class="xp-slider penalty"
                 />
@@ -750,7 +750,7 @@
                 class="today-habit-item"
                 :class="{ completed: isHabitCompletedToday(habit) }"
               >
-                <span class="habit-icon">{{ habit.icon }}</span>
+                <span class="habit-icon">{{ getIconEmoji(habit.icon) }}</span>
                 <span class="habit-name">{{ habit.name }}</span>
                 <CheckCircle v-if="isHabitCompletedToday(habit)" :size="16" :stroke-width="2" class="check-icon" />
               </div>
@@ -835,7 +835,43 @@ const showDescriptionField = ref(false)
 const showXpSlider = ref(false)
 const showPenaltyField = ref(false)
 
-const quickIcons = ['🔥', '💪', '📖', '🧘', '💧', '🏃', '🍎', '😴']
+const habitIconsData = [
+  { emoji: '🔥', name: 'fire' },
+  { emoji: '💪', name: 'strength' },
+  { emoji: '📖', name: 'book' },
+  { emoji: '🧘', name: 'meditation' },
+  { emoji: '💧', name: 'water' },
+  { emoji: '🏃', name: 'running' },
+  { emoji: '🍎', name: 'apple' },
+  { emoji: '😴', name: 'sleep' },
+  { emoji: '🎯', name: 'target' },
+  { emoji: '📝', name: 'writing' },
+  { emoji: '🧠', name: 'brain' },
+  { emoji: '🎨', name: 'art' },
+  { emoji: '🎵', name: 'music' },
+  { emoji: '🌅', name: 'sunrise' },
+  { emoji: '🚶', name: 'walking' },
+  { emoji: '🧹', name: 'cleaning' },
+  { emoji: '💼', name: 'work' },
+  { emoji: '🏋️', name: 'gym' },
+  { emoji: '🥗', name: 'salad' },
+  { emoji: '☕', name: 'coffee' },
+  { emoji: '🚿', name: 'shower' },
+  { emoji: '🌿', name: 'nature' },
+  { emoji: '📱', name: 'phone' },
+  { emoji: '💊', name: 'pills' },
+  { emoji: '🧘‍♀️', name: 'yoga' },
+  { emoji: '🚴', name: 'cycling' },
+  { emoji: '🏊', name: 'swimming' },
+  { emoji: '⏰', name: 'alarm' },
+  { emoji: '📚', name: 'study' },
+  { emoji: '🎮', name: 'gaming' },
+  { emoji: '🐕', name: 'dog' },
+  { emoji: '🌙', name: 'moon' }
+]
+
+const quickIcons = habitIconsData.slice(0, 8)
+const moreIcons = habitIconsData.slice(8)
 
 const weekDaysConfig = [
   { key: 1, name: 'Понедельник', short: 'Пн' },
@@ -847,14 +883,10 @@ const weekDaysConfig = [
   { key: 0, name: 'Воскресенье', short: 'Вс' }
 ]
 
-const habitIcons = [
-  '🏃', '📖', '🧘', '💪', '🎯', '📝', '💧', '🍎',
-  '😴', '🧠', '🎨', '🎵', '🌅', '🚶', '🧹', '💼'
-]
 
 const formData = ref({
   name: '',
-  icon: '🔥',
+  icon: 'fire',
   description: '',
   xpReward: 5,
   xpPenalty: 0,
@@ -862,6 +894,19 @@ const formData = ref({
   scheduleDays: [1, 2, 3, 4, 5, 6, 0],
   reminderTime: ''
 })
+
+function getIconEmoji(iconName) {
+  const found = habitIconsData.find(i => i.name === iconName)
+  return found ? found.emoji : iconName
+}
+
+function normalizeIconName(rawIcon) {
+  const byName = habitIconsData.find(i => i.name === rawIcon)
+  if (byName) return rawIcon
+  const byEmoji = habitIconsData.find(i => i.emoji === rawIcon)
+  if (byEmoji) return byEmoji.name
+  return 'fire'
+}
 
 const gameSettings = ref({
   difficultyMode: 'soft',
@@ -1353,7 +1398,7 @@ function editHabit(habit) {
   editingHabit.value = habit
   formData.value = {
     name: habit.name,
-    icon: habit.icon,
+    icon: normalizeIconName(habit.icon),
     description: habit.description || '',
     xpReward: habit.xpReward || 5,
     xpPenalty: habit.xpPenalty || 0,
@@ -3407,6 +3452,10 @@ onMounted(() => {
 .description-input {
   resize: none;
   font-size: 0.9rem;
+}
+
+.description-spacing {
+  margin-top: 0.75rem;
 }
 
 .btn-link {
