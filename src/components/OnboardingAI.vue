@@ -1578,5 +1578,101 @@ async function completeOnboarding() {
   .insight-content p {
     font-size: 0.75rem;
   }
+  
+  /* Страница План - мобильная оптимизация */
+  .plan-header {
+    margin-bottom: 1rem;
+  }
+  
+  .plan-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    margin-bottom: 0.5rem;
+  }
+  
+  .plan-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .step-plan .step-title {
+    font-size: 1.4rem;
+  }
+  
+  .step-plan .step-subtitle {
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+  
+  .goals-preview {
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  
+  .goal-preview-card {
+    padding: 0.75rem;
+    border-radius: 10px;
+  }
+  
+  .goal-preview-header {
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .goal-sphere-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+  }
+  
+  .goal-sphere-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .goal-sphere-name {
+    font-size: 0.7rem;
+  }
+  
+  .goal-preview-info h4 {
+    font-size: 0.85rem;
+    margin-top: 0.15rem;
+  }
+  
+  .goal-steps-preview {
+    padding: 0.5rem;
+    border-radius: 6px;
+  }
+  
+  .steps-label {
+    font-size: 0.7rem;
+    gap: 0.35rem;
+    margin-bottom: 0.35rem;
+  }
+  
+  .steps-list-mini li {
+    font-size: 0.75rem;
+    padding: 0.15rem 0;
+    padding-left: 0.75rem;
+  }
+  
+  .plan-summary {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  
+  .summary-item {
+    font-size: 0.8rem;
+    gap: 0.35rem;
+    justify-content: center;
+  }
+  
+  .summary-item svg {
+    width: 16px;
+    height: 16px;
+  }
 }
 </style>
