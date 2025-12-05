@@ -56,7 +56,10 @@
       <button 
         v-if="showAmnestyButton" 
         class="stat-item amnesty clickable" 
-        :class="{ 'has-missed': missedDaysForAmnesty.length > 0 }"
+        :class="{ 
+          'has-missed': missedDaysForAmnesty.length > 0 && amnestiesRemaining > 0,
+          'depleted': amnestiesRemaining === 0
+        }"
         @click="showAmnestyModal = true" 
         title="Амнистия"
       >
@@ -67,7 +70,7 @@
           <span class="stat-value">{{ amnestiesRemaining }}/{{ maxAmnesties }}</span>
           <span class="stat-label">амнистия</span>
         </div>
-        <div class="stat-action-hint" v-if="missedDaysForAmnesty.length > 0">
+        <div class="stat-action-hint" v-if="missedDaysForAmnesty.length > 0 && amnestiesRemaining > 0">
           <span class="amnesty-badge">{{ missedDaysForAmnesty.length }}</span>
         </div>
       </button>
@@ -1312,8 +1315,8 @@ function normalizeIconName(rawIcon) {
 }
 
 const gameSettings = ref({
-  difficultyMode: 'soft',
-  penaltiesEnabled: false,
+  difficultyMode: 'balanced',
+  penaltiesEnabled: true,
   journalPenalty: false,
   planningPenalty: false,
   journalPenaltyAmount: 10,
@@ -1323,7 +1326,8 @@ const gameSettings = ref({
   customPenaltyPercent: 50,
   weeklyAmnestyCount: 1,
   amnestiesUsedThisWeek: 0,
-  amnestyWeekStart: null
+  amnestyWeekStart: null,
+  amnestiedDates: []
 })
 
 const weekDays = computed(() => {
@@ -1519,7 +1523,7 @@ const difficultyLabel = computed(() => {
 const isSoftMode = computed(() => gameSettings.value.difficultyMode === 'soft')
 
 const showAmnestyButton = computed(() => {
-  return maxAmnesties.value > 0 && amnestiesRemaining.value > 0
+  return maxAmnesties.value > 0
 })
 
 const currentPenaltyPercent = computed(() => {
@@ -1533,9 +1537,7 @@ const currentPenaltyPercent = computed(() => {
 const maxAmnesties = computed(() => {
   const mode = gameSettings.value.difficultyMode
   if (mode === 'soft') return 0
-  if (mode === 'balanced') return 1
-  if (mode === 'hardcore') return 0
-  return gameSettings.value.weeklyAmnestyCount
+  return gameSettings.value.weeklyAmnestyCount || 0
 })
 
 const amnestiesRemaining = computed(() => {
@@ -2353,9 +2355,9 @@ function setDifficulty(mode) {
   
   if (mode === 'soft') {
     gameSettings.value.weeklyAmnestyCount = 0
-  } else if (mode === 'balanced') {
+  } else if (mode === 'balanced' && gameSettings.value.weeklyAmnestyCount === 0) {
     gameSettings.value.weeklyAmnestyCount = 1
-  } else if (mode === 'hardcore') {
+  } else if (mode === 'hardcore' && gameSettings.value.weeklyAmnestyCount === undefined) {
     gameSettings.value.weeklyAmnestyCount = 0
   }
   
@@ -2377,7 +2379,15 @@ function loadGameSettings() {
   try {
     const stored = localStorage.getItem('onepercent_game_settings')
     if (stored) {
-      gameSettings.value = { ...gameSettings.value, ...JSON.parse(stored) }
+      const parsed = JSON.parse(stored)
+      gameSettings.value = { ...gameSettings.value, ...parsed }
+      
+      if (gameSettings.value.difficultyMode !== 'soft' && 
+          (gameSettings.value.weeklyAmnestyCount === undefined || gameSettings.value.weeklyAmnestyCount === 0)) {
+        if (gameSettings.value.difficultyMode === 'balanced') {
+          gameSettings.value.weeklyAmnestyCount = 1
+        }
+      }
     }
   } catch (e) {
     console.error('[Habits] Failed to load game settings:', e)
@@ -2539,6 +2549,18 @@ onMounted(() => {
 .stat-item.amnesty.has-missed {
   border-color: rgba(236, 72, 153, 0.3);
   background: linear-gradient(135deg, var(--card-bg) 0%, rgba(236, 72, 153, 0.05) 100%);
+}
+
+.stat-item.amnesty.depleted {
+  opacity: 0.6;
+}
+
+.stat-item.amnesty.depleted .stat-icon {
+  color: var(--text-muted);
+}
+
+.stat-item.amnesty.depleted .stat-value {
+  color: var(--text-muted);
 }
 
 .stat-item.amnesty .amnesty-badge {
