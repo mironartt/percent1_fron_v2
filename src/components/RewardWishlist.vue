@@ -19,26 +19,48 @@
     </div>
 
     <div v-else>
-      <div class="rewards-scroll mobile-only">
-        <div 
-          v-for="reward in allActiveRewards" 
-          :key="reward.id"
-          class="reward-bubble"
-          :class="{ available: reward.isAvailable }"
-          @click="reward.isAvailable ? claimReward(reward) : editReward(reward)"
-        >
-          <span class="bubble-icon">{{ reward.icon }}</span>
-          <div class="bubble-progress" v-if="!reward.isAvailable">
-            <div 
-              class="bubble-fill"
-              :style="{ width: getProgress(reward) + '%' }"
-            />
+      <div class="rewards-compact mobile-only">
+        <div class="compact-list">
+          <div 
+            v-for="reward in visibleRewards" 
+            :key="reward.id"
+            class="compact-reward"
+            :class="{ available: reward.isAvailable }"
+            @click="reward.isAvailable ? claimReward(reward) : editReward(reward)"
+          >
+            <span class="compact-icon">{{ reward.icon }}</span>
+            <div class="compact-info">
+              <span class="compact-name">{{ reward.name }}</span>
+              <div class="compact-progress" v-if="!reward.isAvailable">
+                <div class="progress-bar-mini">
+                  <div 
+                    class="progress-fill-mini"
+                    :style="{ width: getProgress(reward) + '%' }"
+                  />
+                </div>
+                <span class="progress-text-mini">{{ xpBalance }}/{{ reward.cost }}</span>
+              </div>
+              <span v-else class="compact-ready">Доступна!</span>
+            </div>
+            <Check v-if="reward.isAvailable" :size="16" :stroke-width="2" class="compact-check" />
           </div>
-          <Check v-else :size="12" :stroke-width="2.5" class="bubble-check" />
         </div>
-        <button class="reward-bubble add-bubble" @click="showAddModal = true">
-          <Plus :size="20" :stroke-width="2" />
-        </button>
+        
+        <div class="compact-actions">
+          <button 
+            v-if="hiddenRewardsCount > 0" 
+            class="btn-expand"
+            @click="toggleRewardsExpand"
+          >
+            <span v-if="!rewardsExpanded">Ещё {{ hiddenRewardsCount }}</span>
+            <span v-else>Свернуть</span>
+            <ChevronDown :size="16" :stroke-width="2" :class="{ rotated: rewardsExpanded }" />
+          </button>
+          <button class="btn-add-compact" @click="showAddModal = true">
+            <Plus :size="16" :stroke-width="2" />
+            <span>Добавить</span>
+          </button>
+        </div>
       </div>
 
       <div class="rewards-list desktop-only">
@@ -199,12 +221,13 @@
 import { ref, computed } from 'vue'
 import { useXpStore } from '../stores/xp'
 import { useToastStore } from '../stores/toast'
-import { Gift, Plus, Pencil, Check, X } from 'lucide-vue-next'
+import { Gift, Plus, Pencil, Check, X, ChevronDown } from 'lucide-vue-next'
 
 const xpStore = useXpStore()
 const toast = useToastStore()
 
 const showAddModal = ref(false)
+const rewardsExpanded = ref(false)
 const editingReward = ref(null)
 const claimingReward = ref(null)
 
@@ -231,6 +254,21 @@ const allActiveRewards = computed(() => {
   const upcoming = upcomingRewards.value.map(r => ({ ...r, isAvailable: false }))
   return [...available, ...upcoming]
 })
+
+const visibleRewards = computed(() => {
+  if (rewardsExpanded.value) {
+    return allActiveRewards.value
+  }
+  return allActiveRewards.value.slice(0, 4)
+})
+
+const hiddenRewardsCount = computed(() => {
+  return Math.max(0, allActiveRewards.value.length - 4)
+})
+
+function toggleRewardsExpand() {
+  rewardsExpanded.value = !rewardsExpanded.value
+}
 
 function getProgress(reward) {
   return Math.min(100, (xpBalance.value / reward.cost) * 100)
@@ -665,8 +703,8 @@ function confirmClaim() {
     display: none !important;
   }
   
-  .rewards-scroll.mobile-only {
-    display: flex !important;
+  .rewards-compact.mobile-only {
+    display: block !important;
   }
   
   .btn-icon.desktop-only {
@@ -674,90 +712,141 @@ function confirmClaim() {
   }
 }
 
-
-.rewards-scroll {
-  display: none;
-  gap: 0.75rem;
-  overflow-x: auto;
-  padding: 0.25rem 0;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.rewards-scroll::-webkit-scrollbar {
+.rewards-compact {
   display: none;
 }
 
-.reward-bubble {
-  flex-shrink: 0;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: var(--bg-secondary);
-  border: 2px solid var(--border-color);
+.compact-list {
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
+}
+
+.compact-reward {
+  display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
   cursor: pointer;
-  position: relative;
   transition: all 0.2s ease;
+  border: 1px solid transparent;
 }
 
-.reward-bubble.available {
+.compact-reward:active {
+  transform: scale(0.98);
+}
+
+.compact-reward.available {
   border-color: #22c55e;
-  background: rgba(34, 197, 94, 0.1);
+  background: rgba(34, 197, 94, 0.08);
 }
 
-.reward-bubble:active {
-  transform: scale(0.95);
-}
-
-.bubble-icon {
+.compact-icon {
   font-size: 1.5rem;
-  line-height: 1;
+  flex-shrink: 0;
 }
 
-.bubble-progress {
-  position: absolute;
-  bottom: -2px;
-  left: 4px;
-  right: 4px;
+.compact-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.compact-name {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compact-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.progress-bar-mini {
+  flex: 1;
   height: 4px;
   background: var(--border-color);
   border-radius: 2px;
   overflow: hidden;
 }
 
-.bubble-fill {
+.progress-fill-mini {
   height: 100%;
   background: linear-gradient(90deg, #7c3aed, #a855f7);
   border-radius: 2px;
 }
 
-.bubble-check {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 18px;
-  height: 18px;
-  background: #22c55e;
-  border-radius: 50%;
-  color: white;
+.progress-text-mini {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.compact-ready {
+  font-size: 0.8rem;
+  color: #22c55e;
+  font-weight: 500;
+}
+
+.compact-check {
+  color: #22c55e;
+  flex-shrink: 0;
+}
+
+.compact-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.btn-expand {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 3px;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.add-bubble {
-  background: transparent;
-  border: 2px dashed var(--border-color);
-  color: var(--text-muted);
+.btn-expand:hover {
+  background: var(--bg-tertiary);
 }
 
-.add-bubble:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
+.btn-expand svg {
+  transition: transform 0.2s ease;
+}
+
+.btn-expand svg.rotated {
+  transform: rotate(180deg);
+}
+
+.btn-add-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--primary-color);
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-add-compact:hover {
+  opacity: 0.9;
 }
 </style>
