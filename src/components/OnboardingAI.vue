@@ -1500,6 +1500,10 @@ async function completeOnboarding() {
   .stat-card {
     padding: 0.75rem;
     border-radius: 12px;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.5rem;
   }
   
   .stat-card.primary {
@@ -1513,9 +1517,9 @@ async function completeOnboarding() {
   }
   
   .stat-value-sm {
-    font-size: 0.75rem;
-    word-break: break-word;
-    line-height: 1.2;
+    font-size: 0.8rem;
+    word-break: normal;
+    line-height: 1.3;
   }
   
   .stat-label {
@@ -1524,7 +1528,7 @@ async function completeOnboarding() {
   
   .stat-info {
     min-width: 0;
-    overflow: hidden;
+    overflow: visible;
   }
   
   /* Страница Анализ - мобильная оптимизация */
