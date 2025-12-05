@@ -6066,7 +6066,15 @@ onMounted(() => {
 @media (max-width: 768px) {
   .header-content {
     flex-direction: column;
-    align-items: stretch;
+    align-items: center;
+  }
+  
+  .title-section {
+    text-align: center;
+  }
+  
+  .title-section h1 {
+    justify-content: center;
   }
   
   .header-content .btn {
