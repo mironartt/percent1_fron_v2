@@ -1215,8 +1215,8 @@
               Все достижения
             </h3>
             <span class="modal-subtitle">{{ unlockedBadgesCount }} из {{ allHabitBadges.length }} разблокировано</span>
-            <button class="modal-close" @click="showAllBadgesModal = false">
-              <X :size="20" :stroke-width="2" />
+            <button class="btn-close" @click="showAllBadgesModal = false">
+              <X :size="20" :stroke-width="1.5" />
             </button>
           </div>
           <div class="modal-body">
@@ -1264,8 +1264,8 @@
               <ChartBar :size="20" :stroke-width="1.5" />
               Статистика выполнения
             </h3>
-            <button class="modal-close" @click="showCompletionDetailModal = false">
-              <X :size="20" :stroke-width="2" />
+            <button class="btn-close" @click="showCompletionDetailModal = false">
+              <X :size="20" :stroke-width="1.5" />
             </button>
           </div>
           <div class="modal-body">
@@ -1355,8 +1355,8 @@
               <CalendarDays :size="20" :stroke-width="1.5" />
               Годовой календарь
             </h3>
-            <button class="modal-close" @click="showCalendarDetailModal = false">
-              <X :size="20" :stroke-width="2" />
+            <button class="btn-close" @click="showCalendarDetailModal = false">
+              <X :size="20" :stroke-width="1.5" />
             </button>
           </div>
           <div class="modal-body">
@@ -5380,6 +5380,15 @@ onMounted(() => {
   cursor: pointer;
   color: var(--text-secondary);
   border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-close:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .modal-content {
@@ -7398,8 +7407,56 @@ onMounted(() => {
     margin: auto 0 0 0;
   }
   
+  .detail-modal .modal-header {
+    padding: 1rem;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  
+  .detail-modal .modal-header h3 {
+    font-size: 1rem;
+    flex: 1;
+  }
+  
+  .detail-modal .modal-subtitle {
+    width: 100%;
+    order: 3;
+    margin-top: 0.25rem;
+  }
+  
+  .detail-modal .modal-body {
+    padding: 1rem;
+    max-height: calc(95vh - 80px);
+  }
+  
   .badges-grid {
     grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .badge-category {
+    margin-bottom: 1rem;
+  }
+  
+  .category-title {
+    font-size: 0.85rem;
+  }
+  
+  .badge-item {
+    padding: 0.75rem;
+  }
+  
+  .badge-icon {
+    font-size: 1.5rem;
+    min-width: 2.5rem;
+  }
+  
+  .badge-name {
+    font-size: 0.85rem;
+  }
+  
+  .badge-description {
+    font-size: 0.75rem;
   }
   
   .stats-summary,
@@ -7418,24 +7475,66 @@ onMounted(() => {
     font-size: 1.25rem;
   }
   
+  .summary-label,
+  .year-stat-label {
+    font-size: 0.65rem;
+  }
+  
   .weekly-chart {
     height: 100px;
   }
   
+  .chart-bar-value {
+    font-size: 0.6rem;
+  }
+  
+  .habit-distribution .habit-bar-label {
+    font-size: 0.75rem;
+  }
+  
   .best-worst-section {
     grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
   
   .months-grid {
     grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+  
+  .month-card {
+    padding: 0.5rem;
+  }
+  
+  .month-name {
+    font-size: 0.7rem;
+  }
+  
+  .month-rate {
+    font-size: 0.95rem;
   }
   
   .heatmap-months-labels {
     font-size: 0.6rem;
   }
   
+  .yearly-heatmap-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.5rem;
+  }
+  
   .yearly-heatmap-grid {
     min-width: 500px;
+  }
+  
+  .heatmap-cell {
+    width: 10px;
+    height: 10px;
+  }
+  
+  .modal-section-title {
+    font-size: 0.9rem;
   }
 }
 </style>
