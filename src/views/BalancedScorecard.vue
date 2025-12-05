@@ -2803,11 +2803,11 @@ watch(() => route.query.spp_step, () => {
   }
   
   .wheel-summary {
-    padding: 0;
+    padding: 16px 0;
     margin: 0 0 12px 0;
-    background: transparent;
+    background: white;
     border: none;
-    box-shadow: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     border-radius: 0;
     width: 100vw;
     position: relative;
@@ -2816,9 +2816,9 @@ watch(() => route.query.spp_step, () => {
   }
   
   .wheel-summary.card {
-    background: transparent;
+    background: white;
     border: none;
-    box-shadow: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   }
   
   .btn-edit-wheel-icon {
@@ -2870,6 +2870,9 @@ watch(() => route.query.spp_step, () => {
   .summary-stat-compact {
     padding: 10px;
     min-width: unset;
+    background: white;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   }
   
   .summary-stat-compact:last-child {
