@@ -1461,5 +1461,19 @@ async function completeOnboarding() {
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  
+  .step-actions {
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+  }
+  
+  .step-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .step-actions .btn-primary {
+    flex: none;
+  }
 }
 </style>
