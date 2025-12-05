@@ -5,7 +5,7 @@
         <Gift :size="18" :stroke-width="1.5" />
         Мои награды
       </h3>
-      <button class="btn-icon" @click="showAddModal = true">
+      <button class="btn-icon desktop-only" @click="showAddModal = true">
         <Plus :size="18" :stroke-width="1.5" />
       </button>
     </div>
@@ -18,64 +18,88 @@
       </button>
     </div>
 
-    <div v-else class="rewards-list">
-      <div class="rewards-section" v-if="availableRewards.length > 0">
-        <h4 class="section-label available">Доступны сейчас</h4>
+    <div v-else>
+      <div class="rewards-scroll mobile-only">
         <div 
-          v-for="reward in availableRewards" 
+          v-for="reward in allActiveRewards" 
           :key="reward.id"
-          class="reward-card available"
+          class="reward-bubble"
+          :class="{ available: reward.isAvailable }"
+          @click="reward.isAvailable ? claimReward(reward) : editReward(reward)"
         >
-          <span class="reward-icon">{{ reward.icon }}</span>
-          <div class="reward-info">
-            <span class="reward-name">{{ reward.name }}</span>
-            <span class="reward-cost">{{ reward.cost }} XP</span>
+          <span class="bubble-icon">{{ reward.icon }}</span>
+          <div class="bubble-progress" v-if="!reward.isAvailable">
+            <div 
+              class="bubble-fill"
+              :style="{ width: getProgress(reward) + '%' }"
+            />
           </div>
-          <button class="btn btn-success btn-sm" @click="claimReward(reward)">
-            Получить
-          </button>
+          <Check v-else :size="12" :stroke-width="2.5" class="bubble-check" />
         </div>
+        <button class="reward-bubble add-bubble" @click="showAddModal = true">
+          <Plus :size="20" :stroke-width="2" />
+        </button>
       </div>
 
-      <div class="rewards-section" v-if="upcomingRewards.length > 0">
-        <h4 class="section-label upcoming">Впереди</h4>
-        <div 
-          v-for="reward in upcomingRewards" 
-          :key="reward.id"
-          class="reward-card"
-        >
-          <span class="reward-icon">{{ reward.icon }}</span>
-          <div class="reward-info">
-            <span class="reward-name">{{ reward.name }}</span>
-            <div class="reward-progress">
-              <div class="progress-bar">
-                <div 
-                  class="progress-fill"
-                  :style="{ width: getProgress(reward) + '%' }"
-                />
-              </div>
-              <span class="progress-text">{{ xpBalance }}/{{ reward.cost }} XP</span>
+      <div class="rewards-list desktop-only">
+        <div class="rewards-section" v-if="availableRewards.length > 0">
+          <h4 class="section-label available">Доступны сейчас</h4>
+          <div 
+            v-for="reward in availableRewards" 
+            :key="reward.id"
+            class="reward-card available"
+          >
+            <span class="reward-icon">{{ reward.icon }}</span>
+            <div class="reward-info">
+              <span class="reward-name">{{ reward.name }}</span>
+              <span class="reward-cost">{{ reward.cost }} XP</span>
             </div>
+            <button class="btn btn-success btn-sm" @click="claimReward(reward)">
+              Получить
+            </button>
           </div>
-          <button class="btn-icon" @click="editReward(reward)">
-            <Pencil :size="14" :stroke-width="1.5" />
-          </button>
         </div>
-      </div>
 
-      <div class="rewards-section" v-if="redeemedRewards.length > 0">
-        <h4 class="section-label redeemed">Полученные</h4>
-        <div 
-          v-for="reward in redeemedRewards.slice(0, 3)" 
-          :key="reward.id"
-          class="reward-card redeemed"
-        >
-          <span class="reward-icon">{{ reward.icon }}</span>
-          <div class="reward-info">
-            <span class="reward-name">{{ reward.name }}</span>
-            <span class="reward-date">{{ formatDate(reward.redeemedAt) }}</span>
+        <div class="rewards-section" v-if="upcomingRewards.length > 0">
+          <h4 class="section-label upcoming">Впереди</h4>
+          <div 
+            v-for="reward in upcomingRewards" 
+            :key="reward.id"
+            class="reward-card"
+          >
+            <span class="reward-icon">{{ reward.icon }}</span>
+            <div class="reward-info">
+              <span class="reward-name">{{ reward.name }}</span>
+              <div class="reward-progress">
+                <div class="progress-bar">
+                  <div 
+                    class="progress-fill"
+                    :style="{ width: getProgress(reward) + '%' }"
+                  />
+                </div>
+                <span class="progress-text">{{ xpBalance }}/{{ reward.cost }} XP</span>
+              </div>
+            </div>
+            <button class="btn-icon" @click="editReward(reward)">
+              <Pencil :size="14" :stroke-width="1.5" />
+            </button>
           </div>
-          <Check :size="18" :stroke-width="2" class="check-icon" />
+        </div>
+
+        <div class="rewards-section" v-if="redeemedRewards.length > 0">
+          <h4 class="section-label redeemed">Полученные</h4>
+          <div 
+            v-for="reward in redeemedRewards.slice(0, 3)" 
+            :key="reward.id"
+            class="reward-card redeemed"
+          >
+            <span class="reward-icon">{{ reward.icon }}</span>
+            <div class="reward-info">
+              <span class="reward-name">{{ reward.name }}</span>
+              <span class="reward-date">{{ formatDate(reward.redeemedAt) }}</span>
+            </div>
+            <Check :size="18" :stroke-width="2" class="check-icon" />
+          </div>
         </div>
       </div>
     </div>
@@ -201,6 +225,12 @@ const wishlist = computed(() => xpStore.wishlist)
 const availableRewards = computed(() => xpStore.availableRewards)
 const upcomingRewards = computed(() => xpStore.upcomingRewards)
 const redeemedRewards = computed(() => xpStore.redeemedRewards)
+
+const allActiveRewards = computed(() => {
+  const available = availableRewards.value.map(r => ({ ...r, isAvailable: true }))
+  const upcoming = upcomingRewards.value.map(r => ({ ...r, isAvailable: false }))
+  return [...available, ...upcoming]
+})
 
 function getProgress(reward) {
   return Math.min(100, (xpBalance.value / reward.cost) * 100)
@@ -620,5 +650,114 @@ function confirmClaim() {
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--border-color);
   justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .wishlist-section {
+    padding: 1rem;
+  }
+  
+  .section-header {
+    margin-bottom: 0.75rem;
+  }
+  
+  .rewards-list.desktop-only {
+    display: none !important;
+  }
+  
+  .rewards-scroll.mobile-only {
+    display: flex !important;
+  }
+  
+  .btn-icon.desktop-only {
+    display: none !important;
+  }
+}
+
+
+.rewards-scroll {
+  display: none;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding: 0.25rem 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.rewards-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.reward-bubble {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.reward-bubble.available {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.reward-bubble:active {
+  transform: scale(0.95);
+}
+
+.bubble-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.bubble-progress {
+  position: absolute;
+  bottom: -2px;
+  left: 4px;
+  right: 4px;
+  height: 4px;
+  background: var(--border-color);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.bubble-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7c3aed, #a855f7);
+  border-radius: 2px;
+}
+
+.bubble-check {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 18px;
+  height: 18px;
+  background: #22c55e;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+}
+
+.add-bubble {
+  background: transparent;
+  border: 2px dashed var(--border-color);
+  color: var(--text-muted);
+}
+
+.add-bubble:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 </style>

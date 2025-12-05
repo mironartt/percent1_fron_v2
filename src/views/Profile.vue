@@ -1,23 +1,37 @@
 <template>
   <div class="profile-page">
     <header class="profile-header">
-      <div class="user-info">
-        <div class="avatar">
-          <User :size="32" :stroke-width="1.5" />
+      <div class="header-main">
+        <div class="user-info">
+          <div class="avatar">
+            <User :size="24" :stroke-width="1.5" />
+          </div>
+          <div class="user-details">
+            <h1>{{ userName }}</h1>
+            <p class="user-email desktop-only">{{ userEmail }}</p>
+          </div>
         </div>
-        <div class="user-details">
-          <h1>{{ userName }}</h1>
-          <p class="user-email">{{ userEmail }}</p>
+        <div class="xp-display">
+          <div class="xp-balance">
+            <Sparkles :size="20" :stroke-width="1.5" />
+            <span class="xp-value">{{ xpBalance }}</span>
+            <span class="xp-label">XP</span>
+          </div>
+          <div class="xp-lifetime desktop-only">
+            Всего заработано: {{ lifetimeEarned }} XP
+          </div>
         </div>
       </div>
-      <div class="xp-display">
-        <div class="xp-balance">
-          <Sparkles :size="24" :stroke-width="1.5" />
-          <span class="xp-value">{{ xpBalance }}</span>
-          <span class="xp-label">XP</span>
-        </div>
-        <div class="xp-lifetime">
-          Всего заработано: {{ lifetimeEarned }} XP
+      <div class="header-reward" v-if="nextReward">
+        <div class="reward-mini">
+          <span class="reward-mini-icon">{{ nextReward.icon }}</span>
+          <div class="reward-mini-progress">
+            <div 
+              class="reward-mini-fill"
+              :style="{ width: nextRewardProgress + '%' }"
+            />
+          </div>
+          <span class="reward-mini-text">{{ xpToNextReward }}</span>
         </div>
       </div>
     </header>
@@ -26,17 +40,17 @@
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon habits">
-            <Flame :size="20" :stroke-width="1.5" />
+            <Flame :size="18" :stroke-width="1.5" />
           </div>
           <div class="stat-info">
             <span class="stat-value">{{ habitStreak }}</span>
-            <span class="stat-label">дней подряд</span>
+            <span class="stat-label">дней</span>
           </div>
         </div>
 
         <div class="stat-card">
           <div class="stat-icon journal">
-            <BookOpen :size="20" :stroke-width="1.5" />
+            <BookOpen :size="18" :stroke-width="1.5" />
           </div>
           <div class="stat-info">
             <span class="stat-value">{{ journalStreak }}</span>
@@ -46,26 +60,26 @@
 
         <div class="stat-card">
           <div class="stat-icon tasks">
-            <CheckCircle :size="20" :stroke-width="1.5" />
+            <CheckCircle :size="18" :stroke-width="1.5" />
           </div>
           <div class="stat-info">
             <span class="stat-value">{{ todayXP }}</span>
-            <span class="stat-label">XP сегодня</span>
+            <span class="stat-label">сегодня</span>
           </div>
         </div>
 
         <div class="stat-card">
           <div class="stat-icon week">
-            <TrendingUp :size="20" :stroke-width="1.5" />
+            <TrendingUp :size="18" :stroke-width="1.5" />
           </div>
           <div class="stat-info">
             <span class="stat-value">{{ weekXP }}</span>
-            <span class="stat-label">XP за неделю</span>
+            <span class="stat-label">неделя</span>
           </div>
         </div>
       </div>
 
-      <div class="next-reward" v-if="nextReward">
+      <div class="next-reward desktop-only" v-if="nextReward">
         <div class="next-reward-header">
           <Target :size="18" :stroke-width="1.5" />
           <span>Следующая награда</span>
@@ -89,31 +103,39 @@
 
       <RewardWishlist />
 
-      <div class="xp-history">
-        <h3>
-          <History :size="18" :stroke-width="1.5" />
-          История XP
-        </h3>
-        <div v-if="recentHistory.length === 0" class="empty-history">
-          <p>Начните выполнять задачи и привычки, чтобы получать XP</p>
-        </div>
-        <div v-else class="history-list">
-          <div 
-            v-for="entry in recentHistory" 
-            :key="entry.id"
-            class="history-item"
-          >
-            <div class="history-icon" :class="getSourceClass(entry.source)">
-              <component :is="getSourceIcon(entry.source)" :size="14" :stroke-width="1.5" />
+      <div class="xp-history" :class="{ collapsed: !historyExpanded }">
+        <button class="history-header" @click="historyExpanded = !historyExpanded">
+          <div class="history-title">
+            <History :size="18" :stroke-width="1.5" />
+            <span>История XP</span>
+          </div>
+          <div class="history-summary" v-if="!historyExpanded && todayXP > 0">
+            <span class="summary-text">Сегодня +{{ todayXP }} XP</span>
+          </div>
+          <ChevronDown :size="18" :stroke-width="1.5" class="expand-icon" />
+        </button>
+        <div class="history-content" v-show="historyExpanded">
+          <div v-if="recentHistory.length === 0" class="empty-history">
+            <p>Начните выполнять задачи и привычки, чтобы получать XP</p>
+          </div>
+          <div v-else class="history-list">
+            <div 
+              v-for="entry in recentHistory" 
+              :key="entry.id"
+              class="history-item"
+            >
+              <div class="history-icon" :class="getSourceClass(entry.source)">
+                <component :is="getSourceIcon(entry.source)" :size="14" :stroke-width="1.5" />
+              </div>
+              <div class="history-info">
+                <span class="history-source">{{ getSourceLabel(entry.source) }}</span>
+                <span class="history-meta" v-if="entry.metadata?.habitName">
+                  {{ entry.metadata.habitName }}
+                </span>
+              </div>
+              <span class="history-amount">+{{ entry.amount }} XP</span>
+              <span class="history-time">{{ formatTime(entry.timestamp) }}</span>
             </div>
-            <div class="history-info">
-              <span class="history-source">{{ getSourceLabel(entry.source) }}</span>
-              <span class="history-meta" v-if="entry.metadata?.habitName">
-                {{ entry.metadata.habitName }}
-              </span>
-            </div>
-            <span class="history-amount">+{{ entry.amount }} XP</span>
-            <span class="history-time">{{ formatTime(entry.timestamp) }}</span>
           </div>
         </div>
       </div>
@@ -122,7 +144,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useAppStore } from '../stores/app'
 import { useXpStore } from '../stores/xp'
 import RewardWishlist from '../components/RewardWishlist.vue'
@@ -136,8 +158,11 @@ import {
   Target,
   History,
   Zap,
-  Star
+  Star,
+  ChevronDown
 } from 'lucide-vue-next'
+
+const historyExpanded = ref(false)
 
 const appStore = useAppStore()
 const xpStore = useXpStore()
@@ -218,52 +243,61 @@ function formatTime(timestamp) {
 }
 
 .profile-header {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
+}
+
+.header-main {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--card-bg);
-  border-radius: 16px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid var(--border-color);
+  gap: 1rem;
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .avatar {
-  width: 64px;
-  height: 64px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: linear-gradient(135deg, #7c3aed, #a855f7);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
+  flex-shrink: 0;
 }
 
 .user-details h1 {
-  font-size: 1.5rem;
-  margin: 0 0 0.25rem 0;
+  font-size: 1.1rem;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-email {
   color: var(--text-muted);
-  font-size: 0.9rem;
-  margin: 0;
+  font-size: 0.85rem;
+  margin: 0.125rem 0 0 0;
 }
 
 .xp-display {
   text-align: right;
+  flex-shrink: 0;
 }
 
 .xp-balance {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
   justify-content: flex-end;
 }
 
@@ -272,21 +306,69 @@ function formatTime(timestamp) {
 }
 
 .xp-value {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #7c3aed;
 }
 
 .xp-label {
-  font-size: 1rem;
+  font-size: 0.875rem;
   font-weight: 600;
   color: #a855f7;
 }
 
 .xp-lifetime {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
-  margin-top: 0.25rem;
+  margin-top: 0.125rem;
+}
+
+.header-reward {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.reward-mini {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.reward-mini-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.reward-mini-progress {
+  flex: 1;
+  height: 6px;
+  background: rgba(124, 58, 237, 0.15);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.reward-mini-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7c3aed, #a855f7);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.reward-mini-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.desktop-only {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
 }
 
 .profile-content {
@@ -297,30 +379,26 @@ function formatTime(timestamp) {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-}
-
-@media (min-width: 600px) {
-  .stats-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
 }
 
 .stat-card {
   background: var(--card-bg);
   border-radius: 12px;
-  padding: 1rem;
+  padding: 0.75rem 0.5rem;
   border: 1px solid var(--border-color);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
+  text-align: center;
+  gap: 0.375rem;
 }
 
 .stat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -349,16 +427,19 @@ function formatTime(timestamp) {
 .stat-info {
   display: flex;
   flex-direction: column;
+  align-items: center;
 }
 
 .stat-value {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 700;
+  line-height: 1.2;
 }
 
 .stat-label {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   color: var(--text-muted);
+  line-height: 1.2;
 }
 
 .next-reward {
@@ -428,25 +509,67 @@ function formatTime(timestamp) {
 .xp-history {
   background: var(--card-bg);
   border-radius: 16px;
-  padding: 1.5rem;
   border: 1px solid var(--border-color);
+  overflow: hidden;
 }
 
-.xp-history h3 {
+.history-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s ease;
+}
+
+.history-header:hover {
+  background: var(--bg-secondary);
+}
+
+.history-title {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 1.1rem;
-  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
-.xp-history h3 svg {
+.history-title svg {
   color: var(--primary-color);
+}
+
+.history-summary {
+  flex: 1;
+  text-align: right;
+}
+
+.summary-text {
+  font-size: 0.85rem;
+  color: #22c55e;
+  font-weight: 500;
+}
+
+.expand-icon {
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.xp-history:not(.collapsed) .expand-icon {
+  transform: rotate(180deg);
+}
+
+.history-content {
+  padding: 0 1.25rem 1.25rem;
 }
 
 .empty-history {
   text-align: center;
-  padding: 2rem;
+  padding: 1.5rem;
   color: var(--text-muted);
 }
 
@@ -536,31 +659,4 @@ function formatTime(timestamp) {
   white-space: nowrap;
 }
 
-/* Mobile responsiveness */
-@media (max-width: 768px) {
-  .profile-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-  
-  .xp-display {
-    text-align: left;
-    width: 100%;
-  }
-  
-  .xp-balance {
-    justify-content: flex-start;
-  }
-  
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .stat-card {
-    flex-direction: column;
-    text-align: center;
-    gap: 0.5rem;
-  }
-}
 </style>
