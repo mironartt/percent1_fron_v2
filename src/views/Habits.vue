@@ -3453,6 +3453,7 @@ onMounted(() => {
 
 .habit-card.deleted-during-week {
   position: relative;
+  border: 1px dashed rgba(239, 68, 68, 0.4);
   background: linear-gradient(135deg, var(--card-bg) 0%, rgba(239, 68, 68, 0.03) 100%);
 }
 
@@ -3748,25 +3749,22 @@ onMounted(() => {
 .habits-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  background: #ffffff;
-  border-radius: 16px;
-  border: 1px solid var(--border-color);
-  padding: 1rem;
+  gap: 0.5rem;
 }
 
 .habit-card {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding: 0;
-  background: transparent;
-  border: none;
+  padding: 0.875rem 1rem;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
   transition: all 0.2s ease;
 }
 
 .habit-card:hover {
-  background: rgba(124, 58, 237, 0.02);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .habit-card:hover .habit-schedule-inline {
@@ -3804,7 +3802,8 @@ onMounted(() => {
 }
 
 .habit-card.completed {
-  background: rgba(34, 197, 94, 0.05);
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.3);
 }
 
 .habit-card.not-scheduled {
@@ -6179,6 +6178,11 @@ onMounted(() => {
   .btn-cancel-amnesty {
     width: 24px;
     height: 24px;
+  }
+  
+  .habit-card {
+    padding: 0.875rem 1rem;
+    gap: 0.75rem;
   }
   
   .habit-row-bottom {
