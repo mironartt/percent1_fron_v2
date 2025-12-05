@@ -92,6 +92,15 @@
                 </template>
               </div>
 
+            </div>
+
+            <div class="goal-footer">
+              <button v-if="goal.steps.length > 0" class="steps-toggle" @click="toggleGoalExpanded(goal.id)">
+                <ChevronDown :size="16" :class="{ rotated: expandedGoals[goal.id] }" />
+                <span>{{ expandedGoals[goal.id] ? 'Скрыть шаги' : 'Показать шаги' }}</span>
+              </button>
+              <div v-else class="steps-placeholder"></div>
+              
               <div v-if="goal.status === 'pending' && editingGoalId !== goal.id" class="goal-actions">
                 <button 
                   class="action-btn accept" 
@@ -127,13 +136,8 @@
               </div>
             </div>
 
-            <div v-if="goal.steps.length > 0" class="goal-steps" :class="{ collapsed: !expandedGoals[goal.id] }">
-              <button class="steps-toggle" @click="toggleGoalExpanded(goal.id)">
-                <ChevronDown :size="16" :class="{ rotated: expandedGoals[goal.id] }" />
-                <span>{{ expandedGoals[goal.id] ? 'Скрыть шаги' : 'Показать шаги' }}</span>
-              </button>
-              
-              <div v-show="expandedGoals[goal.id]" class="steps-list">
+            <div v-if="goal.steps.length > 0 && expandedGoals[goal.id]" class="goal-steps">
+              <div class="steps-list">
                 <div 
                   v-for="(step, index) in goal.steps" 
                   :key="step.id"
@@ -610,6 +614,18 @@ async function confirmPlan() {
   flex-shrink: 0;
 }
 
+.goal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem 0.75rem;
+  gap: 0.5rem;
+}
+
+.steps-placeholder {
+  flex: 1;
+}
+
 .action-btn-small {
   width: 28px;
   height: 28px;
@@ -635,11 +651,10 @@ async function confirmPlan() {
 }
 
 .steps-toggle {
-  width: 100%;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
+  padding: 0.25rem 0;
   background: none;
   border: none;
   cursor: pointer;
@@ -841,27 +856,135 @@ async function confirmPlan() {
   }
   
   .modal-header {
-    padding: 1rem;
+    padding: 0.75rem 1rem;
   }
   
   .header-content {
-    flex-direction: column;
-    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .header-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+  
+  .header-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .header-text h2 {
+    font-size: 1.1rem;
+  }
+  
+  .header-text p {
+    font-size: 0.8rem;
+  }
+  
+  .modal-body {
+    padding: 1rem;
   }
   
   .stats-bar {
-    flex-wrap: wrap;
-    gap: 1rem;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 1rem;
+    font-size: 0.75rem;
+  }
+  
+  .stat {
+    gap: 0.25rem;
+    font-size: 0.75rem;
+  }
+  
+  .stat svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .goals-list {
+    gap: 0.75rem;
   }
   
   .goal-header {
-    flex-wrap: wrap;
+    padding: 0.75rem;
+    gap: 0.75rem;
   }
   
-  .goal-actions {
-    width: 100%;
-    justify-content: flex-end;
-    margin-top: 0.5rem;
+  .goal-sphere-badge {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .goal-sphere-badge svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .goal-title {
+    font-size: 0.9rem;
+  }
+  
+  .goal-description {
+    font-size: 0.8rem;
+  }
+  
+  .goal-meta {
+    gap: 0.5rem;
+    font-size: 0.7rem;
+  }
+  
+  .goal-footer {
+    padding: 0 0.75rem 0.5rem;
+  }
+  
+  .action-btn {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .action-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .steps-toggle {
+    font-size: 0.75rem;
+    padding: 0.5rem 0;
+  }
+  
+  .goal-steps {
+    border-top: 1px solid var(--border-color);
+  }
+  
+  .steps-list {
+    padding: 0.5rem 0.75rem 0.75rem;
+  }
+  
+  .step-item {
+    gap: 0.5rem;
+    padding: 0.375rem 0;
+  }
+  
+  .step-number {
+    width: 18px;
+    height: 18px;
+    font-size: 0.625rem;
+  }
+  
+  .step-title {
+    font-size: 0.8rem;
+  }
+  
+  .modal-footer {
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
+  }
+  
+  .modal-footer .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
   }
 }
 </style>
