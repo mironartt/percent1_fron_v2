@@ -16,7 +16,7 @@
       </div>
     </header>
 
-    <div class="stats-bar">
+    <div class="stats-bar" :class="{ 'has-amnesty': showAmnestyButton }">
       <button class="stat-item streak clickable" @click="showStreakModal = true" title="Нажмите для просмотра серии">
         <div class="stat-icon">
           <Zap :size="20" :stroke-width="1.5" />
@@ -53,6 +53,24 @@
           <TrendingUp :size="12" :stroke-width="1.5" />
         </div>
       </button>
+      <button 
+        v-if="showAmnestyButton" 
+        class="stat-item amnesty clickable" 
+        :class="{ 'has-missed': missedDaysForAmnesty.length > 0 }"
+        @click="showAmnestyModal = true" 
+        title="Амнистия"
+      >
+        <div class="stat-icon">
+          <Heart :size="20" :stroke-width="1.5" />
+        </div>
+        <div class="stat-content">
+          <span class="stat-value">{{ amnestiesRemaining }}/{{ maxAmnesties }}</span>
+          <span class="stat-label">амнистия</span>
+        </div>
+        <div class="stat-action-hint" v-if="missedDaysForAmnesty.length > 0">
+          <span class="amnesty-badge">{{ missedDaysForAmnesty.length }}</span>
+        </div>
+      </button>
       <button class="stat-item mode settings clickable compact-mode" @click="showSettingsModal = true" title="Настройки геймификации">
         <div class="stat-icon" :class="gameSettings.difficultyMode">
           <Shield :size="18" :stroke-width="1.5" />
@@ -62,34 +80,6 @@
         </div>
         <Settings :size="14" :stroke-width="1.5" class="settings-icon" />
       </button>
-    </div>
-
-    <!-- Блок амнистии -->
-    <div class="amnesty-banner" v-if="maxAmnesties > 0 && amnestiesRemaining > 0 && missedDaysForAmnesty.length > 0">
-      <div class="amnesty-banner-header">
-        <div class="amnesty-banner-icon">
-          <Heart :size="20" :stroke-width="1.5" />
-        </div>
-        <div class="amnesty-banner-info">
-          <span class="amnesty-banner-title">Амнистия доступна</span>
-          <span class="amnesty-banner-subtitle">{{ amnestiesRemaining }} из {{ maxAmnesties }} использований</span>
-        </div>
-      </div>
-      <div class="amnesty-days-list">
-        <span class="amnesty-days-label">Выберите день для прощения:</span>
-        <div class="amnesty-days">
-          <button 
-            v-for="day in missedDaysForAmnesty" 
-            :key="day.date"
-            class="amnesty-day-btn"
-            @click="applyAmnestyForDay(day.date)"
-            :title="`Простить ${day.missedCount} пропущенных привычек`"
-          >
-            <span class="day-name">{{ day.dayName }}</span>
-            <span class="day-missed">-{{ day.penaltyXp }} XP</span>
-          </button>
-        </div>
-      </div>
     </div>
 
     <div class="tabs-navigation" v-if="allHabits.length > 0">
@@ -915,6 +905,55 @@
         </div>
       </div>
     </Teleport>
+
+    <Teleport to="body">
+      <div v-if="showAmnestyModal" class="modal-overlay" @click.self="showAmnestyModal = false">
+        <div class="modal-container modal-mini amnesty-modal">
+          <div class="modal-header amnesty-header">
+            <h3>
+              <Heart :size="20" :stroke-width="1.5" />
+              Амнистия
+            </h3>
+            <button class="btn-close" @click="showAmnestyModal = false">
+              <X :size="20" :stroke-width="1.5" />
+            </button>
+          </div>
+          <div class="modal-content">
+            <div class="amnesty-status">
+              <div class="amnesty-counter">
+                <span class="amnesty-remaining">{{ amnestiesRemaining }}</span>
+                <span class="amnesty-separator">/</span>
+                <span class="amnesty-total">{{ maxAmnesties }}</span>
+              </div>
+              <span class="amnesty-hint">использований на этой неделе</span>
+            </div>
+
+            <div v-if="missedDaysForAmnesty.length > 0" class="amnesty-days-section">
+              <p class="amnesty-instruction">Выберите день для прощения пропущенных привычек:</p>
+              <div class="amnesty-days-grid">
+                <button 
+                  v-for="day in missedDaysForAmnesty" 
+                  :key="day.date"
+                  class="amnesty-day-card"
+                  @click="applyAmnestyForDay(day.date); showAmnestyModal = false"
+                >
+                  <span class="day-name">{{ day.dayName }}</span>
+                  <span class="day-date">{{ formatAmnestyDate(day.date) }}</span>
+                  <span class="day-missed">{{ day.missedCount }} {{ pluralizeHabits(day.missedCount) }}</span>
+                  <span class="day-penalty">-{{ day.penaltyXp }} XP</span>
+                </button>
+              </div>
+            </div>
+
+            <div v-else class="amnesty-empty">
+              <CheckCircle :size="32" :stroke-width="1.5" />
+              <p>Нет пропущенных дней для амнистии</p>
+              <span class="amnesty-empty-hint">Пропущенные дни за последнюю неделю появятся здесь</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -949,6 +988,7 @@ const showDescriptionField = ref(false)
 const showXpSlider = ref(false)
 const showPenaltyField = ref(false)
 const showSuggestionsModal = ref(false)
+const showAmnestyModal = ref(false)
 
 const habitSuggestions = [
   {
@@ -1226,6 +1266,10 @@ const difficultyLabel = computed(() => {
 })
 
 const isSoftMode = computed(() => gameSettings.value.difficultyMode === 'soft')
+
+const showAmnestyButton = computed(() => {
+  return maxAmnesties.value > 0 && amnestiesRemaining.value > 0
+})
 
 const currentPenaltyPercent = computed(() => {
   const mode = gameSettings.value.difficultyMode
@@ -1579,6 +1623,21 @@ function pluralizeDaysWord(n) {
   return 'дней'
 }
 
+function pluralizeHabits(n) {
+  const mod10 = n % 10
+  const mod100 = n % 100
+  if (mod10 === 1 && mod100 !== 11) return 'привычка'
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return 'привычки'
+  return 'привычек'
+}
+
+function formatAmnestyDate(dateStr) {
+  const date = new Date(dateStr)
+  const day = date.getDate()
+  const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
+  return `${day} ${months[date.getMonth()]}`
+}
+
 function toggleHabitCompletion(habit) {
   if (!isScheduledForToday(habit)) {
     toast.showToast({ title: 'Эта привычка не запланирована на сегодня', type: 'info' })
@@ -1858,6 +1917,10 @@ onMounted(() => {
   margin-bottom: 1.5rem;
 }
 
+.stats-bar.has-amnesty {
+  grid-template-columns: 1fr 1fr 1fr 1fr 1.5fr;
+}
+
 .stat-item {
   background: var(--card-bg);
   border-radius: 12px;
@@ -1928,6 +1991,160 @@ onMounted(() => {
 }
 
 .stat-item.mode .stat-icon.custom { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+
+.stat-item.amnesty .stat-icon {
+  background: rgba(236, 72, 153, 0.1);
+  color: #ec4899;
+}
+
+.stat-item.amnesty.has-missed {
+  border-color: rgba(236, 72, 153, 0.3);
+  background: linear-gradient(135deg, var(--card-bg) 0%, rgba(236, 72, 153, 0.05) 100%);
+}
+
+.stat-item.amnesty .amnesty-badge {
+  background: #ec4899;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.amnesty-modal .amnesty-header h3 {
+  color: #ec4899;
+}
+
+.amnesty-modal .amnesty-header h3 svg {
+  color: #ec4899;
+}
+
+.amnesty-status {
+  text-align: center;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.08) 0%, rgba(236, 72, 153, 0.02) 100%);
+  border-radius: 12px;
+  margin-bottom: 1.25rem;
+}
+
+.amnesty-counter {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.amnesty-remaining {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ec4899;
+}
+
+.amnesty-separator {
+  font-size: 1.5rem;
+  color: var(--text-muted);
+}
+
+.amnesty-total {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.amnesty-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.amnesty-days-section {
+  margin-top: 0.5rem;
+}
+
+.amnesty-instruction {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+.amnesty-days-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.amnesty-day-card {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.amnesty-day-card:hover {
+  border-color: #ec4899;
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(236, 72, 153, 0.05) 100%);
+}
+
+.amnesty-day-card .day-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.amnesty-day-card .day-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.amnesty-day-card .day-missed {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+}
+
+.amnesty-day-card .day-penalty {
+  font-weight: 600;
+  color: #ef4444;
+  font-size: 0.85rem;
+}
+
+.amnesty-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 1rem;
+  color: var(--text-muted);
+}
+
+.amnesty-empty svg {
+  color: #22c55e;
+}
+
+.amnesty-empty p {
+  margin: 0;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.amnesty-empty-hint {
+  font-size: 0.75rem;
+  text-align: center;
+}
 
 .tabs-navigation {
   display: flex;
@@ -3045,99 +3262,6 @@ onMounted(() => {
 .btn-suggest-habit:hover {
   background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(139, 92, 246, 0.2));
   border-style: solid;
-}
-
-.amnesty-banner {
-  background: linear-gradient(135deg, rgba(236, 72, 153, 0.08), rgba(244, 114, 182, 0.12));
-  border: 1px solid rgba(236, 72, 153, 0.2);
-  border-radius: 12px;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.amnesty-banner-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-.amnesty-banner-icon {
-  width: 36px;
-  height: 36px;
-  background: rgba(236, 72, 153, 0.15);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ec4899;
-  flex-shrink: 0;
-}
-
-.amnesty-banner-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.amnesty-banner-title {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--text-primary);
-}
-
-.amnesty-banner-subtitle {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.amnesty-days-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.amnesty-days-label {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
-.amnesty-days {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.amnesty-day-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.15rem;
-  padding: 0.5rem 0.75rem;
-  background: var(--card-bg);
-  border: 1px solid rgba(236, 72, 153, 0.3);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 60px;
-}
-
-.amnesty-day-btn:hover {
-  background: rgba(236, 72, 153, 0.1);
-  border-color: #ec4899;
-  transform: translateY(-1px);
-}
-
-.amnesty-day-btn .day-name {
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.amnesty-day-btn .day-missed {
-  font-size: 0.7rem;
-  color: #ef4444;
-  font-weight: 500;
 }
 
 .suggestions-intro {
@@ -4583,18 +4707,26 @@ onMounted(() => {
     grid-column: span 2;
   }
   
-  .amnesty-banner {
-    padding: 0.75rem;
-    margin-bottom: 1rem;
+  .stat-item.amnesty {
+    grid-column: span 1;
   }
   
-  .amnesty-days {
-    gap: 0.35rem;
+  .stats-bar.has-amnesty {
+    grid-template-columns: repeat(2, 1fr);
   }
   
-  .amnesty-day-btn {
-    padding: 0.4rem 0.5rem;
-    min-width: 50px;
+  .stats-bar.has-amnesty .stat-item.compact-mode {
+    grid-column: span 2;
+  }
+  
+  .amnesty-day-card {
+    grid-template-columns: 1fr auto auto;
+    gap: 0.5rem;
+    padding: 0.625rem 0.75rem;
+  }
+  
+  .amnesty-day-card .day-date {
+    display: none;
   }
   
   .habit-card {
