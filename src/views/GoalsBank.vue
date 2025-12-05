@@ -3355,19 +3355,35 @@ onMounted(async () => {
   background: var(--bg-primary);
   border-radius: var(--radius-md);
   transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .idea-card:hover {
   box-shadow: var(--shadow-sm);
 }
 
-.idea-card.validated {
-  border-left: 3px solid var(--success-color);
+.idea-card.validated::before,
+.idea-card.rejected::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+.idea-card.validated::before {
+  background: var(--success-color);
 }
 
 .idea-card.rejected {
-  border-left: 3px solid var(--danger-color);
   opacity: 0.7;
+}
+
+.idea-card.rejected::before {
+  background: var(--danger-color);
 }
 
 .idea-card-content {
@@ -3635,7 +3651,19 @@ onMounted(async () => {
 }
 
 .selectable-goal-item.weak-sphere {
-  border-left: 3px solid var(--warning-color);
+  position: relative;
+  overflow: hidden;
+}
+
+.selectable-goal-item.weak-sphere::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--warning-color);
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
 }
 
 .summary-actions {
@@ -3905,15 +3933,31 @@ onMounted(async () => {
 
 .validation-card {
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.validation-card.validated {
-  border-left: 4px solid var(--success-color);
+.validation-card.validated::before,
+.validation-card.rejected::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+.validation-card.validated::before {
+  background: var(--success-color);
 }
 
 .validation-card.rejected {
-  border-left: 4px solid var(--danger-color);
   opacity: 0.7;
+}
+
+.validation-card.rejected::before {
+  background: var(--danger-color);
 }
 
 .validation-header {
