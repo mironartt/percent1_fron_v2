@@ -2540,18 +2540,24 @@ onMounted(() => {
 
 .page-header {
   margin-bottom: 1.5rem;
+  text-align: center;
 }
 
 .header-content {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: center;
   gap: 1rem;
 }
 
+.title-section {
+  text-align: center;
+}
+
 .title-section h1 {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.75rem;
   font-size: 1.75rem;
   margin: 0 0 0.25rem 0;

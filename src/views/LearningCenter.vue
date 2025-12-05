@@ -476,9 +476,11 @@ function markLessonComplete() {
 
 .page-header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: center;
   margin-bottom: 2rem;
+  text-align: center;
+  gap: 1rem;
 }
 
 .page-header h1 {

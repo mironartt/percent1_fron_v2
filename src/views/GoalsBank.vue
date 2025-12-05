@@ -1931,7 +1931,7 @@ onMounted(async () => {
 }
 
 .summary-section .section-header {
-  text-align: left;
+  text-align: center;
   margin-bottom: 2rem;
 }
 
@@ -3597,7 +3597,7 @@ onMounted(async () => {
 
 .section-header {
   margin-bottom: 2rem;
-  text-align: left;
+  text-align: center;
 }
 
 .section-header h1 {

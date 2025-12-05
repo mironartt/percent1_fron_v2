@@ -3087,6 +3087,7 @@ onMounted(async () => {
 
 .section-header {
   margin-bottom: 1.5rem;
+  text-align: center;
 }
 
 .section-header h1 {
@@ -3857,7 +3858,7 @@ onMounted(async () => {
 
 .header-row {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   flex-wrap: wrap;
   gap: 1rem;

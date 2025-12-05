@@ -381,25 +381,14 @@ function onEntrySaved() {
 
 .page-header {
   padding: 2rem 0;
+  text-align: center;
 }
 
 .header-content {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1.5rem;
-}
-
-@media (max-width: 640px) {
-  .header-content {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-  
-  .header-content > div {
-    text-align: center;
-  }
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
 }
 
 .page-header h1 {
