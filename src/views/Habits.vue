@@ -2586,12 +2586,14 @@ onMounted(() => {
 }
 
 .schedule-day-mini.scheduled,
-.schedule-day-mini.future {
+.schedule-day-mini.future,
+.schedule-day-mini.today {
   background: rgba(124, 58, 237, 0.1);
 }
 
 .schedule-day-mini.scheduled .day-letter,
-.schedule-day-mini.future .day-letter {
+.schedule-day-mini.future .day-letter,
+.schedule-day-mini.today .day-letter {
   color: var(--primary-color);
 }
 
