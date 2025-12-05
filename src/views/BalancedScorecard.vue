@@ -2850,15 +2850,23 @@ watch(() => route.query.spp_step, () => {
   }
   
   .wheel-edit-actions {
-    flex-direction: column;
-    gap: 0.75rem;
-    margin: 1rem 8px 0 8px;
+    flex-direction: row;
+    gap: 0.5rem;
+    margin: 1rem 16px 0 16px;
     padding-top: 0.75rem;
   }
   
   .wheel-edit-actions .btn {
-    width: 100%;
     justify-content: center;
+    padding: 0.75rem 1rem;
+  }
+  
+  .wheel-edit-actions .btn-secondary {
+    flex: 0 0 35%;
+  }
+  
+  .wheel-edit-actions .btn-primary {
+    flex: 1;
   }
   
   .summary-stats-row {
