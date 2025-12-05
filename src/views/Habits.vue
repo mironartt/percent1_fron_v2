@@ -6187,11 +6187,6 @@ onMounted(() => {
     height: 24px;
   }
   
-  .habit-card {
-    padding: 0.875rem 1rem;
-    gap: 0.75rem;
-  }
-  
   .habit-row-bottom {
     flex-wrap: wrap;
     gap: 0.5rem;
