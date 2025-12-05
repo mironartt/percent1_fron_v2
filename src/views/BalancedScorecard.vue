@@ -1250,11 +1250,43 @@ watch(() => route.query.spp_step, () => {
 
 @media (max-width: 640px) {
   .summary-stats-row {
-    flex-direction: column;
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
   }
   
   .summary-stat-compact {
-    min-width: 100%;
+    flex: 1;
+    min-width: 0;
+    padding: 8px 6px;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 4px;
+  }
+  
+  .summary-stat-compact .stat-info {
+    align-items: center;
+  }
+  
+  .summary-stat-compact .stat-icon-wrapper {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .summary-stat-compact .stat-value {
+    font-size: 1rem;
+  }
+  
+  .summary-stat-compact .stat-value-text {
+    font-size: 0.7rem;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.1;
+  }
+  
+  .summary-stat-compact .stat-label {
+    font-size: 0.6rem;
   }
 }
 
@@ -2882,21 +2914,26 @@ watch(() => route.query.spp_step, () => {
   }
   
   .summary-stats-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: row;
     gap: 8px;
   }
   
   .summary-stat-compact {
-    padding: 10px;
-    min-width: unset;
+    flex: 1;
+    min-width: 0;
+    padding: 10px 8px;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
     background: white;
     border: 1px solid #e5e7eb;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   }
   
-  .summary-stat-compact:last-child {
-    grid-column: span 2;
+  .summary-stat-compact .stat-info {
+    align-items: center;
   }
   
   .stat-icon-wrapper {
@@ -2959,11 +2996,36 @@ watch(() => route.query.spp_step, () => {
   }
   
   .summary-stats-row {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
   }
   
-  .summary-stat-compact:last-child {
-    grid-column: span 1;
+  .summary-stat-compact {
+    padding: 6px 4px;
+    gap: 3px;
+  }
+  
+  .summary-stat-compact .stat-icon-wrapper {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .summary-stat-compact .stat-icon-wrapper svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .summary-stat-compact .stat-value {
+    font-size: 0.9rem;
+  }
+  
+  .summary-stat-compact .stat-value-text {
+    font-size: 0.65rem;
+  }
+  
+  .summary-stat-compact .stat-label {
+    font-size: 0.55rem;
   }
   
   .wheel-visualization {
