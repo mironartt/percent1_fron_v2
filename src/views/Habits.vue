@@ -283,37 +283,25 @@
             'deleted-during-week': habit.wasDeletedThisWeek
           }"
         >
-          <div class="habit-row-top">
-            <div class="habit-toggle" @click="toggleHabitCompletion(habit)">
-              <div class="habit-check">
-                <div class="checkbox" :class="{ checked: isHabitCompletedToday(habit), disabled: !isScheduledForToday(habit) }">
-                  <Check v-if="isHabitCompletedToday(habit)" :size="14" :stroke-width="2.5" />
-                </div>
+          <div class="habit-row-top" @click="toggleHabitCompletion(habit)">
+            <div class="habit-check">
+              <div class="checkbox" :class="{ checked: isHabitCompletedToday(habit), disabled: !isScheduledForToday(habit) }">
+                <Check v-if="isHabitCompletedToday(habit)" :size="14" :stroke-width="2.5" />
               </div>
-              <span class="habit-icon">{{ getIconEmoji(habit.icon) }}</span>
-              <span class="habit-name">{{ habit.name }}</span>
-              <transition name="xp-pop">
-                <span v-if="showXpPopup === habit.id" class="xp-popup">+{{ habit.xpReward }} XP</span>
-              </transition>
             </div>
-            <div class="habit-actions" v-if="!isPastWeek">
-              <button class="btn-icon" @click.stop="editHabit(habit)" title="Редактировать">
-                <Pencil :size="16" :stroke-width="1.5" />
-              </button>
-              <button class="btn-icon danger" @click.stop="confirmDeleteHabit(habit)" title="Удалить">
-                <Trash2 :size="16" :stroke-width="1.5" />
-              </button>
-            </div>
+            <span class="habit-icon">{{ getIconEmoji(habit.icon) }}</span>
+            <span class="habit-name">{{ habit.name }}</span>
+            <span class="xp-badge positive">+{{ habit.xpReward }} XP</span>
+            <transition name="xp-pop">
+              <span v-if="showXpPopup === habit.id" class="xp-popup">+{{ habit.xpReward }} XP</span>
+            </transition>
           </div>
           
           <div class="habit-row-bottom">
-            <div class="habit-meta">
-              <span class="xp-badge positive">+{{ habit.xpReward }} XP</span>
-              <span v-if="habit.xpPenalty && gameSettings.penaltiesEnabled" class="xp-badge negative">
-                -{{ habit.xpPenalty }} XP
-              </span>
-              <span class="frequency-badge">{{ getFrequencyLabel(habit) }}</span>
-            </div>
+            <span class="frequency-badge">{{ getFrequencyLabel(habit) }}</span>
+            <span v-if="habit.xpPenalty && gameSettings.penaltiesEnabled" class="xp-badge negative">
+              -{{ habit.xpPenalty }} XP
+            </span>
             <div class="habit-schedule-inline clickable-schedule" @click.stop>
               <div 
                 v-for="day in weekDays" 
@@ -332,15 +320,6 @@
                 <span class="day-letter">{{ day.short.charAt(0) }}</span>
               </div>
             </div>
-          </div>
-          
-          <div class="habit-actions-old" v-if="false">
-            <button class="btn-icon" @click.stop="editHabit(habit)" title="Редактировать">
-              <Pencil :size="16" :stroke-width="1.5" />
-            </button>
-            <button class="btn-icon danger" @click.stop="confirmDeleteHabit(habit)" title="Удалить">
-              <Trash2 :size="16" :stroke-width="1.5" />
-            </button>
           </div>
           
           <div class="habit-deleted-during-week-badge" v-if="habit.wasDeletedThisWeek">
@@ -3798,47 +3777,24 @@ onMounted(() => {
 .habit-row-top {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-}
-
-.habit-toggle {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
   cursor: pointer;
 }
 
-.habit-toggle .habit-name {
+.habit-row-top .habit-name {
   flex: 1;
   font-size: 0.95rem;
   font-weight: 500;
 }
 
-.habit-row-top .habit-actions {
-  display: flex;
-  gap: 0.25rem;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
-}
-
-.habit-card:hover .habit-row-top .habit-actions {
-  opacity: 1;
-  visibility: visible;
+.habit-row-top .xp-badge {
+  flex-shrink: 0;
 }
 
 .habit-row-bottom {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding-left: 2rem;
-}
-
-.habit-row-bottom .habit-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
 }
 
 .habit-row-bottom .habit-schedule-inline {
@@ -6229,23 +6185,15 @@ onMounted(() => {
     gap: 0.75rem;
   }
   
-  .habit-row-top .habit-actions {
-    opacity: 1;
-    visibility: visible;
-  }
-  
   .habit-row-bottom {
     flex-wrap: wrap;
     gap: 0.5rem;
-    padding-left: 2rem;
   }
   
   .habit-row-bottom .habit-schedule-inline {
     margin-left: 0;
-  }
-  
-  .habit-actions {
-    gap: 0.5rem;
+    width: 100%;
+    justify-content: flex-start;
   }
   
   .btn-icon {
