@@ -7,12 +7,20 @@
       class="wheel-svg"
     >
       <defs>
-        <!-- Arc paths for curved text -->
+        <!-- Arc paths for curved text - outer line -->
         <path
           v-for="(sphere, index) in spheres"
           :key="`arc-path-${sphere.id}`"
           :id="`text-arc-${index}`"
-          :d="getTextArcPath(index)"
+          :d="getTextArcPath(index, 0)"
+          fill="none"
+        />
+        <!-- Arc paths for curved text - inner line (for two-line labels) -->
+        <path
+          v-for="(sphere, index) in spheres"
+          :key="`arc-path-inner-${sphere.id}`"
+          :id="`text-arc-inner-${index}`"
+          :d="getTextArcPath(index, 1)"
           fill="none"
         />
       </defs>
@@ -77,22 +85,55 @@
       />
 
       <!-- Sphere labels - curved text following arc -->
-      <text
-        v-for="(sphere, index) in spheres"
-        :key="`label-${sphere.id}`"
-        :fill="getSphereColor(index)"
-        :class="['sphere-label', { 'sphere-label-readonly': readonly }]"
-        @click="!readonly && selectSphere(sphere)"
-      >
-        <textPath
-          :href="`#text-arc-${index}`"
-          startOffset="50%"
-          text-anchor="middle"
-          dominant-baseline="middle"
+      <template v-for="(sphere, index) in spheres" :key="`label-group-${sphere.id}`">
+        <!-- Single line label (short names) -->
+        <text
+          v-if="!needsTwoLines(sphere.name)"
+          :fill="getSphereColor(index)"
+          :class="['sphere-label', { 'sphere-label-readonly': readonly }]"
+          @click="!readonly && selectSphere(sphere)"
         >
-          {{ sphere.name.toUpperCase() }}
-        </textPath>
-      </text>
+          <textPath
+            :href="`#text-arc-${index}`"
+            startOffset="50%"
+            text-anchor="middle"
+            dominant-baseline="middle"
+          >
+            {{ sphere.name.toUpperCase() }}
+          </textPath>
+        </text>
+        <!-- Two line label (long names) -->
+        <template v-else>
+          <text
+            :fill="getSphereColor(index)"
+            :class="['sphere-label', { 'sphere-label-readonly': readonly }]"
+            @click="!readonly && selectSphere(sphere)"
+          >
+            <textPath
+              :href="`#text-arc-${index}`"
+              startOffset="50%"
+              text-anchor="middle"
+              dominant-baseline="middle"
+            >
+              {{ splitName(sphere.name)[0] }}
+            </textPath>
+          </text>
+          <text
+            :fill="getSphereColor(index)"
+            :class="['sphere-label', 'sphere-label-line2', { 'sphere-label-readonly': readonly }]"
+            @click="!readonly && selectSphere(sphere)"
+          >
+            <textPath
+              :href="`#text-arc-inner-${index}`"
+              startOffset="50%"
+              text-anchor="middle"
+              dominant-baseline="middle"
+            >
+              {{ splitName(sphere.name)[1] }}
+            </textPath>
+          </text>
+        </template>
+      </template>
 
       <!-- Interactive handle for dragging (hidden in readonly mode) -->
       <circle
@@ -172,12 +213,35 @@ function getMidAngle(index) {
   return getAngle(index) + angleStep.value / 2
 }
 
-function getTextArcPath(index) {
+const labelRadiusInner = labelRadius - 22
+
+function needsTwoLines(name) {
+  return name.length > 18
+}
+
+function splitName(name) {
+  const words = name.split(/[,\s]+/)
+  if (words.length <= 2) {
+    const mid = Math.ceil(name.length / 2)
+    const spaceIndex = name.indexOf(' ', mid - 5)
+    if (spaceIndex > 0 && spaceIndex < name.length - 3) {
+      return [name.slice(0, spaceIndex).toUpperCase(), name.slice(spaceIndex + 1).toUpperCase()]
+    }
+    return [name.toUpperCase(), '']
+  }
+  const midIndex = Math.ceil(words.length / 2)
+  const firstLine = words.slice(0, midIndex).join(' ').toUpperCase()
+  const secondLine = words.slice(midIndex).join(' ').toUpperCase()
+  return [firstLine, secondLine]
+}
+
+function getTextArcPath(index, lineNumber = 0) {
   const startAngle = getAngle(index)
   const endAngle = getAngle(index + 1)
   const midAngle = getMidAngle(index)
   
   const isBottomHalf = midAngle > 0 && midAngle < Math.PI
+  const radius = lineNumber === 0 ? labelRadius : labelRadiusInner
   
   let arcStart, arcEnd
   if (isBottomHalf) {
@@ -188,14 +252,14 @@ function getTextArcPath(index) {
     arcEnd = endAngle
   }
   
-  const x1 = center + labelRadius * Math.cos(arcStart)
-  const y1 = center + labelRadius * Math.sin(arcStart)
-  const x2 = center + labelRadius * Math.cos(arcEnd)
-  const y2 = center + labelRadius * Math.sin(arcEnd)
+  const x1 = center + radius * Math.cos(arcStart)
+  const y1 = center + radius * Math.sin(arcStart)
+  const x2 = center + radius * Math.cos(arcEnd)
+  const y2 = center + radius * Math.sin(arcEnd)
   
   const sweepFlag = isBottomHalf ? 0 : 1
   
-  return `M ${x1} ${y1} A ${labelRadius} ${labelRadius} 0 0 ${sweepFlag} ${x2} ${y2}`
+  return `M ${x1} ${y1} A ${radius} ${radius} 0 0 ${sweepFlag} ${x2} ${y2}`
 }
 
 function getSegmentPath(index, score) {
@@ -314,6 +378,10 @@ function startDrag(event, sphere, index) {
   cursor: default;
 }
 
+.sphere-label-line2 {
+  font-size: 13px;
+}
+
 .drag-handle {
   cursor: grab;
   transition: all 0.2s ease;
@@ -348,6 +416,10 @@ function startDrag(event, sphere, index) {
     stroke-linejoin: round;
   }
   
+  .sphere-label-line2 {
+    font-size: 20px;
+  }
+  
   .wheel-of-life {
     width: 100%;
     min-width: unset;
@@ -364,6 +436,10 @@ function startDrag(event, sphere, index) {
     font-size: 21px;
     letter-spacing: 1px;
     stroke-width: 2.5px;
+  }
+  
+  .sphere-label-line2 {
+    font-size: 19px;
   }
   
   .drag-handle {
