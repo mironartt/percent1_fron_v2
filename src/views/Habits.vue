@@ -277,7 +277,11 @@
           v-for="habit in allHabits" 
           :key="habit.id"
           class="habit-card"
-          :class="{ completed: isHabitCompletedToday(habit), 'not-scheduled': !isScheduledForToday(habit) }"
+          :class="{ 
+            completed: isHabitCompletedToday(habit), 
+            'not-scheduled': !isScheduledForToday(habit),
+            'deleted-during-week': habit.wasDeletedThisWeek
+          }"
         >
           <div class="habit-main" @click="toggleHabitCompletion(habit)">
             <div class="habit-check">
@@ -306,8 +310,14 @@
               v-for="day in weekDays" 
               :key="day.key"
               class="schedule-day"
-              :class="[getDayStatus(habit, day.date), { today: day.isToday }]"
-              :title="`${day.name}: ${getDayStatusLabel(getDayStatus(habit, day.date))}`"
+              :class="[
+                getDayStatus(habit, day.date), 
+                { 
+                  today: day.isToday,
+                  'deleted-after': habit.deletedDuringWeek && day.date > habit.deletedDuringWeek
+                }
+              ]"
+              :title="`${day.name}: ${getDayStatusLabel(getDayStatus(habit, day.date))}${habit.deletedDuringWeek && day.date > habit.deletedDuringWeek ? ' (привычка удалена)' : ''}`"
               @click="openDayEditModal(habit, day)"
             >
               <span class="day-letter">{{ day.short.charAt(0) }}</span>
@@ -322,7 +332,12 @@
               <Trash2 :size="16" :stroke-width="1.5" />
             </button>
           </div>
-          <div class="habit-deleted-badge" v-if="habit.deletedAt">
+          
+          <div class="habit-deleted-during-week-badge" v-if="habit.wasDeletedThisWeek">
+            <Trash2 :size="12" :stroke-width="1.5" />
+            <span>Удалена {{ formatDeletedDate(habit.deletedDuringWeek) }}</span>
+          </div>
+          <div class="habit-deleted-badge" v-else-if="habit.deletedAt && !habit.wasDeletedThisWeek">
             <Trash2 :size="12" :stroke-width="1.5" />
             <span>Удалена {{ formatDeletedDate(habit.deletedAt) }}</span>
           </div>
@@ -1404,6 +1419,7 @@ function goToCurrentWeek() {
 }
 
 const allHabits = computed(() => {
+  const weekStartDate = weekDays.value[0]?.date
   const weekEndDate = weekDays.value[6]?.date
   
   return appStore.habits
@@ -1412,16 +1428,31 @@ const allHabits = computed(() => {
       if (!h.deletedAt) return true
       if (isPastWeek.value) {
         const deletedDate = h.deletedAt.split('T')[0]
-        return deletedDate > weekEndDate
+        return deletedDate > weekStartDate
       }
       return false
     })
-    .map(habit => ({
-      ...habit,
-      frequencyType: habit.frequencyType || 'daily',
-      scheduleDays: habit.scheduleDays || [1, 2, 3, 4, 5, 6, 0],
-      xpPenalty: habit.xpPenalty || 0
-    }))
+    .map(habit => {
+      let wasDeletedThisWeek = false
+      let deletedDuringWeek = null
+      
+      if (habit.deletedAt && isPastWeek.value) {
+        const deletedDate = habit.deletedAt.split('T')[0]
+        if (deletedDate >= weekStartDate && deletedDate <= weekEndDate) {
+          wasDeletedThisWeek = true
+          deletedDuringWeek = deletedDate
+        }
+      }
+      
+      return {
+        ...habit,
+        frequencyType: habit.frequencyType || 'daily',
+        scheduleDays: habit.scheduleDays || [1, 2, 3, 4, 5, 6, 0],
+        xpPenalty: habit.xpPenalty || 0,
+        wasDeletedThisWeek,
+        deletedDuringWeek
+      }
+    })
 })
 
 const deletedHabits = computed(() => {
@@ -3429,6 +3460,52 @@ onMounted(() => {
   border-radius: 6px;
   font-size: 0.65rem;
   color: #ef4444;
+}
+
+.habit-card.deleted-during-week {
+  position: relative;
+  border: 1px dashed rgba(239, 68, 68, 0.4);
+  background: linear-gradient(135deg, var(--card-bg) 0%, rgba(239, 68, 68, 0.03) 100%);
+}
+
+.habit-deleted-during-week-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.08) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #ef4444;
+}
+
+.habit-deleted-during-week-badge svg {
+  opacity: 0.8;
+}
+
+.schedule-day.deleted-after {
+  opacity: 0.35;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 2px,
+    rgba(239, 68, 68, 0.1) 2px,
+    rgba(239, 68, 68, 0.1) 4px
+  );
+}
+
+.schedule-day.deleted-after::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 70%;
+  height: 1px;
+  background: rgba(239, 68, 68, 0.5);
+  transform: translate(-50%, -50%) rotate(-45deg);
 }
 
 .btn-icon.restore {
