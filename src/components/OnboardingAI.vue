@@ -1450,5 +1450,16 @@ async function completeOnboarding() {
   .progress-labels {
     display: none;
   }
+  
+  .progress-step-wrapper {
+    min-width: 0;
+  }
+  
+  .progress-label {
+    font-size: 0.65rem;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 </style>
