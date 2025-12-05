@@ -967,12 +967,20 @@
               <span class="habit-name">{{ selectedHabitForEdit.name }}</span>
             </div>
 
-            <div class="day-edit-schedule">
+            <div class="day-edit-schedule clickable">
               <div 
                 v-for="day in weekDays" 
                 :key="day.key"
                 class="schedule-day-mini"
-                :class="[getDayStatus(selectedHabitForEdit, day.date), { current: day.date === selectedDayForEdit.date }]"
+                :class="[
+                  getDayStatus(selectedHabitForEdit, day.date), 
+                  { 
+                    current: day.date === selectedDayForEdit.date,
+                    clickable: isScheduledForDay(selectedHabitForEdit, new Date(day.date).getDay())
+                  }
+                ]"
+                @click="switchToDay(day)"
+                :title="getDayStatusLabel(getDayStatus(selectedHabitForEdit, day.date))"
               >
                 <span class="day-letter">{{ day.short.charAt(0) }}</span>
               </div>
@@ -989,6 +997,11 @@
               </div>
             </div>
 
+            <div v-if="isFutureDay" class="day-edit-future-notice">
+              <Info :size="16" :stroke-width="1.5" />
+              <span>Это будущий день. Изменение статуса недоступно, но вы можете добавить заметку заранее.</span>
+            </div>
+
             <div class="day-edit-current-status">
               <span class="status-label">Текущий статус:</span>
               <span class="status-value" :class="getDayStatus(selectedHabitForEdit, selectedDayForEdit.date)">
@@ -996,16 +1009,26 @@
               </span>
             </div>
 
-            <div class="day-edit-reason">
-              <label>Причина пропуска (опционально):</label>
+            <div class="day-edit-notes">
+              <label>Заметка о выполнении:</label>
               <textarea 
-                v-model="dayEditSkipReason" 
-                placeholder="Укажите причину, если хотите..."
+                v-model="dayEditNote" 
+                placeholder="Как прошло выполнение? Что получилось? Что можно улучшить?"
                 rows="2"
               ></textarea>
             </div>
 
-            <div class="day-edit-actions">
+            <div v-if="showSkipReasonField" class="day-edit-reason">
+              <label>Причина пропуска:</label>
+              <textarea 
+                v-model="dayEditSkipReason" 
+                placeholder="Почему не удалось выполнить?"
+                rows="2"
+                :disabled="isFutureDay"
+              ></textarea>
+            </div>
+
+            <div v-if="!isFutureDay" class="day-edit-actions">
               <button 
                 class="btn-status completed"
                 :class="{ active: getDayStatus(selectedHabitForEdit, selectedDayForEdit.date) === 'completed' }"
@@ -1033,8 +1056,15 @@
               </button>
             </div>
 
+            <div v-if="isFutureDay" class="day-edit-actions-locked">
+              <button class="btn-save-note" @click="saveNoteAndClose">
+                <Check :size="16" :stroke-width="2" />
+                Сохранить заметку
+              </button>
+            </div>
+
             <div 
-              v-if="gameSettings.amnestiedDates?.includes(selectedDayForEdit.date)" 
+              v-if="!isFutureDay && gameSettings.amnestiedDates?.includes(selectedDayForEdit.date)" 
               class="day-edit-amnesty-warning"
             >
               <div class="amnesty-info">
@@ -1088,6 +1118,7 @@ const showDayEditModal = ref(false)
 const selectedDayForEdit = ref(null)
 const selectedHabitForEdit = ref(null)
 const dayEditSkipReason = ref('')
+const dayEditNote = ref('')
 
 // ==== DEMO DATA FOR DEVELOPMENT ====
 // TODO: Remove this block after development is complete
@@ -1794,10 +1825,12 @@ function formatAmnestyDate(dateStr) {
 
 const skipReasons = ref(JSON.parse(localStorage.getItem('habitSkipReasons') || '{}'))
 const excusedSkips = ref(JSON.parse(localStorage.getItem('habitExcusedSkips') || '{}'))
+const habitNotes = ref(JSON.parse(localStorage.getItem('habitNotes') || '{}'))
 
 function saveSkipData() {
   localStorage.setItem('habitSkipReasons', JSON.stringify(skipReasons.value))
   localStorage.setItem('habitExcusedSkips', JSON.stringify(excusedSkips.value))
+  localStorage.setItem('habitNotes', JSON.stringify(habitNotes.value))
 }
 
 function getDayStatus(habit, dateStr) {
@@ -1838,16 +1871,21 @@ function getDayStatusLabel(status) {
   return labels[status] || status
 }
 
-function openDayEditModal(habit, day) {
-  const date = new Date(day.date)
+const isFutureDay = computed(() => {
+  if (!selectedDayForEdit.value) return false
+  const date = new Date(selectedDayForEdit.value.date)
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  
-  if (date > today) {
-    toast.showToast({ type: 'info', title: 'Будущие дни нельзя редактировать' })
-    return
-  }
-  
+  return date > today
+})
+
+const showSkipReasonField = computed(() => {
+  if (!selectedHabitForEdit.value || !selectedDayForEdit.value) return false
+  const status = getDayStatus(selectedHabitForEdit.value, selectedDayForEdit.value.date)
+  return status === 'missed' || status === 'excused'
+})
+
+function openDayEditModal(habit, day) {
   if (!isScheduledForDay(habit, new Date(day.date).getDay())) {
     toast.showToast({ type: 'info', title: 'Привычка не запланирована на этот день' })
     return
@@ -1856,14 +1894,53 @@ function openDayEditModal(habit, day) {
   selectedHabitForEdit.value = habit
   selectedDayForEdit.value = day
   dayEditSkipReason.value = skipReasons.value[day.date]?.[habit.id] || ''
+  dayEditNote.value = habitNotes.value[day.date]?.[habit.id] || ''
   showDayEditModal.value = true
 }
 
+function switchToDay(day) {
+  if (!selectedHabitForEdit.value) return
+  if (!isScheduledForDay(selectedHabitForEdit.value, new Date(day.date).getDay())) {
+    toast.showToast({ type: 'info', title: 'Привычка не запланирована на этот день' })
+    return
+  }
+  
+  saveCurrentDayData()
+  
+  selectedDayForEdit.value = day
+  dayEditSkipReason.value = skipReasons.value[day.date]?.[selectedHabitForEdit.value.id] || ''
+  dayEditNote.value = habitNotes.value[day.date]?.[selectedHabitForEdit.value.id] || ''
+}
+
+function saveCurrentDayData() {
+  if (!selectedHabitForEdit.value || !selectedDayForEdit.value) return
+  
+  const habit = selectedHabitForEdit.value
+  const dateStr = selectedDayForEdit.value.date
+  
+  if (dayEditNote.value) {
+    if (!habitNotes.value[dateStr]) habitNotes.value[dateStr] = {}
+    habitNotes.value[dateStr][habit.id] = dayEditNote.value
+  } else if (habitNotes.value[dateStr]?.[habit.id]) {
+    delete habitNotes.value[dateStr][habit.id]
+  }
+  
+  saveSkipData()
+}
+
 function closeDayEditModal() {
+  saveCurrentDayData()
   showDayEditModal.value = false
   selectedDayForEdit.value = null
   selectedHabitForEdit.value = null
   dayEditSkipReason.value = ''
+  dayEditNote.value = ''
+}
+
+function saveNoteAndClose() {
+  saveCurrentDayData()
+  toast.showToast({ type: 'success', title: 'Заметка сохранена' })
+  closeDayEditModal()
 }
 
 function setDayAsCompleted() {
@@ -2682,10 +2759,12 @@ onMounted(() => {
   color: var(--primary-color);
 }
 
+.day-edit-notes,
 .day-edit-reason {
   margin-bottom: 1rem;
 }
 
+.day-edit-notes label,
 .day-edit-reason label {
   display: block;
   font-size: 0.8rem;
@@ -2693,6 +2772,7 @@ onMounted(() => {
   margin-bottom: 0.35rem;
 }
 
+.day-edit-notes textarea,
 .day-edit-reason textarea {
   width: 100%;
   padding: 0.5rem 0.75rem;
@@ -2704,9 +2784,72 @@ onMounted(() => {
   resize: none;
 }
 
+.day-edit-notes textarea:focus,
 .day-edit-reason textarea:focus {
   outline: none;
   border-color: var(--primary-color);
+}
+
+.day-edit-reason textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.day-edit-future-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(124, 58, 237, 0.08);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
+  color: var(--primary-color);
+}
+
+.day-edit-future-notice svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.day-edit-actions-locked {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+
+.btn-save-note {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--primary-color);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-save-note:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.day-edit-schedule.clickable .schedule-day-mini.clickable {
+  cursor: pointer;
+}
+
+.day-edit-schedule.clickable .schedule-day-mini.clickable:hover {
+  transform: scale(1.1);
+}
+
+.day-edit-schedule.clickable .schedule-day-mini:not(.clickable) {
+  cursor: not-allowed;
+  opacity: 0.4;
 }
 
 .day-edit-actions {
