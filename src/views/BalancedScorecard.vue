@@ -693,7 +693,7 @@ const showEmptyState = computed(() => {
 })
 
 const showSummary = computed(() => {
-  return !!sspModuleCompleted.value?.completed
+  return true
 })
 
 const averageScore = computed(() => {
