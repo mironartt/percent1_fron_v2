@@ -4,9 +4,7 @@
       <div class="login-card">
         <div class="login-header">
           <h1 class="login-logo">OnePercent</h1>
-          <p class="login-subtitle">+1% каждый день к лучшей жизни</p>
-          <h2>Добро пожаловать назад</h2>
-          <p class="login-description">Войдите в свой аккаунт, чтобы продолжить</p>
+          <h2>Добро пожаловать</h2>
         </div>
 
         <form @submit.prevent="handleLogin" class="login-form">
