@@ -5,7 +5,7 @@
         <Gift :size="18" :stroke-width="1.5" />
         Мои награды
       </h3>
-      <button class="btn-icon" @click="showAddModal = true">
+      <button class="btn-icon desktop-only" @click="showAddModal = true">
         <Plus :size="18" :stroke-width="1.5" />
       </button>
     </div>
@@ -18,64 +18,110 @@
       </button>
     </div>
 
-    <div v-else class="rewards-list">
-      <div class="rewards-section" v-if="availableRewards.length > 0">
-        <h4 class="section-label available">Доступны сейчас</h4>
-        <div 
-          v-for="reward in availableRewards" 
-          :key="reward.id"
-          class="reward-card available"
-        >
-          <span class="reward-icon">{{ reward.icon }}</span>
-          <div class="reward-info">
-            <span class="reward-name">{{ reward.name }}</span>
-            <span class="reward-cost">{{ reward.cost }} XP</span>
-          </div>
-          <button class="btn btn-success btn-sm" @click="claimReward(reward)">
-            Получить
-          </button>
-        </div>
-      </div>
-
-      <div class="rewards-section" v-if="upcomingRewards.length > 0">
-        <h4 class="section-label upcoming">Впереди</h4>
-        <div 
-          v-for="reward in upcomingRewards" 
-          :key="reward.id"
-          class="reward-card"
-        >
-          <span class="reward-icon">{{ reward.icon }}</span>
-          <div class="reward-info">
-            <span class="reward-name">{{ reward.name }}</span>
-            <div class="reward-progress">
-              <div class="progress-bar">
-                <div 
-                  class="progress-fill"
-                  :style="{ width: getProgress(reward) + '%' }"
-                />
+    <div v-else>
+      <div class="rewards-compact mobile-only">
+        <div class="compact-list">
+          <div 
+            v-for="reward in visibleRewards" 
+            :key="reward.id"
+            class="compact-reward"
+            :class="{ available: reward.isAvailable }"
+            @click="reward.isAvailable ? claimReward(reward) : editReward(reward)"
+          >
+            <span class="compact-icon">{{ reward.icon }}</span>
+            <div class="compact-info">
+              <span class="compact-name">{{ reward.name }}</span>
+              <div class="compact-progress" v-if="!reward.isAvailable">
+                <div class="progress-bar-mini">
+                  <div 
+                    class="progress-fill-mini"
+                    :style="{ width: getProgress(reward) + '%' }"
+                  />
+                </div>
+                <span class="progress-text-mini">{{ xpBalance }}/{{ reward.cost }}</span>
               </div>
-              <span class="progress-text">{{ xpBalance }}/{{ reward.cost }} XP</span>
+              <span v-else class="compact-ready">Доступна!</span>
             </div>
+            <Check v-if="reward.isAvailable" :size="16" :stroke-width="2" class="compact-check" />
           </div>
-          <button class="btn-icon" @click="editReward(reward)">
-            <Pencil :size="14" :stroke-width="1.5" />
+        </div>
+        
+        <div class="compact-actions">
+          <button 
+            v-if="hiddenRewardsCount > 0" 
+            class="btn-expand"
+            @click="toggleRewardsExpand"
+          >
+            <span v-if="!rewardsExpanded">Ещё {{ hiddenRewardsCount }}</span>
+            <span v-else>Свернуть</span>
+            <ChevronDown :size="16" :stroke-width="2" :class="{ rotated: rewardsExpanded }" />
+          </button>
+          <button class="btn-add-compact" @click="showAddModal = true">
+            <Plus :size="16" :stroke-width="2" />
+            <span>Добавить</span>
           </button>
         </div>
       </div>
 
-      <div class="rewards-section" v-if="redeemedRewards.length > 0">
-        <h4 class="section-label redeemed">Полученные</h4>
-        <div 
-          v-for="reward in redeemedRewards.slice(0, 3)" 
-          :key="reward.id"
-          class="reward-card redeemed"
-        >
-          <span class="reward-icon">{{ reward.icon }}</span>
-          <div class="reward-info">
-            <span class="reward-name">{{ reward.name }}</span>
-            <span class="reward-date">{{ formatDate(reward.redeemedAt) }}</span>
+      <div class="rewards-list desktop-only">
+        <div class="rewards-section" v-if="availableRewards.length > 0">
+          <h4 class="section-label available">Доступны сейчас</h4>
+          <div 
+            v-for="reward in availableRewards" 
+            :key="reward.id"
+            class="reward-card available"
+          >
+            <span class="reward-icon">{{ reward.icon }}</span>
+            <div class="reward-info">
+              <span class="reward-name">{{ reward.name }}</span>
+              <span class="reward-cost">{{ reward.cost }} XP</span>
+            </div>
+            <button class="btn btn-success btn-sm" @click="claimReward(reward)">
+              Получить
+            </button>
           </div>
-          <Check :size="18" :stroke-width="2" class="check-icon" />
+        </div>
+
+        <div class="rewards-section" v-if="upcomingRewards.length > 0">
+          <h4 class="section-label upcoming">Впереди</h4>
+          <div 
+            v-for="reward in upcomingRewards" 
+            :key="reward.id"
+            class="reward-card"
+          >
+            <span class="reward-icon">{{ reward.icon }}</span>
+            <div class="reward-info">
+              <span class="reward-name">{{ reward.name }}</span>
+              <div class="reward-progress">
+                <div class="progress-bar">
+                  <div 
+                    class="progress-fill"
+                    :style="{ width: getProgress(reward) + '%' }"
+                  />
+                </div>
+                <span class="progress-text">{{ xpBalance }}/{{ reward.cost }} XP</span>
+              </div>
+            </div>
+            <button class="btn-icon" @click="editReward(reward)">
+              <Pencil :size="14" :stroke-width="1.5" />
+            </button>
+          </div>
+        </div>
+
+        <div class="rewards-section" v-if="redeemedRewards.length > 0">
+          <h4 class="section-label redeemed">Полученные</h4>
+          <div 
+            v-for="reward in redeemedRewards.slice(0, 3)" 
+            :key="reward.id"
+            class="reward-card redeemed"
+          >
+            <span class="reward-icon">{{ reward.icon }}</span>
+            <div class="reward-info">
+              <span class="reward-name">{{ reward.name }}</span>
+              <span class="reward-date">{{ formatDate(reward.redeemedAt) }}</span>
+            </div>
+            <Check :size="18" :stroke-width="2" class="check-icon" />
+          </div>
         </div>
       </div>
     </div>
@@ -175,12 +221,13 @@
 import { ref, computed } from 'vue'
 import { useXpStore } from '../stores/xp'
 import { useToastStore } from '../stores/toast'
-import { Gift, Plus, Pencil, Check, X } from 'lucide-vue-next'
+import { Gift, Plus, Pencil, Check, X, ChevronDown } from 'lucide-vue-next'
 
 const xpStore = useXpStore()
 const toast = useToastStore()
 
 const showAddModal = ref(false)
+const rewardsExpanded = ref(false)
 const editingReward = ref(null)
 const claimingReward = ref(null)
 
@@ -201,6 +248,27 @@ const wishlist = computed(() => xpStore.wishlist)
 const availableRewards = computed(() => xpStore.availableRewards)
 const upcomingRewards = computed(() => xpStore.upcomingRewards)
 const redeemedRewards = computed(() => xpStore.redeemedRewards)
+
+const allActiveRewards = computed(() => {
+  const available = availableRewards.value.map(r => ({ ...r, isAvailable: true }))
+  const upcoming = upcomingRewards.value.map(r => ({ ...r, isAvailable: false }))
+  return [...available, ...upcoming]
+})
+
+const visibleRewards = computed(() => {
+  if (rewardsExpanded.value) {
+    return allActiveRewards.value
+  }
+  return allActiveRewards.value.slice(0, 4)
+})
+
+const hiddenRewardsCount = computed(() => {
+  return Math.max(0, allActiveRewards.value.length - 4)
+})
+
+function toggleRewardsExpand() {
+  rewardsExpanded.value = !rewardsExpanded.value
+}
 
 function getProgress(reward) {
   return Math.min(100, (xpBalance.value / reward.cost) * 100)
@@ -240,10 +308,10 @@ function closeModal() {
 function saveReward() {
   if (editingReward.value) {
     xpStore.updateReward(editingReward.value.id, formData.value)
-    toast.show('Награда обновлена', 'success')
+    toast.showToast({ title: 'Награда обновлена', type: 'success' })
   } else {
     xpStore.addReward(formData.value)
-    toast.show('Награда добавлена', 'success')
+    toast.showToast({ title: 'Награда добавлена', type: 'success' })
   }
   closeModal()
 }
@@ -251,7 +319,7 @@ function saveReward() {
 function deleteReward() {
   if (editingReward.value) {
     xpStore.removeReward(editingReward.value.id)
-    toast.show('Награда удалена', 'info')
+    toast.showToast({ title: 'Награда удалена', type: 'info' })
     closeModal()
   }
 }
@@ -265,9 +333,9 @@ function confirmClaim() {
   
   const result = xpStore.spendXP(claimingReward.value.id)
   if (result.success) {
-    toast.show(`Поздравляем! Вы получили: ${claimingReward.value.name}`, 'success')
+    toast.showToast({ title: `Поздравляем! Вы получили: ${claimingReward.value.name}`, type: 'success' })
   } else {
-    toast.show(result.error, 'error')
+    toast.showToast({ title: result.error, type: 'error' })
   }
   claimingReward.value = null
 }
@@ -620,5 +688,165 @@ function confirmClaim() {
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--border-color);
   justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .wishlist-section {
+    padding: 1rem;
+  }
+  
+  .section-header {
+    margin-bottom: 0.75rem;
+  }
+  
+  .rewards-list.desktop-only {
+    display: none !important;
+  }
+  
+  .rewards-compact.mobile-only {
+    display: block !important;
+  }
+  
+  .btn-icon.desktop-only {
+    display: none !important;
+  }
+}
+
+.rewards-compact {
+  display: none;
+}
+
+.compact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.compact-reward {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.compact-reward:active {
+  transform: scale(0.98);
+}
+
+.compact-reward.available {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.compact-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.compact-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.compact-name {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compact-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.progress-bar-mini {
+  flex: 1;
+  height: 4px;
+  background: var(--border-color);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill-mini {
+  height: 100%;
+  background: linear-gradient(90deg, #7c3aed, #a855f7);
+  border-radius: 2px;
+}
+
+.progress-text-mini {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.compact-ready {
+  font-size: 0.8rem;
+  color: #22c55e;
+  font-weight: 500;
+}
+
+.compact-check {
+  color: #22c55e;
+  flex-shrink: 0;
+}
+
+.compact-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.btn-expand {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-expand:hover {
+  background: var(--bg-tertiary);
+}
+
+.btn-expand svg {
+  transition: transform 0.2s ease;
+}
+
+.btn-expand svg.rotated {
+  transform: rotate(180deg);
+}
+
+.btn-add-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--primary-color);
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-add-compact:hover {
+  opacity: 0.9;
 }
 </style>

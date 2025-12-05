@@ -21,7 +21,7 @@
 
     <div class="content-layout">
       <div class="main-content">
-        <div class="today-cta card">
+        <div class="today-cta card" v-if="journalEntries.length > 0 || isLoading">
           <div class="cta-content">
             <BookOpen :size="32" :stroke-width="1.5" class="cta-icon" />
             <div>
@@ -393,6 +393,12 @@ function onEntrySaved() {
 @media (max-width: 640px) {
   .header-content {
     flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .header-content > div {
+    text-align: center;
   }
 }
 

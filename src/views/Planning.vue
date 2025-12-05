@@ -787,7 +787,7 @@
                     </select>
                   </div>
                   <button 
-                    class="btn btn-sm"
+                    class="btn btn-sm desktop-only"
                     :class="{ 'btn-primary': filterThisWeek, 'btn-outline': !filterThisWeek }"
                     @click="filterThisWeek = !filterThisWeek"
                     title="Показать цели с шагами на текущей неделе"

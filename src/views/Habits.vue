@@ -9,7 +9,7 @@
           </h1>
           <p class="subtitle">Маленькие шаги к большим изменениям</p>
         </div>
-        <button class="btn btn-primary" @click="openAddModal">
+        <button class="btn btn-primary desktop-only" @click="openAddModal">
           <Plus :size="18" :stroke-width="1.5" />
           Добавить привычку
         </button>
@@ -283,54 +283,43 @@
             'deleted-during-week': habit.wasDeletedThisWeek
           }"
         >
-          <div class="habit-main" @click="toggleHabitCompletion(habit)">
+          <div class="habit-row-top" @click="toggleHabitCompletion(habit)">
             <div class="habit-check">
               <div class="checkbox" :class="{ checked: isHabitCompletedToday(habit), disabled: !isScheduledForToday(habit) }">
                 <Check v-if="isHabitCompletedToday(habit)" :size="14" :stroke-width="2.5" />
               </div>
             </div>
             <span class="habit-icon">{{ getIconEmoji(habit.icon) }}</span>
-            <div class="habit-info">
-              <span class="habit-name">{{ habit.name }}</span>
-              <div class="habit-meta">
-                <span class="xp-badge positive">+{{ habit.xpReward }} XP</span>
-                <span v-if="habit.xpPenalty && gameSettings.penaltiesEnabled" class="xp-badge negative">
-                  -{{ habit.xpPenalty }} XP
-                </span>
-                <span class="frequency-badge">{{ getFrequencyLabel(habit) }}</span>
-              </div>
-            </div>
+            <span class="habit-name">{{ habit.name }}</span>
+            <span class="xp-badge positive">+{{ habit.xpReward }} XP</span>
             <transition name="xp-pop">
               <span v-if="showXpPopup === habit.id" class="xp-popup">+{{ habit.xpReward }} XP</span>
             </transition>
           </div>
           
-          <div class="habit-schedule-inline clickable-schedule" @click.stop>
-            <div 
-              v-for="day in weekDays" 
-              :key="day.key"
-              class="schedule-day"
-              :class="[
-                getDayStatus(habit, day.date), 
-                { 
-                  today: day.isToday,
-                  'deleted-after': habit.deletedDuringWeek && day.date > habit.deletedDuringWeek
-                }
-              ]"
-              :title="`${day.name}: ${getDayStatusLabel(getDayStatus(habit, day.date))}${habit.deletedDuringWeek && day.date > habit.deletedDuringWeek ? ' (привычка удалена)' : ''}`"
-              @click="openDayEditModal(habit, day)"
-            >
-              <span class="day-letter">{{ day.short.charAt(0) }}</span>
+          <div class="habit-row-bottom">
+            <span class="frequency-badge">{{ getFrequencyLabel(habit) }}</span>
+            <span v-if="habit.xpPenalty && gameSettings.penaltiesEnabled" class="xp-badge negative">
+              -{{ habit.xpPenalty }} XP
+            </span>
+            <div class="habit-schedule-inline clickable-schedule" @click.stop>
+              <div 
+                v-for="day in weekDays" 
+                :key="day.key"
+                class="schedule-day"
+                :class="[
+                  getDayStatus(habit, day.date), 
+                  { 
+                    today: day.isToday,
+                    'deleted-after': habit.deletedDuringWeek && day.date > habit.deletedDuringWeek
+                  }
+                ]"
+                :title="`${day.name}: ${getDayStatusLabel(getDayStatus(habit, day.date))}${habit.deletedDuringWeek && day.date > habit.deletedDuringWeek ? ' (привычка удалена)' : ''}`"
+                @click="openDayEditModal(habit, day)"
+              >
+                <span class="day-letter">{{ day.short.charAt(0) }}</span>
+              </div>
             </div>
-          </div>
-          
-          <div class="habit-actions" v-if="!isPastWeek">
-            <button class="btn-icon" @click.stop="editHabit(habit)" title="Редактировать">
-              <Pencil :size="16" :stroke-width="1.5" />
-            </button>
-            <button class="btn-icon danger" @click.stop="confirmDeleteHabit(habit)" title="Удалить">
-              <Trash2 :size="16" :stroke-width="1.5" />
-            </button>
           </div>
           
           <div class="habit-deleted-during-week-badge" v-if="habit.wasDeletedThisWeek">
@@ -385,6 +374,13 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <div class="mobile-add-button" v-if="allHabits.length > 0 || deletedHabits.length > 0">
+        <button class="btn btn-primary btn-add-habit" @click="openAddModal">
+          <Plus :size="18" :stroke-width="1.5" />
+          Добавить привычку
+        </button>
       </div>
 
       <div v-else-if="allHabits.length === 0 && deletedHabits.length === 0" class="empty-state">
@@ -3765,16 +3761,16 @@ onMounted(() => {
 
 .habit-card {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 0.5rem;
-  padding: 0.75rem;
-  background: var(--bg-secondary);
+  padding: 0.875rem 1rem;
+  background: #ffffff;
   border-radius: 12px;
+  border: 1px solid var(--border-color);
   transition: all 0.2s ease;
 }
 
 .habit-card:hover {
-  background: var(--bg-tertiary, rgba(0,0,0,0.08));
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
@@ -3785,8 +3781,36 @@ onMounted(() => {
   margin: -4px;
 }
 
+.habit-row-top {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.habit-row-top .habit-name {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.habit-row-top .xp-badge {
+  flex-shrink: 0;
+}
+
+.habit-row-bottom {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.habit-row-bottom .habit-schedule-inline {
+  margin-left: auto;
+}
+
 .habit-card.completed {
-  background: rgba(34, 197, 94, 0.1);
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.3);
 }
 
 .habit-card.not-scheduled {
@@ -6026,10 +6050,31 @@ onMounted(() => {
   justify-content: space-between;
 }
 
+.mobile-add-button {
+  display: none;
+  padding: 1rem 0;
+  margin-top: 0.5rem;
+}
+
+.btn-add-habit {
+  width: 100%;
+  justify-content: center;
+  padding: 0.875rem 1rem;
+  border-radius: 12px;
+}
+
 @media (max-width: 768px) {
   .header-content {
     flex-direction: column;
-    align-items: stretch;
+    align-items: center;
+  }
+  
+  .title-section {
+    text-align: center;
+  }
+  
+  .title-section h1 {
+    justify-content: center;
   }
   
   .header-content .btn {
@@ -6168,8 +6213,15 @@ onMounted(() => {
     gap: 0.75rem;
   }
   
-  .habit-actions {
+  .habit-row-bottom {
+    flex-wrap: wrap;
     gap: 0.5rem;
+  }
+  
+  .habit-row-bottom .habit-schedule-inline {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-start;
   }
   
   .btn-icon {
@@ -6203,6 +6255,14 @@ onMounted(() => {
   
   .empty-state p {
     font-size: 0.9rem;
+  }
+  
+  .desktop-only {
+    display: none !important;
+  }
+  
+  .mobile-add-button {
+    display: block;
   }
 }
 </style>
