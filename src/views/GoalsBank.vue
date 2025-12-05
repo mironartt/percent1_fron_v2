@@ -654,6 +654,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
 import { 
   Lightbulb, 
   CheckCircle, 
@@ -1732,6 +1733,20 @@ function goToDecompose(goalId) {
   
   // Find the goal and get its backendId
   const rawGoal = rawIdeas.value.find(g => g.id === goalId)
+  
+  // Dev mode: allow navigation with local id when backend is skipped
+  if (DEBUG_MODE && SKIP_AUTH_CHECK) {
+    if (rawGoal) {
+      // Use backendId if available, otherwise use local id prefixed with 'local-'
+      const navigateId = rawGoal.backendId || `local-${goalId}`
+      router.push(`/app/goals/${navigateId}`)
+    } else {
+      console.warn('[GoalsBank] Cannot decompose: goal not found', goalId)
+    }
+    return
+  }
+  
+  // Production mode: require backendId
   if (rawGoal && rawGoal.backendId) {
     // Navigate using backendId - this will be used by GoalEdit to fetch data
     router.push(`/app/goals/${rawGoal.backendId}`)

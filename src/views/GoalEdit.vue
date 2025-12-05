@@ -624,6 +624,7 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
 import { 
   Trash2, Save, Plus, ArrowLeft, GripVertical, X, Edit2, ChevronUp, ChevronDown, ChevronsUpDown,
   Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target,
@@ -638,11 +639,39 @@ const store = useAppStore()
 const lifeSpheres = computed(() => store.lifeSpheres)
 const goals = computed(() => store.goals)
 
-// route.params.id is now backendId from the URL
+// route.params.id is now backendId from the URL (or local-{id} in dev mode)
 const goalBackendId = computed(() => route.params.id)
+
+// Check if this is a local id (dev mode)
+const isLocalId = computed(() => goalBackendId.value?.startsWith('local-'))
+const localGoalId = computed(() => isLocalId.value ? goalBackendId.value.replace('local-', '') : null)
 
 // Find goal by backendId in store.goals or rawIdeas
 const goal = computed(() => {
+  // Dev mode: handle local ids
+  if (DEBUG_MODE && SKIP_AUTH_CHECK && isLocalId.value) {
+    // Find by local id in rawIdeas
+    const rawGoal = store.goalsBank.rawIdeas.find(g => g.id === localGoalId.value)
+    if (rawGoal) {
+      return {
+        id: rawGoal.id,
+        backendId: rawGoal.backendId,
+        title: rawGoal.title,
+        description: rawGoal.description || rawGoal.why,
+        sphereId: rawGoal.category,
+        status: rawGoal.status,
+        steps: [],
+        source: 'goals-bank',
+        sourceId: rawGoal.id
+      }
+    }
+    // Also try in goals
+    const foundGoal = goals.value.find(g => g.id === localGoalId.value)
+    if (foundGoal) return foundGoal
+    
+    return null
+  }
+  
   // First try to find in goals by backendId
   let found = goals.value.find(g => g.backendId === goalBackendId.value || String(g.backendId) === goalBackendId.value)
   if (found) return found
