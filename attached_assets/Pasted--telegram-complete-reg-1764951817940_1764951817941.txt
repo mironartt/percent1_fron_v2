@@ -1,0 +1,55 @@
+Сейчас, после регистрации через телеграм, пользователь попадает на страницу: `?telegram_complete_registration=1`.
+И ему открывается модальное окно с возможностью указать email и пароль.
+ВАЖНО: окно доступно, только если ранее юзер их не указывал!!!
+Юзер не указывал данные ранее, если в эндпоинте `/api/rest/front/get-user-data/`:
+- возвращается флаг `is_telegram_registration=true`
+- И поле email либо пустое, либо имеет формат `<что-то>@telegram.com` (т.е. оканчивается на `@telegram.com`) ИЛИ начинается со знака `@`.
+
+Если оба условия выполняются, то отображается модальное окно "Завершите регистрацию" с формами для указания email и пароля.
+
+Для данной задачи был добавлен эндопинт: `/api/rest/front/registration/fill-data/`.
+Пример запроса:
+```
+// Основной запрос к API
+function callApi() {
+    const url = 'http://127.0.0.1:8017/api/rest/front/registration/fill-data/';
+    const data = {
+        "email": "user_tg@example.com",
+        "password1": "qwe#@Q#frty123",
+        "password2": "qwe#@Q#frty123"
+    };
+    const headers = {
+        "Content-Type": "application/json"
+    };
+
+    // Добавляем CSRF токен в заголовки
+    const csrftoken = getCookie('csrftoken');
+    if (csrftoken) {
+        headers['X-CSRFToken'] = csrftoken;
+    }
+
+    return fetch(url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: headers,
+            body: JSON.stringify(data),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Response:', data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// Использование: сначала инициализируем CSRF, потом вызываем эндпоинт
+initCsrf()
+    .then(() => callApi())
+    .catch(console.error);
+```
+
+Если запрос не успешен, вернутся ошибки как при обычной регистрации/авторизации, и их также нужно будет отрисовать для пользователя (по аналогии как на странице входа или регистрации).
+В случае успеха, ответ будет аналогичный эндпоинту `/api/rest/front/get-user-data/`.
+
+Добавь работу данного модального окна с бэком.
