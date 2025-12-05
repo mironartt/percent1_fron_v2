@@ -91,18 +91,15 @@
       </div>
 
       <div class="wheel-summary card">
-        <div class="wheel-header">
-          <h3>Система сбалансированных показателей</h3>
-          <button 
-            v-if="!isEditingWheel" 
-            class="btn-edit-wheel"
-            @click="startEditWheel"
-            title="Редактировать оценки"
-          >
-            <Pencil :size="18" />
-            <span class="btn-edit-text">Редактировать</span>
-          </button>
-        </div>
+        <h3 class="wheel-title">Колесо баланса</h3>
+        <button 
+          v-if="!isEditingWheel" 
+          class="btn-edit-wheel-icon"
+          @click="startEditWheel"
+          title="Редактировать оценки"
+        >
+          <Settings :size="20" />
+        </button>
         <div class="wheel-visualization">
           <WheelOfLife 
             :spheres="lifeSpheres" 
@@ -603,7 +600,8 @@ import {
   X,
   Lightbulb,
   ChartPie,
-  Sparkles
+  Sparkles,
+  Settings
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -1271,43 +1269,44 @@ watch(() => route.query.spp_step, () => {
 .wheel-summary {
   margin-bottom: 2rem;
   text-align: center;
+  position: relative;
 }
 
 .wheel-summary h3 {
   margin-bottom: 1rem;
 }
 
-.wheel-header {
+.wheel-title {
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.btn-edit-wheel-icon {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-  padding: 0 1rem;
-}
-
-.wheel-header h3 {
-  margin: 0;
-}
-
-.btn-edit-wheel {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  justify-content: center;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-  font-size: 0.875rem;
-  font-weight: 500;
+  border-radius: 50%;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
+  z-index: 10;
 }
 
-.btn-edit-wheel:hover {
+.btn-edit-wheel-icon:hover {
   background: var(--primary-color);
   color: white;
   border-color: var(--primary-color);
+  transform: rotate(45deg);
 }
 
 .wheel-edit-hint {
@@ -2805,40 +2804,46 @@ watch(() => route.query.spp_step, () => {
     font-size: 1.5rem;
   }
   
-  .wheel-summary h3 {
+  .wheel-summary h3,
+  .wheel-title {
     display: none;
   }
   
   .wheel-summary {
-    padding: 12px;
-    margin-bottom: 12px;
-  }
-  
-  .wheel-header {
-    justify-content: center;
     padding: 0;
+    margin: 0 -8px 12px -8px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
   }
   
-  .wheel-header h3 {
-    display: none;
+  .wheel-summary.card {
+    background: transparent;
+    border: none;
+    box-shadow: none;
   }
   
-  .btn-edit-wheel {
-    padding: 0.75rem 1.25rem;
-    font-size: 0.9rem;
+  .btn-edit-wheel-icon {
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
   }
   
-  .btn-edit-text {
-    display: inline;
+  .btn-edit-wheel-icon svg {
+    width: 18px;
+    height: 18px;
   }
   
   .wheel-visualization {
-    padding: 8px 0;
-    max-width: 320px;
+    padding: 0;
+    max-width: 100%;
+    width: 100%;
   }
   
   .wheel-edit-hint {
-    margin-top: 0.75rem;
+    margin: 0.75rem 8px 0 8px;
     padding: 0.5rem 0.75rem;
   }
   
@@ -2849,7 +2854,7 @@ watch(() => route.query.spp_step, () => {
   .wheel-edit-actions {
     flex-direction: column;
     gap: 0.75rem;
-    margin-top: 1rem;
+    margin: 1rem 8px 0 8px;
     padding-top: 0.75rem;
   }
   

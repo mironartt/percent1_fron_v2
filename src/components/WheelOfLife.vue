@@ -340,7 +340,13 @@ function startDrag(event, sphere, index) {
   }
   
   .wheel-of-life {
-    min-width: 280px;
+    width: 100%;
+    min-width: unset;
+  }
+  
+  .wheel-svg {
+    width: 100%;
+    height: auto;
   }
 }
 
