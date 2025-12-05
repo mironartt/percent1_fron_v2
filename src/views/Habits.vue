@@ -734,17 +734,6 @@
                 <div class="toggle-item">
                   <label class="toggle-row" :class="{ disabled: isSoftMode }">
                     <div class="toggle-info">
-                      <span class="toggle-label">Штрафы за пропуск привычек</span>
-                      <span class="toggle-hint">Снимает XP если запланированная привычка не выполнена</span>
-                    </div>
-                    <input type="checkbox" v-model="gameSettings.penaltiesEnabled" @change="onPenaltiesEnabledChange" :disabled="isSoftMode" />
-                    <span class="toggle"></span>
-                  </label>
-                </div>
-                
-                <div class="toggle-item">
-                  <label class="toggle-row" :class="{ disabled: isSoftMode }">
-                    <div class="toggle-info">
                       <span class="toggle-label">Штрафы за планирование</span>
                       <span class="toggle-hint">Снимает XP если нет плана на следующий день</span>
                     </div>
@@ -1784,14 +1773,6 @@ function saveGameSettings() {
   } catch (e) {
     console.error('[Habits] Failed to save game settings:', e)
   }
-}
-
-function onPenaltiesEnabledChange() {
-  if (!gameSettings.value.penaltiesEnabled) {
-    gameSettings.value.difficultyMode = 'soft'
-    gameSettings.value.weeklyAmnestyCount = 0
-  }
-  saveGameSettings()
 }
 
 function loadGameSettings() {
