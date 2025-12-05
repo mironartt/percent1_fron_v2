@@ -1433,6 +1433,7 @@ async function completeOnboarding() {
   .onboarding-container {
     padding: 1.5rem;
     border-radius: 16px;
+    overflow: hidden;
   }
   
   .options-grid {
@@ -1441,10 +1442,12 @@ async function completeOnboarding() {
   
   .wheel-section {
     grid-template-columns: 1fr;
+    overflow: hidden;
   }
   
   .wheel-container {
-    transform: none;
+    transform: scale(0.85);
+    transform-origin: center;
     width: 100%;
     max-width: none;
     margin: 0 auto;
@@ -1513,11 +1516,18 @@ async function completeOnboarding() {
   }
   
   .stat-value-sm {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
+    word-break: break-word;
+    line-height: 1.2;
   }
   
   .stat-label {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
+  }
+  
+  .stat-info {
+    min-width: 0;
+    overflow: hidden;
   }
 }
 </style>
