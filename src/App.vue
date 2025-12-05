@@ -51,14 +51,18 @@ const isAuthPage = computed(() => {
   return route.name === 'register' || route.name === 'login'
 })
 
-const hasSidebar = computed(() => !isAuthPage.value)
+const isOnboarding = computed(() => {
+  return store.shouldShowOnboarding && route.path === '/app'
+})
+
+const hasSidebar = computed(() => !isAuthPage.value && !isOnboarding.value)
 
 const isAppPage = computed(() => {
   return route.path === '/app' || route.path.startsWith('/app/')
 })
 
 const showMentorPanel = computed(() => {
-  return hasSidebar.value && isAppPage.value
+  return hasSidebar.value && isAppPage.value && !isOnboarding.value
 })
 
 const appClasses = computed(() => ({
