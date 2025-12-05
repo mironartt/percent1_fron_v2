@@ -714,38 +714,44 @@
               </p>
             </div>
             
-            <div class="settings-section">
+            <div class="settings-section" :class="{ 'section-disabled': isSoftMode }">
               <div class="section-header">
                 <h4>Санкции</h4>
                 <span class="section-hint">Дополнительная мотивация</span>
               </div>
-              <p class="settings-info">
+              
+              <div v-if="isSoftMode" class="soft-mode-notice">
+                <Shield :size="16" :stroke-width="1.5" />
+                <span>В мягком режиме штрафы недоступны. Выберите другой режим для активации.</span>
+              </div>
+              
+              <p v-else class="settings-info">
                 <Info :size="14" :stroke-width="1.5" />
                 Штрафы снимают XP, но ваш баланс никогда не уйдёт ниже 0
               </p>
               
-              <div class="toggle-group-with-sliders">
+              <div class="toggle-group-with-sliders" :class="{ 'toggles-disabled': isSoftMode }">
                 <div class="toggle-item">
-                  <label class="toggle-row">
+                  <label class="toggle-row" :class="{ disabled: isSoftMode }">
                     <div class="toggle-info">
                       <span class="toggle-label">Штрафы за пропуск привычек</span>
                       <span class="toggle-hint">Снимает XP если запланированная привычка не выполнена</span>
                     </div>
-                    <input type="checkbox" v-model="gameSettings.penaltiesEnabled" @change="onPenaltiesEnabledChange" />
+                    <input type="checkbox" v-model="gameSettings.penaltiesEnabled" @change="onPenaltiesEnabledChange" :disabled="isSoftMode" />
                     <span class="toggle"></span>
                   </label>
                 </div>
                 
                 <div class="toggle-item">
-                  <label class="toggle-row">
+                  <label class="toggle-row" :class="{ disabled: isSoftMode }">
                     <div class="toggle-info">
                       <span class="toggle-label">Штрафы за планирование</span>
                       <span class="toggle-hint">Снимает XP если нет плана на следующий день</span>
                     </div>
-                    <input type="checkbox" v-model="gameSettings.planningPenalty" @change="saveGameSettings" />
+                    <input type="checkbox" v-model="gameSettings.planningPenalty" @change="saveGameSettings" :disabled="isSoftMode" />
                     <span class="toggle"></span>
                   </label>
-                  <div class="inline-slider" v-if="gameSettings.planningPenalty">
+                  <div class="inline-slider" v-if="gameSettings.planningPenalty && !isSoftMode">
                     <div class="inline-slider-header">
                       <span>Размер штрафа</span>
                       <span class="inline-slider-value">{{ gameSettings.planningPenaltyAmount || 10 }} XP</span>
@@ -763,15 +769,15 @@
                 </div>
                 
                 <div class="toggle-item">
-                  <label class="toggle-row">
+                  <label class="toggle-row" :class="{ disabled: isSoftMode }">
                     <div class="toggle-info">
                       <span class="toggle-label">Штрафы за дневник</span>
                       <span class="toggle-hint">Снимает XP если дневник не заполнен за день</span>
                     </div>
-                    <input type="checkbox" v-model="gameSettings.journalPenalty" @change="saveGameSettings" />
+                    <input type="checkbox" v-model="gameSettings.journalPenalty" @change="saveGameSettings" :disabled="isSoftMode" />
                     <span class="toggle"></span>
                   </label>
-                  <div class="inline-slider" v-if="gameSettings.journalPenalty">
+                  <div class="inline-slider" v-if="gameSettings.journalPenalty && !isSoftMode">
                     <div class="inline-slider-header">
                       <span>Размер штрафа</span>
                       <span class="inline-slider-value">{{ gameSettings.journalPenaltyAmount || 10 }} XP</span>
@@ -1229,6 +1235,8 @@ const difficultyLabel = computed(() => {
   const labels = { soft: 'Мягкий', balanced: 'Баланс', hardcore: 'Хардкор', custom: 'Свой' }
   return labels[gameSettings.value.difficultyMode]
 })
+
+const isSoftMode = computed(() => gameSettings.value.difficultyMode === 'soft')
 
 const currentPenaltyPercent = computed(() => {
   const mode = gameSettings.value.difficultyMode
@@ -3769,6 +3777,56 @@ onMounted(() => {
 
 .toggle-row:last-child {
   border-bottom: none;
+}
+
+.toggle-row.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.toggle-row.disabled .toggle-label,
+.toggle-row.disabled .toggle-hint {
+  color: var(--text-muted);
+}
+
+.toggle-row.disabled .toggle {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+}
+
+.toggles-disabled {
+  position: relative;
+}
+
+.toggles-disabled::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-primary);
+  opacity: 0.3;
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+.soft-mode-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(156, 163, 175, 0.1);
+  border: 1px solid rgba(156, 163, 175, 0.2);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.soft-mode-notice svg {
+  flex-shrink: 0;
+  color: var(--text-muted);
 }
 
 .toggle-row input[type="checkbox"] {
