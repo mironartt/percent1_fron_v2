@@ -1945,6 +1945,12 @@ function saveNoteAndClose() {
 
 function setDayAsCompleted() {
   if (!selectedHabitForEdit.value || !selectedDayForEdit.value) return
+  if (isFutureDay.value) {
+    toast.showToast({ type: 'warning', title: 'Нельзя изменить статус будущего дня' })
+    return
+  }
+  
+  saveCurrentDayData()
   
   const habit = selectedHabitForEdit.value
   const dateStr = selectedDayForEdit.value.date
@@ -1967,6 +1973,12 @@ function setDayAsCompleted() {
 
 function setDayAsMissed() {
   if (!selectedHabitForEdit.value || !selectedDayForEdit.value) return
+  if (isFutureDay.value) {
+    toast.showToast({ type: 'warning', title: 'Нельзя изменить статус будущего дня' })
+    return
+  }
+  
+  saveCurrentDayData()
   
   const habit = selectedHabitForEdit.value
   const dateStr = selectedDayForEdit.value.date
@@ -1992,6 +2004,12 @@ function setDayAsMissed() {
 
 function setDayAsExcused() {
   if (!selectedHabitForEdit.value || !selectedDayForEdit.value) return
+  if (isFutureDay.value) {
+    toast.showToast({ type: 'warning', title: 'Нельзя изменить статус будущего дня' })
+    return
+  }
+  
+  saveCurrentDayData()
   
   const habit = selectedHabitForEdit.value
   const dateStr = selectedDayForEdit.value.date
