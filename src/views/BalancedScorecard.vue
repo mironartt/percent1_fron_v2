@@ -91,7 +91,6 @@
       </div>
 
       <div class="wheel-summary card">
-        <h3 class="wheel-title">Колесо баланса</h3>
         <button 
           v-if="!isEditingWheel" 
           class="btn-edit-wheel-icon"
@@ -253,9 +252,6 @@
       <div class="summary-actions">
         <button class="btn btn-primary btn-lg" @click="goToGoalsBank">
           🏦 Перейти в Банк целей
-        </button>
-        <button class="btn btn-secondary" @click="restartLesson">
-          🔄 Пройти оценку заново
         </button>
       </div>
     </div>
@@ -555,10 +551,6 @@
 
         <!-- Action Buttons -->
         <div class="completion-actions">
-          <button class="btn btn-secondary" @click="resetModule">
-            <RotateCcw :size="18" />
-            Пройти заново
-          </button>
           <button 
             class="btn btn-primary btn-lg" 
             @click="completeModule"
