@@ -1067,13 +1067,16 @@
               v-if="!isFutureDay && gameSettings.amnestiedDates?.includes(selectedDayForEdit.date)" 
               class="day-edit-amnesty-warning"
             >
-              <div class="amnesty-info">
+              <div class="amnesty-info-row">
                 <Heart :size="16" :stroke-width="1.5" />
                 <span>На этот день применена амнистия</span>
               </div>
-              <button class="btn-cancel-amnesty" @click="cancelAmnestyForDay">
-                Отменить амнистию
-              </button>
+              <div class="amnesty-cancel-row">
+                <button class="btn-cancel-amnesty" @click="cancelAmnestyForDay">
+                  Отменить амнистию
+                </button>
+                <span class="amnesty-cancel-note">Амнистия будет отменена для всех привычек в этот день</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1120,60 +1123,6 @@ const selectedHabitForEdit = ref(null)
 const dayEditSkipReason = ref('')
 const dayEditNote = ref('')
 
-// ==== DEMO DATA FOR DEVELOPMENT ====
-// TODO: Remove this block after development is complete
-// This generates random past completion/skip data for visual testing
-const generateDemoData = () => {
-  const today = new Date()
-  const demoHabitLog = {}
-  const demoSkipReasons = {}
-  const demoExcusedSkips = {}
-  
-  for (let i = 1; i <= 6; i++) {
-    const date = new Date(today)
-    date.setDate(date.getDate() - i)
-    const dateStr = date.toISOString().split('T')[0]
-    
-    const random = Math.random()
-    if (random > 0.3) {
-      const habitIds = appStore.habits.filter(h => !h.archived).map(h => h.id)
-      const completedCount = Math.floor(Math.random() * habitIds.length) + 1
-      demoHabitLog[dateStr] = habitIds.slice(0, completedCount)
-    }
-    
-    if (random > 0.5 && random < 0.7) {
-      const skippedHabits = appStore.habits.filter(h => !h.archived).slice(0, 2)
-      skippedHabits.forEach(h => {
-        if (!demoSkipReasons[dateStr]) demoSkipReasons[dateStr] = {}
-        demoSkipReasons[dateStr][h.id] = 'Был занят другими делами'
-      })
-    }
-    
-    if (random > 0.8) {
-      const excusedHabits = appStore.habits.filter(h => !h.archived).slice(0, 1)
-      excusedHabits.forEach(h => {
-        if (!demoExcusedSkips[dateStr]) demoExcusedSkips[dateStr] = {}
-        demoExcusedSkips[dateStr][h.id] = true
-      })
-    }
-  }
-  
-  return { demoHabitLog, demoSkipReasons, demoExcusedSkips }
-}
-
-const demoData = ref(null)
-
-const initDemoData = () => {
-  if (appStore.habits.length > 0 && !demoData.value) {
-    demoData.value = generateDemoData()
-    Object.entries(demoData.value.demoHabitLog).forEach(([date, ids]) => {
-      if (!appStore.habitLog[date]) {
-        appStore.habitLog[date] = ids
-      }
-    })
-  }
-}
-// ==== END DEMO DATA ====
 
 const habitSuggestions = [
   {
@@ -1873,10 +1822,9 @@ function getDayStatusLabel(status) {
 
 const isFutureDay = computed(() => {
   if (!selectedDayForEdit.value) return false
-  const date = new Date(selectedDayForEdit.value.date)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  return date > today
+  const selectedDateStr = selectedDayForEdit.value.date
+  const todayStr = new Date().toISOString().split('T')[0]
+  return selectedDateStr > todayStr
 })
 
 const showSkipReasonField = computed(() => {
@@ -1968,7 +1916,6 @@ function setDayAsCompleted() {
   }
   
   toast.showToast({ type: 'success', title: `Отмечено как выполненное` })
-  closeDayEditModal()
 }
 
 function setDayAsMissed() {
@@ -1999,7 +1946,6 @@ function setDayAsMissed() {
   }
   
   toast.showToast({ type: 'info', title: `Отмечено как пропущенное` })
-  closeDayEditModal()
 }
 
 function setDayAsExcused() {
@@ -2028,7 +1974,6 @@ function setDayAsExcused() {
   saveSkipData()
   
   toast.showToast({ type: 'success', title: `Уважительный пропуск (без штрафа)` })
-  closeDayEditModal()
 }
 
 function cancelAmnestyForDay() {
@@ -2050,7 +1995,6 @@ function cancelAmnestyForDay() {
   saveGameSettings()
   
   toast.showToast({ type: 'warning', title: 'Амнистия отменена' })
-  closeDayEditModal()
 }
 
 const dayEditWeekStats = computed(() => {
@@ -2304,11 +2248,6 @@ function useAmnesty() {
 
 onMounted(() => {
   loadGameSettings()
-  
-  // ==== DEMO: Initialize demo data for development ====
-  // TODO: Remove after development
-  initDemoData()
-  // ==== END DEMO ====
   
   if (gameSettings.value.aiCoachEnabled && habitStreak.value >= 7 && habitStreak.value % 7 === 0) {
     coachHint.value = `Потрясающе! ${habitStreak.value} дней подряд — это уже настоящая привычка! Так держать!`
@@ -2842,7 +2781,7 @@ onMounted(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: var(--primary-color);
+  background: #7c3aed;
   border: none;
   border-radius: 8px;
   color: white;
@@ -2850,11 +2789,13 @@ onMounted(() => {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
 }
 
 .btn-save-note:hover {
-  background: var(--primary-hover);
+  background: #6d28d9;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
 }
 
 .day-edit-schedule.clickable .schedule-day-mini.clickable {
@@ -2920,29 +2861,43 @@ onMounted(() => {
 
 .day-edit-amnesty-warning {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.6rem 0.75rem;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem;
   background: rgba(236, 72, 153, 0.08);
   border: 1px solid rgba(236, 72, 153, 0.2);
   border-radius: 8px;
 }
 
-.day-edit-amnesty-warning .amnesty-info {
+.day-edit-amnesty-warning .amnesty-info-row {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: #ec4899;
+  font-weight: 500;
+}
+
+.amnesty-cancel-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.amnesty-cancel-note {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 .btn-cancel-amnesty {
-  padding: 0.35rem 0.6rem;
+  align-self: flex-start;
+  padding: 0.4rem 0.75rem;
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: 6px;
   color: #ef4444;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
