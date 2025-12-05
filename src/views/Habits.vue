@@ -292,6 +292,13 @@
             <span class="habit-icon">{{ getIconEmoji(habit.icon) }}</span>
             <span class="habit-name">{{ habit.name }}</span>
             <span class="xp-badge positive">+{{ habit.xpReward }} XP</span>
+            <button 
+              class="btn-edit-habit" 
+              @click.stop="editHabit(habit)" 
+              title="Редактировать привычку"
+            >
+              <Pencil :size="14" :stroke-width="1.5" />
+            </button>
             <transition name="xp-pop">
               <span v-if="showXpPopup === habit.id" class="xp-popup">+{{ habit.xpReward }} XP</span>
             </transition>
@@ -3896,6 +3903,39 @@ onMounted(() => {
 .xp-badge.negative {
   background: rgba(239, 68, 68, 0.1);
   color: #ef4444;
+}
+
+.btn-edit-habit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0;
+  flex-shrink: 0;
+}
+
+.habit-card:hover .btn-edit-habit {
+  opacity: 1;
+}
+
+.btn-edit-habit:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .btn-edit-habit {
+    opacity: 1;
+    width: 32px;
+    height: 32px;
+  }
 }
 
 .frequency-badge {
