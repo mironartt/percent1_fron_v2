@@ -6164,83 +6164,12 @@ onMounted(() => {
   }
   
   .habit-card {
-    padding: 0.75rem;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    position: relative;
-  }
-  
-  .habit-main {
-    flex: 1;
-    min-width: 0;
-  }
-  
-  .habit-info {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem;
-    padding-right: 3.5rem;
-  }
-  
-  .habit-name {
-    flex: 1;
-    min-width: 0;
-    font-size: 0.95rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  
-  .habit-meta {
-    order: 0;
-    margin-top: 0;
-  }
-  
-  .habit-meta .xp-badge.positive {
-    position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-  }
-  
-  .habit-meta .xp-badge.negative,
-  .habit-meta .frequency-badge {
-    display: none;
-  }
-  
-  .habit-schedule-inline {
-    width: 100%;
-    order: 10;
-    margin-left: 0;
-    margin-right: 0;
-    padding-left: calc(24px + 1.5rem + 0.75rem);
-    justify-content: flex-start;
-    gap: 4px;
-  }
-  
-  .schedule-day {
-    width: 28px;
-    height: 28px;
-  }
-  
-  .day-letter {
-    font-size: 0.7rem;
+    padding: 0.875rem 1rem;
+    gap: 0.75rem;
   }
   
   .habit-actions {
-    position: absolute;
-    top: 0.5rem;
-    right: 3.5rem;
-    gap: 0.25rem;
-  }
-  
-  .habit-actions .btn-icon {
-    min-width: 32px;
-    min-height: 32px;
-    padding: 0.4rem;
-    opacity: 0.6;
+    gap: 0.5rem;
   }
   
   .btn-icon {
