@@ -2944,7 +2944,8 @@ watch(() => route.query.spp_step, () => {
   }
   
   .wheel-visualization {
-    max-width: 280px;
+    max-width: 100%;
+    width: 100%;
   }
   
   .accordion-header {
