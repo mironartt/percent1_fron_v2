@@ -6050,6 +6050,28 @@ onMounted(() => {
   justify-content: space-between;
 }
 
+.mobile-sticky-add {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 90px;
+  padding: 0.75rem 1rem;
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to top, var(--bg-primary) 80%, transparent);
+  z-index: 90;
+  pointer-events: none;
+}
+
+.btn-sticky-add {
+  width: 100%;
+  justify-content: center;
+  padding: 0.875rem 1rem;
+  border-radius: 12px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(124, 58, 237, 0.3);
+  pointer-events: auto;
+}
+
 @media (max-width: 768px) {
   .header-content {
     flex-direction: column;
@@ -6247,27 +6269,5 @@ onMounted(() => {
   .habits-page {
     padding-bottom: 5rem;
   }
-}
-
-.mobile-sticky-add {
-  display: none;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 90px;
-  padding: 0.75rem 1rem;
-  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(to top, var(--bg-primary) 80%, transparent);
-  z-index: 90;
-  pointer-events: none;
-}
-
-.btn-sticky-add {
-  width: 100%;
-  justify-content: center;
-  padding: 0.875rem 1rem;
-  border-radius: 12px;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(124, 58, 237, 0.3);
-  pointer-events: auto;
 }
 </style>
