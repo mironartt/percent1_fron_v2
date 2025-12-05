@@ -267,17 +267,14 @@
             </transition>
           </div>
           
-          <div class="habit-schedule-inline">
+          <div class="habit-schedule-inline clickable-schedule" @click.stop>
             <div 
               v-for="day in weekDays" 
               :key="day.key"
               class="schedule-day"
-              :class="{ 
-                active: isScheduledForDay(habit, day.key),
-                completed: isCompletedOnDay(habit, day.date),
-                today: day.isToday
-              }"
-              :title="`${day.name}: ${isCompletedOnDay(habit, day.date) ? 'выполнено' : isScheduledForDay(habit, day.key) ? 'запланировано' : 'не запланировано'}`"
+              :class="getDayStatus(habit, day.date)"
+              :title="`${day.name}: ${getDayStatusLabel(getDayStatus(habit, day.date))}`"
+              @click="openDayEditModal(habit, day)"
             >
               <span class="day-letter">{{ day.short.charAt(0) }}</span>
             </div>
@@ -286,9 +283,6 @@
           <div class="habit-actions">
             <button class="btn-icon" @click.stop="editHabit(habit)" title="Редактировать">
               <Pencil :size="16" :stroke-width="1.5" />
-            </button>
-            <button class="btn-icon" @click.stop="archiveHabit(habit)" title="Архивировать">
-              <Archive :size="16" :stroke-width="1.5" />
             </button>
             <button class="btn-icon danger" @click.stop="confirmDeleteHabit(habit)" title="Удалить">
               <Trash2 :size="16" :stroke-width="1.5" />
@@ -954,6 +948,107 @@
         </div>
       </div>
     </Teleport>
+
+    <Teleport to="body">
+      <div v-if="showDayEditModal && selectedHabitForEdit && selectedDayForEdit" class="modal-overlay" @click.self="closeDayEditModal">
+        <div class="modal-container modal-mini day-edit-modal">
+          <div class="modal-header">
+            <h3>
+              <Calendar :size="20" :stroke-width="1.5" />
+              {{ selectedDayForEdit.name }}, {{ formatAmnestyDate(selectedDayForEdit.date) }}
+            </h3>
+            <button class="btn-close" @click="closeDayEditModal">
+              <X :size="20" :stroke-width="1.5" />
+            </button>
+          </div>
+          <div class="modal-content">
+            <div class="day-edit-habit-info">
+              <span class="habit-icon">{{ getIconEmoji(selectedHabitForEdit.icon) }}</span>
+              <span class="habit-name">{{ selectedHabitForEdit.name }}</span>
+            </div>
+
+            <div class="day-edit-schedule">
+              <div 
+                v-for="day in weekDays" 
+                :key="day.key"
+                class="schedule-day-mini"
+                :class="[getDayStatus(selectedHabitForEdit, day.date), { current: day.date === selectedDayForEdit.date }]"
+              >
+                <span class="day-letter">{{ day.short.charAt(0) }}</span>
+              </div>
+            </div>
+
+            <div class="day-edit-stats">
+              <div class="stat-item-mini positive">
+                <span class="stat-value">+{{ dayEditWeekStats.xpEarned }}</span>
+                <span class="stat-label">XP за неделю</span>
+              </div>
+              <div class="stat-item-mini negative" v-if="dayEditWeekStats.xpPenalty > 0">
+                <span class="stat-value">-{{ dayEditWeekStats.xpPenalty }}</span>
+                <span class="stat-label">штрафы</span>
+              </div>
+            </div>
+
+            <div class="day-edit-current-status">
+              <span class="status-label">Текущий статус:</span>
+              <span class="status-value" :class="getDayStatus(selectedHabitForEdit, selectedDayForEdit.date)">
+                {{ getDayStatusLabel(getDayStatus(selectedHabitForEdit, selectedDayForEdit.date)) }}
+              </span>
+            </div>
+
+            <div class="day-edit-reason">
+              <label>Причина пропуска (опционально):</label>
+              <textarea 
+                v-model="dayEditSkipReason" 
+                placeholder="Укажите причину, если хотите..."
+                rows="2"
+              ></textarea>
+            </div>
+
+            <div class="day-edit-actions">
+              <button 
+                class="btn-status completed"
+                :class="{ active: getDayStatus(selectedHabitForEdit, selectedDayForEdit.date) === 'completed' }"
+                @click="setDayAsCompleted"
+              >
+                <Check :size="16" :stroke-width="2" />
+                Выполнено
+              </button>
+              <button 
+                class="btn-status missed"
+                :class="{ active: getDayStatus(selectedHabitForEdit, selectedDayForEdit.date) === 'missed' }"
+                @click="setDayAsMissed"
+              >
+                <X :size="16" :stroke-width="2" />
+                Пропущено
+              </button>
+              <button 
+                class="btn-status excused"
+                :class="{ active: getDayStatus(selectedHabitForEdit, selectedDayForEdit.date) === 'excused' }"
+                @click="setDayAsExcused"
+                title="Уважительная причина — без штрафа"
+              >
+                <Heart :size="16" :stroke-width="1.5" />
+                Уваж. пропуск
+              </button>
+            </div>
+
+            <div 
+              v-if="gameSettings.amnestiedDates?.includes(selectedDayForEdit.date)" 
+              class="day-edit-amnesty-warning"
+            >
+              <div class="amnesty-info">
+                <Heart :size="16" :stroke-width="1.5" />
+                <span>На этот день применена амнистия</span>
+              </div>
+              <button class="btn-cancel-amnesty" @click="cancelAmnestyForDay">
+                Отменить амнистию
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -989,6 +1084,65 @@ const showXpSlider = ref(false)
 const showPenaltyField = ref(false)
 const showSuggestionsModal = ref(false)
 const showAmnestyModal = ref(false)
+const showDayEditModal = ref(false)
+const selectedDayForEdit = ref(null)
+const selectedHabitForEdit = ref(null)
+const dayEditSkipReason = ref('')
+
+// ==== DEMO DATA FOR DEVELOPMENT ====
+// TODO: Remove this block after development is complete
+// This generates random past completion/skip data for visual testing
+const generateDemoData = () => {
+  const today = new Date()
+  const demoHabitLog = {}
+  const demoSkipReasons = {}
+  const demoExcusedSkips = {}
+  
+  for (let i = 1; i <= 6; i++) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - i)
+    const dateStr = date.toISOString().split('T')[0]
+    
+    const random = Math.random()
+    if (random > 0.3) {
+      const habitIds = appStore.habits.filter(h => !h.archived).map(h => h.id)
+      const completedCount = Math.floor(Math.random() * habitIds.length) + 1
+      demoHabitLog[dateStr] = habitIds.slice(0, completedCount)
+    }
+    
+    if (random > 0.5 && random < 0.7) {
+      const skippedHabits = appStore.habits.filter(h => !h.archived).slice(0, 2)
+      skippedHabits.forEach(h => {
+        if (!demoSkipReasons[dateStr]) demoSkipReasons[dateStr] = {}
+        demoSkipReasons[dateStr][h.id] = 'Был занят другими делами'
+      })
+    }
+    
+    if (random > 0.8) {
+      const excusedHabits = appStore.habits.filter(h => !h.archived).slice(0, 1)
+      excusedHabits.forEach(h => {
+        if (!demoExcusedSkips[dateStr]) demoExcusedSkips[dateStr] = {}
+        demoExcusedSkips[dateStr][h.id] = true
+      })
+    }
+  }
+  
+  return { demoHabitLog, demoSkipReasons, demoExcusedSkips }
+}
+
+const demoData = ref(null)
+
+const initDemoData = () => {
+  if (appStore.habits.length > 0 && !demoData.value) {
+    demoData.value = generateDemoData()
+    Object.entries(demoData.value.demoHabitLog).forEach(([date, ids]) => {
+      if (!appStore.habitLog[date]) {
+        appStore.habitLog[date] = ids
+      }
+    })
+  }
+}
+// ==== END DEMO DATA ====
 
 const habitSuggestions = [
   {
@@ -1348,7 +1502,7 @@ const missedDaysForAmnesty = computed(() => {
 
 function applyAmnestyForDay(dateStr) {
   if (amnestiesRemaining.value <= 0) {
-    toast.warning('Нет доступных амнистий')
+    toast.showToast({ type: 'warning', title: 'Нет доступных амнистий' })
     return
   }
   
@@ -1371,7 +1525,7 @@ function applyAmnestyForDay(dateStr) {
   const dayInfo = missedDaysForAmnesty.value.find(d => d.date === dateStr)
   const xpRecovered = dayInfo?.penaltyXp || 0
   
-  toast.success(`Амнистия применена! Возвращено ${xpRecovered} XP`)
+  toast.showToast({ type: 'success', title: `Амнистия применена! Возвращено ${xpRecovered} XP` })
 }
 
 function getWeekStart(date) {
@@ -1638,6 +1792,193 @@ function formatAmnestyDate(dateStr) {
   return `${day} ${months[date.getMonth()]}`
 }
 
+const skipReasons = ref(JSON.parse(localStorage.getItem('habitSkipReasons') || '{}'))
+const excusedSkips = ref(JSON.parse(localStorage.getItem('habitExcusedSkips') || '{}'))
+
+function saveSkipData() {
+  localStorage.setItem('habitSkipReasons', JSON.stringify(skipReasons.value))
+  localStorage.setItem('habitExcusedSkips', JSON.stringify(excusedSkips.value))
+}
+
+function getDayStatus(habit, dateStr) {
+  const date = new Date(dateStr)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const dayOfWeek = date.getDay()
+  
+  const isScheduled = isScheduledForDay(habit, dayOfWeek)
+  const isCompleted = isCompletedOnDay(habit, dateStr)
+  const isAmnestied = gameSettings.value.amnestiedDates?.includes(dateStr)
+  const isExcused = excusedSkips.value[dateStr]?.[habit.id]
+  const isFuture = date > today
+  const isToday = date.toDateString() === today.toDateString()
+  const isPast = date < today && !isToday
+  
+  if (!isScheduled) return 'not-scheduled'
+  if (isFuture) return 'future'
+  if (isCompleted) return 'completed'
+  if (isAmnestied) return 'amnestied'
+  if (isExcused) return 'excused'
+  if (isPast) return 'missed'
+  if (isToday) return 'today'
+  return 'scheduled'
+}
+
+function getDayStatusLabel(status) {
+  const labels = {
+    'not-scheduled': 'Не запланировано',
+    'future': 'Запланировано',
+    'completed': 'Выполнено',
+    'amnestied': 'Амнистия',
+    'excused': 'Уважительный пропуск',
+    'missed': 'Пропущено',
+    'today': 'Сегодня',
+    'scheduled': 'Запланировано'
+  }
+  return labels[status] || status
+}
+
+function openDayEditModal(habit, day) {
+  const date = new Date(day.date)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  if (date > today) {
+    toast.showToast({ type: 'info', title: 'Будущие дни нельзя редактировать' })
+    return
+  }
+  
+  if (!isScheduledForDay(habit, new Date(day.date).getDay())) {
+    toast.showToast({ type: 'info', title: 'Привычка не запланирована на этот день' })
+    return
+  }
+  
+  selectedHabitForEdit.value = habit
+  selectedDayForEdit.value = day
+  dayEditSkipReason.value = skipReasons.value[day.date]?.[habit.id] || ''
+  showDayEditModal.value = true
+}
+
+function closeDayEditModal() {
+  showDayEditModal.value = false
+  selectedDayForEdit.value = null
+  selectedHabitForEdit.value = null
+  dayEditSkipReason.value = ''
+}
+
+function setDayAsCompleted() {
+  if (!selectedHabitForEdit.value || !selectedDayForEdit.value) return
+  
+  const habit = selectedHabitForEdit.value
+  const dateStr = selectedDayForEdit.value.date
+  
+  if (!appStore.habitLog[dateStr]) {
+    appStore.habitLog[dateStr] = []
+  }
+  if (!appStore.habitLog[dateStr].includes(habit.id)) {
+    appStore.habitLog[dateStr].push(habit.id)
+  }
+  
+  if (excusedSkips.value[dateStr]?.[habit.id]) {
+    delete excusedSkips.value[dateStr][habit.id]
+    saveSkipData()
+  }
+  
+  toast.showToast({ type: 'success', title: `Отмечено как выполненное` })
+  closeDayEditModal()
+}
+
+function setDayAsMissed() {
+  if (!selectedHabitForEdit.value || !selectedDayForEdit.value) return
+  
+  const habit = selectedHabitForEdit.value
+  const dateStr = selectedDayForEdit.value.date
+  
+  if (appStore.habitLog[dateStr]) {
+    appStore.habitLog[dateStr] = appStore.habitLog[dateStr].filter(id => id !== habit.id)
+  }
+  
+  if (excusedSkips.value[dateStr]?.[habit.id]) {
+    delete excusedSkips.value[dateStr][habit.id]
+    saveSkipData()
+  }
+  
+  if (dayEditSkipReason.value) {
+    if (!skipReasons.value[dateStr]) skipReasons.value[dateStr] = {}
+    skipReasons.value[dateStr][habit.id] = dayEditSkipReason.value
+    saveSkipData()
+  }
+  
+  toast.showToast({ type: 'info', title: `Отмечено как пропущенное` })
+  closeDayEditModal()
+}
+
+function setDayAsExcused() {
+  if (!selectedHabitForEdit.value || !selectedDayForEdit.value) return
+  
+  const habit = selectedHabitForEdit.value
+  const dateStr = selectedDayForEdit.value.date
+  
+  if (appStore.habitLog[dateStr]) {
+    appStore.habitLog[dateStr] = appStore.habitLog[dateStr].filter(id => id !== habit.id)
+  }
+  
+  if (!excusedSkips.value[dateStr]) excusedSkips.value[dateStr] = {}
+  excusedSkips.value[dateStr][habit.id] = true
+  
+  if (dayEditSkipReason.value) {
+    if (!skipReasons.value[dateStr]) skipReasons.value[dateStr] = {}
+    skipReasons.value[dateStr][habit.id] = dayEditSkipReason.value
+  }
+  saveSkipData()
+  
+  toast.showToast({ type: 'success', title: `Уважительный пропуск (без штрафа)` })
+  closeDayEditModal()
+}
+
+function cancelAmnestyForDay() {
+  if (!selectedDayForEdit.value) return
+  
+  const dateStr = selectedDayForEdit.value.date
+  const amnestiedDates = gameSettings.value.amnestiedDates || []
+  
+  if (!amnestiedDates.includes(dateStr)) return
+  
+  if (!confirm('Отменить амнистию для этого дня? Штрафы будут восстановлены для ВСЕХ привычек в этот день.')) {
+    return
+  }
+  
+  gameSettings.value.amnestiedDates = amnestiedDates.filter(d => d !== dateStr)
+  if (gameSettings.value.amnestiesUsedThisWeek > 0) {
+    gameSettings.value.amnestiesUsedThisWeek--
+  }
+  saveGameSettings()
+  
+  toast.showToast({ type: 'warning', title: 'Амнистия отменена' })
+  closeDayEditModal()
+}
+
+const dayEditWeekStats = computed(() => {
+  if (!selectedHabitForEdit.value) return { xpEarned: 0, xpPenalty: 0 }
+  
+  const habit = selectedHabitForEdit.value
+  let xpEarned = 0
+  let xpPenalty = 0
+  
+  weekDays.value.forEach(day => {
+    const status = getDayStatus(habit, day.date)
+    if (status === 'completed') {
+      xpEarned += habit.xpReward || 5
+    } else if (status === 'missed' && gameSettings.value.penaltiesEnabled) {
+      const baseXp = habit.xpReward || 5
+      const penaltyMultiplier = (habit.penaltyPercent ?? currentPenaltyPercent.value) / 100
+      xpPenalty += Math.round(baseXp * penaltyMultiplier)
+    }
+  })
+  
+  return { xpEarned, xpPenalty }
+})
+
 function toggleHabitCompletion(habit) {
   if (!isScheduledForToday(habit)) {
     toast.showToast({ title: 'Эта привычка не запланирована на сегодня', type: 'info' })
@@ -1868,6 +2209,11 @@ function useAmnesty() {
 
 onMounted(() => {
   loadGameSettings()
+  
+  // ==== DEMO: Initialize demo data for development ====
+  // TODO: Remove after development
+  initDemoData()
+  // ==== END DEMO ====
   
   if (gameSettings.value.aiCoachEnabled && habitStreak.value >= 7 && habitStreak.value % 7 === 0) {
     coachHint.value = `Потрясающе! ${habitStreak.value} дней подряд — это уже настоящая привычка! Так держать!`
@@ -2144,6 +2490,303 @@ onMounted(() => {
 .amnesty-empty-hint {
   font-size: 0.75rem;
   text-align: center;
+}
+
+.day-edit-modal .modal-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.day-edit-modal .modal-header h3 svg {
+  color: var(--primary-color);
+}
+
+.day-edit-habit-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+.day-edit-habit-info .habit-icon {
+  font-size: 1.25rem;
+}
+
+.day-edit-habit-info .habit-name {
+  font-weight: 600;
+}
+
+.day-edit-schedule {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+.schedule-day-mini {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: var(--bg-primary);
+  transition: all 0.2s ease;
+}
+
+.schedule-day-mini .day-letter {
+  font-size: 0.7rem;
+}
+
+.schedule-day-mini.current {
+  box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.schedule-day-mini.not-scheduled {
+  opacity: 0.4;
+}
+
+.schedule-day-mini.completed {
+  background: #22c55e;
+}
+
+.schedule-day-mini.completed .day-letter {
+  color: white;
+}
+
+.schedule-day-mini.missed {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.schedule-day-mini.missed .day-letter {
+  color: #ef4444;
+}
+
+.schedule-day-mini.amnestied {
+  background: rgba(236, 72, 153, 0.15);
+}
+
+.schedule-day-mini.amnestied .day-letter {
+  color: #ec4899;
+}
+
+.schedule-day-mini.excused {
+  background: rgba(234, 179, 8, 0.15);
+}
+
+.schedule-day-mini.excused .day-letter {
+  color: #eab308;
+}
+
+.schedule-day-mini.scheduled,
+.schedule-day-mini.future {
+  background: rgba(124, 58, 237, 0.1);
+}
+
+.schedule-day-mini.scheduled .day-letter,
+.schedule-day-mini.future .day-letter {
+  color: var(--primary-color);
+}
+
+.day-edit-stats {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.stat-item-mini {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem;
+  border-radius: 8px;
+}
+
+.stat-item-mini.positive {
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.stat-item-mini.positive .stat-value {
+  color: #22c55e;
+  font-weight: 700;
+}
+
+.stat-item-mini.negative {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.stat-item-mini.negative .stat-value {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.stat-item-mini .stat-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.day-edit-current-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+}
+
+.day-edit-current-status .status-label {
+  color: var(--text-muted);
+}
+
+.day-edit-current-status .status-value {
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+}
+
+.day-edit-current-status .status-value.completed {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.day-edit-current-status .status-value.missed {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.day-edit-current-status .status-value.amnestied {
+  background: rgba(236, 72, 153, 0.15);
+  color: #ec4899;
+}
+
+.day-edit-current-status .status-value.excused {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+}
+
+.day-edit-current-status .status-value.today,
+.day-edit-current-status .status-value.scheduled {
+  background: rgba(124, 58, 237, 0.15);
+  color: var(--primary-color);
+}
+
+.day-edit-reason {
+  margin-bottom: 1rem;
+}
+
+.day-edit-reason label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.day-edit-reason textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  resize: none;
+}
+
+.day-edit-reason textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.day-edit-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.btn-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.6rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.btn-status:hover {
+  border-color: var(--primary-color);
+}
+
+.btn-status.completed:hover,
+.btn-status.completed.active {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: #22c55e;
+  color: #22c55e;
+}
+
+.btn-status.missed:hover,
+.btn-status.missed.active {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.btn-status.excused:hover,
+.btn-status.excused.active {
+  background: rgba(234, 179, 8, 0.1);
+  border-color: #eab308;
+  color: #eab308;
+}
+
+.day-edit-amnesty-warning {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.75rem;
+  background: rgba(236, 72, 153, 0.08);
+  border: 1px solid rgba(236, 72, 153, 0.2);
+  border-radius: 8px;
+}
+
+.day-edit-amnesty-warning .amnesty-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #ec4899;
+}
+
+.btn-cancel-amnesty {
+  padding: 0.35rem 0.6rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  color: #ef4444;
+  font-size: 0.7rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel-amnesty:hover {
+  background: rgba(239, 68, 68, 0.2);
 }
 
 .tabs-navigation {
@@ -2545,6 +3188,14 @@ onMounted(() => {
   margin-right: 0.5rem;
 }
 
+.clickable-schedule {
+  cursor: pointer;
+}
+
+.clickable-schedule:hover .schedule-day:not(.not-scheduled) {
+  transform: translateY(-1px);
+}
+
 .schedule-day {
   width: 24px;
   height: 24px;
@@ -2554,7 +3205,7 @@ onMounted(() => {
   border-radius: 6px;
   background: var(--bg-secondary);
   transition: all 0.2s ease;
-  cursor: default;
+  cursor: pointer;
 }
 
 .day-letter {
@@ -2564,11 +3215,19 @@ onMounted(() => {
   text-transform: uppercase;
 }
 
-.schedule-day.active {
+.schedule-day.not-scheduled {
+  background: var(--bg-secondary);
+  opacity: 0.5;
+  cursor: default;
+}
+
+.schedule-day.scheduled,
+.schedule-day.future {
   background: rgba(124, 58, 237, 0.15);
 }
 
-.schedule-day.active .day-letter {
+.schedule-day.scheduled .day-letter,
+.schedule-day.future .day-letter {
   color: var(--primary-color);
 }
 
@@ -2578,6 +3237,30 @@ onMounted(() => {
 
 .schedule-day.completed .day-letter {
   color: white;
+}
+
+.schedule-day.missed {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.schedule-day.missed .day-letter {
+  color: #ef4444;
+}
+
+.schedule-day.amnestied {
+  background: rgba(236, 72, 153, 0.15);
+}
+
+.schedule-day.amnestied .day-letter {
+  color: #ec4899;
+}
+
+.schedule-day.excused {
+  background: rgba(234, 179, 8, 0.15);
+}
+
+.schedule-day.excused .day-letter {
+  color: #eab308;
 }
 
 .schedule-day.today {
