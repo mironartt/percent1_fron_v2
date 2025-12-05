@@ -3453,7 +3453,6 @@ onMounted(() => {
 
 .habit-card.deleted-during-week {
   position: relative;
-  border: 1px dashed rgba(239, 68, 68, 0.4);
   background: linear-gradient(135deg, var(--card-bg) 0%, rgba(239, 68, 68, 0.03) 100%);
 }
 
@@ -3760,15 +3759,10 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding-bottom: 1rem;
+  padding: 0;
   background: transparent;
-  border-bottom: 1px solid var(--border-color);
+  border: none;
   transition: all 0.2s ease;
-}
-
-.habit-card:last-child {
-  padding-bottom: 0;
-  border-bottom: none;
 }
 
 .habit-card:hover {
