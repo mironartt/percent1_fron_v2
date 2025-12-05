@@ -748,27 +748,6 @@
                 </div>
               </div>
               
-              <div class="amnesty-use-block" v-if="maxAmnesties > 0">
-                <div class="amnesty-status">
-                  <Gift :size="18" :stroke-width="1.5" />
-                  <div class="amnesty-info-text">
-                    <span class="amnesty-available" v-if="amnestiesRemaining > 0">
-                      Доступно {{ amnestiesRemaining }} из {{ maxAmnesties }} на этой неделе
-                    </span>
-                    <span class="amnesty-depleted" v-else>
-                      Все амнистии использованы на этой неделе
-                    </span>
-                  </div>
-                </div>
-                <button 
-                  v-if="amnestiesRemaining > 0"
-                  class="btn btn-amnesty"
-                  @click="useAmnesty"
-                >
-                  <Gift :size="14" :stroke-width="1.5" />
-                  Использовать амнистию
-                </button>
-              </div>
               
               <p class="settings-tip">
                 <Lightbulb :size="14" :stroke-width="1.5" />
@@ -1082,8 +1061,13 @@
 
             <div class="day-edit-current-status">
               <span class="status-label">Текущий статус:</span>
-              <span class="status-value" :class="getDayStatus(selectedHabitForEdit, selectedDayForEdit.date)">
-                {{ getDayStatusLabel(getDayStatus(selectedHabitForEdit, selectedDayForEdit.date)) }}
+              <span 
+                class="status-value" 
+                :class="isSelectedDayToday && getDayStatus(selectedHabitForEdit, selectedDayForEdit.date) !== 'completed' ? 'today' : getDayStatus(selectedHabitForEdit, selectedDayForEdit.date)"
+              >
+                {{ isSelectedDayToday && getDayStatus(selectedHabitForEdit, selectedDayForEdit.date) !== 'completed' 
+                   ? 'Сегодня' 
+                   : getDayStatusLabel(getDayStatus(selectedHabitForEdit, selectedDayForEdit.date)) }}
               </span>
             </div>
 
@@ -1106,16 +1090,17 @@
               ></textarea>
             </div>
 
-            <div v-if="!isFutureDay" class="day-edit-actions">
+            <div v-if="!isFutureDay" class="day-edit-actions" :class="{ 'today-mode': isSelectedDayToday }">
               <button 
                 class="btn-status completed"
                 :class="{ active: getDayStatus(selectedHabitForEdit, selectedDayForEdit.date) === 'completed' }"
                 @click="setDayAsCompleted"
               >
                 <Check :size="16" :stroke-width="2" />
-                Выполнено
+                {{ isSelectedDayToday ? (getDayStatus(selectedHabitForEdit, selectedDayForEdit.date) === 'completed' ? 'Выполнено' : 'Отметить выполненным') : 'Выполнено' }}
               </button>
               <button 
+                v-if="!isSelectedDayToday"
                 class="btn-status missed"
                 :class="{ active: getDayStatus(selectedHabitForEdit, selectedDayForEdit.date) === 'missed' }"
                 @click="setDayAsMissed"
@@ -1124,6 +1109,7 @@
                 Пропущено
               </button>
               <button 
+                v-if="!isSelectedDayToday"
                 class="btn-status excused"
                 :class="{ active: getDayStatus(selectedHabitForEdit, selectedDayForEdit.date) === 'excused' }"
                 @click="setDayAsExcused"
@@ -1956,6 +1942,13 @@ const isFutureDay = computed(() => {
   const selectedDateStr = selectedDayForEdit.value.date
   const todayStr = new Date().toISOString().split('T')[0]
   return selectedDateStr > todayStr
+})
+
+const isSelectedDayToday = computed(() => {
+  if (!selectedDayForEdit.value) return false
+  const selectedDateStr = selectedDayForEdit.value.date
+  const todayStr = new Date().toISOString().split('T')[0]
+  return selectedDateStr === todayStr
 })
 
 const showSkipReasonField = computed(() => {
@@ -2986,6 +2979,22 @@ onMounted(() => {
   grid-template-columns: repeat(3, 1fr);
   gap: 0.5rem;
   margin-bottom: 0.75rem;
+}
+
+.day-edit-actions.today-mode {
+  grid-template-columns: 1fr;
+}
+
+.day-edit-actions.today-mode .btn-status.completed {
+  flex-direction: row;
+  justify-content: center;
+  padding: 0.875rem 1rem;
+  font-size: 0.9rem;
+}
+
+.status-value.today {
+  color: var(--primary-color);
+  background: rgba(124, 58, 237, 0.1);
 }
 
 .btn-status {
