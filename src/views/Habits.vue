@@ -53,20 +53,14 @@
           <TrendingUp :size="12" :stroke-width="1.5" />
         </div>
       </button>
-      <button class="stat-item mode settings clickable" @click="showSettingsModal = true" title="Настройки геймификации">
+      <button class="stat-item mode settings clickable compact-mode" @click="showSettingsModal = true" title="Настройки геймификации">
         <div class="stat-icon" :class="gameSettings.difficultyMode">
-          <Shield :size="20" :stroke-width="1.5" />
+          <Shield :size="18" :stroke-width="1.5" />
         </div>
-        <div class="stat-main">
-          <div class="stat-content">
-            <span class="stat-value">{{ difficultyLabel }}</span>
-            <span class="stat-label">режим</span>
-          </div>
-          <div class="settings-cta">
-            <Settings :size="14" :stroke-width="1.5" />
-            <span>Настроить</span>
-          </div>
+        <div class="stat-content-inline">
+          <span class="mode-label">режим: <strong>{{ difficultyLabel }}</strong></span>
         </div>
+        <Settings :size="14" :stroke-width="1.5" class="settings-icon" />
       </button>
     </div>
 
@@ -358,6 +352,15 @@
               />
             </div>
             
+            <button 
+              v-if="!editingHabit"
+              class="btn-suggest-habit"
+              @click="showSuggestionsModal = true"
+            >
+              <Sparkles :size="14" :stroke-width="1.5" />
+              Подобрать привычку
+            </button>
+            
             <div class="xp-slider-row">
               <label class="slider-label">Награда за выполнение</label>
               <div class="xp-slider-control">
@@ -460,6 +463,57 @@
             >
               {{ editingHabit ? 'Сохранить' : 'Создать' }}
             </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <Teleport to="body">
+      <div v-if="showSuggestionsModal" class="modal-overlay" @click.self="showSuggestionsModal = false">
+        <div class="modal-container modal-suggestions">
+          <div class="modal-header">
+            <h3>
+              <Sparkles :size="20" :stroke-width="1.5" />
+              Подобрать привычку
+            </h3>
+            <button class="btn-close" @click="showSuggestionsModal = false">
+              <X :size="20" :stroke-width="1.5" />
+            </button>
+          </div>
+          
+          <div class="modal-content">
+            <p class="suggestions-intro">
+              <Bot :size="16" :stroke-width="1.5" />
+              Рекомендации от AI-ментора для формирования полезных привычек
+            </p>
+            
+            <div class="suggestions-categories">
+              <div 
+                v-for="category in habitSuggestions" 
+                :key="category.name"
+                class="suggestion-category"
+              >
+                <div class="category-header">
+                  <span class="category-icon">{{ category.icon }}</span>
+                  <span class="category-name">{{ category.name }}</span>
+                </div>
+                <div class="category-habits">
+                  <button 
+                    v-for="habit in category.habits" 
+                    :key="habit.name"
+                    class="suggestion-habit"
+                    @click="selectSuggestedHabit(habit)"
+                  >
+                    <span class="habit-emoji">{{ getIconEmoji(habit.icon) }}</span>
+                    <div class="habit-details">
+                      <span class="habit-title">{{ habit.name }}</span>
+                      <span class="habit-desc">{{ habit.description }}</span>
+                    </div>
+                    <div class="habit-schedule-badge">{{ habit.scheduleLabel }}</div>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -573,28 +627,6 @@
                     <span>150%</span>
                   </div>
                 </div>
-                
-                <div class="custom-setting">
-                  <div class="setting-header">
-                    <label>Амнистий в неделю</label>
-                    <span class="setting-value">{{ gameSettings.weeklyAmnestyCount }}</span>
-                  </div>
-                  <div class="setting-hint">Сколько раз можно отменить штрафы за день</div>
-                  <input 
-                    type="range" 
-                    min="0" 
-                    max="7" 
-                    step="1"
-                    v-model.number="gameSettings.weeklyAmnestyCount"
-                    @change="saveGameSettings"
-                    class="slider amnesty-slider"
-                  />
-                  <div class="slider-labels amnesty-labels">
-                    <span>0</span>
-                    <span>3</span>
-                    <span>7</span>
-                  </div>
-                </div>
               </div>
             </div>
             
@@ -624,6 +656,28 @@
                   <span>3</span>
                   <span>7</span>
                 </div>
+              </div>
+              
+              <div class="amnesty-use-block" v-if="maxAmnesties > 0">
+                <div class="amnesty-status">
+                  <Gift :size="18" :stroke-width="1.5" />
+                  <div class="amnesty-info-text">
+                    <span class="amnesty-available" v-if="amnestiesRemaining > 0">
+                      Доступно {{ amnestiesRemaining }} из {{ maxAmnesties }} на этой неделе
+                    </span>
+                    <span class="amnesty-depleted" v-else>
+                      Все амнистии использованы на этой неделе
+                    </span>
+                  </div>
+                </div>
+                <button 
+                  v-if="amnestiesRemaining > 0"
+                  class="btn btn-amnesty"
+                  @click="useAmnesty"
+                >
+                  <Gift :size="14" :stroke-width="1.5" />
+                  Использовать амнистию
+                </button>
               </div>
               
               <p class="settings-tip">
@@ -871,6 +925,56 @@ const showXpModal = ref(false)
 const showDescriptionField = ref(false)
 const showXpSlider = ref(false)
 const showPenaltyField = ref(false)
+const showSuggestionsModal = ref(false)
+
+const habitSuggestions = [
+  {
+    name: 'Здоровье и спорт',
+    icon: '💪',
+    habits: [
+      { name: 'Утренняя зарядка', description: 'Разминка для бодрости на весь день', icon: 'gym', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 10 },
+      { name: 'Прогулка 30 минут', description: 'Свежий воздух и движение', icon: 'walking', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 8 },
+      { name: 'Выпить 8 стаканов воды', description: 'Поддержание водного баланса', icon: 'water', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 5 },
+      { name: 'Тренировка в зале', description: 'Силовые или кардио упражнения', icon: 'gym', frequencyType: 'custom', scheduleDays: [1,3,5], scheduleLabel: 'Пн, Ср, Пт', xpReward: 15 },
+    ]
+  },
+  {
+    name: 'Продуктивность',
+    icon: '🎯',
+    habits: [
+      { name: 'Планирование дня', description: 'Составить список задач на день', icon: 'writing', frequencyType: 'weekdays', scheduleDays: [1,2,3,4,5], scheduleLabel: 'Будни', xpReward: 8 },
+      { name: 'Фокус-сессия 25 мин', description: 'Работа без отвлечений по Помодоро', icon: 'target', frequencyType: 'weekdays', scheduleDays: [1,2,3,4,5], scheduleLabel: 'Будни', xpReward: 10 },
+      { name: 'Разбор почты', description: 'Обработка входящих сообщений', icon: 'work', frequencyType: 'weekdays', scheduleDays: [1,2,3,4,5], scheduleLabel: 'Будни', xpReward: 5 },
+    ]
+  },
+  {
+    name: 'Саморазвитие',
+    icon: '📚',
+    habits: [
+      { name: 'Чтение 20 минут', description: 'Расширение кругозора и отдых', icon: 'book', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 10 },
+      { name: 'Изучение языка', description: 'Практика иностранного языка', icon: 'brain', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 12 },
+      { name: 'Ведение дневника', description: 'Рефлексия и анализ дня', icon: 'writing', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 8 },
+    ]
+  },
+  {
+    name: 'Ментальное здоровье',
+    icon: '🧘',
+    habits: [
+      { name: 'Медитация', description: 'Практика осознанности и покоя', icon: 'meditation', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 10 },
+      { name: 'Благодарность', description: 'Записать 3 вещи за которые благодарен', icon: 'heart', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 5 },
+      { name: 'Цифровой детокс', description: 'Час без телефона перед сном', icon: 'phone', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 8 },
+    ]
+  },
+  {
+    name: 'Режим и отдых',
+    icon: '😴',
+    habits: [
+      { name: 'Ранний подъём', description: 'Встать до 7:00 утра', icon: 'sunrise', frequencyType: 'weekdays', scheduleDays: [1,2,3,4,5], scheduleLabel: 'Будни', xpReward: 10 },
+      { name: 'Сон до 23:00', description: 'Лечь спать вовремя', icon: 'sleep', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 8 },
+      { name: 'Без экранов за час до сна', description: 'Подготовка к качественному сну', icon: 'moon', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 6 },
+    ]
+  }
+]
 
 const habitIconsData = [
   { emoji: '🔥', name: 'fire' },
@@ -1456,6 +1560,20 @@ function closeModal() {
   showDescriptionField.value = false
   showXpSlider.value = false
   showPenaltyField.value = false
+}
+
+function selectSuggestedHabit(habit) {
+  formData.value = {
+    name: habit.name,
+    icon: habit.icon,
+    description: habit.description || '',
+    xpReward: habit.xpReward || 10,
+    xpPenalty: 0,
+    frequencyType: habit.frequencyType || 'daily',
+    scheduleDays: habit.scheduleDays || [1, 2, 3, 4, 5, 6, 0],
+    reminderTime: ''
+  }
+  showSuggestionsModal.value = false
 }
 
 function toggleDay(dayKey) {
@@ -2213,6 +2331,40 @@ onMounted(() => {
   white-space: nowrap;
 }
 
+.stat-item.compact-mode {
+  flex: 1.2;
+  min-width: 0;
+}
+
+.stat-content-inline {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.mode-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mode-label strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.settings-icon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
+.stat-item.compact-mode:hover .settings-icon {
+  color: var(--primary-color);
+}
+
 .settings-cta {
   display: flex;
   align-items: center;
@@ -2522,7 +2674,57 @@ onMounted(() => {
 
 .amnesty-setting .setting-value {
   font-weight: 700;
-  color: var(--primary-color);
+}
+
+.amnesty-use-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.08), rgba(34, 197, 94, 0.04));
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 10px;
+  margin-bottom: 0.75rem;
+}
+
+.amnesty-status {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #22c55e;
+}
+
+.amnesty-info-text {
+  flex: 1;
+}
+
+.amnesty-available {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.amnesty-depleted {
+  color: var(--text-muted);
+}
+
+.btn-amnesty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  background: #22c55e;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-amnesty:hover {
+  background: #16a34a;
 }
 
 .amnesty-setting .setting-hint {
@@ -2716,6 +2918,145 @@ onMounted(() => {
 
 .modal-settings {
   max-width: 520px;
+}
+
+.modal-suggestions {
+  max-width: 560px;
+  max-height: 85vh;
+}
+
+.modal-suggestions .modal-content {
+  overflow-y: auto;
+  max-height: calc(85vh - 80px);
+}
+
+.btn-suggest-habit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(139, 92, 246, 0.12));
+  border: 1px dashed var(--primary-color);
+  border-radius: 8px;
+  color: var(--primary-color);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 0.75rem;
+}
+
+.btn-suggest-habit:hover {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(139, 92, 246, 0.2));
+  border-style: solid;
+}
+
+.suggestions-intro {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(124, 58, 237, 0.08);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.suggestions-intro svg {
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.suggestions-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.suggestion-category {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-tertiary);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.category-icon {
+  font-size: 1.1rem;
+}
+
+.category-habits {
+  display: flex;
+  flex-direction: column;
+}
+
+.suggestion-habit {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.suggestion-habit:last-child {
+  border-bottom: none;
+}
+
+.suggestion-habit:hover {
+  background: var(--bg-tertiary);
+}
+
+.suggestion-habit .habit-emoji {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.suggestion-habit .habit-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.suggestion-habit .habit-title {
+  display: block;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  margin-bottom: 0.15rem;
+}
+
+.suggestion-habit .habit-desc {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.habit-schedule-badge {
+  flex-shrink: 0;
+  padding: 0.25rem 0.5rem;
+  background: rgba(124, 58, 237, 0.1);
+  color: var(--primary-color);
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 500;
 }
 
 .modal-header {
