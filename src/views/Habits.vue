@@ -6851,6 +6851,9 @@ onMounted(() => {
   max-width: 600px;
   width: 95%;
   max-height: 90vh;
+  background: var(--card-bg);
+  border-radius: 16px;
+  overflow: hidden;
 }
 
 .detail-modal .modal-header {
