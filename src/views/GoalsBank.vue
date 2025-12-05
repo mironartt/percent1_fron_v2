@@ -4922,26 +4922,15 @@ onMounted(async () => {
     background: var(--bg-primary);
   }
   
-  .goals-table-section .goals-table tbody tr.in-work::before,
-  .goals-table-section .goals-table tbody tr.row-rejected::before,
-  .goals-table-section .goals-table tbody tr.row-raw::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    border: 2px solid transparent;
-  }
-  
-  .goals-table-section .goals-table tbody tr.in-work::before {
+  .goals-table-section .goals-table tbody tr.in-work {
     border-color: var(--primary-color);
   }
   
-  .goals-table-section .goals-table tbody tr.row-rejected::before {
+  .goals-table-section .goals-table tbody tr.row-rejected {
     border-color: var(--danger-color);
   }
   
-  .goals-table-section .goals-table tbody tr.row-raw::before {
+  .goals-table-section .goals-table tbody tr.row-raw {
     border-color: var(--warning-color);
   }
   
