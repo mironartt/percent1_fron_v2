@@ -2852,17 +2852,22 @@ watch(() => route.query.spp_step, () => {
   .wheel-edit-actions {
     flex-direction: row;
     gap: 0.5rem;
-    margin: 1rem 16px 0 16px;
-    padding-top: 0.75rem;
+    margin: 1rem auto 0 auto;
+    padding: 0.75rem 16px 0 16px;
+    width: calc(100% - 32px);
+    max-width: calc(100vw - 32px);
+    box-sizing: border-box;
   }
   
   .wheel-edit-actions .btn {
     justify-content: center;
-    padding: 0.75rem 1rem;
+    padding: 0.75rem 0.5rem;
+    min-width: 0;
+    font-size: 0.9rem;
   }
   
   .wheel-edit-actions .btn-secondary {
-    flex: 0 0 35%;
+    flex: 0 0 30%;
   }
   
   .wheel-edit-actions .btn-primary {
