@@ -145,7 +145,7 @@
                   <component :is="getSphereIcon(sphere.id)" :size="24" :stroke-width="2" />
                 </div>
                 <div class="sphere-title-info">
-                  <h2>{{ sphere.name }}</h2>
+                  <span class="sphere-name">{{ sphere.name }}</span>
                   <span class="score-badge-neutral">{{ sphere.score }}/10</span>
                 </div>
               </div>
@@ -416,7 +416,7 @@
                   <component :is="getSphereIcon(sphere.id)" :size="24" :stroke-width="2" />
                 </div>
                 <div class="sphere-title-info">
-                  <h2>{{ sphere.name }}</h2>
+                  <span class="sphere-name">{{ sphere.name }}</span>
                   <div class="header-meta">
                     <span class="score-badge-neutral">{{ sphere.score }}/10</span>
                     <span v-if="hasReflectionContent(sphere)" class="filled-badge">Заполнено</span>
@@ -1800,9 +1800,11 @@ watch(() => route.query.spp_step, () => {
   flex-shrink: 0;
 }
 
-.sphere-title-info h2 {
+.sphere-name {
+  display: block;
   margin: 0 0 0.5rem 0;
   font-size: 1.5rem;
+  font-weight: 600;
 }
 
 .score-badge {
@@ -1952,9 +1954,11 @@ watch(() => route.query.spp_step, () => {
   transform: rotate(180deg);
 }
 
-.accordion-left .sphere-title-info h2 {
+.accordion-left .sphere-name {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .header-meta {
@@ -2939,7 +2943,7 @@ watch(() => route.query.spp_step, () => {
     height: 18px;
   }
   
-  .sphere-title-info h2 {
+  .sphere-name {
     font-size: 1rem;
   }
   
@@ -2971,7 +2975,7 @@ watch(() => route.query.spp_step, () => {
     padding: 8px 10px;
   }
   
-  .sphere-title-info h2 {
+  .sphere-name {
     font-size: 0.95rem;
   }
   
