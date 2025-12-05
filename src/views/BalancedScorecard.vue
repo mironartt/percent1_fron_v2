@@ -2827,7 +2827,7 @@ watch(() => route.query.spp_step, () => {
   
   .summary-section-main .section-header {
     margin-bottom: 8px;
-    padding: 0;
+    padding: 2rem 0 0 0;
   }
   
   .summary-section-main .section-header h1 {
