@@ -448,24 +448,44 @@
               <span>Проверка цели</span>
             </div>
 
-            <div class="form-group">
-              <label class="form-label">1. Почему для меня это важно?</label>
-              <textarea 
-                v-model="editingGoal.whyImportant"
-                class="form-textarea"
-                placeholder="Опишите, почему эта цель важна для вас"
-                rows="3"
-              ></textarea>
+            <div class="accordion-group">
+              <div 
+                class="accordion-header" 
+                :class="{ open: editWhyAccordion.question1Open, filled: editingGoal?.whyImportant?.trim() }"
+                @click="toggleWhyQuestion(1, true)"
+              >
+                <span class="accordion-title">1. Почему для меня это важно?</span>
+                <span v-if="editingGoal?.whyImportant?.trim() && !editWhyAccordion.question1Open" class="accordion-preview">{{ editingGoal.whyImportant.slice(0, 30) }}...</span>
+                <ChevronDown :size="16" class="accordion-chevron" :class="{ open: editWhyAccordion.question1Open }" />
+              </div>
+              <div class="accordion-content" v-show="editWhyAccordion.question1Open">
+                <textarea 
+                  v-model="editingGoal.whyImportant"
+                  class="form-textarea"
+                  placeholder="Опишите, почему эта цель важна для вас"
+                  rows="3"
+                ></textarea>
+              </div>
             </div>
 
-            <div class="form-group">
-              <label class="form-label">2. Как эта цель поможет выйти на новый уровень?</label>
-              <textarea 
-                v-model="editingGoal.why2"
-                class="form-textarea"
-                placeholder="Опишите, как достижение этой цели изменит вашу жизнь"
-                rows="3"
-              ></textarea>
+            <div class="accordion-group">
+              <div 
+                class="accordion-header" 
+                :class="{ open: editWhyAccordion.question2Open, filled: editingGoal?.why2?.trim() }"
+                @click="toggleWhyQuestion(2, true)"
+              >
+                <span class="accordion-title">2. Как это изменит мою жизнь?</span>
+                <span v-if="editingGoal?.why2?.trim() && !editWhyAccordion.question2Open" class="accordion-preview">{{ editingGoal.why2.slice(0, 30) }}...</span>
+                <ChevronDown :size="16" class="accordion-chevron" :class="{ open: editWhyAccordion.question2Open }" />
+              </div>
+              <div class="accordion-content" v-show="editWhyAccordion.question2Open">
+                <textarea 
+                  v-model="editingGoal.why2"
+                  class="form-textarea"
+                  placeholder="Опишите, как достижение этой цели изменит вашу жизнь"
+                  rows="3"
+                ></textarea>
+              </div>
             </div>
 
             <div class="validation-section">
@@ -483,7 +503,7 @@
                   @click="selectValidationStatus(true)"
                 >
                   <CheckCircle :size="18" :stroke-width="2" />
-                  Это истинная цель
+                  Истинная
                 </button>
                 <button 
                   class="btn btn-validation btn-false-goal"
@@ -491,7 +511,7 @@
                   @click="selectValidationStatus(false)"
                 >
                   <XCircle :size="18" :stroke-width="2" />
-                  Это ложная цель
+                  Ложная
                 </button>
               </div>
             </div>
@@ -586,24 +606,44 @@
               <span>Проверка цели</span>
             </div>
 
-            <div class="form-group">
-              <label class="form-label">1. Почему для меня это важно?</label>
-              <textarea 
-                v-model="newGoal.whyImportant"
-                class="form-textarea"
-                placeholder="Опишите, почему эта цель важна для вас"
-                rows="3"
-              ></textarea>
+            <div class="accordion-group">
+              <div 
+                class="accordion-header" 
+                :class="{ open: whyAccordion.question1Open, filled: newGoal.whyImportant?.trim() }"
+                @click="toggleWhyQuestion(1)"
+              >
+                <span class="accordion-title">1. Почему для меня это важно?</span>
+                <span v-if="newGoal.whyImportant?.trim() && !whyAccordion.question1Open" class="accordion-preview">{{ newGoal.whyImportant.slice(0, 30) }}...</span>
+                <ChevronDown :size="16" class="accordion-chevron" :class="{ open: whyAccordion.question1Open }" />
+              </div>
+              <div class="accordion-content" v-show="whyAccordion.question1Open">
+                <textarea 
+                  v-model="newGoal.whyImportant"
+                  class="form-textarea"
+                  placeholder="Опишите, почему эта цель важна для вас"
+                  rows="3"
+                ></textarea>
+              </div>
             </div>
 
-            <div class="form-group">
-              <label class="form-label">2. Как эта цель поможет выйти на новый уровень?</label>
-              <textarea 
-                v-model="newGoal.why2"
-                class="form-textarea"
-                placeholder="Опишите, как достижение этой цели изменит вашу жизнь"
-                rows="3"
-              ></textarea>
+            <div class="accordion-group">
+              <div 
+                class="accordion-header" 
+                :class="{ open: whyAccordion.question2Open, filled: newGoal.why2?.trim() }"
+                @click="toggleWhyQuestion(2)"
+              >
+                <span class="accordion-title">2. Как это изменит мою жизнь?</span>
+                <span v-if="newGoal.why2?.trim() && !whyAccordion.question2Open" class="accordion-preview">{{ newGoal.why2.slice(0, 30) }}...</span>
+                <ChevronDown :size="16" class="accordion-chevron" :class="{ open: whyAccordion.question2Open }" />
+              </div>
+              <div class="accordion-content" v-show="whyAccordion.question2Open">
+                <textarea 
+                  v-model="newGoal.why2"
+                  class="form-textarea"
+                  placeholder="Опишите, как достижение этой цели изменит вашу жизнь"
+                  rows="3"
+                ></textarea>
+              </div>
             </div>
 
             <div class="validation-section">
@@ -621,7 +661,7 @@
                   @click="selectNewGoalValidationStatus(true)"
                 >
                   <CheckCircle :size="18" :stroke-width="2" />
-                  Это истинная цель
+                  Истинная
                 </button>
                 <button 
                   class="btn btn-validation btn-false-goal"
@@ -629,7 +669,7 @@
                   @click="selectNewGoalValidationStatus(false)"
                 >
                   <XCircle :size="18" :stroke-width="2" />
-                  Это ложная цель
+                  Ложная
                 </button>
               </div>
             </div>
@@ -771,6 +811,31 @@ const newGoal = ref({
   status: null
 })
 
+// Accordion state for question fields
+const whyAccordion = ref({
+  question1Open: false,
+  question2Open: false
+})
+const editWhyAccordion = ref({
+  question1Open: false,
+  question2Open: false
+})
+
+function toggleWhyQuestion(questionNum, isEdit = false) {
+  const accordion = isEdit ? editWhyAccordion : whyAccordion
+  if (questionNum === 1) {
+    accordion.value.question1Open = !accordion.value.question1Open
+  } else {
+    accordion.value.question2Open = !accordion.value.question2Open
+  }
+}
+
+function resetAccordion(isEdit = false) {
+  const accordion = isEdit ? editWhyAccordion : whyAccordion
+  accordion.value.question1Open = false
+  accordion.value.question2Open = false
+}
+
 // API loading state  
 const loadAttempted = ref(false)
 const isGoalsLoading = computed(() => goalsApiData.value?.loading ?? false)
@@ -848,11 +913,13 @@ function addNewGoal() {
     why2: '',
     status: null
   }
+  resetAccordion(false)
   showAddModal.value = true
 }
 
 function closeAddModal() {
   showAddModal.value = false
+  resetAccordion(false)
   newGoal.value = {
     text: '',
     sphereId: '',
@@ -1666,11 +1733,13 @@ function openEditModal(goal) {
     sphereId: goal.sphereId,
     status: goal.status || 'raw'
   }
+  resetAccordion(true)
   showEditModal.value = true
 }
 
 function closeEditModal() {
   showEditModal.value = false
+  resetAccordion(true)
   editingGoal.value = null
 }
 
@@ -1875,7 +1944,7 @@ onMounted(async () => {
 }
 
 .empty-state-card h1 {
-  font-size: 2rem;
+  font-size: 1.75rem;
   margin-bottom: 0.75rem;
 }
 
@@ -1936,7 +2005,7 @@ onMounted(async () => {
 }
 
 .summary-section .section-header h1 {
-  font-size: 2rem;
+  font-size: 1.75rem;
   margin-bottom: 0.5rem;
 }
 
@@ -3286,19 +3355,35 @@ onMounted(async () => {
   background: var(--bg-primary);
   border-radius: var(--radius-md);
   transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .idea-card:hover {
   box-shadow: var(--shadow-sm);
 }
 
-.idea-card.validated {
-  border-left: 3px solid var(--success-color);
+.idea-card.validated::before,
+.idea-card.rejected::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+.idea-card.validated::before {
+  background: var(--success-color);
 }
 
 .idea-card.rejected {
-  border-left: 3px solid var(--danger-color);
   opacity: 0.7;
+}
+
+.idea-card.rejected::before {
+  background: var(--danger-color);
 }
 
 .idea-card-content {
@@ -3566,7 +3651,19 @@ onMounted(async () => {
 }
 
 .selectable-goal-item.weak-sphere {
-  border-left: 3px solid var(--warning-color);
+  position: relative;
+  overflow: hidden;
+}
+
+.selectable-goal-item.weak-sphere::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--warning-color);
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
 }
 
 .summary-actions {
@@ -3601,7 +3698,7 @@ onMounted(async () => {
 }
 
 .section-header h1 {
-  font-size: 2rem;
+  font-size: 1.75rem;
   margin-bottom: 0.5rem;
 }
 
@@ -3836,15 +3933,31 @@ onMounted(async () => {
 
 .validation-card {
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.validation-card.validated {
-  border-left: 4px solid var(--success-color);
+.validation-card.validated::before,
+.validation-card.rejected::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+.validation-card.validated::before {
+  background: var(--success-color);
 }
 
 .validation-card.rejected {
-  border-left: 4px solid var(--danger-color);
   opacity: 0.7;
+}
+
+.validation-card.rejected::before {
+  background: var(--danger-color);
 }
 
 .validation-header {
@@ -4797,12 +4910,12 @@ onMounted(async () => {
     display: flex;
     flex-direction: column;
     background: var(--bg-primary);
-    border: 1px solid var(--border-color);
+    border: 2px solid var(--border-color);
     border-radius: var(--radius-md);
     padding: 1rem;
     gap: 0.75rem;
     position: relative;
-    overflow: visible;
+    overflow: hidden;
   }
   
   .goals-table-section .goals-table tbody tr:hover {
@@ -4811,7 +4924,6 @@ onMounted(async () => {
   
   .goals-table-section .goals-table tbody tr.in-work {
     border-color: var(--primary-color);
-    border-width: 2px;
   }
   
   .goals-table-section .goals-table tbody tr.row-rejected {
@@ -5111,6 +5223,72 @@ onMounted(async () => {
   white-space: nowrap;
 }
 
+/* Accordion styles for why questions */
+.accordion-group {
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.accordion-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.accordion-header:hover {
+  background: var(--bg-tertiary);
+}
+
+.accordion-header.open {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.accordion-header.filled:not(.open) {
+  background: rgba(34, 197, 94, 0.05);
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+.accordion-title {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.accordion-preview {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accordion-chevron {
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.accordion-chevron.open {
+  transform: rotate(180deg);
+}
+
+.accordion-content {
+  padding: 0.75rem 1rem;
+  background: var(--bg-primary);
+}
+
+.accordion-content .form-textarea {
+  margin: 0;
+}
+
 .validation-section {
   margin-top: 1.5rem;
   padding: 1rem;
@@ -5383,7 +5561,13 @@ onMounted(async () => {
 }
 
 .modal-footer-add {
-  justify-content: space-between;
+  display: flex;
+  flex-direction: row;
+  gap: 0.75rem;
+}
+
+.modal-footer-add .btn {
+  flex: 1;
 }
 
 .modal-footer-add .btn-primary:disabled {
@@ -5519,6 +5703,16 @@ onMounted(async () => {
   .modal-footer-right {
     width: 100%;
     justify-content: center;
+  }
+  
+  .modal-footer-add {
+    flex-direction: row;
+  }
+  
+  .modal-footer-add .btn {
+    flex: 1;
+    padding: 0.75rem 0.5rem;
+    font-size: 0.875rem;
   }
 }
 </style>

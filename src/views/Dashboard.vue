@@ -1008,6 +1008,34 @@ function pluralize(n, one, few, many) {
     align-items: flex-start;
     gap: 1rem;
   }
+  
+  .mentor-content {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+  
+  .mentor-avatar {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .mentor-text {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .mentor-text p {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .mentor-content .btn {
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.25rem;
+  }
 }
 
 .modal-overlay {

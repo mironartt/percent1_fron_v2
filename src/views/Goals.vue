@@ -1858,15 +1858,15 @@ function formatDate(dateString) {
 /* Goals List Mode */
 .goals-list-mode .page-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
   margin-bottom: 2rem;
-  flex-wrap: wrap;
   gap: 1rem;
+  text-align: center;
 }
 
 .page-header h1 {
-  font-size: 2rem;
+  font-size: 1.75rem;
   margin-bottom: 0.5rem;
 }
 

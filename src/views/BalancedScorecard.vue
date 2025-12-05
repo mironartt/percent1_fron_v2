@@ -91,9 +91,33 @@
       </div>
 
       <div class="wheel-summary card">
-        <h3>Система сбалансированных показателей</h3>
+        <button 
+          v-if="!isEditingWheel" 
+          class="btn-edit-wheel-icon"
+          @click="startEditWheel"
+          title="Редактировать оценки"
+        >
+          <Settings :size="20" />
+        </button>
         <div class="wheel-visualization">
-          <WheelOfLife :spheres="lifeSpheres" :readonly="true" />
+          <WheelOfLife 
+            :spheres="lifeSpheres" 
+            :readonly="!isEditingWheel" 
+            @update-sphere="handleSphereUpdate"
+          />
+        </div>
+        <div v-if="isEditingWheel" class="wheel-edit-hint">
+          <span class="hint-text">Перетаскивайте точки для изменения оценок</span>
+        </div>
+        <div v-if="isEditingWheel" class="wheel-edit-actions">
+          <button class="btn btn-secondary" @click="cancelWheelEdits">
+            <X :size="18" />
+            Отмена
+          </button>
+          <button class="btn btn-primary" @click="saveWheelEdits">
+            <Check :size="18" />
+            Сохранить
+          </button>
         </div>
       </div>
 
@@ -121,7 +145,7 @@
                   <component :is="getSphereIcon(sphere.id)" :size="24" :stroke-width="2" />
                 </div>
                 <div class="sphere-title-info">
-                  <h2>{{ sphere.name }}</h2>
+                  <span class="sphere-name">{{ sphere.name }}</span>
                   <span class="score-badge-neutral">{{ sphere.score }}/10</span>
                 </div>
               </div>
@@ -228,9 +252,6 @@
       <div class="summary-actions">
         <button class="btn btn-primary btn-lg" @click="goToGoalsBank">
           🏦 Перейти в Банк целей
-        </button>
-        <button class="btn btn-secondary" @click="restartLesson">
-          🔄 Пройти оценку заново
         </button>
       </div>
     </div>
@@ -395,7 +416,7 @@
                   <component :is="getSphereIcon(sphere.id)" :size="24" :stroke-width="2" />
                 </div>
                 <div class="sphere-title-info">
-                  <h2>{{ sphere.name }}</h2>
+                  <span class="sphere-name">{{ sphere.name }}</span>
                   <div class="header-meta">
                     <span class="score-badge-neutral">{{ sphere.score }}/10</span>
                     <span v-if="hasReflectionContent(sphere)" class="filled-badge">Заполнено</span>
@@ -530,10 +551,6 @@
 
         <!-- Action Buttons -->
         <div class="completion-actions">
-          <button class="btn btn-secondary" @click="resetModule">
-            <RotateCcw :size="18" />
-            Пройти заново
-          </button>
           <button 
             class="btn btn-primary btn-lg" 
             @click="completeModule"
@@ -575,7 +592,8 @@ import {
   X,
   Lightbulb,
   ChartPie,
-  Sparkles
+  Sparkles,
+  Settings
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -649,6 +667,35 @@ const editingReflection = ref({
   desired: ''
 })
 
+const isEditingWheel = ref(false)
+const wheelBackup = ref([])
+
+function startEditWheel() {
+  wheelBackup.value = lifeSpheres.value.map(s => ({ id: s.id, score: s.score }))
+  isEditingWheel.value = true
+}
+
+async function saveWheelEdits() {
+  isEditingWheel.value = false
+  wheelBackup.value = []
+  
+  if (DEBUG_MODE) {
+    console.log('[SSP] Saving wheel edits to backend...')
+  }
+  const result = await store.saveSSPRatingsToBackend()
+  if (!result.success && DEBUG_MODE) {
+    console.warn('[SSP] Failed to save wheel edits:', result.error)
+  }
+}
+
+function cancelWheelEdits() {
+  wheelBackup.value.forEach(backup => {
+    store.updateSphere(backup.id, { score: backup.score })
+  })
+  isEditingWheel.value = false
+  wheelBackup.value = []
+}
+
 function startEditReflection(sphere) {
   editingSphereId.value = sphere.id
   editingReflection.value = {
@@ -693,7 +740,7 @@ const showEmptyState = computed(() => {
 })
 
 const showSummary = computed(() => {
-  return !!sspModuleCompleted.value?.completed
+  return true
 })
 
 const averageScore = computed(() => {
@@ -1124,11 +1171,12 @@ watch(() => route.query.spp_step, () => {
 
 .summary-section-main .section-header {
   text-align: center;
-  margin-bottom: 2rem;
+  padding-top: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .summary-section-main .section-header h1 {
-  font-size: 2rem;
+  font-size: 1.75rem;
   margin-bottom: 0.5rem;
 }
 
@@ -1203,21 +1251,116 @@ watch(() => route.query.spp_step, () => {
 
 @media (max-width: 640px) {
   .summary-stats-row {
-    flex-direction: column;
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
   }
   
   .summary-stat-compact {
-    min-width: 100%;
+    flex: 1;
+    min-width: 0;
+    padding: 8px 6px;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 4px;
+  }
+  
+  .summary-stat-compact .stat-info {
+    align-items: center;
+  }
+  
+  .summary-stat-compact .stat-icon-wrapper {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .summary-stat-compact .stat-value {
+    font-size: 1rem;
+  }
+  
+  .summary-stat-compact .stat-value-text {
+    font-size: 0.7rem;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.1;
+  }
+  
+  .summary-stat-compact .stat-label {
+    font-size: 0.6rem;
   }
 }
 
 .wheel-summary {
   margin-bottom: 2rem;
   text-align: center;
+  position: relative;
 }
 
 .wheel-summary h3 {
   margin-bottom: 1rem;
+}
+
+.wheel-title {
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.btn-edit-wheel-icon {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.btn-edit-wheel-icon:hover {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  transform: rotate(45deg);
+}
+
+.wheel-edit-hint {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.05));
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--primary-color);
+}
+
+.wheel-edit-hint .hint-text {
+  color: var(--primary-color);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.wheel-edit-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.wheel-edit-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .wheel-visualization {
@@ -1690,9 +1833,11 @@ watch(() => route.query.spp_step, () => {
   flex-shrink: 0;
 }
 
-.sphere-title-info h2 {
+.sphere-name {
+  display: block;
   margin: 0 0 0.5rem 0;
   font-size: 1.5rem;
+  font-weight: 600;
 }
 
 .score-badge {
@@ -1842,9 +1987,11 @@ watch(() => route.query.spp_step, () => {
   transform: rotate(180deg);
 }
 
-.accordion-left .sphere-title-info h2 {
+.accordion-left .sphere-name {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .header-meta {
@@ -2667,6 +2814,236 @@ watch(() => route.query.spp_step, () => {
   .completion-actions .btn {
     width: 100%;
     justify-content: center;
+  }
+}
+
+/* Mobile optimizations for Summary section */
+@media (max-width: 768px) {
+  .summary-section-main {
+    gap: 12px;
+    padding: 0 8px;
+    overflow-x: hidden;
+  }
+  
+  .summary-section-main .section-header {
+    margin-bottom: 8px;
+    padding: 2rem 0 0 0;
+  }
+  
+  .summary-section-main .section-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .wheel-summary h3,
+  .wheel-title {
+    display: none;
+  }
+  
+  .wheel-summary {
+    padding: 0;
+    margin: 0 0 12px 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  .wheel-summary.card {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+  
+  .btn-edit-wheel-icon {
+    top: 8px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    z-index: 10;
+  }
+  
+  .btn-edit-wheel-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .wheel-visualization {
+    padding: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  .wheel-edit-hint {
+    margin: 0.75rem 16px 0 16px;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    width: calc(100% - 32px);
+    box-sizing: border-box;
+  }
+  
+  .wheel-edit-hint .hint-text {
+    font-size: 0.85rem;
+  }
+  
+  .wheel-edit-actions {
+    flex-direction: row;
+    gap: 0.5rem;
+    margin: 1rem auto 0 auto;
+    padding: 0.75rem 16px 0 16px;
+    width: calc(100% - 32px);
+    max-width: calc(100vw - 32px);
+    box-sizing: border-box;
+  }
+  
+  .wheel-edit-actions .btn {
+    justify-content: center;
+    padding: 0.75rem 0.5rem;
+    min-width: 0;
+    font-size: 0.9rem;
+  }
+  
+  .wheel-edit-actions .btn-secondary {
+    flex: 0 0 30%;
+  }
+  
+  .wheel-edit-actions .btn-primary {
+    flex: 1;
+  }
+  
+  .summary-stats-row {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+  }
+  
+  .summary-stat-compact {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 8px;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  }
+  
+  .summary-stat-compact .stat-info {
+    align-items: center;
+  }
+  
+  .stat-icon-wrapper {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .stat-value {
+    font-size: 1.1rem;
+  }
+  
+  .stat-value-text {
+    font-size: 0.85rem;
+  }
+  
+  .stat-label {
+    font-size: 0.7rem;
+  }
+  
+  .reflection-summary {
+    padding: 12px;
+  }
+  
+  .reflection-summary h3 {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+  }
+  
+  .accordion-item {
+    margin-bottom: 8px;
+  }
+  
+  .accordion-header {
+    padding: 10px 12px;
+  }
+  
+  .sphere-icon-wrapper {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .sphere-icon-wrapper svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .sphere-name {
+    font-size: 1rem;
+  }
+  
+  .score-badge-neutral {
+    font-size: 0.8rem;
+    padding: 2px 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .summary-section-main .section-header h1 {
+    font-size: 1.25rem;
+  }
+  
+  .summary-stats-row {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+  }
+  
+  .summary-stat-compact {
+    padding: 6px 4px;
+    gap: 3px;
+  }
+  
+  .summary-stat-compact .stat-icon-wrapper {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .summary-stat-compact .stat-icon-wrapper svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .summary-stat-compact .stat-value {
+    font-size: 0.9rem;
+  }
+  
+  .summary-stat-compact .stat-value-text {
+    font-size: 0.65rem;
+  }
+  
+  .summary-stat-compact .stat-label {
+    font-size: 0.55rem;
+  }
+  
+  .wheel-visualization {
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  .accordion-header {
+    padding: 8px 10px;
+  }
+  
+  .sphere-name {
+    font-size: 0.95rem;
+  }
+  
+  .score-badge-neutral {
+    font-size: 0.75rem;
   }
 }
 </style>
