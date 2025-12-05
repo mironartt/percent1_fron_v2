@@ -57,13 +57,15 @@
         <div class="stat-icon" :class="gameSettings.difficultyMode">
           <Shield :size="20" :stroke-width="1.5" />
         </div>
-        <div class="stat-content">
-          <span class="stat-value">{{ difficultyLabel }}</span>
-          <span class="stat-label">режим</span>
-        </div>
-        <div class="settings-cta">
-          <Settings :size="14" :stroke-width="1.5" />
-          <span>Настроить</span>
+        <div class="stat-main">
+          <div class="stat-content">
+            <span class="stat-value">{{ difficultyLabel }}</span>
+            <span class="stat-label">режим</span>
+          </div>
+          <div class="settings-cta">
+            <Settings :size="14" :stroke-width="1.5" />
+            <span>Настроить</span>
+          </div>
         </div>
       </button>
     </div>
@@ -374,7 +376,7 @@
             <textarea 
               v-model="formData.description"
               class="form-input description-input description-spacing"
-              rows="2"
+              rows="4"
               placeholder="Зачем вам эта привычка? (опционально)"
             />
             
@@ -436,7 +438,7 @@
                   type="range" 
                   v-model.number="formData.xpPenalty"
                   min="0"
-                  max="100"
+                  max="200"
                   step="1"
                   class="xp-slider penalty"
                 />
@@ -596,92 +598,119 @@
               </div>
             </div>
             
+            <div class="settings-section" v-if="gameSettings.difficultyMode !== 'soft'">
+              <div class="section-header">
+                <h4>Амнистии</h4>
+                <span class="section-hint">Прощение штрафов</span>
+              </div>
+              
+              <div class="amnesty-setting">
+                <div class="setting-header">
+                  <label>Амнистий в неделю</label>
+                  <span class="setting-value">{{ gameSettings.weeklyAmnestyCount }}</span>
+                </div>
+                <div class="setting-hint">Амнистия отменяет все штрафы за один день. Используйте их мудро.</div>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="7" 
+                  step="1"
+                  v-model.number="gameSettings.weeklyAmnestyCount"
+                  @change="saveGameSettings"
+                  class="slider amnesty-slider"
+                />
+                <div class="slider-labels amnesty-labels">
+                  <span>0</span>
+                  <span>3</span>
+                  <span>7</span>
+                </div>
+              </div>
+              
+              <p class="settings-tip">
+                <Lightbulb :size="14" :stroke-width="1.5" />
+                Детальную настройку наград и штрафов можно задать при добавлении каждой привычки
+              </p>
+            </div>
+            
             <div class="settings-section">
               <div class="section-header">
                 <h4>Санкции</h4>
-                <span class="section-hint">Включите для дополнительной мотивации</span>
+                <span class="section-hint">Дополнительная мотивация</span>
               </div>
               <p class="settings-info">
                 <Info :size="14" :stroke-width="1.5" />
                 Штрафы снимают XP, но ваш баланс никогда не уйдёт ниже 0
               </p>
               
-              <div class="toggle-group">
-                <label class="toggle-row">
-                  <div class="toggle-info">
-                    <span class="toggle-label">Штрафы за пропуск привычек</span>
-                    <span class="toggle-hint">Снимает XP если запланированная привычка не выполнена</span>
-                  </div>
-                  <input type="checkbox" v-model="gameSettings.penaltiesEnabled" @change="saveGameSettings" />
-                  <span class="toggle"></span>
-                </label>
+              <div class="toggle-group-with-sliders">
+                <div class="toggle-item">
+                  <label class="toggle-row">
+                    <div class="toggle-info">
+                      <span class="toggle-label">Штрафы за пропуск привычек</span>
+                      <span class="toggle-hint">Снимает XP если запланированная привычка не выполнена</span>
+                    </div>
+                    <input type="checkbox" v-model="gameSettings.penaltiesEnabled" @change="saveGameSettings" />
+                    <span class="toggle"></span>
+                  </label>
+                </div>
                 
-                <label class="toggle-row">
-                  <div class="toggle-info">
-                    <span class="toggle-label">Штрафы за дневник</span>
-                    <span class="toggle-hint">Снимает XP если дневник не заполнен за день</span>
+                <div class="toggle-item">
+                  <label class="toggle-row">
+                    <div class="toggle-info">
+                      <span class="toggle-label">Штрафы за планирование</span>
+                      <span class="toggle-hint">Снимает XP если нет плана на следующий день</span>
+                    </div>
+                    <input type="checkbox" v-model="gameSettings.planningPenalty" @change="saveGameSettings" />
+                    <span class="toggle"></span>
+                  </label>
+                  <div class="inline-slider" v-if="gameSettings.planningPenalty">
+                    <div class="inline-slider-header">
+                      <span>Размер штрафа</span>
+                      <span class="inline-slider-value">{{ gameSettings.planningPenaltyAmount || 10 }} XP</span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="100" 
+                      step="5"
+                      v-model.number="gameSettings.planningPenaltyAmount"
+                      @change="saveGameSettings"
+                      class="slider mini-slider"
+                    />
                   </div>
-                  <input type="checkbox" v-model="gameSettings.journalPenalty" @change="saveGameSettings" />
-                  <span class="toggle"></span>
-                </label>
+                </div>
                 
-                <label class="toggle-row">
-                  <div class="toggle-info">
-                    <span class="toggle-label">Штрафы за планирование</span>
-                    <span class="toggle-hint">Снимает XP если нет плана на следующий день</span>
+                <div class="toggle-item">
+                  <label class="toggle-row">
+                    <div class="toggle-info">
+                      <span class="toggle-label">Штрафы за дневник</span>
+                      <span class="toggle-hint">Снимает XP если дневник не заполнен за день</span>
+                    </div>
+                    <input type="checkbox" v-model="gameSettings.journalPenalty" @change="saveGameSettings" />
+                    <span class="toggle"></span>
+                  </label>
+                  <div class="inline-slider" v-if="gameSettings.journalPenalty">
+                    <div class="inline-slider-header">
+                      <span>Размер штрафа</span>
+                      <span class="inline-slider-value">{{ gameSettings.journalPenaltyAmount || 10 }} XP</span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="100" 
+                      step="5"
+                      v-model.number="gameSettings.journalPenaltyAmount"
+                      @change="saveGameSettings"
+                      class="slider mini-slider"
+                    />
                   </div>
-                  <input type="checkbox" v-model="gameSettings.planningPenalty" @change="saveGameSettings" />
-                  <span class="toggle"></span>
-                </label>
+                </div>
               </div>
             </div>
             
-            <div class="settings-section">
-              <div class="section-header">
-                <h4>AI-коуч</h4>
-                <span class="section-hint">Персональный помощник</span>
-              </div>
-              
-              <div class="toggle-group">
-                <label class="toggle-row">
-                  <div class="toggle-info">
-                    <span class="toggle-label">Подсказки и напоминания</span>
-                    <span class="toggle-hint">Получайте советы, мотивацию и напоминания от AI-ментора</span>
-                  </div>
-                  <input type="checkbox" v-model="gameSettings.aiCoachEnabled" @change="saveGameSettings" />
-                  <span class="toggle"></span>
-                </label>
-              </div>
-              
-              <div class="amnesty-info" v-if="gameSettings.penaltiesEnabled && maxAmnesties > 0">
-                <Gift :size="18" :stroke-width="1.5" />
-                <div class="amnesty-content">
-                  <span class="amnesty-title">Амнистия</span>
-                  <span class="amnesty-desc" v-if="amnestiesRemaining > 0">
-                    Доступно {{ amnestiesRemaining }} из {{ maxAmnesties }} на этой неделе — отменяет штрафы за день
-                  </span>
-                  <span class="amnesty-desc" v-else>Все амнистии использованы на этой неделе</span>
-                </div>
-                <button 
-                  v-if="weeklyAmnestyAvailable" 
-                  class="btn btn-sm btn-secondary"
-                  @click="useAmnesty"
-                >
-                  Активировать
-                </button>
-              </div>
-              
-              <div class="amnesty-info no-amnesty" v-if="gameSettings.penaltiesEnabled && maxAmnesties === 0 && gameSettings.difficultyMode !== 'custom'">
-                <Gift :size="18" :stroke-width="1.5" />
-                <div class="amnesty-content">
-                  <span class="amnesty-title">Амнистия</span>
-                  <span class="amnesty-desc">Недоступна в режиме "{{ difficultyLabel }}"</span>
-                </div>
-              </div>
-            </div>
           </div>
           
-          <div class="modal-footer">
+          <div class="modal-footer modal-footer-right">
             <button class="btn btn-primary" @click="showSettingsModal = false">Готово</button>
           </div>
         </div>
@@ -747,12 +776,20 @@
               <div 
                 v-for="habit in scheduledToday" 
                 :key="habit.id"
-                class="today-habit-item"
+                class="today-habit-item clickable"
                 :class="{ completed: isHabitCompletedToday(habit) }"
+                @click="toggleHabitCompletion(habit)"
               >
+                <div class="habit-check-mini">
+                  <div class="checkbox-mini" :class="{ checked: isHabitCompletedToday(habit) }">
+                    <Check v-if="isHabitCompletedToday(habit)" :size="12" :stroke-width="2.5" />
+                  </div>
+                </div>
                 <span class="habit-icon">{{ getIconEmoji(habit.icon) }}</span>
                 <span class="habit-name">{{ habit.name }}</span>
-                <CheckCircle v-if="isHabitCompletedToday(habit)" :size="16" :stroke-width="2" class="check-icon" />
+                <span class="habit-xp-reward" :class="{ earned: isHabitCompletedToday(habit) }">
+                  +{{ habit.xpReward || 5 }} XP
+                </span>
               </div>
             </div>
           </div>
@@ -813,7 +850,7 @@ import { DEBUG_MODE } from '@/config/settings.js'
 import { 
   Flame, Plus, Minus, Zap, CheckCircle, Sparkles, Shield, Bot,
   Check, Pencil, X, Trash2, Settings, Gift, Archive, Info, TrendingUp, Calendar, Award,
-  Ellipsis, CircleAlert
+  Ellipsis, CircleAlert, Lightbulb
 } from 'lucide-vue-next'
 
 const appStore = useAppStore()
@@ -913,6 +950,8 @@ const gameSettings = ref({
   penaltiesEnabled: false,
   journalPenalty: false,
   planningPenalty: false,
+  journalPenaltyAmount: 10,
+  planningPenaltyAmount: 10,
   aiCoachEnabled: true,
   weeklyAmnestyUsed: null,
   customPenaltyPercent: 50,
@@ -2162,17 +2201,29 @@ onMounted(() => {
   color: var(--primary-color);
 }
 
+.stat-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-main .stat-content {
+  white-space: nowrap;
+}
+
 .settings-cta {
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.35rem 0.6rem;
+  padding: 0.25rem 0.5rem;
   background: rgba(124, 58, 237, 0.1);
-  border-radius: 6px;
+  border-radius: 5px;
   color: var(--primary-color);
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 500;
-  margin-left: auto;
+  width: fit-content;
   transition: all 0.2s ease;
 }
 
@@ -2405,6 +2456,97 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.toggle-group-with-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.toggle-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.toggle-item .toggle-row {
+  margin-bottom: 0;
+}
+
+.inline-slider {
+  padding: 0.75rem 1rem;
+  margin-left: 0;
+  background: var(--bg-tertiary);
+  border-radius: 0 0 10px 10px;
+  margin-top: -2px;
+}
+
+.inline-slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.inline-slider-value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mini-slider {
+  width: 100%;
+  height: 4px;
+}
+
+.amnesty-setting {
+  background: var(--bg-secondary);
+  padding: 1rem;
+  border-radius: 10px;
+  margin-bottom: 0.75rem;
+}
+
+.amnesty-setting .setting-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.amnesty-setting .setting-header label {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.amnesty-setting .setting-value {
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.amnesty-setting .setting-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.settings-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(124, 58, 237, 0.08);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+.settings-tip svg {
+  flex-shrink: 0;
+  color: var(--primary-color);
+  margin-top: 0.1rem;
 }
 
 .toggle-info {
@@ -2756,6 +2898,10 @@ onMounted(() => {
   gap: 0.75rem;
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--border-color);
+}
+
+.modal-footer-right {
+  justify-content: flex-end;
 }
 
 .spacer {
@@ -3636,8 +3782,42 @@ onMounted(() => {
   transition: all 0.2s ease;
 }
 
+.today-habit-item.clickable {
+  cursor: pointer;
+}
+
+.today-habit-item.clickable:hover {
+  background: var(--bg-tertiary);
+}
+
 .today-habit-item.completed {
   background: rgba(34, 197, 94, 0.1);
+}
+
+.today-habit-item.completed.clickable:hover {
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.habit-check-mini {
+  flex-shrink: 0;
+}
+
+.checkbox-mini {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 2px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  background: var(--bg-primary);
+}
+
+.checkbox-mini.checked {
+  background: #22c55e;
+  border-color: #22c55e;
+  color: white;
 }
 
 .today-habit-item .habit-icon {
@@ -3648,6 +3828,21 @@ onMounted(() => {
   flex: 1;
   font-weight: 500;
   color: var(--text-primary);
+}
+
+.habit-xp-reward {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 0.25rem 0.5rem;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.habit-xp-reward.earned {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
 }
 
 .today-habit-item .check-icon {
