@@ -731,7 +731,7 @@
                       <span class="toggle-label">Штрафы за пропуск привычек</span>
                       <span class="toggle-hint">Снимает XP если запланированная привычка не выполнена</span>
                     </div>
-                    <input type="checkbox" v-model="gameSettings.penaltiesEnabled" @change="saveGameSettings" />
+                    <input type="checkbox" v-model="gameSettings.penaltiesEnabled" @change="onPenaltiesEnabledChange" />
                     <span class="toggle"></span>
                   </label>
                 </div>
@@ -1325,7 +1325,7 @@ function applyAmnestyForDay(dateStr) {
   }
   gameSettings.value.amnestiedDates.push(dateStr)
   gameSettings.value.amnestiesUsedThisWeek++
-  appStore.saveHabits()
+  saveGameSettings()
   
   const dayInfo = missedDaysForAmnesty.value.find(d => d.date === dateStr)
   const xpRecovered = dayInfo?.penaltyXp || 0
@@ -1776,6 +1776,14 @@ function saveGameSettings() {
   } catch (e) {
     console.error('[Habits] Failed to save game settings:', e)
   }
+}
+
+function onPenaltiesEnabledChange() {
+  if (!gameSettings.value.penaltiesEnabled) {
+    gameSettings.value.difficultyMode = 'soft'
+    gameSettings.value.weeklyAmnestyCount = 0
+  }
+  saveGameSettings()
 }
 
 function loadGameSettings() {
