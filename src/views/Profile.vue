@@ -8,7 +8,6 @@
           </div>
           <div class="user-details">
             <h1>{{ userName }}</h1>
-            <p class="user-email desktop-only">{{ userEmail }}</p>
           </div>
         </div>
         <div class="xp-display">
