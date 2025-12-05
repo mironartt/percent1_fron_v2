@@ -1473,6 +1473,15 @@ async function completeOnboarding() {
     gap: 0.75rem;
   }
   
+  .btn {
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+  }
+  
+  .btn-lg {
+    padding: 0.85rem 1.25rem;
+  }
+  
   .step-actions .btn {
     width: 100%;
     justify-content: center;
