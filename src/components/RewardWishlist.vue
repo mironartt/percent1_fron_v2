@@ -240,10 +240,10 @@ function closeModal() {
 function saveReward() {
   if (editingReward.value) {
     xpStore.updateReward(editingReward.value.id, formData.value)
-    toast.show('Награда обновлена', 'success')
+    toast.showToast({ title: 'Награда обновлена', type: 'success' })
   } else {
     xpStore.addReward(formData.value)
-    toast.show('Награда добавлена', 'success')
+    toast.showToast({ title: 'Награда добавлена', type: 'success' })
   }
   closeModal()
 }
@@ -251,7 +251,7 @@ function saveReward() {
 function deleteReward() {
   if (editingReward.value) {
     xpStore.removeReward(editingReward.value.id)
-    toast.show('Награда удалена', 'info')
+    toast.showToast({ title: 'Награда удалена', type: 'info' })
     closeModal()
   }
 }
@@ -265,9 +265,9 @@ function confirmClaim() {
   
   const result = xpStore.spendXP(claimingReward.value.id)
   if (result.success) {
-    toast.show(`Поздравляем! Вы получили: ${claimingReward.value.name}`, 'success')
+    toast.showToast({ title: `Поздравляем! Вы получили: ${claimingReward.value.name}`, type: 'success' })
   } else {
-    toast.show(result.error, 'error')
+    toast.showToast({ title: result.error, type: 'error' })
   }
   claimingReward.value = null
 }
