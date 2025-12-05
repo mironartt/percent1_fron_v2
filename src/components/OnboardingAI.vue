@@ -1517,5 +1517,66 @@ async function completeOnboarding() {
     min-width: 0;
     overflow: hidden;
   }
+  
+  /* Страница Анализ - мобильная оптимизация */
+  .ai-analysis-section {
+    padding: 1rem;
+    border-radius: 16px;
+    margin-bottom: 1rem;
+  }
+  
+  .ai-header {
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  
+  .ai-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+  }
+  
+  .ai-avatar svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .ai-info h3 {
+    font-size: 0.95rem;
+  }
+  
+  .ai-status {
+    font-size: 0.75rem;
+  }
+  
+  .message-bubble {
+    padding: 1rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+  }
+  
+  .insights-cards {
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  
+  .insight-card {
+    padding: 0.75rem;
+    gap: 0.75rem;
+    border-radius: 10px;
+  }
+  
+  .insight-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .insight-content h4 {
+    font-size: 0.8rem;
+  }
+  
+  .insight-content p {
+    font-size: 0.75rem;
+  }
 }
 </style>
