@@ -303,7 +303,7 @@
               v-for="day in weekDays" 
               :key="day.key"
               class="schedule-day"
-              :class="getDayStatus(habit, day.date)"
+              :class="[getDayStatus(habit, day.date), { today: day.isToday }]"
               :title="`${day.name}: ${getDayStatusLabel(getDayStatus(habit, day.date))}`"
               @click="openDayEditModal(habit, day)"
             >
