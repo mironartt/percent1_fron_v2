@@ -232,7 +232,7 @@
               <Target :size="40" />
             </div>
             <h2 class="step-title">Ваши первые цели</h2>
-            <p class="step-subtitle">AI подготовил цели с шагами для улучшения слабых сфер</p>
+            <p class="step-subtitle">AI подготовил цели с шагами на основе анализа ССП. Утвердите или откажитесь от целей.</p>
           </div>
 
           <div class="goals-preview">
