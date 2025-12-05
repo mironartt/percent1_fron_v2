@@ -2620,9 +2620,13 @@ onMounted(() => {
 }
 
 .schedule-day-mini.scheduled,
-.schedule-day-mini.future,
+.schedule-day-mini.future {
+  background: rgba(124, 58, 237, 0.1);
+}
+
 .schedule-day-mini.today {
   background: rgba(124, 58, 237, 0.1);
+  box-shadow: 0 0 0 2px var(--primary-color);
 }
 
 .schedule-day-mini.scheduled .day-letter,
@@ -3175,7 +3179,15 @@ onMounted(() => {
 }
 
 .habit-card:hover {
-  background: var(--bg-tertiary, rgba(0,0,0,0.05));
+  background: var(--bg-tertiary, rgba(0,0,0,0.08));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.habit-card:hover .habit-schedule-inline {
+  background: rgba(124, 58, 237, 0.06);
+  border-radius: 8px;
+  padding: 4px;
+  margin: -4px;
 }
 
 .habit-card.completed {
@@ -3304,6 +3316,11 @@ onMounted(() => {
   gap: 3px;
   margin-left: auto;
   margin-right: 0.5rem;
+  transition: all 0.2s ease;
+  padding: 4px;
+  margin: -4px;
+  margin-left: auto;
+  border-radius: 8px;
 }
 
 .clickable-schedule {
