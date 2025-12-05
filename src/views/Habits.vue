@@ -64,6 +64,34 @@
       </button>
     </div>
 
+    <!-- Блок амнистии -->
+    <div class="amnesty-banner" v-if="maxAmnesties > 0 && amnestiesRemaining > 0 && missedDaysForAmnesty.length > 0">
+      <div class="amnesty-banner-header">
+        <div class="amnesty-banner-icon">
+          <Heart :size="20" :stroke-width="1.5" />
+        </div>
+        <div class="amnesty-banner-info">
+          <span class="amnesty-banner-title">Амнистия доступна</span>
+          <span class="amnesty-banner-subtitle">{{ amnestiesRemaining }} из {{ maxAmnesties }} использований</span>
+        </div>
+      </div>
+      <div class="amnesty-days-list">
+        <span class="amnesty-days-label">Выберите день для прощения:</span>
+        <div class="amnesty-days">
+          <button 
+            v-for="day in missedDaysForAmnesty" 
+            :key="day.date"
+            class="amnesty-day-btn"
+            @click="applyAmnestyForDay(day.date)"
+            :title="`Простить ${day.missedCount} пропущенных привычек`"
+          >
+            <span class="day-name">{{ day.dayName }}</span>
+            <span class="day-missed">-{{ day.penaltyXp }} XP</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="tabs-navigation" v-if="allHabits.length > 0">
       <button 
         class="tab-btn" 
@@ -904,7 +932,7 @@ import { DEBUG_MODE } from '@/config/settings.js'
 import { 
   Flame, Plus, Minus, Zap, CheckCircle, Sparkles, Shield, Bot,
   Check, Pencil, X, Trash2, Settings, Gift, Archive, Info, TrendingUp, Calendar, Award,
-  Ellipsis, CircleAlert, Lightbulb
+  Ellipsis, CircleAlert, Lightbulb, Heart
 } from 'lucide-vue-next'
 
 const appStore = useAppStore()
@@ -1230,6 +1258,81 @@ const amnestiesRemaining = computed(() => {
   return Math.max(0, maxAmnesties.value - gameSettings.value.amnestiesUsedThisWeek)
 })
 
+function isScheduledForDay(habit, dayKey) {
+  if (habit.frequencyType === 'daily') return true
+  if (habit.frequencyType === 'weekdays') return dayKey >= 1 && dayKey <= 5
+  if (habit.frequencyType === 'weekends') return dayKey === 0 || dayKey === 6
+  return habit.scheduleDays?.includes(dayKey)
+}
+
+const missedDaysForAmnesty = computed(() => {
+  if (gameSettings.value.difficultyMode === 'soft') return []
+  if (!gameSettings.value.penaltiesEnabled) return []
+  
+  const days = []
+  const today = new Date()
+  const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
+  
+  for (let i = 1; i <= 7; i++) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - i)
+    const dateStr = date.toISOString().split('T')[0]
+    const dayOfWeek = date.getDay()
+    
+    const scheduledForDay = allHabits.value.filter(h => isScheduledForDay(h, dayOfWeek))
+    const completedIds = appStore.habitLog[dateStr] || []
+    const missedHabits = scheduledForDay.filter(h => !completedIds.includes(h.id))
+    
+    if (missedHabits.length > 0) {
+      const penaltyXp = missedHabits.reduce((sum, h) => {
+        const baseXp = h.xpReward || 5
+        const penaltyMultiplier = (h.penaltyPercent ?? currentPenaltyPercent.value) / 100
+        return sum + Math.round(baseXp * penaltyMultiplier)
+      }, 0)
+      
+      const amnestiedDates = gameSettings.value.amnestiedDates || []
+      if (!amnestiedDates.includes(dateStr)) {
+        days.push({
+          date: dateStr,
+          dayName: dayNames[dayOfWeek] + ', ' + date.getDate(),
+          missedCount: missedHabits.length,
+          penaltyXp
+        })
+      }
+    }
+  }
+  
+  return days.slice(0, 5)
+})
+
+function applyAmnestyForDay(dateStr) {
+  if (amnestiesRemaining.value <= 0) {
+    toast.warning('Нет доступных амнистий')
+    return
+  }
+  
+  const now = new Date()
+  const weekStart = getWeekStart(now)
+  
+  if (!gameSettings.value.amnestyWeekStart || 
+      new Date(gameSettings.value.amnestyWeekStart).getTime() !== weekStart.getTime()) {
+    gameSettings.value.amnestyWeekStart = weekStart.toISOString()
+    gameSettings.value.amnestiesUsedThisWeek = 0
+  }
+  
+  if (!gameSettings.value.amnestiedDates) {
+    gameSettings.value.amnestiedDates = []
+  }
+  gameSettings.value.amnestiedDates.push(dateStr)
+  gameSettings.value.amnestiesUsedThisWeek++
+  appStore.saveHabits()
+  
+  const dayInfo = missedDaysForAmnesty.value.find(d => d.date === dateStr)
+  const xpRecovered = dayInfo?.penaltyXp || 0
+  
+  toast.success(`Амнистия применена! Возвращено ${xpRecovered} XP`)
+}
+
 function getWeekStart(date) {
   const d = new Date(date)
   const day = d.getDay()
@@ -1244,13 +1347,6 @@ const weeklyAmnestyAvailable = computed(() => {
   if (!gameSettings.value.penaltiesEnabled) return false
   return amnestiesRemaining.value > 0
 })
-
-function isScheduledForDay(habit, dayKey) {
-  if (habit.frequencyType === 'daily') return true
-  if (habit.frequencyType === 'weekdays') return dayKey >= 1 && dayKey <= 5
-  if (habit.frequencyType === 'weekends') return dayKey === 0 || dayKey === 6
-  return habit.scheduleDays?.includes(dayKey)
-}
 
 function getCompletionForDate(dateStr) {
   const dayOfWeek = new Date(dateStr).getDay()
@@ -1760,19 +1856,19 @@ onMounted(() => {
 
 .stats-bar {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 1rem;
+  grid-template-columns: 1fr 1fr 1fr 1.5fr;
+  gap: 0.75rem;
   margin-bottom: 1.5rem;
 }
 
 .stat-item {
   background: var(--card-bg);
   border-radius: 12px;
-  padding: 1rem;
+  padding: 0.75rem;
   border: 1px solid var(--border-color);
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   position: relative;
 }
 
@@ -1786,12 +1882,13 @@ onMounted(() => {
 }
 
 .stat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .stat-item.streak .stat-icon {
@@ -2332,8 +2429,8 @@ onMounted(() => {
 }
 
 .stat-item.compact-mode {
-  flex: 1.2;
   min-width: 0;
+  padding: 0.75rem 1rem;
 }
 
 .stat-content-inline {
@@ -2951,6 +3048,99 @@ onMounted(() => {
 .btn-suggest-habit:hover {
   background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(139, 92, 246, 0.2));
   border-style: solid;
+}
+
+.amnesty-banner {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.08), rgba(244, 114, 182, 0.12));
+  border: 1px solid rgba(236, 72, 153, 0.2);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.amnesty-banner-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.amnesty-banner-icon {
+  width: 36px;
+  height: 36px;
+  background: rgba(236, 72, 153, 0.15);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ec4899;
+  flex-shrink: 0;
+}
+
+.amnesty-banner-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.amnesty-banner-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.amnesty-banner-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.amnesty-days-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.amnesty-days-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.amnesty-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.amnesty-day-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--card-bg);
+  border: 1px solid rgba(236, 72, 153, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 60px;
+}
+
+.amnesty-day-btn:hover {
+  background: rgba(236, 72, 153, 0.1);
+  border-color: #ec4899;
+  transform: translateY(-1px);
+}
+
+.amnesty-day-btn .day-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.amnesty-day-btn .day-missed {
+  font-size: 0.7rem;
+  color: #ef4444;
+  font-weight: 500;
 }
 
 .suggestions-intro {
@@ -4324,9 +4514,14 @@ onMounted(() => {
     display: none;
   }
   
+  .stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+  
   .stat-item {
-    padding: 0.875rem;
-    min-height: 60px;
+    padding: 0.625rem;
+    min-height: 50px;
   }
   
   .stat-item .settings-cta {
@@ -4335,6 +4530,24 @@ onMounted(() => {
   
   .stat-action-hint {
     display: none;
+  }
+  
+  .stat-item.compact-mode {
+    grid-column: span 2;
+  }
+  
+  .amnesty-banner {
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  
+  .amnesty-days {
+    gap: 0.35rem;
+  }
+  
+  .amnesty-day-btn {
+    padding: 0.4rem 0.5rem;
+    min-width: 50px;
   }
   
   .habit-card {
