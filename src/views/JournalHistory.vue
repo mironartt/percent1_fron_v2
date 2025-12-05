@@ -393,6 +393,12 @@ function onEntrySaved() {
 @media (max-width: 640px) {
   .header-content {
     flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .header-content > div {
+    text-align: center;
   }
 }
 
