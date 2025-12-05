@@ -4910,12 +4910,12 @@ onMounted(async () => {
     display: flex;
     flex-direction: column;
     background: var(--bg-primary);
-    border: 1px solid var(--border-color);
+    border: 2px solid var(--border-color);
     border-radius: var(--radius-md);
     padding: 1rem;
     gap: 0.75rem;
     position: relative;
-    overflow: visible;
+    overflow: hidden;
   }
   
   .goals-table-section .goals-table tbody tr:hover {
@@ -4924,7 +4924,6 @@ onMounted(async () => {
   
   .goals-table-section .goals-table tbody tr.in-work {
     border-color: var(--primary-color);
-    border-width: 2px;
   }
   
   .goals-table-section .goals-table tbody tr.row-rejected {
