@@ -982,14 +982,41 @@
               <span class="amnesty-hint">использований на этой неделе</span>
             </div>
 
+            <div v-if="amnestiedDaysInWeek.length > 0" class="amnesty-days-section amnestied-section">
+              <p class="amnesty-instruction amnestied-label">Амнистия уже применена:</p>
+              <div class="amnesty-days-grid">
+                <div 
+                  v-for="day in amnestiedDaysInWeek" 
+                  :key="day.date"
+                  class="amnesty-day-card amnestied"
+                >
+                  <div class="amnestied-badge">
+                    <Heart :size="14" :stroke-width="1.5" />
+                  </div>
+                  <span class="day-name">{{ day.dayName }}</span>
+                  <span class="day-date">{{ formatAmnestyDate(day.date) }}</span>
+                  <span class="day-missed">{{ day.missedCount }} {{ pluralizeHabits(day.missedCount) }}</span>
+                  <span class="day-penalty saved">+{{ day.penaltyXp }} XP</span>
+                  <button 
+                    class="btn-cancel-amnesty"
+                    @click="cancelAmnestyFromModal(day.date)"
+                    title="Отменить амнистию"
+                  >
+                    <X :size="14" :stroke-width="2" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <div v-if="missedDaysForAmnesty.length > 0" class="amnesty-days-section">
-              <p class="amnesty-instruction">Выберите день для прощения пропущенных привычек:</p>
+              <p class="amnesty-instruction">Выберите день для прощения:</p>
               <div class="amnesty-days-grid">
                 <button 
                   v-for="day in missedDaysForAmnesty" 
                   :key="day.date"
                   class="amnesty-day-card"
-                  @click="applyAmnestyForDay(day.date); showAmnestyModal = false"
+                  :disabled="amnestiesRemaining <= 0"
+                  @click="applyAmnestyForDay(day.date)"
                 >
                   <span class="day-name">{{ day.dayName }}</span>
                   <span class="day-date">{{ formatAmnestyDate(day.date) }}</span>
@@ -999,7 +1026,7 @@
               </div>
             </div>
 
-            <div v-else class="amnesty-empty">
+            <div v-if="missedDaysForAmnesty.length === 0 && amnestiedDaysInWeek.length === 0" class="amnesty-empty">
               <CheckCircle :size="32" :stroke-width="1.5" />
               <p>Нет пропущенных дней для амнистии</p>
               <span class="amnesty-empty-hint">Пропущенные дни за последнюю неделю появятся здесь</span>
@@ -1598,6 +1625,59 @@ const missedDaysForAmnesty = computed(() => {
   
   return days.slice(0, 5)
 })
+
+const amnestiedDaysInWeek = computed(() => {
+  const amnestiedDates = gameSettings.value.amnestiedDates || []
+  if (amnestiedDates.length === 0) return []
+  
+  const days = []
+  const today = new Date()
+  const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
+  
+  for (let i = 1; i <= 7; i++) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - i)
+    const dateStr = date.toISOString().split('T')[0]
+    const dayOfWeek = date.getDay()
+    
+    if (amnestiedDates.includes(dateStr)) {
+      const scheduledForDay = allHabits.value.filter(h => isScheduledForDay(h, dayOfWeek))
+      const completedIds = appStore.habitLog[dateStr] || []
+      const missedHabits = scheduledForDay.filter(h => !completedIds.includes(h.id))
+      
+      const penaltyXp = missedHabits.reduce((sum, h) => {
+        const baseXp = h.xpReward || 5
+        const penaltyMultiplier = (h.penaltyPercent ?? currentPenaltyPercent.value) / 100
+        return sum + Math.round(baseXp * penaltyMultiplier)
+      }, 0)
+      
+      days.push({
+        date: dateStr,
+        dayName: dayNames[dayOfWeek] + ', ' + date.getDate(),
+        missedCount: missedHabits.length,
+        penaltyXp
+      })
+    }
+  }
+  
+  return days
+})
+
+function cancelAmnestyFromModal(dateStr) {
+  const amnestiedDates = gameSettings.value.amnestiedDates || []
+  if (!amnestiedDates.includes(dateStr)) return
+  
+  gameSettings.value.amnestiedDates = amnestiedDates.filter(d => d !== dateStr)
+  if (gameSettings.value.amnestiesUsedThisWeek > 0) {
+    gameSettings.value.amnestiesUsedThisWeek--
+  }
+  saveGameSettings()
+  
+  const dayInfo = amnestiedDaysInWeek.value.find(d => d.date === dateStr)
+  const xpPenalty = dayInfo?.penaltyXp || 0
+  
+  toast.showToast({ type: 'info', title: `Амнистия отменена. Штраф -${xpPenalty} XP восстановлен` })
+}
 
 function applyAmnestyForDay(dateStr) {
   if (amnestiesRemaining.value <= 0) {
@@ -2681,6 +2761,83 @@ onMounted(() => {
   font-weight: 600;
   color: #ef4444;
   font-size: 0.85rem;
+}
+
+.amnesty-day-card .day-penalty.saved {
+  color: #22c55e;
+}
+
+.amnesty-day-card:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.amnesty-day-card:disabled:hover {
+  border-color: var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.amnesty-day-card.amnestied {
+  position: relative;
+  grid-template-columns: 1fr auto auto auto auto;
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.08) 0%, rgba(236, 72, 153, 0.02) 100%);
+  border-color: rgba(236, 72, 153, 0.3);
+  cursor: default;
+}
+
+.amnesty-day-card.amnestied:hover {
+  border-color: rgba(236, 72, 153, 0.4);
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, rgba(236, 72, 153, 0.04) 100%);
+}
+
+.amnestied-badge {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(236, 72, 153, 0.4);
+}
+
+.amnestied-badge svg {
+  color: white;
+}
+
+.btn-cancel-amnesty {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+
+.btn-cancel-amnesty:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.amnestied-section {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.amnesty-instruction.amnestied-label {
+  color: #ec4899;
+  font-weight: 500;
 }
 
 .amnesty-empty {
@@ -5904,8 +6061,29 @@ onMounted(() => {
     padding: 0.625rem 0.75rem;
   }
   
+  .amnesty-day-card.amnestied {
+    grid-template-columns: 1fr auto auto auto;
+  }
+  
   .amnesty-day-card .day-date {
     display: none;
+  }
+  
+  .amnestied-badge {
+    width: 18px;
+    height: 18px;
+    top: -4px;
+    left: -4px;
+  }
+  
+  .amnestied-badge svg {
+    width: 10px;
+    height: 10px;
+  }
+  
+  .btn-cancel-amnesty {
+    width: 24px;
+    height: 24px;
   }
   
   .habit-card {
