@@ -1585,15 +1585,7 @@ async function completeOnboarding() {
   }
   
   .plan-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    margin-bottom: 0.5rem;
-  }
-  
-  .plan-icon svg {
-    width: 24px;
-    height: 24px;
+    display: none;
   }
   
   .step-plan .step-title {
