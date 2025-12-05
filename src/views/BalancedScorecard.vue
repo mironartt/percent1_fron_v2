@@ -2785,6 +2785,7 @@ watch(() => route.query.spp_step, () => {
   .summary-section-main {
     gap: 12px;
     padding: 0 8px;
+    overflow-x: hidden;
   }
   
   .summary-section-main .section-header {
@@ -2803,11 +2804,15 @@ watch(() => route.query.spp_step, () => {
   
   .wheel-summary {
     padding: 0;
-    margin: 0 -8px 12px -8px;
+    margin: 0 0 12px 0;
     background: transparent;
     border: none;
     box-shadow: none;
     border-radius: 0;
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
   }
   
   .wheel-summary.card {
@@ -2818,9 +2823,10 @@ watch(() => route.query.spp_step, () => {
   
   .btn-edit-wheel-icon {
     top: 8px;
-    right: 8px;
-    width: 32px;
-    height: 32px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    z-index: 10;
   }
   
   .btn-edit-wheel-icon svg {
