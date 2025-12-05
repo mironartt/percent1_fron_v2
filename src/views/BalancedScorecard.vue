@@ -2841,12 +2841,15 @@ watch(() => route.query.spp_step, () => {
   }
   
   .wheel-edit-hint {
-    margin: 0.75rem 8px 0 8px;
-    padding: 0.5rem 0.75rem;
+    margin: 0.75rem 16px 0 16px;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    width: calc(100% - 32px);
+    box-sizing: border-box;
   }
   
   .wheel-edit-hint .hint-text {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
   }
   
   .wheel-edit-actions {

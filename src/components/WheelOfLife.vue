@@ -339,7 +339,7 @@ function startDrag(event, sphere, index) {
 
 @media (max-width: 768px) {
   .sphere-label {
-    font-size: 12px;
+    font-size: 15px;
     font-weight: 800;
     letter-spacing: 1.5px;
     paint-order: stroke fill;
@@ -361,7 +361,7 @@ function startDrag(event, sphere, index) {
 
 @media (max-width: 480px) {
   .sphere-label {
-    font-size: 11px;
+    font-size: 14px;
     letter-spacing: 1px;
     stroke-width: 2.5px;
   }
