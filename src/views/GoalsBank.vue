@@ -1875,7 +1875,7 @@ onMounted(async () => {
 }
 
 .empty-state-card h1 {
-  font-size: 2rem;
+  font-size: 1.75rem;
   margin-bottom: 0.75rem;
 }
 
@@ -1931,12 +1931,12 @@ onMounted(async () => {
 }
 
 .summary-section .section-header {
-  text-align: center;
+  text-align: left;
   margin-bottom: 2rem;
 }
 
 .summary-section .section-header h1 {
-  font-size: 2rem;
+  font-size: 1.75rem;
   margin-bottom: 0.5rem;
 }
 
@@ -3597,11 +3597,11 @@ onMounted(async () => {
 
 .section-header {
   margin-bottom: 2rem;
-  text-align: center;
+  text-align: left;
 }
 
 .section-header h1 {
-  font-size: 2rem;
+  font-size: 1.75rem;
   margin-bottom: 0.5rem;
 }
 

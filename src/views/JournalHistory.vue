@@ -403,7 +403,7 @@ function onEntrySaved() {
 }
 
 .page-header h1 {
-  font-size: 2rem;
+  font-size: 1.75rem;
   margin: 0 0 0.25rem 0;
 }
 

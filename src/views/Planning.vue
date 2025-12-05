@@ -3090,6 +3090,7 @@ onMounted(async () => {
 }
 
 .section-header h1 {
+  font-size: 1.75rem;
   margin-bottom: 0.5rem;
 }
 
