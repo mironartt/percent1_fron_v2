@@ -171,6 +171,10 @@
               :title="`${day.date}: ${day.completed}/${day.total}`"
             ></div>
           </div>
+          <button class="card-expand-btn" @click="showCompletionDetailModal = true">
+            <ChartBar :size="14" :stroke-width="1.5" />
+            Подробнее
+          </button>
         </div>
 
         <div class="analytics-card calendar">
@@ -199,13 +203,18 @@
             </div>
             <span>Больше</span>
           </div>
+          <button class="card-expand-btn" @click="showCalendarDetailModal = true">
+            <CalendarDays :size="14" :stroke-width="1.5" />
+            Годовой обзор
+          </button>
         </div>
 
         <div class="analytics-card achievements">
           <div class="card-header">
             <span class="card-title">Достижения</span>
+            <span class="card-subtitle">{{ unlockedBadgesCount }}/{{ allHabitBadges.length }}</span>
           </div>
-          <div class="badges-list">
+          <div class="badges-list compact">
             <div 
               v-for="badge in habitBadges" 
               :key="badge.id"
@@ -219,6 +228,10 @@
               </div>
             </div>
           </div>
+          <button class="card-expand-btn" @click="showAllBadgesModal = true">
+            <Award :size="14" :stroke-width="1.5" />
+            Все достижения
+          </button>
         </div>
       </div>
 
@@ -1191,6 +1204,239 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- All Badges Modal -->
+    <Teleport to="body">
+      <div v-if="showAllBadgesModal" class="modal-overlay" @click.self="showAllBadgesModal = false">
+        <div class="modal detail-modal badges-modal">
+          <div class="modal-header">
+            <h3>
+              <Award :size="20" :stroke-width="1.5" />
+              Все достижения
+            </h3>
+            <span class="modal-subtitle">{{ unlockedBadgesCount }} из {{ allHabitBadges.length }} разблокировано</span>
+            <button class="btn-close" @click="showAllBadgesModal = false">
+              <X :size="20" :stroke-width="1.5" />
+            </button>
+          </div>
+          <div class="modal-body">
+            <div v-for="category in badgeCategories" :key="category.id" class="badge-category">
+              <h4 class="category-title">
+                <span class="category-icon">{{ category.icon }}</span>
+                {{ category.name }}
+              </h4>
+              <div class="badges-grid">
+                <div 
+                  v-for="badge in allHabitBadges.filter(b => b.category === category.id)" 
+                  :key="badge.id"
+                  class="badge-card"
+                  :class="{ unlocked: badge.unlocked, locked: !badge.unlocked }"
+                >
+                  <div class="badge-card-icon">{{ badge.icon }}</div>
+                  <div class="badge-card-content">
+                    <span class="badge-card-name">{{ badge.name }}</span>
+                    <span class="badge-card-desc">{{ badge.description }}</span>
+                    <div class="badge-progress" v-if="!badge.unlocked">
+                      <div class="progress-bar">
+                        <div class="progress-fill" :style="{ width: (badge.progress / badge.target * 100) + '%' }"></div>
+                      </div>
+                      <span class="progress-text">{{ badge.progress }}/{{ badge.target }}</span>
+                    </div>
+                    <div class="badge-unlocked-mark" v-else>
+                      <Check :size="14" :stroke-width="2.5" />
+                      Получено
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Completion Detail Modal -->
+    <Teleport to="body">
+      <div v-if="showCompletionDetailModal" class="modal-overlay" @click.self="showCompletionDetailModal = false">
+        <div class="modal detail-modal completion-modal">
+          <div class="modal-header">
+            <h3>
+              <ChartBar :size="20" :stroke-width="1.5" />
+              Статистика выполнения
+            </h3>
+            <button class="btn-close" @click="showCompletionDetailModal = false">
+              <X :size="20" :stroke-width="1.5" />
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="stats-summary">
+              <div class="summary-card">
+                <span class="summary-value">{{ weekCompletionRate }}%</span>
+                <span class="summary-label">За 7 дней</span>
+              </div>
+              <div class="summary-card">
+                <span class="summary-value">{{ monthCompletionRate }}%</span>
+                <span class="summary-label">За 30 дней</span>
+              </div>
+              <div class="summary-card accent">
+                <span class="summary-value">{{ habitStreak }}</span>
+                <span class="summary-label">Дней подряд</span>
+              </div>
+            </div>
+
+            <div class="chart-section">
+              <h4>Тренд за 8 недель</h4>
+              <div class="weekly-chart">
+                <div 
+                  v-for="(week, index) in weeklyCompletionData" 
+                  :key="index" 
+                  class="weekly-bar-container"
+                >
+                  <div class="weekly-bar-wrapper">
+                    <div 
+                      class="weekly-bar" 
+                      :style="{ height: week.rate + '%' }"
+                      :class="{ current: index === weeklyCompletionData.length - 1 }"
+                    ></div>
+                  </div>
+                  <span class="weekly-label">{{ week.label }}</span>
+                  <span class="weekly-rate">{{ week.rate }}%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="chart-section">
+              <h4>По привычкам (за 30 дней)</h4>
+              <div class="habit-distribution">
+                <div 
+                  v-for="habit in habitCompletionDistribution" 
+                  :key="habit.id" 
+                  class="habit-dist-item"
+                >
+                  <div class="habit-dist-header">
+                    <span class="habit-dist-icon">{{ getIconEmoji(habit.icon) }}</span>
+                    <span class="habit-dist-name">{{ habit.name }}</span>
+                    <span class="habit-dist-rate">{{ habit.rate }}%</span>
+                  </div>
+                  <div class="habit-dist-bar">
+                    <div class="habit-dist-fill" :style="{ width: habit.rate + '%' }"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="best-worst-section">
+              <div class="best-card">
+                <TrendingUp :size="16" :stroke-width="1.5" />
+                <div class="bw-content">
+                  <span class="bw-label">Лучшая неделя</span>
+                  <span class="bw-value">{{ bestWeekRate }}%</span>
+                </div>
+              </div>
+              <div class="worst-card">
+                <TrendingUp :size="16" :stroke-width="1.5" class="down" />
+                <div class="bw-content">
+                  <span class="bw-label">Нужно улучшить</span>
+                  <span class="bw-value">{{ worstWeekRate }}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Calendar Detail Modal -->
+    <Teleport to="body">
+      <div v-if="showCalendarDetailModal" class="modal-overlay" @click.self="showCalendarDetailModal = false">
+        <div class="modal detail-modal calendar-modal">
+          <div class="modal-header">
+            <h3>
+              <CalendarDays :size="20" :stroke-width="1.5" />
+              Годовой календарь
+            </h3>
+            <button class="btn-close" @click="showCalendarDetailModal = false">
+              <X :size="20" :stroke-width="1.5" />
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="year-stats-summary">
+              <div class="year-stat">
+                <span class="year-stat-value">{{ yearTotalCompletions }}</span>
+                <span class="year-stat-label">Выполнений за год</span>
+              </div>
+              <div class="year-stat">
+                <span class="year-stat-value">{{ yearActiveDays }}</span>
+                <span class="year-stat-label">Активных дней</span>
+              </div>
+              <div class="year-stat accent">
+                <span class="year-stat-value">{{ bestMonthName }}</span>
+                <span class="year-stat-label">Лучший месяц</span>
+              </div>
+            </div>
+
+            <div class="yearly-heatmap-section">
+              <div class="yearly-heatmap">
+                <div class="heatmap-months-labels">
+                  <span v-for="month in monthLabels" :key="month">{{ month }}</span>
+                </div>
+                <div class="heatmap-days-labels">
+                  <span>Пн</span>
+                  <span>Ср</span>
+                  <span>Пт</span>
+                </div>
+                <div class="heatmap-grid-wrapper">
+                  <div class="yearly-heatmap-grid">
+                    <div 
+                      v-for="(week, weekIndex) in yearlyHeatmapData" 
+                      :key="weekIndex"
+                      class="heatmap-week-column"
+                    >
+                      <div 
+                        v-for="(day, dayIndex) in week" 
+                        :key="dayIndex"
+                        class="heatmap-day"
+                        :class="[day.level, { empty: !day.date }]"
+                        :title="day.date ? `${formatCalendarDate(day.date)}: ${day.completed}/${day.total}` : ''"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="heatmap-legend yearly">
+                <span>Меньше</span>
+                <div class="legend-scale">
+                  <div class="legend-cell level-0"></div>
+                  <div class="legend-cell level-1"></div>
+                  <div class="legend-cell level-2"></div>
+                  <div class="legend-cell level-3"></div>
+                </div>
+                <span>Больше</span>
+              </div>
+            </div>
+
+            <div class="monthly-breakdown">
+              <h4>По месяцам</h4>
+              <div class="months-grid">
+                <div 
+                  v-for="month in monthlyStats" 
+                  :key="month.name" 
+                  class="month-card"
+                  :class="{ best: month.isBest, current: month.isCurrent }"
+                >
+                  <span class="month-name">{{ month.name }}</span>
+                  <span class="month-rate">{{ month.rate }}%</span>
+                  <div class="month-bar">
+                    <div class="month-bar-fill" :style="{ width: month.rate + '%' }"></div>
+                  </div>
+                  <span class="month-completions">{{ month.completed }}/{{ month.total }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -1203,7 +1449,8 @@ import { DEBUG_MODE } from '@/config/settings.js'
 import { 
   Flame, Plus, Minus, Zap, CheckCircle, Sparkles, Shield, Bot,
   Check, Pencil, X, Trash2, Settings, Gift, Archive, Info, TrendingUp, Calendar, Award,
-  Ellipsis, CircleAlert, Lightbulb, Heart, ChevronLeft, ChevronRight, RotateCcw, Lock
+  Ellipsis, CircleAlert, Lightbulb, Heart, ChevronLeft, ChevronRight, RotateCcw, Lock,
+  ChartBar, CalendarDays, Target
 } from 'lucide-vue-next'
 
 const appStore = useAppStore()
@@ -1226,6 +1473,9 @@ const showXpSlider = ref(false)
 const showPenaltyField = ref(false)
 const showSuggestionsModal = ref(false)
 const showAmnestyModal = ref(false)
+const showAllBadgesModal = ref(false)
+const showCompletionDetailModal = ref(false)
+const showCalendarDetailModal = ref(false)
 const showDayEditModal = ref(false)
 const selectedDayForEdit = ref(null)
 const selectedHabitForEdit = ref(null)
@@ -1943,15 +2193,272 @@ function formatCalendarDate(dateStr) {
   return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
 }
 
-const habitBadges = computed(() => {
+const allHabitBadges = computed(() => {
   const streak = habitStreak.value
+  const weekRate = weekCompletionRate.value
+  const monthRate = monthCompletionRate.value
+  const totalCompletions = Object.values(appStore.habitLog).flat().length
+  const habitsCount = allHabits.value.length
+  
   const badges = [
-    { id: 'week', icon: '🔥', name: '7 дней подряд', description: 'Неделя без пропусков', unlocked: streak >= 7 },
-    { id: 'fortnight', icon: '⚡', name: '14 дней подряд', description: 'Две недели дисциплины', unlocked: streak >= 14 },
-    { id: 'month', icon: '🏆', name: '30 дней подряд', description: 'Месяц стабильности', unlocked: streak >= 30 },
-    { id: 'perfectWeek', icon: '💎', name: 'Идеальная неделя', description: '100% выполнение за 7 дней', unlocked: weekCompletionRate.value === 100 },
+    // Серии (стрики)
+    { id: 'streak3', icon: '🌱', name: 'Первые ростки', description: '3 дня подряд', unlocked: streak >= 3, category: 'streak', progress: Math.min(streak, 3), target: 3 },
+    { id: 'streak7', icon: '🔥', name: 'Неделя огня', description: '7 дней подряд', unlocked: streak >= 7, category: 'streak', progress: Math.min(streak, 7), target: 7 },
+    { id: 'streak14', icon: '⚡', name: 'Две недели силы', description: '14 дней дисциплины', unlocked: streak >= 14, category: 'streak', progress: Math.min(streak, 14), target: 14 },
+    { id: 'streak21', icon: '🧠', name: 'Привычка закреплена', description: '21 день — новая привычка', unlocked: streak >= 21, category: 'streak', progress: Math.min(streak, 21), target: 21 },
+    { id: 'streak30', icon: '🏆', name: 'Месяц стабильности', description: '30 дней без пропусков', unlocked: streak >= 30, category: 'streak', progress: Math.min(streak, 30), target: 30 },
+    { id: 'streak50', icon: '👑', name: 'Железная воля', description: '50 дней подряд', unlocked: streak >= 50, category: 'streak', progress: Math.min(streak, 50), target: 50 },
+    { id: 'streak100', icon: '💎', name: 'Легенда', description: '100 дней без пропусков', unlocked: streak >= 100, category: 'streak', progress: Math.min(streak, 100), target: 100 },
+    
+    // Выполнение
+    { id: 'perfectWeek', icon: '✨', name: 'Идеальная неделя', description: '100% за 7 дней', unlocked: weekRate === 100, category: 'completion', progress: weekRate, target: 100 },
+    { id: 'week80', icon: '🎯', name: 'Почти идеал', description: '80%+ за неделю', unlocked: weekRate >= 80, category: 'completion', progress: weekRate, target: 80 },
+    { id: 'month80', icon: '📈', name: 'Стабильный месяц', description: '80%+ за 30 дней', unlocked: monthRate >= 80, category: 'completion', progress: monthRate, target: 80 },
+    { id: 'perfectMonth', icon: '🌟', name: 'Идеальный месяц', description: '100% за 30 дней', unlocked: monthRate === 100, category: 'completion', progress: monthRate, target: 100 },
+    
+    // Объём
+    { id: 'first', icon: '🚀', name: 'Первый шаг', description: 'Первое выполнение', unlocked: totalCompletions >= 1, category: 'volume', progress: Math.min(totalCompletions, 1), target: 1 },
+    { id: 'completions10', icon: '🎖️', name: 'Десятка', description: '10 выполнений', unlocked: totalCompletions >= 10, category: 'volume', progress: Math.min(totalCompletions, 10), target: 10 },
+    { id: 'completions50', icon: '🏅', name: 'Полсотни', description: '50 выполнений', unlocked: totalCompletions >= 50, category: 'volume', progress: Math.min(totalCompletions, 50), target: 50 },
+    { id: 'completions100', icon: '🥇', name: 'Сотня', description: '100 выполнений', unlocked: totalCompletions >= 100, category: 'volume', progress: Math.min(totalCompletions, 100), target: 100 },
+    { id: 'completions500', icon: '🏆', name: 'Мастер привычек', description: '500 выполнений', unlocked: totalCompletions >= 500, category: 'volume', progress: Math.min(totalCompletions, 500), target: 500 },
+    
+    // Разнообразие
+    { id: 'habits3', icon: '🌈', name: 'Разнообразие', description: '3 активных привычки', unlocked: habitsCount >= 3, category: 'variety', progress: Math.min(habitsCount, 3), target: 3 },
+    { id: 'habits5', icon: '🎨', name: 'Богатый арсенал', description: '5 активных привычек', unlocked: habitsCount >= 5, category: 'variety', progress: Math.min(habitsCount, 5), target: 5 },
+    { id: 'habits10', icon: '🌍', name: 'Всесторонний рост', description: '10 активных привычек', unlocked: habitsCount >= 10, category: 'variety', progress: Math.min(habitsCount, 10), target: 10 },
   ]
+  
   return badges
+})
+
+const habitBadges = computed(() => {
+  // Для карточки показываем только первые 4 (2 строки по 2)
+  return allHabitBadges.value.slice(0, 4)
+})
+
+const unlockedBadgesCount = computed(() => {
+  return allHabitBadges.value.filter(b => b.unlocked).length
+})
+
+const badgeCategories = computed(() => {
+  return [
+    { id: 'streak', name: 'Серии', icon: '🔥' },
+    { id: 'completion', name: 'Выполнение', icon: '✨' },
+    { id: 'volume', name: 'Объём', icon: '🏅' },
+    { id: 'variety', name: 'Разнообразие', icon: '🌈' }
+  ]
+})
+
+// Данные для модального окна "Выполнение"
+const weeklyCompletionData = computed(() => {
+  const weeks = []
+  const today = new Date()
+  
+  for (let w = 7; w >= 0; w--) {
+    const weekStart = new Date(today)
+    weekStart.setDate(today.getDate() - (today.getDay() || 7) + 1 - (w * 7))
+    
+    let completed = 0
+    let total = 0
+    
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(weekStart)
+      date.setDate(weekStart.getDate() + d)
+      const dateStr = date.toISOString().split('T')[0]
+      
+      if (date > today) continue
+      
+      allHabits.value.forEach(habit => {
+        if (isScheduledForDay(habit, date.getDay())) {
+          total++
+          if (appStore.habitLog[dateStr]?.includes(habit.id)) {
+            completed++
+          }
+        }
+      })
+    }
+    
+    const weekNum = w === 0 ? 'Эта' : w === 1 ? 'Прошлая' : `-${w} нед.`
+    weeks.push({
+      label: weekNum,
+      rate: total > 0 ? Math.round(completed / total * 100) : 0,
+      completed,
+      total
+    })
+  }
+  
+  return weeks
+})
+
+const bestWeekRate = computed(() => {
+  return Math.max(...weeklyCompletionData.value.map(w => w.rate), 0)
+})
+
+const worstWeekRate = computed(() => {
+  const rates = weeklyCompletionData.value.filter(w => w.total > 0).map(w => w.rate)
+  return rates.length > 0 ? Math.min(...rates) : 0
+})
+
+const habitCompletionDistribution = computed(() => {
+  const today = new Date()
+  
+  return allHabits.value.map(habit => {
+    let completed = 0
+    let total = 0
+    
+    for (let d = 0; d < 30; d++) {
+      const date = new Date(today)
+      date.setDate(today.getDate() - d)
+      const dateStr = date.toISOString().split('T')[0]
+      
+      if (isScheduledForDay(habit, date.getDay())) {
+        total++
+        if (appStore.habitLog[dateStr]?.includes(habit.id)) {
+          completed++
+        }
+      }
+    }
+    
+    return {
+      id: habit.id,
+      name: habit.name,
+      icon: habit.icon,
+      rate: total > 0 ? Math.round(completed / total * 100) : 0,
+      completed,
+      total
+    }
+  }).sort((a, b) => b.rate - a.rate)
+})
+
+// Данные для модального окна "Календарь"
+const yearlyHeatmapData = computed(() => {
+  const weeks = []
+  const today = new Date()
+  const startDate = new Date(today)
+  startDate.setFullYear(today.getFullYear() - 1)
+  startDate.setDate(startDate.getDate() - startDate.getDay() + 1) // Начало недели
+  
+  let currentDate = new Date(startDate)
+  
+  while (currentDate <= today) {
+    const week = []
+    
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(currentDate)
+      date.setDate(currentDate.getDate() + d)
+      
+      if (date > today) {
+        week.push({ date: null, completed: 0, total: 0, level: 'level-0' })
+        continue
+      }
+      
+      const dateStr = date.toISOString().split('T')[0]
+      let completed = 0
+      let total = 0
+      
+      allHabits.value.forEach(habit => {
+        if (isScheduledForDay(habit, date.getDay())) {
+          total++
+          if (appStore.habitLog[dateStr]?.includes(habit.id)) {
+            completed++
+          }
+        }
+      })
+      
+      const rate = total > 0 ? completed / total : 0
+      let level = 'level-0'
+      if (rate > 0 && rate < 0.33) level = 'level-1'
+      else if (rate >= 0.33 && rate < 0.66) level = 'level-2'
+      else if (rate >= 0.66) level = 'level-3'
+      
+      week.push({ date: dateStr, completed, total, level })
+    }
+    
+    weeks.push(week)
+    currentDate.setDate(currentDate.getDate() + 7)
+  }
+  
+  return weeks
+})
+
+const monthLabels = computed(() => {
+  const months = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
+  const today = new Date()
+  const result = []
+  
+  for (let i = 11; i >= 0; i--) {
+    const date = new Date(today)
+    date.setMonth(today.getMonth() - i)
+    result.push(months[date.getMonth()])
+  }
+  
+  return result
+})
+
+const yearTotalCompletions = computed(() => {
+  return Object.values(appStore.habitLog).flat().length
+})
+
+const yearActiveDays = computed(() => {
+  return Object.keys(appStore.habitLog).filter(date => appStore.habitLog[date].length > 0).length
+})
+
+const monthlyStats = computed(() => {
+  const today = new Date()
+  const months = []
+  const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 
+                      'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
+  
+  for (let m = 11; m >= 0; m--) {
+    const monthDate = new Date(today)
+    monthDate.setMonth(today.getMonth() - m)
+    const year = monthDate.getFullYear()
+    const month = monthDate.getMonth()
+    
+    let completed = 0
+    let total = 0
+    
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
+    
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(year, month, d)
+      if (date > today) continue
+      
+      const dateStr = date.toISOString().split('T')[0]
+      
+      allHabits.value.forEach(habit => {
+        if (isScheduledForDay(habit, date.getDay())) {
+          total++
+          if (appStore.habitLog[dateStr]?.includes(habit.id)) {
+            completed++
+          }
+        }
+      })
+    }
+    
+    months.push({
+      name: monthNames[month],
+      rate: total > 0 ? Math.round(completed / total * 100) : 0,
+      completed,
+      total,
+      isCurrent: m === 0,
+      isBest: false
+    })
+  }
+  
+  // Найти лучший месяц
+  const maxRate = Math.max(...months.filter(m => m.total > 0).map(m => m.rate))
+  months.forEach(m => {
+    if (m.rate === maxRate && m.total > 0) m.isBest = true
+  })
+  
+  return months
+})
+
+const bestMonthName = computed(() => {
+  const best = monthlyStats.value.find(m => m.isBest)
+  return best ? best.name : '-'
 })
 
 function isScheduledForToday(habit) {
@@ -4873,6 +5380,15 @@ onMounted(() => {
   cursor: pointer;
   color: var(--text-secondary);
   border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-close:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .modal-content {
@@ -6306,6 +6822,719 @@ onMounted(() => {
   
   .mobile-add-button {
     display: block;
+  }
+}
+
+/* Card Expand Buttons */
+.card-expand-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem;
+  margin-top: 0.75rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.card-expand-btn:hover {
+  background: rgba(124, 58, 237, 0.1);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.badges-list.compact {
+  max-height: 140px;
+  overflow: hidden;
+}
+
+/* Detail Modals */
+.detail-modal {
+  max-width: 600px;
+  width: 95%;
+  max-height: 90vh;
+  background: var(--card-bg);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.detail-modal .modal-header {
+  position: relative;
+  padding-right: 3rem;
+}
+
+.detail-modal .modal-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.detail-modal .modal-header h3 svg {
+  color: var(--primary-color);
+}
+
+.detail-modal .modal-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+.detail-modal .modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 1rem 1.5rem 1.5rem;
+}
+
+/* Badges Modal */
+.badges-modal {
+  max-width: 650px;
+}
+
+.badge-category {
+  margin-bottom: 1.5rem;
+}
+
+.badge-category:last-child {
+  margin-bottom: 0;
+}
+
+.category-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary);
+}
+
+.category-icon {
+  font-size: 1.1rem;
+}
+
+.badges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.badge-card {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.badge-card.unlocked {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+.badge-card.locked {
+  opacity: 0.6;
+}
+
+.badge-card-icon {
+  font-size: 1.75rem;
+  flex-shrink: 0;
+}
+
+.badge-card-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.badge-card-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.badge-card-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.badge-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.badge-progress .progress-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--border-color);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.badge-progress .progress-fill {
+  height: 100%;
+  background: var(--primary-color);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.badge-progress .progress-text {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.badge-unlocked-mark {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: #22c55e;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+/* Completion Modal */
+.completion-modal {
+  max-width: 600px;
+}
+
+.stats-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.summary-card.accent {
+  background: rgba(124, 58, 237, 0.1);
+  border-color: rgba(124, 58, 237, 0.2);
+}
+
+.summary-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.summary-card.accent .summary-value {
+  color: var(--primary-color);
+}
+
+.summary-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.chart-section {
+  margin-bottom: 1.5rem;
+}
+
+.chart-section h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary);
+}
+
+.weekly-chart {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+  height: 120px;
+  padding: 0.5rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+}
+
+.weekly-bar-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  height: 100%;
+}
+
+.weekly-bar-wrapper {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.weekly-bar {
+  width: 100%;
+  min-height: 4px;
+  background: var(--primary-color);
+  border-radius: 4px 4px 0 0;
+  transition: height 0.3s ease;
+  opacity: 0.7;
+}
+
+.weekly-bar.current {
+  opacity: 1;
+  background: linear-gradient(135deg, var(--primary-color), #a855f7);
+}
+
+.weekly-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.weekly-rate {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.habit-distribution {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.habit-dist-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.habit-dist-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.habit-dist-icon {
+  font-size: 1rem;
+}
+
+.habit-dist-name {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.habit-dist-rate {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.habit-dist-bar {
+  height: 6px;
+  background: var(--bg-secondary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.habit-dist-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-color), #a855f7);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.best-worst-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.best-card, .worst-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  background: var(--bg-secondary);
+}
+
+.best-card {
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.best-card svg {
+  color: #22c55e;
+}
+
+.worst-card {
+  background: rgba(234, 179, 8, 0.1);
+}
+
+.worst-card svg {
+  color: #eab308;
+}
+
+.worst-card svg.down {
+  transform: rotate(180deg);
+}
+
+.bw-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.bw-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.bw-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.best-card .bw-value {
+  color: #22c55e;
+}
+
+.worst-card .bw-value {
+  color: #eab308;
+}
+
+/* Calendar Modal */
+.calendar-modal {
+  max-width: 700px;
+}
+
+.year-stats-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.year-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.year-stat.accent {
+  background: rgba(124, 58, 237, 0.1);
+  border-color: rgba(124, 58, 237, 0.2);
+}
+
+.year-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.year-stat-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.yearly-heatmap-section {
+  margin-bottom: 1.5rem;
+}
+
+.yearly-heatmap {
+  position: relative;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+}
+
+.heatmap-months-labels {
+  display: flex;
+  justify-content: space-between;
+  padding-left: 30px;
+  margin-bottom: 0.5rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.heatmap-days-labels {
+  position: absolute;
+  left: 0.5rem;
+  top: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.heatmap-grid-wrapper {
+  padding-left: 25px;
+  overflow-x: auto;
+}
+
+.yearly-heatmap-grid {
+  display: flex;
+  gap: 2px;
+}
+
+.heatmap-week-column {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.heatmap-day {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--border-color);
+}
+
+.heatmap-day.empty {
+  visibility: hidden;
+}
+
+.heatmap-day.level-0 { background: var(--border-color); }
+.heatmap-day.level-1 { background: rgba(34, 197, 94, 0.3); }
+.heatmap-day.level-2 { background: rgba(34, 197, 94, 0.6); }
+.heatmap-day.level-3 { background: #22c55e; }
+
+.heatmap-legend.yearly {
+  margin-top: 0.75rem;
+  justify-content: flex-end;
+}
+
+.monthly-breakdown h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary);
+}
+
+.months-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0.5rem;
+}
+
+.month-card {
+  display: flex;
+  flex-direction: column;
+  padding: 0.6rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.month-card.best {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.month-card.current {
+  border-color: var(--primary-color);
+}
+
+.month-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.month-rate {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.month-card.best .month-rate {
+  color: #22c55e;
+}
+
+.month-bar {
+  height: 4px;
+  background: var(--border-color);
+  border-radius: 2px;
+  margin: 0.35rem 0;
+  overflow: hidden;
+}
+
+.month-bar-fill {
+  height: 100%;
+  background: var(--primary-color);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.month-card.best .month-bar-fill {
+  background: #22c55e;
+}
+
+.month-completions {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+  .detail-modal {
+    max-width: 100%;
+    width: 100%;
+    max-height: 95vh;
+    border-radius: 16px 16px 0 0;
+    margin: auto 0 0 0;
+  }
+  
+  .detail-modal .modal-header {
+    padding: 1rem;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  
+  .detail-modal .modal-header h3 {
+    font-size: 1rem;
+    flex: 1;
+  }
+  
+  .detail-modal .modal-subtitle {
+    width: 100%;
+    order: 3;
+    margin-top: 0.25rem;
+  }
+  
+  .detail-modal .modal-body {
+    padding: 1rem;
+    max-height: calc(95vh - 80px);
+  }
+  
+  .badges-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .badge-category {
+    margin-bottom: 1rem;
+  }
+  
+  .category-title {
+    font-size: 0.85rem;
+  }
+  
+  .badge-item {
+    padding: 0.75rem;
+  }
+  
+  .badge-icon {
+    font-size: 1.5rem;
+    min-width: 2.5rem;
+  }
+  
+  .badge-name {
+    font-size: 0.85rem;
+  }
+  
+  .badge-description {
+    font-size: 0.75rem;
+  }
+  
+  .stats-summary,
+  .year-stats-summary {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+  
+  .summary-card,
+  .year-stat {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .summary-value,
+  .year-stat-value {
+    font-size: 1.25rem;
+  }
+  
+  .summary-label,
+  .year-stat-label {
+    font-size: 0.65rem;
+  }
+  
+  .weekly-chart {
+    height: 100px;
+  }
+  
+  .chart-bar-value {
+    font-size: 0.6rem;
+  }
+  
+  .habit-distribution .habit-bar-label {
+    font-size: 0.75rem;
+  }
+  
+  .best-worst-section {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .months-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+  
+  .month-card {
+    padding: 0.5rem;
+  }
+  
+  .month-name {
+    font-size: 0.7rem;
+  }
+  
+  .month-rate {
+    font-size: 0.95rem;
+  }
+  
+  .heatmap-months-labels {
+    font-size: 0.6rem;
+  }
+  
+  .yearly-heatmap-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.5rem;
+  }
+  
+  .yearly-heatmap-grid {
+    min-width: 500px;
+  }
+  
+  .heatmap-cell {
+    width: 10px;
+    height: 10px;
+  }
+  
+  .modal-section-title {
+    font-size: 0.9rem;
   }
 }
 </style>
