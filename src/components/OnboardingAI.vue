@@ -1444,7 +1444,10 @@ async function completeOnboarding() {
   }
   
   .wheel-container {
-    transform: scale(0.55);
+    transform: none;
+    width: 100%;
+    max-width: none;
+    margin: 0 auto;
   }
   
   .progress-labels {
