@@ -82,7 +82,7 @@
       </button>
     </div>
 
-    <div class="tabs-navigation" v-if="allHabits.length > 0">
+    <div class="tabs-navigation" v-if="allHabits.length > 0 || deletedHabits.length > 0">
       <button 
         class="tab-btn" 
         :class="{ active: activeTab === 'tracker' }"
@@ -99,6 +99,37 @@
         <TrendingUp :size="16" :stroke-width="1.5" />
         Аналитика
       </button>
+    </div>
+
+    <div class="week-navigation" v-if="activeTab === 'tracker' && (allHabits.length > 0 || deletedHabits.length > 0)">
+      <button class="week-nav-btn" @click="goToPreviousWeek" title="Предыдущая неделя">
+        <ChevronLeft :size="20" :stroke-width="2" />
+      </button>
+      <div class="week-label" :class="{ past: isPastWeek }">
+        <span class="week-text">{{ currentWeekLabel }}</span>
+        <button 
+          v-if="isPastWeek" 
+          class="btn-return-current" 
+          @click="goToCurrentWeek"
+          title="Вернуться к текущей неделе"
+        >
+          <RotateCcw :size="14" :stroke-width="2" />
+          Сейчас
+        </button>
+      </div>
+      <button 
+        class="week-nav-btn" 
+        @click="goToNextWeek" 
+        :disabled="isCurrentWeek"
+        title="Следующая неделя"
+      >
+        <ChevronRight :size="20" :stroke-width="2" />
+      </button>
+    </div>
+
+    <div class="past-week-notice" v-if="isPastWeek && activeTab === 'tracker'">
+      <Lock :size="14" :stroke-width="2" />
+      <span>Режим просмотра — редактирование статусов через клик по дню</span>
     </div>
 
     <div class="tab-content" v-if="activeTab === 'tracker'">
@@ -280,7 +311,7 @@
             </div>
           </div>
           
-          <div class="habit-actions">
+          <div class="habit-actions" v-if="!isPastWeek">
             <button class="btn-icon" @click.stop="editHabit(habit)" title="Редактировать">
               <Pencil :size="16" :stroke-width="1.5" />
             </button>
@@ -288,10 +319,57 @@
               <Trash2 :size="16" :stroke-width="1.5" />
             </button>
           </div>
+          <div class="habit-deleted-badge" v-if="habit.deletedAt">
+            <Trash2 :size="12" :stroke-width="1.5" />
+            <span>Удалена {{ formatDeletedDate(habit.deletedAt) }}</span>
+          </div>
         </div>
       </div>
 
-      <div v-else class="empty-state">
+      <div class="deleted-habits-section" v-if="deletedHabits.length > 0 && isCurrentWeek">
+        <button 
+          class="deleted-habits-toggle" 
+          @click="showDeletedHabits = !showDeletedHabits"
+        >
+          <Archive :size="16" :stroke-width="1.5" />
+          <span>Удалённые привычки ({{ deletedHabits.length }})</span>
+          <ChevronRight 
+            :size="16" 
+            :stroke-width="2" 
+            class="toggle-icon"
+            :class="{ rotated: showDeletedHabits }"
+          />
+        </button>
+        
+        <div class="deleted-habits-list" v-if="showDeletedHabits">
+          <div 
+            v-for="habit in deletedHabits" 
+            :key="habit.id"
+            class="habit-card deleted"
+          >
+            <div class="habit-main">
+              <div class="habit-icon deleted">
+                {{ getIconEmoji(habit.icon) }}
+              </div>
+              <div class="habit-info">
+                <span class="habit-name deleted">{{ habit.name }}</span>
+                <span class="deleted-date">Удалена {{ formatDeletedDate(habit.deletedAt) }}</span>
+              </div>
+            </div>
+            
+            <div class="habit-actions">
+              <button class="btn-icon restore" @click.stop="restoreHabit(habit)" title="Восстановить">
+                <RotateCcw :size="16" :stroke-width="1.5" />
+              </button>
+              <button class="btn-icon danger" @click.stop="permanentlyDeleteHabit(habit)" title="Удалить навсегда">
+                <Trash2 :size="16" :stroke-width="1.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else-if="allHabits.length === 0 && deletedHabits.length === 0" class="empty-state">
         <div class="empty-icon">🔥</div>
         <h3>Начните формировать привычки</h3>
         <p>Добавьте регулярные действия, которые хотите закрепить в своей жизни</p>
@@ -1094,7 +1172,7 @@ import { DEBUG_MODE } from '@/config/settings.js'
 import { 
   Flame, Plus, Minus, Zap, CheckCircle, Sparkles, Shield, Bot,
   Check, Pencil, X, Trash2, Settings, Gift, Archive, Info, TrendingUp, Calendar, Award,
-  Ellipsis, CircleAlert, Lightbulb, Heart
+  Ellipsis, CircleAlert, Lightbulb, Heart, ChevronLeft, ChevronRight, RotateCcw, Lock
 } from 'lucide-vue-next'
 
 const appStore = useAppStore()
@@ -1122,7 +1200,8 @@ const selectedDayForEdit = ref(null)
 const selectedHabitForEdit = ref(null)
 const dayEditSkipReason = ref('')
 const dayEditNote = ref('')
-
+const weekOffset = ref(0)
+const showDeletedHabits = ref(false)
 
 const habitSuggestions = [
   {
@@ -1265,7 +1344,7 @@ const weekDays = computed(() => {
   const today = new Date()
   const currentDay = today.getDay()
   const monday = new Date(today)
-  monday.setDate(today.getDate() - ((currentDay + 6) % 7))
+  monday.setDate(today.getDate() - ((currentDay + 6) % 7) + (weekOffset.value * 7))
   
   return weekDaysConfig.map((day, index) => {
     const date = new Date(monday)
@@ -1278,13 +1357,65 @@ const weekDays = computed(() => {
   })
 })
 
+const isPastWeek = computed(() => weekOffset.value < 0)
+const isCurrentWeek = computed(() => weekOffset.value === 0)
+
+const currentWeekLabel = computed(() => {
+  if (isCurrentWeek.value) return 'Текущая неделя'
+  
+  const start = weekDays.value[0]
+  const end = weekDays.value[6]
+  const startDate = new Date(start.date)
+  const endDate = new Date(end.date)
+  
+  const formatDate = (d) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+  return `${formatDate(startDate)} — ${formatDate(endDate)}`
+})
+
+function goToPreviousWeek() {
+  weekOffset.value--
+}
+
+function goToNextWeek() {
+  if (weekOffset.value < 0) {
+    weekOffset.value++
+  }
+}
+
+function goToCurrentWeek() {
+  weekOffset.value = 0
+}
+
 const allHabits = computed(() => {
-  return appStore.habits.filter(h => !h.archived).map(habit => ({
-    ...habit,
-    frequencyType: habit.frequencyType || 'daily',
-    scheduleDays: habit.scheduleDays || [1, 2, 3, 4, 5, 6, 0],
-    xpPenalty: habit.xpPenalty || 0
-  }))
+  const weekEndDate = weekDays.value[6]?.date
+  
+  return appStore.habits
+    .filter(h => !h.archived)
+    .filter(h => {
+      if (!h.deletedAt) return true
+      if (isPastWeek.value) {
+        const deletedDate = h.deletedAt.split('T')[0]
+        return deletedDate > weekEndDate
+      }
+      return false
+    })
+    .map(habit => ({
+      ...habit,
+      frequencyType: habit.frequencyType || 'daily',
+      scheduleDays: habit.scheduleDays || [1, 2, 3, 4, 5, 6, 0],
+      xpPenalty: habit.xpPenalty || 0
+    }))
+})
+
+const deletedHabits = computed(() => {
+  return appStore.habits
+    .filter(h => !h.archived && h.deletedAt)
+    .map(habit => ({
+      ...habit,
+      frequencyType: habit.frequencyType || 'daily',
+      scheduleDays: habit.scheduleDays || [1, 2, 3, 4, 5, 6, 0],
+      xpPenalty: habit.xpPenalty || 0
+    }))
 })
 
 const habitStreak = computed(() => appStore.habitStreak)
@@ -1834,6 +1965,10 @@ const showSkipReasonField = computed(() => {
 })
 
 function openDayEditModal(habit, day) {
+  if (isPastWeek.value) {
+    toast.showToast({ type: 'info', title: 'Нельзя редактировать дни в прошлых неделях' })
+    return
+  }
   if (!isScheduledForDay(habit, new Date(day.date).getDay())) {
     toast.showToast({ type: 'info', title: 'Привычка не запланирована на этот день' })
     return
@@ -2019,6 +2154,10 @@ const dayEditWeekStats = computed(() => {
 })
 
 function toggleHabitCompletion(habit) {
+  if (isPastWeek.value) {
+    toast.showToast({ title: 'Нельзя изменять статусы в прошлых неделях', type: 'info' })
+    return
+  }
   if (!isScheduledForToday(habit)) {
     toast.showToast({ title: 'Эта привычка не запланирована на сегодня', type: 'info' })
     return
@@ -2184,8 +2323,35 @@ function archiveHabit(habit) {
 function confirmDeleteHabit(habit) {
   if (confirm(`Удалить привычку "${habit.name}"?`)) {
     appStore.removeHabit(habit.id)
-    toast.showToast({ title: 'Привычка удалена', type: 'info' })
+    toast.showToast({ title: 'Привычка удалена', message: 'Её можно восстановить в блоке "Удалённые привычки"', type: 'info' })
   }
+}
+
+function restoreHabit(habit) {
+  appStore.restoreHabit(habit.id)
+  toast.showToast({ title: 'Привычка восстановлена', type: 'success' })
+}
+
+function permanentlyDeleteHabit(habit) {
+  if (confirm(`Удалить привычку "${habit.name}" навсегда? Это действие нельзя отменить.`)) {
+    appStore.permanentlyDeleteHabit(habit.id)
+    toast.showToast({ title: 'Привычка удалена навсегда', type: 'warning' })
+  }
+}
+
+function formatDeletedDate(dateStr) {
+  const date = new Date(dateStr)
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  
+  if (date.toDateString() === today.toDateString()) {
+    return 'сегодня'
+  }
+  if (date.toDateString() === yesterday.toDateString()) {
+    return 'вчера'
+  }
+  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
 }
 
 function setDifficulty(mode) {
@@ -2914,11 +3080,175 @@ onMounted(() => {
 .tabs-navigation {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   padding: 4px;
   background: var(--bg-secondary);
   border-radius: 12px;
   border: 1px solid var(--border-color);
+}
+
+.week-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+}
+
+.week-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: var(--card-bg);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.week-nav-btn:hover:not(:disabled) {
+  background: var(--primary-color);
+  color: white;
+}
+
+.week-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.week-label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.week-label.past .week-text {
+  color: var(--text-muted);
+}
+
+.btn-return-current {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.6rem;
+  background: var(--primary-color);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-return-current:hover {
+  background: var(--primary-hover, #6d28d9);
+  transform: translateY(-1px);
+}
+
+.past-week-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+  background: rgba(234, 179, 8, 0.1);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: #ca8a04;
+}
+
+.deleted-habits-section {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border-color);
+}
+
+.deleted-habits-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.deleted-habits-toggle:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.deleted-habits-toggle .toggle-icon {
+  margin-left: auto;
+  transition: transform 0.2s ease;
+}
+
+.deleted-habits-toggle .toggle-icon.rotated {
+  transform: rotate(90deg);
+}
+
+.deleted-habits-list {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.habit-card.deleted {
+  opacity: 0.7;
+  background: var(--bg-tertiary);
+}
+
+.habit-icon.deleted {
+  opacity: 0.5;
+}
+
+.habit-name.deleted {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.deleted-date {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.habit-deleted-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 6px;
+  font-size: 0.65rem;
+  color: #ef4444;
+}
+
+.btn-icon.restore {
+  color: var(--success-color, #22c55e);
+}
+
+.btn-icon.restore:hover {
+  background: rgba(34, 197, 94, 0.1);
 }
 
 .tab-btn {

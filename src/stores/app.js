@@ -1181,13 +1181,37 @@ export const useAppStore = defineStore('app', () => {
   }
 
   function removeHabit(habitId) {
+    const habit = habits.value.find(h => h.id === habitId)
+    if (habit) {
+      habit.deletedAt = new Date().toISOString().split('T')[0]
+      saveToLocalStorage()
+      
+      if (DEBUG_MODE) {
+        console.log('[Store] Habit soft-deleted:', habit.name, 'at', habit.deletedAt)
+      }
+    }
+  }
+  
+  function restoreHabit(habitId) {
+    const habit = habits.value.find(h => h.id === habitId)
+    if (habit && habit.deletedAt) {
+      delete habit.deletedAt
+      saveToLocalStorage()
+      
+      if (DEBUG_MODE) {
+        console.log('[Store] Habit restored:', habit.name)
+      }
+    }
+  }
+  
+  function permanentlyDeleteHabit(habitId) {
     const index = habits.value.findIndex(h => h.id === habitId)
     if (index !== -1) {
       const removed = habits.value.splice(index, 1)[0]
       saveToLocalStorage()
       
       if (DEBUG_MODE) {
-        console.log('[Store] Habit removed:', removed.name)
+        console.log('[Store] Habit permanently deleted:', removed.name)
       }
     }
   }
@@ -3094,6 +3118,8 @@ export const useAppStore = defineStore('app', () => {
     addHabit,
     updateHabit,
     removeHabit,
+    restoreHabit,
+    permanentlyDeleteHabit,
     toggleHabit,
     getHabitHistory,
     
