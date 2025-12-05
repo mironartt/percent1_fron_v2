@@ -1446,11 +1446,11 @@ async function completeOnboarding() {
   }
   
   .wheel-container {
-    transform: scale(0.85);
+    transform: scale(1);
     transform-origin: center;
-    width: 100%;
+    width: calc(100% + 2rem);
     max-width: none;
-    margin: 0 auto;
+    margin: 0 -1rem;
   }
   
   .progress-labels {
