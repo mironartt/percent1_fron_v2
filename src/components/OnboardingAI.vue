@@ -1478,5 +1478,46 @@ async function completeOnboarding() {
   .step-actions .btn-primary {
     flex: none;
   }
+  
+  .wheel-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+  
+  .stat-card {
+    padding: 0.75rem;
+    border-radius: 12px;
+  }
+  
+  .stat-card.primary {
+    grid-column: 1 / -1;
+    padding: 1rem;
+    flex-direction: row;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+  
+  .stat-card.primary .stat-value {
+    font-size: 1.75rem;
+  }
+  
+  .stat-card.primary .stat-label {
+    font-size: 0.85rem;
+  }
+  
+  .stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
+  
+  .stat-value-sm {
+    font-size: 0.85rem;
+  }
+  
+  .stat-label {
+    font-size: 0.7rem;
+  }
 }
 </style>
