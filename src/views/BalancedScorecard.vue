@@ -91,9 +91,37 @@
       </div>
 
       <div class="wheel-summary card">
-        <h3>Система сбалансированных показателей</h3>
+        <div class="wheel-header">
+          <h3>Система сбалансированных показателей</h3>
+          <button 
+            v-if="!isEditingWheel" 
+            class="btn-edit-wheel"
+            @click="startEditWheel"
+            title="Редактировать оценки"
+          >
+            <Pencil :size="18" />
+            <span class="btn-edit-text">Редактировать</span>
+          </button>
+        </div>
         <div class="wheel-visualization">
-          <WheelOfLife :spheres="lifeSpheres" :readonly="true" />
+          <WheelOfLife 
+            :spheres="lifeSpheres" 
+            :readonly="!isEditingWheel" 
+            @update-sphere="handleSphereUpdate"
+          />
+        </div>
+        <div v-if="isEditingWheel" class="wheel-edit-hint">
+          <span class="hint-text">Перетаскивайте точки для изменения оценок</span>
+        </div>
+        <div v-if="isEditingWheel" class="wheel-edit-actions">
+          <button class="btn btn-secondary" @click="cancelWheelEdits">
+            <X :size="18" />
+            Отмена
+          </button>
+          <button class="btn btn-primary" @click="saveWheelEdits">
+            <Check :size="18" />
+            Сохранить
+          </button>
         </div>
       </div>
 
@@ -648,6 +676,35 @@ const editingReflection = ref({
   prevents: '',
   desired: ''
 })
+
+const isEditingWheel = ref(false)
+const wheelBackup = ref([])
+
+function startEditWheel() {
+  wheelBackup.value = lifeSpheres.value.map(s => ({ id: s.id, score: s.score }))
+  isEditingWheel.value = true
+}
+
+async function saveWheelEdits() {
+  isEditingWheel.value = false
+  wheelBackup.value = []
+  
+  if (DEBUG_MODE) {
+    console.log('[SSP] Saving wheel edits to backend...')
+  }
+  const result = await store.saveSSPRatingsToBackend()
+  if (!result.success && DEBUG_MODE) {
+    console.warn('[SSP] Failed to save wheel edits:', result.error)
+  }
+}
+
+function cancelWheelEdits() {
+  wheelBackup.value.forEach(backup => {
+    store.updateSphere(backup.id, { score: backup.score })
+  })
+  isEditingWheel.value = false
+  wheelBackup.value = []
+}
 
 function startEditReflection(sphere) {
   editingSphereId.value = sphere.id
@@ -1218,6 +1275,68 @@ watch(() => route.query.spp_step, () => {
 
 .wheel-summary h3 {
   margin-bottom: 1rem;
+}
+
+.wheel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0 1rem;
+}
+
+.wheel-header h3 {
+  margin: 0;
+}
+
+.btn-edit-wheel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-edit-wheel:hover {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.wheel-edit-hint {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.05));
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--primary-color);
+}
+
+.wheel-edit-hint .hint-text {
+  color: var(--primary-color);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.wheel-edit-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.wheel-edit-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .wheel-visualization {
@@ -2695,9 +2814,48 @@ watch(() => route.query.spp_step, () => {
     margin-bottom: 12px;
   }
   
+  .wheel-header {
+    justify-content: center;
+    padding: 0;
+  }
+  
+  .wheel-header h3 {
+    display: none;
+  }
+  
+  .btn-edit-wheel {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+  }
+  
+  .btn-edit-text {
+    display: inline;
+  }
+  
   .wheel-visualization {
     padding: 8px 0;
     max-width: 320px;
+  }
+  
+  .wheel-edit-hint {
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .wheel-edit-hint .hint-text {
+    font-size: 0.8rem;
+  }
+  
+  .wheel-edit-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+  }
+  
+  .wheel-edit-actions .btn {
+    width: 100%;
+    justify-content: center;
   }
   
   .summary-stats-row {

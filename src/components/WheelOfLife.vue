@@ -93,13 +93,26 @@
         v-if="!readonly"
         :cx="center + Math.max((gridRadius / 10) * sphere.score, gridRadius / 15) * Math.cos(getAngle(index) + angleStep / 2)"
         :cy="center + Math.max((gridRadius / 10) * sphere.score, gridRadius / 15) * Math.sin(getAngle(index) + angleStep / 2)"
-        r="10"
+        r="14"
         :fill="selectedSphere === sphere.id ? getSphereColor(index) : 'white'"
         :stroke="getSphereColor(index)"
         stroke-width="3"
         class="drag-handle"
         @mousedown="startDrag($event, sphere, index)"
-        @touchstart="startDrag($event, sphere, index)"
+        @touchstart.prevent="startDrag($event, sphere, index)"
+      />
+      <!-- Invisible larger touch target for mobile -->
+      <circle
+        v-for="(sphere, index) in spheres"
+        :key="`touch-${sphere.id}`"
+        v-if="!readonly"
+        :cx="center + Math.max((gridRadius / 10) * sphere.score, gridRadius / 15) * Math.cos(getAngle(index) + angleStep / 2)"
+        :cy="center + Math.max((gridRadius / 10) * sphere.score, gridRadius / 15) * Math.sin(getAngle(index) + angleStep / 2)"
+        r="28"
+        fill="transparent"
+        class="touch-target"
+        @mousedown="startDrag($event, sphere, index)"
+        @touchstart.prevent="startDrag($event, sphere, index)"
       />
     </svg>
   </div>
@@ -299,10 +312,19 @@ function startDrag(event, sphere, index) {
 }
 
 .drag-handle:hover {
-  r: 12;
+  r: 16;
 }
 
 .drag-handle:active {
+  cursor: grabbing;
+}
+
+.touch-target {
+  cursor: grab;
+  touch-action: none;
+}
+
+.touch-target:active {
   cursor: grabbing;
 }
 
@@ -330,7 +352,7 @@ function startDrag(event, sphere, index) {
   }
   
   .drag-handle {
-    r: 8;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
   }
 }
 </style>
