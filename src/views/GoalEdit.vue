@@ -20,10 +20,6 @@
         Назад
       </button>
       <div class="header-actions">
-        <button class="btn btn-ghost btn-with-icon btn-planning" @click="goToPlanning" title="Запланировать шаги">
-          <CalendarDays :size="16" />
-          <span class="btn-planning-text">Планировщик</span>
-        </button>
         <button class="btn btn-primary btn-with-icon" @click="saveAndGoToBank">
           <Save :size="16" />
           Сохранить
@@ -143,14 +139,6 @@
                 <option value="completed">Выполнены</option>
               </select>
               
-              <select v-model="filterPriority" class="filter-select">
-                <option value="">Все приоритеты</option>
-                <option value="critical">Критично</option>
-                <option value="desirable">Важно</option>
-                <option value="attention">Внимание</option>
-                <option value="optional">Опционально</option>
-              </select>
-              
               <button 
                 v-if="hasActiveFilters"
                 class="btn btn-sm btn-secondary"
@@ -163,9 +151,7 @@
               <div class="sort-controls">
                 <select v-model="sortBy" class="filter-select sort-select">
                   <option value="order">По порядку</option>
-                  <option value="priority">По приоритету</option>
                   <option value="is_complete">По результату</option>
-                  <option value="time_duration">По времени</option>
                   <option value="date_created">По дате создания</option>
                   <option value="title">По названию</option>
                 </select>
@@ -261,49 +247,6 @@
                   :class="{ 'completed-text': step.completed }"
                   :placeholder="`Шаг ${getOriginalIndex(step) + 1}: что конкретно нужно сделать?`"
                 />
-                
-                <!-- Параметры шага -->
-                <div class="step-params">
-                  <!-- Приоритет -->
-                  <select 
-                    :value="step.priority || ''"
-                    @change="updateStepAndSave(getOriginalIndex(step), 'priority', $event.target.value)"
-                    class="step-param-select priority-select-sm"
-                    :class="'priority-' + (step.priority || 'none')"
-                    title="Приоритет"
-                  >
-                    <option value="">Приоритет</option>
-                    <option value="critical">Критично</option>
-                    <option value="desirable">Важно</option>
-                    <option value="attention">Внимание</option>
-                    <option value="optional">Опционально</option>
-                  </select>
-                  
-                  <!-- Время -->
-                  <select 
-                    :value="step.timeEstimate || ''"
-                    @change="updateStepAndSave(getOriginalIndex(step), 'timeEstimate', $event.target.value)"
-                    class="step-param-select time-select-sm"
-                    title="Время на выполнение"
-                  >
-                    <option value="">Время</option>
-                    <option value="15">15 мин</option>
-                    <option value="30">30 мин</option>
-                    <option value="60">1 час</option>
-                    <option value="120">2 часа</option>
-                    <option value="180">3 часа</option>
-                    <option value="240">4 часа</option>
-                  </select>
-                  
-                  <!-- Дата -->
-                  <input 
-                    type="date"
-                    :value="step.scheduledDate || ''"
-                    @change="updateStepAndSave(getOriginalIndex(step), 'scheduledDate', $event.target.value)"
-                    class="step-param-select date-input-sm"
-                    title="Запланировать на дату"
-                  />
-                </div>
                 
                 <!-- Комментарий -->
                 <div class="step-comment-section">
@@ -405,58 +348,15 @@
                       :placeholder="`Введите название нового шага`"
                     />
                     
-                    <!-- Параметры шага -->
-                    <div class="step-params">
-                      <!-- Приоритет -->
-                      <select 
-                        :value="step.priority || ''"
-                        @change="updateStep(getOriginalIndex(step), 'priority', $event.target.value)"
-                        class="step-param-select priority-select-sm"
-                        :class="'priority-' + (step.priority || 'none')"
-                        title="Приоритет"
-                      >
-                        <option value="">Приоритет</option>
-                        <option value="critical">Критично</option>
-                        <option value="desirable">Важно</option>
-                        <option value="attention">Внимание</option>
-                        <option value="optional">Опционально</option>
-                      </select>
-                      
-                      <!-- Время -->
-                      <select 
-                        :value="step.timeEstimate || ''"
-                        @change="updateStep(getOriginalIndex(step), 'timeEstimate', $event.target.value)"
-                        class="step-param-select time-select-sm"
-                        title="Время на выполнение"
-                      >
-                        <option value="">Время</option>
-                        <option value="15">15 мин</option>
-                        <option value="30">30 мин</option>
-                        <option value="60">1 час</option>
-                        <option value="120">2 часа</option>
-                        <option value="180">3 часа</option>
-                        <option value="240">4 часа</option>
-                      </select>
-                      
-                      <!-- Дата -->
-                      <input 
-                        type="date"
-                        :value="step.scheduledDate || ''"
-                        @change="updateStep(getOriginalIndex(step), 'scheduledDate', $event.target.value)"
-                        class="step-param-select date-input-sm"
-                        title="Запланировать на дату"
-                      />
-                      
-                      <!-- Кнопка добавления -->
-                      <button 
-                        class="btn btn-primary btn-sm save-new-step-btn"
-                        @click="saveNewStep(step)"
-                        title="Добавить шаг"
-                      >
-                        <Check :size="14" />
-                        Добавить
-                      </button>
-                    </div>
+                    <!-- Кнопка добавления -->
+                    <button 
+                      class="btn btn-primary btn-sm save-new-step-btn"
+                      @click="saveNewStep(step)"
+                      title="Добавить шаг"
+                    >
+                      <Check :size="14" />
+                      Добавить
+                    </button>
                     
                     <!-- Комментарий -->
                     <div class="step-comment-section">
@@ -638,8 +538,8 @@ import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
 import { 
   Trash2, Save, Plus, ArrowLeft, GripVertical, X, Edit2, ChevronUp, ChevronDown, ChevronsUpDown,
   Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target,
-  Square, CheckSquare, Search, Calendar, CheckCircle2, AlertCircle,
-  CheckCircle, XCircle, Check, CalendarDays, Filter
+  Square, CheckSquare, Search, CheckCircle2, AlertCircle,
+  CheckCircle, XCircle, Check, Filter
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -736,14 +636,13 @@ const editingGoal = ref(null)
 // Фильтры
 const searchQuery = ref('')
 const filterStatus = ref('')
-const filterPriority = ref('')
 const sortBy = ref('order')
 const sortDirection = ref('asc')
 const mobileFiltersExpanded = ref(false)
 
 // Автоматически раскрывать фильтры на мобильных при активных фильтрах
-watch(() => [searchQuery.value, filterStatus.value, filterPriority.value], () => {
-  if (searchQuery.value || filterStatus.value || filterPriority.value) {
+watch(() => [searchQuery.value, filterStatus.value], () => {
+  if (searchQuery.value || filterStatus.value) {
     mobileFiltersExpanded.value = true
   }
 }, { immediate: true })
@@ -752,14 +651,13 @@ watch(() => [searchQuery.value, filterStatus.value, filterPriority.value], () =>
 const stepsDisplayLimit = ref(10)
 
 const hasActiveFilters = computed(() => {
-  return searchQuery.value || filterStatus.value || filterPriority.value
+  return searchQuery.value || filterStatus.value
 })
 
 const activeFiltersCount = computed(() => {
   let count = 0
   if (searchQuery.value) count++
   if (filterStatus.value) count++
-  if (filterPriority.value) count++
   return count
 })
 
@@ -785,7 +683,6 @@ let lastSavedHash = ''
 function clearFilters() {
   searchQuery.value = ''
   filterStatus.value = ''
-  filterPriority.value = ''
 }
 
 function toggleSortDirection() {
@@ -863,9 +760,6 @@ const filteredSteps = computed(() => {
     }
   }
   
-  if (filterPriority.value) {
-    steps = steps.filter(s => s.priority === filterPriority.value)
-  }
   
   // Применить сортировку
   steps = sortSteps(steps)
@@ -880,7 +774,7 @@ const paginatedSteps = computed(() => {
 
 // Проверка есть ли активные фильтры или сортировка
 const hasActiveFiltersOrSort = computed(() => {
-  return searchQuery.value || filterStatus.value || filterPriority.value || sortBy.value !== 'order'
+  return searchQuery.value || filterStatus.value || sortBy.value !== 'order'
 })
 
 const hasMoreSteps = computed(() => {
@@ -905,13 +799,13 @@ function getOriginalIndex(step) {
 let filterDebounceTimer = null
 let previousHasFilters = false
 
-watch([searchQuery, filterStatus, filterPriority, sortBy, sortDirection], () => {
+watch([searchQuery, filterStatus, sortBy, sortDirection], () => {
   stepsDisplayLimit.value = 10
   
   // Debounce for search query, immediate for other filters
   if (filterDebounceTimer) clearTimeout(filterDebounceTimer)
   
-  const hasFiltersOrSort = searchQuery.value || filterStatus.value || filterPriority.value || 
+  const hasFiltersOrSort = searchQuery.value || filterStatus.value || 
     sortBy.value !== 'order' || sortDirection.value !== 'asc'
   const filtersCleared = previousHasFilters && !hasFiltersOrSort
   
@@ -988,9 +882,6 @@ async function loadStepsWithFilters() {
     if (filterStatus.value) {
       // Frontend uses 'completed'/'pending', backend uses 'complete'/'uncomplete'
       params.result_filter = filterStatus.value === 'completed' ? 'complete' : 'uncomplete'
-    }
-    if (filterPriority.value) {
-      params.priority_filter = mapPriorityToBackend(filterPriority.value)
     }
     
     console.log('[GoalEdit] Loading steps with filters:', params)
@@ -3107,17 +2998,6 @@ function formatDate(dateString) {
   color: white;
 }
 
-.btn-planning {
-  color: var(--text-secondary);
-  border: 1px solid var(--border-color);
-}
-
-.btn-planning:hover {
-  color: var(--primary-color);
-  border-color: var(--primary-color);
-  background: rgba(99, 102, 241, 0.05);
-}
-
 .modal-fade-enter-active,
 .modal-fade-leave-active {
   transition: opacity 0.2s ease;
@@ -3148,10 +3028,6 @@ function formatDate(dateString) {
   .header-actions .btn {
     flex: 1;
     min-width: 100px;
-  }
-
-  .btn-planning-text {
-    display: none;
   }
 
   /* Кнопка toggle фильтров на мобильных */
