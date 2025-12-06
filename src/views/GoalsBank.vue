@@ -79,58 +79,79 @@
           <p class="section-hint">Все ваши цели и идеи</p>
         </div>
         
-        <!-- Фильтры -->
-        <div class="goals-filters">
-          <!-- Mobile: Toggle button -->
-          <button 
-            class="mobile-filters-toggle"
-            @click="toggleMobileFilters"
-          >
-            <Filter :size="16" />
-            <span>Фильтры</span>
-            <span v-if="activeFiltersCount > 0" class="filters-badge">{{ activeFiltersCount }}</span>
-            <ChevronDown :size="16" class="toggle-chevron" :class="{ open: mobileFiltersOpen }" />
-          </button>
+        <!-- Поиск -->
+        <div class="goals-search-bar">
+          <div class="search-input-wrapper">
+            <Search :size="16" :stroke-width="2" class="search-icon" />
+            <input 
+              v-model="searchQuery"
+              type="text"
+              class="search-input"
+              placeholder="Поиск по названию..."
+              @input="onSearchInput"
+            />
+            <button 
+              v-if="searchQuery" 
+              class="search-clear"
+              @click="searchQuery = ''"
+            >
+              <X :size="14" />
+            </button>
+          </div>
+        </div>
+        
+        <!-- Chip Filters: Статус -->
+        <div class="filter-chips-section">
+          <div class="filter-chips">
+            <button 
+              class="filter-chip"
+              :class="{ active: filterStatus === '' }"
+              @click="filterStatus = ''; onFilterChange()"
+            >
+              Все
+            </button>
+            <button 
+              class="filter-chip"
+              :class="{ active: filterStatus === 'work' }"
+              @click="filterStatus = 'work'; onFilterChange()"
+            >
+              В работе
+            </button>
+            <button 
+              class="filter-chip"
+              :class="{ active: filterStatus === 'complete' }"
+              @click="filterStatus = 'complete'; onFilterChange()"
+            >
+              Завершённые
+            </button>
+            <button 
+              class="filter-chip"
+              :class="{ active: filterStatus === 'unstatus' }"
+              @click="filterStatus = 'unstatus'; onFilterChange()"
+            >
+              Не оценённые
+            </button>
+          </div>
           
-          <!-- Desktop: Always visible / Mobile: Collapsible -->
-          <div class="filter-content" :class="{ 'mobile-open': mobileFiltersOpen }">
-            <div class="filter-row">
-              <div class="filter-group search-group">
-                <div class="search-input-wrapper">
-                  <Search :size="16" :stroke-width="2" class="search-icon" />
-                  <input 
-                    v-model="searchQuery"
-                    type="text"
-                    class="search-input"
-                    placeholder="Поиск по названию..."
-                    @input="onSearchInput"
-                  />
-                </div>
-              </div>
-              <div class="filter-group">
-                <select v-model="filterSphere" class="filter-select" @change="onFilterChange">
-                  <option value="">Все сферы</option>
-                  <option v-for="sphere in lifeSpheres" :key="sphere.id" :value="sphere.id">
-                    {{ sphere.icon }} {{ sphere.name }}
-                  </option>
-                </select>
-              </div>
-              <div class="filter-group">
-                <select v-model="filterStatus" class="filter-select" @change="onFilterChange">
-                  <option value="">Все статусы</option>
-                  <option value="work">В работе</option>
-                  <option value="complete">Завершенные</option>
-                  <option value="unstatus">Не оценённые</option>
-                </select>
-              </div>
-              <button 
-                v-if="filterSphere || filterStatus || searchQuery" 
-                class="btn btn-sm btn-ghost"
-                @click="clearFilters"
-              >
-                ✕ Сбросить
-              </button>
-            </div>
+          <!-- Chip Filters: Сферы (горизонтальный скролл) -->
+          <div class="filter-chips filter-chips-scroll">
+            <button 
+              class="filter-chip filter-chip-sphere"
+              :class="{ active: filterSphere === '' }"
+              @click="filterSphere = ''; onFilterChange()"
+            >
+              Все сферы
+            </button>
+            <button 
+              v-for="sphere in lifeSpheres" 
+              :key="sphere.id"
+              class="filter-chip filter-chip-sphere"
+              :class="{ active: filterSphere === sphere.id }"
+              :style="filterSphere === sphere.id ? { '--chip-color': sphere.color || 'var(--primary-color)' } : {}"
+              @click="filterSphere = sphere.id; onFilterChange()"
+            >
+              {{ sphere.icon }} {{ sphere.name }}
+            </button>
           </div>
         </div>
 
@@ -2147,38 +2168,92 @@ onMounted(async () => {
   font-weight: 400;
 }
 
-.goals-filters {
+/* Поиск */
+.goals-search-bar {
+  margin-bottom: 0.75rem;
+}
+
+.goals-search-bar .search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.goals-search-bar .search-clear {
+  position: absolute;
+  right: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.goals-search-bar .search-clear:hover {
   background: var(--bg-secondary);
-  border-radius: var(--radius-md);
+  color: var(--text-primary);
+}
+
+/* Chip Filters */
+.filter-chips-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   margin-bottom: 1rem;
 }
 
-.goals-filters .filter-content {
-  display: block;
-  padding: 1rem;
-}
-
-.goals-filters .filter-row {
+.filter-chips {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
   flex-wrap: wrap;
 }
 
-/* Mobile filters toggle button - hidden on desktop */
-.mobile-filters-toggle {
+.filter-chips-scroll {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  padding-bottom: 0.25rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.filter-chips-scroll::-webkit-scrollbar {
   display: none;
 }
 
-.filter-group {
-  display: flex;
+.filter-chip {
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.filter-group.search-group {
-  flex: 1;
-  min-width: 200px;
+.filter-chip:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.filter-chip.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.filter-chip-sphere.active {
+  background: var(--chip-color, var(--primary-color));
+  border-color: var(--chip-color, var(--primary-color));
 }
 
 .search-input-wrapper {
@@ -4822,46 +4897,18 @@ onMounted(async () => {
     text-align: center;
   }
   
-  .goals-filters {
-    padding: 0;
-  }
-  
-  .goals-filters .filter-content {
-    display: none;
-    padding: 1rem;
-    border-top: 1px solid var(--border-color);
-  }
-  
-  .goals-filters .filter-content.mobile-open {
-    display: block;
-  }
-  
-  .goals-filters .filter-row {
-    flex-direction: column;
+  /* Chip Filters на мобилке */
+  .filter-chips-section {
     gap: 0.75rem;
   }
   
-  .filter-group {
-    width: 100%;
+  .filter-chips {
+    gap: 0.375rem;
   }
   
-  .filter-group.search-group {
-    min-width: unset;
-  }
-  
-  .filter-select,
-  .search-input {
-    width: 100%;
-    padding: 0.625rem;
-  }
-  
-  .search-input {
-    padding-left: 2.25rem;
-  }
-  
-  .goals-filters .filter-row .btn {
-    width: 100%;
-    justify-content: center;
+  .filter-chip {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
   }
   
   .goals-table-section .goals-table-wrapper {
