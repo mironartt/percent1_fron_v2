@@ -1090,7 +1090,7 @@ onUnmounted(() => {
 }
 
 .nav-btn:hover {
-  background: var(--hover-bg);
+  background: var(--hover-bg, #f3f4f6);
 }
 
 .week-range {
@@ -1170,7 +1170,7 @@ onUnmounted(() => {
 }
 
 .day-tab:hover {
-  background: var(--hover-bg);
+  background: var(--hover-bg, #f3f4f6);
 }
 
 .day-tab.active {
@@ -1267,7 +1267,7 @@ onUnmounted(() => {
 }
 
 .task-card:hover {
-  background: var(--hover-bg);
+  background: var(--hover-bg, #f3f4f6);
 }
 
 .task-card.completed {
@@ -1287,7 +1287,7 @@ onUnmounted(() => {
 }
 
 .task-card.priority-optional {
-  border-left-color: var(--text-muted);
+  border-left-color: var(--text-muted, #9ca3af);
 }
 
 .task-checkbox {
@@ -1365,7 +1365,7 @@ onUnmounted(() => {
 .priority-dot.priority-critical { background: var(--danger); }
 .priority-dot.priority-desirable { background: var(--warning); }
 .priority-dot.priority-attention { background: var(--info); }
-.priority-dot.priority-optional { background: var(--text-muted); }
+.priority-dot.priority-optional { background: var(--text-muted, #9ca3af); }
 
 .empty-day {
   text-align: center;
@@ -1374,7 +1374,7 @@ onUnmounted(() => {
 }
 
 .empty-icon {
-  color: var(--text-muted);
+  color: var(--text-muted, #9ca3af);
   margin-bottom: 0.5rem;
 }
 
@@ -1385,7 +1385,7 @@ onUnmounted(() => {
 
 .empty-hint {
   font-size: 0.875rem;
-  color: var(--text-muted);
+  color: var(--text-muted, #9ca3af);
 }
 
 .section-divider {
@@ -1443,7 +1443,7 @@ onUnmounted(() => {
 }
 
 .chip:hover {
-  background: var(--hover-bg);
+  background: var(--hover-bg, #f3f4f6);
 }
 
 .chip.active {
@@ -1490,7 +1490,7 @@ onUnmounted(() => {
 }
 
 .goal-header:hover {
-  background: var(--hover-bg);
+  background: var(--hover-bg, #f3f4f6);
 }
 
 .goal-main {
@@ -1531,7 +1531,7 @@ onUnmounted(() => {
 }
 
 .expand-icon {
-  color: var(--text-muted);
+  color: var(--text-muted, #9ca3af);
   transition: transform 0.2s;
 }
 
@@ -1565,7 +1565,7 @@ onUnmounted(() => {
 }
 
 .step-card:hover {
-  background: var(--hover-bg);
+  background: var(--hover-bg, #f3f4f6);
 }
 
 .step-card.scheduled {
@@ -1619,9 +1619,9 @@ onUnmounted(() => {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 1px dashed var(--border-color);
+  border: 1px dashed var(--border-color, #e5e7eb);
   background: transparent;
-  color: var(--text-muted);
+  color: var(--text-muted, #9ca3af);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1695,7 +1695,7 @@ onUnmounted(() => {
 }
 
 .btn-outline:hover {
-  background: var(--hover-bg);
+  background: var(--hover-bg, #f3f4f6);
 }
 
 .fab {
@@ -1786,7 +1786,7 @@ onUnmounted(() => {
 }
 
 .sheet-action:hover {
-  background: var(--hover-bg);
+  background: var(--hover-bg, #f3f4f6);
 }
 
 .sheet-action.danger {
@@ -1826,11 +1826,11 @@ onUnmounted(() => {
   border-radius: 50%;
 }
 
-.priority-indicator.priority-critical { background: var(--danger); }
-.priority-indicator.priority-desirable { background: var(--warning); }
-.priority-indicator.priority-attention { background: var(--info); }
-.priority-indicator.priority-optional { background: var(--text-muted); }
-.priority-indicator.priority- { background: var(--border-color); }
+.priority-indicator.priority-critical { background: var(--danger, #ef4444); }
+.priority-indicator.priority-desirable { background: var(--warning, #f59e0b); }
+.priority-indicator.priority-attention { background: var(--info, #3b82f6); }
+.priority-indicator.priority-optional { background: var(--text-muted, #9ca3af); }
+.priority-indicator.priority-none { background: var(--border-color, #e5e7eb); }
 
 .add-step-search {
   display: flex;
