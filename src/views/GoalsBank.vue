@@ -5628,6 +5628,7 @@ onUnmounted(() => {
   display: flex;
   gap: 0.5rem;
   padding: 0 1.25rem;
+  margin-top: 0.75rem;
   margin-bottom: 0.75rem;
   flex-wrap: wrap;
 }
