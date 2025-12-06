@@ -1777,7 +1777,8 @@ function getGoalProgress(goalId) {
   const transferredGoal = allGoals.value.find(g => g.sourceId === goalId && g.source === 'goals-bank')
   if (!transferredGoal) return 0
   
-  const steps = store.steps.filter(s => s.goalId === transferredGoal.id || s.sourceGoalId === transferredGoal.id)
+  const stepsArray = store.steps || []
+  const steps = stepsArray.filter(s => s.goalId === transferredGoal.id || s.sourceGoalId === transferredGoal.id)
   if (steps.length === 0) return 0
   const completed = steps.filter(s => s.status === 'completed' || s.completed).length
   return Math.round((completed / steps.length) * 100)
@@ -1787,7 +1788,8 @@ function getGoalProgressText(goalId) {
   const transferredGoal = allGoals.value.find(g => g.sourceId === goalId && g.source === 'goals-bank')
   if (!transferredGoal) return 'Не в работе'
   
-  const steps = store.steps.filter(s => s.goalId === transferredGoal.id || s.sourceGoalId === transferredGoal.id)
+  const stepsArray = store.steps || []
+  const steps = stepsArray.filter(s => s.goalId === transferredGoal.id || s.sourceGoalId === transferredGoal.id)
   if (steps.length === 0) return 'Нет шагов'
   const completed = steps.filter(s => s.status === 'completed' || s.completed).length
   return `${completed} из ${steps.length} шагов`
