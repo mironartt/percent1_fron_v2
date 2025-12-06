@@ -50,8 +50,8 @@
             Разбейте цель на конкретные действия. Каждый шаг должен быть понятным и выполнимым за 1-4 часа.
           </div>
 
-          <!-- Поиск и фильтр -->
-          <div class="search-filter-bar">
+          <!-- Поиск -->
+          <div class="search-bar">
             <div class="search-input-wrapper">
               <Search :size="16" class="search-icon" />
               <input 
@@ -68,47 +68,31 @@
                 <X :size="14" />
               </button>
             </div>
-            
-            <div class="filter-dropdown-wrapper">
-              <button 
-                class="btn-filter-icon"
-                :class="{ active: hasActiveFilters, open: showFilterDropdown }"
-                @click="showFilterDropdown = !showFilterDropdown"
-                title="Фильтры"
-              >
-                <Filter :size="18" />
-                <span v-if="hasActiveFilters" class="filter-badge">{{ activeFiltersCount }}</span>
-              </button>
-              
-              <div v-if="showFilterDropdown" class="filter-dropdown" @click.stop>
-                <div class="filter-dropdown-header">
-                  <span>Фильтры</span>
-                  <button 
-                    v-if="hasActiveFilters"
-                    class="btn-link btn-reset-filters"
-                    @click="clearFilters"
-                  >
-                    Сбросить
-                  </button>
-                </div>
-                
-                <div class="filter-option">
-                  <label class="filter-label">Статус</label>
-                  <select v-model="filterStatus" class="filter-select">
-                    <option value="">Все</option>
-                    <option value="pending">Не выполнены</option>
-                    <option value="completed">Выполнены</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Overlay для закрытия dropdown -->
-            <div 
-              v-if="showFilterDropdown" 
-              class="filter-dropdown-overlay"
-              @click="showFilterDropdown = false"
-            ></div>
+          </div>
+          
+          <!-- Chip Filters -->
+          <div class="filter-chips">
+            <button 
+              class="filter-chip"
+              :class="{ active: filterStatus === '' }"
+              @click="filterStatus = ''"
+            >
+              Все
+            </button>
+            <button 
+              class="filter-chip"
+              :class="{ active: filterStatus === 'pending' }"
+              @click="filterStatus = 'pending'"
+            >
+              Не выполнены
+            </button>
+            <button 
+              class="filter-chip"
+              :class="{ active: filterStatus === 'completed' }"
+              @click="filterStatus = 'completed'"
+            >
+              Выполнены
+            </button>
           </div>
 
           <!-- Подсказка о drag/drop -->
@@ -2225,12 +2209,41 @@ function formatDate(dateString) {
 }
 
 /* Поиск и фильтр */
-.search-filter-bar {
+.search-bar {
+  margin-bottom: 0.75rem;
+}
+
+.filter-chips {
   display: flex;
-  gap: 0.75rem;
-  align-items: center;
+  gap: 0.5rem;
   margin-bottom: 1rem;
-  position: relative;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.filter-chip:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.filter-chip.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
 }
 
 .search-input-wrapper {
