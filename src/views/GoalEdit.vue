@@ -50,51 +50,65 @@
             Разбейте цель на конкретные действия. Каждый шаг должен быть понятным и выполнимым за 1-4 часа.
           </div>
 
-          <!-- Фильтры шагов -->
-          <div class="steps-filters">
-            <button 
-              class="mobile-filters-toggle"
-              @click="mobileFiltersExpanded = !mobileFiltersExpanded"
-            >
-              <Filter :size="16" />
-              <span>Фильтры</span>
-              <span v-if="hasActiveFilters" class="filters-badge">{{ activeFiltersCount }}</span>
-              <ChevronDown :size="16" :class="{ rotated: mobileFiltersExpanded }" />
-            </button>
-            
-            <div class="filter-row" :class="{ 'mobile-expanded': mobileFiltersExpanded }">
-              <div class="search-input-wrapper">
-                <Search :size="16" class="search-icon" />
-                <input 
-                  v-model="searchQuery"
-                  type="text"
-                  class="search-input"
-                  placeholder="Поиск по шагам..."
-                />
-                <button 
-                  v-if="searchQuery" 
-                  class="search-clear"
-                  @click="searchQuery = ''"
-                >
-                  <X :size="14" />
-                </button>
-              </div>
-              
-              <select v-model="filterStatus" class="filter-select">
-                <option value="">Все статусы</option>
-                <option value="pending">Не выполнены</option>
-                <option value="completed">Выполнены</option>
-              </select>
-              
+          <!-- Поиск и фильтр -->
+          <div class="search-filter-bar">
+            <div class="search-input-wrapper">
+              <Search :size="16" class="search-icon" />
+              <input 
+                v-model="searchQuery"
+                type="text"
+                class="search-input"
+                placeholder="Поиск по шагам..."
+              />
               <button 
-                v-if="hasActiveFilters"
-                class="btn btn-sm btn-secondary"
-                @click="clearFilters"
+                v-if="searchQuery" 
+                class="search-clear"
+                @click="searchQuery = ''"
               >
                 <X :size="14" />
-                Сбросить
               </button>
             </div>
+            
+            <div class="filter-dropdown-wrapper">
+              <button 
+                class="btn-filter-icon"
+                :class="{ active: hasActiveFilters, open: showFilterDropdown }"
+                @click="showFilterDropdown = !showFilterDropdown"
+                title="Фильтры"
+              >
+                <Filter :size="18" />
+                <span v-if="hasActiveFilters" class="filter-badge">{{ activeFiltersCount }}</span>
+              </button>
+              
+              <div v-if="showFilterDropdown" class="filter-dropdown" @click.stop>
+                <div class="filter-dropdown-header">
+                  <span>Фильтры</span>
+                  <button 
+                    v-if="hasActiveFilters"
+                    class="btn-link btn-reset-filters"
+                    @click="clearFilters"
+                  >
+                    Сбросить
+                  </button>
+                </div>
+                
+                <div class="filter-option">
+                  <label class="filter-label">Статус</label>
+                  <select v-model="filterStatus" class="filter-select">
+                    <option value="">Все</option>
+                    <option value="pending">Не выполнены</option>
+                    <option value="completed">Выполнены</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Overlay для закрытия dropdown -->
+            <div 
+              v-if="showFilterDropdown" 
+              class="filter-dropdown-overlay"
+              @click="showFilterDropdown = false"
+            ></div>
           </div>
 
           <!-- Подсказка о drag/drop -->
@@ -518,7 +532,7 @@ import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
 import { 
-  Trash2, Save, Plus, ArrowLeft, GripVertical, X, Edit2, ChevronDown,
+  Trash2, Save, Plus, ArrowLeft, GripVertical, X, Edit2,
   Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target,
   Square, CheckSquare, Search, CheckCircle2, AlertCircle,
   CheckCircle, XCircle, Check, Filter
@@ -669,14 +683,7 @@ const searchQuery = ref('')
 const filterStatus = ref('')
 const sortBy = ref('order')
 const sortDirection = ref('asc')
-const mobileFiltersExpanded = ref(false)
-
-// Автоматически раскрывать фильтры на мобильных при активных фильтрах
-watch(() => [searchQuery.value, filterStatus.value], () => {
-  if (searchQuery.value || filterStatus.value) {
-    mobileFiltersExpanded.value = true
-  }
-}, { immediate: true })
+const showFilterDropdown = ref(false)
 
 // Пагинация
 const stepsDisplayLimit = ref(10)
@@ -2130,23 +2137,18 @@ function formatDate(dateString) {
   border-radius: var(--radius-md);
 }
 
-/* Фильтры шагов */
-.steps-filters {
-  margin-bottom: 1rem;
-}
-
-.filter-row {
+/* Поиск и фильтр */
+.search-filter-bar {
   display: flex;
   gap: 0.75rem;
-  flex-wrap: wrap;
   align-items: center;
+  margin-bottom: 1rem;
+  position: relative;
 }
 
 .search-input-wrapper {
   position: relative;
   flex: 1;
-  min-width: 200px;
-  max-width: 300px;
 }
 
 .search-input-wrapper .search-icon {
@@ -2183,18 +2185,121 @@ function formatDate(dateString) {
   padding: 0.25rem;
 }
 
+/* Кнопка фильтра */
+.filter-dropdown-wrapper {
+  position: relative;
+}
+
+.btn-filter-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.btn-filter-icon:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.btn-filter-icon.active {
+  border-color: var(--primary-color);
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--primary-color);
+}
+
+.btn-filter-icon.open {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.filter-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  background: var(--primary-color);
+  color: white;
+  font-size: 0.625rem;
+  font-weight: 600;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Dropdown фильтров */
+.filter-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  min-width: 200px;
+  z-index: 100;
+}
+
+.filter-dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 500;
+}
+
+.btn-reset-filters {
+  font-size: 0.8125rem;
+  color: var(--primary-color);
+  padding: 0;
+}
+
+.filter-option {
+  padding: 0.75rem 1rem;
+}
+
+.filter-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
 .filter-select {
+  width: 100%;
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   font-size: 0.875rem;
   background: var(--bg-primary);
-  min-width: 130px;
 }
 
 .filter-select:focus {
   outline: none;
   border-color: var(--primary-color);
+}
+
+.filter-dropdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99;
 }
 
 .drag-disabled-hint {
@@ -3007,11 +3112,6 @@ function formatDate(dateString) {
   opacity: 0;
 }
 
-/* Кнопка toggle фильтров - скрыта по умолчанию */
-.mobile-filters-toggle {
-  display: none;
-}
-
 @media (max-width: 768px) {
   /* Переключение десктоп/мобильных элементов */
   .desktop-only {
@@ -3025,83 +3125,6 @@ function formatDate(dateString) {
   /* Скрыть встроенные новые шаги на мобильных */
   .new-steps-section {
     display: none;
-  }
-
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .header-actions {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-
-  .header-actions .btn {
-    flex: 1;
-    min-width: 100px;
-  }
-
-  /* Кнопка toggle фильтров на мобильных */
-  .mobile-filters-toggle {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    width: 100%;
-    padding: 0.75rem 1rem;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    margin-bottom: 0.5rem;
-    min-height: 44px;
-  }
-
-  .mobile-filters-toggle:active {
-    background: var(--bg-tertiary);
-  }
-
-  .mobile-filters-toggle svg:last-child {
-    margin-left: auto;
-    transition: transform 0.2s ease;
-  }
-
-  .mobile-filters-toggle svg.rotated {
-    transform: rotate(180deg);
-  }
-
-  .filters-badge {
-    background: var(--primary-color);
-    color: white;
-    font-size: 0.75rem;
-    padding: 0.125rem 0.5rem;
-    border-radius: 10px;
-    font-weight: 600;
-  }
-
-  /* Скрыть фильтры по умолчанию на мобильных */
-  .filter-row {
-    display: none;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.5rem;
-  }
-
-  .filter-row.mobile-expanded {
-    display: flex;
-  }
-  
-  .search-input-wrapper {
-    max-width: none;
-  }
-  
-  .filter-select {
-    width: 100%;
-    min-height: 44px;
   }
 
   /* Скрыть drag-handle на мобильных */
