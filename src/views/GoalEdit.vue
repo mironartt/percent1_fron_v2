@@ -109,7 +109,17 @@
 
           <!-- Фильтры шагов -->
           <div class="steps-filters">
-            <div class="filter-row">
+            <button 
+              class="mobile-filters-toggle"
+              @click="mobileFiltersExpanded = !mobileFiltersExpanded"
+            >
+              <Filter :size="16" />
+              <span>Фильтры</span>
+              <span v-if="hasActiveFilters" class="filters-badge">{{ activeFiltersCount }}</span>
+              <ChevronDown :size="16" :class="{ rotated: mobileFiltersExpanded }" />
+            </button>
+            
+            <div class="filter-row" :class="{ 'mobile-expanded': mobileFiltersExpanded }">
               <div class="search-input-wrapper">
                 <Search :size="16" class="search-icon" />
                 <input 
@@ -629,7 +639,7 @@ import {
   Trash2, Save, Plus, ArrowLeft, GripVertical, X, Edit2, ChevronUp, ChevronDown, ChevronsUpDown,
   Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target,
   Square, CheckSquare, Search, Calendar, CheckCircle2, AlertCircle,
-  CheckCircle, XCircle, Check, CalendarDays
+  CheckCircle, XCircle, Check, CalendarDays, Filter
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -729,12 +739,28 @@ const filterStatus = ref('')
 const filterPriority = ref('')
 const sortBy = ref('order')
 const sortDirection = ref('asc')
+const mobileFiltersExpanded = ref(false)
+
+// Автоматически раскрывать фильтры на мобильных при активных фильтрах
+watch(() => [searchQuery.value, filterStatus.value, filterPriority.value], () => {
+  if (searchQuery.value || filterStatus.value || filterPriority.value) {
+    mobileFiltersExpanded.value = true
+  }
+}, { immediate: true })
 
 // Пагинация
 const stepsDisplayLimit = ref(10)
 
 const hasActiveFilters = computed(() => {
   return searchQuery.value || filterStatus.value || filterPriority.value
+})
+
+const activeFiltersCount = computed(() => {
+  let count = 0
+  if (searchQuery.value) count++
+  if (filterStatus.value) count++
+  if (filterPriority.value) count++
+  return count
 })
 
 // Drag & drop отключен при активных фильтрах или сортировке
@@ -3102,6 +3128,11 @@ function formatDate(dateString) {
   opacity: 0;
 }
 
+/* Кнопка toggle фильтров - скрыта по умолчанию */
+.mobile-filters-toggle {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .page-header {
     flex-direction: column;
@@ -3123,9 +3154,56 @@ function formatDate(dateString) {
     display: none;
   }
 
+  /* Кнопка toggle фильтров на мобильных */
+  .mobile-filters-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+    min-height: 44px;
+  }
+
+  .mobile-filters-toggle:active {
+    background: var(--bg-tertiary);
+  }
+
+  .mobile-filters-toggle svg:last-child {
+    margin-left: auto;
+    transition: transform 0.2s ease;
+  }
+
+  .mobile-filters-toggle svg.rotated {
+    transform: rotate(180deg);
+  }
+
+  .filters-badge {
+    background: var(--primary-color);
+    color: white;
+    font-size: 0.75rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+
+  /* Скрыть фильтры по умолчанию на мобильных */
   .filter-row {
+    display: none;
     flex-direction: column;
     align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .filter-row.mobile-expanded {
+    display: flex;
   }
   
   .search-input-wrapper {
@@ -3134,14 +3212,36 @@ function formatDate(dateString) {
   
   .filter-select {
     width: 100%;
+    min-height: 44px;
+  }
+
+  /* Скрыть drag-handle на мобильных */
+  .step-drag-handle {
+    display: none !important;
+  }
+
+  /* Увеличить touch targets */
+  .step-checkbox {
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .step-delete-btn {
+    min-width: 44px;
+    min-height: 44px;
   }
 
   .step-params {
     flex-direction: column;
+    gap: 0.5rem;
   }
   
   .step-param-select {
     width: 100%;
+    min-height: 44px;
   }
 
   .goal-meta-info {
@@ -3199,6 +3299,16 @@ function formatDate(dateString) {
   .modal-footer-left .btn,
   .modal-footer-right .btn {
     flex: 1;
+  }
+
+  /* Форма добавления шага - вертикальное расположение */
+  .new-step-card .step-params {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .new-step-card .step-param-select {
+    width: 100%;
   }
 }
 </style>
