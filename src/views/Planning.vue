@@ -1275,19 +1275,23 @@ onUnmounted(() => {
 }
 
 .task-card.priority-critical {
-  border-left-color: var(--danger);
+  border-left-color: var(--danger, #ef4444);
 }
 
 .task-card.priority-desirable {
-  border-left-color: var(--warning);
+  border-left-color: var(--warning, #f59e0b);
 }
 
 .task-card.priority-attention {
-  border-left-color: var(--info);
+  border-left-color: var(--info, #3b82f6);
 }
 
 .task-card.priority-optional {
   border-left-color: var(--text-muted, #9ca3af);
+}
+
+.task-card.priority-none {
+  border-left-color: var(--border-color, #e5e7eb);
 }
 
 .task-checkbox {
@@ -1362,10 +1366,11 @@ onUnmounted(() => {
   border-radius: 50%;
 }
 
-.priority-dot.priority-critical { background: var(--danger); }
-.priority-dot.priority-desirable { background: var(--warning); }
-.priority-dot.priority-attention { background: var(--info); }
+.priority-dot.priority-critical { background: var(--danger, #ef4444); }
+.priority-dot.priority-desirable { background: var(--warning, #f59e0b); }
+.priority-dot.priority-attention { background: var(--info, #3b82f6); }
 .priority-dot.priority-optional { background: var(--text-muted, #9ca3af); }
+.priority-dot.priority-none { background: var(--border-color, #e5e7eb); }
 
 .empty-day {
   text-align: center;
@@ -1610,10 +1615,11 @@ onUnmounted(() => {
   border-radius: 6px;
 }
 
-.priority-badge.priority-critical { background: var(--danger); color: white; }
-.priority-badge.priority-desirable { background: var(--warning); color: white; }
-.priority-badge.priority-attention { background: var(--info); color: white; }
-.priority-badge.priority-optional { background: var(--text-muted); color: white; }
+.priority-badge.priority-critical { background: var(--danger, #ef4444); color: white; }
+.priority-badge.priority-desirable { background: var(--warning, #f59e0b); color: white; }
+.priority-badge.priority-attention { background: var(--info, #3b82f6); color: white; }
+.priority-badge.priority-optional { background: var(--text-muted, #9ca3af); color: white; }
+.priority-badge.priority-none { background: var(--border-color, #e5e7eb); color: var(--text-primary, #1f2937); }
 
 .quick-add-btn {
   width: 32px;
