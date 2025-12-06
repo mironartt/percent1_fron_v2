@@ -284,40 +284,16 @@
                   :style="step.priority && !step.completed ? { '--priority-color': getPriorityColor(step.priority) } : {}"
                   @focusout="handleNewStepFocusOut(step, $event)"
                 >
-                  <!-- Левая колонка: drag-handle, checkbox, delete -->
-                  <div class="step-actions-column">
-                    <div class="step-drag-handle disabled" title="Сохраните шаг для возможности перетаскивания">
-                      <GripVertical :size="16" />
-                    </div>
-                    
-                    <div class="step-checkbox-wrapper">
-                      <input 
-                        type="checkbox"
-                        :checked="step.completed"
-                        @change="updateStep(getOriginalIndex(step), 'completed', !step.completed)"
-                        class="step-checkbox"
-                        :id="`new-step-checkbox-${step.id}`"
-                      />
-                      <label 
-                        :for="`new-step-checkbox-${step.id}`" 
-                        class="step-checkbox-label"
-                        :title="step.completed ? 'Отметить как невыполненный' : 'Отметить как выполненный'"
-                      >
-                        <CheckSquare v-if="step.completed" :size="20" class="check-icon checked" />
-                        <Square v-else :size="20" class="check-icon" />
-                      </label>
-                    </div>
-                    
+                  <!-- Левая колонка: только кнопка удаления для новых шагов -->
+                  <div class="step-actions-column new-step-actions">
                     <button 
                       class="btn-icon btn-icon-danger step-delete-btn"
                       @click="removeStep(getOriginalIndex(step))"
-                      title="Удалить шаблон"
+                      title="Удалить"
                     >
                       <X :size="14" :stroke-width="2" />
                     </button>
                   </div>
-
-                  <span class="step-number-badge new-badge">Новый</span>
                   
                   <div class="step-main">
                     <input 
@@ -340,14 +316,23 @@
                       Добавить
                     </button>
                     
-                    <!-- Комментарий -->
-                    <div class="step-comment-section">
+                    <!-- Комментарий (сворачиваемый) -->
+                    <div class="step-comment-section collapsible">
+                      <button 
+                        v-if="!step.showComment && !step.comment"
+                        class="btn-link add-comment-toggle"
+                        @click="step.showComment = true"
+                        type="button"
+                      >
+                        + Добавить комментарий
+                      </button>
                       <textarea 
+                        v-else
                         :value="step.comment || ''"
                         @input="handleCommentInput(getOriginalIndex(step), $event)"
                         class="step-comment-input"
-                        :placeholder="'Комментарий к шагу (необязательно)'"
-                        rows="1"
+                        :placeholder="'Комментарий к шагу'"
+                        rows="2"
                       ></textarea>
                     </div>
                   </div>
@@ -1362,7 +1347,8 @@ function addStep() {
     priority: '',
     scheduledDate: '',
     status: 'pending',
-    isNew: true
+    isNew: true,
+    showComment: false
   }
   goalForm.value.steps.push(newStep)
   
@@ -2441,23 +2427,15 @@ function formatDate(dateString) {
   background: rgba(99, 102, 241, 0.02);
 }
 
-.step-number-badge.new-badge {
-  background: var(--primary-color);
-  color: white;
-  font-size: 0.625rem;
-  padding: 0.125rem 0.375rem;
-  min-width: auto;
-}
-
 /* Кнопка добавления нового шага */
 .save-new-step-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
   white-space: nowrap;
-  margin-left: auto;
+  align-self: flex-start;
 }
 
 .save-new-step-btn:hover {
@@ -2542,9 +2520,35 @@ function formatDate(dateString) {
   min-width: 130px;
 }
 
+/* Новые шаги - упрощённая колонка действий */
+.new-step-actions {
+  justify-content: center;
+  min-width: auto;
+  width: auto;
+  padding-top: 0.5rem;
+}
+
 /* Комментарий */
 .step-comment-section {
   margin-top: 0.25rem;
+}
+
+.step-comment-section.collapsible {
+  margin-top: 0.5rem;
+}
+
+.add-comment-toggle {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  transition: color 0.2s ease;
+}
+
+.add-comment-toggle:hover {
+  color: var(--primary-color);
 }
 
 .step-comment-input {
@@ -3046,6 +3050,27 @@ function formatDate(dateString) {
   /* Скрыть drag-handle на мобильных */
   .step-drag-handle {
     display: none !important;
+  }
+
+  /* Кнопка "Добавить" на полную ширину в мобильной версии */
+  .save-new-step-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+    align-self: stretch;
+  }
+
+  /* Карточка нового шага на мобильных */
+  .new-step-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .new-step-card .step-actions-column {
+    flex-direction: row;
+    justify-content: flex-end;
+    order: -1;
   }
 
   /* Увеличить touch targets */
