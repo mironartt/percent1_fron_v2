@@ -3275,6 +3275,12 @@ function formatDate(dateString) {
     display: flex !important;
   }
 
+  /* Центрирование заголовка на мобилке */
+  .decomposition-header {
+    text-align: center;
+    align-items: center;
+  }
+
   /* Скрыть встроенные новые шаги на мобильных */
   .new-steps-section {
     display: none;
