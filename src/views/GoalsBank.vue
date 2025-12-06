@@ -79,79 +79,58 @@
           <p class="section-hint">Все ваши цели и идеи</p>
         </div>
         
-        <!-- Поиск -->
-        <div class="goals-search-bar">
-          <div class="search-input-wrapper">
-            <Search :size="16" :stroke-width="2" class="search-icon" />
-            <input 
-              v-model="searchQuery"
-              type="text"
-              class="search-input"
-              placeholder="Поиск по названию..."
-              @input="onSearchInput"
-            />
-            <button 
-              v-if="searchQuery" 
-              class="search-clear"
-              @click="searchQuery = ''"
-            >
-              <X :size="14" />
-            </button>
-          </div>
-        </div>
-        
-        <!-- Chip Filters: Статус -->
-        <div class="filter-chips-section">
-          <div class="filter-chips">
-            <button 
-              class="filter-chip"
-              :class="{ active: filterStatus === '' }"
-              @click="filterStatus = ''; onFilterChange()"
-            >
-              Все
-            </button>
-            <button 
-              class="filter-chip"
-              :class="{ active: filterStatus === 'work' }"
-              @click="filterStatus = 'work'; onFilterChange()"
-            >
-              В работе
-            </button>
-            <button 
-              class="filter-chip"
-              :class="{ active: filterStatus === 'complete' }"
-              @click="filterStatus = 'complete'; onFilterChange()"
-            >
-              Завершённые
-            </button>
-            <button 
-              class="filter-chip"
-              :class="{ active: filterStatus === 'unstatus' }"
-              @click="filterStatus = 'unstatus'; onFilterChange()"
-            >
-              Не оценённые
-            </button>
-          </div>
+        <!-- Фильтры -->
+        <div class="goals-filters">
+          <!-- Mobile: Toggle button -->
+          <button 
+            class="mobile-filters-toggle"
+            @click="toggleMobileFilters"
+          >
+            <Filter :size="16" />
+            <span>Фильтры</span>
+            <span v-if="activeFiltersCount > 0" class="filters-badge">{{ activeFiltersCount }}</span>
+            <ChevronDown :size="16" class="toggle-chevron" :class="{ open: mobileFiltersOpen }" />
+          </button>
           
-          <!-- Chip Filters: Сферы (горизонтальный скролл) -->
-          <div class="filter-chips filter-chips-scroll">
-            <button 
-              class="filter-chip filter-chip-sphere"
-              :class="{ active: filterSphere === '' }"
-              @click="filterSphere = ''; onFilterChange()"
-            >
-              Все сферы
-            </button>
-            <button 
-              v-for="sphere in lifeSpheres" 
-              :key="sphere.id"
-              class="filter-chip filter-chip-sphere"
-              :class="{ active: filterSphere === sphere.id }"
-              :style="filterSphere === sphere.id ? { '--chip-color': sphere.color || 'var(--primary-color)' } : {}"
-              @click="filterSphere = sphere.id; onFilterChange()"
-            >
-              {{ sphere.icon }} {{ sphere.name }}
-            </button>
+          <!-- Desktop: Always visible / Mobile: Collapsible -->
+          <div class="filter-content" :class="{ 'mobile-open': mobileFiltersOpen }">
+            <div class="filter-row">
+              <div class="filter-group search-group">
+                <div class="search-input-wrapper">
+                  <Search :size="16" :stroke-width="2" class="search-icon" />
+                  <input 
+                    v-model="searchQuery"
+                    type="text"
+                    class="search-input"
+                    placeholder="Поиск по названию..."
+                    @input="onSearchInput"
+                  />
+                </div>
+              </div>
+              <div class="filter-group">
+                <select v-model="filterSphere" class="filter-select" @change="onFilterChange">
+                  <option value="">Все сферы</option>
+                  <option v-for="sphere in lifeSpheres" :key="sphere.id" :value="sphere.id">
+                    {{ sphere.icon }} {{ sphere.name }}
+                  </option>
+                </select>
+              </div>
+              <div class="filter-group">
+                <select v-model="filterStatus" class="filter-select" @change="onFilterChange">
+                  <option value="">Все статусы</option>
+                  <option value="work">В работе</option>
+                  <option value="complete">Завершенные</option>
+                  <option value="unstatus">Не оценённые</option>
+                </select>
+              </div>
+              <button 
+                v-if="filterSphere || filterStatus || searchQuery" 
+                class="btn btn-sm btn-ghost"
+                @click="clearFilters"
+              >
+                ✕ Сбросить
+              </button>
+            </div>
           </div>
         </div>
 
@@ -324,7 +303,6 @@
                           class="dropdown-menu-mobile"
                           @click.stop
                         >
-                          <div class="sheet-handle"></div>
                           <button class="dropdown-item" @click="openEditModal(goal); closeActionsDropdown()">
                             <Edit2 :size="18" :stroke-width="2" />
                             Редактировать
@@ -686,15 +664,6 @@
         </div>
       </div>
     </Transition>
-    
-    <!-- FAB: Floating Action Button для мобилки -->
-    <button 
-      class="fab-add-goal mobile-only"
-      @click="addNewGoal"
-      title="Добавить цель"
-    >
-      <Plus :size="24" :stroke-width="2" />
-    </button>
   </div>
 </template>
 
@@ -2178,92 +2147,38 @@ onMounted(async () => {
   font-weight: 400;
 }
 
-/* Поиск */
-.goals-search-bar {
-  margin-bottom: 0.75rem;
-}
-
-.goals-search-bar .search-input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.goals-search-bar .search-clear {
-  position: absolute;
-  right: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.25rem;
-  border: none;
-  background: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  border-radius: 50%;
-}
-
-.goals-search-bar .search-clear:hover {
+.goals-filters {
   background: var(--bg-secondary);
-  color: var(--text-primary);
-}
-
-/* Chip Filters */
-.filter-chips-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  border-radius: var(--radius-md);
   margin-bottom: 1rem;
 }
 
-.filter-chips {
+.goals-filters .filter-content {
+  display: block;
+  padding: 1rem;
+}
+
+.goals-filters .filter-row {
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 1rem;
   flex-wrap: wrap;
 }
 
-.filter-chips-scroll {
-  overflow-x: auto;
-  flex-wrap: nowrap;
-  padding-bottom: 0.25rem;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.filter-chips-scroll::-webkit-scrollbar {
+/* Mobile filters toggle button - hidden on desktop */
+.mobile-filters-toggle {
   display: none;
 }
 
-.filter-chip {
-  display: inline-flex;
+.filter-group {
+  display: flex;
   align-items: center;
-  padding: 0.5rem 1rem;
-  border-radius: 2rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-  flex-shrink: 0;
+  gap: 0.5rem;
 }
 
-.filter-chip:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-}
-
-.filter-chip.active {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
-  color: white;
-}
-
-.filter-chip-sphere.active {
-  background: var(--chip-color, var(--primary-color));
-  border-color: var(--chip-color, var(--primary-color));
+.filter-group.search-group {
+  flex: 1;
+  min-width: 200px;
 }
 
 .search-input-wrapper {
@@ -4907,18 +4822,46 @@ onMounted(async () => {
     text-align: center;
   }
   
-  /* Chip Filters на мобилке */
-  .filter-chips-section {
+  .goals-filters {
+    padding: 0;
+  }
+  
+  .goals-filters .filter-content {
+    display: none;
+    padding: 1rem;
+    border-top: 1px solid var(--border-color);
+  }
+  
+  .goals-filters .filter-content.mobile-open {
+    display: block;
+  }
+  
+  .goals-filters .filter-row {
+    flex-direction: column;
     gap: 0.75rem;
   }
   
-  .filter-chips {
-    gap: 0.375rem;
+  .filter-group {
+    width: 100%;
   }
   
-  .filter-chip {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.8125rem;
+  .filter-group.search-group {
+    min-width: unset;
+  }
+  
+  .filter-select,
+  .search-input {
+    width: 100%;
+    padding: 0.625rem;
+  }
+  
+  .search-input {
+    padding-left: 2.25rem;
+  }
+  
+  .goals-filters .filter-row .btn {
+    width: 100%;
+    justify-content: center;
   }
   
   .goals-table-section .goals-table-wrapper {
@@ -5112,35 +5055,6 @@ onMounted(async () => {
     display: flex !important;
   }
   
-  /* FAB Button */
-  .fab-add-goal {
-    position: fixed;
-    bottom: 1.5rem;
-    right: 1.5rem;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  
-  .fab-add-goal:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 16px rgba(124, 58, 237, 0.5);
-  }
-  
-  .fab-add-goal:active {
-    transform: scale(0.95);
-  }
-  
   .mobile-actions-dropdown {
     display: flex !important;
     position: relative;
@@ -5190,16 +5104,7 @@ onMounted(async () => {
   box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.25);
   z-index: 9999;
   padding: 0.5rem;
-  padding-top: 0.75rem;
   animation: slideUpSheet 0.25s ease-out;
-}
-
-.sheet-handle {
-  width: 36px;
-  height: 4px;
-  background: var(--border-color);
-  border-radius: 2px;
-  margin: 0 auto 0.75rem;
 }
 
 @keyframes slideUpSheet {
