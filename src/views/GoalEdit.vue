@@ -14,25 +14,6 @@
       </div>
     </transition-group>
 
-    <header class="page-header">
-      <button class="btn btn-secondary btn-back" @click="goBack">
-        <ArrowLeft :size="16" />
-        Назад
-      </button>
-      <div class="header-actions">
-        <button class="btn btn-primary btn-with-icon" @click="saveAndGoToBank">
-          <Save :size="16" />
-          Сохранить
-        </button>
-        <button 
-          class="btn btn-danger-outline btn-with-icon"
-          @click="deleteGoalConfirm"
-        >
-          <Trash2 :size="16" />
-          Удалить
-        </button>
-      </div>
-    </header>
 
     <div v-if="!goal" class="empty-state card">
       <div class="empty-icon">
@@ -47,46 +28,12 @@
 
     <div v-else class="edit-layout">
       <div class="main-content">
-        <div class="card goal-info-card">
-          <div class="card-header-optimized">
-            <div class="goal-title-wrapper">
-              <h2 class="goal-title-truncate" :title="goalForm.title">{{ goalForm.title || 'Без названия' }}</h2>
-              <button 
-                v-if="goal.sourceId" 
-                class="btn btn-link edit-in-bank-btn"
-                @click="openEditModal"
-              >
-                <Edit2 :size="14" />
-                Редактировать цель
-              </button>
-            </div>
-            <div class="goal-meta-right">
-              <span 
-                class="goal-status-badge"
-                :class="goal.status"
-              >
-                {{ getStatusLabel(goal.status) }}
-              </span>
-              <div class="sphere-display-compact" v-if="goalForm.sphereId">
-                <span class="sphere-icon-wrapper" :style="{ '--sphere-color': getSphereColor(goalForm.sphereId) }">
-                  <component :is="getSphereIconComponent(goalForm.sphereId)" :size="14" />
-                </span>
-                <span class="sphere-name-sm">{{ getSphereName(goalForm.sphereId) }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="goal-info-section" v-if="goalForm.description">
-            <div class="goal-info-row">
-              <span class="info-label">Почему важно:</span>
-              <p class="info-value description-value">{{ goalForm.description }}</p>
-            </div>
-          </div>
-        </div>
-
         <div class="card">
           <div class="card-header">
-            <h3>Декомпозиция на шаги</h3>
+            <div class="decomposition-header">
+              <h2 class="goal-title-in-header" :title="goalForm.title">{{ goalForm.title || 'Без названия' }}</h2>
+              <h3>Декомпозиция на шаги</h3>
+            </div>
             <span class="steps-count">
               {{ goalForm.steps.filter(s => !s.isNew).length }}
               <template v-if="totalFilteredSteps > 0 && totalFilteredSteps !== totalStepsFromBackend">
@@ -364,6 +311,18 @@
               <span class="meta-label">Завершена:</span>
               {{ formatDate(goal.completedAt) }}
             </span>
+          </div>
+
+          <!-- Кнопки действий внизу страницы -->
+          <div class="footer-actions">
+            <button class="btn btn-secondary btn-with-icon" @click="goBack">
+              <ArrowLeft :size="16" />
+              Назад
+            </button>
+            <button class="btn btn-primary btn-with-icon" @click="saveAndGoToBank">
+              <Save :size="16" />
+              Сохранить
+            </button>
           </div>
 
         </div>
@@ -2082,6 +2041,38 @@ function formatDate(dateString) {
   margin: 0;
 }
 
+/* Заголовок декомпозиции с названием цели */
+.decomposition-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.goal-title-in-header {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.decomposition-header h3 {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Кнопки внизу страницы */
+.footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding-top: 1.5rem;
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
 .goal-status-badge {
   padding: 0.375rem 0.75rem;
   border-radius: var(--radius-sm);
@@ -2101,133 +2092,6 @@ function formatDate(dateString) {
   color: var(--primary-color);
 }
 
-/* Goal Info Card */
-.goal-info-card .card-header {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.75rem;
-}
-
-.card-header-optimized {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-color);
-  margin-bottom: 1rem;
-}
-
-.goal-title-wrapper {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.5rem;
-}
-
-.goal-title-truncate {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin: 0;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-
-.goal-meta-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.5rem;
-  flex-shrink: 0;
-  min-width: 120px;
-  max-width: 160px;
-}
-
-.sphere-display-compact {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
-  max-width: 100%;
-}
-
-.sphere-name-sm {
-  font-size: 0.8125rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.goal-title-section {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  flex-wrap: wrap;
-  max-width: 100%;
-  min-width: 0;
-}
-
-.goal-title {
-  font-size: 1.5rem;
-  margin: 0;
-  color: var(--text-primary);
-  word-break: break-word;
-}
-
-.edit-in-bank-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.375rem 0;
-  font-size: 0.875rem;
-  color: var(--primary-color);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-}
-
-.edit-in-bank-btn:hover {
-  text-decoration: underline;
-}
-
-.goal-info-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.goal-info-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.info-label {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.info-value {
-  margin: 0;
-  color: var(--text-primary);
-  line-height: 1.5;
-}
-
-.description-value {
-  padding: 0.75rem 1rem;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  border-left: 3px solid var(--primary-color);
-}
 
 .goal-info-grid {
   display: grid;
@@ -3309,29 +3173,6 @@ function formatDate(dateString) {
   .sphere-selector,
   .sphere-select-grid {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .card-header-optimized {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  .goal-title-wrapper {
-    width: 100%;
-  }
-
-  .goal-title-truncate {
-    white-space: normal;
-    -webkit-line-clamp: 2;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-  }
-
-  .goal-meta-right {
-    flex-direction: row;
-    width: 100%;
-    justify-content: space-between;
-    align-items: center;
   }
 
   .validation-buttons {
