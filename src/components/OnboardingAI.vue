@@ -126,7 +126,7 @@
         </div>
 
         <div v-if="currentStep === 3" class="step-content step-wheel">
-          <h2 class="step-title">Ваше колесо баланса</h2>
+          <h2 class="step-title">Система сбалансированных показателей</h2>
           <p class="step-subtitle">Визуализация текущего состояния всех сфер жизни</p>
 
           <div class="wheel-section">
