@@ -27,38 +27,43 @@
     </div>
 
     <div v-else class="edit-layout">
-      <div class="main-content">
-        <div class="card">
-          <div class="card-header">
-            <div class="decomposition-header">
-              <h2 class="goal-title-in-header" :title="goalForm.title">{{ goalForm.title || 'Без названия' }}</h2>
-              <h3>Декомпозиция на шаги</h3>
-            </div>
-            <span class="steps-count">
-              {{ goalForm.steps.filter(s => !s.isNew).length }}
-              <template v-if="totalFilteredSteps > 0 && totalFilteredSteps !== totalStepsFromBackend">
-                из {{ totalFilteredSteps }} (всего {{ totalStepsFromBackend }})
-              </template>
-              <template v-else-if="totalStepsFromBackend > 0">
-                из {{ totalStepsFromBackend }}
-              </template>
-              шагов
+      <!-- Compact Sticky Header -->
+      <header class="goal-header-compact">
+        <div class="header-row">
+          <button class="btn-back" @click="goBack" title="Назад">
+            <ArrowLeft :size="20" />
+          </button>
+          <div class="header-title-section" @click="openEditModal">
+            <h1 class="header-goal-title">{{ goalForm.title || 'Без названия' }}</h1>
+            <span class="header-sphere-badge" :style="{ '--sphere-color': getSphereColor(goalForm.sphereId) }">
+              {{ getSphereNameOnly(goalForm.sphereId) }}
             </span>
           </div>
-
-          <div class="form-hint decomposition-hint">
-            Разбейте цель на конкретные действия. Каждый шаг должен быть понятным и выполнимым за 1-4 часа.
+          <button class="btn-settings" @click="openEditModal" title="Настройки цели">
+            <Settings :size="20" />
+          </button>
+        </div>
+        <div class="header-progress">
+          <div class="progress-bar-wrapper">
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill" :style="{ width: completionProgress + '%' }"></div>
+            </div>
+            <span class="progress-text-inline">{{ completedStepsCount }}/{{ totalStepsCount }}</span>
           </div>
+        </div>
+      </header>
 
-          <!-- Поиск -->
-          <div class="search-bar">
+      <div class="main-content">
+        <div class="card card-no-header">
+          <!-- Combined Search + Filter Bar -->
+          <div class="search-filter-bar">
             <div class="search-input-wrapper">
               <Search :size="16" class="search-icon" />
               <input 
                 v-model="searchQuery"
                 type="text"
                 class="search-input"
-                placeholder="Поиск по шагам..."
+                placeholder="Поиск..."
               />
               <button 
                 v-if="searchQuery" 
@@ -68,31 +73,32 @@
                 <X :size="14" />
               </button>
             </div>
-          </div>
-          
-          <!-- Chip Filters -->
-          <div class="filter-chips">
-            <button 
-              class="filter-chip"
-              :class="{ active: filterStatus === '' }"
-              @click="filterStatus = ''"
-            >
-              Все
-            </button>
-            <button 
-              class="filter-chip"
-              :class="{ active: filterStatus === 'pending' }"
-              @click="filterStatus = 'pending'"
-            >
-              Не выполнены
-            </button>
-            <button 
-              class="filter-chip"
-              :class="{ active: filterStatus === 'completed' }"
-              @click="filterStatus = 'completed'"
-            >
-              Выполнены
-            </button>
+            
+            <div class="filter-chips-scroll">
+              <div class="filter-chips-inner">
+                <button 
+                  class="filter-chip"
+                  :class="{ active: filterStatus === '' }"
+                  @click="filterStatus = ''"
+                >
+                  Все
+                </button>
+                <button 
+                  class="filter-chip"
+                  :class="{ active: filterStatus === 'pending' }"
+                  @click="filterStatus = 'pending'"
+                >
+                  Активные
+                </button>
+                <button 
+                  class="filter-chip"
+                  :class="{ active: filterStatus === 'completed' }"
+                  @click="filterStatus = 'completed'"
+                >
+                  Готовые
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- Подсказка о drag/drop -->
@@ -254,18 +260,6 @@
             <button class="btn btn-secondary add-step-btn btn-with-icon mobile-only" @click="openAddStepModal">
               <Plus :size="16" />
               Добавить шаг
-            </button>
-          </div>
-
-          <!-- Кнопки действий внизу страницы -->
-          <div class="footer-actions">
-            <button class="btn btn-secondary btn-with-icon" @click="goBack">
-              <ArrowLeft :size="16" />
-              Назад
-            </button>
-            <button class="btn btn-primary btn-with-icon" @click="saveAndGoToBank">
-              <Save :size="16" />
-              Сохранить
             </button>
           </div>
 
@@ -547,7 +541,7 @@ import {
   Trash2, Save, Plus, ArrowLeft, GripVertical, X, Edit2,
   Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target,
   Square, CheckSquare, Search, CheckCircle2, AlertCircle,
-  CheckCircle, XCircle, Check, Filter
+  CheckCircle, XCircle, Check, Filter, Settings, Clock, Calendar
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -876,6 +870,20 @@ const filteredSteps = computed(() => {
 // Пагинированные шаги (без новых)
 const paginatedSteps = computed(() => {
   return filteredSteps.value.slice(0, stepsDisplayLimit.value)
+})
+
+// Progress computed properties
+const totalStepsCount = computed(() => {
+  return goalForm.value.steps.filter(s => !s.isNew).length
+})
+
+const completedStepsCount = computed(() => {
+  return goalForm.value.steps.filter(s => !s.isNew && s.completed).length
+})
+
+const completionProgress = computed(() => {
+  if (totalStepsCount.value === 0) return 0
+  return Math.round((completedStepsCount.value / totalStepsCount.value) * 100)
 })
 
 // Проверка есть ли активные фильтры
@@ -1976,6 +1984,158 @@ function formatDate(dateString) {
   max-width: 1400px;
   margin: 0 auto;
   position: relative;
+}
+
+/* Compact Sticky Header */
+.goal-header-compact {
+  background: var(--bg-primary, #ffffff);
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  padding: 0.75rem 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  margin: -1rem -1rem 1rem -1rem;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btn-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: var(--hover-bg, #f3f4f6);
+  border-radius: 50%;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.btn-back:hover {
+  background: var(--border-color, #e5e7eb);
+  color: var(--text-primary, #1f2937);
+}
+
+.header-title-section {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.header-goal-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary, #1f2937);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.header-sphere-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: var(--sphere-color, var(--primary, #6366f1));
+  margin-top: 2px;
+}
+
+.btn-settings {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  flex-shrink: 0;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.btn-settings:hover {
+  background: var(--hover-bg, #f3f4f6);
+  color: var(--primary, #6366f1);
+}
+
+.header-progress {
+  margin-top: 0.5rem;
+}
+
+.progress-bar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.progress-bar-track {
+  flex: 1;
+  height: 6px;
+  background: var(--border-color, #e5e7eb);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--primary, #6366f1);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.progress-text-inline {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #6b7280);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.card-no-header {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+/* Combined Search + Filter Bar */
+.search-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 0;
+  margin-bottom: 1rem;
+}
+
+.search-filter-bar .search-input-wrapper {
+  flex-shrink: 0;
+  width: 140px;
+  min-width: 100px;
+}
+
+.filter-chips-scroll {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.filter-chips-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-chips-inner {
+  display: flex;
+  gap: 0.5rem;
+  padding: 2px 4px;
+  white-space: nowrap;
 }
 
 /* Toast уведомления */
