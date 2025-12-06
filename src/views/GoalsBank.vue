@@ -260,6 +260,7 @@
             <button 
               v-if="editingGoal.status === 'validated' && !isGoalTransferred(editingGoal.id)"
               class="quick-action-btn action-work"
+              title="Взять цель в работу"
               @click="handleQuickTakeToWork"
             >
               <Play :size="16" />
@@ -268,6 +269,7 @@
             <button 
               v-if="isGoalTransferred(editingGoal.id)"
               class="quick-action-btn action-remove-work"
+              title="Убрать из работы"
               @click="handleQuickRemoveFromWork"
             >
               <Pause :size="16" />
@@ -276,6 +278,7 @@
             <button 
               v-if="editingGoal.status === 'validated'"
               class="quick-action-btn action-decompose"
+              title="Перейти к декомпозиции на шаги"
               @click="goToDecompose(editingGoal.id)"
             >
               <GitBranch :size="16" />
@@ -284,6 +287,7 @@
             <button 
               v-if="isGoalTransferred(editingGoal.id) && !isGoalCompleted(editingGoal.id)"
               class="quick-action-btn action-complete"
+              title="Завершить цель"
               @click="handleQuickComplete"
             >
               <CheckCircle :size="16" />
@@ -296,6 +300,7 @@
             <button 
               class="modal-tab" 
               :class="{ active: editModalTab === 'main' }"
+              title="Основное"
               @click="editModalTab = 'main'"
             >
               <FileText :size="16" />
@@ -304,6 +309,7 @@
             <button 
               class="modal-tab" 
               :class="{ active: editModalTab === 'motivation' }"
+              title="Мотивация"
               @click="editModalTab = 'motivation'"
             >
               <Heart :size="16" />
@@ -312,6 +318,7 @@
             <button 
               class="modal-tab" 
               :class="{ active: editModalTab === 'status' }"
+              title="Статус"
               @click="editModalTab = 'status'"
             >
               <Settings :size="16" />
@@ -1767,14 +1774,20 @@ function toggleWorkStatus() {
 }
 
 function getGoalProgress(goalId) {
-  const steps = store.steps.filter(s => s.goalId === goalId || s.sourceGoalId === goalId)
+  const transferredGoal = allGoals.value.find(g => g.sourceId === goalId && g.source === 'goals-bank')
+  if (!transferredGoal) return 0
+  
+  const steps = store.steps.filter(s => s.goalId === transferredGoal.id || s.sourceGoalId === transferredGoal.id)
   if (steps.length === 0) return 0
   const completed = steps.filter(s => s.status === 'completed' || s.completed).length
   return Math.round((completed / steps.length) * 100)
 }
 
 function getGoalProgressText(goalId) {
-  const steps = store.steps.filter(s => s.goalId === goalId || s.sourceGoalId === goalId)
+  const transferredGoal = allGoals.value.find(g => g.sourceId === goalId && g.source === 'goals-bank')
+  if (!transferredGoal) return 'Не в работе'
+  
+  const steps = store.steps.filter(s => s.goalId === transferredGoal.id || s.sourceGoalId === transferredGoal.id)
   if (steps.length === 0) return 'Нет шагов'
   const completed = steps.filter(s => s.status === 'completed' || s.completed).length
   return `${completed} из ${steps.length} шагов`
