@@ -305,19 +305,6 @@
             </button>
           </div>
 
-          <!-- Quick Actions -->
-          <div class="quick-actions-goal" v-if="editingGoal">
-            <button 
-              v-if="editingGoal.workStatus !== 'complete'"
-              class="quick-action-btn action-complete"
-              title="Завершить цель"
-              @click="handleQuickComplete"
-            >
-              <CheckCircle :size="16" />
-              <span>Завершить</span>
-            </button>
-          </div>
-
           <!-- Tab Navigation -->
           <div class="modal-tabs">
             <button 
