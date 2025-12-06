@@ -517,34 +517,11 @@
             </div>
           </div>
 
-          <div class="modal-footer">
-            <div class="modal-footer-left">
-              <button 
-                v-if="isGoalTransferred(editingGoal?.id)"
-                class="btn btn-danger-outline" 
-                @click="removeGoalFromWork"
-              >
-                <X :size="16" :stroke-width="2" />
-                Убрать из работы
-              </button>
-              <button 
-                v-else
-                class="btn btn-danger-outline" 
-                @click="deleteGoalFromModal"
-              >
-                <Trash2 :size="16" :stroke-width="2" />
-                Удалить
-              </button>
-            </div>
-            <div class="modal-footer-right">
-              <button class="btn btn-secondary" @click="closeEditModal">
-                Отмена
-              </button>
-              <button class="btn btn-primary" @click="saveGoalEdit">
-                <Check :size="16" :stroke-width="2" />
-                Сохранить
-              </button>
-            </div>
+          <div class="modal-footer modal-footer-center">
+            <button class="btn btn-primary" @click="saveGoalEdit">
+              <Check :size="16" :stroke-width="2" />
+              Сохранить
+            </button>
           </div>
 
           <div class="modal-advanced" v-if="editingGoal && editingGoal.status === 'validated'">
