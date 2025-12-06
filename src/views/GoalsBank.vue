@@ -5531,6 +5531,10 @@ onMounted(async () => {
   background: var(--bg-secondary);
 }
 
+.modal-footer-center {
+  justify-content: center;
+}
+
 .modal-footer-left,
 .modal-footer-right {
   display: flex;
