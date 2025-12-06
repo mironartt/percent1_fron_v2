@@ -40,50 +40,51 @@
 
       <!-- Goals Content -->
       <div class="goals-content" v-if="rawIdeas.length > 0 || hasActiveFilters">
-        <!-- Search bar -->
-        <div class="search-bar">
+        <!-- Combined Search + Filter Bar -->
+        <div class="search-filter-bar">
           <div class="search-input-wrapper">
             <Search :size="16" :stroke-width="2" class="search-icon" />
             <input 
               v-model="searchQuery"
               type="text"
               class="search-input"
-              placeholder="Поиск по названию..."
+              placeholder="Поиск..."
               @input="onSearchInput"
             />
           </div>
-        </div>
-
-        <!-- Chip Filters -->
-        <div class="filter-chips">
-          <button 
-            class="filter-chip" 
-            :class="{ active: filterStatus === '' }" 
-            @click="setFilterStatus('')"
-          >
-            Все <span class="chip-count">{{ totalGoalsCount }}</span>
-          </button>
-          <button 
-            class="filter-chip" 
-            :class="{ active: filterStatus === 'work' }" 
-            @click="setFilterStatus('work')"
-          >
-            В работе <span class="chip-count">{{ inWorkGoalsCount }}</span>
-          </button>
-          <button 
-            class="filter-chip" 
-            :class="{ active: filterStatus === 'unstatus' }" 
-            @click="setFilterStatus('unstatus')"
-          >
-            На оценке <span class="chip-count">{{ rawGoalsCount }}</span>
-          </button>
-          <button 
-            class="filter-chip" 
-            :class="{ active: filterStatus === 'complete' }" 
-            @click="setFilterStatus('complete')"
-          >
-            Завершены <span class="chip-count">{{ completedGoalsCount }}</span>
-          </button>
+          
+          <div class="filter-chips-scroll">
+            <div class="filter-chips-inner">
+              <button 
+                class="filter-chip" 
+                :class="{ active: filterStatus === '' }" 
+                @click="setFilterStatus('')"
+              >
+                Все <span class="chip-count">{{ totalGoalsCount }}</span>
+              </button>
+              <button 
+                class="filter-chip" 
+                :class="{ active: filterStatus === 'work' }" 
+                @click="setFilterStatus('work')"
+              >
+                В работе <span class="chip-count">{{ inWorkGoalsCount }}</span>
+              </button>
+              <button 
+                class="filter-chip" 
+                :class="{ active: filterStatus === 'unstatus' }" 
+                @click="setFilterStatus('unstatus')"
+              >
+                На оценке <span class="chip-count">{{ rawGoalsCount }}</span>
+              </button>
+              <button 
+                class="filter-chip" 
+                :class="{ active: filterStatus === 'complete' }" 
+                @click="setFilterStatus('complete')"
+              >
+                Завершены <span class="chip-count">{{ completedGoalsCount }}</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Empty state when filters return no results -->
@@ -2118,28 +2119,50 @@ onUnmounted(() => {
 }
 
 /* Search Bar */
-.search-bar {
-  padding: 0 1rem;
-  margin-bottom: 1rem;
-}
-
-.search-bar .search-input-wrapper {
-  max-width: 400px;
-}
-
-/* Chip Filters */
-.filter-chips {
+/* Combined Search + Filter Bar */
+.search-filter-bar {
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.75rem;
   padding: 0 1rem;
   margin-bottom: 1rem;
+}
+
+.search-filter-bar .search-input-wrapper {
+  flex-shrink: 0;
+  width: 160px;
+  min-width: 120px;
+}
+
+.search-filter-bar .search-input {
+  padding: 0.5rem 0.75rem 0.5rem 2rem;
+  font-size: 0.875rem;
+}
+
+.search-filter-bar .search-icon {
+  left: 0.625rem;
+}
+
+/* Scrollable Filter Chips */
+.filter-chips-scroll {
+  flex: 1;
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  mask-image: linear-gradient(to right, transparent, black 8px, black calc(100% - 8px), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 8px, black calc(100% - 8px), transparent);
 }
 
-.filter-chips::-webkit-scrollbar {
+.filter-chips-scroll::-webkit-scrollbar {
   display: none;
+}
+
+.filter-chips-inner {
+  display: flex;
+  gap: 0.5rem;
+  padding: 2px 4px;
+  white-space: nowrap;
 }
 
 .filter-chip {
@@ -4024,8 +4047,32 @@ onUnmounted(() => {
     padding: 0 0.75rem;
   }
   
-  .search-bar {
+  .search-filter-bar {
     padding: 0 0.75rem;
+    gap: 0.5rem;
+  }
+  
+  .search-filter-bar .search-input-wrapper {
+    width: 110px;
+    min-width: 100px;
+  }
+  
+  .search-filter-bar .search-input {
+    padding: 0.375rem 0.5rem 0.375rem 1.75rem;
+    font-size: 0.8125rem;
+  }
+  
+  .filter-chips-inner {
+    gap: 0.375rem;
+  }
+  
+  .filter-chip {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .chip-count {
+    font-size: 0.6875rem;
   }
   
   .summary-actions.desktop-only {
