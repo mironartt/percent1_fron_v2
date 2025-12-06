@@ -324,6 +324,7 @@
                           class="dropdown-menu-mobile"
                           @click.stop
                         >
+                          <div class="sheet-handle"></div>
                           <button class="dropdown-item" @click="openEditModal(goal); closeActionsDropdown()">
                             <Edit2 :size="18" :stroke-width="2" />
                             Редактировать
@@ -5189,7 +5190,16 @@ onMounted(async () => {
   box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.25);
   z-index: 9999;
   padding: 0.5rem;
+  padding-top: 0.75rem;
   animation: slideUpSheet 0.25s ease-out;
+}
+
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--border-color);
+  border-radius: 2px;
+  margin: 0 auto 0.75rem;
 }
 
 @keyframes slideUpSheet {
