@@ -2062,7 +2062,7 @@ function formatDate(dateString) {
 /* Кнопки внизу страницы */
 .footer-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 1rem;
   padding-top: 1.5rem;
   margin-top: 1.5rem;
