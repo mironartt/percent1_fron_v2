@@ -275,6 +275,10 @@
 
           <!-- Кнопки действий внизу страницы -->
           <div class="footer-actions">
+            <button class="btn btn-secondary btn-with-icon" @click="goBack">
+              <ArrowLeft :size="16" />
+              Назад
+            </button>
             <button class="btn btn-primary btn-with-icon" @click="saveAndGoToBank">
               <Save :size="16" />
               Сохранить
