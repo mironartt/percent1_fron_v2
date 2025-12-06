@@ -1036,8 +1036,8 @@ async function completeOnboarding() {
 
 .wheel-section {
   display: grid;
-  grid-template-columns: 1fr 250px;
-  gap: 2rem;
+  grid-template-columns: 1fr 200px;
+  gap: 1.5rem;
   align-items: center;
   margin-bottom: 2rem;
 }
@@ -1045,7 +1045,7 @@ async function completeOnboarding() {
 .wheel-container {
   display: flex;
   justify-content: center;
-  transform: scale(0.7);
+  transform: scale(0.95);
   transform-origin: center;
 }
 
@@ -1057,11 +1057,11 @@ async function completeOnboarding() {
 
 .stat-card {
   background: var(--bg-color);
-  border-radius: 16px;
-  padding: 1.25rem;
+  border-radius: 12px;
+  padding: 0.75rem;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .stat-card.primary {
@@ -1069,10 +1069,11 @@ async function completeOnboarding() {
   color: white;
   flex-direction: column;
   text-align: center;
+  padding: 1rem;
 }
 
 .stat-card.primary .stat-value {
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: 700;
 }
 
@@ -1093,13 +1094,14 @@ async function completeOnboarding() {
 }
 
 .stat-icon {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--card-bg);
-  border-radius: 12px;
+  border-radius: 10px;
+  flex-shrink: 0;
 }
 
 .stat-info {
@@ -1108,11 +1110,11 @@ async function completeOnboarding() {
 
 .stat-value-sm {
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .stat-label {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
 }
 
