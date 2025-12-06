@@ -1103,16 +1103,16 @@ onUnmounted(() => {
 .today-btn {
   padding: 0.5rem 1rem;
   border-radius: 20px;
-  border: 1px solid var(--primary);
+  border: 1px solid var(--primary, #6366f1);
   background: transparent;
-  color: var(--primary);
+  color: var(--primary, #6366f1);
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .today-btn:hover {
-  background: var(--primary);
+  background: var(--primary, #6366f1);
   color: white;
 }
 
@@ -1137,7 +1137,7 @@ onUnmounted(() => {
 
 .stat-value {
   font-weight: 600;
-  color: var(--primary);
+  color: var(--primary, #6366f1);
 }
 
 .stat-label {
@@ -1174,12 +1174,12 @@ onUnmounted(() => {
 }
 
 .day-tab.active {
-  background: var(--primary);
+  background: var(--primary, #6366f1);
   color: white;
 }
 
 .day-tab.today:not(.active) {
-  border: 2px solid var(--primary);
+  border: 2px solid var(--primary, #6366f1);
 }
 
 .day-tab.weekend {
@@ -1215,7 +1215,7 @@ onUnmounted(() => {
 
 .day-tab.active .task-count {
   background: white;
-  color: var(--primary);
+  color: var(--primary, #6366f1);
 }
 
 .day-content {
@@ -1309,7 +1309,7 @@ onUnmounted(() => {
 }
 
 .task-checkbox:hover {
-  border-color: var(--primary);
+  border-color: var(--primary, #6366f1);
 }
 
 .task-checkbox.completed {
@@ -1452,8 +1452,8 @@ onUnmounted(() => {
 }
 
 .chip.active {
-  background: var(--primary);
-  border-color: var(--primary);
+  background: var(--primary, #6366f1);
+  border-color: var(--primary, #6366f1);
   color: white;
 }
 
@@ -1604,7 +1604,7 @@ onUnmounted(() => {
 .date-badge {
   font-size: 0.6875rem;
   padding: 0.125rem 0.375rem;
-  background: var(--primary);
+  background: var(--primary, #6366f1);
   color: white;
   border-radius: 6px;
 }
@@ -1637,8 +1637,8 @@ onUnmounted(() => {
 }
 
 .quick-add-btn:hover {
-  border-color: var(--primary);
-  color: var(--primary);
+  border-color: var(--primary, #6366f1);
+  color: var(--primary, #6366f1);
   background: var(--primary-light, rgba(99, 102, 241, 0.1));
 }
 
@@ -1651,8 +1651,8 @@ onUnmounted(() => {
 .loading-spinner-small {
   width: 24px;
   height: 24px;
-  border: 2px solid var(--border-color);
-  border-top-color: var(--primary);
+  border: 2px solid var(--border-color, #e5e7eb);
+  border-top-color: var(--primary, #6366f1);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -1686,7 +1686,7 @@ onUnmounted(() => {
 }
 
 .btn-primary {
-  background: var(--primary);
+  background: var(--primary, #6366f1);
   color: white;
 }
 
@@ -1711,7 +1711,7 @@ onUnmounted(() => {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: var(--primary);
+  background: var(--primary, #6366f1);
   color: white;
   border: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -1801,7 +1801,7 @@ onUnmounted(() => {
 
 .sheet-action.active {
   background: var(--primary-light, rgba(99, 102, 241, 0.1));
-  color: var(--primary);
+  color: var(--primary, #6366f1);
 }
 
 .sheet-action.day-option {
