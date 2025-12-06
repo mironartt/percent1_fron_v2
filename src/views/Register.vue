@@ -5,7 +5,7 @@
         <!-- Header -->
         <div class="register-header">
           <h1 class="register-logo">OnePercent</h1>
-          <p class="register-subtitle">+1% каждый день к лучшей жизни</p>
+          <p class="register-subtitle">Регистрация</p>
         </div>
 
         <!-- Form -->
