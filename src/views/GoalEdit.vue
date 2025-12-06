@@ -352,7 +352,7 @@
               <div class="form-group">
                 <label class="form-label">Название цели</label>
                 <input 
-                  v-model="editingGoal.text"
+                  v-model="editingGoal.title"
                   type="text"
                   class="form-input form-input-large"
                   placeholder="Введите название цели"
