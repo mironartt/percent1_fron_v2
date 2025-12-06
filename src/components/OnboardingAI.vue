@@ -260,7 +260,7 @@
                   <li v-for="(step, index) in goal.steps.slice(0, 3)" :key="index">
                     {{ step.title }}
                   </li>
-                  <li v-if="goal.steps.length > 3" class="more-steps">
+                  <li v-if="goal.steps.length > 3" class="more-steps clickable" @click="completeOnboarding">
                     +{{ goal.steps.length - 3 }} ещё...
                   </li>
                 </ul>
@@ -1429,6 +1429,16 @@ async function completeOnboarding() {
 
 .steps-list-mini li.more-steps::before {
   content: '';
+}
+
+.steps-list-mini li.more-steps.clickable {
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.steps-list-mini li.more-steps.clickable:hover {
+  color: var(--primary-color);
+  text-decoration: underline;
 }
 
 @media (max-width: 768px) {
