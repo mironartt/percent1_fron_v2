@@ -284,63 +284,72 @@
                   :style="step.priority && !step.completed ? { '--priority-color': getPriorityColor(step.priority) } : {}"
                   @focusout="handleNewStepFocusOut(step, $event)"
                 >
-                  <!-- Левая колонка: только кнопка удаления для новых шагов -->
-                  <div class="step-actions-column new-step-actions">
-                    <button 
-                      class="btn-icon btn-icon-danger step-delete-btn"
-                      @click="removeStep(getOriginalIndex(step))"
-                      title="Удалить"
-                    >
-                      <X :size="14" :stroke-width="2" />
-                    </button>
-                  </div>
-                  
-                  <div class="step-main">
+                  <div class="new-step-content">
+                    <!-- Поле ввода названия -->
                     <input 
                       type="text"
                       :value="step.title"
                       @input="updateStep(getOriginalIndex(step), 'title', $event.target.value)"
                       @keydown.enter="saveNewStep(step)"
-                      class="step-input"
-                      :class="{ 'completed-text': step.completed }"
-                      :placeholder="`Введите название нового шага`"
+                      class="step-input new-step-title-input"
+                      :placeholder="'Введите название нового шага'"
                     />
                     
-                    <!-- Кнопка добавления -->
-                    <button 
-                      class="btn btn-primary btn-sm save-new-step-btn"
-                      @click="saveNewStep(step)"
-                      title="Добавить шаг"
-                    >
-                      <Check :size="14" />
-                      Добавить
-                    </button>
-                    
-                    <!-- Комментарий (сворачиваемый) -->
-                    <div class="step-comment-section collapsible">
-                      <button 
-                        v-if="!step.showComment && !step.comment"
-                        class="btn-link add-comment-toggle"
-                        @click="step.showComment = true"
-                        type="button"
-                      >
-                        + Добавить комментарий
-                      </button>
-                      <textarea 
-                        v-else
-                        :value="step.comment || ''"
-                        @input="handleCommentInput(getOriginalIndex(step), $event)"
-                        class="step-comment-input"
-                        :placeholder="'Комментарий к шагу'"
-                        rows="2"
-                      ></textarea>
+                    <!-- Нижняя строка: комментарий слева, кнопки справа -->
+                    <div class="new-step-footer">
+                      <!-- Комментарий (сворачиваемый) -->
+                      <div class="step-comment-section collapsible">
+                        <button 
+                          v-if="!step.showComment && !step.comment"
+                          class="btn-link add-comment-toggle"
+                          @click="step.showComment = true"
+                          type="button"
+                        >
+                          + Добавить комментарий
+                        </button>
+                        <textarea 
+                          v-else
+                          :value="step.comment || ''"
+                          @input="handleCommentInput(getOriginalIndex(step), $event)"
+                          class="step-comment-input"
+                          :placeholder="'Комментарий к шагу'"
+                          rows="2"
+                        ></textarea>
+                      </div>
+                      
+                      <!-- Кнопки действий -->
+                      <div class="new-step-actions-row">
+                        <button 
+                          class="btn btn-primary btn-sm save-new-step-btn"
+                          @click="saveNewStep(step)"
+                          title="Добавить шаг"
+                        >
+                          <Check :size="14" />
+                          Добавить
+                        </button>
+                        <button 
+                          class="btn btn-ghost btn-sm delete-new-step-btn"
+                          @click="removeStep(getOriginalIndex(step))"
+                          title="Удалить"
+                        >
+                          <X :size="14" />
+                          Удалить
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </template>
 
-            <button class="btn btn-secondary add-step-btn btn-with-icon" @click="addStep">
+            <!-- Десктоп: встроенная карточка добавления -->
+            <button class="btn btn-secondary add-step-btn btn-with-icon desktop-only" @click="addStep">
+              <Plus :size="16" />
+              Добавить шаг
+            </button>
+            
+            <!-- Мобильная: кнопка открывает модалку -->
+            <button class="btn btn-secondary add-step-btn btn-with-icon mobile-only" @click="openAddStepModal">
               <Plus :size="16" />
               Добавить шаг
             </button>
@@ -494,6 +503,64 @@
         </div>
       </div>
     </transition>
+
+    <!-- Модальное окно добавления шага (мобильная версия) -->
+    <transition name="modal-fade">
+      <div v-if="showAddStepModal" class="modal-overlay" @click.self="closeAddStepModal">
+        <div class="add-step-modal">
+          <div class="modal-header">
+            <h3>Новый шаг</h3>
+            <button class="modal-close" @click="closeAddStepModal">
+              <X :size="20" :stroke-width="2" />
+            </button>
+          </div>
+          
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">Название шага</label>
+              <input 
+                v-model="newStepForm.title"
+                type="text"
+                class="form-input"
+                placeholder="Введите название шага"
+                ref="newStepTitleInput"
+                @keydown.enter="saveStepFromModal"
+              />
+            </div>
+            
+            <div class="form-group">
+              <button 
+                v-if="!newStepForm.showComment && !newStepForm.comment"
+                class="btn-link add-comment-toggle"
+                @click="newStepForm.showComment = true"
+                type="button"
+              >
+                + Добавить комментарий
+              </button>
+              <template v-else>
+                <label class="form-label">Комментарий</label>
+                <textarea 
+                  v-model="newStepForm.comment"
+                  class="form-input form-textarea"
+                  placeholder="Комментарий к шагу (необязательно)"
+                  rows="3"
+                ></textarea>
+              </template>
+            </div>
+          </div>
+          
+          <div class="modal-footer">
+            <button class="btn btn-secondary" @click="closeAddStepModal">
+              Отмена
+            </button>
+            <button class="btn btn-primary" @click="saveStepFromModal">
+              <Check :size="16" :stroke-width="2" />
+              Добавить
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -599,6 +666,55 @@ function showToast(message, type = 'success') {
 // Модальное окно редактирования
 const showEditModal = ref(false)
 const editingGoal = ref(null)
+
+// Модалка добавления шага (мобильная версия)
+const showAddStepModal = ref(false)
+const newStepForm = ref({
+  title: '',
+  comment: '',
+  showComment: false
+})
+const newStepTitleInput = ref(null)
+
+function openAddStepModal() {
+  newStepForm.value = {
+    title: '',
+    comment: '',
+    showComment: false
+  }
+  showAddStepModal.value = true
+  nextTick(() => {
+    newStepTitleInput.value?.focus()
+  })
+}
+
+function closeAddStepModal() {
+  showAddStepModal.value = false
+}
+
+async function saveStepFromModal() {
+  if (!newStepForm.value.title.trim()) {
+    return
+  }
+  
+  const newStep = { 
+    id: Date.now().toString(),
+    title: newStepForm.value.title.trim(),
+    completed: false,
+    comment: newStepForm.value.comment || '',
+    timeEstimate: '',
+    priority: '',
+    scheduledDate: '',
+    status: 'pending',
+    isNew: false // Сразу сохраняем
+  }
+  
+  goalForm.value.steps.push(newStep)
+  closeAddStepModal()
+  
+  // Сохраняем сразу
+  await saveGoalChanges()
+}
 
 // Фильтры
 const searchQuery = ref('')
@@ -2425,6 +2541,37 @@ function formatDate(dateString) {
   border-style: dashed;
   border-color: var(--primary-color);
   background: rgba(99, 102, 241, 0.02);
+  flex-direction: column;
+  padding: 1rem;
+}
+
+.new-step-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.new-step-title-input {
+  font-size: 1rem;
+}
+
+.new-step-footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.new-step-footer .step-comment-section {
+  flex: 1;
+  margin-top: 0;
+}
+
+.new-step-actions-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 /* Кнопка добавления нового шага */
@@ -2435,7 +2582,21 @@ function formatDate(dateString) {
   padding: 0.375rem 0.75rem;
   font-size: 0.8125rem;
   white-space: nowrap;
-  align-self: flex-start;
+}
+
+.delete-new-step-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+.delete-new-step-btn:hover {
+  color: var(--danger-color);
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .save-new-step-btn:hover {
@@ -2680,6 +2841,35 @@ function formatDate(dateString) {
 
 .edit-modal.edit-modal-extended {
   max-width: 600px;
+}
+
+/* Модалка добавления шага */
+.add-step-modal {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.add-step-modal .modal-footer {
+  justify-content: flex-end;
+}
+
+.form-textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* Классы отображения для десктоп/мобильная */
+.desktop-only {
+  display: flex;
+}
+
+.mobile-only {
+  display: none;
 }
 
 .modal-header {
@@ -2970,6 +3160,20 @@ function formatDate(dateString) {
 }
 
 @media (max-width: 768px) {
+  /* Переключение десктоп/мобильных элементов */
+  .desktop-only {
+    display: none !important;
+  }
+  
+  .mobile-only {
+    display: flex !important;
+  }
+
+  /* Скрыть встроенные новые шаги на мобильных */
+  .new-steps-section {
+    display: none;
+  }
+
   .page-header {
     flex-direction: column;
     align-items: stretch;
