@@ -294,7 +294,7 @@
     <!-- Модальное окно редактирования цели (унифицировано с GoalsBank) -->
     <transition name="modal-fade">
       <div v-if="showEditModal" class="modal-overlay" @click.self="closeEditModal">
-        <div class="edit-modal edit-modal-extended">
+        <div class="edit-modal edit-modal-redesigned">
           <div class="modal-header">
             <h3>
               <Edit2 :size="20" :stroke-width="2" class="modal-header-icon" />
@@ -304,121 +304,197 @@
               <X :size="20" :stroke-width="2" />
             </button>
           </div>
-          
-          <div class="modal-body" v-if="editingGoal">
-            <div class="form-group">
-              <label class="form-label">Название цели</label>
-              <input 
-                v-model="editingGoal.text"
-                type="text"
-                class="form-input"
-                placeholder="Введите название цели"
-              />
-            </div>
-            
-            <div class="form-group">
-              <label class="form-label">Сфера жизни</label>
-              <div class="sphere-select-grid">
-                <button 
-                  v-for="sphere in lifeSpheres"
-                  :key="sphere.id"
-                  class="sphere-select-btn"
-                  :class="{ active: editingGoal.sphereId === sphere.id }"
-                  :style="{ '--sphere-color': getSphereColor(sphere.id) }"
-                  @click="editingGoal.sphereId = sphere.id"
-                >
-                  <component :is="getSphereIconComponent(sphere.id)" :size="18" :stroke-width="2" />
-                  <span>{{ getSphereNameOnly(sphere.id) }}</span>
-                </button>
+
+          <!-- Quick Actions -->
+          <div class="quick-actions-goal" v-if="editingGoal">
+            <button 
+              v-if="editingGoal.workStatus !== 'complete'"
+              class="quick-action-btn action-complete"
+              title="Завершить цель"
+              @click="handleQuickComplete"
+            >
+              <CheckCircle :size="16" />
+              <span>Завершить</span>
+            </button>
+          </div>
+
+          <!-- Tab Navigation -->
+          <div class="modal-tabs">
+            <button 
+              class="modal-tab" 
+              :class="{ active: editModalTab === 'main' }"
+              @click="editModalTab = 'main'"
+            >
+              <FileText :size="16" />
+              <span>Основное</span>
+            </button>
+            <button 
+              class="modal-tab" 
+              :class="{ active: editModalTab === 'motivation' }"
+              @click="editModalTab = 'motivation'"
+            >
+              <Heart :size="16" />
+              <span>Мотивация</span>
+            </button>
+            <button 
+              class="modal-tab" 
+              :class="{ active: editModalTab === 'status' }"
+              @click="editModalTab = 'status'"
+            >
+              <Settings :size="16" />
+              <span>Статус</span>
+            </button>
+          </div>
+
+          <div class="modal-body modal-body-tabs" v-if="editingGoal">
+            <!-- Tab: Main -->
+            <div v-show="editModalTab === 'main'" class="tab-content">
+              <div class="form-group">
+                <label class="form-label">Название цели</label>
+                <input 
+                  v-model="editingGoal.text"
+                  type="text"
+                  class="form-input form-input-large"
+                  placeholder="Введите название цели"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Сфера жизни</label>
+                <div class="sphere-select-grid sphere-grid-compact">
+                  <button
+                    v-for="sphere in lifeSpheres"
+                    :key="sphere.id"
+                    class="sphere-select-btn"
+                    :class="{ active: editingGoal.sphereId === sphere.id }"
+                    :style="{ '--sphere-color': getSphereColor(sphere.id) }"
+                    @click="editingGoal.sphereId = sphere.id"
+                  >
+                    <component :is="getSphereIconComponent(sphere.id)" :size="18" :stroke-width="2" />
+                    <span>{{ getSphereNameOnly(sphere.id) }}</span>
+                  </button>
+                </div>
               </div>
             </div>
-            
-            <div class="why-section-divider">
-              <span>Проверка цели</span>
-            </div>
-            
-            <div class="form-group">
-              <label class="form-label">1. Почему для меня это важно?</label>
-              <textarea 
-                v-model="editingGoal.whyImportant"
-                class="form-textarea"
-                placeholder="Опишите, почему эта цель важна для вас"
-                rows="3"
-              ></textarea>
-            </div>
-            
-            <div class="form-group">
-              <label class="form-label">2. Как эта цель поможет выйти на новый уровень?</label>
-              <textarea 
-                v-model="editingGoal.why2"
-                class="form-textarea"
-                placeholder="Опишите, как достижение этой цели изменит вашу жизнь"
-                rows="3"
-              ></textarea>
-            </div>
-            
-            <div class="validation-section">
-              <div class="validation-label">Тип цели:</div>
-              <div class="validation-buttons">
-                <button 
-                  class="btn btn-validation btn-true-goal"
-                  :class="{ active: editingGoal.validationStatus === 'validated' }"
-                  @click="editingGoal.validationStatus = 'validated'"
-                >
-                  <CheckCircle :size="18" :stroke-width="2" />
-                  Истинная цель
-                </button>
-                <button 
-                  class="btn btn-validation btn-false-goal"
-                  :class="{ active: editingGoal.validationStatus === 'rejected' }"
-                  @click="editingGoal.validationStatus = 'rejected'"
-                >
-                  <XCircle :size="18" :stroke-width="2" />
-                  Ложная цель
-                </button>
+
+            <!-- Tab: Motivation -->
+            <div v-show="editModalTab === 'motivation'" class="tab-content">
+              <div class="motivation-intro">
+                <Lightbulb :size="20" class="motivation-icon" />
+                <p>Ответьте на вопросы, чтобы понять истинную ценность цели</p>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">1. Почему для меня это важно?</label>
+                <textarea 
+                  v-model="editingGoal.whyImportant"
+                  class="form-textarea form-textarea-visible"
+                  placeholder="Опишите, почему эта цель важна для вас..."
+                  rows="3"
+                ></textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">2. Как это изменит мою жизнь?</label>
+                <textarea 
+                  v-model="editingGoal.why2"
+                  class="form-textarea form-textarea-visible"
+                  placeholder="Опишите, как достижение этой цели изменит вашу жизнь..."
+                  rows="3"
+                ></textarea>
               </div>
             </div>
-            
-            <div class="validation-section">
-              <div class="validation-label">Статус:</div>
-              <div class="validation-buttons">
+
+            <!-- Tab: Status -->
+            <div v-show="editModalTab === 'status'" class="tab-content">
+              <!-- Work Status -->
+              <div class="status-card">
+                <div class="status-card-header">
+                  <Target :size="20" />
+                  <span>Статус работы</span>
+                </div>
+                <div class="status-toggle-row">
+                  <span class="toggle-label">В работе</span>
+                  <button 
+                    class="toggle-switch"
+                    :class="{ active: editingGoal.workStatus === 'work' }"
+                    @click="editingGoal.workStatus = editingGoal.workStatus === 'work' ? 'idle' : 'work'"
+                  >
+                    <span class="toggle-slider"></span>
+                  </button>
+                </div>
+                <p class="status-hint" v-if="editingGoal.workStatus === 'work'">
+                  Цель в активной работе.
+                </p>
+                <p class="status-hint" v-else>
+                  Включите, чтобы начать работу над целью.
+                </p>
+              </div>
+
+              <!-- Validation Section -->
+              <div class="status-card">
+                <div class="status-card-header">
+                  <Shield :size="20" />
+                  <span>Оценка цели</span>
+                </div>
+                <p class="status-description">
+                  Подтверждённая цель отвечает на вопросы «почему важно?» и «как изменит жизнь?»
+                </p>
+                <div class="validation-buttons-new">
+                  <button 
+                    class="btn-validation-new btn-confirm"
+                    :class="{ active: editingGoal.validationStatus === 'validated' }"
+                    @click="editingGoal.validationStatus = 'validated'"
+                  >
+                    <CheckCircle :size="20" />
+                    <span>Подтвердить</span>
+                  </button>
+                  <button 
+                    class="btn-validation-new btn-reject"
+                    :class="{ active: editingGoal.validationStatus === 'rejected' }"
+                    @click="editingGoal.validationStatus = 'rejected'"
+                  >
+                    <XCircle :size="20" />
+                    <span>Отклонить</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Progress -->
+              <div class="status-card">
+                <div class="status-card-header">
+                  <BarChart2 :size="20" />
+                  <span>Прогресс</span>
+                </div>
+                <div class="progress-info">
+                  <div class="progress-bar-container">
+                    <div class="progress-bar-fill" :style="{ width: completionProgress + '%' }"></div>
+                  </div>
+                  <span class="progress-text">{{ completedStepsCount }}/{{ totalStepsCount }} шагов</span>
+                </div>
+              </div>
+
+              <!-- Delete -->
+              <div class="status-card status-card-danger">
                 <button 
-                  class="btn btn-validation"
-                  :class="{ active: editingGoal.workStatus === 'work' }"
-                  @click="editingGoal.workStatus = 'work'"
+                  class="btn btn-danger-outline btn-full" 
+                  @click="deleteGoalFromModal"
                 >
-                  В работе
-                </button>
-                <button 
-                  class="btn btn-validation"
-                  :class="{ active: editingGoal.workStatus === 'complete' }"
-                  @click="editingGoal.workStatus = 'complete'"
-                >
-                  Завершена
+                  <Trash2 :size="16" :stroke-width="2" />
+                  Удалить цель
                 </button>
               </div>
             </div>
           </div>
-          
-          <div class="modal-footer">
-            <div class="modal-footer-left">
-              <button 
-                class="btn btn-danger-outline" 
-                @click="deleteGoalFromModal"
-              >
-                <Trash2 :size="16" :stroke-width="2" />
-                Удалить
-              </button>
-            </div>
-            <div class="modal-footer-right">
-              <button class="btn btn-secondary" @click="closeEditModal">
-                Отмена
-              </button>
-              <button class="btn btn-primary" @click="saveEditModal">
-                <Check :size="16" :stroke-width="2" />
-                Сохранить
-              </button>
-            </div>
+
+          <div class="modal-footer modal-footer-redesigned">
+            <button class="btn btn-secondary" @click="closeEditModal">
+              Отмена
+            </button>
+            <button class="btn btn-primary" @click="saveEditModal">
+              <Check :size="16" :stroke-width="2" />
+              Сохранить
+            </button>
           </div>
         </div>
       </div>
@@ -622,7 +698,8 @@ import {
   Trash2, Save, Plus, ArrowLeft, GripVertical, X, Edit2,
   Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target,
   Square, CheckSquare, Search, CheckCircle2, AlertCircle,
-  CheckCircle, XCircle, Check, Filter, Settings, Clock, Calendar, Circle
+  CheckCircle, XCircle, Check, Filter, Settings, Clock, Calendar, Circle,
+  FileText, Lightbulb, Shield, BarChart2
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -715,6 +792,7 @@ function showToast(message, type = 'success') {
 // Модальное окно редактирования
 const showEditModal = ref(false)
 const editingGoal = ref(null)
+const editModalTab = ref('main')
 
 // Модалка добавления шага (мобильная версия)
 const showAddStepModal = ref(false)
@@ -1174,6 +1252,14 @@ function openEditModal() {
 function closeEditModal() {
   showEditModal.value = false
   editingGoal.value = null
+  editModalTab.value = 'main'
+}
+
+function handleQuickComplete() {
+  if (editingGoal.value) {
+    editingGoal.value.workStatus = 'complete'
+    saveEditModal()
+  }
 }
 
 function deleteGoalFromModal() {
@@ -3595,6 +3681,333 @@ function formatDate(dateString) {
 
 .edit-modal.edit-modal-extended {
   max-width: 600px;
+}
+
+.edit-modal.edit-modal-redesigned {
+  max-width: 520px;
+  width: 95%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.quick-actions-goal {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 1.25rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.quick-actions-goal .quick-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 20px;
+  border: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quick-actions-goal .quick-action-btn.action-complete {
+  background: var(--success, #10b981);
+  color: white;
+}
+
+.quick-actions-goal .quick-action-btn.action-complete:hover {
+  background: #059669;
+}
+
+.modal-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  padding: 0 1.25rem;
+  gap: 0.25rem;
+}
+
+.modal-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #6b7280);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.2s;
+}
+
+.modal-tab:hover {
+  color: var(--text-primary, #1f2937);
+}
+
+.modal-tab.active {
+  color: var(--primary, #6366f1);
+  border-bottom-color: var(--primary, #6366f1);
+}
+
+.modal-body-tabs {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+.motivation-intro {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(99, 102, 241, 0.05);
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+}
+
+.motivation-intro .motivation-icon {
+  color: var(--primary, #6366f1);
+}
+
+.motivation-intro p {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.form-textarea-visible {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.status-card {
+  background: var(--bg-secondary, #f9fafb);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.status-card:last-child {
+  margin-bottom: 0;
+}
+
+.status-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.status-card-header svg {
+  color: var(--primary, #6366f1);
+}
+
+.status-description {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.status-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.toggle-label {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.toggle-switch {
+  width: 48px;
+  height: 26px;
+  background: var(--bg-tertiary, #e5e7eb);
+  border: none;
+  border-radius: 13px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-switch.active {
+  background: var(--primary, #6366f1);
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.toggle-switch.active .toggle-slider {
+  left: 25px;
+}
+
+.status-hint {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.validation-buttons-new {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.btn-validation-new {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 2px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-md);
+  background: transparent;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-validation-new.btn-confirm {
+  color: var(--success, #10b981);
+}
+
+.btn-validation-new.btn-confirm.active {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: var(--success, #10b981);
+}
+
+.btn-validation-new.btn-reject {
+  color: var(--danger, #ef4444);
+}
+
+.btn-validation-new.btn-reject.active {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--danger, #ef4444);
+}
+
+.progress-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.progress-bar-container {
+  flex: 1;
+  height: 8px;
+  background: var(--bg-tertiary, #e5e7eb);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-container .progress-bar-fill {
+  height: 100%;
+  background: var(--primary, #6366f1);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.status-card-danger {
+  background: transparent;
+  border: 1px dashed var(--danger, #ef4444);
+  padding: 0.75rem;
+}
+
+.btn-full {
+  width: 100%;
+  justify-content: center;
+}
+
+.modal-footer-redesigned {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.form-input-large {
+  font-size: 1rem;
+  padding: 0.75rem;
+}
+
+.sphere-grid-compact {
+  gap: 0.5rem;
+}
+
+.sphere-grid-compact .sphere-select-btn {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+@media (max-width: 768px) {
+  .edit-modal.edit-modal-redesigned {
+    max-width: 100%;
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+  
+  .modal-tabs {
+    padding: 0 1rem;
+  }
+  
+  .modal-tab {
+    flex: 1;
+    justify-content: center;
+    padding: 0.625rem 0.5rem;
+    font-size: 0.8125rem;
+  }
+  
+  .modal-tab span {
+    display: none;
+  }
+  
+  .quick-actions-goal {
+    padding: 0 1rem;
+  }
+  
+  .quick-actions-goal .quick-action-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 0.625rem 0.5rem;
+  }
+  
+  .quick-actions-goal .quick-action-btn span {
+    display: none;
+  }
+  
+  .modal-body-tabs {
+    padding: 1rem;
+  }
+  
+  .validation-buttons-new {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Модалка добавления шага */
