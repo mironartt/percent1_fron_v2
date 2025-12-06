@@ -147,24 +147,6 @@
                 <X :size="14" />
                 Сбросить
               </button>
-              
-              <div class="sort-controls">
-                <select v-model="sortBy" class="filter-select sort-select">
-                  <option value="order">По порядку</option>
-                  <option value="is_complete">По результату</option>
-                  <option value="date_created">По дате создания</option>
-                  <option value="title">По названию</option>
-                </select>
-                <button 
-                  class="btn-icon sort-direction-btn"
-                  @click="toggleSortDirection"
-                  :title="sortDirection === 'asc' ? 'По возрастанию' : 'По убыванию'"
-                >
-                  <ChevronsUpDown :size="16" v-if="sortBy === 'order'" />
-                  <ChevronUp :size="16" v-else-if="sortDirection === 'asc'" />
-                  <ChevronDown :size="16" v-else />
-                </button>
-              </div>
             </div>
           </div>
 
@@ -536,7 +518,7 @@ import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
 import { 
-  Trash2, Save, Plus, ArrowLeft, GripVertical, X, Edit2, ChevronUp, ChevronDown, ChevronsUpDown,
+  Trash2, Save, Plus, ArrowLeft, GripVertical, X, Edit2, ChevronDown,
   Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target,
   Square, CheckSquare, Search, CheckCircle2, AlertCircle,
   CheckCircle, XCircle, Check, Filter
@@ -685,9 +667,6 @@ function clearFilters() {
   filterStatus.value = ''
 }
 
-function toggleSortDirection() {
-  sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
-}
 
 function sortSteps(steps) {
   if (sortBy.value === 'order') {
@@ -772,9 +751,9 @@ const paginatedSteps = computed(() => {
   return filteredSteps.value.slice(0, stepsDisplayLimit.value)
 })
 
-// Проверка есть ли активные фильтры или сортировка
+// Проверка есть ли активные фильтры
 const hasActiveFiltersOrSort = computed(() => {
-  return searchQuery.value || filterStatus.value || sortBy.value !== 'order'
+  return searchQuery.value || filterStatus.value
 })
 
 const hasMoreSteps = computed(() => {
@@ -799,14 +778,13 @@ function getOriginalIndex(step) {
 let filterDebounceTimer = null
 let previousHasFilters = false
 
-watch([searchQuery, filterStatus, sortBy, sortDirection], () => {
+watch([searchQuery, filterStatus], () => {
   stepsDisplayLimit.value = 10
   
   // Debounce for search query, immediate for other filters
   if (filterDebounceTimer) clearTimeout(filterDebounceTimer)
   
-  const hasFiltersOrSort = searchQuery.value || filterStatus.value || 
-    sortBy.value !== 'order' || sortDirection.value !== 'asc'
+  const hasFiltersOrSort = searchQuery.value || filterStatus.value
   const filtersCleared = previousHasFilters && !hasFiltersOrSort
   
   if (goalBackendId.value) {
@@ -2262,32 +2240,6 @@ function formatDate(dateString) {
 .filter-select:focus {
   outline: none;
   border-color: var(--primary-color);
-}
-
-.sort-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  margin-left: auto;
-}
-
-.sort-select {
-  min-width: 120px;
-}
-
-.sort-direction-btn {
-  padding: 0.5rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.sort-direction-btn:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
 }
 
 .drag-disabled-hint {
