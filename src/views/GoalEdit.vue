@@ -487,9 +487,18 @@
         <div class="add-step-modal">
           <div class="modal-header">
             <h3>Редактирование шага</h3>
-            <button class="modal-close" @click="closeEditStepModal">
-              <X :size="20" :stroke-width="2" />
-            </button>
+            <div class="modal-header-actions">
+              <button 
+                class="modal-delete-btn" 
+                @click="deleteStepFromModal"
+                title="Удалить шаг"
+              >
+                <Trash2 :size="18" :stroke-width="2" />
+              </button>
+              <button class="modal-close" @click="closeEditStepModal">
+                <X :size="20" :stroke-width="2" />
+              </button>
+            </div>
           </div>
           
           <div class="modal-body">
@@ -536,25 +545,14 @@
             </div>
           </div>
           
-          <div class="modal-footer">
-            <div class="modal-footer-left">
-              <button 
-                class="btn btn-danger-outline" 
-                @click="deleteStepFromModal"
-              >
-                <Trash2 :size="16" :stroke-width="2" />
-                Удалить
-              </button>
-            </div>
-            <div class="modal-footer-right">
-              <button class="btn btn-secondary" @click="closeEditStepModal">
-                Отмена
-              </button>
-              <button class="btn btn-primary" @click="saveEditStepModal">
-                <Check :size="16" :stroke-width="2" />
-                Сохранить
-              </button>
-            </div>
+          <div class="modal-footer modal-footer-center">
+            <button class="btn btn-secondary" @click="closeEditStepModal">
+              Отмена
+            </button>
+            <button class="btn btn-primary" @click="saveEditStepModal">
+              <Check :size="16" :stroke-width="2" />
+              Сохранить
+            </button>
           </div>
         </div>
       </div>
@@ -2981,6 +2979,34 @@ function formatDate(dateString) {
 
 .modal-header-icon {
   color: var(--primary-color);
+}
+
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.modal-delete-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.375rem;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.modal-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger-color);
+}
+
+.modal-footer-center {
+  justify-content: center !important;
 }
 
 .btn-close {
