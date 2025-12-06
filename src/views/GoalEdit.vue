@@ -116,7 +116,7 @@
             <div 
               v-for="(step, displayIndex) in paginatedSteps" 
               :key="step.id || displayIndex"
-              class="step-card step-card-clickable"
+              class="step-card step-card-clickable step-card-expanded"
               :class="{ 
                 dragging: isDragEnabled && dragIndex === getOriginalIndex(step),
                 'drag-over': isDragEnabled && dragOverIndex === getOriginalIndex(step) && dragIndex !== getOriginalIndex(step),
@@ -149,8 +149,33 @@
                 <span class="step-title" :class="{ 'completed-text': step.completed }">
                   {{ step.title || `Шаг ${getOriginalIndex(step) + 1}` }}
                 </span>
-                <span v-if="step.comment" class="step-comment-preview">{{ step.comment }}</span>
+                <!-- Мета-строка: приоритет, время, дата -->
+                <div class="step-meta" v-if="step.priority || step.timeEstimate || step.scheduledDate">
+                  <span v-if="step.priority" class="step-meta-item priority-indicator" :class="'priority-' + step.priority">
+                    <span class="priority-dot"></span>
+                    {{ getPriorityLabel(step.priority) }}
+                  </span>
+                  <span v-if="step.timeEstimate" class="step-meta-item">
+                    <Clock :size="12" />
+                    {{ formatTimeEstimate(step.timeEstimate) }}
+                  </span>
+                  <span v-if="step.scheduledDate" class="step-meta-item">
+                    <Calendar :size="12" />
+                    {{ formatScheduledDate(step.scheduledDate) }}
+                  </span>
+                </div>
               </div>
+              
+              <!-- Чекбокс справа для быстрого выполнения -->
+              <button 
+                class="step-checkbox-btn"
+                :class="{ checked: step.completed }"
+                @click.stop="toggleStepComplete(step, getOriginalIndex(step))"
+                :title="step.completed ? 'Отметить как невыполненный' : 'Отметить как выполненный'"
+              >
+                <CheckCircle v-if="step.completed" :size="22" />
+                <Circle v-else :size="22" />
+              </button>
             </div>
             
             <!-- Кнопка загрузить ещё (локальная пагинация) -->
@@ -250,21 +275,19 @@
               </div>
             </template>
 
-            <!-- Десктоп: встроенная карточка добавления -->
-            <button class="btn btn-secondary add-step-btn btn-with-icon desktop-only" @click="addStep">
-              <Plus :size="16" />
-              Добавить шаг
-            </button>
-            
-            <!-- Мобильная: кнопка открывает модалку -->
-            <button class="btn btn-secondary add-step-btn btn-with-icon mobile-only" @click="openAddStepModal">
-              <Plus :size="16" />
-              Добавить шаг
-            </button>
           </div>
 
         </div>
       </div>
+      
+      <!-- FAB кнопка добавления шага -->
+      <button 
+        class="fab-add-step"
+        @click="openAddStepModal"
+        title="Добавить шаг"
+      >
+        <Plus :size="24" />
+      </button>
 
     </div>
 
@@ -456,73 +479,131 @@
       </div>
     </transition>
 
-    <!-- Модальное окно редактирования шага -->
-    <transition name="modal-fade">
-      <div v-if="showEditStepModal" class="modal-overlay" @click.self="closeEditStepModal">
-        <div class="add-step-modal">
-          <div class="modal-header">
-            <h3>Редактирование шага</h3>
-            <div class="modal-header-actions">
-              <button 
-                class="modal-delete-btn" 
-                @click="deleteStepFromModal"
-                title="Удалить шаг"
-              >
-                <Trash2 :size="18" :stroke-width="2" />
-              </button>
-              <button class="modal-close" @click="closeEditStepModal">
-                <X :size="20" :stroke-width="2" />
-              </button>
-            </div>
+    <!-- Bottom Sheet модалка редактирования шага -->
+    <transition name="bottom-sheet">
+      <div v-if="showEditStepModal" class="bottom-sheet-overlay" @click.self="closeEditStepModal">
+        <div class="bottom-sheet step-bottom-sheet">
+          <!-- Ручка для свайпа -->
+          <div class="bottom-sheet-handle"></div>
+          
+          <!-- Quick Actions вверху -->
+          <div class="quick-actions">
+            <button 
+              class="quick-action-btn"
+              :class="{ active: editStepForm.completed }"
+              @click="toggleEditStepComplete"
+            >
+              <CheckCircle :size="20" />
+              <span>{{ editStepForm.completed ? 'Выполнен' : 'Выполнить' }}</span>
+            </button>
+            <button 
+              class="quick-action-btn"
+              @click="openScheduleForStep"
+            >
+              <Calendar :size="20" />
+              <span>Запланировать</span>
+            </button>
+            <button 
+              class="quick-action-btn danger"
+              @click="deleteStepFromModal"
+            >
+              <Trash2 :size="20" />
+              <span>Удалить</span>
+            </button>
           </div>
           
-          <div class="modal-body">
-            <div class="form-group">
-              <label class="form-label">Название шага</label>
-              <input 
-                v-model="editStepForm.title"
-                type="text"
-                class="form-input"
-                placeholder="Введите название шага"
-                ref="editStepTitleInput"
-              />
-            </div>
-            
-            <div class="form-group">
-              <button 
-                v-if="!editStepForm.showComment && !editStepForm.comment"
-                class="btn-link add-comment-toggle"
-                @click="editStepForm.showComment = true"
-                type="button"
-              >
-                + Добавить комментарий
-              </button>
-              <template v-else>
+          <!-- Табы -->
+          <div class="step-modal-tabs">
+            <button 
+              class="tab-btn"
+              :class="{ active: editStepTab === 'main' }"
+              @click="editStepTab = 'main'"
+            >
+              Основное
+            </button>
+            <button 
+              class="tab-btn"
+              :class="{ active: editStepTab === 'params' }"
+              @click="editStepTab = 'params'"
+            >
+              Параметры
+            </button>
+          </div>
+          
+          <!-- Контент табов -->
+          <div class="bottom-sheet-body">
+            <!-- Таб Основное -->
+            <div v-show="editStepTab === 'main'" class="tab-content">
+              <div class="form-group">
+                <label class="form-label">Название шага</label>
+                <input 
+                  v-model="editStepForm.title"
+                  type="text"
+                  class="form-input"
+                  placeholder="Введите название шага"
+                  ref="editStepTitleInput"
+                />
+              </div>
+              
+              <div class="form-group">
                 <label class="form-label">Комментарий</label>
                 <textarea 
                   v-model="editStepForm.comment"
                   class="form-input form-textarea"
-                  placeholder="Комментарий к шагу (необязательно)"
+                  placeholder="Дополнительные заметки..."
                   rows="3"
                 ></textarea>
-              </template>
+              </div>
             </div>
-
-            <div class="form-group">
-              <label class="step-completed-toggle">
+            
+            <!-- Таб Параметры -->
+            <div v-show="editStepTab === 'params'" class="tab-content">
+              <div class="form-group">
+                <label class="form-label">Приоритет</label>
+                <div class="priority-selector">
+                  <button 
+                    v-for="p in priorityOptions" 
+                    :key="p.value"
+                    class="priority-option"
+                    :class="{ active: editStepForm.priority === p.value, [p.value]: true }"
+                    @click="editStepForm.priority = p.value"
+                  >
+                    <span class="priority-dot"></span>
+                    {{ p.label }}
+                  </button>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Время на выполнение (часов)</label>
                 <input 
-                  type="checkbox" 
-                  v-model="editStepForm.completed"
-                  class="step-completed-checkbox"
+                  v-model="editStepForm.timeEstimate"
+                  type="number"
+                  class="form-input"
+                  placeholder="2"
+                  min="0.5"
+                  max="24"
+                  step="0.5"
                 />
-                <span>Выполнен</span>
-              </label>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Дата выполнения</label>
+                <input 
+                  v-model="editStepForm.scheduledDate"
+                  type="date"
+                  class="form-input"
+                />
+              </div>
             </div>
           </div>
           
-          <div class="modal-footer modal-footer-center">
+          <div class="bottom-sheet-footer">
+            <button class="btn btn-secondary" @click="closeEditStepModal">
+              Отмена
+            </button>
             <button class="btn btn-primary" @click="saveEditStepModal">
-              <Check :size="16" :stroke-width="2" />
+              <Check :size="16" />
               Сохранить
             </button>
           </div>
@@ -541,7 +622,7 @@ import {
   Trash2, Save, Plus, ArrowLeft, GripVertical, X, Edit2,
   Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target,
   Square, CheckSquare, Search, CheckCircle2, AlertCircle,
-  CheckCircle, XCircle, Check, Filter, Settings, Clock, Calendar
+  CheckCircle, XCircle, Check, Filter, Settings, Clock, Calendar, Circle
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -684,26 +765,50 @@ async function saveStepFromModal() {
 
 // Модалка редактирования шага
 const showEditStepModal = ref(false)
+const editStepTab = ref('main')
 const editStepForm = ref({
   title: '',
   comment: '',
-  showComment: false,
   completed: false,
+  priority: '',
+  timeEstimate: '',
+  scheduledDate: '',
   stepIndex: -1
 })
 const editStepTitleInput = ref(null)
 
+const priorityOptions = [
+  { value: 'critical', label: 'Критично' },
+  { value: 'desirable', label: 'Желательно' },
+  { value: 'attention', label: 'Внимание' },
+  { value: 'optional', label: 'Опционально' }
+]
+
 function openEditStepModal(step, index) {
+  editStepTab.value = 'main'
   editStepForm.value = {
     title: step.title || '',
     comment: step.comment || '',
-    showComment: !!step.comment,
     completed: step.completed || false,
+    priority: step.priority || '',
+    timeEstimate: step.timeEstimate || '',
+    scheduledDate: step.scheduledDate || '',
     stepIndex: index
   }
   showEditStepModal.value = true
   nextTick(() => {
     editStepTitleInput.value?.focus()
+  })
+}
+
+function toggleEditStepComplete() {
+  editStepForm.value.completed = !editStepForm.value.completed
+}
+
+function openScheduleForStep() {
+  editStepTab.value = 'params'
+  nextTick(() => {
+    // Фокус на поле даты
   })
 }
 
@@ -723,6 +828,9 @@ function saveEditStepModal() {
   
   step.title = editStepForm.value.title.trim()
   step.comment = editStepForm.value.comment || ''
+  step.priority = editStepForm.value.priority || ''
+  step.timeEstimate = editStepForm.value.timeEstimate || ''
+  step.scheduledDate = editStepForm.value.scheduledDate || ''
   
   if (wasCompleted !== nowCompleted) {
     step.completed = nowCompleted
@@ -1213,6 +1321,60 @@ function getPriorityColor(priority) {
     'optional': '#9ca3af'
   }
   return colors[priority] || '#9ca3af'
+}
+
+function getPriorityLabel(priority) {
+  const labels = {
+    'critical': 'Критично',
+    'desirable': 'Желательно',
+    'attention': 'Внимание',
+    'optional': 'Опционально'
+  }
+  return labels[priority] || priority
+}
+
+function formatScheduledDate(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const today = new Date()
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  
+  if (date.toDateString() === today.toDateString()) return 'Сегодня'
+  if (date.toDateString() === tomorrow.toDateString()) return 'Завтра'
+  
+  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+}
+
+function formatTimeEstimate(timeEstimate) {
+  if (!timeEstimate) return ''
+  const timeLabels = {
+    '15': '15мин',
+    '30': '30мин',
+    '60': '1ч',
+    '120': '2ч',
+    '180': '3ч',
+    '240': '4ч'
+  }
+  return timeLabels[timeEstimate] || timeEstimate + 'ч'
+}
+
+async function toggleStepComplete(step, index) {
+  const newCompleted = !step.completed
+  updateStep(index, 'completed', newCompleted)
+  
+  // Сохранить на бэкенд если есть ID
+  if (step.backendId && goalBackendId.value) {
+    try {
+      await store.updateGoalStep(goalBackendId.value, step.backendId, { completed: newCompleted })
+      showToast(newCompleted ? 'Шаг выполнен!' : 'Шаг возвращён в работу', 'success')
+    } catch (error) {
+      console.error('Failed to update step:', error)
+      // Откатить изменение
+      updateStep(index, 'completed', !newCompleted)
+      showToast('Ошибка при обновлении шага', 'error')
+    }
+  }
 }
 
 const dragIndex = ref(null)
@@ -2612,6 +2774,338 @@ function formatDate(dateString) {
 .step-card.priority-optional:not(.step-completed) {
   border-left-color: #9ca3af;
   background: rgba(156, 163, 175, 0.06);
+}
+
+/* Расширенный вид карточки */
+.step-card-expanded {
+  align-items: center;
+  padding: 0.875rem 1rem;
+}
+
+.step-card-expanded .step-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.step-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.375rem;
+}
+
+.step-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.step-meta-item svg {
+  opacity: 0.7;
+}
+
+.priority-indicator {
+  font-weight: 500;
+}
+
+.priority-indicator.priority-critical {
+  color: #ef4444;
+}
+
+.priority-indicator.priority-desirable {
+  color: #f97316;
+}
+
+.priority-indicator.priority-attention {
+  color: #3b82f6;
+}
+
+.priority-indicator.priority-optional {
+  color: #9ca3af;
+}
+
+.priority-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Чекбокс справа */
+.step-checkbox-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  margin-left: auto;
+}
+
+.step-checkbox-btn:hover {
+  background: var(--hover-bg, #f3f4f6);
+  color: var(--primary, #6366f1);
+}
+
+.step-checkbox-btn.checked {
+  color: #10b981;
+}
+
+.step-checkbox-btn.checked:hover {
+  color: #059669;
+}
+
+/* FAB кнопка добавления шага */
+.fab-add-step {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--primary, #6366f1);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+  transition: all 0.2s;
+  z-index: 100;
+}
+
+.fab-add-step:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.5);
+}
+
+.fab-add-step:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+  .fab-add-step {
+    bottom: 1rem;
+    right: 1rem;
+    width: 52px;
+    height: 52px;
+  }
+}
+
+/* Bottom Sheet стили */
+.bottom-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.bottom-sheet {
+  background: var(--bg-primary, #ffffff);
+  border-radius: 1rem 1rem 0 0;
+  width: 100%;
+  max-width: 500px;
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.bottom-sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--border-color, #e5e7eb);
+  border-radius: 2px;
+  margin: 0.75rem auto;
+}
+
+/* Quick Actions */
+.quick-actions {
+  display: flex;
+  justify-content: space-around;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+.quick-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  font-size: 0.75rem;
+}
+
+.quick-action-btn:hover {
+  background: var(--hover-bg, #f3f4f6);
+}
+
+.quick-action-btn.active {
+  color: #10b981;
+}
+
+.quick-action-btn.danger {
+  color: #ef4444;
+}
+
+.quick-action-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Step Modal Tabs */
+.step-modal-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+.step-modal-tabs .tab-btn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  font-weight: 500;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.step-modal-tabs .tab-btn.active {
+  color: var(--primary, #6366f1);
+}
+
+.step-modal-tabs .tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--primary, #6366f1);
+}
+
+.bottom-sheet-body {
+  padding: 1rem;
+}
+
+.tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Priority Selector */
+.priority-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.priority-option {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: transparent;
+  border-radius: 2rem;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #6b7280);
+  transition: all 0.2s;
+}
+
+.priority-option:hover {
+  border-color: var(--text-secondary, #6b7280);
+}
+
+.priority-option.active {
+  border-color: currentColor;
+  font-weight: 500;
+}
+
+.priority-option.critical { color: #ef4444; }
+.priority-option.desirable { color: #f97316; }
+.priority-option.attention { color: #3b82f6; }
+.priority-option.optional { color: #9ca3af; }
+
+.priority-option.active.critical { background: rgba(239, 68, 68, 0.1); }
+.priority-option.active.desirable { background: rgba(249, 115, 22, 0.1); }
+.priority-option.active.attention { background: rgba(59, 130, 246, 0.1); }
+.priority-option.active.optional { background: rgba(156, 163, 175, 0.1); }
+
+.bottom-sheet-footer {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.bottom-sheet-footer .btn {
+  flex: 1;
+}
+
+/* Bottom Sheet transition */
+.bottom-sheet-enter-active,
+.bottom-sheet-leave-active {
+  transition: opacity 0.3s;
+}
+
+.bottom-sheet-enter-active .bottom-sheet,
+.bottom-sheet-leave-active .bottom-sheet {
+  transition: transform 0.3s;
+}
+
+.bottom-sheet-enter-from,
+.bottom-sheet-leave-to {
+  opacity: 0;
+}
+
+.bottom-sheet-enter-from .bottom-sheet,
+.bottom-sheet-leave-to .bottom-sheet {
+  transform: translateY(100%);
+}
+
+/* Desktop: центрированная модалка */
+@media (min-width: 769px) {
+  .bottom-sheet-overlay {
+    align-items: center;
+  }
+  
+  .bottom-sheet {
+    border-radius: 1rem;
+    max-height: 80vh;
+  }
+  
+  .bottom-sheet-handle {
+    display: none;
+  }
 }
 
 .step-card.step-completed {
