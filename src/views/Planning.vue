@@ -1,1796 +1,435 @@
 <template>
   <div class="planning-container">
-    <!-- Empty State - First Visit -->
-    <div v-if="showEmptyState" class="empty-state-section">
-      <div class="empty-state-card card">
-        <div class="icon-wrapper lg primary">
-          <Calendar :size="32" />
-        </div>
-        <h1>Планирование</h1>
-        <p class="subtitle">
-          Распределите шаги по дням недели и получайте напоминания
-        </p>
-        
-        <div class="lesson-info">
-          <h3>Что вас ждёт в уроке:</h3>
-          <div class="lesson-steps">
-            <div class="lesson-step">
-              <span class="step-num">1</span>
-              <div>
-                <strong>Теория планирования</strong>
-                <p>Узнаете принципы эффективного недельного планирования</p>
-              </div>
-            </div>
-            <div class="lesson-step">
-              <span class="step-num">2</span>
-              <div>
-                <strong>Практика</strong>
-                <p>Распределите шаги ваших целей по дням недели</p>
-              </div>
-            </div>
-            <div class="lesson-step">
-              <span class="step-num">3</span>
-              <div>
-                <strong>Настройка напоминаний</strong>
-                <p>Подключите Telegram-бота для ежедневных напоминаний</p>
-              </div>
-            </div>
+    <header class="planning-header">
+      <h1 class="page-title">Планирование</h1>
+      <div class="week-navigation">
+        <button class="nav-btn" @click="prevWeek" aria-label="Предыдущая неделя">
+          <ChevronLeft :size="20" />
+        </button>
+        <span class="week-range">{{ weekRangeText }}</span>
+        <button class="nav-btn" @click="nextWeek" aria-label="Следующая неделя">
+          <ChevronRight :size="20" />
+        </button>
+        <button 
+          v-if="!isCurrentWeek" 
+          class="today-btn"
+          @click="goToCurrentWeek"
+        >
+          Сегодня
+        </button>
+      </div>
+    </header>
+
+    <div class="week-stats">
+      <div class="stat-chip">
+        <span class="stat-value">{{ weeklyTotalTasks }}</span>
+        <span class="stat-label">шагов</span>
+      </div>
+      <div class="stat-chip">
+        <span class="stat-value">{{ weeklyCompletedTasks }}</span>
+        <span class="stat-label">выполнено</span>
+      </div>
+      <div class="stat-chip" v-if="weeklyTotalTime">
+        <span class="stat-value">{{ weeklyTotalTime }}</span>
+        <span class="stat-label">всего</span>
+      </div>
+    </div>
+
+    <div class="week-bar">
+      <button 
+        v-for="day in weekDays" 
+        :key="day.date"
+        class="day-tab"
+        :class="{ 
+          active: selectedDay === day.date,
+          today: isToday(day.date),
+          'has-tasks': getTasksForDay(day.date).length > 0,
+          weekend: day.isWeekend
+        }"
+        @click="selectDay(day.date)"
+      >
+        <span class="day-name">{{ day.shortName }}</span>
+        <span class="day-num">{{ day.dayNum }}</span>
+        <span v-if="getTasksForDay(day.date).length > 0" class="task-count">
+          {{ getTasksForDay(day.date).length }}
+        </span>
+      </button>
+    </div>
+
+    <div class="day-content" v-if="selectedDay">
+      <div class="day-header-info">
+        <h2 class="day-title">{{ selectedDayTitle }}</h2>
+        <span v-if="getTotalTimeForDay(selectedDay)" class="day-time">
+          <Clock :size="14" />
+          {{ getTotalTimeForDay(selectedDay) }}
+        </span>
+      </div>
+
+      <div class="tasks-list" v-if="getTasksForDay(selectedDay).length > 0">
+        <div 
+          v-for="task in getTasksForDay(selectedDay)" 
+          :key="task.id"
+          class="task-card"
+          :class="[
+            { completed: task.completed },
+            'priority-' + (task.priority || 'none')
+          ]"
+          @click="openTaskActions(task)"
+          @touchstart="handleTouchStart(task, $event)"
+          @touchend="handleTouchEnd"
+          @touchmove="handleTouchMove"
+        >
+          <button 
+            class="task-checkbox"
+            :class="{ completed: task.completed }"
+            @click.stop="toggleTaskComplete(task)"
+          >
+            <Check v-if="task.completed" :size="16" />
+          </button>
+          <div class="task-info">
+            <span class="task-title">{{ task.stepTitle }}</span>
+            <span class="task-goal">{{ task.goalTitle }}</span>
+          </div>
+          <div class="task-meta">
+            <span v-if="task.timeEstimate" class="time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
+            <span v-if="task.priority" class="priority-dot" :class="'priority-' + task.priority"></span>
           </div>
         </div>
+      </div>
 
-        <button class="btn btn-primary btn-lg" @click="startLesson">
-          <Sparkles :size="18" />
-          Начать урок
+      <div v-else class="empty-day">
+        <Calendar :size="48" class="empty-icon" />
+        <p>Нет задач на этот день</p>
+        <span class="empty-hint">Добавьте шаги из целей ниже</span>
+      </div>
+    </div>
+
+    <div class="section-divider">
+      <span>Цели и шаги</span>
+    </div>
+
+    <div class="filters-section">
+      <div class="chip-filters">
+        <button 
+          class="chip"
+          :class="{ active: filterSphere === '' }"
+          @click="filterSphere = ''"
+        >
+          Все сферы
+          <span class="chip-count">{{ goalsWithSteps.length }}</span>
+        </button>
+        <button 
+          v-for="sphere in spheresWithGoals" 
+          :key="sphere.id"
+          class="chip"
+          :class="{ active: filterSphere === sphere.id }"
+          @click="filterSphere = sphere.id"
+        >
+          {{ sphere.icon }} {{ sphere.name }}
+          <span class="chip-count">{{ sphere.goalCount }}</span>
+        </button>
+      </div>
+      
+      <div class="status-chips">
+        <button 
+          class="chip small"
+          :class="{ active: filterStatus === '' }"
+          @click="filterStatus = ''"
+        >
+          Все
+        </button>
+        <button 
+          class="chip small"
+          :class="{ active: filterStatus === 'unscheduled' }"
+          @click="filterStatus = 'unscheduled'"
+        >
+          Незапланированные
+        </button>
+        <button 
+          class="chip small"
+          :class="{ active: filterStatus === 'scheduled' }"
+          @click="filterStatus = 'scheduled'"
+        >
+          Запланированные
         </button>
       </div>
     </div>
 
-    <!-- Lesson Mode -->
-    <div v-else-if="!lessonCompleted" class="lesson-mode">
-      <div class="progress-bar">
-        <div 
-          v-for="(step, index) in lessonSteps" 
-          :key="index"
-          class="progress-step"
-          :class="{ 
-            active: currentStep === index + 1, 
-            completed: currentStep > index + 1 
-          }"
-          @click="goToStep(index + 1)"
-        >
-          <div class="step-number">{{ index + 1 }}</div>
-          <div class="step-label">{{ step }}</div>
+    <div class="goals-list" v-if="filteredGoalsWithSteps.length > 0">
+      <div 
+        v-for="goal in paginatedGoals" 
+        :key="goal.id" 
+        class="goal-card"
+        :class="{ expanded: expandedGoals[goal.id] }"
+      >
+        <div class="goal-header" @click="toggleGoal(goal.id)">
+          <div class="goal-main">
+            <span class="goal-sphere-badge">{{ getSphereName(goal.sphereId) }}</span>
+            <h3 class="goal-title">{{ goal.title }}</h3>
+          </div>
+          <div class="goal-meta">
+            <span class="steps-badge">
+              {{ getUnscheduledStepsCount(goal) }}/{{ getUncompletedSteps(goal).length }}
+            </span>
+            <ChevronDown :size="20" class="expand-icon" :class="{ expanded: expandedGoals[goal.id] }" />
+          </div>
         </div>
-      </div>
-
-      <!-- Step 1: Theory -->
-      <div v-if="currentStep === 1" class="step-content">
-        <div class="step-layout">
-          <div class="step-main">
-            <header class="section-header">
-              <div class="header-with-icon">
-                <div class="icon-wrapper md primary">
-                  <BookOpen :size="24" />
-                </div>
-                <h1>Теория недельного планирования</h1>
-              </div>
-              <p class="subtitle">
-                Научитесь планировать неделю так, чтобы двигаться к целям каждый день
-              </p>
-            </header>
-
-            <div class="theory-content">
-              <div class="theory-block card">
-                <div class="theory-header">
-                  <div class="icon-wrapper sm target">
-                    <Target :size="18" />
-                  </div>
-                  <h3>Принцип «Неделя вперёд»</h3>
-                </div>
-                <p>
-                  Планируйте неделю заранее — в выходные или в начале недели. 
-                  Это даёт ясность и снижает стресс от неопределённости.
-                </p>
-                <div class="key-point">
-                  <div class="icon-wrapper xs accent">
-                    <Lightbulb :size="14" />
-                  </div>
-                  <span>Лучшее время для планирования: воскресенье вечером или понедельник утром</span>
-                </div>
-              </div>
-
-              <div class="theory-block card">
-                <div class="theory-header">
-                  <div class="icon-wrapper sm zap">
-                    <Zap :size="18" />
-                  </div>
-                  <h3>Правило 3 шагов в день</h3>
-                </div>
-                <p>
-                  Не перегружайте день. Выберите максимум 3 ключевых шага из ваших целей.
-                  Остальное время оставьте для рутины и непредвиденных задач.
-                </p>
-                <div class="key-point warning">
-                  <div class="icon-wrapper xs warning">
-                    <AlertTriangle :size="14" />
-                  </div>
-                  <span>Перегруженный план = срыв плана. Меньше = лучше.</span>
-                </div>
-              </div>
-
-              <div class="theory-block card">
-                <div class="theory-header">
-                  <div class="icon-wrapper sm refresh">
-                    <RefreshCcw :size="18" />
-                  </div>
-                  <h3>Баланс сфер жизни</h3>
-                </div>
-                <p>
-                  Распределяйте шаги из разных сфер жизни по неделе.
-                  Это поможет поддерживать баланс и не выгорать.
-                </p>
-                <ul class="balance-tips">
-                  <li>Утро — для важных и сложных задач</li>
-                  <li>День — для рутины и встреч</li>
-                  <li>Вечер — для отдыха и хобби</li>
-                </ul>
-              </div>
-
-              <div class="theory-block card">
-                <div class="theory-header">
-                  <div class="icon-wrapper sm phone">
-                    <Smartphone :size="18" />
-                  </div>
-                  <h3>Напоминания = дисциплина</h3>
-                </div>
-                <p>
-                  Ежедневные напоминания в Telegram помогут не забыть о запланированных шагах.
-                  Отмечайте выполнение прямо в мессенджере — и прогресс синхронизируется.
-                </p>
-                <div class="telegram-preview">
-                  <div class="tg-message">
-                    <div class="tg-header">
-                      <Target :size="16" class="tg-icon" />
-                      <strong>Задачи на сегодня:</strong>
-                    </div>
-                    <ul class="tg-tasks">
-                      <li><Square :size="14" class="task-check" /> Пробежка 30 минут</li>
-                      <li><Square :size="14" class="task-check" /> Прочитать главу книги</li>
-                      <li><Square :size="14" class="task-check" /> Позвонить другу</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="step-actions">
-              <button class="btn btn-primary btn-lg" @click="nextStep">
-                Перейти к практике
-                <ArrowRight :size="18" />
-              </button>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- Step 2: Practice -->
-      <div v-if="currentStep === 2" class="step-content">
-        <div class="step-layout">
-          <div class="step-main">
-            <header class="section-header">
-              <h1>Планирование недели</h1>
-              <p class="subtitle">
-                Распределите шаги из ваших целей по дням недели
-              </p>
-            </header>
-
-            <div class="week-info card">
-              <div class="week-dates">
-                <span class="week-label">Планируемая неделя:</span>
-                <span class="week-range">{{ weekRangeText }}</span>
-              </div>
-            </div>
-
-            <!-- Weekly Calendar View (moved above goals) -->
-            <div class="week-calendar card">
-              <h3 class="calendar-title">
-                <Calendar :size="20" class="calendar-icon" />
-                Ваш план на неделю 
-                <span class="drag-hint" v-if="draggedStep">(отпустите на нужный день)</span>
-              </h3>
-              <div class="calendar-grid">
-                <div 
-                  v-for="day in weekDays" 
-                  :key="day.date"
-                  class="calendar-day"
-                  :class="{ 
-                    today: isToday(day.date), 
-                    'has-tasks': getTasksForDay(day.date).length > 0,
-                    'drag-over-day': dragOverDay === day.date 
-                  }"
-                  @dragover.prevent="handleDayDragOver($event, day.date)"
-                  @dragleave="handleDayDragLeave"
-                  @drop="handleDayDrop($event, day.date)"
-                >
-                  <div class="day-header">
-                    <span class="day-name">{{ day.shortName }}</span>
-                    <span class="day-date">{{ day.dayNum }}</span>
-                    <span v-if="getTotalTimeForDay(day.date)" class="day-time-total">{{ getTotalTimeForDay(day.date) }}</span>
-                  </div>
-                  <div class="day-tasks">
-                    <div 
-                      v-for="task in getTasksForDay(day.date)" 
-                      :key="task.id"
-                      class="scheduled-task"
-                      :class="'priority-' + (task.priority || 'optional')"
-                    >
-                      <span class="task-title" :title="task.stepTitle">{{ task.stepTitle }}</span>
-                      <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
-                    </div>
-                    <div v-if="getTasksForDay(day.date).length === 0" class="no-tasks drop-hint">
-                      {{ draggedStep ? 'Сюда' : '—' }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Goals with steps to schedule (accordion) -->
-            <div class="goals-to-schedule">
-              <div class="goals-header">
-                <h3>🎯 Ваши цели и шаги</h3>
-                <button 
-                  v-if="goalsWithSteps.length > 0"
-                  class="btn btn-sm btn-outline toggle-all-btn"
-                  @click="toggleAllGoals"
-                >
-                  {{ allGoalsExpanded ? 'Свернуть все' : 'Развернуть все' }}
-                </button>
-              </div>
-              <p class="hint" v-if="goalsWithSteps.length === 0">
-                У вас пока нет целей с шагами. Сначала добавьте цели в модуле Декомпозиция.
-              </p>
-              
-              <div v-for="goal in goalsWithSteps" :key="goal.id" class="goal-schedule-card card" :class="{ collapsed: !expandedGoals[goal.id] }">
-                <div class="goal-header-accordion" @click="toggleGoal(goal.id)">
-                  <div class="goal-header-left">
-                    <span class="expand-icon">{{ expandedGoals[goal.id] ? '▼' : '▶' }}</span>
-                    <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
-                    <h4 class="truncate-1" :title="goal.title">{{ goal.title }}</h4>
-                  </div>
-                  <div class="goal-header-right">
-                    <span class="steps-count">{{ getUncompletedSteps(goal).length }} шагов</span>
-                    <span class="scheduled-count" v-if="getScheduledStepsCount(goal) > 0">
-                      ✓ {{ getScheduledStepsCount(goal) }} запланировано
-                    </span>
-                  </div>
-                </div>
-                <div class="steps-to-schedule" v-show="expandedGoals[goal.id]">
-                  <div 
-                    v-for="step in getUncompletedSteps(goal)" 
-                    :key="step.id"
-                    class="step-schedule-item"
-                    :class="{ 
-                      scheduled: isStepScheduled(goal.id, step.id),
-                      dragging: draggedStep && draggedStep.stepId === step.id 
-                    }"
-                    draggable="true"
-                    @dragstart="handleStepDragStart($event, goal, step)"
-                    @dragend="handleStepDragEnd"
-                  >
-                    <div class="step-info">
-                      <span class="drag-handle-lesson">⠿</span>
-                      <span class="step-title truncate-1" :title="step.title">{{ step.title }}</span>
-                    </div>
-                    <div class="step-schedule-controls">
-                      <select 
-                        :value="getScheduledDate(goal.id, step.id)"
-                        @change="scheduleStep(goal.id, step, $event.target.value)"
-                        class="day-select"
-                      >
-                        <option value="">📅 День</option>
-                        <option 
-                          v-for="day in weekDays" 
-                          :key="day.date"
-                          :value="day.date"
-                        >
-                          {{ day.label }}
-                        </option>
-                      </select>
-                      <template v-if="isStepScheduled(goal.id, step.id)">
-                        <select 
-                          :value="getScheduledTimeEstimate(goal.id, step.id)"
-                          @change="updateScheduledStep(goal.id, step.id, 'timeEstimate', $event.target.value)"
-                          class="time-select"
-                          title="Время выполнения"
-                        >
-                          <option value="">⏱️ Время</option>
-                          <option value="30min">30 мин</option>
-                          <option value="1h">1 час</option>
-                          <option value="2h">2 часа</option>
-                          <option value="3h">3 часа</option>
-                          <option value="4h">4 часа</option>
-                        </select>
-                        <select 
-                          :value="getScheduledPriority(goal.id, step.id)"
-                          @change="updateScheduledStep(goal.id, step.id, 'priority', $event.target.value)"
-                          class="priority-select"
-                          title="Приоритет"
-                        >
-                          <option value="">🎯 Приоритет</option>
-                          <option value="critical">🔴 Важно</option>
-                          <option value="desirable">🟠 Желательно</option>
-                          <option value="attention">🔵 В поле внимания</option>
-                          <option value="optional">⚪ Опционально</option>
-                        </select>
-                        <button 
-                          class="btn-icon remove"
-                          @click="unscheduleStep(goal.id, step.id)"
-                          title="Убрать из плана"
-                        >
-                          ✕
-                        </button>
-                      </template>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="step-actions">
-              <button class="btn btn-secondary" @click="prevStep">
-                ← Назад
-              </button>
-              <button 
-                class="btn btn-primary btn-lg" 
-                @click="nextStep"
-                :disabled="scheduledTasksCount === 0"
-              >
-                Далее: Напоминания →
-              </button>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- Step 3: Telegram Setup -->
-      <div v-if="currentStep === 3" class="step-content">
-        <div class="step-layout">
-          <div class="step-main">
-            <header class="section-header">
-              <h1>📱 Настройка напоминаний</h1>
-              <p class="subtitle">
-                Подключите Telegram-бота для получения ежедневных задач
-              </p>
-            </header>
-
-            <!-- Connected State -->
-            <div v-if="telegramConnected" class="telegram-setup card connected">
-              <div class="telegram-header">
-                <div class="telegram-icon connected">✅</div>
-                <div class="telegram-info">
-                  <h3>Telegram подключён</h3>
-                  <p class="telegram-username">@{{ telegramUsername }}</p>
-                </div>
-              </div>
-              
-              <div class="notification-settings">
-                <h4>Настройки уведомлений</h4>
-                
-                <label class="toggle-setting">
-                  <input 
-                    type="checkbox" 
-                    :checked="notificationSettings.morningPlan"
-                    @change="updateNotification('morningPlan', $event.target.checked)"
-                  />
-                  <span class="toggle-label">
-                    <span class="toggle-title">🌅 Утренний план</span>
-                    <span class="toggle-desc">Задачи на сегодня в {{ notificationSettings.morningTime }}</span>
-                  </span>
-                </label>
-                
-                <label class="toggle-setting">
-                  <input 
-                    type="checkbox" 
-                    :checked="notificationSettings.eveningReview"
-                    @change="updateNotification('eveningReview', $event.target.checked)"
-                  />
-                  <span class="toggle-label">
-                    <span class="toggle-title">🌙 Вечерний обзор</span>
-                    <span class="toggle-desc">Итоги дня в {{ notificationSettings.eveningTime }}</span>
-                  </span>
-                </label>
-                
-                <label class="toggle-setting">
-                  <input 
-                    type="checkbox" 
-                    :checked="notificationSettings.weekendPlanning"
-                    @change="updateNotification('weekendPlanning', $event.target.checked)"
-                  />
-                  <span class="toggle-label">
-                    <span class="toggle-title">📅 Планирование выходных</span>
-                    <span class="toggle-desc">Пятница — обзор недели, воскресенье — план на неделю</span>
-                  </span>
-                </label>
-              </div>
-              
-              <button class="btn btn-danger-outline btn-sm" @click="handleDisconnectTelegram">
-                Отключить Telegram
-              </button>
-            </div>
-
-            <!-- Not Connected State -->
-            <div v-else class="telegram-setup card">
-              <div class="telegram-icon">📱</div>
-              <h3>Подключите Telegram</h3>
-              <p>
-                Получайте ежедневные напоминания о задачах и отмечайте выполнение прямо в мессенджере.
-              </p>
-              
-              <div class="connection-steps">
-                <div class="connection-step">
-                  <span class="step-number">1</span>
-                  <span class="step-text">Откройте бота <a href="https://t.me/OnePercentLifeBot" target="_blank">@OnePercentLifeBot</a></span>
-                </div>
-                <div class="connection-step">
-                  <span class="step-number">2</span>
-                  <span class="step-text">Нажмите "Начать" и следуйте инструкциям</span>
-                </div>
-                <div class="connection-step">
-                  <span class="step-number">3</span>
-                  <span class="step-text">Введите код подключения ниже</span>
-                </div>
-              </div>
-              
-              <div class="connection-form">
-                <input 
-                  type="text" 
-                  v-model="telegramCode"
-                  placeholder="Введите код из бота"
-                  class="input-lg"
-                />
-                <button 
-                  class="btn btn-primary" 
-                  @click="handleConnectTelegram"
-                  :disabled="!telegramCode.trim()"
-                >
-                  Подключить
-                </button>
-              </div>
-              
-              <p class="skip-note">
-                Можно пропустить этот шаг и настроить позже в настройках.
-              </p>
-            </div>
-
-            <div class="plan-summary card">
-              <h3>📊 Ваш план на неделю</h3>
-              <div class="summary-stats">
-                <div class="stat-item">
-                  <span class="stat-value">{{ scheduledTasksCount }}</span>
-                  <span class="stat-label">Запланировано шагов</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-value">{{ scheduledDaysCount }}</span>
-                  <span class="stat-label">Дней с задачами</span>
-                </div>
-              </div>
-
-              <div class="daily-breakdown">
-                <template v-for="day in weekDays" :key="day.date">
-                  <div 
-                    v-if="getTasksForDay(day.date).length > 0"
-                    class="day-summary"
-                  >
-                    <span class="day-name">{{ day.label }}:</span>
-                    <span class="day-tasks-count">{{ getTasksForDay(day.date).length }} {{ pluralize(getTasksForDay(day.date).length, 'шаг', 'шага', 'шагов') }}</span>
-                  </div>
-                </template>
-              </div>
-            </div>
-
-            <div class="step-actions">
-              <button class="btn btn-secondary" @click="prevStep">
-                ← Назад
-              </button>
-              <button class="btn btn-primary btn-lg" @click="completeLesson">
-                ✅ Завершить урок
-              </button>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-
-    <!-- Planner Mode - After lesson completion -->
-    <div v-else class="planner-mode">
-      <div class="planner-layout">
-        <div class="planner-main">
-          <header class="section-header">
-            <div class="header-row">
-              <h1>Планирование недели</h1>
-            </div>
-            <div class="week-navigation">
-              <button class="btn btn-icon-nav" @click="prevWeek" title="Предыдущая неделя">
-                ←
-              </button>
-              <span class="week-range-text">{{ weekRangeText }}</span>
-              <button class="btn btn-icon-nav" @click="nextWeek" title="Следующая неделя">
-                →
-              </button>
-              <button 
-                v-if="!isCurrentWeek" 
-                class="btn btn-text-sm" 
-                @click="goToCurrentWeek"
-              >
-                Сегодня
-              </button>
-            </div>
-          </header>
-
-          <!-- Mobile Week View -->
-          <div class="mobile-week-view card">
-            <div class="mobile-days-strip">
-              <button 
-                v-for="day in weekDays" 
-                :key="day.date"
-                class="mobile-day-btn"
-                :class="{ 
-                  active: selectedMobileDay === day.date,
-                  today: isToday(day.date),
-                  'has-tasks': getTasksForDay(day.date).length > 0
-                }"
-                @click="selectMobileDay(day.date)"
-              >
-                <span class="mobile-day-name">{{ day.shortName }}</span>
-                <span class="mobile-day-num">{{ day.dayNum }}</span>
-                <span v-if="getTasksForDay(day.date).length > 0" class="mobile-day-dot"></span>
-              </button>
-            </div>
-            
-            <div class="mobile-day-content" v-if="selectedMobileDay">
-              <div class="mobile-day-header">
-                <h3>{{ getMobileDayTitle(selectedMobileDay) }}</h3>
-                <span v-if="getTotalTimeForDay(selectedMobileDay)" class="day-time-badge">
-                  {{ getTotalTimeForDay(selectedMobileDay) }}
-                </span>
-              </div>
-              
-              <div class="mobile-day-tasks">
-                <div 
-                  v-for="task in getTasksForDay(selectedMobileDay)" 
-                  :key="task.id"
-                  class="mobile-task-card"
-                  :class="[
-                    { completed: task.completed },
-                    'priority-' + (task.priority || 'optional')
-                  ]"
-                >
-                  <button 
-                    class="mobile-task-checkbox" 
-                    :class="{ completed: task.completed }"
-                    @click="toggleTaskComplete(task.id)"
-                  >
-                    <Check v-if="task.completed" :size="14" />
-                  </button>
-                  <div class="mobile-task-info">
-                    <span class="mobile-task-title">{{ task.stepTitle }}</span>
-                    <span class="mobile-task-goal">{{ task.goalTitle }}</span>
-                  </div>
-                  <button 
-                    class="mobile-task-remove"
-                    @click="removeTask(task.id)"
-                  >
-                    ✕
-                  </button>
-                </div>
-                
-                <div v-if="getTasksForDay(selectedMobileDay).length === 0" class="mobile-empty-day">
-                  <Calendar :size="32" class="empty-icon" />
-                  <p>Нет задач на этот день</p>
-                  <span class="empty-hint">Добавьте задачи из списка целей ниже</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Week Calendar - Desktop only -->
-          <div class="week-calendar-full card desktop-only">
-            <div class="calendar-header-row" v-if="viewMode !== 'day'">
-              <h3>План на неделю <span class="drag-hint">Перетаскивайте задачи между днями</span></h3>
-              <div class="view-mode-tabs">
-                <button 
-                  class="view-tab" 
-                  :class="{ active: viewMode === 'workdays' }"
-                  @click="viewMode = 'workdays'; focusedDay = null"
-                >
-                  5 дней
-                </button>
-                <button 
-                  class="view-tab" 
-                  :class="{ active: viewMode === 'week' }"
-                  @click="viewMode = 'week'; focusedDay = null"
-                >
-                  7 дней
-                </button>
-                <button 
-                  class="view-tab" 
-                  :class="{ active: viewMode === 'day' }"
-                  @click="setDayView"
-                >
-                  День
-                </button>
-              </div>
-            </div>
-            <div class="calendar-header-row" v-else>
-              <div class="day-view-nav">
-                <button class="btn btn-icon-nav" @click="navigateFocusedDay(-1)" title="Предыдущий день">←</button>
-                <h3>{{ getFocusedDayTitle() }}</h3>
-                <button class="btn btn-icon-nav" @click="navigateFocusedDay(1)" title="Следующий день">→</button>
-              </div>
-              <div class="view-mode-tabs">
-                <button 
-                  class="view-tab" 
-                  :class="{ active: viewMode === 'workdays' }"
-                  @click="viewMode = 'workdays'; focusedDay = null"
-                >
-                  5 дней
-                </button>
-                <button 
-                  class="view-tab" 
-                  :class="{ active: viewMode === 'week' }"
-                  @click="viewMode = 'week'; focusedDay = null"
-                >
-                  7 дней
-                </button>
-                <button 
-                  class="view-tab" 
-                  :class="{ active: viewMode === 'day' }"
-                  @click="setDayView"
-                >
-                  День
-                </button>
-              </div>
-            </div>
-            <div :class="getCalendarGridClass()">
-              <div 
-                v-for="day in displayDays" 
-                :key="day.date"
-                class="calendar-day-full"
-                :class="{ 
-                  today: isToday(day.date),
-                  'drag-over': dragOverDay === day.date
-                }"
-                @dragover.prevent="handleDragOver(day.date)"
-                @dragleave="handleDragLeave"
-                @drop="handleDrop(day.date)"
-              >
-                <div class="day-header-full">
-                  <div class="day-header-left">
-                    <span class="day-name">{{ day.label }}</span>
-                    <span class="tasks-count" v-if="getTasksForDay(day.date).length > 0">
-                      {{ getTasksForDay(day.date).length }}
-                    </span>
-                  </div>
-                  <div class="day-header-right">
-                    <span class="day-load-indicator" :class="'load-' + getDayLoadLevel(day.date)"></span>
-                    <span v-if="getTotalTimeForDay(day.date)" class="day-time-total">{{ getTotalTimeForDay(day.date) }}</span>
-                    <button class="quick-add-btn" @click="scrollToGoals" title="Добавить задачу">
-                      <Plus :size="14" />
-                    </button>
-                  </div>
-                </div>
-                <div class="day-tasks-full">
-                  <div 
-                    v-for="task in getTasksForDay(day.date)" 
-                    :key="task.id"
-                    class="task-card has-tooltip"
-                    :class="[
-                      { completed: task.completed, dragging: draggedTaskId === task.id },
-                      'priority-' + (task.priority || 'optional')
-                    ]"
-                    :data-tooltip="`${task.stepTitle}\n${task.goalTitle}\n${getPriorityLabel(task.priority)}${task.timeEstimate ? ' • ' + formatTimeEstimate(task.timeEstimate) : ''}`"
-                    draggable="true"
-                    @dragstart="handleDragStart(task)"
-                    @dragend="handleDragEnd"
-                  >
-                    <button 
-                      class="sphere-toggle-btn" 
-                      :class="{ completed: task.completed }"
-                      :style="{ 
-                        '--sphere-color': getSphereColor(getSphereIdFromGoal(task.goalId)),
-                        '--sphere-bg': getSphereColor(getSphereIdFromGoal(task.goalId)) + '20'
-                      }"
-                      :title="task.completed ? 'Отменить выполнение' : 'Отметить выполненной'"
-                      @click.stop="toggleTaskComplete(task.id)"
-                    >
-                      <component 
-                        v-if="!task.completed" 
-                        :is="getSphereIcon(getSphereIdFromGoal(task.goalId))" 
-                        :size="14" 
-                        class="sphere-icon"
-                      />
-                      <Check v-else :size="14" class="check-icon" />
-                    </button>
-                    <div class="task-info">
-                      <span class="task-step" :title="task.stepTitle">{{ task.stepTitle }}</span>
-                      <span class="task-goal" :title="task.goalTitle">{{ task.goalTitle }}</span>
-                    </div>
-                    <div class="task-meta">
-                      <span v-if="task.timeEstimate" class="task-time-badge">{{ formatTimeEstimate(task.timeEstimate) }}</span>
-                    </div>
-                    <button 
-                      class="btn-icon remove-sm"
-                      @click.stop="removeTask(task.id)"
-                      title="Удалить"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  <div v-if="getTasksForDay(day.date).length === 0" class="empty-day drop-zone">
-                    Перетащите сюда
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Goals with steps (accordion) -->
-          <div class="goals-section">
-            <div class="goals-header">
-              <h3>Цели и шаги</h3>
-              <button 
-                v-if="filteredGoalsWithSteps.length > 0"
-                class="btn btn-sm btn-outline toggle-all-btn"
-                @click="toggleAllGoals"
-              >
-                {{ allGoalsExpanded ? 'Свернуть все' : 'Развернуть все' }}
-              </button>
-            </div>
-            
-            <!-- Filters Section -->
-            <div class="goals-filters card">
-              <!-- Mobile: Toggle button -->
-              <button 
-                class="mobile-filters-toggle"
-                @click="toggleMobileFilters"
-              >
-                <Filter :size="16" />
-                <span>Фильтры</span>
-                <span v-if="activeFiltersCount > 0" class="filters-badge">{{ activeFiltersCount }}</span>
-                <ChevronDown :size="16" class="toggle-chevron" :class="{ open: mobileFiltersOpen }" />
-              </button>
-              
-              <!-- Desktop: Always visible / Mobile: Collapsible -->
-              <div class="filter-content" :class="{ 'mobile-open': mobileFiltersOpen }">
-                <div class="filter-row">
-                  <div class="filter-group search-group">
-                    <div class="search-input-wrapper">
-                      <Search :size="16" class="search-icon" />
-                      <input 
-                        v-model="searchQuery"
-                        type="text"
-                        class="search-input"
-                        placeholder="Поиск по целям и шагам..."
-                      />
-                    </div>
-                  </div>
-                  <div class="filter-group">
-                    <select v-model="filterSphere" class="filter-select">
-                      <option value="">Все сферы</option>
-                      <option v-for="sphere in lifeSpheres" :key="sphere.id" :value="sphere.id">
-                        {{ sphere.icon }} {{ sphere.name }}
-                      </option>
-                    </select>
-                  </div>
-                  <button 
-                    class="btn btn-sm desktop-only"
-                    :class="{ 'btn-primary': filterThisWeek, 'btn-outline': !filterThisWeek }"
-                    @click="filterThisWeek = !filterThisWeek"
-                    title="Показать цели с шагами на текущей неделе"
-                  >
-                    <Calendar :size="14" />
-                    Эта неделя
-                  </button>
-                  <button 
-                    v-if="searchQuery || filterSphere || filterThisWeek" 
-                    class="btn btn-sm btn-ghost"
-                    @click="clearFilters"
-                  >
-                    ✕ Сбросить
-                  </button>
-                </div>
-              </div>
-              <div class="filter-stats" v-if="goalsWithSteps.length > 0">
-                <span class="filter-count">
-                  Показано: {{ paginatedGoals.length }} из {{ filteredGoalsWithSteps.length }}
-                  <template v-if="filteredGoalsWithSteps.length !== goalsWithSteps.length">
-                    (всего {{ goalsWithSteps.length }})
-                  </template>
+        
+        <div class="steps-grid" v-show="expandedGoals[goal.id]">
+          <div 
+            v-for="step in getFilteredSteps(goal)" 
+            :key="step.id"
+            class="step-card"
+            :class="{ 
+              scheduled: isStepScheduled(goal.id, step.id),
+              completed: step.completed
+            }"
+            @click="openStepActions(goal, step)"
+          >
+            <div class="step-content">
+              <span class="step-title">{{ step.title }}</span>
+              <div class="step-badges" v-if="isStepScheduled(goal.id, step.id)">
+                <span class="date-badge">{{ formatStepDate(goal.id, step.id) }}</span>
+                <span v-if="getScheduledPriority(goal.id, step.id)" class="priority-badge" :class="'priority-' + getScheduledPriority(goal.id, step.id)">
+                  {{ getPriorityShort(getScheduledPriority(goal.id, step.id)) }}
                 </span>
               </div>
             </div>
-            
-            <div v-if="goalsWithSteps.length === 0" class="empty-goals card">
-              <p>У вас пока нет целей в работе. Перейдите в банк целей, возьмите цель в работу и декомпозируйте её.</p>
-              <button class="btn btn-primary" @click="goToDecomposition">
-                Перейти в банк целей
-              </button>
-            </div>
-            
-            <div v-else-if="filteredGoalsWithSteps.length === 0" class="empty-goals card">
-              <p>Нет целей, соответствующих фильтрам.</p>
-              <button class="btn btn-outline" @click="clearFilters">
-                Сбросить фильтры
-              </button>
-            </div>
-
-            <div class="goals-list-wrapper" :class="{ 'has-scroll': paginatedGoals.length > 10 }">
-              <div v-for="goal in paginatedGoals" :key="goal.id" class="goal-card card" :class="{ collapsed: !expandedGoals[goal.id] }">
-                <div class="goal-header-accordion" @click="toggleGoal(goal.id)">
-                  <div class="goal-header-left">
-                    <span class="expand-icon">{{ expandedGoals[goal.id] ? '▼' : '▶' }}</span>
-                    <span class="goal-sphere">{{ getSphereName(goal.sphereId) }}</span>
-                    <h4 class="truncate-1" :title="goal.title">{{ goal.title }}</h4>
-                  </div>
-                  <div class="goal-header-right">
-                    <span class="steps-count">
-                      {{ getCompletedStepsCount(goal) }} из {{ getTotalStepsCount(goal) }} шагов
-                    </span>
-                    <span class="scheduled-count" v-if="getScheduledStepsCount(goal) > 0">
-                      ✓ {{ getScheduledStepsCount(goal) }} запланировано
-                    </span>
-                    <span class="goal-progress">{{ getGoalProgress(goal) }}%</span>
-                  </div>
-                </div>
-                <div 
-                  class="steps-list" 
-                  v-show="expandedGoals[goal.id]" 
-                  :data-steps-list="goal.id"
-                  :class="{ 
-                    'has-scroll': stepsContainerHeights[goal.id]
-                  }"
-                  :style="getStepsListStyle(goal)"
-                >
-                  <div 
-                    v-for="step in getVisibleSteps(goal)" 
-                    :key="step.id"
-                    class="step-item"
-                    :class="{ 
-                      scheduled: isStepScheduled(goal.id, step.id),
-                      ['priority-' + getScheduledPriority(goal.id, step.id)]: isStepScheduled(goal.id, step.id),
-                      dragging: draggedStep && draggedStep.stepId === step.id,
-                      completed: step.completed
-                    }"
-                    draggable="true"
-                    @dragstart="handleStepDragStart($event, goal, step)"
-                    @dragend="handleStepDragEnd"
-                  >
-                    <button 
-                      class="step-complete-btn"
-                      :class="{ completed: step.completed }"
-                      @click.stop="toggleStepComplete(goal, step)"
-                      :title="step.completed ? 'Отменить выполнение' : 'Отметить выполненным'"
-                    >
-                      <CheckCircle v-if="step.completed" :size="18" />
-                      <Circle v-else :size="18" />
-                    </button>
-                    <span class="step-title truncate-1" :class="{ completed: step.completed }" :title="step.title">{{ step.title }}</span>
-                    <div class="step-actions">
-                      <span class="step-date-display" v-if="isStepScheduled(goal.id, step.id)">
-                        {{ formatStepDate(goal.id, step.id) }}
-                      </span>
-                      <select 
-                        :value="getScheduledDate(goal.id, step.id)"
-                        @change="scheduleStep(goal.id, step, $event.target.value)"
-                        class="day-select-sm"
-                      >
-                        <option value="">День</option>
-                        <option 
-                          v-for="day in weekDays" 
-                          :key="day.date"
-                          :value="day.date"
-                        >
-                          {{ day.shortName }}
-                        </option>
-                      </select>
-                      <select 
-                        :value="getScheduledTimeEstimate(goal.id, step.id)"
-                        @change="updateScheduledStep(goal.id, step.id, 'timeEstimate', $event.target.value)"
-                        class="time-select-sm"
-                        title="Время"
-                      >
-                        <option value="">⏱</option>
-                        <option value="30min">30м</option>
-                        <option value="1h">1ч</option>
-                        <option value="2h">2ч</option>
-                        <option value="3h">3ч</option>
-                        <option value="4h">4ч</option>
-                      </select>
-                      <select 
-                        :value="getScheduledPriority(goal.id, step.id)"
-                        @change="updateScheduledStep(goal.id, step.id, 'priority', $event.target.value)"
-                        class="priority-select-sm"
-                        :class="'priority-' + (getScheduledPriority(goal.id, step.id) || 'none')"
-                        title="Приоритет"
-                      >
-                        <option value="">—</option>
-                        <option value="critical">Критично</option>
-                        <option value="desirable">Важно</option>
-                        <option value="attention">Внимание</option>
-                        <option value="optional">Опционально</option>
-                      </select>
-                    </div>
-                  </div>
-                  
-                  <!-- Load more steps button -->
-                  <button 
-                    v-if="hasMoreStepsToLoad(goal)"
-                    class="btn btn-sm btn-outline load-more-steps"
-                    :disabled="stepsLoadingForGoal[goal.backendId]"
-                    @click.stop="loadMoreStepsFromBackend(goal)"
-                  >
-                    <template v-if="stepsLoadingForGoal[goal.backendId]">
-                      Загрузка...
-                    </template>
-                    <template v-else>
-                      Ещё {{ getRemainingStepsToLoad(goal) }} шагов
-                    </template>
-                  </button>
-                </div>
-              </div>
-              
-              <!-- Load more goals button -->
-              <button 
-                v-if="hasMoreGoals"
-                class="btn btn-outline load-more-goals"
-                @click="loadMoreGoals"
-              >
-                Загрузить ещё {{ remainingGoalsCount }} целей
-              </button>
-            </div>
+            <button 
+              v-if="!isStepScheduled(goal.id, step.id)"
+              class="quick-add-btn"
+              @click.stop="quickScheduleStep(goal, step)"
+            >
+              <Plus :size="18" />
+            </button>
           </div>
         </div>
+      </div>
 
+      <div v-if="hasMoreGoals" class="infinite-scroll-trigger" ref="infiniteScrollTrigger">
+        <div class="loading-spinner-small"></div>
       </div>
     </div>
 
-    <Transition name="toast">
-      <div v-if="showUndoToast" class="undo-toast">
-        <span>Задача удалена</span>
-        <button class="btn-undo" @click="undoDeleteTask">Отменить</button>
+    <div v-else-if="goalsWithSteps.length === 0" class="empty-state">
+      <Target :size="48" class="empty-icon" />
+      <h3>Нет целей для планирования</h3>
+      <p>Добавьте цели в банк целей и декомпозируйте их на шаги</p>
+      <button class="btn btn-primary" @click="goToGoalsBank">
+        Перейти в банк целей
+      </button>
+    </div>
+
+    <div v-else class="empty-state">
+      <Filter :size="48" class="empty-icon" />
+      <p>Нет целей по выбранным фильтрам</p>
+      <button class="btn btn-outline" @click="clearFilters">
+        Сбросить фильтры
+      </button>
+    </div>
+
+    <button class="fab" @click="openAddStepModal" v-if="goalsWithSteps.length > 0">
+      <Plus :size="24" />
+    </button>
+
+    <div class="bottom-sheet-overlay" v-if="showBottomSheet" @click="closeBottomSheet">
+      <div class="bottom-sheet" @click.stop>
+        <div class="sheet-handle"></div>
+        
+        <template v-if="bottomSheetMode === 'task'">
+          <h3 class="sheet-title">{{ selectedTask?.stepTitle }}</h3>
+          <p class="sheet-subtitle">{{ selectedTask?.goalTitle }}</p>
+          
+          <div class="sheet-actions">
+            <button class="sheet-action" @click="toggleTaskComplete(selectedTask); closeBottomSheet()">
+              <CheckCircle :size="20" />
+              <span>{{ selectedTask?.completed ? 'Отменить выполнение' : 'Выполнено' }}</span>
+            </button>
+            <button class="sheet-action" @click="openRescheduleSheet">
+              <Calendar :size="20" />
+              <span>Перенести</span>
+            </button>
+            <button class="sheet-action" @click="openPrioritySheet">
+              <Flag :size="20" />
+              <span>Приоритет</span>
+            </button>
+            <button class="sheet-action" @click="openTimeSheet">
+              <Clock :size="20" />
+              <span>Время</span>
+            </button>
+            <button class="sheet-action danger" @click="removeTaskFromSchedule(selectedTask); closeBottomSheet()">
+              <Trash2 :size="20" />
+              <span>Убрать из плана</span>
+            </button>
+          </div>
+        </template>
+
+        <template v-else-if="bottomSheetMode === 'step'">
+          <h3 class="sheet-title">{{ selectedStep?.title }}</h3>
+          <p class="sheet-subtitle">{{ selectedGoal?.title }}</p>
+          
+          <div class="sheet-actions">
+            <button 
+              v-for="day in weekDays" 
+              :key="day.date"
+              class="sheet-action day-option"
+              :class="{ today: isToday(day.date) }"
+              @click="scheduleStepToDay(selectedGoal, selectedStep, day.date)"
+            >
+              <span class="day-label">{{ day.label }}</span>
+              <span class="day-date">{{ day.dayNum }}</span>
+            </button>
+          </div>
+        </template>
+
+        <template v-else-if="bottomSheetMode === 'reschedule'">
+          <h3 class="sheet-title">Перенести на</h3>
+          
+          <div class="sheet-actions">
+            <button 
+              v-for="day in weekDays" 
+              :key="day.date"
+              class="sheet-action day-option"
+              :class="{ 
+                today: isToday(day.date),
+                active: selectedTask?.scheduledDate === day.date 
+              }"
+              @click="rescheduleTask(selectedTask, day.date)"
+            >
+              <span class="day-label">{{ day.label }}</span>
+              <span class="day-date">{{ day.dayNum }}</span>
+            </button>
+          </div>
+        </template>
+
+        <template v-else-if="bottomSheetMode === 'priority'">
+          <h3 class="sheet-title">Приоритет</h3>
+          
+          <div class="sheet-actions">
+            <button 
+              v-for="priority in priorities" 
+              :key="priority.value"
+              class="sheet-action priority-option"
+              :class="{ active: selectedTask?.priority === priority.value }"
+              @click="updateTaskPriority(selectedTask, priority.value)"
+            >
+              <span class="priority-indicator" :class="'priority-' + priority.value"></span>
+              <span>{{ priority.label }}</span>
+            </button>
+          </div>
+        </template>
+
+        <template v-else-if="bottomSheetMode === 'time'">
+          <h3 class="sheet-title">Время выполнения</h3>
+          
+          <div class="sheet-actions">
+            <button 
+              v-for="time in timeOptions" 
+              :key="time.value"
+              class="sheet-action"
+              :class="{ active: selectedTask?.timeEstimate === time.value }"
+              @click="updateTaskTime(selectedTask, time.value)"
+            >
+              <Clock :size="18" />
+              <span>{{ time.label }}</span>
+            </button>
+          </div>
+        </template>
+
+        <template v-else-if="bottomSheetMode === 'add'">
+          <h3 class="sheet-title">Добавить шаг на {{ selectedDayTitle }}</h3>
+          
+          <div class="add-step-search">
+            <Search :size="16" />
+            <input 
+              v-model="addStepSearch" 
+              type="text" 
+              placeholder="Поиск по шагам..."
+              class="search-input"
+            />
+          </div>
+          
+          <div class="add-step-list">
+            <template v-for="goal in goalsWithUnscheduledSteps" :key="goal.id">
+              <div class="add-goal-header">{{ goal.title }}</div>
+              <button 
+                v-for="step in getUnscheduledStepsFiltered(goal)" 
+                :key="step.id"
+                class="sheet-action step-option"
+                @click="scheduleStepToDay(goal, step, selectedDay)"
+              >
+                <span class="step-name">{{ step.title }}</span>
+                <Plus :size="18" />
+              </button>
+            </template>
+          </div>
+        </template>
       </div>
-    </Transition>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
-import { useXpStore, XP_REWARDS } from '../stores/xp'
-import { DEMO_PLANNING_MODE } from '../config/settings.js'
+import { useXpStore } from '../stores/xp'
 import { 
   Calendar, 
-  BookOpen, 
-  Target, 
-  Lightbulb, 
-  Zap, 
-  AlertTriangle, 
-  RefreshCcw, 
-  Smartphone, 
-  Sparkles,
-  Square,
-  ArrowRight,
-  CheckSquare,
-  Check,
-  Wallet,
-  Palette,
-  Users,
-  Heart,
-  Briefcase,
-  HeartHandshake,
-  Search,
-  Filter,
-  Circle,
-  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
   ChevronDown,
-  Plus
+  Check,
+  CheckCircle,
+  Clock,
+  Plus,
+  Target,
+  Filter,
+  Search,
+  Flag,
+  Trash2
 } from 'lucide-vue-next'
 
 const store = useAppStore()
 const xpStore = useXpStore()
 const router = useRouter()
-const route = useRoute()
-
-const lessonSteps = ['Теория', 'Практика', 'Напоминания']
-
-const lessonStarted = computed(() => store.planningModule.lessonStarted)
-const lessonCompleted = computed(() => true)
-const currentStep = computed(() => store.planningModule.currentStep)
 
 const weekOffset = ref(0)
-
-// Mobile day selection
-const selectedMobileDay = ref(null)
-const isMobile = ref(false)
-const mobileFiltersOpen = ref(false)
-
-function checkMobile() {
-  isMobile.value = window.innerWidth <= 768
-}
-
-function toggleMobileFilters() {
-  mobileFiltersOpen.value = !mobileFiltersOpen.value
-}
-
-const activeFiltersCount = computed(() => {
-  let count = 0
-  if (searchQuery.value) count++
-  if (filterSphere.value) count++
-  if (filterThisWeek.value) count++
-  return count
-})
-
-function selectMobileDay(date) {
-  selectedMobileDay.value = date
-}
-
-function initSelectedDay() {
-  if (weekDays.value && weekDays.value.length > 0) {
-    const today = new Date().toISOString().split('T')[0]
-    const todayDay = weekDays.value.find(d => d.date === today)
-    selectedMobileDay.value = todayDay ? todayDay.date : weekDays.value[0].date
-  }
-}
-
-function getMobileDayTitle(dateStr) {
-  const day = weekDays.value.find(d => d.date === dateStr)
-  if (!day) return ''
-  const date = new Date(dateStr)
-  const monthNames = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 
-                      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
-  return `${day.label}, ${day.dayNum} ${monthNames[date.getMonth()]}`
-}
-
-// Filter state
-const searchQuery = ref('')
+const selectedDay = ref(null)
 const filterSphere = ref('')
-const filterThisWeek = ref(false)
-
-// Pagination state
+const filterStatus = ref('')
+const addStepSearch = ref('')
 const goalsDisplayLimit = ref(10)
-const stepsDisplayLimits = ref({})
-const stepsLoadingForGoal = ref({})
-const stepsPageForGoal = ref({})
-const stepsContainerHeights = ref({}) // Fixed heights for steps containers after pagination
-
-// Weekly planner data from backend API
-const weeklyStepsData = ref([]) // Data from /goals/steps/planned/get/
-const weeklyStepsLoading = ref(false)
-
-// Step filters per goal (each goal can have its own filters)
-const stepsFilters = ref({})
-// { [goalId]: { search: '', priority: '', status: '', sortBy: 'order', sortDir: 'asc' } }
-
-function getStepFilters(goalId) {
-  if (!stepsFilters.value[goalId]) {
-    stepsFilters.value[goalId] = {
-      search: '',
-      priority: '',
-      status: '',
-      sortBy: 'order',
-      sortDir: 'asc'
-    }
-  }
-  return stepsFilters.value[goalId]
-}
-
-function updateStepFilter(goalId, field, value) {
-  const filters = getStepFilters(goalId)
-  filters[field] = value
-  // Reset pagination when filters change
-  stepsDisplayLimits.value[goalId] = 6
-}
-
-function clearStepFilters(goalId) {
-  stepsFilters.value[goalId] = {
-    search: '',
-    priority: '',
-    status: '',
-    sortBy: 'order',
-    sortDir: 'asc'
-  }
-  stepsDisplayLimits.value[goalId] = 6
-}
-
-function hasActiveStepFilters(goalId) {
-  const filters = getStepFilters(goalId)
-  return filters.search || filters.priority || filters.status || filters.sortBy !== 'order'
-}
-
-function toggleStepSortDirection(goalId) {
-  const filters = getStepFilters(goalId)
-  filters.sortDir = filters.sortDir === 'asc' ? 'desc' : 'asc'
-}
-
-// Get filtered and sorted steps for a goal
-function getFilteredSteps(goal) {
-  let steps = goal.steps || []
-  const filters = getStepFilters(goal.id)
-  
-  // Apply search filter
-  if (filters.search) {
-    const query = filters.search.toLowerCase()
-    steps = steps.filter(s => s.title?.toLowerCase().includes(query))
-  }
-  
-  // Apply priority filter
-  if (filters.priority) {
-    const scheduled = scheduledTasks.value.find(t => t.goalId === goal.id)
-    if (filters.priority === 'none') {
-      steps = steps.filter(s => {
-        const task = scheduledTasks.value.find(t => t.goalId === goal.id && t.stepId === s.id)
-        return !task?.priority
-      })
-    } else {
-      steps = steps.filter(s => {
-        const task = scheduledTasks.value.find(t => t.goalId === goal.id && t.stepId === s.id)
-        return task?.priority === filters.priority
-      })
-    }
-  }
-  
-  // Apply status filter
-  if (filters.status) {
-    if (filters.status === 'scheduled') {
-      steps = steps.filter(s => isStepScheduled(goal.id, s.id))
-    } else if (filters.status === 'unscheduled') {
-      steps = steps.filter(s => !isStepScheduled(goal.id, s.id))
-    } else if (filters.status === 'completed') {
-      steps = steps.filter(s => s.completed)
-    } else if (filters.status === 'uncompleted') {
-      steps = steps.filter(s => !s.completed)
-    }
-  }
-  
-  // Apply sorting
-  if (filters.sortBy !== 'order') {
-    const dir = filters.sortDir === 'asc' ? 1 : -1
-    steps = [...steps].sort((a, b) => {
-      switch (filters.sortBy) {
-        case 'priority': {
-          const priorityOrder = { 'critical': 1, 'desirable': 2, 'attention': 3, 'optional': 4, '': 5 }
-          const aPriority = getScheduledPriority(goal.id, a.id) || ''
-          const bPriority = getScheduledPriority(goal.id, b.id) || ''
-          return (priorityOrder[aPriority] - priorityOrder[bPriority]) * dir
-        }
-        case 'date': {
-          const aDate = getScheduledDate(goal.id, a.id) || ''
-          const bDate = getScheduledDate(goal.id, b.id) || ''
-          if (!aDate && !bDate) return 0
-          if (!aDate) return dir
-          if (!bDate) return -dir
-          return aDate.localeCompare(bDate) * dir
-        }
-        case 'status': {
-          const aScheduled = isStepScheduled(goal.id, a.id) ? 1 : 0
-          const bScheduled = isStepScheduled(goal.id, b.id) ? 1 : 0
-          return (bScheduled - aScheduled) * dir
-        }
-        default:
-          return 0
-      }
-    })
-  }
-  
-  return steps
-}
-
-const showEmptyState = computed(() => {
-  return false
-})
-
-const telegramCode = ref('')
-const telegramConnected = computed(() => store.telegramSettings.connected)
-const telegramUsername = computed(() => store.telegramSettings.username)
-const notificationSettings = computed(() => store.telegramSettings.notifications)
-
-const draggedTaskId = ref(null)
-const draggedTask = ref(null)
-const dragOverDay = ref(null)
-const draggedStep = ref(null)
-const deletedTask = ref(null)
-const showUndoToast = ref(false)
-let undoTimeout = null
-
-function handleStepDragStart(event, goal, step) {
-  console.log('[Planning] DragStart - step:', step.title, 'goal:', goal.title)
-  draggedStep.value = {
-    goalId: goal.id,
-    stepId: step.id,
-    stepTitle: step.title,
-    goal: goal
-  }
-  event.dataTransfer.effectAllowed = 'move'
-  event.dataTransfer.setData('text/plain', step.id)
-}
-
-function handleStepDragEnd() {
-  draggedStep.value = null
-  dragOverDay.value = null
-}
-
-function handleDayDragOver(event, dayDate) {
-  event.preventDefault()
-  if (draggedStep.value) {
-    dragOverDay.value = dayDate
-  }
-}
-
-function handleDayDragLeave() {
-  dragOverDay.value = null
-}
-
-async function handleDayDrop(event, dayDate) {
-  if (draggedStep.value) {
-    event.preventDefault()
-    console.log('[Planning] Drop step:', draggedStep.value.stepTitle, 'on day:', dayDate)
-    await scheduleStepWithBackend(
-      draggedStep.value.goalId, 
-      draggedStep.value.stepId, 
-      draggedStep.value.stepTitle,
-      draggedStep.value.goal,
-      dayDate
-    )
-    handleStepDragEnd()
-  }
-}
-
-function handleConnectTelegram() {
-  if (!telegramCode.value.trim()) return
-  const code = telegramCode.value.trim()
-  const username = 'user_' + code.substring(0, 6)
-  store.connectTelegram(code, username)
-  telegramCode.value = ''
-}
-
-function handleDisconnectTelegram() {
-  store.disconnectTelegram()
-}
-
-function updateNotification(key, value) {
-  store.updateTelegramNotifications({ [key]: value })
-}
-
-function handleDragStart(task) {
-  draggedTaskId.value = task.id
-  // For backend tasks, keep the original goalId/stepId for API calls
-  draggedTask.value = {
-    ...task,
-    // Ensure we have backend IDs for API calls
-    backendGoalId: task.goalId,
-    backendStepId: task.stepId
-  }
-}
-
-function handleDragEnd() {
-  draggedTaskId.value = null
-  draggedTask.value = null
-  dragOverDay.value = null
-}
-
-function handleDragOver(dayDate) {
-  // Highlight day for both task and step dragging
-  if (draggedTask.value || draggedStep.value) {
-    dragOverDay.value = dayDate
-  }
-}
-
-function handleDragLeave() {
-  dragOverDay.value = null
-}
-
-async function handleDrop(newDate) {
-  // Handle step drag from goals section
-  if (draggedStep.value) {
-    console.log('[Planning] Drop step:', draggedStep.value.stepTitle, 'on day:', newDate)
-    await scheduleStepWithBackend(
-      draggedStep.value.goalId, 
-      draggedStep.value.stepId, 
-      draggedStep.value.stepTitle,
-      draggedStep.value.goal,
-      newDate
-    )
-    handleStepDragEnd()
-    return
-  }
-  
-  // Handle task drag between days (from weekly calendar)
-  if (draggedTask.value && draggedTask.value.scheduledDate !== newDate) {
-    await updateTaskDateWithBackend(draggedTask.value, newDate)
-  }
-  handleDragEnd()
-}
-
-async function updateTaskDateWithBackend(task, newDate) {
-  console.log('[Planning] Updating task date:', task.stepTitle, 'to', newDate)
-  
-  // Get backend IDs from the task (already stored as goalId/stepId from backend data)
-  const goalId = task.backendGoalId || task.goalId
-  const stepId = task.backendStepId || task.stepId
-  
-  if (!goalId || !stepId) {
-    console.error('[Planning] Missing goalId or stepId for task:', task)
-    return
-  }
-  
-  try {
-    const { updateGoalSteps } = await import('@/services/api.js')
-    await updateGoalSteps({
-      goals_steps_data: [{
-        goal_id: goalId,
-        step_id: stepId,
-        dt: newDate
-      }]
-    })
-    console.log('[Planning] Successfully updated step date on backend')
-    
-    // 1. Local sync: update date in goals block
-    syncStepToGoalsBlock(goalId, stepId, { date: newDate })
-    
-    // 2. Reload goals to update headers
-    await refreshGoalsAfterCalendarChange()
-    
-    // 3. Reload weekly steps data to reflect changes
-    await loadWeeklySteps()
-  } catch (error) {
-    console.error('[Planning] Error updating task date on backend:', error)
-  }
-}
-
-const goals = computed(() => store.goals)
-const goalsWithSteps = computed(() => {
-  const filtered = goals.value.filter(g => g.status === 'active' && g.steps && g.steps.length > 0)
-  console.log('[Planning] goalsWithSteps:', filtered.length, 'goals with steps, all goals:', goals.value.length)
-  if (filtered.length > 0) {
-    filtered.forEach(g => console.log('[Planning] Goal:', g.title, 'steps:', g.steps?.length))
-  }
-  return filtered
-})
-
-// Filtered goals based on search, sphere, status, and week filters
-const filteredGoalsWithSteps = computed(() => {
-  return goalsWithSteps.value.filter(goal => {
-    // Text search filter
-    if (searchQuery.value) {
-      const query = searchQuery.value.toLowerCase()
-      const matchesTitle = goal.title?.toLowerCase().includes(query)
-      const matchesSteps = goal.steps?.some(s => s.title?.toLowerCase().includes(query))
-      if (!matchesTitle && !matchesSteps) {
-        return false
-      }
-    }
-    
-    // Sphere filter
-    if (filterSphere.value && goal.sphereId !== filterSphere.value) {
-      return false
-    }
-    
-    // Status filter is now server-side (work/complete/unstatus)
-    // No client-side filtering needed - data is already filtered by backend
-    
-    // Week filter - goals with steps that intersect with current week
-    if (filterThisWeek.value) {
-      const weekStart = weekDays.value[0]?.date
-      const weekEnd = weekDays.value[6]?.date
-      if (!weekStart || !weekEnd) return true
-      
-      const hasStepsThisWeek = scheduledTasks.value.some(task => {
-        if (task.goalId !== goal.id) return false
-        return task.scheduledDate >= weekStart && task.scheduledDate <= weekEnd
-      })
-      
-      if (!hasStepsThisWeek) {
-        return false
-      }
-    }
-    
-    return true
-  })
-})
-
-// Paginated goals (first N goals)
-const paginatedGoals = computed(() => {
-  return filteredGoalsWithSteps.value.slice(0, goalsDisplayLimit.value)
-})
-
-const hasMoreGoals = computed(() => {
-  return filteredGoalsWithSteps.value.length > goalsDisplayLimit.value
-})
-
-const remainingGoalsCount = computed(() => {
-  return filteredGoalsWithSteps.value.length - goalsDisplayLimit.value
-})
-
-function loadMoreGoals() {
-  goalsDisplayLimit.value += 10
-}
-
-// Get visible steps for a goal (simple - no filtering, just pagination)
-function getVisibleSteps(goal) {
-  const steps = goal.steps || []
-  const limit = stepsDisplayLimits.value[goal.id] || 6
-  return steps.slice(0, limit)
-}
-
-function hasMoreSteps(goal) {
-  const steps = goal.steps || []
-  const limit = stepsDisplayLimits.value[goal.id] || 6
-  return steps.length > limit
-}
-
-function remainingStepsCount(goal) {
-  const steps = goal.steps || []
-  const limit = stepsDisplayLimits.value[goal.id] || 6
-  return steps.length - limit
-}
-
-function loadMoreSteps(goalId) {
-  // Capture current container height BEFORE showing more steps
-  captureStepsContainerHeight(goalId)
-  
-  const currentLimit = stepsDisplayLimits.value[goalId] || 6
-  stepsDisplayLimits.value[goalId] = currentLimit + 6
-}
-
-// Get style for steps list container - fixed height after pagination
-function getStepsListStyle(goal) {
-  const fixedHeight = stepsContainerHeights.value[goal.id]
-  
-  // If height was captured before pagination, use it to create fixed container with scroll
-  if (fixedHeight) {
-    return { 
-      maxHeight: `${fixedHeight}px`,
-      overflowY: 'auto'
-    }
-  }
-  
-  // No fixed height yet - let container expand naturally for initial 6 steps
-  return {}
-}
-
-// Get total steps count from backend totalStepsData
-function getTotalStepsCount(goal) {
-  if (goal.totalStepsData?.total_steps !== undefined) {
-    return goal.totalStepsData.total_steps
-  }
-  return (goal.steps || []).length
-}
-
-// Get completed steps count from backend totalStepsData
-function getCompletedStepsCount(goal) {
-  if (goal.totalStepsData?.complete_steps !== undefined) {
-    return goal.totalStepsData.complete_steps
-  }
-  return (goal.steps || []).filter(s => s.completed).length
-}
-
-// Get goal progress from backend totalStepsData
-function getGoalProgress(goal) {
-  if (goal.totalStepsData?.complete_percent !== undefined) {
-    return goal.totalStepsData.complete_percent
-  }
-  return goal.progress || 0
-}
-
-// Check if there are more steps to load from backend
-function hasMoreStepsToLoad(goal) {
-  const loadedSteps = (goal.steps || []).length
-  const totalSteps = getTotalStepsCount(goal)
-  return loadedSteps < totalSteps
-}
-
-// Get remaining steps to load from backend
-function getRemainingStepsToLoad(goal) {
-  const loadedSteps = (goal.steps || []).length
-  const totalSteps = getTotalStepsCount(goal)
-  return Math.max(0, totalSteps - loadedSteps)
-}
-
-// Capture current height of steps list before pagination
-function captureStepsContainerHeight(goalId) {
-  // Only capture if not already captured
-  if (stepsContainerHeights.value[goalId]) return
-  
-  const container = document.querySelector(`[data-steps-list="${goalId}"]`)
-  if (container) {
-    const height = container.offsetHeight
-    stepsContainerHeights.value[goalId] = height
-    console.log('[Planning] Captured steps container height for goal', goalId, ':', height)
-  }
-}
-
-// Load more steps from backend API
-async function loadMoreStepsFromBackend(goal) {
-  if (!goal.backendId || stepsLoadingForGoal.value[goal.backendId]) return
-  
-  // Capture current container height BEFORE loading more steps
-  captureStepsContainerHeight(goal.id)
-  
-  stepsLoadingForGoal.value[goal.backendId] = true
-  
-  try {
-    const { getGoalSteps } = await import('@/services/api.js')
-    
-    // Calculate next page (each page has 6 steps)
-    const currentPage = stepsPageForGoal.value[goal.backendId] || 1
-    const nextPage = currentPage + 1
-    
-    console.log('[Planning] Loading more steps for goal:', goal.backendId, 'page:', nextPage)
-    
-    const result = await getGoalSteps({
-      goal_id: goal.backendId,
-      page: nextPage,
-      page_size: 6,
-      order_by: 'order',
-      order_direction: 'asc'
-    })
-    
-    if (result.status === 'ok' && result.data?.goal_data?.steps_data) {
-      const newSteps = result.data.goal_data.steps_data.map(s => ({
-        id: s.step_id,
-        backendId: s.step_id,
-        title: s.title,
-        description: s.description || '',
-        priority: s.priority || null,
-        timeEstimate: s.time_duration || null,
-        date: s.dt || null,
-        order: s.order,
-        completed: s.is_complete || false,
-        dateCompleted: s.date_completed || null,
-        dateCreated: s.date_created || null,
-        status: s.status || 'unplanned',
-        goalId: s.goal_id
-      }))
-      
-      // Add new steps to goal, avoiding duplicates
-      const existingIds = new Set((goal.steps || []).map(s => s.id))
-      const uniqueNewSteps = newSteps.filter(s => !existingIds.has(s.id))
-      
-      if (uniqueNewSteps.length > 0) {
-        goal.steps = [...(goal.steps || []), ...uniqueNewSteps]
-        // Update display limit to show all loaded steps
-        stepsDisplayLimits.value[goal.id] = goal.steps.length
-      }
-      
-      // Update page counter
-      stepsPageForGoal.value[goal.backendId] = nextPage
-      
-      console.log('[Planning] Loaded', uniqueNewSteps.length, 'new steps, total:', goal.steps.length)
-    }
-  } catch (error) {
-    console.error('[Planning] Error loading more steps:', error)
-  } finally {
-    stepsLoadingForGoal.value[goal.backendId] = false
-  }
-}
-
-// Clear all filters
-function clearFilters() {
-  searchQuery.value = ''
-  filterSphere.value = ''
-  filterThisWeek.value = false
-  resetPagination()
-  updateUrlParams()
-}
-
-// Reset pagination when filters change
-function resetPagination() {
-  goalsDisplayLimit.value = 10
-  stepsDisplayLimits.value = {}
-  stepsContainerHeights.value = {} // Reset fixed heights
-}
-
-// URL parameter sync
-function updateUrlParams() {
-  const newQuery = { ...route.query }
-  
-  // Update filter params
-  if (searchQuery.value) {
-    newQuery.search = searchQuery.value
-  } else {
-    delete newQuery.search
-  }
-  
-  if (filterSphere.value) {
-    newQuery.sphere = filterSphere.value
-  } else {
-    delete newQuery.sphere
-  }
-  
-  if (filterThisWeek.value) {
-    newQuery.week = '1'
-  } else {
-    delete newQuery.week
-  }
-  
-  // Check if query actually changed to avoid redundant navigation
-  const currentQuery = JSON.stringify(route.query)
-  const updatedQuery = JSON.stringify(newQuery)
-  if (currentQuery !== updatedQuery) {
-    router.replace({ path: route.path, query: newQuery })
-  }
-}
-
-function loadFiltersFromUrl() {
-  if (route.query.search) searchQuery.value = route.query.search
-  if (route.query.sphere) filterSphere.value = route.query.sphere
-  if (route.query.week === '1') filterThisWeek.value = true
-}
-
-// Note: Filter watching is now handled by onFilterChange and searchQuery watcher in loadGoalsFromBackend section
-
-// Format date for step display - includes day of week for dates outside current week
-function formatStepDate(goalId, stepId) {
-  const date = getScheduledDate(goalId, stepId)
-  if (!date) return ''
-  
-  // Parse date parts directly to avoid timezone issues
-  // Date format is "YYYY-MM-DD"
-  const [year, month, day] = date.split('-').map(Number)
-  const dateObj = new Date(year, month - 1, day) // month is 0-indexed
-  const dayNum = dateObj.getDate()
-  const monthStr = dateObj.toLocaleDateString('ru-RU', { month: 'short' })
-  
-  // Check if date is within current week - if not, show day of week
-  const isInCurrentWeek = weekDays.value.some(d => d.date === date)
-  if (!isInCurrentWeek) {
-    const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
-    const dayOfWeek = dayNames[dateObj.getDay()]
-    return `${dayNum} ${monthStr} ${dayOfWeek}`
-  }
-  
-  return `${dayNum} ${monthStr}`
-}
-
 const expandedGoals = ref({})
+const infiniteScrollTrigger = ref(null)
+let infiniteScrollObserver = null
 
-function toggleGoal(goalId) {
-  expandedGoals.value[goalId] = !expandedGoals.value[goalId]
-}
+const showBottomSheet = ref(false)
+const bottomSheetMode = ref('task')
+const selectedTask = ref(null)
+const selectedGoal = ref(null)
+const selectedStep = ref(null)
 
-const allGoalsExpanded = computed(() => {
-  if (goalsWithSteps.value.length === 0) return false
-  return goalsWithSteps.value.every(g => expandedGoals.value[g.id])
-})
+let touchTimer = null
+const longPressDelay = 500
 
-function toggleAllGoals() {
-  const newState = !allGoalsExpanded.value
-  goalsWithSteps.value.forEach(g => {
-    expandedGoals.value[g.id] = newState
-  })
-}
+const priorities = [
+  { value: 'critical', label: 'Критично' },
+  { value: 'desirable', label: 'Важно' },
+  { value: 'attention', label: 'В поле внимания' },
+  { value: 'optional', label: 'По возможности' },
+  { value: '', label: 'Без приоритета' }
+]
 
-function getScheduledStepsCount(goal) {
-  return scheduledTasks.value.filter(t => t.goalId === goal.id).length
-}
+const timeOptions = [
+  { value: '30min', label: '30 минут' },
+  { value: '1h', label: '1 час' },
+  { value: '2h', label: '2 часа' },
+  { value: '3h', label: '3 часа' },
+  { value: '4h', label: '4 часа' },
+  { value: '', label: 'Без оценки' }
+]
 
-const lifeSpheres = computed(() => store.lifeSpheres)
-
-function getSphereName(sphereId) {
-  const sphere = lifeSpheres.value.find(s => s.id === sphereId)
-  return sphere ? `${sphere.icon} ${sphere.name}` : ''
-}
-
-const sphereIcons = {
-  wealth: Wallet,
-  hobbies: Palette,
-  friendship: Users,
-  health: Heart,
-  career: Briefcase,
-  love: HeartHandshake
-}
-
-const sphereColors = {
-  wealth: '#e63946',
-  hobbies: '#f4a261',
-  friendship: '#e9c46a',
-  health: '#2a9d8f',
-  career: '#264653',
-  love: '#9b5de5'
-}
-
-const sphereNames = {
-  wealth: 'Деньги',
-  hobbies: 'Хобби и отдых',
-  friendship: 'Друзья',
-  health: 'Здоровье',
-  career: 'Карьера',
-  love: 'Любовь'
-}
-
-function getSphereIcon(sphereId) {
-  return sphereIcons[sphereId] || Target
-}
-
-function getSphereColor(sphereId) {
-  return sphereColors[sphereId] || '#6366f1'
-}
-
-function getSphereNameOnly(sphereId) {
-  return sphereNames[sphereId] || 'Сфера'
-}
-
-function getSphereIdFromGoal(goalId) {
-  const goal = goals.value.find(g => g.id === goalId)
-  return goal?.sphereId || ''
-}
-
-function getUncompletedSteps(goal) {
-  return (goal.steps || []).filter(s => !s.completed)
-}
-
-async function toggleStepComplete(goal, step) {
-  const wasCompleted = step.completed
-  const newCompleted = !wasCompleted
-  
-  store.updateGoalStep(goal.id, step.id, { completed: newCompleted })
-  
-  if (newCompleted) {
-    xpStore.awardXP(XP_REWARDS.GOAL_STEP_COMPLETED, 'goal_step_completed', { 
-      goalId: goal.id,
-      stepId: step.id, 
-      stepTitle: step.title,
-      goalTitle: goal.title
-    })
-    
-    const allSteps = goal.steps || []
-    const completedSteps = allSteps.filter(s => s.id === step.id ? true : s.completed).length
-    if (completedSteps === allSteps.length && allSteps.length > 0) {
-      xpStore.awardXP(XP_REWARDS.GOAL_COMPLETED, 'goal_completed', { 
-        goalId: goal.id,
-        goalTitle: goal.title
-      })
-      store.updateGoal(goal.id, { status: 'completed' })
-    }
-  } else {
-    const lastEvent = xpStore.xpHistory.find(
-      e => e.source === 'goal_step_completed' && 
-           e.metadata?.stepId === step.id &&
-           new Date(e.timestamp).toDateString() === new Date().toDateString()
-    )
-    if (lastEvent) {
-      xpStore.revokeXP(lastEvent.id)
-    }
-  }
-  
-  if (goal.backendId && step.backendId) {
-    try {
-      const { updateGoalSteps } = await import('@/services/api.js')
-      await updateGoalSteps({
-        goals_steps_data: [{
-          goal_id: goal.backendId,
-          step_id: step.backendId,
-          is_complete: newCompleted
-        }]
-      })
-      
-      // Bidirectional sync: update calendar if step is shown there
-      syncStepToCalendar(goal.backendId, step.backendId, { completed: newCompleted })
-      
-      // Reload calendar to refresh
-      await loadWeeklySteps()
-    } catch (error) {
-      console.error('[Planning] Error syncing step completion to backend:', error)
-    }
-  }
-}
-
-// Format date as YYYY-MM-DD in local timezone (avoids UTC conversion issues)
 function formatDateLocal(date) {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -1801,7 +440,7 @@ function formatDateLocal(date) {
 const weekDays = computed(() => {
   const days = []
   const today = new Date()
-  today.setHours(12, 0, 0, 0) // Use noon to avoid DST issues
+  today.setHours(12, 0, 0, 0)
   const dayOfWeek = today.getDay()
   const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
   const monday = new Date(today)
@@ -1825,109 +464,96 @@ const weekDays = computed(() => {
   return days
 })
 
-const workDays = computed(() => weekDays.value.slice(0, 5))
-const viewMode = ref('week') // 'week' | 'workdays' | 'day'
-const focusedDay = ref(null)
-
 const isCurrentWeek = computed(() => weekOffset.value === 0)
-
-function prevWeek() {
-  weekOffset.value--
-}
-
-function nextWeek() {
-  weekOffset.value++
-}
-
-function goToCurrentWeek() {
-  weekOffset.value = 0
-}
 
 const weekRangeText = computed(() => {
   if (weekDays.value.length < 7) return ''
   const start = new Date(weekDays.value[0].date)
   const end = new Date(weekDays.value[6].date)
-  const options = { day: 'numeric', month: 'long' }
+  const options = { day: 'numeric', month: 'short' }
   return `${start.toLocaleDateString('ru-RU', options)} — ${end.toLocaleDateString('ru-RU', options)}`
 })
+
+const selectedDayTitle = computed(() => {
+  if (!selectedDay.value) return ''
+  const day = weekDays.value.find(d => d.date === selectedDay.value)
+  if (!day) return ''
+  const date = new Date(selectedDay.value)
+  const monthNames = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 
+                      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
+  return `${day.label}, ${day.dayNum} ${monthNames[date.getMonth()]}`
+})
+
+function prevWeek() {
+  weekOffset.value--
+  loadWeeklySteps()
+}
+
+function nextWeek() {
+  weekOffset.value++
+  loadWeeklySteps()
+}
+
+function goToCurrentWeek() {
+  weekOffset.value = 0
+  loadWeeklySteps()
+}
+
+function selectDay(date) {
+  selectedDay.value = date
+}
 
 function isToday(dateStr) {
   return dateStr === formatDateLocal(new Date())
 }
 
-const currentPlan = computed(() => {
-  const mondayDate = weekDays.value[0]?.date
-  if (!mondayDate) return null
-  return store.weeklyPlans.find(p => p.weekStart === mondayDate)
-})
+function initSelectedDay() {
+  const today = formatDateLocal(new Date())
+  const todayInWeek = weekDays.value.find(d => d.date === today)
+  selectedDay.value = todayInWeek ? todayInWeek.date : weekDays.value[0].date
+}
 
-const scheduledTasks = computed(() => {
-  return currentPlan.value?.scheduledTasks || []
-})
+const weeklyStepsData = ref([])
+const weeklyStepsLoading = ref(false)
 
-const scheduledTasksCount = computed(() => scheduledTasks.value.length)
-
-const scheduledDaysCount = computed(() => {
-  const days = new Set(scheduledTasks.value.map(t => t.scheduledDate))
-  return days.size
-})
-
-const weeklyTotalTasks = computed(() => scheduledTasks.value.length)
-
-const weeklyCompletedTasks = computed(() => {
-  return scheduledTasks.value.filter(t => t.completed).length
-})
-
-const weeklyCompletionRate = computed(() => {
-  if (weeklyTotalTasks.value === 0) return 0
-  return Math.round((weeklyCompletedTasks.value / weeklyTotalTasks.value) * 100)
-})
-
-const currentStreak = computed(() => {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  let streak = 0
+async function loadWeeklySteps() {
+  if (weeklyStepsLoading.value) return
   
-  for (let i = 0; i < 30; i++) {
-    const checkDate = new Date(today)
-    checkDate.setDate(today.getDate() - i)
-    const dateStr = formatDateLocal(checkDate)
-    
-    const dayTasks = scheduledTasks.value.filter(t => t.scheduledDate === dateStr)
-    if (dayTasks.length === 0) {
-      if (i === 0) continue
-      break
-    }
-    
-    const allCompleted = dayTasks.every(t => t.completed)
-    if (allCompleted) {
-      streak++
-    } else if (i > 0) {
-      break
-    }
+  await nextTick()
+  
+  const startDate = weekDays.value[0]?.date
+  const endDate = weekDays.value[6]?.date
+  
+  if (!startDate || !endDate) {
+    console.log('[Planning] Week dates not ready yet')
+    return
   }
   
-  return streak
-})
+  weeklyStepsLoading.value = true
+  
+  try {
+    const { getPlannedSteps } = await import('@/services/api.js')
+    console.log('[Planning] Loading weekly steps for:', startDate, 'to', endDate)
+    
+    const response = await getPlannedSteps({ date_from: startDate, date_to: endDate })
+    if (response.status === 'success' && response.steps_data) {
+      weeklyStepsData.value = response.steps_data
+    }
+  } catch (error) {
+    console.error('[Planning] Error loading weekly steps:', error)
+  } finally {
+    weeklyStepsLoading.value = false
+  }
+}
 
+const timeDurationMap = { 'half': '30min', 'one': '1h', 'two': '2h', 'three': '3h', 'four': '4h' }
+const priorityBackendToFrontend = { 'critical': 'critical', 'important': 'desirable', 'attention': 'attention', 'optional': 'optional' }
+const priorityFrontendToBackend = { 'critical': 'critical', 'desirable': 'important', 'attention': 'attention', 'optional': 'optional' }
 const priorityOrder = { critical: 0, important: 0, desirable: 1, attention: 2, optional: 3, '': 4 }
 
-// Map backend time_duration to frontend timeEstimate
-const timeDurationMap = { 'half': '30min', 'one': '1h', 'two': '2h', 'three': '3h', 'four': '4h' }
-
-// Map backend priority to frontend priority
-// Backend: critical, important, attention, optional
-// Frontend: critical, desirable, attention, optional
-const priorityBackendToFrontend = { 'critical': 'critical', 'important': 'desirable', 'attention': 'attention', 'optional': 'optional' }
-
-// Map frontend priority to backend priority (reverse mapping)
-const priorityFrontendToBackend = { 'critical': 'critical', 'desirable': 'important', 'attention': 'attention', 'optional': 'optional' }
-
 function getTasksForDay(dateStr) {
-  // First check weeklyStepsData from backend API
   const dayData = weeklyStepsData.value.find(d => d.date === dateStr)
   if (dayData && dayData.steps_data && dayData.steps_data.length > 0) {
-    // Transform backend format to UI format
     return dayData.steps_data
       .map(step => ({
         id: `backend-${step.step_id}`,
@@ -1940,8 +566,7 @@ function getTasksForDay(dateStr) {
         timeEstimate: timeDurationMap[step.step_time_duration] || '',
         priority: priorityBackendToFrontend[step.step_priority] || step.step_priority || '',
         completed: step.step_is_complete || false,
-        order: step.step_order,
-        description: step.step_description
+        order: step.step_order
       }))
       .sort((a, b) => {
         const priorityA = priorityOrder[a.priority] ?? 4
@@ -1950,8 +575,10 @@ function getTasksForDay(dateStr) {
       })
   }
   
-  // Fallback to local scheduledTasks if no backend data
-  return scheduledTasks.value
+  const plan = store.weeklyPlans.find(p => p.weekStart === weekDays.value[0]?.date)
+  if (!plan) return []
+  
+  return (plan.scheduledTasks || [])
     .filter(t => t.scheduledDate === dateStr)
     .sort((a, b) => {
       const priorityA = priorityOrder[a.priority] ?? 4
@@ -1971,3324 +598,701 @@ function getTotalTimeForDay(dateStr) {
   if (totalMinutes < 60) return `${totalMinutes}м`
   const hours = Math.floor(totalMinutes / 60)
   const minutes = totalMinutes % 60
-  return minutes > 0 ? `${hours}ч${minutes}м` : `${hours}ч`
+  return minutes > 0 ? `${hours}ч ${minutes}м` : `${hours}ч`
 }
 
-function getDayLoadLevel(dateStr) {
-  const tasks = getTasksForDay(dateStr)
-  const count = tasks.length
-  if (count === 0) return 'empty'
-  if (count <= 2) return 'light'
-  if (count <= 4) return 'normal'
-  return 'heavy'
-}
-
-function formatTimeEstimate(time) {
-  const labels = {
-    '30min': '30м',
-    '1h': '1ч',
-    '2h': '2ч',
-    '3h': '3ч',
-    '4h': '4ч'
+const weeklyTotalTasks = computed(() => {
+  let total = 0
+  for (const day of weekDays.value) {
+    total += getTasksForDay(day.date).length
   }
+  return total
+})
+
+const weeklyCompletedTasks = computed(() => {
+  let completed = 0
+  for (const day of weekDays.value) {
+    completed += getTasksForDay(day.date).filter(t => t.completed).length
+  }
+  return completed
+})
+
+const weeklyTotalTime = computed(() => {
+  const timeValues = { '30min': 30, '1h': 60, '2h': 120, '3h': 180, '4h': 240 }
+  let totalMinutes = 0
+  
+  for (const day of weekDays.value) {
+    for (const task of getTasksForDay(day.date)) {
+      totalMinutes += timeValues[task.timeEstimate] || 0
+    }
+  }
+  
+  if (totalMinutes === 0) return ''
+  if (totalMinutes < 60) return `${totalMinutes}м`
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  return minutes > 0 ? `${hours}ч ${minutes}м` : `${hours}ч`
+})
+
+function formatTimeShort(time) {
+  const labels = { '30min': '30м', '1h': '1ч', '2h': '2ч', '3h': '3ч', '4h': '4ч' }
   return labels[time] || time
 }
 
-function scrollToGoals() {
-  const goalsSection = document.querySelector('.goals-section')
-  if (goalsSection) {
-    goalsSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-}
+const goals = computed(() => store.goalsBank?.rawIdeas || [])
+const lifeSpheres = computed(() => store.lifeSpheres)
 
-function getPriorityLabel(priority) {
-  const labels = {
-    'critical': 'Критично',
-    'important': 'Важно',
-    'desirable': 'Желательно',
-    'optional': 'По возможности'
-  }
-  return labels[priority] || 'Без приоритета'
-}
-
-function setDayView() {
-  viewMode.value = 'day'
-  const today = new Date().toISOString().split('T')[0]
-  const todayInWeek = weekDays.value.find(d => d.date === today)
-  focusedDay.value = todayInWeek ? todayInWeek.date : weekDays.value[0].date
-}
-
-function focusOnDay(date) {
-  viewMode.value = 'day'
-  focusedDay.value = date
-}
-
-const displayDays = computed(() => {
-  if (viewMode.value === 'day' && focusedDay.value) {
-    return weekDays.value.filter(d => d.date === focusedDay.value)
-  }
-  if (viewMode.value === 'workdays') {
-    return workDays.value
-  }
-  return weekDays.value // 'week' mode
+const goalsWithSteps = computed(() => {
+  const activeStatuses = ['in_progress', 'active', 'in-progress']
+  return goals.value.filter(g => 
+    activeStatuses.includes(g.status) && 
+    g.steps && 
+    g.steps.length > 0
+  )
 })
 
-function getCalendarGridClass() {
-  if (viewMode.value === 'day') return 'calendar-grid-1'
-  if (viewMode.value === 'workdays') return 'calendar-grid-5'
-  return 'calendar-grid-7'
-}
-
-function navigateFocusedDay(direction) {
-  const currentIndex = weekDays.value.findIndex(d => d.date === focusedDay.value)
-  const newIndex = currentIndex + direction
-  if (newIndex >= 0 && newIndex < weekDays.value.length) {
-    focusedDay.value = weekDays.value[newIndex].date
-  } else if (newIndex < 0) {
-    prevWeek()
-    setTimeout(() => { focusedDay.value = weekDays.value[6].date }, 100)
-  } else {
-    nextWeek()
-    setTimeout(() => { focusedDay.value = weekDays.value[0].date }, 100)
+const spheresWithGoals = computed(() => {
+  const sphereCounts = {}
+  for (const goal of goalsWithSteps.value) {
+    const sphereId = goal.sphereId || goal.sphere_id
+    if (!sphereCounts[sphereId]) {
+      sphereCounts[sphereId] = 0
+    }
+    sphereCounts[sphereId]++
   }
+  
+  return lifeSpheres.value
+    .filter(s => sphereCounts[s.id])
+    .map(s => ({
+      ...s,
+      goalCount: sphereCounts[s.id]
+    }))
+})
+
+const filteredGoalsWithSteps = computed(() => {
+  let filtered = goalsWithSteps.value
+  
+  if (filterSphere.value) {
+    filtered = filtered.filter(g => (g.sphereId || g.sphere_id) === filterSphere.value)
+  }
+  
+  if (filterStatus.value === 'unscheduled') {
+    filtered = filtered.filter(g => getUnscheduledStepsCount(g) > 0)
+  } else if (filterStatus.value === 'scheduled') {
+    filtered = filtered.filter(g => getScheduledStepsCount(g) > 0)
+  }
+  
+  return filtered
+})
+
+const paginatedGoals = computed(() => {
+  return filteredGoalsWithSteps.value.slice(0, goalsDisplayLimit.value)
+})
+
+const hasMoreGoals = computed(() => {
+  return goalsDisplayLimit.value < filteredGoalsWithSteps.value.length
+})
+
+const goalsWithUnscheduledSteps = computed(() => {
+  return goalsWithSteps.value.filter(g => 
+    getUncompletedSteps(g).some(s => !isStepScheduled(g.id, s.id))
+  )
+})
+
+function getUncompletedSteps(goal) {
+  return (goal.steps || []).filter(s => !s.completed)
 }
 
-function getFocusedDayTitle() {
-  const day = weekDays.value.find(d => d.date === focusedDay.value)
-  if (!day) return ''
-  return getMobileDayTitle(day.date)
+function getFilteredSteps(goal) {
+  let steps = getUncompletedSteps(goal)
+  
+  if (filterStatus.value === 'unscheduled') {
+    steps = steps.filter(s => !isStepScheduled(goal.id, s.id))
+  } else if (filterStatus.value === 'scheduled') {
+    steps = steps.filter(s => isStepScheduled(goal.id, s.id))
+  }
+  
+  return steps
+}
+
+function getUnscheduledStepsFiltered(goal) {
+  let steps = getUncompletedSteps(goal).filter(s => !isStepScheduled(goal.id, s.id))
+  
+  if (addStepSearch.value) {
+    const query = addStepSearch.value.toLowerCase()
+    steps = steps.filter(s => s.title?.toLowerCase().includes(query))
+  }
+  
+  return steps
+}
+
+function getUnscheduledStepsCount(goal) {
+  return getUncompletedSteps(goal).filter(s => !isStepScheduled(goal.id, s.id)).length
+}
+
+function getScheduledStepsCount(goal) {
+  return getUncompletedSteps(goal).filter(s => isStepScheduled(goal.id, s.id)).length
+}
+
+function getSphereName(sphereId) {
+  const sphere = lifeSpheres.value.find(s => s.id === sphereId)
+  return sphere ? `${sphere.icon} ${sphere.name}` : ''
 }
 
 function isStepScheduled(goalId, stepId) {
-  // Проверяем в scheduledTasks
-  const inScheduled = scheduledTasks.value.some(t => t.goalId === goalId && t.stepId === stepId)
-  if (inScheduled) return true
+  for (const day of weeklyStepsData.value) {
+    if (day.steps_data?.some(s => s.goal_id === goalId && s.step_id === stepId)) {
+      return true
+    }
+  }
   
-  // Проверяем в данных шага (из backend)
+  const plan = store.weeklyPlans.find(p => p.weekStart === weekDays.value[0]?.date)
+  if (plan?.scheduledTasks?.some(t => t.goalId === goalId && t.stepId === stepId)) {
+    return true
+  }
+  
   const goal = goals.value.find(g => g.id === goalId)
   const step = goal?.steps?.find(s => s.id === stepId)
   return !!step?.date
 }
 
 function getScheduledDate(goalId, stepId) {
-  // Сначала проверяем в scheduledTasks (локальные изменения)
-  const task = scheduledTasks.value.find(t => t.goalId === goalId && t.stepId === stepId)
-  if (task?.scheduledDate) return task.scheduledDate
+  for (const day of weeklyStepsData.value) {
+    const step = day.steps_data?.find(s => s.goal_id === goalId && s.step_id === stepId)
+    if (step) return step.step_dt
+  }
   
-  // Затем проверяем в данных шага (из backend)
+  const plan = store.weeklyPlans.find(p => p.weekStart === weekDays.value[0]?.date)
+  const task = plan?.scheduledTasks?.find(t => t.goalId === goalId && t.stepId === stepId)
+  if (task) return task.scheduledDate
+  
   const goal = goals.value.find(g => g.id === goalId)
   const step = goal?.steps?.find(s => s.id === stepId)
   return step?.date || ''
 }
 
-function getScheduledTimeEstimate(goalId, stepId) {
-  // Сначала проверяем в scheduledTasks (локальные изменения)
-  const task = scheduledTasks.value.find(t => t.goalId === goalId && t.stepId === stepId)
-  if (task?.timeEstimate) return task.timeEstimate
-  
-  // Затем проверяем в данных шага (из backend)
-  const goal = goals.value.find(g => g.id === goalId)
-  const step = goal?.steps?.find(s => s.id === stepId)
-  return step?.timeEstimate || ''
-}
-
 function getScheduledPriority(goalId, stepId) {
-  // Сначала проверяем в scheduledTasks (локальные изменения)
-  const task = scheduledTasks.value.find(t => t.goalId === goalId && t.stepId === stepId)
-  if (task?.priority) return task.priority
-  
-  // Затем проверяем в данных шага (из backend)
-  const goal = goals.value.find(g => g.id === goalId)
-  const step = goal?.steps?.find(s => s.id === stepId)
-  return step?.priority || ''
-}
-
-async function updateScheduledStep(goalId, stepId, field, value) {
-  const plan = ensureWeekPlan()
-  if (!plan) return
-
-  const existingTask = plan.scheduledTasks.find(t => t.goalId === goalId && t.stepId === stepId)
-  if (existingTask) {
-    store.updateScheduledTask(plan.id, existingTask.id, { [field]: value })
+  for (const day of weeklyStepsData.value) {
+    const step = day.steps_data?.find(s => s.goal_id === goalId && s.step_id === stepId)
+    if (step) return priorityBackendToFrontend[step.step_priority] || step.step_priority || ''
   }
   
-  // Sync to backend for priority and timeEstimate
-  if (field === 'priority' || field === 'timeEstimate') {
-    const goal = goals.value.find(g => g.id === goalId)
-    const step = goal?.steps?.find(s => s.id === stepId)
-    
-    if (goal?.backendId && step?.backendId) {
-      try {
-        const { updateGoalSteps } = await import('@/services/api.js')
-        const updateData = { goal_id: goal.backendId, step_id: step.backendId }
-        
-        if (field === 'priority') {
-          // Convert frontend priority to backend format
-          updateData.priority = priorityFrontendToBackend[value] || value || null
-        } else if (field === 'timeEstimate') {
-          const timeMap = { '30min': 'half', '1h': 'one', '2h': 'two', '3h': 'three', '4h': 'four' }
-          updateData.time_duration = timeMap[value] || null
-        }
-        
-        await updateGoalSteps({ goals_steps_data: [updateData] })
-        
-        // Bidirectional sync: update calendar if step is shown there
-        // For calendar, use backend format for priority (step_priority field)
-        const syncChanges = {}
-        if (field === 'priority') {
-          // Calendar uses backend priority format in step_priority
-          syncChanges.priority = priorityFrontendToBackend[value] || value
-        } else if (field === 'timeEstimate') {
-          syncChanges.timeEstimate = value
-        }
-        syncStepToCalendar(goal.backendId, step.backendId, syncChanges)
-        
-        // Reload calendar to refresh
-        await loadWeeklySteps()
-      } catch (error) {
-        console.error('[Planning] Error syncing step field to backend:', error)
-      }
-    }
+  const plan = store.weeklyPlans.find(p => p.weekStart === weekDays.value[0]?.date)
+  const task = plan?.scheduledTasks?.find(t => t.goalId === goalId && t.stepId === stepId)
+  return task?.priority || ''
+}
+
+function formatStepDate(goalId, stepId) {
+  const dateStr = getScheduledDate(goalId, stepId)
+  if (!dateStr) return ''
+  
+  const day = weekDays.value.find(d => d.date === dateStr)
+  if (day) return day.shortName
+  
+  const date = new Date(dateStr)
+  return `${date.getDate()}.${date.getMonth() + 1}`
+}
+
+function getPriorityShort(priority) {
+  const labels = { 'critical': '!!!', 'desirable': '!!', 'attention': '!', 'optional': '○' }
+  return labels[priority] || ''
+}
+
+function toggleGoal(goalId) {
+  expandedGoals.value[goalId] = !expandedGoals.value[goalId]
+}
+
+function clearFilters() {
+  filterSphere.value = ''
+  filterStatus.value = ''
+}
+
+function goToGoalsBank() {
+  router.push('/app/goals-bank')
+}
+
+function handleTouchStart(task, event) {
+  touchTimer = setTimeout(() => {
+    openTaskActions(task)
+  }, longPressDelay)
+}
+
+function handleTouchEnd() {
+  if (touchTimer) {
+    clearTimeout(touchTimer)
+    touchTimer = null
   }
 }
 
-function ensureWeekPlan() {
-  const mondayDate = weekDays.value[0]?.date
-  console.log('[Planning] ensureWeekPlan - mondayDate:', mondayDate)
-  if (!mondayDate) return null
-  
-  let plan = store.weeklyPlans.find(p => p.weekStart === mondayDate)
-  console.log('[Planning] Found existing plan:', plan?.id || 'none')
-  if (!plan) {
-    plan = store.createWeeklyPlan(mondayDate)
-    console.log('[Planning] Created new plan:', plan.id)
-  }
-  return plan
-}
-
-async function scheduleStep(goalId, step, dateStr) {
-  console.log('[Planning] scheduleStep called:', { goalId, stepId: step?.id, dateStr })
-  const plan = ensureWeekPlan()
-  console.log('[Planning] Plan for scheduling:', plan?.id || 'null')
-  if (!plan) return
-
-  const existingTask = plan.scheduledTasks.find(t => t.goalId === goalId && t.stepId === step.id)
-  if (existingTask) {
-    if (dateStr) {
-      store.updateScheduledTask(plan.id, existingTask.id, { scheduledDate: dateStr })
-    } else {
-      store.removeScheduledTask(plan.id, existingTask.id)
-    }
-  } else if (dateStr) {
-    const goal = goals.value.find(g => g.id === goalId)
-    store.addScheduledTask(plan.id, {
-      goalId: goalId,
-      stepId: step.id,
-      stepTitle: step.title,
-      goalTitle: goal?.title || '',
-      sphereId: goal?.sphereId || '',
-      scheduledDate: dateStr,
-      timeEstimate: '',
-      priority: ''
-    })
-  }
-  
-  // Sync scheduled date to backend
-  const goal = goals.value.find(g => g.id === goalId)
-  if (goal?.backendId && step?.backendId) {
-    try {
-      const { updateGoalSteps } = await import('@/services/api.js')
-      await updateGoalSteps({
-        goals_steps_data: [{
-          goal_id: goal.backendId,
-          step_id: step.backendId,
-          dt: dateStr || '1700-01-01'  // Backend workaround: use old date instead of null
-        }]
-      })
-      
-      // Bidirectional sync: update or remove from calendar
-      if (dateStr) {
-        syncStepToCalendar(goal.backendId, step.backendId, { date: dateStr })
-      }
-      
-      // Reload calendar to refresh (handles both add and remove)
-      await loadWeeklySteps()
-    } catch (error) {
-      console.error('[Planning] Error syncing step date to backend:', error)
-    }
+function handleTouchMove() {
+  if (touchTimer) {
+    clearTimeout(touchTimer)
+    touchTimer = null
   }
 }
 
-// Schedule step from "Goals and Steps" block with backend sync
-async function scheduleStepWithBackend(goalId, stepId, stepTitle, goal, dateStr) {
-  console.log('[Planning] scheduleStepWithBackend:', { goalId, stepId, stepTitle, dateStr })
+function openTaskActions(task) {
+  selectedTask.value = task
+  bottomSheetMode.value = 'task'
+  showBottomSheet.value = true
+}
+
+function openStepActions(goal, step) {
+  selectedGoal.value = goal
+  selectedStep.value = step
+  bottomSheetMode.value = 'step'
+  showBottomSheet.value = true
+}
+
+function openRescheduleSheet() {
+  bottomSheetMode.value = 'reschedule'
+}
+
+function openPrioritySheet() {
+  bottomSheetMode.value = 'priority'
+}
+
+function openTimeSheet() {
+  bottomSheetMode.value = 'time'
+}
+
+function openAddStepModal() {
+  addStepSearch.value = ''
+  bottomSheetMode.value = 'add'
+  showBottomSheet.value = true
+}
+
+function closeBottomSheet() {
+  showBottomSheet.value = false
+  selectedTask.value = null
+  selectedGoal.value = null
+  selectedStep.value = null
+}
+
+async function toggleTaskComplete(task) {
+  if (!task) return
   
-  // Get backend IDs - could be from goal object or directly if dragged from backend data
-  let backendGoalId = goal?.backendId || goalId
-  let backendStepId = null
+  const newCompleted = !task.completed
   
-  // Find step's backendId from goal's steps array
-  if (goal?.steps) {
-    const step = goal.steps.find(s => s.id === stepId || s.backendId === stepId)
-    backendStepId = step?.backendId || stepId
-  } else {
-    // If no goal object, assume stepId is already backend ID
-    backendStepId = stepId
-  }
+  task.completed = newCompleted
   
-  console.log('[Planning] Backend IDs:', { backendGoalId, backendStepId })
-  
-  if (!backendGoalId || !backendStepId) {
-    console.error('[Planning] Missing backend IDs for scheduling')
-    return
+  if (newCompleted) {
+    xpStore.addXP(10, 'step', `Выполнен шаг: ${task.stepTitle}`)
   }
   
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
     await updateGoalSteps({
       goals_steps_data: [{
-        goal_id: backendGoalId,
-        step_id: backendStepId,
-        dt: dateStr
+        goal_id: task.goalId,
+        step_id: task.stepId,
+        is_complete: newCompleted
       }]
     })
-    console.log('[Planning] Successfully scheduled step on backend')
-    
-    // 1. Local sync: update date in goals block
-    syncStepToGoalsBlock(backendGoalId, backendStepId, { date: dateStr })
-    
-    // 2. Reload goals to update headers
-    await refreshGoalsAfterCalendarChange()
-    
-    // 3. Reload weekly steps data to reflect changes
     await loadWeeklySteps()
   } catch (error) {
-    console.error('[Planning] Error scheduling step on backend:', error)
+    console.error('[Planning] Error toggling task complete:', error)
+    task.completed = !newCompleted
   }
 }
 
-function unscheduleStep(goalId, stepId) {
-  const plan = currentPlan.value
-  if (!plan) return
-  const task = plan.scheduledTasks.find(t => t.goalId === goalId && t.stepId === stepId)
-  if (task) {
-    store.removeScheduledTask(plan.id, task.id)
-  }
-}
-
-// Synchronous refresh of goals after calendar changes
-async function refreshGoalsAfterCalendarChange() {
-  console.log('[Planning] Refreshing goals after calendar change...')
-  try {
-    // Use store method to reload goals - this handles all syncing properly
-    const params = {
-      with_steps_data: true,
-      page: 1,
-      per_page: 100
-    }
-    
-    if (filterSphere.value) {
-      params.category_filter = filterSphere.value
-    }
-    
-    await store.loadGoalsFromBackend(params, false)
-    console.log('[Planning] Goals refreshed successfully')
-  } catch (error) {
-    console.error('[Planning] Error refreshing goals:', error)
-  }
-}
-
-// Local sync: update step in weeklyStepsData (calendar) when changed
-// Calendar uses backend format: step_priority (important/desirable/etc), step_time_duration (half/one/etc)
-function syncStepToCalendar(goalId, stepId, changes) {
-  const timeToBackend = { '30min': 'half', '1h': 'one', '2h': 'two', '3h': 'three', '4h': 'four' }
-  
-  for (const dayData of weeklyStepsData.value) {
-    if (!dayData.steps_data) continue
-    const step = dayData.steps_data.find(s => s.goal_id === goalId && s.step_id === stepId)
-    if (step) {
-      if (changes.completed !== undefined) {
-        step.step_is_complete = changes.completed
-      }
-      if (changes.date !== undefined) {
-        step.step_dt = changes.date
-      }
-      if (changes.priority !== undefined) {
-        // Priority is already in backend format when passed from updateScheduledStep
-        step.step_priority = changes.priority
-      }
-      if (changes.timeEstimate !== undefined) {
-        // Convert frontend timeEstimate to backend format
-        step.step_time_duration = timeToBackend[changes.timeEstimate] || changes.timeEstimate
-      }
-      console.log('[Planning] Synced step to calendar:', step.step_title, changes)
-      return true
-    }
-  }
-  return false
-}
-
-// Local sync: update step in store.goals (goals block) when changed
-// Goals block uses frontend format: priority (critical/desirable/etc), timeEstimate (30min/1h/etc)
-function syncStepToGoalsBlock(goalId, stepId, changes) {
-  const goal = store.goals.find(g => g.backendId === goalId)
-  if (!goal || !goal.steps) return false
-  
-  const step = goal.steps.find(s => s.backendId === stepId)
-  if (!step) return false
-  
-  if (changes.completed !== undefined) {
-    step.completed = changes.completed
-  }
-  if (changes.date !== undefined) {
-    step.date = changes.date
-  }
-  if (changes.priority !== undefined) {
-    // Convert backend priority to frontend format if needed
-    step.priority = priorityBackendToFrontend[changes.priority] || changes.priority
-  }
-  if (changes.timeEstimate !== undefined) {
-    // Convert backend time_duration to frontend format if needed
-    step.timeEstimate = timeDurationMap[changes.timeEstimate] || changes.timeEstimate
-  }
-  
-  console.log('[Planning] Synced step to goals block:', step.title, changes)
-  return true
-}
-
-async function toggleTaskComplete(taskId) {
-  // For backend tasks, taskId has format "backend-{stepId}"
-  const isBackendTask = taskId.toString().startsWith('backend-')
-  
-  if (isBackendTask) {
-    // Find the task in weeklyStepsData
-    let taskData = null
-    for (const dayData of weeklyStepsData.value) {
-      const found = dayData.steps_data?.find(s => `backend-${s.step_id}` === taskId)
-      if (found) {
-        taskData = found
-        break
-      }
-    }
-    
-    if (taskData) {
-      const newCompleted = !taskData.step_is_complete
-      console.log('[Planning] Toggling backend task completion:', taskData.step_title, '→', newCompleted)
-      
-      // XP logic
-      if (newCompleted) {
-        xpStore.awardXP(XP_REWARDS.FOCUS_TASK_COMPLETED, 'focus_task_completed', { 
-          taskId: taskId, 
-          taskTitle: taskData.step_title 
-        })
-      } else {
-        const lastEvent = xpStore.xpHistory.find(
-          e => e.source === 'focus_task_completed' && 
-               e.metadata?.taskId === taskId &&
-               new Date(e.timestamp).toDateString() === new Date().toDateString()
-        )
-        if (lastEvent) {
-          xpStore.revokeXP(lastEvent.id)
-        }
-      }
-      
-      try {
-        const { updateGoalSteps } = await import('@/services/api.js')
-        await updateGoalSteps({
-          goals_steps_data: [{
-            goal_id: taskData.goal_id,
-            step_id: taskData.step_id,
-            is_complete: newCompleted
-          }]
-        })
-        console.log('[Planning] Successfully toggled completion on backend')
-        
-        // 1. Local sync: update calendar data
-        syncStepToCalendar(taskData.goal_id, taskData.step_id, { completed: newCompleted })
-        
-        // 2. Local sync: update goals block
-        syncStepToGoalsBlock(taskData.goal_id, taskData.step_id, { completed: newCompleted })
-        
-        // 3. Reload goals from backend to update headers (counts, percents)
-        await refreshGoalsAfterCalendarChange()
-        
-        // 4. Also reload weekly steps to stay in sync
-        await loadWeeklySteps()
-      } catch (error) {
-        console.error('[Planning] Error toggling task completion:', error)
-      }
-    }
-    return
-  }
-  
-  // Handle local tasks (legacy)
-  const plan = currentPlan.value
-  if (!plan) return
-  
-  const task = plan.scheduledTasks.find(t => t.id === taskId)
+async function rescheduleTask(task, newDate) {
   if (!task) return
   
-  const wasCompleted = task.completed
-  
-  // Optimistic UI update
-  store.toggleScheduledTaskComplete(plan.id, taskId)
-  
-  // XP logic
-  if (!wasCompleted) {
-    xpStore.awardXP(XP_REWARDS.FOCUS_TASK_COMPLETED, 'focus_task_completed', { 
-      taskId: task.id, 
-      taskTitle: task.stepTitle || task.goalTitle 
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: task.goalId,
+        step_id: task.stepId,
+        dt: newDate
+      }]
     })
-  } else {
-    const lastEvent = xpStore.xpHistory.find(
-      e => e.source === 'focus_task_completed' && 
-           e.metadata?.taskId === task.id &&
-           new Date(e.timestamp).toDateString() === new Date().toDateString()
-    )
-    if (lastEvent) {
-      xpStore.revokeXP(lastEvent.id)
-    }
-  }
-  
-  // Sync completion status to backend
-  const goal = goals.value.find(g => g.id === task.goalId)
-  const step = goal?.steps?.find(s => s.id === task.stepId)
-  
-  if (goal?.backendId && step?.backendId) {
-    try {
-      const { updateGoalSteps } = await import('@/services/api.js')
-      await updateGoalSteps({
-        goals_steps_data: [{
-          goal_id: goal.backendId,
-          step_id: step.backendId,
-          is_complete: !wasCompleted
-        }]
-      })
-    } catch (error) {
-      console.error('[Planning] Error syncing task completion to backend:', error)
-    }
+    await loadWeeklySteps()
+    closeBottomSheet()
+  } catch (error) {
+    console.error('[Planning] Error rescheduling task:', error)
   }
 }
 
-async function removeTask(taskId) {
-  // For backend tasks, taskId has format "backend-{stepId}"
-  const isBackendTask = taskId.toString().startsWith('backend-')
-  
-  if (isBackendTask) {
-    // Find the task in weeklyStepsData
-    let taskToRemove = null
-    for (const dayData of weeklyStepsData.value) {
-      const found = dayData.steps_data?.find(s => `backend-${s.step_id}` === taskId)
-      if (found) {
-        taskToRemove = found
-        break
-      }
-    }
-    
-    if (taskToRemove) {
-      console.log('[Planning] Removing backend task from calendar:', taskToRemove.step_title)
-      
-      try {
-        const { updateGoalSteps } = await import('@/services/api.js')
-        await updateGoalSteps({
-          goals_steps_data: [{
-            goal_id: taskToRemove.goal_id,
-            step_id: taskToRemove.step_id,
-            dt: '1700-01-01'  // Backend workaround: use old date instead of null to remove from calendar
-          }]
-        })
-        console.log('[Planning] Successfully removed step from calendar on backend')
-        
-        // 1. Local sync: update goals block (clear date)
-        syncStepToGoalsBlock(taskToRemove.goal_id, taskToRemove.step_id, { date: null })
-        
-        // 2. Reload goals from backend to update headers
-        await refreshGoalsAfterCalendarChange()
-        
-        // 3. Reload weekly steps to reflect removal
-        await loadWeeklySteps()
-      } catch (error) {
-        console.error('[Planning] Error removing task from calendar:', error)
-      }
-    }
-    return
-  }
-  
-  // Handle local tasks (legacy)
-  const plan = currentPlan.value
-  if (plan) {
-    const taskToDelete = plan.scheduledTasks.find(t => t.id === taskId)
-    if (taskToDelete) {
-      deletedTask.value = { ...taskToDelete, planId: plan.id }
-      store.removeScheduledTask(plan.id, taskId)
-      showUndoToast.value = true
-      
-      if (undoTimeout) clearTimeout(undoTimeout)
-      undoTimeout = setTimeout(() => {
-        showUndoToast.value = false
-        deletedTask.value = null
-      }, 4000)
-    }
-  }
-}
-
-function undoDeleteTask() {
-  if (deletedTask.value) {
-    const { planId, ...task } = deletedTask.value
-    store.addScheduledTask(planId, task)
-    showUndoToast.value = false
-    deletedTask.value = null
-    if (undoTimeout) clearTimeout(undoTimeout)
-  }
-}
-
-const priorityOptions = [
-  { value: 'critical', label: 'Критично', color: '#ef4444' },
-  { value: 'desirable', label: 'Важно', color: '#f97316' },
-  { value: 'attention', label: 'Внимание', color: '#3b82f6' },
-  { value: 'optional', label: 'Опционально', color: '#9ca3af' }
-]
-
-function getPriorityColor(priority) {
-  const option = priorityOptions.find(p => p.value === priority)
-  return option ? option.color : '#9ca3af'
-}
-
-function pluralize(n, one, few, many) {
-  if (n % 10 === 1 && n % 100 !== 11) return one
-  if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) return few
-  return many
-}
-
-function startLesson() {
-  store.startPlanningLesson()
-}
-
-function goToStep(step) {
-  if (step <= currentStep.value) {
-    store.setPlanningStep(step)
-  }
-}
-
-function nextStep() {
-  if (currentStep.value < 3) {
-    store.setPlanningStep(currentStep.value + 1)
-  }
-}
-
-function prevStep() {
-  if (currentStep.value > 1) {
-    store.setPlanningStep(currentStep.value - 1)
-  }
-}
-
-function completeLesson() {
-  store.completePlanningLesson()
-}
-
-function restartLesson() {
-  if (confirm('Вы уверены? Урок начнётся заново.')) {
-    store.resetPlanningModule()
-  }
-}
-
-function goToDecomposition() {
-  router.push('/app/goals-bank')
-}
-
-function setupDemoData() {
-  if (!DEMO_PLANNING_MODE) return
-  
-  const today = new Date()
-  const dayOfWeek = today.getDay()
-  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
-  const monday = new Date(today)
-  monday.setDate(today.getDate() + mondayOffset)
-  
-  const demoGoals = [
-    {
-      id: 'demo-goal-1',
-      title: 'Улучшить физическую форму',
-      sphere: 'health',
-      status: 'active',
-      steps: [
-        { id: 'step-1-1', title: 'Пробежка 3 км', completed: false },
-        { id: 'step-1-2', title: 'Зарядка 15 минут', completed: false },
-        { id: 'step-1-3', title: 'Тренировка в зале', completed: false }
-      ]
-    },
-    {
-      id: 'demo-goal-2', 
-      title: 'Изучить новый навык',
-      sphere: 'development',
-      status: 'active',
-      steps: [
-        { id: 'step-2-1', title: 'Прочитать главу книги', completed: false },
-        { id: 'step-2-2', title: 'Пройти урок курса', completed: false }
-      ]
-    },
-    {
-      id: 'demo-goal-3',
-      title: 'Улучшить отношения',
-      sphere: 'relationships',
-      status: 'active',
-      steps: [
-        { id: 'step-3-1', title: 'Позвонить родителям', completed: false },
-        { id: 'step-3-2', title: 'Встретиться с друзьями', completed: false }
-      ]
-    }
-  ]
-  
-  if (store.goals.length === 0) {
-    demoGoals.forEach(g => store.addGoal(g))
-  }
-  
-  const plan = currentPlan.value
-  if (plan && (!plan.scheduledTasks || plan.scheduledTasks.length === 0)) {
-    const getDateStr = (offset) => {
-      const d = new Date(monday)
-      d.setDate(monday.getDate() + offset)
-      return formatDateLocal(d)
-    }
-    
-    const demoTasks = [
-      { goalId: 'demo-goal-1', stepId: 'step-1-1', stepTitle: 'Пробежка 3 км', goalTitle: 'Улучшить физическую форму', scheduledDate: getDateStr(0), timeEstimate: '30', priority: 'critical', completed: false },
-      { goalId: 'demo-goal-1', stepId: 'step-1-2', stepTitle: 'Зарядка 15 минут', goalTitle: 'Улучшить физическую форму', scheduledDate: getDateStr(1), timeEstimate: '15', priority: 'desirable', completed: false },
-      { goalId: 'demo-goal-2', stepId: 'step-2-1', stepTitle: 'Прочитать главу книги', goalTitle: 'Изучить новый навык', scheduledDate: getDateStr(1), timeEstimate: '45', priority: 'attention', completed: false },
-      { goalId: 'demo-goal-1', stepId: 'step-1-3', stepTitle: 'Тренировка в зале', goalTitle: 'Улучшить физическую форму', scheduledDate: getDateStr(2), timeEstimate: '60', priority: 'critical', completed: true },
-      { goalId: 'demo-goal-2', stepId: 'step-2-2', stepTitle: 'Пройти урок курса', goalTitle: 'Изучить новый навык', scheduledDate: getDateStr(3), timeEstimate: '30', priority: 'desirable', completed: false },
-      { goalId: 'demo-goal-3', stepId: 'step-3-1', stepTitle: 'Позвонить родителям', goalTitle: 'Улучшить отношения', scheduledDate: getDateStr(4), timeEstimate: '20', priority: 'critical', completed: false },
-      { goalId: 'demo-goal-3', stepId: 'step-3-2', stepTitle: 'Встретиться с друзьями', goalTitle: 'Улучшить отношения', scheduledDate: getDateStr(5), timeEstimate: '120', priority: 'optional', completed: false }
-    ]
-    
-    demoTasks.forEach(task => {
-      plan.scheduledTasks.push({
-        id: `demo-task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        ...task
-      })
-    })
-    store.saveToLocalStorage()
-  }
-}
-
-// Loading state
-const isLoadingGoals = ref(false)
-
-// Load weekly steps data from backend API for the week planner
-async function loadWeeklySteps() {
-  if (weeklyStepsLoading.value) return
-  
-  // Get week date range based on weekOffset
-  const today = new Date()
-  today.setHours(12, 0, 0, 0)
-  const dayOfWeek = today.getDay()
-  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
-  const monday = new Date(today)
-  monday.setDate(today.getDate() + mondayOffset + (weekOffset.value * 7))
-  monday.setHours(12, 0, 0, 0)
-  
-  const sunday = new Date(monday)
-  sunday.setDate(monday.getDate() + 6)
-  
-  const dateFrom = formatDateLocal(monday)
-  const dateTo = formatDateLocal(sunday)
-  
-  console.log('[Planning] Loading weekly steps for:', dateFrom, 'to', dateTo)
-  
-  weeklyStepsLoading.value = true
+async function updateTaskPriority(task, priority) {
+  if (!task) return
   
   try {
-    const { getPlannedSteps } = await import('@/services/api.js')
-    const response = await getPlannedSteps({
-      date_from: dateFrom,
-      date_to: dateTo
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: task.goalId,
+        step_id: task.stepId,
+        priority: priorityFrontendToBackend[priority] || priority || null
+      }]
     })
-    
-    if (response.status === 'ok' && response.data?.result_week_data) {
-      weeklyStepsData.value = response.data.result_week_data
-      console.log('[Planning] Loaded weekly steps data:', weeklyStepsData.value.length, 'days')
-    } else {
-      console.warn('[Planning] Unexpected response format:', response)
-      weeklyStepsData.value = []
-    }
+    await loadWeeklySteps()
+    closeBottomSheet()
   } catch (error) {
-    console.error('[Planning] Error loading weekly steps:', error)
-    weeklyStepsData.value = []
-  } finally {
-    weeklyStepsLoading.value = false
+    console.error('[Planning] Error updating task priority:', error)
   }
 }
 
-// Load goals with steps from backend with filters
-async function loadGoalsFromBackend() {
-  if (isLoadingGoals.value) return
+async function updateTaskTime(task, time) {
+  if (!task) return
   
-  isLoadingGoals.value = true
+  const timeMap = { '30min': 'half', '1h': 'one', '2h': 'two', '3h': 'three', '4h': 'four' }
   
   try {
-    // Build params with filters
-    const params = {
-      with_steps_data: true,
-      order_by: 'date_created',
-      order_direction: 'desc'
-    }
-    
-    // Add sphere/category filter
-    if (filterSphere.value) {
-      const backendCategory = store.categoryFrontendToBackend[filterSphere.value]
-      if (backendCategory) {
-        params.category_filter = backendCategory
-      }
-    }
-    
-    // Add text search filter (min 3 characters)
-    if (searchQuery.value && searchQuery.value.length >= 3) {
-      params.query_filter = searchQuery.value
-    }
-    
-    // Add result_week_data flag when "This week" filter is active
-    if (filterThisWeek.value) {
-      params.result_week_data = true
-    }
-    
-    console.log('[Planning] Loading goals with params:', params)
-    
-    const result = await store.loadGoalsFromBackend(params)
-    
-    if (result.success) {
-      console.log('[Planning] Loaded goals from backend, count:', result.count || store.goals.length)
-    } else if (result.error) {
-      console.warn('[Planning] Backend returned error:', result.error)
-    }
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: task.goalId,
+        step_id: task.stepId,
+        time_duration: timeMap[time] || null
+      }]
+    })
+    await loadWeeklySteps()
+    closeBottomSheet()
   } catch (error) {
-    console.error('[Planning] Error loading goals from backend:', error)
-    // Continue with local data - don't block UI
-  } finally {
-    isLoadingGoals.value = false
+    console.error('[Planning] Error updating task time:', error)
   }
 }
 
-// Debounce timer for filter changes
-let filterDebounceTimer = null
-
-// Reload data when filters change
-function onFilterChange() {
-  if (filterDebounceTimer) {
-    clearTimeout(filterDebounceTimer)
-  }
+async function removeTaskFromSchedule(task) {
+  if (!task) return
   
-  filterDebounceTimer = setTimeout(() => {
-    resetPagination()
-    updateUrlParams()
-    loadGoalsFromBackend()
-  }, 300)
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: task.goalId,
+        step_id: task.stepId,
+        dt: '1700-01-01'
+      }]
+    })
+    await loadWeeklySteps()
+  } catch (error) {
+    console.error('[Planning] Error removing task from schedule:', error)
+  }
 }
 
-// Watch filters and reload data
-watch([filterSphere, filterThisWeek], () => {
-  onFilterChange()
-})
+async function scheduleStepToDay(goal, step, date) {
+  if (!goal || !step || !date) return
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: goal.backendId || goal.id,
+        step_id: step.backendId || step.id,
+        dt: date
+      }]
+    })
+    await loadWeeklySteps()
+    closeBottomSheet()
+  } catch (error) {
+    console.error('[Planning] Error scheduling step:', error)
+  }
+}
 
-// Watch search query with longer debounce
-watch(searchQuery, (newVal) => {
-  if (filterDebounceTimer) {
-    clearTimeout(filterDebounceTimer)
+function quickScheduleStep(goal, step) {
+  selectedGoal.value = goal
+  selectedStep.value = step
+  bottomSheetMode.value = 'step'
+  showBottomSheet.value = true
+}
+
+function loadMoreGoals() {
+  if (hasMoreGoals.value) {
+    goalsDisplayLimit.value += 10
+  }
+}
+
+function setupInfiniteScroll() {
+  if (infiniteScrollObserver) {
+    infiniteScrollObserver.disconnect()
   }
   
-  // Only search if 3+ characters or empty (reset)
-  if (newVal.length >= 3 || newVal.length === 0) {
-    filterDebounceTimer = setTimeout(() => {
-      resetPagination()
-      updateUrlParams()
-      loadGoalsFromBackend()
-    }, 500)
-  }
-})
+  infiniteScrollObserver = new IntersectionObserver((entries) => {
+    const entry = entries[0]
+    if (entry.isIntersecting && hasMoreGoals.value) {
+      loadMoreGoals()
+    }
+  }, {
+    rootMargin: '100px'
+  })
+  
+  watch(infiniteScrollTrigger, (el) => {
+    if (el && infiniteScrollObserver) {
+      infiniteScrollObserver.observe(el)
+    }
+  }, { immediate: true })
+}
 
-// Watch weekOffset to reload weekly steps when navigating weeks
 watch(weekOffset, () => {
-  loadWeeklySteps()
+  initSelectedDay()
 })
 
 onMounted(async () => {
-  console.log('[Planning] onMounted - goals count:', store.goals.length)
-  console.log('[Planning] onMounted - goalsWithSteps:', goalsWithSteps.value.length)
-  store.goals.forEach(g => {
-    console.log('[Planning] Goal:', g.title, 'status:', g.status, 'steps:', g.steps?.length || 0)
-  })
-  
-  // Initialize mobile detection
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
-  
-  // Load goals from backend first
-  await loadGoalsFromBackend()
-  
-  // Load weekly steps data for the week planner
-  await loadWeeklySteps()
-  
-  // Initialize selected day for mobile view
   initSelectedDay()
+  await loadWeeklySteps()
+  setupInfiniteScroll()
   
-  ensureWeekPlan()
-  setupDemoData()
-  loadFiltersFromUrl()
+  if (filteredGoalsWithSteps.value.length > 0) {
+    expandedGoals.value[filteredGoalsWithSteps.value[0].id] = true
+  }
+})
+
+onUnmounted(() => {
+  if (infiniteScrollObserver) {
+    infiniteScrollObserver.disconnect()
+  }
+  if (touchTimer) {
+    clearTimeout(touchTimer)
+  }
 })
 </script>
 
 <style scoped>
 .planning-container {
-  max-width: 100%;
+  max-width: 800px;
   margin: 0 auto;
-  padding: 0 1rem;
-}
-
-.empty-state-section {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 70vh;
-  padding: 2rem;
-}
-
-.empty-state-card {
-  text-align: center;
-  max-width: 600px;
-  padding: 3rem;
-}
-
-.empty-state-card h1 {
-  margin-bottom: 0.5rem;
-}
-
-/* Icon wrapper system */
-.icon-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.icon-wrapper.xs {
-  width: 24px;
-  height: 24px;
-}
-
-.icon-wrapper.sm {
-  width: 32px;
-  height: 32px;
-}
-
-.icon-wrapper.md {
-  width: 48px;
-  height: 48px;
-}
-
-.icon-wrapper.lg {
-  width: 72px;
-  height: 72px;
-  margin-bottom: 1rem;
-}
-
-.icon-wrapper.primary {
-  background: rgba(124, 58, 237, 0.15);
-  color: var(--primary-color);
-}
-
-.icon-wrapper.accent {
-  background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
-}
-
-.icon-wrapper.target {
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
-}
-
-.icon-wrapper.zap {
-  background: rgba(59, 130, 246, 0.15);
-  color: #3b82f6;
-}
-
-.icon-wrapper.warning {
-  background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
-}
-
-.icon-wrapper.refresh {
-  background: rgba(34, 197, 94, 0.15);
-  color: #22c55e;
-}
-
-.icon-wrapper.phone {
-  background: rgba(6, 182, 212, 0.15);
-  color: #06b6d4;
-}
-
-.subtitle {
-  color: var(--text-secondary);
-  margin-bottom: 2rem;
-}
-
-.lesson-info {
-  text-align: left;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.lesson-info h3 {
-  margin-bottom: 1rem;
-  font-size: 1rem;
-}
-
-.lesson-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.lesson-step {
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
-}
-
-.step-num {
-  width: 28px;
-  height: 28px;
-  background: var(--primary-color);
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.lesson-step strong {
-  display: block;
-  margin-bottom: 0.25rem;
-}
-
-.lesson-step p {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
-.progress-bar {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 3rem;
-  padding: 0 2rem;
-}
-
-.progress-step {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-  cursor: pointer;
-  opacity: 0.5;
-  transition: all 0.3s ease;
-}
-
-.progress-step.active,
-.progress-step.completed {
-  opacity: 1;
-}
-
-.progress-step::before {
-  content: '';
-  position: absolute;
-  top: 20px;
-  right: 50%;
-  width: 100%;
-  height: 2px;
-  background: var(--border-color);
-  z-index: 0;
-}
-
-.progress-step:first-child::before {
-  display: none;
-}
-
-.progress-step.completed::before,
-.progress-step.active::before {
-  background: var(--primary-color);
-}
-
-.progress-step .step-number {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  position: relative;
-  z-index: 1;
-  transition: all 0.3s ease;
-}
-
-.progress-step.active .step-number {
-  background: var(--primary-color);
-  color: white;
-  transform: scale(1.1);
-}
-
-.progress-step.completed .step-number {
-  background: var(--success-color);
-  color: white;
-}
-
-.step-label {
-  font-size: 0.875rem;
-  text-align: center;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.progress-step.active .step-label {
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
-.step-content {
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.step-layout {
-  display: grid;
-  grid-template-columns: 1fr 350px;
-  gap: 2rem;
-}
-
-.step-main {
-  min-width: 0;
-}
-
-.step-sidebar {
-  min-width: 0;
-}
-
-.section-header {
-  margin-bottom: 1.5rem;
-  text-align: center;
-}
-
-.section-header h1 {
-  font-size: 1.75rem;
-  margin-bottom: 0.5rem;
-}
-
-.theory-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.theory-block {
-  padding: 1.5rem;
-}
-
-.theory-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-.theory-header h3 {
-  margin: 0;
-}
-
-.theory-block p {
-  margin-bottom: 1rem;
-  line-height: 1.6;
-}
-
-.key-point {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  font-size: 0.9rem;
-}
-
-.key-point.warning {
-  background: rgba(245, 158, 11, 0.1);
-}
-
-.balance-tips {
-  margin: 0;
-  padding-left: 1.25rem;
-}
-
-.balance-tips li {
-  margin-bottom: 0.5rem;
-}
-
-.telegram-preview {
-  background: #e3f2fd;
-  border-radius: var(--radius-md);
   padding: 1rem;
-  margin-top: 1rem;
+  padding-bottom: 100px;
 }
 
-.tg-message {
-  font-size: 0.9rem;
-}
-
-.tg-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.tg-icon {
-  color: var(--primary-color);
-}
-
-.tg-tasks {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.tg-tasks li {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem 0;
-}
-
-.task-check {
-  color: var(--text-secondary);
-}
-
-.header-with-icon {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.header-with-icon h1 {
-  margin: 0;
-}
-
-.calendar-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.calendar-icon {
-  color: var(--primary-color);
-}
-
-.btn.btn-primary.btn-lg {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.step-actions {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.week-info {
-  padding: 1rem 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.week-dates {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-}
-
-.week-label {
-  color: var(--text-secondary);
-}
-
-.week-range {
-  font-weight: 600;
-  color: var(--primary-color);
-}
-
-.goals-to-schedule {
-  margin-bottom: 2rem;
-}
-
-.goals-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.planning-header {
   margin-bottom: 1rem;
 }
 
-.goals-header h3 {
-  margin: 0;
-}
-
-.toggle-all-btn {
-  font-size: 0.85rem;
-  padding: 0.4rem 0.75rem;
-}
-
-.hint {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-}
-
-.goal-schedule-card {
-  margin-bottom: 1rem;
-  padding: 0;
-  overflow: hidden;
-}
-
-.goal-schedule-card.collapsed {
-  background: var(--bg-primary);
-}
-
-.goal-header-accordion {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.25rem;
-  cursor: pointer;
-  user-select: none;
-  transition: background 0.2s;
-}
-
-.goal-header-accordion:hover {
-  background: var(--bg-secondary);
-}
-
-.goal-header-left {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex: 1;
-  min-width: 0;
-}
-
-.expand-icon {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  transition: transform 0.2s;
-  flex-shrink: 0;
-}
-
-.goal-header-left h4 {
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-}
-
-.goal-header-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.steps-count {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-.scheduled-count {
-  font-size: 0.85rem;
-  color: var(--success-color, #10b981);
-  font-weight: 500;
-}
-
-.goal-schedule-card .steps-to-schedule {
-  padding: 0 1.25rem 1.25rem;
-}
-
-.goal-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.goal-sphere {
-  font-size: 0.8rem;
-  padding: 0.25rem 0.5rem;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-sm);
-}
-
-.goal-header h4 {
-  margin: 0;
-  flex: 1;
-}
-
-.goal-progress {
-  font-weight: 600;
-  color: var(--primary-color);
-}
-
-.steps-to-schedule {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.step-schedule-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  transition: all 0.2s ease;
-}
-
-.step-schedule-item.scheduled {
-  background: rgba(99, 102, 241, 0.1);
-  border-left: 3px solid var(--primary-color);
-}
-
-.step-schedule-item[draggable="true"] {
-  cursor: grab;
-}
-
-.step-schedule-item[draggable="true"]:active {
-  cursor: grabbing;
-}
-
-.step-schedule-item.dragging {
-  opacity: 0.5;
-  transform: scale(0.98);
-}
-
-.drag-handle-lesson {
-  color: var(--text-tertiary);
-  font-size: 0.9rem;
-  cursor: grab;
-  user-select: none;
-}
-
-.drag-handle-lesson:active {
-  cursor: grabbing;
-}
-
-.calendar-day.drag-over-day {
-  background: rgba(99, 102, 241, 0.15);
-  border: 2px dashed var(--primary-color);
-}
-
-.calendar-day.drag-over-day .no-tasks {
-  color: var(--primary-color);
-  font-weight: 500;
-}
-
-.drop-hint {
-  transition: all 0.2s;
-}
-
-.step-info {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex: 1;
-  min-width: 0;
-}
-
-.step-title {
-  font-size: 0.9rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-}
-
-.step-time {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  padding: 0.125rem 0.5rem;
-  background: var(--bg-tertiary);
-  border-radius: var(--radius-sm);
-}
-
-.step-schedule-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.time-select,
-.priority-select,
-.day-select {
-  padding: 0.375rem 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-  background: var(--bg-primary);
-  cursor: pointer;
-}
-
-.time-select {
-  min-width: 100px;
-}
-
-.priority-select {
-  min-width: 140px;
-}
-
-.priority-select option[value="critical"] {
-  color: #dc2626;
-}
-
-.priority-select option[value="desirable"] {
-  color: #ea580c;
-}
-
-.priority-select option[value="attention"] {
-  color: #2563eb;
-}
-
-.priority-select option[value="optional"] {
-  color: #6b7280;
-}
-
-.btn-icon.remove {
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-icon.remove:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--danger-color);
-}
-
-.week-calendar {
-  padding: 1.5rem;
-  margin-bottom: 1rem;
-}
-
-.week-calendar h3 {
-  margin-bottom: 1rem;
-}
-
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(120px, 1fr));
-  gap: 0.75rem;
-}
-
-.calendar-day {
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  padding: 0.75rem;
-  min-height: 120px;
-}
-
-.calendar-day.today {
-  border: 2px solid var(--primary-color);
-}
-
-.calendar-day.has-tasks {
-  background: rgba(99, 102, 241, 0.05);
-}
-
-.day-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border-color);
-  flex-wrap: wrap;
-  gap: 0.25rem;
-}
-
-.day-time-total {
-  font-size: 0.7rem;
-  color: var(--primary-color);
-  background: rgba(99, 102, 241, 0.1);
-  padding: 0.15rem 0.4rem;
-  border-radius: var(--radius-sm);
-  font-weight: 500;
-}
-
-.day-name {
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-
-.day-date {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
-.day-tasks {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.scheduled-task {
-  font-size: 0.8rem;
-  padding: 0.4rem 0.5rem;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  border-radius: var(--radius-sm);
-  border-left: 3px solid var(--border-color);
-  display: flex;
-  align-items: flex-start;
-  gap: 0.35rem;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-}
-
-.scheduled-task .task-title {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  flex: 1;
-  min-width: 0;
-  line-height: 1.3;
-  word-break: break-word;
-}
-
-.task-time-badge {
-  font-size: 0.65rem;
-  color: var(--text-tertiary);
-  background: var(--bg-secondary);
-  padding: 0.1rem 0.3rem;
-  border-radius: var(--radius-xs, 2px);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.scheduled-task.priority-critical {
-  border-left-color: #dc2626;
-  background: rgba(220, 38, 38, 0.1);
-}
-
-.scheduled-task.priority-desirable {
-  border-left-color: #ea580c;
-  background: rgba(234, 88, 12, 0.1);
-}
-
-.scheduled-task.priority-attention {
-  border-left-color: #2563eb;
-  background: rgba(37, 99, 235, 0.1);
-}
-
-.scheduled-task.priority-optional {
-  border-left-color: #9ca3af;
-  background: rgba(156, 163, 175, 0.1);
-}
-
-.no-tasks {
-  color: var(--text-tertiary);
-  font-size: 0.8rem;
-  text-align: center;
-}
-
-.telegram-setup {
-  text-align: center;
-  padding: 2rem;
-  margin-bottom: 1.5rem;
-}
-
-.telegram-setup.connected {
-  text-align: left;
-}
-
-.telegram-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.telegram-icon {
-  font-size: 2.5rem;
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-secondary);
-  border-radius: 50%;
-}
-
-.telegram-icon.connected {
-  background: rgba(34, 197, 94, 0.1);
-}
-
-.telegram-info h3 {
-  margin: 0 0 0.25rem;
-}
-
-.telegram-username {
-  color: var(--text-secondary);
-  margin: 0;
-  font-size: 0.9rem;
-}
-
-.telegram-setup h3 {
-  margin-bottom: 0.75rem;
-}
-
-.telegram-setup > p {
-  color: var(--text-secondary);
-  margin-bottom: 1.5rem;
-  max-width: 400px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.connection-steps {
-  text-align: left;
-  max-width: 400px;
-  margin: 0 auto 1.5rem;
-}
-
-.connection-step {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 0;
-}
-
-.step-number {
-  width: 28px;
-  height: 28px;
-  background: var(--primary-color);
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.85rem;
-  flex-shrink: 0;
-}
-
-.step-text {
-  color: var(--text-primary);
-}
-
-.step-text a {
-  color: var(--primary-color);
-  font-weight: 500;
-}
-
-.connection-form {
-  display: flex;
-  gap: 0.75rem;
-  max-width: 350px;
-  margin: 0 auto 1rem;
-}
-
-.connection-form .input-lg {
-  flex: 1;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 1rem;
-}
-
-.skip-note {
-  font-size: 0.85rem;
-  color: var(--text-tertiary);
-  margin-top: 1rem;
-}
-
-.notification-settings {
-  margin-bottom: 1.5rem;
-}
-
-.notification-settings h4 {
-  margin-bottom: 1rem;
-  font-size: 0.95rem;
-  color: var(--text-secondary);
-}
-
-.toggle-setting {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  margin-bottom: 0.5rem;
-  cursor: pointer;
-}
-
-.toggle-setting input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  margin-top: 2px;
-  cursor: pointer;
-}
-
-.toggle-label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-
-.toggle-title {
-  font-weight: 500;
-}
-
-.toggle-desc {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
-.btn-danger-outline {
-  border: 1px solid var(--danger-color);
-  color: var(--danger-color);
-  background: transparent;
-}
-
-.btn-danger-outline:hover {
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.plan-summary {
-  padding: 1.5rem;
-}
-
-.plan-summary h3 {
-  margin-bottom: 1rem;
-}
-
-.summary-stats {
-  display: flex;
-  gap: 2rem;
-  margin-bottom: 1.5rem;
-}
-
-.stat-item {
-  text-align: center;
-}
-
-.stat-value {
-  display: block;
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--primary-color);
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
-.daily-breakdown {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.day-summary {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.9rem;
-}
-
-.day-summary .day-name {
-  font-weight: 500;
-}
-
-.day-tasks-count {
-  color: var(--text-secondary);
-}
-
-.planner-mode {
-  padding: 0;
-}
-
-.planner-layout {
-  display: block;
-}
-
-.planner-main {
-  min-width: 0;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.header-row {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.weekly-stats {
-  padding: 1.25rem;
-  margin-bottom: 1.5rem;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.stat-box {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-}
-
-.stat-icon {
+.page-title {
   font-size: 1.5rem;
-}
-
-.stat-content {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-number {
-  font-size: 1.25rem;
   font-weight: 700;
-  color: var(--primary-color);
-}
-
-.stat-box .stat-label {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-}
-
-.progress-bar-container {
-  margin-top: 0.5rem;
-}
-
-.progress-bar-bg {
-  height: 8px;
-  background: var(--bg-secondary);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--primary-color), #818cf8);
-  border-radius: 4px;
-  transition: width 0.3s ease;
-}
-
-.goals-section {
-  margin-top: 2rem;
-  margin-bottom: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.goals-section .goals-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.goals-section .goals-header h3 {
-  margin: 0;
-}
-
-/* Goals filters */
-.goals-filters {
-  margin-bottom: 1rem;
-  padding: 1rem;
-}
-
-.goals-filters .filter-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: center;
-}
-
-.goals-filters .filter-group {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.goals-filters .search-group {
-  flex: 1;
-  min-width: 200px;
-  max-width: 300px;
-}
-
-.goals-filters .search-input-wrapper {
-  position: relative;
-  width: 100%;
-}
-
-.goals-filters .search-input-wrapper .search-icon {
-  position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-tertiary);
-  pointer-events: none;
-}
-
-.goals-filters .search-input {
-  width: 100%;
-  padding: 0.5rem 0.75rem 0.5rem 2.25rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-  background: var(--bg-primary);
-}
-
-.goals-filters .search-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
-}
-
-.goals-filters .filter-select {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-  background: var(--bg-primary);
-  cursor: pointer;
-  min-width: 140px;
-}
-
-.goals-filters .filter-stats {
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.goals-filters .filter-count {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
-/* Mobile filters toggle button - hidden on desktop */
-.mobile-filters-toggle {
-  display: none;
-}
-
-/* Goals list wrapper with scroll */
-.goals-list-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.goals-list-wrapper.has-scroll {
-  max-height: calc(10 * 80px + 60px);
-  overflow-y: auto;
-}
-
-/* Steps list with scroll - applies after pagination, height is set via inline style */
-.steps-list.has-scroll {
-  overflow-y: auto;
-}
-
-/* Load more buttons */
-.load-more-steps {
-  margin-top: 0.5rem;
-  align-self: center;
-}
-
-.load-more-goals {
-  margin-top: 1rem;
-  align-self: center;
-  width: 100%;
-}
-
-/* Step date display */
-.step-date-display {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  background: var(--bg-secondary);
-  padding: 0.2rem 0.5rem;
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-}
-
-/* Step filters panel */
-.step-filters-panel {
-  padding: 0.75rem 1.25rem;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.step-filters-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.step-search-wrapper {
-  position: relative;
-  flex: 1;
-  min-width: 120px;
-  max-width: 180px;
-}
-
-.step-search-wrapper .search-icon {
-  position: absolute;
-  left: 0.5rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-secondary);
-}
-
-.step-search-input {
-  width: 100%;
-  padding: 0.35rem 0.5rem 0.35rem 1.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  font-size: 0.75rem;
-  background: var(--bg-primary);
-}
-
-.step-filter-select {
-  padding: 0.35rem 0.5rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  font-size: 0.75rem;
-  background: var(--bg-primary);
-  cursor: pointer;
-  min-width: 110px;
-}
-
-.step-sort-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.btn-sort-dir {
-  width: 1.5rem;
-  height: 1.5rem;
-  padding: 0;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  background: var(--bg-primary);
-  cursor: pointer;
-  font-size: 0.85rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-sort-dir:hover {
-  background: var(--bg-secondary);
-}
-
-.clear-step-filters {
-  font-size: 0.7rem;
-  padding: 0.25rem 0.5rem;
-}
-
-.step-filter-stats {
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.step-filter-stats .filter-count {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-}
-
-.empty-goals {
-  text-align: center;
-  padding: 2rem;
-}
-
-.empty-goals p {
-  margin-bottom: 1rem;
-  color: var(--text-secondary);
-}
-
-.goal-card {
-  margin-bottom: 1rem;
-  padding: 0;
-  overflow: hidden;
-}
-
-.goal-card.collapsed {
-  background: var(--bg-primary);
-}
-
-.goal-card .goal-header-accordion {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.25rem;
-  cursor: pointer;
-  user-select: none;
-  transition: background 0.2s;
-}
-
-.goal-card .goal-header-accordion:hover {
-  background: var(--bg-secondary);
-}
-
-.goal-card .goal-progress {
-  font-weight: 600;
-  color: var(--primary-color);
-  margin-left: 0.5rem;
-}
-
-.goal-card .steps-list {
-  padding: 0 1.25rem 1.25rem;
-}
-
-.steps-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.step-item {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: nowrap !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 12px;
-  padding: 6px 12px;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-sm);
-  border-left: 3px solid transparent;
-  cursor: grab;
-  transition: opacity 0.2s, transform 0.2s;
-}
-
-.step-item:active {
-  cursor: grabbing;
-}
-
-.step-item.dragging {
-  opacity: 0.5;
-  transform: scale(0.98);
-}
-
-.step-item.scheduled {
-  background: rgba(99, 102, 241, 0.08);
-  border-left-color: var(--primary-color);
-}
-
-.step-item.priority-critical {
-  border-left-color: var(--danger-color);
-  background: rgba(239, 68, 68, 0.05);
-}
-
-.step-item.priority-desirable {
-  border-left-color: var(--warning-color);
-  background: rgba(245, 158, 11, 0.05);
-}
-
-.step-item.priority-attention {
-  border-left-color: var(--info-color);
-  background: rgba(59, 130, 246, 0.05);
-}
-
-.step-item.priority-optional {
-  border-left-color: var(--text-tertiary);
-  background: rgba(156, 163, 175, 0.05);
-}
-
-.step-item.completed {
-  opacity: 0.6;
-}
-
-.step-item.completed .step-title {
-  text-decoration: line-through;
-  color: var(--text-tertiary);
-}
-
-.step-complete-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  flex-shrink: 0;
-  border-radius: 50%;
-  transition: color 0.2s, background 0.2s;
-}
-
-.step-complete-btn:hover {
-  color: var(--primary-color);
-  background: rgba(99, 102, 241, 0.1);
-}
-
-.step-complete-btn.completed {
-  color: var(--success-color);
-}
-
-.step-complete-btn.completed:hover {
-  color: var(--danger-color);
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.step-item .step-title {
-  flex: 1 1 auto;
-  font-size: 0.875rem;
-  min-width: 0;
-  line-height: 28px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.step-item .step-actions {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  gap: 6px;
-  flex-shrink: 0;
-  flex-wrap: nowrap !important;
-}
-
-.day-select-sm,
-.time-select-sm,
-.priority-select-sm {
-  padding: 0.25rem 0.4rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  font-size: 0.75rem;
-  background: var(--bg-primary);
-  cursor: pointer;
-  height: 28px;
-}
-
-.day-select-sm {
-  min-width: 50px;
-}
-
-.time-select-sm {
-  min-width: 45px;
-}
-
-.priority-select-sm {
-  min-width: 85px;
-}
-
-.priority-select-sm.priority-critical {
-  border-color: var(--danger-color);
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--danger-color);
-}
-
-.priority-select-sm.priority-desirable {
-  border-color: var(--warning-color);
-  background: rgba(245, 158, 11, 0.1);
-  color: #b45309;
-}
-
-.priority-select-sm.priority-attention {
-  border-color: var(--info-color);
-  background: rgba(59, 130, 246, 0.1);
-  color: var(--info-color);
-}
-
-.priority-select-sm.priority-optional {
-  border-color: var(--text-tertiary);
-  background: rgba(156, 163, 175, 0.1);
+  margin: 0 0 0.75rem 0;
+  color: var(--text-primary);
 }
 
 .week-navigation {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
-.week-navigation .btn-icon {
-  width: 32px;
-  height: 32px;
+.nav-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   border: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
+  background: var(--card-bg);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary);
+  cursor: pointer;
   transition: all 0.2s;
 }
 
-.week-navigation .btn-icon:hover {
-  background: var(--bg-secondary);
+.nav-btn:hover {
+  background: var(--hover-bg);
+}
+
+.week-range {
+  flex: 1;
+  text-align: center;
+  font-weight: 500;
   color: var(--text-primary);
 }
 
-.week-range-text {
-  font-weight: 500;
-  min-width: 180px;
-  text-align: center;
-}
-
-.btn-today {
-  padding: 0.25rem 0.75rem;
-  font-size: 0.8rem;
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: var(--radius-sm);
+.today-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  border: 1px solid var(--primary);
+  background: transparent;
+  color: var(--primary);
+  font-size: 0.875rem;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
-.week-calendar-full {
-  padding: 1.5rem;
-}
-
-.week-calendar-full h3 {
-  margin-bottom: 1rem;
-}
-
-.calendar-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.calendar-header-row h3 {
-  margin: 0;
-}
-
-.weekend-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.weekend-badge {
-  background: var(--primary-color);
+.today-btn:hover {
+  background: var(--primary);
   color: white;
-  font-size: 0.7rem;
-  padding: 0.1rem 0.4rem;
-  border-radius: 10px;
+}
+
+.week-stats {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.stat-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.stat-value {
   font-weight: 600;
+  color: var(--primary);
 }
 
-.calendar-grid-5 {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.75rem;
+.stat-label {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
 }
 
-.calendar-grid-7 {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-
-.calendar-grid-1 {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.75rem;
-}
-
-.calendar-grid-1 .calendar-day-full {
-  min-height: 300px;
-}
-
-.view-mode-tabs {
+.week-bar {
   display: flex;
   gap: 0.25rem;
-  background: var(--bg-tertiary);
-  padding: 0.25rem;
-  border-radius: var(--radius-md);
-  margin-top: 0.75rem;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
 }
 
-.view-tab {
-  padding: 0.4rem 0.75rem;
-  background: transparent;
+.day-tab {
+  flex: 1;
+  min-width: 44px;
+  padding: 0.5rem 0.25rem;
   border: none;
-  border-radius: var(--radius-sm);
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--text-secondary);
+  border-radius: 12px;
+  background: var(--card-bg);
   cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.view-tab:hover {
-  color: var(--text-primary);
-}
-
-.view-tab.active {
-  background: var(--bg-primary);
-  color: var(--primary-color);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.day-view-nav {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.day-view-nav h3 {
-  margin: 0;
-  min-width: 200px;
-  text-align: center;
-}
-
-.calendar-grid-2 {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-
-.weekend-section {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px dashed var(--border-color);
-}
-
-.weekend-day {
-  background: rgba(99, 102, 241, 0.03);
-}
-
-.calendar-grid-full {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(140px, 1fr));
-  gap: 0.75rem;
-}
-
-.calendar-day-full {
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  min-height: 150px;
-  min-width: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-}
-
-.calendar-day-full.today {
-  border: 2px solid var(--primary-color);
-  background: linear-gradient(180deg, rgba(99, 102, 241, 0.08) 0%, transparent 100%);
-  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.2);
-}
-
-.calendar-day-full.today .day-header-full {
-  background: rgba(99, 102, 241, 0.1);
-}
-
-.calendar-day-full.today .day-name {
-  color: var(--primary-color);
-}
-
-.day-header-full {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 0.75rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.day-header-full .day-header-left {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.day-header-full .day-header-right {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.day-header-full .day-name {
-  font-weight: 600;
-  font-size: 0.8rem;
-}
-
-.day-load-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-}
-
-.day-load-indicator.load-empty {
-  background: var(--border-color);
-  opacity: 0.5;
-}
-
-.day-load-indicator.load-light {
-  background: #22c55e;
-}
-
-.day-load-indicator.load-normal {
-  background: #f59e0b;
-}
-
-.day-load-indicator.load-heavy {
-  background: #ef4444;
-}
-
-.quick-add-btn {
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  opacity: 0;
-}
-
-.calendar-day-full:hover .quick-add-btn {
-  opacity: 1;
-}
-
-.quick-add-btn:hover {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
-  color: white;
-}
-
-.task-card.has-tooltip {
+  gap: 0.25rem;
+  transition: all 0.2s;
   position: relative;
 }
 
-.task-card.has-tooltip::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 0.5rem 0.75rem;
-  font-size: 0.75rem;
-  line-height: 1.4;
-  white-space: pre-line;
-  color: var(--text-primary);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.2s, visibility 0.2s;
-  z-index: 100;
-  min-width: 150px;
-  max-width: 250px;
-  text-align: left;
-  pointer-events: none;
+.day-tab:hover {
+  background: var(--hover-bg);
 }
 
-.task-card.has-tooltip:hover::after {
-  opacity: 1;
-  visibility: visible;
-}
-
-.tasks-count {
-  width: 22px;
-  height: 22px;
-  background: var(--primary-color);
+.day-tab.active {
+  background: var(--primary);
   color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+}
+
+.day-tab.today:not(.active) {
+  border: 2px solid var(--primary);
+}
+
+.day-tab.weekend {
+  opacity: 0.8;
+}
+
+.day-tab .day-name {
   font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.day-tab .day-num {
+  font-size: 1rem;
   font-weight: 600;
 }
 
-.day-tasks-full {
-  flex: 1;
-  padding: 0.5rem;
+.day-tab .task-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: white;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.day-tab.active .task-count {
+  background: white;
+  color: var(--primary);
+}
+
+.day-content {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.day-header-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.day-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.day-time {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.tasks-list {
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
-  overflow-y: auto;
-  min-width: 0;
+  gap: 0.5rem;
 }
 
 .task-card {
   display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  padding: 0.6rem 0.75rem;
-  background: var(--bg-primary);
-  border-radius: var(--radius-md);
-  font-size: 0.85rem;
-  border-left: 4px solid var(--border-color);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-left: 3px solid transparent;
 }
 
-.task-card.priority-critical {
-  border-left-color: #dc2626;
-  background: rgba(220, 38, 38, 0.08);
-}
-
-.task-card.priority-desirable {
-  border-left-color: #ea580c;
-  background: rgba(234, 88, 12, 0.08);
-}
-
-.task-card.priority-attention {
-  border-left-color: #2563eb;
-  background: rgba(37, 99, 235, 0.08);
-}
-
-.task-card.priority-optional {
-  border-left-color: #9ca3af;
-  background: rgba(156, 163, 175, 0.08);
+.task-card:hover {
+  background: var(--hover-bg);
 }
 
 .task-card.completed {
   opacity: 0.6;
 }
 
-.task-card.completed .task-title {
-  text-decoration: line-through;
+.task-card.priority-critical {
+  border-left-color: var(--danger);
 }
 
-.task-card.dragging {
-  opacity: 0.5;
-  transform: scale(0.98);
+.task-card.priority-desirable {
+  border-left-color: var(--warning);
 }
 
-.task-card[draggable="true"] {
-  cursor: grab;
+.task-card.priority-attention {
+  border-left-color: var(--info);
 }
 
-.task-card[draggable="true"]:active {
-  cursor: grabbing;
-}
-
-.task-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  margin-left: auto;
-  flex-shrink: 0;
-}
-
-.task-time-badge {
-  font-size: 0.65rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  background: var(--bg-tertiary);
-  padding: 0.15rem 0.35rem;
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-}
-
-.sphere-icon-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  flex-shrink: 0;
-  cursor: help;
-}
-
-.sphere-toggle-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  flex-shrink: 0;
-  border: none;
-  cursor: pointer;
-  background: var(--sphere-bg);
-  color: var(--sphere-color);
-  transition: all 0.2s ease;
-}
-
-.sphere-toggle-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.sphere-toggle-btn.completed {
-  background: #10b981;
-  color: white;
-}
-
-.sphere-toggle-btn .sphere-icon,
-.sphere-toggle-btn .check-icon {
-  transition: transform 0.2s ease;
-}
-
-.sphere-toggle-btn:active .sphere-icon,
-.sphere-toggle-btn:active .check-icon {
-  transform: scale(0.9);
-}
-
-.calendar-day-full.drag-over {
-  background: rgba(99, 102, 241, 0.15);
-  border: 2px dashed var(--primary-color);
-}
-
-.calendar-day-full.drag-over .empty-day {
-  color: var(--primary-color);
-  font-weight: 500;
-}
-
-.drop-zone {
-  border: 2px dashed var(--border-color);
-  border-radius: var(--radius-sm);
-  min-height: 60px;
-  transition: all 0.2s;
-}
-
-.drag-hint {
-  font-size: 0.75rem;
-  color: var(--text-tertiary);
-  font-weight: 400;
-  margin-left: 0.5rem;
+.task-card.priority-optional {
+  border-left-color: var(--text-muted);
 }
 
 .task-checkbox {
-  margin-top: 2px;
-  cursor: pointer;
-}
-
-.task-info {
-  flex: 1;
-  min-width: 0;
-  max-width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  overflow: hidden;
-}
-
-.task-info .task-step {
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  font-weight: 600;
-  font-size: 0.9rem;
-  line-height: 1.3;
-  word-break: break-word;
-  color: var(--text-primary);
-}
-
-.task-info .task-goal {
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  font-size: 0.8rem;
-  font-weight: 300;
-  color: var(--text-secondary);
-  line-height: 1.3;
-}
-
-.btn-icon.remove-sm {
-  width: 20px;
-  height: 20px;
-  border: none;
-  background: transparent;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  border-radius: 2px;
-  font-size: 0.7rem;
-  flex-shrink: 0;
-}
-
-.btn-icon.remove-sm:hover {
-  color: var(--danger-color);
-}
-
-.empty-day {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: var(--text-tertiary);
-  font-size: 0.8rem;
-  min-height: 80px;
-}
-
-@media (max-width: 1024px) {
-  .step-layout,
-  .planner-layout {
-    grid-template-columns: 1fr;
-  }
-  
-  .step-sidebar,
-  .planner-sidebar {
-    order: -1;
-  }
-  
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .lesson-progress-bar {
-    padding: 0 0.5rem;
-  }
-  
-  .step-label {
-    display: none;
-  }
-  
-  .step-actions {
-    flex-direction: column;
-  }
-  
-  .step-item .step-actions {
-    flex-direction: row !important;
-  }
-  
-  .step-schedule-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-  
-  .step-schedule-controls {
-    width: 100%;
-  }
-  
-  .time-select,
-  .priority-select,
-  .day-select {
-    flex: 1;
-  }
-  
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-  }
-  
-  .stat-box {
-    padding: 0.5rem;
-  }
-  
-  .stat-icon {
-    font-size: 1.25rem;
-  }
-  
-  .stat-number {
-    font-size: 1rem;
-  }
-  
-  .header-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .week-navigation {
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-  
-  .task-card {
-    padding: 0.75rem;
-  }
-  
-  .task-header {
-    flex-direction: column;
-    gap: 0.5rem;
-    align-items: flex-start;
-  }
-  
-  .task-controls {
-    width: 100%;
-    justify-content: space-between;
-  }
-  
-  .telegram-setup {
-    padding: 1rem;
-  }
-  
-  .telegram-status {
-    flex-direction: column;
-    text-align: center;
-    gap: 1rem;
-  }
-  
-  .notification-options {
-    gap: 0.5rem;
-  }
-  
-  .calendar-grid,
-  .calendar-grid-full {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-  
-  .calendar-grid-5 {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-  
-  .calendar-grid-2 {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-  
-  .calendar-day,
-  .calendar-day-full {
-    min-height: auto;
-    padding: 0.75rem;
-  }
-  
-  .calendar-day .day-header,
-  .calendar-day-full .day-header-full {
-    margin-bottom: 0.5rem;
-  }
-  
-  .day-tasks,
-  .day-tasks-full {
-    min-height: 60px;
-  }
-  
-  .scheduled-task .task-title,
-  .task-info .task-step {
-    font-size: 0.85rem;
-  }
-  
-  .task-info .task-goal {
-    font-size: 0.75rem;
-  }
-  
-  .empty-day {
-    min-height: 50px;
-  }
-  
-  .weekend-section {
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
-  }
-  
-  .calendar-header-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-  
-  .calendar-header-row h3 {
-    font-size: 1rem;
-  }
-  
-  .drag-hint {
-    display: none;
-  }
-  
-  /* Hide desktop calendar on mobile */
-  .desktop-only {
-    display: none !important;
-  }
-  
-  /* Show mobile view */
-  .mobile-week-view {
-    display: block !important;
-  }
-  
-  /* Mobile filters */
-  .mobile-filters-toggle {
-    display: flex !important;
-    align-items: center;
-    gap: 0.5rem;
-    width: 100%;
-    padding: 0.75rem;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid var(--border-color);
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  
-  .mobile-filters-toggle:hover {
-    background: var(--bg-secondary);
-  }
-  
-  .mobile-filters-toggle .toggle-chevron {
-    margin-left: auto;
-    transition: transform 0.2s ease;
-  }
-  
-  .mobile-filters-toggle .toggle-chevron.open {
-    transform: rotate(180deg);
-  }
-  
-  .filters-badge {
-    background: var(--primary-color);
-    color: white;
-    font-size: 0.7rem;
-    font-weight: 600;
-    padding: 0.15rem 0.4rem;
-    border-radius: 10px;
-    min-width: 18px;
-    text-align: center;
-  }
-  
-  .goals-filters {
-    padding: 0;
-  }
-  
-  .goals-filters .filter-content {
-    display: none;
-    padding: 1rem;
-    border-bottom: 1px solid var(--border-color);
-  }
-  
-  .goals-filters .filter-content.mobile-open {
-    display: block;
-  }
-  
-  .goals-filters .filter-row {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .goals-filters .filter-group,
-  .goals-filters .search-group {
-    width: 100%;
-    max-width: none;
-  }
-  
-  .goals-filters .filter-select,
-  .goals-filters .search-input {
-    width: 100%;
-  }
-  
-  .goals-filters .filter-row .btn {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .goals-filters .filter-stats {
-    padding: 0.75rem 1rem;
-    margin-top: 0;
-    border-top: none;
-  }
-}
-
-/* Mobile Week View Styles */
-.mobile-week-view {
-  display: none;
-  padding: 0;
-  overflow: hidden;
-}
-
-.mobile-days-strip {
-  display: flex;
-  gap: 0;
-  padding: 0.75rem;
-  background: var(--bg-tertiary);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.mobile-day-btn {
-  flex: 1;
-  min-width: 44px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem 0.25rem;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
-.mobile-day-btn:hover {
-  background: var(--bg-secondary);
-}
-
-.mobile-day-btn.active {
-  background: var(--primary-color);
-  color: white;
-}
-
-.mobile-day-btn.today:not(.active) {
-  background: rgba(99, 102, 241, 0.1);
-}
-
-.mobile-day-btn.today .mobile-day-num {
-  font-weight: 700;
-}
-
-.mobile-day-name {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-  font-weight: 500;
-}
-
-.mobile-day-btn.active .mobile-day-name {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.mobile-day-num {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.mobile-day-btn.active .mobile-day-num {
-  color: white;
-}
-
-.mobile-day-dot {
-  position: absolute;
-  bottom: 4px;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--primary-color);
-}
-
-.mobile-day-btn.active .mobile-day-dot {
-  background: white;
-}
-
-.mobile-day-content {
-  padding: 1rem;
-}
-
-.mobile-day-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
-
-.mobile-day-header h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin: 0;
-}
-
-.day-time-badge {
-  font-size: 0.8rem;
-  color: var(--primary-color);
-  background: rgba(99, 102, 241, 0.1);
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--radius-sm);
-  font-weight: 500;
-}
-
-.mobile-day-tasks {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.mobile-task-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.875rem;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  border-left: 3px solid var(--border-color);
-}
-
-.mobile-task-card.priority-important {
-  border-left-color: #ef4444;
-}
-
-.mobile-task-card.priority-desirable {
-  border-left-color: #f59e0b;
-}
-
-.mobile-task-card.priority-optional {
-  border-left-color: #6b7280;
-}
-
-.mobile-task-card.completed {
-  opacity: 0.6;
-}
-
-.mobile-task-card.completed .mobile-task-title {
-  text-decoration: line-through;
-}
-
-.mobile-task-checkbox {
   width: 24px;
   height: 24px;
-  min-width: 24px;
   border-radius: 50%;
   border: 2px solid var(--border-color);
   background: transparent;
@@ -5296,133 +1300,617 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  flex-shrink: 0;
+  transition: all 0.2s;
 }
 
-.mobile-task-checkbox:hover {
-  border-color: var(--primary-color);
+.task-checkbox:hover {
+  border-color: var(--primary);
 }
 
-.mobile-task-checkbox.completed {
-  background: var(--success-color);
-  border-color: var(--success-color);
+.task-checkbox.completed {
+  background: var(--success);
+  border-color: var(--success);
   color: white;
 }
 
-.mobile-task-info {
+.task-info {
   flex: 1;
   min-width: 0;
 }
 
-.mobile-task-title {
+.task-title {
   display: block;
-  font-size: 0.95rem;
   font-weight: 500;
   color: var(--text-primary);
-  margin-bottom: 0.25rem;
-}
-
-.mobile-task-goal {
-  display: block;
-  font-size: 0.8rem;
-  color: var(--text-tertiary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.mobile-task-remove {
-  width: 28px;
-  height: 28px;
-  min-width: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm);
-  color: var(--text-tertiary);
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
+.task-card.completed .task-title {
+  text-decoration: line-through;
 }
 
-.mobile-task-remove:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-}
-
-.mobile-empty-day {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 1rem;
-  text-align: center;
-  color: var(--text-tertiary);
-}
-
-.mobile-empty-day .empty-icon {
-  margin-bottom: 0.75rem;
-  opacity: 0.5;
-}
-
-.mobile-empty-day p {
-  font-size: 1rem;
-  font-weight: 500;
+.task-goal {
+  display: block;
+  font-size: 0.8125rem;
   color: var(--text-secondary);
-  margin: 0 0 0.25rem 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.mobile-empty-day .empty-hint {
-  font-size: 0.85rem;
+.task-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
-.undo-toast {
-  position: fixed;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #333;
-  color: white;
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius);
+.time-badge {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  background: var(--bg);
+  border-radius: 10px;
+  color: var(--text-secondary);
+}
+
+.priority-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.priority-dot.priority-critical { background: var(--danger); }
+.priority-dot.priority-desirable { background: var(--warning); }
+.priority-dot.priority-attention { background: var(--info); }
+.priority-dot.priority-optional { background: var(--text-muted); }
+
+.empty-day {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--text-secondary);
+}
+
+.empty-icon {
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.empty-day p {
+  margin: 0.5rem 0 0.25rem;
+  font-weight: 500;
+}
+
+.empty-hint {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.section-divider {
   display: flex;
   align-items: center;
   gap: 1rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
+  margin: 1.5rem 0 1rem;
 }
 
-.undo-toast span {
-  font-size: 0.9rem;
+.section-divider::before,
+.section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
 }
 
-.btn-undo {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: var(--primary-color);
-  padding: 0.4rem 0.75rem;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  font-size: 0.85rem;
+.section-divider span {
+  font-size: 0.875rem;
   font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.filters-section {
+  margin-bottom: 1rem;
+}
+
+.chip-filters {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.status-chips {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  white-space: nowrap;
+  cursor: pointer;
   transition: all 0.2s;
 }
 
-.btn-undo:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: var(--primary-color);
+.chip:hover {
+  background: var(--hover-bg);
 }
 
-.toast-enter-active,
-.toast-leave-active {
-  transition: all 0.3s ease;
+.chip.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
 }
 
-.toast-enter-from,
-.toast-leave-to {
-  opacity: 0;
-  transform: translateX(-50%) translateY(1rem);
+.chip.small {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.chip-count {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.375rem;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+.chip.active .chip-count {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.goal-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.goal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  cursor: pointer;
+}
+
+.goal-header:hover {
+  background: var(--hover-bg);
+}
+
+.goal-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.goal-sphere-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.goal-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.goal-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.steps-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--bg);
+  border-radius: 10px;
+  color: var(--text-secondary);
+}
+
+.expand-icon {
+  color: var(--text-muted);
+  transition: transform 0.2s;
+}
+
+.expand-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.steps-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+  padding: 0 1rem 1rem;
+}
+
+@media (min-width: 480px) {
+  .steps-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.step-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--bg);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.step-card:hover {
+  background: var(--hover-bg);
+}
+
+.step-card.scheduled {
+  background: var(--primary-light, rgba(99, 102, 241, 0.1));
+}
+
+.step-card.completed {
+  opacity: 0.5;
+}
+
+.step-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.step-title {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.step-badges {
+  display: flex;
+  gap: 0.375rem;
+  margin-top: 0.25rem;
+}
+
+.date-badge {
+  font-size: 0.6875rem;
+  padding: 0.125rem 0.375rem;
+  background: var(--primary);
+  color: white;
+  border-radius: 6px;
+}
+
+.priority-badge {
+  font-size: 0.6875rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 6px;
+}
+
+.priority-badge.priority-critical { background: var(--danger); color: white; }
+.priority-badge.priority-desirable { background: var(--warning); color: white; }
+.priority-badge.priority-attention { background: var(--info); color: white; }
+.priority-badge.priority-optional { background: var(--text-muted); color: white; }
+
+.quick-add-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px dashed var(--border-color);
+  background: transparent;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.quick-add-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-light, rgba(99, 102, 241, 0.1));
+}
+
+.infinite-scroll-trigger {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.loading-spinner-small {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--text-secondary);
+}
+
+.empty-state h3 {
+  margin: 1rem 0 0.5rem;
+  color: var(--text-primary);
+}
+
+.empty-state p {
+  margin: 0 0 1.5rem;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.btn-outline:hover {
+  background: var(--hover-bg);
+}
+
+.fab {
+  position: fixed;
+  bottom: 80px;
+  right: 1rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 100;
+  transition: all 0.2s;
+}
+
+.fab:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.bottom-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.bottom-sheet {
+  width: 100%;
+  max-width: 500px;
+  max-height: 80vh;
+  background: var(--card-bg);
+  border-radius: 20px 20px 0 0;
+  padding: 1rem 1rem 2rem;
+  overflow-y: auto;
+}
+
+.sheet-handle {
+  width: 40px;
+  height: 4px;
+  background: var(--border-color);
+  border-radius: 2px;
+  margin: 0 auto 1rem;
+}
+
+.sheet-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+  color: var(--text-primary);
+}
+
+.sheet-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0 0 1rem;
+}
+
+.sheet-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sheet-action {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: none;
+  background: transparent;
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  width: 100%;
+}
+
+.sheet-action:hover {
+  background: var(--hover-bg);
+}
+
+.sheet-action.danger {
+  color: var(--danger);
+}
+
+.sheet-action.active {
+  background: var(--primary-light, rgba(99, 102, 241, 0.1));
+  color: var(--primary);
+}
+
+.sheet-action.day-option {
+  justify-content: space-between;
+}
+
+.sheet-action.day-option.today {
+  background: var(--primary-light, rgba(99, 102, 241, 0.1));
+}
+
+.day-label {
+  font-weight: 500;
+}
+
+.day-date {
+  color: var(--text-secondary);
+}
+
+.priority-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.priority-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.priority-indicator.priority-critical { background: var(--danger); }
+.priority-indicator.priority-desirable { background: var(--warning); }
+.priority-indicator.priority-attention { background: var(--info); }
+.priority-indicator.priority-optional { background: var(--text-muted); }
+.priority-indicator.priority- { background: var(--border-color); }
+
+.add-step-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--bg);
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  color: var(--text-muted);
+}
+
+.add-step-search .search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.add-step-list {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.add-goal-header {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 0.5rem 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.step-option {
+  justify-content: space-between;
+}
+
+.step-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (min-width: 768px) {
+  .planning-container {
+    padding: 1.5rem;
+  }
+  
+  .page-title {
+    font-size: 1.75rem;
+  }
+  
+  .week-bar {
+    gap: 0.5rem;
+  }
+  
+  .day-tab {
+    min-width: 60px;
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .day-tab .day-name {
+    font-size: 0.8125rem;
+  }
+  
+  .day-tab .day-num {
+    font-size: 1.125rem;
+  }
+  
+  .fab {
+    bottom: 2rem;
+    right: 2rem;
+  }
+  
+  .bottom-sheet {
+    border-radius: 20px;
+    margin-bottom: 2rem;
+  }
 }
 </style>
