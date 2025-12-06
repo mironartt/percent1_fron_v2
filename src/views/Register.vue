@@ -6,8 +6,6 @@
         <div class="register-header">
           <h1 class="register-logo">OnePercent</h1>
           <p class="register-subtitle">+1% каждый день к лучшей жизни</p>
-          <h2>Присоединяйтесь к системе</h2>
-          <p class="register-description">Начните путь к достижению своих целей прямо сейчас</p>
         </div>
 
         <!-- Form -->
@@ -467,7 +465,6 @@ function closeSuccess() {
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  padding-left: 0;
 }
 
 .register-container {
@@ -482,12 +479,12 @@ function closeSuccess() {
 .register-card {
   background: white;
   border-radius: var(--radius-xl);
-  padding: 2.5rem;
+  padding: 2rem;
   box-shadow: var(--shadow-xl);
 }
 
 .register-header {
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
   text-align: center;
 }
 
@@ -507,22 +504,12 @@ function closeSuccess() {
   margin-bottom: 1.5rem;
 }
 
-.register-header h2 {
-  font-size: 1.75rem;
-  margin-bottom: 0.5rem;
-}
-
-.register-description {
-  color: var(--text-secondary);
-  margin: 0;
-}
-
 .register-form {
   margin-bottom: 1.5rem;
 }
 
 .form-group {
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.875rem;
 }
 
 .form-label {
