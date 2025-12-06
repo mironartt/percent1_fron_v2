@@ -2151,12 +2151,13 @@ function formatDate(dateString) {
 /* Compact Sticky Header */
 .goal-header-compact {
   background: var(--bg-primary, #ffffff);
-  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-lg, 12px);
   padding: 0.75rem 1rem;
   position: sticky;
   top: 0;
   z-index: 100;
-  margin: -1rem -1rem 1rem -1rem;
+  margin-bottom: 1rem;
 }
 
 .header-row {
@@ -2261,10 +2262,7 @@ function formatDate(dateString) {
   white-space: nowrap;
 }
 
-.card-no-header {
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
-}
+/* card-no-header - убран, оба блока имеют одинаковый стиль */
 
 /* Combined Search + Filter Bar */
 .search-filter-bar {
@@ -2406,7 +2404,7 @@ function formatDate(dateString) {
 .edit-layout {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0;
   max-width: 900px;
 }
 
@@ -2418,6 +2416,8 @@ function formatDate(dateString) {
 
 .main-content .card {
   padding: 1rem;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-lg, 12px);
 }
 
 .card-header {
