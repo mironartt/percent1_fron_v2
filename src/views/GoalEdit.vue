@@ -468,10 +468,7 @@
             </div>
           </div>
           
-          <div class="modal-footer">
-            <button class="btn btn-secondary" @click="closeAddStepModal">
-              Отмена
-            </button>
+          <div class="modal-footer modal-footer-center">
             <button class="btn btn-primary" @click="saveStepFromModal">
               <Check :size="16" :stroke-width="2" />
               Добавить
