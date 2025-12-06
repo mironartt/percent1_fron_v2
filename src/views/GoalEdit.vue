@@ -546,9 +546,6 @@
           </div>
           
           <div class="modal-footer modal-footer-center">
-            <button class="btn btn-secondary" @click="closeEditStepModal">
-              Отмена
-            </button>
             <button class="btn btn-primary" @click="saveEditStepModal">
               <Check :size="16" :stroke-width="2" />
               Сохранить
