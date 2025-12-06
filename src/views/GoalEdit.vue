@@ -302,17 +302,6 @@
             </button>
           </div>
 
-          <div class="goal-meta-info">
-            <span class="meta-item">
-              <span class="meta-label">Создана:</span>
-              {{ formatDate(goal.createdAt) }}
-            </span>
-            <span v-if="goal.completedAt" class="meta-item">
-              <span class="meta-label">Завершена:</span>
-              {{ formatDate(goal.completedAt) }}
-            </span>
-          </div>
-
           <!-- Кнопки действий внизу страницы -->
           <div class="footer-actions">
             <button class="btn btn-secondary btn-with-icon" @click="goBack">
