@@ -685,6 +685,15 @@
         </div>
       </div>
     </Transition>
+    
+    <!-- FAB: Floating Action Button для мобилки -->
+    <button 
+      class="fab-add-goal mobile-only"
+      @click="addNewGoal"
+      title="Добавить цель"
+    >
+      <Plus :size="24" :stroke-width="2" />
+    </button>
   </div>
 </template>
 
@@ -5100,6 +5109,35 @@ onMounted(async () => {
   
   .mobile-only {
     display: flex !important;
+  }
+  
+  /* FAB Button */
+  .fab-add-goal {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .fab-add-goal:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(124, 58, 237, 0.5);
+  }
+  
+  .fab-add-goal:active {
+    transform: scale(0.95);
   }
   
   .mobile-actions-dropdown {
