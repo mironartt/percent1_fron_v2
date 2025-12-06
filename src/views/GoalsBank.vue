@@ -241,10 +241,10 @@
       </div>
     </Transition>
 
-    <!-- Edit Goal Modal -->
+    <!-- Edit Goal Modal - Redesigned with Tabs -->
     <Transition name="modal-fade">
       <div v-if="showEditModal" class="modal-overlay" @click.self="closeEditModal">
-        <div class="edit-modal edit-modal-extended">
+        <div class="edit-modal edit-modal-redesigned">
           <div class="modal-header">
             <h3>
               <Edit2 :size="20" :stroke-width="2" class="modal-header-icon" />
@@ -255,121 +255,207 @@
             </button>
           </div>
 
-          <div class="modal-body" v-if="editingGoal">
-            <div class="form-group">
-              <label class="form-label">Название цели</label>
-              <input 
-                v-model="editingGoal.text"
-                type="text"
-                class="form-input"
-                placeholder="Введите название цели"
-              />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Сфера жизни</label>
-              <div class="sphere-select-grid">
-                <button
-                  v-for="sphere in lifeSpheres"
-                  :key="sphere.id"
-                  class="sphere-select-btn"
-                  :class="{ active: editingGoal.sphereId === sphere.id }"
-                  :style="{ '--sphere-color': getSphereColor(sphere.id) }"
-                  @click="editingGoal.sphereId = sphere.id"
-                >
-                  <component :is="getSphereIcon(sphere.id)" :size="18" :stroke-width="2" />
-                  <span>{{ getSphereNameOnly(sphere.id) }}</span>
-                </button>
-              </div>
-            </div>
-
-            <div class="why-section-divider">
-              <span>Проверка цели</span>
-            </div>
-
-            <div class="accordion-group">
-              <div 
-                class="accordion-header" 
-                :class="{ open: editWhyAccordion.question1Open, filled: editingGoal?.whyImportant?.trim() }"
-                @click="toggleWhyQuestion(1, true)"
-              >
-                <span class="accordion-title">1. Почему для меня это важно?</span>
-                <span v-if="editingGoal?.whyImportant?.trim() && !editWhyAccordion.question1Open" class="accordion-preview">{{ editingGoal.whyImportant.slice(0, 30) }}...</span>
-                <ChevronDown :size="16" class="accordion-chevron" :class="{ open: editWhyAccordion.question1Open }" />
-              </div>
-              <div class="accordion-content" v-show="editWhyAccordion.question1Open">
-                <textarea 
-                  v-model="editingGoal.whyImportant"
-                  class="form-textarea"
-                  placeholder="Опишите, почему эта цель важна для вас"
-                  rows="3"
-                ></textarea>
-              </div>
-            </div>
-
-            <div class="accordion-group">
-              <div 
-                class="accordion-header" 
-                :class="{ open: editWhyAccordion.question2Open, filled: editingGoal?.why2?.trim() }"
-                @click="toggleWhyQuestion(2, true)"
-              >
-                <span class="accordion-title">2. Как это изменит мою жизнь?</span>
-                <span v-if="editingGoal?.why2?.trim() && !editWhyAccordion.question2Open" class="accordion-preview">{{ editingGoal.why2.slice(0, 30) }}...</span>
-                <ChevronDown :size="16" class="accordion-chevron" :class="{ open: editWhyAccordion.question2Open }" />
-              </div>
-              <div class="accordion-content" v-show="editWhyAccordion.question2Open">
-                <textarea 
-                  v-model="editingGoal.why2"
-                  class="form-textarea"
-                  placeholder="Опишите, как достижение этой цели изменит вашу жизнь"
-                  rows="3"
-                ></textarea>
-              </div>
-            </div>
-
-            <div class="validation-section">
-              <div class="validation-label">
-                Оценка цели:
-                <span class="tooltip-wrapper">
-                  <HelpCircle :size="16" :stroke-width="2" class="help-icon" />
-                  <span class="tooltip-text">Истинная цель отвечает на вопросы «почему важно?» и «как изменит жизнь?». Ложная — навязана извне или не ведёт к переменам.</span>
-                </span>
-              </div>
-              <div class="validation-buttons">
-                <button 
-                  class="btn btn-validation btn-true-goal"
-                  :class="{ active: editingGoal.status === 'validated' }"
-                  @click="selectValidationStatus(true)"
-                >
-                  <CheckCircle :size="18" :stroke-width="2" />
-                  Истинная
-                </button>
-                <button 
-                  class="btn btn-validation btn-false-goal"
-                  :class="{ active: editingGoal.status === 'rejected' }"
-                  @click="selectValidationStatus(false)"
-                >
-                  <XCircle :size="18" :stroke-width="2" />
-                  Ложная
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="modal-footer modal-footer-center">
-            <button class="btn btn-primary" @click="saveGoalEdit">
-              <Check :size="16" :stroke-width="2" />
-              Сохранить
+          <!-- Quick Actions -->
+          <div class="quick-actions" v-if="editingGoal">
+            <button 
+              v-if="editingGoal.status === 'validated' && !isGoalTransferred(editingGoal.id)"
+              class="quick-action-btn action-work"
+              @click="handleQuickTakeToWork"
+            >
+              <Play :size="16" />
+              <span>В работу</span>
+            </button>
+            <button 
+              v-if="isGoalTransferred(editingGoal.id)"
+              class="quick-action-btn action-remove-work"
+              @click="handleQuickRemoveFromWork"
+            >
+              <Pause :size="16" />
+              <span>Убрать</span>
+            </button>
+            <button 
+              v-if="editingGoal.status === 'validated'"
+              class="quick-action-btn action-decompose"
+              @click="goToDecompose(editingGoal.id)"
+            >
+              <GitBranch :size="16" />
+              <span>Шаги</span>
+            </button>
+            <button 
+              v-if="isGoalTransferred(editingGoal.id) && !isGoalCompleted(editingGoal.id)"
+              class="quick-action-btn action-complete"
+              @click="handleQuickComplete"
+            >
+              <CheckCircle :size="16" />
+              <span>Завершить</span>
             </button>
           </div>
 
-          <div class="modal-advanced" v-if="editingGoal && editingGoal.status === 'validated'">
-            <div class="advanced-divider">
-              <span>Нужна декомпозиция на шаги?</span>
+          <!-- Tab Navigation -->
+          <div class="modal-tabs">
+            <button 
+              class="modal-tab" 
+              :class="{ active: editModalTab === 'main' }"
+              @click="editModalTab = 'main'"
+            >
+              <FileText :size="16" />
+              <span>Основное</span>
+            </button>
+            <button 
+              class="modal-tab" 
+              :class="{ active: editModalTab === 'motivation' }"
+              @click="editModalTab = 'motivation'"
+            >
+              <Heart :size="16" />
+              <span>Мотивация</span>
+            </button>
+            <button 
+              class="modal-tab" 
+              :class="{ active: editModalTab === 'status' }"
+              @click="editModalTab = 'status'"
+            >
+              <Settings :size="16" />
+              <span>Статус</span>
+            </button>
+          </div>
+
+          <div class="modal-body modal-body-tabs" v-if="editingGoal">
+            <!-- Tab: Main -->
+            <div v-show="editModalTab === 'main'" class="tab-content">
+              <div class="form-group">
+                <label class="form-label">Название цели</label>
+                <input 
+                  v-model="editingGoal.text"
+                  type="text"
+                  class="form-input form-input-large"
+                  placeholder="Введите название цели"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Сфера жизни</label>
+                <div class="sphere-select-grid sphere-grid-compact">
+                  <button
+                    v-for="sphere in lifeSpheres"
+                    :key="sphere.id"
+                    class="sphere-select-btn"
+                    :class="{ active: editingGoal.sphereId === sphere.id }"
+                    :style="{ '--sphere-color': getSphereColor(sphere.id) }"
+                    @click="editingGoal.sphereId = sphere.id"
+                  >
+                    <component :is="getSphereIcon(sphere.id)" :size="18" :stroke-width="2" />
+                    <span>{{ getSphereNameOnly(sphere.id) }}</span>
+                  </button>
+                </div>
+              </div>
             </div>
-            <button class="btn btn-link" @click="goToDecompose(editingGoal.id)">
-              <GitBranch :size="16" :stroke-width="2" />
-              Перейти к декомпозиции
+
+            <!-- Tab: Motivation -->
+            <div v-show="editModalTab === 'motivation'" class="tab-content">
+              <div class="motivation-intro">
+                <Lightbulb :size="20" class="motivation-icon" />
+                <p>Ответьте на вопросы, чтобы понять истинную ценность цели</p>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">1. Почему для меня это важно?</label>
+                <textarea 
+                  v-model="editingGoal.whyImportant"
+                  class="form-textarea form-textarea-visible"
+                  placeholder="Опишите, почему эта цель важна для вас..."
+                  rows="3"
+                ></textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">2. Как это изменит мою жизнь?</label>
+                <textarea 
+                  v-model="editingGoal.why2"
+                  class="form-textarea form-textarea-visible"
+                  placeholder="Опишите, как достижение этой цели изменит вашу жизнь..."
+                  rows="3"
+                ></textarea>
+              </div>
+            </div>
+
+            <!-- Tab: Status -->
+            <div v-show="editModalTab === 'status'" class="tab-content">
+              <!-- Work Status Toggle -->
+              <div class="status-card" v-if="editingGoal.status === 'validated'">
+                <div class="status-card-header">
+                  <Target :size="20" />
+                  <span>Статус работы</span>
+                </div>
+                <div class="status-toggle-row">
+                  <span class="toggle-label">В работе</span>
+                  <button 
+                    class="toggle-switch"
+                    :class="{ active: isGoalTransferred(editingGoal.id) }"
+                    @click="toggleWorkStatus"
+                  >
+                    <span class="toggle-slider"></span>
+                  </button>
+                </div>
+                <p class="status-hint" v-if="isGoalTransferred(editingGoal.id)">
+                  Цель добавлена в активные. Вы можете декомпозировать её на шаги.
+                </p>
+                <p class="status-hint" v-else>
+                  Включите, чтобы начать работу над целью.
+                </p>
+              </div>
+
+              <!-- Validation Section -->
+              <div class="status-card">
+                <div class="status-card-header">
+                  <Shield :size="20" />
+                  <span>Оценка цели</span>
+                </div>
+                <p class="status-description">
+                  Подтверждённая цель отвечает на вопросы «почему важно?» и «как изменит жизнь?»
+                </p>
+                <div class="validation-buttons-new">
+                  <button 
+                    class="btn-validation-new btn-confirm"
+                    :class="{ active: editingGoal.status === 'validated' }"
+                    @click="selectValidationStatus(true)"
+                  >
+                    <CheckCircle :size="20" />
+                    <span>Подтвердить</span>
+                  </button>
+                  <button 
+                    class="btn-validation-new btn-reject"
+                    :class="{ active: editingGoal.status === 'rejected' }"
+                    @click="selectValidationStatus(false)"
+                  >
+                    <XCircle :size="20" />
+                    <span>Отклонить</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Progress (if in work) -->
+              <div class="status-card" v-if="isGoalTransferred(editingGoal.id)">
+                <div class="status-card-header">
+                  <BarChart2 :size="20" />
+                  <span>Прогресс</span>
+                </div>
+                <div class="progress-info">
+                  <div class="progress-bar-container">
+                    <div class="progress-bar-fill" :style="{ width: getGoalProgress(editingGoal.id) + '%' }"></div>
+                  </div>
+                  <span class="progress-text">{{ getGoalProgressText(editingGoal.id) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer modal-footer-redesigned">
+            <button class="btn btn-secondary" @click="closeEditModal">
+              Отмена
+            </button>
+            <button class="btn btn-primary" @click="saveGoalEdit">
+              <Check :size="16" :stroke-width="2" />
+              Сохранить
             </button>
           </div>
         </div>
@@ -549,7 +635,13 @@ import {
   BookOpen,
   HelpCircle,
   Filter,
-  MoreVertical
+  MoreVertical,
+  Play,
+  Pause,
+  FileText,
+  Settings,
+  Shield,
+  BarChart2
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -617,6 +709,7 @@ const selectedBankGoals = ref([])
 
 const showEditModal = ref(false)
 const editingGoal = ref(null)
+const editModalTab = ref('main')
 
 const showBottomSheet = ref(false)
 const bottomSheetGoal = ref(null)
@@ -1639,8 +1732,52 @@ function openEditModal(goal) {
     sphereId: goal.sphereId,
     status: goal.status || 'raw'
   }
+  editModalTab.value = 'main'
   resetAccordion(true)
   showEditModal.value = true
+}
+
+function handleQuickTakeToWork() {
+  if (editingGoal.value) {
+    takeGoalToWork(editingGoal.value)
+  }
+}
+
+function handleQuickRemoveFromWork() {
+  if (editingGoal.value) {
+    removeFromWorkBySourceId(editingGoal.value.id)
+  }
+}
+
+function handleQuickComplete() {
+  if (editingGoal.value) {
+    completeGoalFromBank(editingGoal.value)
+    closeEditModal()
+  }
+}
+
+function toggleWorkStatus() {
+  if (!editingGoal.value) return
+  
+  if (isGoalTransferred(editingGoal.value.id)) {
+    removeFromWorkBySourceId(editingGoal.value.id)
+  } else {
+    takeGoalToWork(editingGoal.value)
+  }
+}
+
+function getGoalProgress(goalId) {
+  const steps = store.steps.filter(s => s.goalId === goalId || s.sourceGoalId === goalId)
+  if (steps.length === 0) return 0
+  const completed = steps.filter(s => s.status === 'completed' || s.completed).length
+  return Math.round((completed / steps.length) * 100)
+}
+
+function getGoalProgressText(goalId) {
+  const steps = store.steps.filter(s => s.goalId === goalId || s.sourceGoalId === goalId)
+  if (steps.length === 0) return 'Нет шагов'
+  const completed = steps.filter(s => s.status === 'completed' || s.completed).length
+  return `${completed} из ${steps.length} шагов`
 }
 
 function closeEditModal() {
@@ -5415,6 +5552,356 @@ onUnmounted(() => {
 
 .edit-modal.edit-modal-extended {
   max-width: 600px;
+}
+
+.edit-modal.edit-modal-redesigned {
+  max-width: 520px;
+  width: 95%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.quick-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 1.25rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 20px;
+  border: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quick-action-btn.action-work {
+  background: var(--primary, #6366f1);
+  color: white;
+}
+
+.quick-action-btn.action-work:hover {
+  background: var(--primary-dark, #4f46e5);
+}
+
+.quick-action-btn.action-remove-work {
+  background: var(--warning, #f59e0b);
+  color: white;
+}
+
+.quick-action-btn.action-decompose {
+  background: var(--bg, #f3f4f6);
+  color: var(--text-primary, #1f2937);
+  border: 1px solid var(--border-color, #e5e7eb);
+}
+
+.quick-action-btn.action-decompose:hover {
+  background: var(--hover-bg, #e5e7eb);
+}
+
+.quick-action-btn.action-complete {
+  background: var(--success, #10b981);
+  color: white;
+}
+
+.modal-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  padding: 0 1.25rem;
+  gap: 0.25rem;
+}
+
+.modal-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #6b7280);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.2s;
+}
+
+.modal-tab:hover {
+  color: var(--text-primary, #1f2937);
+}
+
+.modal-tab.active {
+  color: var(--primary, #6366f1);
+  border-bottom-color: var(--primary, #6366f1);
+}
+
+.modal-body-tabs {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+.tab-content {
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.form-input-large {
+  font-size: 1.125rem;
+  padding: 0.875rem 1rem;
+}
+
+.sphere-grid-compact {
+  gap: 0.5rem;
+}
+
+.motivation-intro {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--primary-light, rgba(99, 102, 241, 0.08));
+  border-radius: 12px;
+  margin-bottom: 1.25rem;
+}
+
+.motivation-intro p {
+  margin: 0;
+  color: var(--text-secondary, #6b7280);
+  font-size: 0.875rem;
+}
+
+.motivation-icon {
+  color: var(--primary, #6366f1);
+  flex-shrink: 0;
+}
+
+.form-textarea-visible {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.status-card {
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.status-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--text-primary, #1f2937);
+  margin-bottom: 0.75rem;
+}
+
+.status-card-header svg {
+  color: var(--primary, #6366f1);
+}
+
+.status-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.toggle-label {
+  font-size: 0.9375rem;
+  color: var(--text-primary, #1f2937);
+}
+
+.toggle-switch {
+  position: relative;
+  width: 52px;
+  height: 28px;
+  background: var(--border-color, #d1d5db);
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.toggle-switch.active {
+  background: var(--primary, #6366f1);
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch.active .toggle-slider {
+  transform: translateX(24px);
+}
+
+.status-hint {
+  font-size: 0.8125rem;
+  color: var(--text-muted, #9ca3af);
+  margin: 0;
+}
+
+.status-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6b7280);
+  margin: 0 0 1rem 0;
+}
+
+.validation-buttons-new {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.btn-validation-new {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 2px solid var(--border-color, #e5e7eb);
+  background: var(--card-bg, #ffffff);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.btn-validation-new:hover {
+  border-color: var(--text-muted, #9ca3af);
+}
+
+.btn-validation-new.btn-confirm.active {
+  background: var(--success-light, rgba(16, 185, 129, 0.1));
+  border-color: var(--success, #10b981);
+  color: var(--success, #10b981);
+}
+
+.btn-validation-new.btn-reject.active {
+  background: var(--danger-light, rgba(239, 68, 68, 0.1));
+  border-color: var(--danger, #ef4444);
+  color: var(--danger, #ef4444);
+}
+
+.btn-validation-new svg {
+  width: 24px;
+  height: 24px;
+}
+
+.progress-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.progress-bar-container {
+  flex: 1;
+  height: 8px;
+  background: var(--border-color, #e5e7eb);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--primary, #6366f1);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #6b7280);
+  white-space: nowrap;
+}
+
+.modal-footer-redesigned {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.btn-secondary {
+  background: var(--bg, #f3f4f6);
+  color: var(--text-primary, #1f2937);
+  border: 1px solid var(--border-color, #e5e7eb);
+}
+
+.btn-secondary:hover {
+  background: var(--hover-bg, #e5e7eb);
+}
+
+@media (max-width: 480px) {
+  .edit-modal.edit-modal-redesigned {
+    max-width: 100%;
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+  
+  .modal-tabs {
+    padding: 0 1rem;
+  }
+  
+  .modal-tab {
+    flex: 1;
+    justify-content: center;
+    padding: 0.625rem 0.5rem;
+    font-size: 0.8125rem;
+  }
+  
+  .modal-tab span {
+    display: none;
+  }
+  
+  .quick-actions {
+    padding: 0 1rem;
+  }
+  
+  .quick-action-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 0.625rem 0.5rem;
+  }
+  
+  .quick-action-btn span {
+    display: none;
+  }
+  
+  .modal-body-tabs {
+    padding: 1rem;
+  }
+  
+  .validation-buttons-new {
+    grid-template-columns: 1fr;
+  }
 }
 
 .why-section-divider {
