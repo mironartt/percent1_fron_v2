@@ -2270,9 +2270,9 @@ function formatDate(dateString) {
 .search-filter-bar {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0 0;
-  margin-bottom: 1rem;
+  gap: 0.5rem;
+  padding: 0;
+  margin-bottom: 0.75rem;
 }
 
 .search-filter-bar .search-input-wrapper {
@@ -2413,7 +2413,11 @@ function formatDate(dateString) {
 .main-content {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
+}
+
+.main-content .card {
+  padding: 1rem;
 }
 
 .card-header {
@@ -2737,7 +2741,7 @@ function formatDate(dateString) {
 .steps-section {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .steps-section.has-scroll {
@@ -2748,8 +2752,8 @@ function formatDate(dateString) {
 .step-card {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-  padding: 1rem;
+  gap: 0.5rem;
+  padding: 0.75rem;
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
   transition: all 0.2s ease;
@@ -2779,7 +2783,7 @@ function formatDate(dateString) {
 /* Расширенный вид карточки */
 .step-card-expanded {
   align-items: center;
-  padding: 0.875rem 1rem;
+  padding: 0.625rem 0.75rem;
 }
 
 .step-card-expanded .step-main {
@@ -2866,8 +2870,8 @@ function formatDate(dateString) {
 /* FAB кнопка добавления шага */
 .fab-add-step {
   position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
+  bottom: 2rem;
+  right: 80px;
   width: 56px;
   height: 56px;
   border-radius: 50%;
@@ -2880,7 +2884,7 @@ function formatDate(dateString) {
   justify-content: center;
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
   transition: all 0.2s;
-  z-index: 100;
+  z-index: 999;
 }
 
 .fab-add-step:hover {
@@ -2894,8 +2898,8 @@ function formatDate(dateString) {
 
 @media (max-width: 768px) {
   .fab-add-step {
-    bottom: 1rem;
-    right: 1rem;
+    bottom: 1.5rem;
+    right: 1.5rem;
     width: 52px;
     height: 52px;
   }
