@@ -3276,9 +3276,20 @@ function formatDate(dateString) {
   }
 
   /* Центрирование заголовка на мобилке */
+  .card-header {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
   .decomposition-header {
     text-align: center;
     align-items: center;
+  }
+  
+  .steps-count {
+    text-align: center;
   }
 
   /* Скрыть встроенные новые шаги на мобильных */
