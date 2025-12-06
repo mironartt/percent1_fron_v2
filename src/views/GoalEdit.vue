@@ -126,7 +126,7 @@
             <div 
               v-for="(step, displayIndex) in paginatedSteps" 
               :key="step.id || displayIndex"
-              class="step-card"
+              class="step-card step-card-clickable"
               :class="{ 
                 dragging: isDragEnabled && dragIndex === getOriginalIndex(step),
                 'drag-over': isDragEnabled && dragOverIndex === getOriginalIndex(step) && dragIndex !== getOriginalIndex(step),
@@ -140,8 +140,9 @@
               @dragend="isDragEnabled && handleDragEnd()"
               @dragover="isDragEnabled && handleDragOver(getOriginalIndex(step), $event)"
               @drop="isDragEnabled && handleDrop(getOriginalIndex(step), $event)"
+              @click="openEditStepModal(step, getOriginalIndex(step))"
             >
-              <!-- Левая колонка: drag-handle, checkbox, delete -->
+              <!-- Левая колонка: drag-handle -->
               <div class="step-actions-column">
                 <div 
                   class="step-drag-handle" 
@@ -150,59 +151,15 @@
                 >
                   <GripVertical :size="16" />
                 </div>
-                
-                <div class="step-checkbox-wrapper">
-                  <input 
-                    type="checkbox"
-                    :checked="step.completed"
-                    @change="toggleStepCompletion(getOriginalIndex(step))"
-                    class="step-checkbox"
-                    :id="`step-checkbox-${step.id}`"
-                  />
-                  <label 
-                    :for="`step-checkbox-${step.id}`" 
-                    class="step-checkbox-label"
-                    :title="step.completed ? 'Отметить как невыполненный' : 'Отметить как выполненный'"
-                  >
-                    <CheckSquare v-if="step.completed" :size="20" class="check-icon checked" />
-                    <Square v-else :size="20" class="check-icon" />
-                  </label>
-                </div>
-                
-                <button 
-                  class="btn-icon btn-icon-danger step-delete-btn"
-                  @click="removeStep(getOriginalIndex(step))"
-                  title="Удалить шаг"
-                >
-                  <X :size="14" :stroke-width="2" />
-                </button>
               </div>
 
               <span class="step-number-badge">{{ getOriginalIndex(step) + 1 }}</span>
               
               <div class="step-main">
-                <input 
-                  type="text"
-                  :value="step.title"
-                  @input="updateStep(getOriginalIndex(step), 'title', $event.target.value)"
-                  @blur="autoSave"
-                  class="step-input"
-                  :class="{ 'completed-text': step.completed }"
-                  :placeholder="`Шаг ${getOriginalIndex(step) + 1}: что конкретно нужно сделать?`"
-                />
-                
-                <!-- Комментарий -->
-                <div class="step-comment-section">
-                  <textarea 
-                    ref="commentTextareas"
-                    :value="step.comment || ''"
-                    @input="handleCommentInput(getOriginalIndex(step), $event)"
-                    @blur="autoSave"
-                    class="step-comment-input"
-                    :placeholder="'Комментарий к шагу (необязательно)'"
-                    rows="1"
-                  ></textarea>
-                </div>
+                <span class="step-title" :class="{ 'completed-text': step.completed }">
+                  {{ step.title || `Шаг ${getOriginalIndex(step) + 1}` }}
+                </span>
+                <span v-if="step.comment" class="step-comment-preview">{{ step.comment }}</span>
               </div>
             </div>
             
@@ -523,6 +480,85 @@
         </div>
       </div>
     </transition>
+
+    <!-- Модальное окно редактирования шага -->
+    <transition name="modal-fade">
+      <div v-if="showEditStepModal" class="modal-overlay" @click.self="closeEditStepModal">
+        <div class="add-step-modal">
+          <div class="modal-header">
+            <h3>Редактирование шага</h3>
+            <button class="modal-close" @click="closeEditStepModal">
+              <X :size="20" :stroke-width="2" />
+            </button>
+          </div>
+          
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">Название шага</label>
+              <input 
+                v-model="editStepForm.title"
+                type="text"
+                class="form-input"
+                placeholder="Введите название шага"
+                ref="editStepTitleInput"
+              />
+            </div>
+            
+            <div class="form-group">
+              <button 
+                v-if="!editStepForm.showComment && !editStepForm.comment"
+                class="btn-link add-comment-toggle"
+                @click="editStepForm.showComment = true"
+                type="button"
+              >
+                + Добавить комментарий
+              </button>
+              <template v-else>
+                <label class="form-label">Комментарий</label>
+                <textarea 
+                  v-model="editStepForm.comment"
+                  class="form-input form-textarea"
+                  placeholder="Комментарий к шагу (необязательно)"
+                  rows="3"
+                ></textarea>
+              </template>
+            </div>
+
+            <div class="form-group">
+              <label class="step-completed-toggle">
+                <input 
+                  type="checkbox" 
+                  v-model="editStepForm.completed"
+                  class="step-completed-checkbox"
+                />
+                <span>Выполнен</span>
+              </label>
+            </div>
+          </div>
+          
+          <div class="modal-footer">
+            <div class="modal-footer-left">
+              <button 
+                class="btn btn-danger-outline" 
+                @click="deleteStepFromModal"
+              >
+                <Trash2 :size="16" :stroke-width="2" />
+                Удалить
+              </button>
+            </div>
+            <div class="modal-footer-right">
+              <button class="btn btn-secondary" @click="closeEditStepModal">
+                Отмена
+              </button>
+              <button class="btn btn-primary" @click="saveEditStepModal">
+                <Check :size="16" :stroke-width="2" />
+                Сохранить
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -673,9 +709,68 @@ async function saveStepFromModal() {
   
   goalForm.value.steps.push(newStep)
   closeAddStepModal()
+  autoSave()
+}
+
+// Модалка редактирования шага
+const showEditStepModal = ref(false)
+const editStepForm = ref({
+  title: '',
+  comment: '',
+  showComment: false,
+  completed: false,
+  stepIndex: -1
+})
+const editStepTitleInput = ref(null)
+
+function openEditStepModal(step, index) {
+  editStepForm.value = {
+    title: step.title || '',
+    comment: step.comment || '',
+    showComment: !!step.comment,
+    completed: step.completed || false,
+    stepIndex: index
+  }
+  showEditStepModal.value = true
+  nextTick(() => {
+    editStepTitleInput.value?.focus()
+  })
+}
+
+function closeEditStepModal() {
+  showEditStepModal.value = false
+}
+
+function saveEditStepModal() {
+  const index = editStepForm.value.stepIndex
+  if (index < 0 || index >= goalForm.value.steps.length) {
+    return
+  }
   
-  // Сохраняем сразу
-  await saveGoalChanges()
+  const step = goalForm.value.steps[index]
+  const wasCompleted = step.completed
+  const nowCompleted = editStepForm.value.completed
+  
+  step.title = editStepForm.value.title.trim()
+  step.comment = editStepForm.value.comment || ''
+  
+  if (wasCompleted !== nowCompleted) {
+    step.completed = nowCompleted
+    step.status = nowCompleted ? 'completed' : 'pending'
+    recalculateProgress()
+  }
+  
+  closeEditStepModal()
+  autoSave()
+}
+
+async function deleteStepFromModal() {
+  const index = editStepForm.value.stepIndex
+  closeEditStepModal()
+  
+  if (index >= 0 && index < goalForm.value.steps.length) {
+    await removeStep(index)
+  }
 }
 
 // Фильтры
@@ -2565,8 +2660,46 @@ function formatDate(dateString) {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem;
   min-width: 0;
+}
+
+.step-title {
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.step-comment-preview {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.step-card-clickable {
+  cursor: pointer;
+}
+
+.step-card-clickable:hover {
+  background: var(--bg-secondary);
+}
+
+.step-completed-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+}
+
+.step-completed-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
 }
 
 .step-input {
