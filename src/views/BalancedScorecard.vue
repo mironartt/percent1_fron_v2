@@ -657,8 +657,14 @@ onMounted(async () => {
 }
 
 .wheel-visualization {
-  max-width: 320px;
+  max-width: 600px;
   margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .wheel-visualization {
+    max-width: 320px;
+  }
 }
 
 .last-assessment {
