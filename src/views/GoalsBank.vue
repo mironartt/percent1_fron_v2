@@ -103,29 +103,38 @@
             v-for="goal in paginatedGoals" 
             :key="goal.id" 
             class="goal-card" 
+            :style="{ '--sphere-accent': getSphereColor(goal.sphereId) }"
             @click="openEditModal(goal)"
             @contextmenu.prevent="openBottomSheet(goal)"
             @touchstart="startLongPress(goal)"
             @touchend="cancelLongPress"
             @touchmove="cancelLongPress"
           >
-            <div class="goal-card-header">
-              <h3 class="goal-title">{{ goal.text }}</h3>
-              <button 
-                class="btn-arrow" 
-                @click.stop="goToDecompose(goal.id)" 
-                v-if="goal.status === 'validated'"
-              >
-                <ChevronRight :size="20" />
-              </button>
+            <div class="goal-card-visual">
+              <div class="goal-sphere-icon-wrapper" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
+                <component :is="getSphereIconComponent(goal.sphereId)" :size="24" />
+              </div>
+              <span v-if="goal.emoji" class="goal-emoji">{{ goal.emoji }}</span>
             </div>
-            <div class="goal-card-footer">
-              <span class="sphere-chip" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
-                {{ getSphereNameOnly(goal.sphereId) }}
-              </span>
-              <span class="status-chip" :class="getStatusClass(goal)">
-                {{ getStatusText(goal) }}
-              </span>
+            <div class="goal-card-content">
+              <div class="goal-card-header">
+                <h3 class="goal-title">{{ goal.text }}</h3>
+                <button 
+                  class="btn-arrow" 
+                  @click.stop="goToDecompose(goal.id)" 
+                  v-if="goal.status === 'validated'"
+                >
+                  <ChevronRight :size="20" />
+                </button>
+              </div>
+              <div class="goal-card-footer">
+                <span class="sphere-chip" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
+                  {{ getSphereNameOnly(goal.sphereId) }}
+                </span>
+                <span class="status-chip" :class="getStatusClass(goal)">
+                  {{ getStatusText(goal) }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -632,6 +641,10 @@ const sphereColors = {
 }
 
 function getSphereIcon(sphereId) {
+  return sphereIcons[sphereId] || Lightbulb
+}
+
+function getSphereIconComponent(sphereId) {
   return sphereIcons[sphereId] || Lightbulb
 }
 
@@ -2191,11 +2204,50 @@ onUnmounted(() => {
   padding: 1rem;
   cursor: pointer;
   transition: all 0.15s ease;
+  display: flex;
+  gap: 0.875rem;
+  border-left: 3px solid var(--sphere-accent, var(--border-color));
 }
 
 .goal-card:hover {
   border-color: var(--primary-color);
+  border-left-color: var(--sphere-accent, var(--primary-color));
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.goal-card-visual {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.goal-sphere-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sphere-color) 12%, transparent);
+  color: var(--sphere-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.goal-card:hover .goal-sphere-icon-wrapper {
+  background: color-mix(in srgb, var(--sphere-color) 20%, transparent);
+  transform: scale(1.05);
+}
+
+.goal-emoji {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.goal-card-content {
+  flex: 1;
+  min-width: 0;
 }
 
 .goal-card-header {

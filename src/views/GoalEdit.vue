@@ -289,12 +289,37 @@
               </div>
             </template>
 
+            <!-- Inline добавление шага (как в Remente) -->
+            <div class="inline-add-step">
+              <div class="inline-add-step-input-wrapper">
+                <Plus :size="18" class="inline-add-icon" />
+                <input 
+                  ref="inlineStepInput"
+                  v-model="inlineStepTitle"
+                  type="text"
+                  class="inline-add-step-input"
+                  placeholder="Добавить шаг..."
+                  @keydown.enter="addInlineStep"
+                  @focus="inlineInputFocused = true"
+                  @blur="inlineInputFocused = false"
+                />
+                <button 
+                  v-if="inlineStepTitle.trim()"
+                  class="inline-add-btn"
+                  @click="addInlineStep"
+                  title="Добавить"
+                >
+                  <Check :size="18" />
+                </button>
+              </div>
+            </div>
+
           </div>
 
         </div>
       </div>
       
-      <!-- FAB кнопка добавления шага -->
+      <!-- FAB кнопка добавления шага (скрыта если inline-поле в фокусе) -->
       <button 
         class="fab-add-step"
         @click="openAddStepModal"
@@ -566,6 +591,44 @@
                 placeholder="Дополнительные заметки..."
                 rows="2"
               ></textarea>
+            </div>
+
+            <div class="form-group checklist-section">
+              <label class="form-label">Чеклист</label>
+              <div class="checklist-items">
+                <div 
+                  v-for="(item, index) in editStepForm.checklist" 
+                  :key="item.id"
+                  class="checklist-item"
+                >
+                  <button 
+                    class="checklist-checkbox"
+                    :class="{ checked: item.completed }"
+                    @click="toggleChecklistItem(index)"
+                  >
+                    <CheckSquare v-if="item.completed" :size="18" />
+                    <Square v-else :size="18" />
+                  </button>
+                  <input 
+                    v-model="item.text"
+                    type="text"
+                    class="checklist-input"
+                    :class="{ completed: item.completed }"
+                    placeholder="Подзадача..."
+                    @keydown.enter="addChecklistItem"
+                  />
+                  <button 
+                    class="checklist-remove"
+                    @click="removeChecklistItem(index)"
+                  >
+                    <X :size="14" />
+                  </button>
+                </div>
+              </div>
+              <button class="btn-link add-checklist-btn" @click="addChecklistItem">
+                <Plus :size="14" />
+                Добавить подзадачу
+              </button>
             </div>
 
             <div class="step-params-row">
@@ -841,6 +904,39 @@ function setValidationStatus(validated) {
   editingGoal.value.status = validated ? 'validated' : 'rejected'
 }
 
+// Inline добавление шага (как в Remente)
+const inlineStepInput = ref(null)
+const inlineStepTitle = ref('')
+const inlineInputFocused = ref(false)
+
+async function addInlineStep() {
+  if (!inlineStepTitle.value.trim()) return
+  
+  // Генерируем уникальный ID с суффиксом для избежания коллизий
+  const uniqueId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  
+  const newStep = { 
+    id: uniqueId,
+    title: inlineStepTitle.value.trim(),
+    completed: false,
+    comment: '',
+    timeEstimate: '',
+    priority: '',
+    scheduledDate: '',
+    status: 'pending',
+    isNew: false
+  }
+  
+  goalForm.value.steps.push(newStep)
+  inlineStepTitle.value = ''
+  autoSave()
+  
+  // Держим фокус на поле для быстрого добавления следующего шага
+  nextTick(() => {
+    inlineStepInput.value?.focus()
+  })
+}
+
 // Модалка добавления шага (мобильная версия)
 const showAddStepModal = ref(false)
 const newStepForm = ref({
@@ -899,7 +995,8 @@ const editStepForm = ref({
   priority: '',
   timeEstimate: '',
   scheduledDate: '',
-  stepIndex: -1
+  stepIndex: -1,
+  checklist: []
 })
 const editStepTitleInput = ref(null)
 
@@ -920,12 +1017,30 @@ function openEditStepModal(step, index) {
     priority: step.priority || '',
     timeEstimate: step.timeEstimate || '',
     scheduledDate: step.scheduledDate || '',
-    stepIndex: index
+    stepIndex: index,
+    checklist: step.checklist ? JSON.parse(JSON.stringify(step.checklist)) : []
   }
   showEditStepModal.value = true
   nextTick(() => {
     editStepTitleInput.value?.focus()
   })
+}
+
+function addChecklistItem() {
+  const newItem = {
+    id: `${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+    text: '',
+    completed: false
+  }
+  editStepForm.value.checklist.push(newItem)
+}
+
+function removeChecklistItem(index) {
+  editStepForm.value.checklist.splice(index, 1)
+}
+
+function toggleChecklistItem(index) {
+  editStepForm.value.checklist[index].completed = !editStepForm.value.checklist[index].completed
 }
 
 function toggleEditStepComplete() {
@@ -976,6 +1091,7 @@ function saveEditStepModal() {
   step.priority = editStepForm.value.priority || ''
   step.timeEstimate = editStepForm.value.timeEstimate || ''
   step.scheduledDate = editStepForm.value.scheduledDate || ''
+  step.checklist = editStepForm.value.checklist.filter(item => item.text.trim())
   
   if (wasCompleted !== nowCompleted) {
     step.completed = nowCompleted
@@ -3064,6 +3180,89 @@ function formatDate(dateString) {
   color: #059669;
 }
 
+/* Inline добавление шага (как в Remente) */
+.inline-add-step {
+  margin-top: 0.75rem;
+  padding: 0.25rem 0;
+}
+
+.inline-add-step-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary, #f9fafb);
+  border: 2px dashed var(--border-color, #e5e7eb);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.inline-add-step-input-wrapper:focus-within {
+  background: var(--bg-primary, #ffffff);
+  border-color: var(--primary, #6366f1);
+  border-style: solid;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.inline-add-icon {
+  color: var(--text-secondary, #6b7280);
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.inline-add-step-input-wrapper:focus-within .inline-add-icon {
+  color: var(--primary, #6366f1);
+}
+
+.inline-add-step-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.9375rem;
+  color: var(--text-primary, #111827);
+  outline: none;
+  padding: 0;
+  min-width: 0;
+}
+
+.inline-add-step-input::placeholder {
+  color: var(--text-secondary, #9ca3af);
+}
+
+.inline-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: var(--primary, #6366f1);
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.inline-add-btn:hover {
+  background: var(--primary-dark, #4f46e5);
+  transform: scale(1.05);
+}
+
+.inline-add-btn:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+  .inline-add-step-input-wrapper {
+    padding: 0.875rem 1rem;
+  }
+  
+  .inline-add-step-input {
+    font-size: 1rem;
+  }
+}
+
 /* FAB кнопка добавления шага */
 .fab-add-step {
   position: fixed;
@@ -3274,6 +3473,111 @@ function formatDate(dateString) {
 
 .step-bottom-sheet-simple {
   max-height: 80vh;
+}
+
+/* Checklist стили */
+.checklist-section {
+  margin-top: 0.5rem;
+}
+
+.checklist-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.checklist-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #9ca3af);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.checklist-checkbox:hover {
+  background: var(--bg-secondary, #f3f4f6);
+  color: var(--primary, #6366f1);
+}
+
+.checklist-checkbox.checked {
+  color: #10b981;
+}
+
+.checklist-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.9rem;
+  color: var(--text-primary, #111827);
+  padding: 0.375rem 0;
+  outline: none;
+  min-width: 0;
+}
+
+.checklist-input::placeholder {
+  color: var(--text-secondary, #9ca3af);
+}
+
+.checklist-input.completed {
+  text-decoration: line-through;
+  color: var(--text-secondary, #9ca3af);
+}
+
+.checklist-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #9ca3af);
+  cursor: pointer;
+  border-radius: 4px;
+  opacity: 0;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.checklist-item:hover .checklist-remove {
+  opacity: 1;
+}
+
+.checklist-remove:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.add-checklist-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.375rem;
+  padding: 0.375rem 0;
+  font-size: 0.85rem;
+  color: var(--primary, #6366f1);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.add-checklist-btn:hover {
+  opacity: 0.8;
 }
 
 .step-params-row {
