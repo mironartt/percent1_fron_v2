@@ -216,13 +216,6 @@
             <h3 class="goal-title">{{ goal.text || goal.title }}</h3>
           </div>
           <div class="goal-meta">
-            <button 
-              class="decompose-btn" 
-              @click.stop="goToDecomposition(goal)"
-              title="Добавить шаги"
-            >
-              <Plus :size="16" />
-            </button>
             <span class="steps-badge">
               {{ getUnscheduledStepsCount(goal) }}/{{ getUncompletedSteps(goal).length }}
             </span>
@@ -2260,26 +2253,6 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   flex-shrink: 0;
-}
-
-.decompose-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: 8px;
-  background: var(--bg);
-  color: var(--primary, #6366f1);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.decompose-btn:hover {
-  background: var(--primary, #6366f1);
-  color: white;
-  border-color: var(--primary, #6366f1);
 }
 
 .steps-badge {
