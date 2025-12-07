@@ -481,6 +481,85 @@
         </div>
       </section>
 
+      <section class="legends-section">
+        <div class="container">
+          <h2 class="section-title">Проверено временем</h2>
+          <p class="section-subtitle">
+            Величайшие умы истории использовали системный подход к развитию задолго до нас
+          </p>
+          
+          <div class="legends-grid">
+            <div class="legend-card">
+              <div class="legend-avatar">
+                <Feather :size="32" />
+              </div>
+              <div class="legend-content">
+                <h3>Бенджамин Франклин</h3>
+                <span class="legend-role">Политик, учёный, изобретатель</span>
+                <blockquote class="legend-quote">
+                  <Quote :size="16" class="quote-icon" />
+                  «Маленькие удары валят большие дубы»
+                </blockquote>
+                <p class="legend-method">
+                  Создал систему 13 добродетелей: каждую неделю фокусировался на одном качестве, вёл дневник самоанализа. За 13 недель — полный цикл личного развития.
+                </p>
+              </div>
+            </div>
+            
+            <div class="legend-card">
+              <div class="legend-avatar">
+                <BookMarked :size="32" />
+              </div>
+              <div class="legend-content">
+                <h3>Джеймс Клир</h3>
+                <span class="legend-role">Автор «Atomic Habits»</span>
+                <blockquote class="legend-quote">
+                  <Quote :size="16" class="quote-icon" />
+                  «Привычки — это сложные проценты самосовершенствования»
+                </blockquote>
+                <p class="legend-method">
+                  Популяризировал концепцию 1%: если каждый день улучшаться на 1%, за год станешь лучше в 37 раз. Его книга — бестселлер с 15+ млн копий.
+                </p>
+              </div>
+            </div>
+            
+            <div class="legend-card">
+              <div class="legend-avatar">
+                <TrendingUp :size="32" />
+              </div>
+              <div class="legend-content">
+                <h3>Уоррен Баффетт</h3>
+                <span class="legend-role">Инвестор, миллиардер</span>
+                <blockquote class="legend-quote">
+                  <Quote :size="16" class="quote-icon" />
+                  «Я просто сижу в офисе и читаю целый день»
+                </blockquote>
+                <p class="legend-method">
+                  Правило 5 часов: ежедневно инвестирует минимум час в обучение и рефлексию. 80% рабочего времени — чтение и анализ. Состояние: $130+ млрд.
+                </p>
+              </div>
+            </div>
+            
+            <div class="legend-card">
+              <div class="legend-avatar">
+                <PenTool :size="32" />
+              </div>
+              <div class="legend-content">
+                <h3>Леонардо да Винчи</h3>
+                <span class="legend-role">Художник, учёный, изобретатель</span>
+                <blockquote class="legend-quote">
+                  <Quote :size="16" class="quote-icon" />
+                  «Препятствия не могут сокрушить меня; каждое — шаг вперёд»
+                </blockquote>
+                <p class="legend-method">
+                  Вёл легендарные записные книжки: 7000+ страниц наблюдений, идей и планов. Ежедневная практика документирования мыслей и экспериментов.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="pricing-section">
         <div class="container">
           <h2 class="section-title">Простая и честная стоимость</h2>
@@ -635,7 +714,10 @@ import {
   ClipboardList,
   Layers,
   Play,
-  PenTool
+  PenTool,
+  Quote,
+  Feather,
+  BookMarked
 } from 'lucide-vue-next'
 
 const days = ref(90)
@@ -1930,6 +2012,119 @@ onUnmounted(() => {
   
   .club-icon {
     font-size: 2rem;
+  }
+}
+
+.legends-section {
+  padding: 5rem 0;
+  background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+}
+
+.legends-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.legend-card {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  display: flex;
+  gap: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s;
+}
+
+.legend-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.legend-avatar {
+  width: 64px;
+  height: 64px;
+  min-width: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.legend-content h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 0.25rem;
+}
+
+.legend-role {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.legend-quote {
+  position: relative;
+  font-style: italic;
+  color: #4b5563;
+  padding-left: 1.5rem;
+  margin: 0 0 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.legend-quote .quote-icon {
+  position: absolute;
+  left: 0;
+  top: 2px;
+  color: #6366f1;
+  opacity: 0.6;
+}
+
+.legend-method {
+  font-size: 0.875rem;
+  color: #6b7280;
+  line-height: 1.6;
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .legends-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .legends-section {
+    padding: 3rem 0;
+  }
+  
+  .legend-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.5rem;
+  }
+  
+  .legend-avatar {
+    margin: 0 auto;
+  }
+  
+  .legend-quote {
+    padding-left: 0;
+    text-align: center;
+  }
+  
+  .legend-quote .quote-icon {
+    display: none;
   }
 }
 
