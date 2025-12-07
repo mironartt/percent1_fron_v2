@@ -130,49 +130,59 @@
       <span>Цели и шаги</span>
     </div>
 
-    <div class="filters-row">
-      <button 
-        class="chip sphere-chip"
-        :class="{ active: filterSphere === '' }"
-        @click="filterSphere = ''"
-      >
-        Все сферы
-        <span class="chip-count">{{ goalsWithSteps.length }}</span>
-      </button>
-      <button 
-        v-for="sphere in spheresWithGoals" 
-        :key="sphere.id"
-        class="chip sphere-chip"
-        :class="{ active: filterSphere === sphere.id }"
-        @click="filterSphere = sphere.id"
-      >
-        {{ sphere.icon }} {{ sphere.name }}
-        <span class="chip-count">{{ sphere.goalCount }}</span>
-      </button>
+    <div class="filters-row compact">
+      <div class="sphere-dropdown" :class="{ open: showSphereDropdown }">
+        <button class="dropdown-trigger" @click="showSphereDropdown = !showSphereDropdown">
+          <Filter :size="14" />
+          <span>{{ selectedSphereName }}</span>
+          <span class="dropdown-count" v-if="filterSphere">1</span>
+          <ChevronDown :size="14" class="dropdown-arrow" />
+        </button>
+        <div class="dropdown-menu" v-if="showSphereDropdown" @click.stop>
+          <button 
+            class="dropdown-item"
+            :class="{ active: filterSphere === '' }"
+            @click="filterSphere = ''; showSphereDropdown = false"
+          >
+            Все сферы
+            <span class="item-count">{{ goalsWithSteps.length }}</span>
+          </button>
+          <button 
+            v-for="sphere in spheresWithGoals" 
+            :key="sphere.id"
+            class="dropdown-item"
+            :class="{ active: filterSphere === sphere.id }"
+            @click="filterSphere = sphere.id; showSphereDropdown = false"
+          >
+            {{ sphere.icon }} {{ sphere.name }}
+            <span class="item-count">{{ sphere.goalCount }}</span>
+          </button>
+        </div>
+      </div>
       
-      <span class="filter-divider">|</span>
-      
-      <button 
-        class="chip status-chip"
-        :class="{ active: filterStatus === '' }"
-        @click="filterStatus = ''"
-      >
-        Все
-      </button>
-      <button 
-        class="chip status-chip"
-        :class="{ active: filterStatus === 'unscheduled' }"
-        @click="filterStatus = 'unscheduled'"
-      >
-        Незапл.
-      </button>
-      <button 
-        class="chip status-chip"
-        :class="{ active: filterStatus === 'scheduled' }"
-        @click="filterStatus = 'scheduled'"
-      >
-        Запл.
-      </button>
+      <div class="segmented-control">
+        <button 
+          class="segment"
+          :class="{ active: filterStatus === '' }"
+          @click="filterStatus = ''"
+        >
+          Все
+        </button>
+        <button 
+          class="segment"
+          :class="{ active: filterStatus === 'unscheduled' }"
+          @click="filterStatus = 'unscheduled'"
+        >
+          Незапл.
+        </button>
+        <button 
+          class="segment"
+          :class="{ active: filterStatus === 'scheduled' }"
+          @click="filterStatus = 'scheduled'"
+        >
+          Запл.
+        </button>
+      </div>
     </div>
 
     <!-- Баннер: цели без шагов -->
@@ -586,6 +596,7 @@ const weekOffset = ref(0)
 const selectedDay = ref(null)
 const filterSphere = ref('')
 const filterStatus = ref('')
+const showSphereDropdown = ref(false)
 const addStepSearch = ref('')
 const goalsDisplayLimit = ref(10)
 const expandedGoals = ref({})
@@ -914,6 +925,12 @@ const spheresWithGoals = computed(() => {
       ...s,
       goalCount: sphereCounts[s.id]
     }))
+})
+
+const selectedSphereName = computed(() => {
+  if (!filterSphere.value) return 'Все сферы'
+  const sphere = spheresWithGoals.value.find(s => s.id === filterSphere.value)
+  return sphere ? `${sphere.icon} ${sphere.name}` : 'Все сферы'
 })
 
 const filteredGoalsWithSteps = computed(() => {
@@ -1668,10 +1685,17 @@ watch(weekOffset, () => {
   initSelectedDay()
 })
 
+function closeSphereDropdown(e) {
+  if (!e.target.closest('.sphere-dropdown')) {
+    showSphereDropdown.value = false
+  }
+}
+
 onMounted(async () => {
   initSelectedDay()
   await loadWeeklySteps()
   setupInfiniteScroll()
+  document.addEventListener('click', closeSphereDropdown)
   
   if (filteredGoalsWithSteps.value.length > 0) {
     expandedGoals.value[filteredGoalsWithSteps.value[0].id] = true
@@ -1685,6 +1709,7 @@ onUnmounted(() => {
   if (touchTimer) {
     clearTimeout(touchTimer)
   }
+  document.removeEventListener('click', closeSphereDropdown)
 })
 </script>
 
@@ -2144,20 +2169,132 @@ onUnmounted(() => {
   margin-bottom: 1rem;
 }
 
-.filter-divider {
-  color: var(--border-color, #d1d5db);
-  font-weight: 300;
-  margin: 0 0.125rem;
+.filters-row.compact {
+  flex-wrap: nowrap;
+  gap: 0.75rem;
 }
 
-.sphere-chip {
-  padding: 0.375rem 0.625rem;
+.sphere-dropdown {
+  position: relative;
+}
+
+.dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg);
+  color: var(--text-primary);
   font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
 }
 
-.status-chip {
-  padding: 0.375rem 0.625rem;
+.dropdown-trigger:hover {
+  border-color: var(--primary, #6366f1);
+}
+
+.sphere-dropdown.open .dropdown-trigger {
+  border-color: var(--primary, #6366f1);
+  background: var(--primary-light, rgba(99, 102, 241, 0.1));
+}
+
+.dropdown-arrow {
+  transition: transform 0.2s;
+}
+
+.sphere-dropdown.open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.dropdown-count {
+  font-size: 0.6875rem;
+  padding: 0.125rem 0.375rem;
+  background: var(--primary, #6366f1);
+  color: white;
+  border-radius: 10px;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 180px;
+  background: var(--card-bg, white);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background: var(--hover-bg, #f3f4f6);
+}
+
+.dropdown-item.active {
+  background: var(--primary-light, rgba(99, 102, 241, 0.1));
+  color: var(--primary, #6366f1);
+}
+
+.item-count {
   font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.dropdown-item.active .item-count {
+  color: var(--primary, #6366f1);
+}
+
+.segmented-control {
+  display: flex;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.segment {
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-right: 1px solid var(--border-color, #e5e7eb);
+}
+
+.segment:last-child {
+  border-right: none;
+}
+
+.segment:hover {
+  background: var(--hover-bg, #f3f4f6);
+}
+
+.segment.active {
+  background: var(--primary, #6366f1);
+  color: white;
 }
 
 .chip {
