@@ -375,7 +375,7 @@ function onEntrySaved() {
   max-width: var(--content-width-narrow);
   width: 100%;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 var(--container-padding);
   box-sizing: border-box;
 }
 

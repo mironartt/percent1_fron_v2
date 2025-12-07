@@ -1089,6 +1089,7 @@ function formatDate(dateString) {
 .goals-container {
   max-width: var(--content-width-wide);
   margin: 0 auto;
+  padding: var(--container-padding);
 }
 
 /* Icon Wrapper System */

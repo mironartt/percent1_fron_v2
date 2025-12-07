@@ -486,6 +486,7 @@ loadEnergyLevels()
 .planner-container {
   max-width: var(--content-width-narrow);
   margin: 0 auto;
+  padding: var(--container-padding);
 }
 
 .page-header {

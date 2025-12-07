@@ -237,7 +237,7 @@ function formatTime(timestamp) {
   max-width: var(--content-width-narrow);
   width: 100%;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: var(--container-padding);
   box-sizing: border-box;
 }
 
