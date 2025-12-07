@@ -294,18 +294,117 @@
 
         <template v-else-if="bottomSheetMode === 'step'">
           <h3 class="sheet-title">{{ selectedStep?.title }}</h3>
-          <p class="sheet-subtitle">{{ selectedGoal?.title }}</p>
+          <p class="sheet-subtitle">{{ selectedGoal?.text || selectedGoal?.title }}</p>
           
-          <div class="sheet-actions">
+          <!-- Запланированный шаг: показываем действия -->
+          <template v-if="isSelectedStepScheduled">
+            <div class="step-info-badges">
+              <span class="info-badge" v-if="getScheduledStepDate">
+                <Calendar :size="14" />
+                {{ formatScheduledDateLabel(getScheduledStepDate) }}
+              </span>
+              <span class="info-badge" v-if="getScheduledStepPriority">
+                <Flag :size="14" />
+                {{ getPriorityLabel(getScheduledStepPriority) }}
+              </span>
+              <span class="info-badge" v-if="getScheduledStepTime">
+                <Clock :size="14" />
+                {{ formatTimeLabel(getScheduledStepTime) }}
+              </span>
+            </div>
+            
+            <div class="sheet-actions">
+              <button class="sheet-action" @click="toggleStepComplete">
+                <CheckCircle :size="20" />
+                <span>{{ selectedStep?.completed ? 'Отменить выполнение' : 'Выполнено' }}</span>
+              </button>
+              <button class="sheet-action" @click="openStepRescheduleSheet">
+                <Calendar :size="20" />
+                <span>Перенести</span>
+              </button>
+              <button class="sheet-action" @click="openStepPrioritySheet">
+                <Flag :size="20" />
+                <span>Приоритет</span>
+              </button>
+              <button class="sheet-action" @click="openStepTimeSheet">
+                <Clock :size="20" />
+                <span>Время</span>
+              </button>
+              <button class="sheet-action danger" @click="removeStepFromSchedule">
+                <Trash2 :size="20" />
+                <span>Убрать из плана</span>
+              </button>
+            </div>
+          </template>
+          
+          <!-- Незапланированный шаг: показываем выбор дня -->
+          <template v-else>
+            <p class="sheet-hint">Выберите день для планирования:</p>
+            <div class="sheet-actions days-grid">
+              <button 
+                v-for="day in weekDays" 
+                :key="day.date"
+                class="sheet-action day-option"
+                :class="{ today: isToday(day.date) }"
+                @click="scheduleStepToDay(selectedGoal, selectedStep, day.date)"
+              >
+                <span class="day-label">{{ day.label }}</span>
+                <span class="day-date">{{ day.dayNum }}</span>
+              </button>
+            </div>
+          </template>
+        </template>
+        
+        <template v-else-if="bottomSheetMode === 'step-reschedule'">
+          <h3 class="sheet-title">Перенести на</h3>
+          
+          <div class="sheet-actions days-grid">
             <button 
               v-for="day in weekDays" 
               :key="day.date"
               class="sheet-action day-option"
-              :class="{ today: isToday(day.date) }"
-              @click="scheduleStepToDay(selectedGoal, selectedStep, day.date)"
+              :class="{ 
+                today: isToday(day.date),
+                active: getScheduledStepDate === day.date 
+              }"
+              @click="rescheduleStep(day.date)"
             >
               <span class="day-label">{{ day.label }}</span>
               <span class="day-date">{{ day.dayNum }}</span>
+            </button>
+          </div>
+        </template>
+        
+        <template v-else-if="bottomSheetMode === 'step-priority'">
+          <h3 class="sheet-title">Приоритет</h3>
+          
+          <div class="sheet-actions">
+            <button 
+              v-for="priority in priorities" 
+              :key="priority.value"
+              class="sheet-action priority-option"
+              :class="{ active: getScheduledStepPriority === priority.value }"
+              @click="updateStepPriority(priority.value)"
+            >
+              <span class="priority-indicator" :class="'priority-' + priority.value"></span>
+              <span>{{ priority.label }}</span>
+            </button>
+          </div>
+        </template>
+        
+        <template v-else-if="bottomSheetMode === 'step-time'">
+          <h3 class="sheet-title">Время выполнения</h3>
+          
+          <div class="sheet-actions">
+            <button 
+              v-for="time in timeOptions" 
+              :key="time.value"
+              class="sheet-action"
+              :class="{ active: getScheduledStepTime === time.value }"
+              @click="updateStepTime(time.value)"
+            >
+              <Clock :size="18" />
+              <span>{{ time.label }}</span>
             </button>
           </div>
         </template>
@@ -825,6 +924,21 @@ function getScheduledPriority(goalId, stepId) {
   return task?.priority || ''
 }
 
+function getScheduledTimeEstimate(goalId, stepId) {
+  for (const day of weeklyStepsData.value) {
+    const step = day.steps_data?.find(s => s.goal_id === goalId && s.step_id === stepId)
+    if (step) return step.step_time_duration || step.time_estimate || ''
+  }
+  
+  const plan = store.weeklyPlans.find(p => p.weekStart === weekDays.value[0]?.date)
+  const task = plan?.scheduledTasks?.find(t => t.goalId === goalId && t.stepId === stepId)
+  if (task) return task.timeEstimate || task.step_time_duration || ''
+  
+  const goal = rawIdeas.value.find(g => g.id === goalId) || workingGoals.value.find(g => g.id === goalId)
+  const localStep = goal?.steps?.find(s => s.id === stepId)
+  return localStep?.timeEstimate || localStep?.time_estimate || ''
+}
+
 function formatStepDate(goalId, stepId) {
   const dateStr = getScheduledDate(goalId, stepId)
   if (!dateStr) return ''
@@ -908,6 +1022,176 @@ function openPrioritySheet() {
 
 function openTimeSheet() {
   bottomSheetMode.value = 'time'
+}
+
+// Computed свойства для работы с шагами из блока "Цели и шаги"
+const isSelectedStepScheduled = computed(() => {
+  if (!selectedGoal.value || !selectedStep.value) return false
+  return isStepScheduled(selectedGoal.value.id, selectedStep.value.id)
+})
+
+const getScheduledStepDate = computed(() => {
+  if (!selectedGoal.value || !selectedStep.value) return null
+  return getScheduledDate(selectedGoal.value.id, selectedStep.value.id) || null
+})
+
+const getScheduledStepPriority = computed(() => {
+  if (!selectedGoal.value || !selectedStep.value) return null
+  return getScheduledPriority(selectedGoal.value.id, selectedStep.value.id) || null
+})
+
+const getScheduledStepTime = computed(() => {
+  if (!selectedGoal.value || !selectedStep.value) return null
+  return getScheduledTimeEstimate(selectedGoal.value.id, selectedStep.value.id) || null
+})
+
+function formatScheduledDateLabel(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const today = new Date()
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  
+  if (date.toDateString() === today.toDateString()) return 'Сегодня'
+  if (date.toDateString() === tomorrow.toDateString()) return 'Завтра'
+  
+  return date.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' })
+}
+
+function getPriorityLabel(priority) {
+  const labels = {
+    'critical': 'Критично',
+    'desirable': 'Важно',
+    'attention': 'В поле внимания',
+    'optional': 'По возможности'
+  }
+  return labels[priority] || priority || ''
+}
+
+function formatTimeLabel(time) {
+  const labels = {
+    '30min': '30 мин',
+    '1h': '1 час',
+    '2h': '2 часа',
+    '3h': '3 часа',
+    '4h': '4 часа'
+  }
+  return labels[time] || time || ''
+}
+
+function openStepRescheduleSheet() {
+  bottomSheetMode.value = 'step-reschedule'
+}
+
+function openStepPrioritySheet() {
+  bottomSheetMode.value = 'step-priority'
+}
+
+function openStepTimeSheet() {
+  bottomSheetMode.value = 'step-time'
+}
+
+async function toggleStepComplete() {
+  if (!selectedGoal.value || !selectedStep.value) return
+  
+  const newCompleted = !selectedStep.value.completed
+  selectedStep.value.completed = newCompleted
+  
+  if (newCompleted) {
+    xpStore.addXP(10, 'step', `Выполнен шаг: ${selectedStep.value.title}`)
+  }
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: selectedGoal.value.backendId || selectedGoal.value.id,
+        step_id: selectedStep.value.backendId || selectedStep.value.id,
+        is_complete: newCompleted
+      }]
+    })
+    await loadWeeklySteps()
+    closeBottomSheet()
+  } catch (error) {
+    console.error('[Planning] Error toggling step complete:', error)
+    selectedStep.value.completed = !newCompleted
+  }
+}
+
+async function rescheduleStep(newDate) {
+  if (!selectedGoal.value || !selectedStep.value) return
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: selectedGoal.value.backendId || selectedGoal.value.id,
+        step_id: selectedStep.value.backendId || selectedStep.value.id,
+        dt: newDate
+      }]
+    })
+    await loadWeeklySteps()
+    closeBottomSheet()
+  } catch (error) {
+    console.error('[Planning] Error rescheduling step:', error)
+  }
+}
+
+async function updateStepPriority(priority) {
+  if (!selectedGoal.value || !selectedStep.value) return
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: selectedGoal.value.backendId || selectedGoal.value.id,
+        step_id: selectedStep.value.backendId || selectedStep.value.id,
+        priority: priorityFrontendToBackend[priority] || priority || null
+      }]
+    })
+    await loadWeeklySteps()
+    closeBottomSheet()
+  } catch (error) {
+    console.error('[Planning] Error updating step priority:', error)
+  }
+}
+
+async function updateStepTime(time) {
+  if (!selectedGoal.value || !selectedStep.value) return
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: selectedGoal.value.backendId || selectedGoal.value.id,
+        step_id: selectedStep.value.backendId || selectedStep.value.id,
+        time_estimate: time || null
+      }]
+    })
+    await loadWeeklySteps()
+    closeBottomSheet()
+  } catch (error) {
+    console.error('[Planning] Error updating step time:', error)
+  }
+}
+
+async function removeStepFromSchedule() {
+  if (!selectedGoal.value || !selectedStep.value) return
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: selectedGoal.value.backendId || selectedGoal.value.id,
+        step_id: selectedStep.value.backendId || selectedStep.value.id,
+        dt: null
+      }]
+    })
+    await loadWeeklySteps()
+    closeBottomSheet()
+  } catch (error) {
+    console.error('[Planning] Error removing step from schedule:', error)
+  }
 }
 
 function openAddStepModal() {
@@ -1942,6 +2226,58 @@ onUnmounted(() => {
   margin: 0 0 1rem;
 }
 
+.sheet-hint {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.75rem;
+}
+
+.step-info-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.info-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  background: var(--bg, #f3f4f6);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.info-badge svg {
+  opacity: 0.7;
+}
+
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0.5rem;
+}
+
+.days-grid .sheet-action.day-option {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  min-height: 60px;
+}
+
+.days-grid .day-label {
+  font-size: 0.875rem;
+}
+
+.days-grid .day-date {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 .sheet-actions {
   display: flex;
   flex-direction: column;
@@ -2054,6 +2390,52 @@ onUnmounted(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+@media (max-width: 767px) {
+  .sheet-action {
+    min-height: 52px;
+    padding: 0.875rem 1rem;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .sheet-action:active {
+    background: var(--hover-bg, #f3f4f6);
+    transform: scale(0.98);
+  }
+  
+  .days-grid {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.35rem;
+  }
+  
+  .days-grid .sheet-action.day-option {
+    padding: 0.5rem 0.25rem;
+    min-height: 50px;
+  }
+  
+  .days-grid .day-label {
+    font-size: 0.7rem;
+  }
+  
+  .days-grid .day-date {
+    font-size: 0.95rem;
+  }
+  
+  .step-card {
+    min-height: 48px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .step-card:active {
+    transform: scale(0.98);
+    background: var(--hover-bg, #f3f4f6);
+  }
+  
+  .quick-add-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 @media (min-width: 768px) {
