@@ -90,24 +90,24 @@
           <h2 class="section-title">Знакомо?</h2>
           <div class="pain-cards">
             <div class="pain-card">
-              <div class="pain-icon">😩</div>
+              <div class="pain-icon"><Frown :size="36" /></div>
               <h3>Не хватает дисциплины</h3>
               <p class="pain-text">Начинаю, бросаю, снова начинаю... Сила воли заканчивается через неделю.</p>
-              <div class="solution-arrow">↓</div>
+              <div class="solution-arrow"><TrendingUp :size="20" /></div>
               <p class="solution-text">Система делает дисциплину ненужной — маленькие шаги + привычки + AI-напоминания. Не сила воли, а правильная среда.</p>
             </div>
             <div class="pain-card">
-              <div class="pain-icon">💸</div>
+              <div class="pain-icon"><Wallet :size="36" /></div>
               <h3>Хочу расти в доходе</h3>
               <p class="pain-text">Работаю много, но финансового роста нет. Не понимаю, что конкретно делать.</p>
-              <div class="solution-arrow">↓</div>
+              <div class="solution-arrow"><TrendingUp :size="20" /></div>
               <p class="solution-text">Сфера "Карьера/Деньги" в Колесе баланса → конкретные цели → ежедневные действия. Рост = система, не удача.</p>
             </div>
             <div class="pain-card">
-              <div class="pain-icon">🤷</div>
+              <div class="pain-icon"><HelpCircle :size="36" /></div>
               <h3>Не знаю, что делать</h3>
               <p class="pain-text">Много идей, но непонятно с чего начать. Ступор и прокрастинация.</p>
-              <div class="solution-arrow">↓</div>
+              <div class="solution-arrow"><TrendingUp :size="20" /></div>
               <p class="solution-text">AI Mentor анализирует твою ситуацию и предлагает следующий шаг. Больше никакого ступора.</p>
             </div>
           </div>
@@ -208,39 +208,39 @@
       <section class="ai-mentor-section">
         <div class="container">
           <div class="mentor-header">
-            <div class="mentor-avatar">🤖</div>
+            <div class="mentor-avatar"><Bot :size="48" /></div>
             <h2 class="section-title">AI Mentor — твой проводник в системе 1%</h2>
             <p class="mentor-tagline">Он видит то, что сложно заметить в рутине, и помогает каждый день делать маленький шаг в плюс</p>
           </div>
           
           <div class="mentor-benefits">
             <div class="mentor-card">
-              <div class="mentor-icon">🎯</div>
+              <div class="mentor-icon"><Target :size="24" /></div>
               <h3>Ясность вместо хаоса</h3>
               <p>Перестань гадать, что делать. Ментор анализирует твои сферы жизни и помогает поставить цели, которые действительно важны именно тебе.</p>
             </div>
             <div class="mentor-card">
-              <div class="mentor-icon">📅</div>
+              <div class="mentor-icon"><Calendar :size="24" /></div>
               <h3>Неделя спланирована за минуту</h3>
               <p>Не трать время на раскладывание задач. Ментор сам распределяет шаги по дням с учётом твоей загрузки и приоритетов.</p>
             </div>
             <div class="mentor-card">
-              <div class="mentor-icon">👁️</div>
+              <div class="mentor-icon"><Eye :size="24" /></div>
               <h3>Видишь то, что упускаешь</h3>
               <p>В рутине легко не заметить перегрузку или дисбаланс. Ментор подсвечивает паттерны и предупреждает до того, как ты выгоришь.</p>
             </div>
             <div class="mentor-card">
-              <div class="mentor-icon">💡</div>
+              <div class="mentor-icon"><Lightbulb :size="24" /></div>
               <h3>Знаешь следующий шаг</h3>
               <p>Никакого ступора "а что теперь?". Получаешь персональные рекомендации на основе твоего реального прогресса.</p>
             </div>
             <div class="mentor-card">
-              <div class="mentor-icon">🪞</div>
+              <div class="mentor-icon"><Heart :size="24" /></div>
               <h3>Глубже понимаешь себя</h3>
               <p>Вечерняя рефлексия с правильными вопросами. Фиксируешь победы, учишься на ошибках, растёшь осознанно.</p>
             </div>
             <div class="mentor-card">
-              <div class="mentor-icon">⚡</div>
+              <div class="mentor-icon"><Zap :size="24" /></div>
               <h3>Меньше рутины — больше действий</h3>
               <p>Напоминания, приоритизация, адаптация плана — всё автоматически. Ты фокусируешься на главном.</p>
             </div>
@@ -249,7 +249,7 @@
           <div class="mentor-chat-demo">
             <div class="chat-window">
               <div class="chat-header">
-                <div class="chat-avatar">🤖</div>
+                <div class="chat-avatar"><Bot :size="24" /></div>
                 <div class="chat-info">
                   <span class="chat-name">AI Mentor</span>
                   <span class="chat-status">Онлайн</span>
@@ -280,42 +280,42 @@
           
           <div class="features-grid">
             <div class="feature-card">
-              <div class="feature-icon">🎯</div>
+              <div class="feature-icon"><Target :size="28" /></div>
               <h3>Колесо баланса</h3>
               <p>Оцени 6 сфер жизни и найди зоны роста. Визуальная карта твоего прогресса.</p>
             </div>
             <div class="feature-card">
-              <div class="feature-icon">🏦</div>
+              <div class="feature-icon"><ClipboardList :size="28" /></div>
               <h3>Банк целей</h3>
               <p>Собери все мечты, отфильтруй важное, разбей на конкретные шаги.</p>
             </div>
             <div class="feature-card">
-              <div class="feature-icon">📅</div>
+              <div class="feature-icon"><Calendar :size="28" /></div>
               <h3>Недельный планировщик</h3>
               <p>Распредели шаги по дням. Утром — фокус, вечером — рефлексия.</p>
             </div>
             <div class="feature-card">
-              <div class="feature-icon">🤖</div>
+              <div class="feature-icon"><Bot :size="28" /></div>
               <h3>AI Mentor</h3>
               <p>Персональный коуч 24/7. Помогает анализировать день и держать курс.</p>
             </div>
             <div class="feature-card">
-              <div class="feature-icon">📓</div>
+              <div class="feature-icon"><BookOpen :size="28" /></div>
               <h3>Дневник рефлексии</h3>
               <p>4 вопроса каждый вечер. Фиксируй победы и уроки дня.</p>
             </div>
             <div class="feature-card">
-              <div class="feature-icon">🔥</div>
+              <div class="feature-icon"><Flame :size="28" /></div>
               <h3>Трекер привычек</h3>
               <p>Формируй полезные привычки. Серии выполнения, XP за каждый день, гибкое расписание.</p>
             </div>
             <div class="feature-card">
-              <div class="feature-icon">🏆</div>
+              <div class="feature-icon"><Trophy :size="28" /></div>
               <h3>Достижения</h3>
               <p>19 бейджей в 4 категориях. Отслеживай прогресс, получай награды за системность.</p>
             </div>
             <div class="feature-card">
-              <div class="feature-icon">⭐</div>
+              <div class="feature-icon"><Star :size="28" /></div>
               <h3>XP и награды</h3>
               <p>Зарабатывай опыт за привычки, шаги и цели. Обменивай на награды из вишлиста.</p>
             </div>
@@ -330,42 +330,42 @@
           
           <div class="journey-grid">
             <div class="journey-card">
-              <div class="journey-icon">🎯</div>
+              <div class="journey-icon"><Target :size="28" /></div>
               <div class="journey-num">01</div>
               <h3>Определи себя</h3>
               <p class="journey-tool">Колесо баланса</p>
               <p class="journey-benefit">Ясность вместо хаоса в голове</p>
             </div>
             <div class="journey-card">
-              <div class="journey-icon">🏦</div>
+              <div class="journey-icon"><ClipboardList :size="28" /></div>
               <div class="journey-num">02</div>
               <h3>Поставь цели</h3>
               <p class="journey-tool">Банк целей + AI</p>
               <p class="journey-benefit">Фокус на том, что реально важно</p>
             </div>
             <div class="journey-card">
-              <div class="journey-icon">🔀</div>
+              <div class="journey-icon"><Layers :size="28" /></div>
               <div class="journey-num">03</div>
               <h3>Разбей путь</h3>
               <p class="journey-tool">Декомпозиция</p>
               <p class="journey-benefit">Большое → понятные шаги</p>
             </div>
             <div class="journey-card">
-              <div class="journey-icon">📅</div>
+              <div class="journey-icon"><Calendar :size="28" /></div>
               <div class="journey-num">04</div>
               <h3>Действуй каждый день</h3>
               <p class="journey-tool">Планировщик + Привычки</p>
               <p class="journey-benefit">Прогресс без перегрузки</p>
             </div>
             <div class="journey-card">
-              <div class="journey-icon">🤖</div>
+              <div class="journey-icon"><Bot :size="28" /></div>
               <div class="journey-num">05</div>
               <h3>Получай обратную связь</h3>
               <p class="journey-tool">AI Mentor</p>
               <p class="journey-benefit">Корректировка курса на ходу</p>
             </div>
             <div class="journey-card">
-              <div class="journey-icon">📈</div>
+              <div class="journey-icon"><TrendingUp :size="28" /></div>
               <div class="journey-num">06</div>
               <h3>Фиксируй прогресс</h3>
               <p class="journey-tool">Дневник + XP</p>
@@ -380,17 +380,17 @@
           <h2 class="section-title">Кому подойдёт One Percent</h2>
           <div class="audience-grid">
             <div class="audience-card">
-              <div class="audience-icon">💼</div>
+              <div class="audience-icon"><Rocket :size="32" /></div>
               <h3>Предпринимателям</h3>
               <p>С нагрузкой и хаосом, которые хотят структуру без потери гибкости</p>
             </div>
             <div class="audience-card">
-              <div class="audience-icon">🎨</div>
+              <div class="audience-icon"><PenTool :size="32" /></div>
               <h3>Фрилансерам</h3>
               <p>Которые хотят систему планирования и стабильный рост дохода</p>
             </div>
             <div class="audience-card">
-              <div class="audience-icon">📊</div>
+              <div class="audience-icon"><BarChart3 :size="32" /></div>
               <h3>Менеджерам</h3>
               <p>Которые ищут баланс между работой и личной жизнью</p>
             </div>
@@ -423,23 +423,23 @@
           <h2 class="section-title">Что меняется, когда системность становится привычкой</h2>
           <div class="benefits-grid">
             <div class="benefit-item">
-              <span class="benefit-icon">🎯</span>
+              <span class="benefit-icon"><Target :size="20" /></span>
               <span>Чёткий фокус без выгорания</span>
             </div>
             <div class="benefit-item">
-              <span class="benefit-icon">🔄</span>
+              <span class="benefit-icon"><RefreshCw :size="20" /></span>
               <span>Естественная дисциплина</span>
             </div>
             <div class="benefit-item">
-              <span class="benefit-icon">🧭</span>
+              <span class="benefit-icon"><Compass :size="20" /></span>
               <span>Понимание своих приоритетов</span>
             </div>
             <div class="benefit-item">
-              <span class="benefit-icon">🌱</span>
+              <span class="benefit-icon"><Sprout :size="20" /></span>
               <span>Рост без стресса</span>
             </div>
             <div class="benefit-item">
-              <span class="benefit-icon">🧠</span>
+              <span class="benefit-icon"><Brain :size="20" /></span>
               <span>Спокойная уверенность</span>
             </div>
           </div>
@@ -449,7 +449,7 @@
       <section class="club-section">
         <div class="container">
           <div class="club-header">
-            <span class="club-badge">🏆 Сообщество</span>
+            <span class="club-badge"><Trophy :size="16" /> Сообщество</span>
             <h2 class="section-title">Клуб 1%</h2>
             <p class="section-subtitle">
               Присоединяйся к сообществу людей, которые выбрали путь системного роста
@@ -458,22 +458,22 @@
           
           <div class="club-benefits">
             <div class="club-card">
-              <div class="club-icon">👥</div>
+              <div class="club-icon"><Users :size="32" /></div>
               <h3>Единомышленники</h3>
               <p>Окружение, которое поддерживает и вдохновляет. Люди с похожими целями и ценностями.</p>
             </div>
             <div class="club-card">
-              <div class="club-icon">📚</div>
+              <div class="club-icon"><BookOpen :size="32" /></div>
               <h3>Эксклюзивный контент</h3>
               <p>Закрытые материалы, разборы кейсов, практические гайды от экспертов.</p>
             </div>
             <div class="club-card">
-              <div class="club-icon">🎯</div>
+              <div class="club-icon"><Target :size="32" /></div>
               <h3>Челленджи и спринты</h3>
               <p>Регулярные групповые активности для прорывов в ключевых сферах жизни.</p>
             </div>
             <div class="club-card">
-              <div class="club-icon">💬</div>
+              <div class="club-icon"><MessageCircle :size="32" /></div>
               <h3>Мастермайнды</h3>
               <p>Групповые сессии взаимной поддержки и обмена опытом с другими участниками.</p>
             </div>
@@ -498,13 +498,13 @@
                 </div>
               </div>
               <ul class="pricing-features">
-                <li><span class="check">✓</span> Колесо баланса (ССП)</li>
-                <li><span class="check">✓</span> Банк целей (до 5 целей)</li>
-                <li><span class="check">✓</span> Базовое планирование</li>
-                <li><span class="check">✓</span> Трекер привычек (до 3)</li>
-                <li><span class="check">✓</span> Дневник рефлексии</li>
-                <li class="disabled"><span class="cross">×</span> AI Mentor</li>
-                <li class="disabled"><span class="cross">×</span> Клуб 1%</li>
+                <li><span class="check"><Check :size="16" /></span> Колесо баланса (ССП)</li>
+                <li><span class="check"><Check :size="16" /></span> Банк целей (до 5 целей)</li>
+                <li><span class="check"><Check :size="16" /></span> Базовое планирование</li>
+                <li><span class="check"><Check :size="16" /></span> Трекер привычек (до 3)</li>
+                <li><span class="check"><Check :size="16" /></span> Дневник рефлексии</li>
+                <li class="disabled"><span class="cross"><X :size="16" /></span> AI Mentor</li>
+                <li class="disabled"><span class="cross"><X :size="16" /></span> Клуб 1%</li>
               </ul>
               <router-link to="/auth/register" class="btn btn-outline">
                 Начать бесплатно
@@ -521,13 +521,13 @@
                 </div>
               </div>
               <ul class="pricing-features">
-                <li><span class="check">✓</span> Всё из бесплатного плана</li>
-                <li><span class="check">✓</span> Безлимитные цели и привычки</li>
-                <li><span class="check">✓</span> AI Mentor — персональный коуч</li>
-                <li><span class="check">✓</span> Продвинутая аналитика</li>
-                <li><span class="check">✓</span> Приоритетная поддержка</li>
-                <li><span class="check">✓</span> Экспорт данных</li>
-                <li class="disabled"><span class="cross">×</span> Клуб 1%</li>
+                <li><span class="check"><Check :size="16" /></span> Всё из бесплатного плана</li>
+                <li><span class="check"><Check :size="16" /></span> Безлимитные цели и привычки</li>
+                <li><span class="check"><Check :size="16" /></span> AI Mentor — персональный коуч</li>
+                <li><span class="check"><Check :size="16" /></span> Продвинутая аналитика</li>
+                <li><span class="check"><Check :size="16" /></span> Приоритетная поддержка</li>
+                <li><span class="check"><Check :size="16" /></span> Экспорт данных</li>
+                <li class="disabled"><span class="cross"><X :size="16" /></span> Клуб 1%</li>
               </ul>
               <router-link to="/auth/register" class="btn btn-primary">
                 Попробовать Pro
@@ -543,13 +543,13 @@
                 </div>
               </div>
               <ul class="pricing-features">
-                <li><span class="check">✓</span> Всё из Pro плана</li>
-                <li><span class="check">✓</span> Доступ в закрытое сообщество</li>
-                <li><span class="check">✓</span> Эксклюзивные материалы</li>
-                <li><span class="check">✓</span> Еженедельные мастермайнды</li>
-                <li><span class="check">✓</span> Групповые челленджи</li>
-                <li><span class="check">✓</span> Персональные разборы</li>
-                <li><span class="check">✓</span> Ранний доступ к новым функциям</li>
+                <li><span class="check"><Check :size="16" /></span> Всё из Pro плана</li>
+                <li><span class="check"><Check :size="16" /></span> Доступ в закрытое сообщество</li>
+                <li><span class="check"><Check :size="16" /></span> Эксклюзивные материалы</li>
+                <li><span class="check"><Check :size="16" /></span> Еженедельные мастермайнды</li>
+                <li><span class="check"><Check :size="16" /></span> Групповые челленджи</li>
+                <li><span class="check"><Check :size="16" /></span> Персональные разборы</li>
+                <li><span class="check"><Check :size="16" /></span> Ранний доступ к новым функциям</li>
               </ul>
               <router-link to="/auth/register" class="btn btn-premium">
                 Вступить в Клуб
@@ -558,7 +558,7 @@
           </div>
           
           <p class="pricing-note">
-            💡 Начни бесплатно и переходи на Pro, когда почувствуешь, что готов к следующему уровню
+            <Lightbulb :size="18" class="note-icon" /> Начни бесплатно и переходи на Pro, когда почувствуешь, что готов к следующему уровню
           </p>
         </div>
       </section>
@@ -604,6 +604,39 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { 
+  Target, 
+  Calendar, 
+  Flame, 
+  Trophy, 
+  Users, 
+  BookOpen, 
+  MessageCircle,
+  Check,
+  X,
+  Lightbulb,
+  RefreshCw,
+  Compass,
+  Sprout,
+  Brain,
+  Frown,
+  Wallet,
+  HelpCircle,
+  Bot,
+  TrendingUp,
+  BarChart3,
+  Zap,
+  Heart,
+  Shield,
+  Rocket,
+  Star,
+  Eye,
+  Layout,
+  ClipboardList,
+  Layers,
+  Play,
+  PenTool
+} from 'lucide-vue-next'
 
 const days = ref(90)
 const isScrolled = ref(false)
@@ -957,8 +990,11 @@ onUnmounted(() => {
 }
 
 .pain-icon {
-  font-size: 2.5rem;
   margin-bottom: 1rem;
+  color: #a5b4fc;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .pain-card h3 {
@@ -976,9 +1012,11 @@ onUnmounted(() => {
 }
 
 .solution-arrow {
-  font-size: 1.5rem;
-  color: #a5b4fc;
+  color: #22c55e;
   margin: 0.5rem 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .pain-card .solution-text {
@@ -1011,9 +1049,6 @@ onUnmounted(() => {
     padding: 1.25rem;
   }
   
-  .pain-icon {
-    font-size: 2rem;
-  }
   
   .pain-card h3 {
     font-size: 1rem;
@@ -1038,8 +1073,10 @@ onUnmounted(() => {
 }
 
 .mentor-avatar {
-  font-size: 4rem;
   margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .ai-mentor-section .section-title {
@@ -1071,8 +1108,9 @@ onUnmounted(() => {
 }
 
 .mentor-icon {
-  font-size: 2rem;
   margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
 }
 
 .mentor-card h3 {
@@ -1110,7 +1148,9 @@ onUnmounted(() => {
 }
 
 .chat-avatar {
-  font-size: 1.5rem;
+  color: #6366f1;
+  display: flex;
+  align-items: center;
 }
 
 .chat-info {
@@ -1253,8 +1293,10 @@ onUnmounted(() => {
 }
 
 .feature-icon {
-  font-size: 2.5rem;
   margin-bottom: 1rem;
+  color: #6366f1;
+  display: flex;
+  align-items: center;
 }
 
 .feature-card h3 {
@@ -1299,8 +1341,11 @@ onUnmounted(() => {
 }
 
 .journey-icon {
-  font-size: 2rem;
   margin-bottom: 0.5rem;
+  color: #6366f1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .journey-num {
@@ -1382,8 +1427,11 @@ onUnmounted(() => {
 }
 
 .audience-icon {
-  font-size: 2.5rem;
   margin-bottom: 1rem;
+  color: #6366f1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .audience-card h3 {
@@ -1787,7 +1835,9 @@ onUnmounted(() => {
 }
 
 .benefit-icon {
-  font-size: 1.25rem;
+  color: #6366f1;
+  display: flex;
+  align-items: center;
 }
 
 .club-section {
@@ -1801,7 +1851,9 @@ onUnmounted(() => {
 }
 
 .club-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   color: white;
   padding: 0.5rem 1rem;
@@ -1836,8 +1888,11 @@ onUnmounted(() => {
 }
 
 .club-icon {
-  font-size: 2.5rem;
   margin-bottom: 1rem;
+  color: #6366f1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .club-card h3 {
@@ -2043,9 +2098,17 @@ onUnmounted(() => {
 }
 
 .pricing-note {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
   text-align: center;
   color: #6b7280;
   font-size: 0.9375rem;
+}
+
+.pricing-note .note-icon {
+  color: #fbbf24;
 }
 
 @media (max-width: 900px) {
