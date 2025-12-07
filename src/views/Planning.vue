@@ -242,9 +242,16 @@
             }"
             @click="openStepActions(goal, step)"
           >
-            <div class="priority-stripe" :class="'priority-' + (getScheduledPriority(goal.id, step.id) || 'none')"></div>
+            <button 
+              class="step-checkbox"
+              :class="{ completed: step.completed }"
+              @click.stop="quickToggleStepComplete(goal, step)"
+              :title="step.completed ? 'Отменить выполнение' : 'Выполнить'"
+            >
+              <Check v-if="step.completed" :size="14" />
+            </button>
             <div class="step-content">
-              <span class="step-title">{{ step.title }}</span>
+              <span class="step-title" :class="{ completed: step.completed }">{{ step.title }}</span>
               <div class="step-badges" v-if="isStepScheduled(goal.id, step.id)">
                 <span class="date-badge">
                   <Calendar :size="11" />
@@ -254,18 +261,9 @@
                   <Clock :size="11" />
                   {{ getScheduledTime(goal.id, step.id) ? formatTimeShort(getScheduledTime(goal.id, step.id)) : '—' }}
                 </span>
-                <span class="priority-icon-badge" :class="'priority-' + (getScheduledPriority(goal.id, step.id) || 'none')">
-                  {{ getScheduledPriority(goal.id, step.id) ? getPriorityIcon(getScheduledPriority(goal.id, step.id)) : '○' }}
-                </span>
               </div>
             </div>
-            <button 
-              v-if="!isStepScheduled(goal.id, step.id)"
-              class="quick-add-btn"
-              @click.stop="quickScheduleStep(goal, step)"
-            >
-              <Plus :size="18" />
-            </button>
+            <div class="priority-stripe" :class="'priority-' + (getScheduledPriority(goal.id, step.id) || 'none')"></div>
           </div>
         </div>
       </div>
@@ -332,40 +330,73 @@
           <h3 class="sheet-title">{{ selectedStep?.title }}</h3>
           <p class="sheet-subtitle">{{ selectedGoal?.text || selectedGoal?.title }}</p>
           
-          <!-- Запланированный шаг: показываем действия -->
+          <!-- Запланированный шаг: показываем inline-действия -->
           <template v-if="isSelectedStepScheduled">
-            <div class="step-info-badges">
-              <span class="info-badge" v-if="getScheduledStepDate">
-                <Calendar :size="14" />
-                {{ formatScheduledDateLabel(getScheduledStepDate) }}
-              </span>
-              <span class="info-badge" v-if="getScheduledStepPriority">
-                <Flag :size="14" />
-                {{ getPriorityLabel(getScheduledStepPriority) }}
-              </span>
-              <span class="info-badge" v-if="getScheduledStepTime">
-                <Clock :size="14" />
-                {{ formatTimeLabel(getScheduledStepTime) }}
-              </span>
-            </div>
-            
             <div class="sheet-actions">
               <button class="sheet-action" @click="toggleStepComplete">
                 <CheckCircle :size="20" />
                 <span>{{ selectedStep?.completed ? 'Отменить выполнение' : 'Выполнено' }}</span>
               </button>
-              <button class="sheet-action" @click="openStepRescheduleSheet">
-                <Calendar :size="20" />
-                <span>Перенести</span>
-              </button>
-              <button class="sheet-action" @click="openStepPrioritySheet">
-                <Flag :size="20" />
+            </div>
+            
+            <div class="inline-options-section">
+              <div class="option-label">
+                <Calendar :size="16" />
+                <span>День</span>
+              </div>
+              <div class="option-chips">
+                <button 
+                  v-for="day in weekDays" 
+                  :key="day.date"
+                  class="chip"
+                  :class="{ active: getScheduledStepDate === day.date }"
+                  @click="rescheduleStep(day.date)"
+                >
+                  {{ day.label }} {{ day.dayNum }}
+                </button>
+              </div>
+            </div>
+            
+            <div class="inline-options-section">
+              <div class="option-label">
+                <Flag :size="16" />
                 <span>Приоритет</span>
-              </button>
-              <button class="sheet-action" @click="openStepTimeSheet">
-                <Clock :size="20" />
+              </div>
+              <div class="option-chips">
+                <button 
+                  v-for="priority in priorities" 
+                  :key="priority.value"
+                  class="chip"
+                  :class="{ 
+                    active: getScheduledStepPriority === priority.value,
+                    ['priority-' + priority.value]: true
+                  }"
+                  @click="updateStepPriority(priority.value)"
+                >
+                  {{ priority.label }}
+                </button>
+              </div>
+            </div>
+            
+            <div class="inline-options-section">
+              <div class="option-label">
+                <Clock :size="16" />
                 <span>Время</span>
-              </button>
+              </div>
+              <div class="option-chips">
+                <button 
+                  v-for="time in timeOptions" 
+                  :key="time.value"
+                  class="chip"
+                  :class="{ active: getScheduledStepTime === time.value }"
+                  @click="updateStepTime(time.value)"
+                >
+                  {{ time.label }}
+                </button>
+              </div>
+            </div>
+            
+            <div class="sheet-actions" style="margin-top: 0.5rem;">
               <button class="sheet-action danger" @click="removeStepFromSchedule">
                 <Trash2 :size="20" />
                 <span>Убрать из плана</span>
@@ -389,60 +420,6 @@
               </button>
             </div>
           </template>
-        </template>
-        
-        <template v-else-if="bottomSheetMode === 'step-reschedule'">
-          <h3 class="sheet-title">Перенести на</h3>
-          
-          <div class="sheet-actions days-grid">
-            <button 
-              v-for="day in weekDays" 
-              :key="day.date"
-              class="sheet-action day-option"
-              :class="{ 
-                today: isToday(day.date),
-                active: getScheduledStepDate === day.date 
-              }"
-              @click="rescheduleStep(day.date)"
-            >
-              <span class="day-label">{{ day.label }}</span>
-              <span class="day-date">{{ day.dayNum }}</span>
-            </button>
-          </div>
-        </template>
-        
-        <template v-else-if="bottomSheetMode === 'step-priority'">
-          <h3 class="sheet-title">Приоритет</h3>
-          
-          <div class="sheet-actions">
-            <button 
-              v-for="priority in priorities" 
-              :key="priority.value"
-              class="sheet-action priority-option"
-              :class="{ active: getScheduledStepPriority === priority.value }"
-              @click="updateStepPriority(priority.value)"
-            >
-              <span class="priority-indicator" :class="'priority-' + priority.value"></span>
-              <span>{{ priority.label }}</span>
-            </button>
-          </div>
-        </template>
-        
-        <template v-else-if="bottomSheetMode === 'step-time'">
-          <h3 class="sheet-title">Время выполнения</h3>
-          
-          <div class="sheet-actions">
-            <button 
-              v-for="time in timeOptions" 
-              :key="time.value"
-              class="sheet-action"
-              :class="{ active: getScheduledStepTime === time.value }"
-              @click="updateStepTime(time.value)"
-            >
-              <Clock :size="18" />
-              <span>{{ time.label }}</span>
-            </button>
-          </div>
         </template>
 
         <template v-else-if="bottomSheetMode === 'reschedule'">
@@ -1169,17 +1146,6 @@ function formatTimeLabel(time) {
   return labels[time] || time || ''
 }
 
-function openStepRescheduleSheet() {
-  bottomSheetMode.value = 'step-reschedule'
-}
-
-function openStepPrioritySheet() {
-  bottomSheetMode.value = 'step-priority'
-}
-
-function openStepTimeSheet() {
-  bottomSheetMode.value = 'step-time'
-}
 
 async function toggleStepComplete() {
   if (!selectedGoal.value || !selectedStep.value) return
@@ -1205,6 +1171,30 @@ async function toggleStepComplete() {
   } catch (error) {
     console.error('[Planning] Error toggling step complete:', error)
     selectedStep.value.completed = !newCompleted
+  }
+}
+
+async function quickToggleStepComplete(goal, step) {
+  const newCompleted = !step.completed
+  step.completed = newCompleted
+  
+  if (newCompleted) {
+    xpStore.addXP(10, 'step', `Выполнен шаг: ${step.title}`)
+  }
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: goal.backendId || goal.id,
+        step_id: step.backendId || step.id,
+        is_complete: newCompleted
+      }]
+    })
+    await loadWeeklySteps()
+  } catch (error) {
+    console.error('[Planning] Error toggling step complete:', error)
+    step.completed = !newCompleted
   }
 }
 
@@ -2222,10 +2212,8 @@ onUnmounted(() => {
 .step-card {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 0.5rem;
   padding: 0.5rem 0.625rem;
-  padding-left: 0;
   background: var(--bg);
   border-radius: 10px;
   border: 1px solid var(--border-color, #e5e7eb);
@@ -2233,12 +2221,46 @@ onUnmounted(() => {
   transition: all 0.2s;
   overflow: hidden;
   min-height: 44px;
+  position: relative;
+}
+
+.step-checkbox {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color, #d1d5db);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: white;
+}
+
+.step-checkbox:hover {
+  border-color: var(--primary, #6366f1);
+  background: var(--primary-light, rgba(99, 102, 241, 0.1));
+}
+
+.step-checkbox.completed {
+  background: var(--success, #10b981);
+  border-color: var(--success, #10b981);
+}
+
+.step-title.completed {
+  text-decoration: line-through;
+  opacity: 0.6;
 }
 
 .step-card .priority-stripe {
-  margin-right: 0.375rem;
-  min-height: 100%;
-  align-self: stretch;
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 0 10px 10px 0;
 }
 
 .step-card:hover {
@@ -2314,26 +2336,6 @@ onUnmounted(() => {
 .priority-badge.priority-optional { background: var(--text-muted, #9ca3af); color: white; }
 .priority-badge.priority-none { background: var(--border-color, #e5e7eb); color: var(--text-primary, #1f2937); }
 
-.quick-add-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px dashed var(--border-color, #e5e7eb);
-  background: transparent;
-  color: var(--text-muted, #9ca3af);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.quick-add-btn:hover {
-  border-color: var(--primary, #6366f1);
-  color: var(--primary, #6366f1);
-  background: var(--primary-light, rgba(99, 102, 241, 0.1));
-}
 
 .infinite-scroll-trigger {
   display: flex;
@@ -2598,6 +2600,74 @@ onUnmounted(() => {
   gap: 0.25rem;
 }
 
+.inline-options-section {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+.inline-options-section:last-of-type {
+  border-bottom: none;
+}
+
+.option-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.option-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.chip {
+  padding: 0.375rem 0.75rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg);
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.chip:hover {
+  border-color: var(--primary, #6366f1);
+  background: var(--primary-light, rgba(99, 102, 241, 0.1));
+}
+
+.chip.active {
+  background: var(--primary, #6366f1);
+  border-color: var(--primary, #6366f1);
+  color: white;
+}
+
+.chip.priority-critical.active {
+  background: var(--danger, #ef4444);
+  border-color: var(--danger, #ef4444);
+}
+
+.chip.priority-desirable.active {
+  background: var(--warning, #f59e0b);
+  border-color: var(--warning, #f59e0b);
+}
+
+.chip.priority-attention.active {
+  background: var(--info, #3b82f6);
+  border-color: var(--info, #3b82f6);
+}
+
+.chip.priority-optional.active {
+  background: var(--text-muted, #9ca3af);
+  border-color: var(--text-muted, #9ca3af);
+}
+
 .sheet-action {
   display: flex;
   align-items: center;
@@ -2746,10 +2816,6 @@ onUnmounted(() => {
     background: var(--hover-bg, #f3f4f6);
   }
   
-  .quick-add-btn {
-    min-width: 44px;
-    min-height: 44px;
-  }
 }
 
 @media (min-width: 768px) {
