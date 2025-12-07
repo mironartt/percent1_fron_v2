@@ -1175,6 +1175,13 @@ onUnmounted(() => {
   margin-bottom: 1rem;
   overflow-x: auto;
   padding-bottom: 0.25rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.week-stats::-webkit-scrollbar {
+  display: none;
 }
 
 .stat-chip {
@@ -1204,6 +1211,13 @@ onUnmounted(() => {
   margin-bottom: 1rem;
   overflow-x: auto;
   padding-bottom: 0.25rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.week-bar::-webkit-scrollbar {
+  display: none;
 }
 
 .day-tab {
@@ -1469,6 +1483,19 @@ onUnmounted(() => {
 
 .filters-section {
   margin-bottom: 1rem;
+  position: relative;
+}
+
+.filters-section::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 40px;
+  height: calc(100% - 0.5rem);
+  background: linear-gradient(to right, transparent, var(--bg-secondary, #f9fafb));
+  pointer-events: none;
+  opacity: 0.9;
 }
 
 .chip-filters {
@@ -1477,12 +1504,26 @@ onUnmounted(() => {
   overflow-x: auto;
   padding-bottom: 0.5rem;
   margin-bottom: 0.5rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.chip-filters::-webkit-scrollbar {
+  display: none;
 }
 
 .status-chips {
   display: flex;
   gap: 0.5rem;
   overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.status-chips::-webkit-scrollbar {
+  display: none;
 }
 
 .chip {
