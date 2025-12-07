@@ -2956,9 +2956,13 @@ async function saveHabit() {
       coachHint.value = 'Отлично! Первый шаг сделан. Старайтесь выполнять привычку каждый день — так она закрепится быстрее.'
     }
     
+    console.log('[Habits] Creating habit on backend:', backendHabitData)
     const backendResult = await habitsStore.createHabit(backendHabitData)
+    console.log('[Habits] Backend create result:', backendResult)
+    
     if (backendResult.success && backendResult.habitId) {
       appStore.updateHabit(localHabit.id, { backendId: backendResult.habitId })
+      console.log('[Habits] Habit synced with backend, id:', backendResult.habitId)
     }
   }
   
