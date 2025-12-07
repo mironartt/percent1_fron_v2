@@ -1903,8 +1903,25 @@ async function deleteGoalFromModal() {
 
 function goToFullEdit(goalId) {
   const transferredGoal = store.goals.find(g => g.sourceId === goalId && g.source === 'goals-bank')
-  if (transferredGoal) {
-    router.push(`/app/goal/${transferredGoal.id}`)
+  if (!transferredGoal) {
+    console.warn('[GoalsBank] Cannot edit: transferred goal not found for', goalId)
+    return
+  }
+  
+  // Use backendId if available, otherwise use id directly (id may already be local-{id} format)
+  const navigateId = transferredGoal.backendId || transferredGoal.id
+  
+  // Dev mode: allow navigation without backendId
+  if (DEBUG_MODE && SKIP_AUTH_CHECK) {
+    router.push(`/app/goals/${navigateId}`)
+    return
+  }
+  
+  // Production: require backendId
+  if (transferredGoal.backendId) {
+    router.push(`/app/goals/${transferredGoal.backendId}`)
+  } else {
+    console.warn('[GoalsBank] Cannot edit: no backendId for transferred goal', goalId)
   }
 }
 

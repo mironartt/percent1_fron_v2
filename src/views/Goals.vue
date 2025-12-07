@@ -944,7 +944,8 @@ function openGoalDetail(goal) {
 }
 
 function editGoal(goal) {
-  router.push(`/app/goals/${goal.id}`)
+  const goalId = goal.backendId || goal.id
+  router.push(`/app/goals/${goalId}`)
 }
 
 function deleteGoalConfirm(goal) {
