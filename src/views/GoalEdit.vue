@@ -4443,6 +4443,11 @@ function formatDate(dateString) {
     gap: 0.75rem;
   }
 
+  .modal-footer.modal-footer-redesigned {
+    flex-direction: row;
+    gap: 0.75rem;
+  }
+
   .modal-footer-left,
   .modal-footer-right {
     width: 100%;
