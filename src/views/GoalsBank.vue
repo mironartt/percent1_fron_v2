@@ -71,13 +71,6 @@
               </button>
               <button 
                 class="filter-chip" 
-                :class="{ active: filterStatus === 'unstatus' }" 
-                @click="setFilterStatus('unstatus')"
-              >
-                На оценке <span class="chip-count">{{ rawGoalsCount }}</span>
-              </button>
-              <button 
-                class="filter-chip" 
                 :class="{ active: filterStatus === 'complete' }" 
                 @click="setFilterStatus('complete')"
               >
@@ -131,7 +124,7 @@
                 <span class="sphere-chip" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
                   {{ getSphereNameOnly(goal.sphereId) }}
                 </span>
-                <span class="status-chip" :class="getStatusClass(goal)">
+                <span v-if="getStatusText(goal)" class="status-chip" :class="getStatusClass(goal)">
                   {{ getStatusText(goal) }}
                 </span>
               </div>
@@ -623,8 +616,6 @@ const apiPagination = computed(() => goalsApiData.value?.pagination || { page: 1
 
 // Stats from API (prefer API data, fallback to local)
 const totalGoalsCount = computed(() => apiTotalData.value?.total_goals ?? rawIdeas.value.length)
-const trueGoalsCount = computed(() => apiTotalData.value?.true_goals ?? validatedGoals.value.length)
-const falseGoalsCount = computed(() => apiTotalData.value?.false_goals ?? rejectedGoals.value.length)
 const inWorkGoalsCount = computed(() => apiTotalData.value?.in_work_goals ?? transferredGoals.value.length)
 
 // Pagination state
@@ -891,20 +882,6 @@ async function saveNewGoal() {
   })
 }
 
-function selectNewGoalValidationStatus(isValid) {
-  newGoal.value.status = isValid ? 'validated' : 'rejected'
-}
-
-const validatedGoals = computed(() => rawIdeas.value.filter(i => i.status === 'validated'))
-const validatedCount = computed(() => validatedGoals.value.length)
-const rejectedGoals = computed(() => rawIdeas.value.filter(i => i.status === 'rejected'))
-const rejectedCount = computed(() => rejectedGoals.value.length)
-const uncheckedCount = computed(() => rawIdeas.value.filter(i => !i.status || i.status === 'raw').length)
-const checkedCount = computed(() => validatedCount.value + rejectedCount.value)
-const validatedPercent = computed(() => rawIdeas.value.length > 0 ? (validatedCount.value / rawIdeas.value.length) * 100 : 0)
-const rejectedPercent = computed(() => rawIdeas.value.length > 0 ? (rejectedCount.value / rawIdeas.value.length) * 100 : 0)
-
-const rawGoalsCount = computed(() => apiTotalData.value?.unstatus_goals ?? uncheckedCount.value)
 const completedGoalsCount = computed(() => apiTotalData.value?.completed_goals ?? allGoals.value.filter(g => g.status === 'completed' && g.source === 'goals-bank').length)
 
 function setFilterStatus(status) {
@@ -915,17 +892,13 @@ function setFilterStatus(status) {
 function getStatusClass(goal) {
   if (isGoalCompleted(goal.id)) return 'completed'
   if (isGoalTransferred(goal.id)) return 'in-work'
-  if (goal.status === 'rejected') return 'rejected'
-  if (!goal.status || goal.status === 'raw') return 'raw'
   return 'available'
 }
 
 function getStatusText(goal) {
   if (isGoalCompleted(goal.id)) return 'Завершена'
   if (isGoalTransferred(goal.id)) return 'В работе'
-  if (goal.status === 'rejected') return 'Отклонена'
-  if (goal.status === 'validated') return 'Истинная'
-  return 'На оценке'
+  return ''
 }
 
 const expandedGoalId = ref(null)
@@ -1241,7 +1214,7 @@ function clearBankSelection() {
 
 const canBulkTakeToWork = computed(() => {
   return selectedBankGoals.value.some(id => {
-    const goal = validatedGoals.value.find(g => g.id === id)
+    const goal = rawIdeas.value.find(g => g.id === id)
     return goal && !isGoalTransferred(id) && !isGoalCompleted(id)
   })
 })
@@ -1254,7 +1227,7 @@ const canBulkComplete = computed(() => {
 
 function bulkTakeToWork() {
   const goalsToTake = selectedBankGoals.value
-    .map(id => validatedGoals.value.find(g => g.id === id))
+    .map(id => rawIdeas.value.find(g => g.id === id))
     .filter(goal => goal && !isGoalTransferred(goal.id) && !isGoalCompleted(goal.id))
   
   if (goalsToTake.length === 0) return
@@ -1271,7 +1244,7 @@ function bulkCompleteGoals() {
   
   if (confirm(`Завершить ${goalsToComplete.length} ${goalsToComplete.length === 1 ? 'цель' : 'целей'}?`)) {
     goalsToComplete.forEach(sourceId => {
-      const goal = validatedGoals.value.find(g => g.id === sourceId)
+      const goal = rawIdeas.value.find(g => g.id === sourceId)
       if (goal) completeGoalFromBank(goal)
     })
     clearBankSelection()
@@ -1293,32 +1266,18 @@ const sphereDistribution = computed(() => {
       id: sphere.id,
       name: sphere.name,
       icon: sphere.icon,
-      total: 0,
-      validated: 0,
-      rejected: 0,
-      validatedPercent: 0,
-      rejectedPercent: 0
+      total: 0
     }
   })
   
   rawIdeas.value.forEach(idea => {
     if (idea.sphereId && distribution[idea.sphereId]) {
       distribution[idea.sphereId].total++
-      if (idea.status === 'validated') {
-        distribution[idea.sphereId].validated++
-      } else if (idea.status === 'rejected') {
-        distribution[idea.sphereId].rejected++
-      }
     }
   })
   
   return Object.values(distribution)
     .filter(s => s.total > 0)
-    .map(s => ({
-      ...s,
-      validatedPercent: s.total > 0 ? (s.validated / s.total) * 100 : 0,
-      rejectedPercent: s.total > 0 ? (s.rejected / s.total) * 100 : 0
-    }))
     .sort((a, b) => b.total - a.total)
 })
 
@@ -1394,7 +1353,7 @@ function addExampleGoal(sphereId, goalText) {
 }
 
 const weakSphereGoals = computed(() => {
-  return validatedGoals.value.filter(g => isWeakSphere(g.sphereId))
+  return rawIdeas.value.filter(g => isWeakSphere(g.sphereId))
 })
 
 const ideasBySphere = computed(() => {
@@ -1561,7 +1520,7 @@ async function completeGoalsBankHandler() {
     return
   }
   
-  const selectedGoals = validatedGoals.value.filter(g => selectedGoalIds.value.includes(g.id))
+  const selectedGoals = rawIdeas.value.filter(g => selectedGoalIds.value.includes(g.id))
   
   // First, sync ALL rawIdeas with backend (those without backendId)
   const goalsToCreate = rawIdeas.value.filter(g => !g.backendId)
