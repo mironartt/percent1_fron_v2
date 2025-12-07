@@ -328,6 +328,59 @@
         <Plus :size="24" />
       </button>
 
+      <!-- Мини-журнал цели -->
+      <div class="mini-journal-section">
+        <button class="mini-journal-toggle" @click="toggleMiniJournal">
+          <BookOpen :size="18" />
+          <span>Заметки</span>
+          <span v-if="miniJournalEntries.length" class="journal-count">{{ miniJournalEntries.length }}</span>
+          <ChevronDown :size="16" class="toggle-icon" :class="{ rotated: showMiniJournal }" />
+        </button>
+        
+        <transition name="slide">
+          <div v-if="showMiniJournal" class="mini-journal-content">
+            <div class="journal-input-wrapper">
+              <textarea 
+                v-model="miniJournalEntry"
+                class="journal-input"
+                placeholder="Запишите мысли, прогресс или идеи..."
+                rows="2"
+                @keydown.ctrl.enter="addMiniJournalEntry"
+                @keydown.meta.enter="addMiniJournalEntry"
+              ></textarea>
+              <button 
+                class="journal-add-btn"
+                @click="addMiniJournalEntry"
+                :disabled="!miniJournalEntry.trim()"
+              >
+                <Send :size="16" />
+              </button>
+            </div>
+            
+            <div v-if="miniJournalEntries.length" class="journal-entries">
+              <div 
+                v-for="entry in miniJournalEntries" 
+                :key="entry.id" 
+                class="journal-entry"
+              >
+                <div class="entry-header">
+                  <span class="entry-date">{{ formatJournalDate(entry.createdAt) }}</span>
+                  <button class="entry-delete" @click="removeMiniJournalEntry(entry.id)">
+                    <X :size="14" />
+                  </button>
+                </div>
+                <p class="entry-text">{{ entry.text }}</p>
+              </div>
+            </div>
+            
+            <div v-else class="journal-empty">
+              <Lightbulb :size="24" />
+              <p>Записывайте идеи и прогресс по этой цели</p>
+            </div>
+          </div>
+        </transition>
+      </div>
+
     </div>
 
     <!-- Модальное окно редактирования цели (унифицировано с GoalsBank) -->
@@ -709,7 +762,8 @@ import {
   Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target,
   Square, CheckSquare, Search, CheckCircle2, AlertCircle,
   CheckCircle, XCircle, Check, Filter, Settings, Clock, Calendar, Circle,
-  FileText, Lightbulb, Shield, BarChart2, Play, Pause, GitBranch
+  FileText, Lightbulb, Shield, BarChart2, Play, Pause, GitBranch,
+  BookOpen, ChevronDown, Send
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -935,6 +989,67 @@ async function addInlineStep() {
   nextTick(() => {
     inlineStepInput.value?.focus()
   })
+}
+
+// Мини-журнал цели
+const showMiniJournal = ref(false)
+const miniJournalEntry = ref('')
+const miniJournalEntries = computed(() => {
+  return goalForm.value?.journal || []
+})
+
+function toggleMiniJournal() {
+  showMiniJournal.value = !showMiniJournal.value
+}
+
+function addMiniJournalEntry() {
+  if (!miniJournalEntry.value.trim()) return
+  
+  const entry = {
+    id: `${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+    text: miniJournalEntry.value.trim(),
+    createdAt: new Date().toISOString()
+  }
+  
+  if (!goalForm.value.journal) {
+    goalForm.value.journal = []
+  }
+  goalForm.value.journal.unshift(entry)
+  miniJournalEntry.value = ''
+  saveJournal()
+}
+
+function removeMiniJournalEntry(entryId) {
+  if (!goalForm.value.journal) return
+  const index = goalForm.value.journal.findIndex(e => e.id === entryId)
+  if (index !== -1) {
+    goalForm.value.journal.splice(index, 1)
+    saveJournal()
+  }
+}
+
+function saveJournal() {
+  if (!goal.value) return
+  store.updateGoal(goal.value.id, {
+    journal: goalForm.value.journal || []
+  })
+}
+
+function formatJournalDate(dateStr) {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diff = now - date
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  
+  if (days === 0) {
+    return 'Сегодня'
+  } else if (days === 1) {
+    return 'Вчера'
+  } else if (days < 7) {
+    return `${days} дн. назад`
+  } else {
+    return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+  }
 }
 
 // Модалка добавления шага (мобильная версия)
@@ -1899,7 +2014,8 @@ function loadGoalData() {
       mvp: goal.value.mvp || '',
       // Only use store steps if we haven't loaded from backend yet
       steps: shouldLoadSteps ? (goal.value.steps ? goal.value.steps.map(s => ({ ...s })) : []) : goalForm.value.steps,
-      progress: goal.value.progress || 0
+      progress: goal.value.progress || 0,
+      journal: goal.value.journal ? JSON.parse(JSON.stringify(goal.value.journal)) : []
     }
     recalculateProgress()
     // Инициализировать hash для отслеживания изменений
@@ -2189,7 +2305,8 @@ async function doSave(showNotification = true) {
     // Optimistic UI: update local state first
     store.updateGoal(goal.value.id, {
       steps: stepsToSave,
-      progress: progress
+      progress: progress,
+      journal: goalForm.value.journal || []
     })
     
     // Убрать флаг isNew у сохранённых шагов
@@ -3299,6 +3416,205 @@ function formatDate(dateString) {
     width: 52px;
     height: 52px;
   }
+}
+
+/* Мини-журнал */
+.mini-journal-section {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+  padding-top: 1rem;
+}
+
+.mini-journal-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary, #f9fafb);
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary, #111827);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mini-journal-toggle:hover {
+  background: var(--bg-hover, #f3f4f6);
+}
+
+.mini-journal-toggle .toggle-icon {
+  margin-left: auto;
+  transition: transform 0.2s;
+  color: var(--text-secondary, #9ca3af);
+}
+
+.mini-journal-toggle .toggle-icon.rotated {
+  transform: rotate(180deg);
+}
+
+.journal-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: var(--primary, #6366f1);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+.mini-journal-content {
+  padding: 1rem 0;
+}
+
+.journal-input-wrapper {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.journal-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  resize: none;
+  background: var(--bg-primary, #ffffff);
+  color: var(--text-primary, #111827);
+  transition: border-color 0.2s;
+}
+
+.journal-input:focus {
+  outline: none;
+  border-color: var(--primary, #6366f1);
+}
+
+.journal-input::placeholder {
+  color: var(--text-secondary, #9ca3af);
+}
+
+.journal-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: var(--primary, #6366f1);
+  color: white;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.journal-add-btn:hover:not(:disabled) {
+  background: var(--primary-dark, #4f46e5);
+}
+
+.journal-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.journal-entries {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.journal-entry {
+  padding: 0.875rem;
+  background: var(--bg-secondary, #f9fafb);
+  border-radius: 10px;
+  border-left: 3px solid var(--primary, #6366f1);
+}
+
+.entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.entry-date {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #9ca3af);
+  font-weight: 500;
+}
+
+.entry-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #9ca3af);
+  cursor: pointer;
+  border-radius: 4px;
+  opacity: 0;
+  transition: all 0.15s;
+}
+
+.journal-entry:hover .entry-delete {
+  opacity: 1;
+}
+
+.entry-delete:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.entry-text {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-primary, #111827);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.journal-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  color: var(--text-secondary, #9ca3af);
+  text-align: center;
+}
+
+.journal-empty p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Slide transition */
+.slide-enter-active,
+.slide-leave-active {
+  transition: all 0.25s ease;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+  opacity: 0;
+  max-height: 0;
+  transform: translateY(-10px);
+}
+
+.slide-enter-to,
+.slide-leave-from {
+  opacity: 1;
+  max-height: 500px;
 }
 
 /* Bottom Sheet стили */

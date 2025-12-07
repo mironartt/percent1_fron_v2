@@ -455,6 +455,43 @@
           </div>
 
           <div class="modal-body">
+            <!-- Секция шаблонов целей -->
+            <div class="templates-section">
+              <button class="templates-toggle" @click="toggleTemplates">
+                <Lightbulb :size="18" />
+                <span>Выбрать из шаблонов</span>
+                <ChevronDown :size="16" class="toggle-chevron" :class="{ rotated: showTemplates }" />
+              </button>
+              
+              <transition name="slide-fade">
+                <div v-if="showTemplates" class="templates-content">
+                  <div class="templates-sphere-tabs">
+                    <button
+                      v-for="sphere in lifeSpheres"
+                      :key="sphere.id"
+                      class="template-sphere-tab"
+                      :class="{ active: selectedTemplateSphere === sphere.id }"
+                      :style="{ '--sphere-color': getSphereColor(sphere.id) }"
+                      @click="selectedTemplateSphere = sphere.id"
+                    >
+                      <component :is="getSphereIcon(sphere.id)" :size="16" />
+                    </button>
+                  </div>
+                  
+                  <div class="templates-list">
+                    <button
+                      v-for="(template, idx) in filteredTemplates"
+                      :key="idx"
+                      class="template-item"
+                      @click="selectTemplate(template)"
+                    >
+                      {{ template }}
+                    </button>
+                  </div>
+                </div>
+              </transition>
+            </div>
+
             <div class="form-group">
               <label class="form-label">Название цели</label>
               <input 
@@ -732,6 +769,80 @@ function resetAccordion(isEdit = false) {
   const accordion = isEdit ? editWhyAccordion : whyAccordion
   accordion.value.question1Open = false
   accordion.value.question2Open = false
+}
+
+// Шаблоны целей по сферам ССП
+const goalTemplates = {
+  finances: [
+    'Создать финансовую подушку на 3 месяца',
+    'Увеличить доход на 20%',
+    'Закрыть все кредиты и долги',
+    'Начать инвестировать регулярно',
+    'Сократить ненужные расходы'
+  ],
+  creativity: [
+    'Освоить новое творческое хобби',
+    'Создать портфолио своих работ',
+    'Участвовать в творческом конкурсе',
+    'Выделять время на творчество еженедельно',
+    'Пройти курс по дизайну/музыке/искусству'
+  ],
+  relationships: [
+    'Улучшить общение с близкими',
+    'Завести новых друзей по интересам',
+    'Организовать регулярные встречи с семьёй',
+    'Научиться слушать и понимать других',
+    'Разрешить затянувшийся конфликт'
+  ],
+  health: [
+    'Установить режим сна 7-8 часов',
+    'Заниматься спортом 3 раза в неделю',
+    'Пройти полное медицинское обследование',
+    'Наладить здоровое питание',
+    'Избавиться от вредной привычки'
+  ],
+  career: [
+    'Получить повышение или новую должность',
+    'Освоить новый профессиональный навык',
+    'Построить личный бренд в индустрии',
+    'Найти ментора в своей сфере',
+    'Пройти сертификацию или курс повышения квалификации'
+  ],
+  environment: [
+    'Организовать комфортное рабочее место',
+    'Провести генеральную уборку и расхламление',
+    'Переехать в лучшее место для жизни',
+    'Окружить себя вдохновляющими людьми',
+    'Создать уютную домашнюю обстановку'
+  ],
+  meaning: [
+    'Определить свою миссию и ценности',
+    'Вести регулярную практику благодарности',
+    'Найти способ помогать другим',
+    'Начать духовную или медитативную практику',
+    'Написать личный манифест или план жизни'
+  ]
+}
+
+const showTemplates = ref(false)
+const selectedTemplateSphere = ref('')
+
+const filteredTemplates = computed(() => {
+  if (!selectedTemplateSphere.value) return []
+  return goalTemplates[selectedTemplateSphere.value] || []
+})
+
+function selectTemplate(template) {
+  newGoal.value.text = template
+  newGoal.value.sphereId = selectedTemplateSphere.value
+  showTemplates.value = false
+}
+
+function toggleTemplates() {
+  showTemplates.value = !showTemplates.value
+  if (showTemplates.value && !selectedTemplateSphere.value && lifeSpheres.value.length > 0) {
+    selectedTemplateSphere.value = lifeSpheres.value[0].id
+  }
 }
 
 // API loading state  
@@ -6326,6 +6437,123 @@ onUnmounted(() => {
 .form-textarea:focus {
   outline: none;
   border-color: var(--primary-color);
+}
+
+/* Шаблоны целей */
+.templates-section {
+  margin-bottom: 1rem;
+}
+
+.templates-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
+  border: 1px dashed var(--primary-color);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--primary-color);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.templates-toggle:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.12));
+}
+
+.templates-toggle .toggle-chevron {
+  margin-left: auto;
+  transition: transform 0.2s;
+}
+
+.templates-toggle .toggle-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.templates-content {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.templates-sphere-tabs {
+  display: flex;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.template-sphere-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1.5px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.template-sphere-tab:hover {
+  border-color: var(--sphere-color);
+  color: var(--sphere-color);
+}
+
+.template-sphere-tab.active {
+  border-color: var(--sphere-color);
+  background: color-mix(in srgb, var(--sphere-color) 15%, var(--bg-primary));
+  color: var(--sphere-color);
+}
+
+.templates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.template-item {
+  padding: 0.75rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.template-item:hover {
+  border-color: var(--primary-color);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+/* Slide-fade transition */
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all 0.25s ease;
+}
+
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  opacity: 0;
+  max-height: 0;
+  transform: translateY(-8px);
+}
+
+.slide-fade-enter-to,
+.slide-fade-leave-from {
+  opacity: 1;
+  max-height: 400px;
 }
 
 .sphere-select-grid {
