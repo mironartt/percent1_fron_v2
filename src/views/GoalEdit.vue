@@ -39,9 +39,6 @@
               {{ getSphereNameOnly(goalForm.sphereId) }}
             </span>
           </div>
-          <button class="btn-settings" @click="openEditModal" title="Настройки цели">
-            <Settings :size="20" />
-          </button>
         </div>
         <div class="header-progress">
           <div class="progress-bar-wrapper">
