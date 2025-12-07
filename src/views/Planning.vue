@@ -1121,6 +1121,10 @@ async function toggleStepComplete() {
 async function rescheduleStep(newDate) {
   if (!selectedGoal.value || !selectedStep.value) return
   
+  // Сначала обновляем локально
+  saveStepToLocalPlan(selectedGoal.value, selectedStep.value, newDate)
+  closeBottomSheet()
+  
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
     await updateGoalSteps({
@@ -1131,7 +1135,6 @@ async function rescheduleStep(newDate) {
       }]
     })
     await loadWeeklySteps()
-    closeBottomSheet()
   } catch (error) {
     console.error('[Planning] Error rescheduling step:', error)
   }
@@ -1178,6 +1181,10 @@ async function updateStepTime(time) {
 async function removeStepFromSchedule() {
   if (!selectedGoal.value || !selectedStep.value) return
   
+  // Сначала удаляем локально
+  removeStepFromLocalPlan(selectedGoal.value, selectedStep.value)
+  closeBottomSheet()
+  
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
     await updateGoalSteps({
@@ -1188,10 +1195,28 @@ async function removeStepFromSchedule() {
       }]
     })
     await loadWeeklySteps()
-    closeBottomSheet()
   } catch (error) {
     console.error('[Planning] Error removing step from schedule:', error)
   }
+}
+
+function removeStepFromLocalPlan(goal, step) {
+  const weekStart = weekDays.value[0]?.date
+  if (!weekStart) return
+  
+  const plan = store.weeklyPlans.find(p => p.weekStart === weekStart)
+  if (plan) {
+    // Удалить по обоим вариантам ID
+    plan.scheduledTasks = (plan.scheduledTasks || []).filter(
+      t => !((t.goalId === goal.id || t.goalId === goal.backendId) && 
+             (t.stepId === step.id || t.stepId === step.backendId))
+    )
+  }
+  
+  // Убрать дату из шага (в обеих коллекциях)
+  updateStepDateInCollections(goal.id, step.id, null)
+  
+  store.saveToLocalStorage()
 }
 
 function openAddStepModal() {
@@ -1314,6 +1339,12 @@ async function removeTaskFromSchedule(task) {
 async function scheduleStepToDay(goal, step, date) {
   if (!goal || !step || !date) return
   
+  const { DEBUG_MODE } = await import('@/config/settings.js')
+  
+  // Сначала обновляем локально для мгновенного отклика
+  saveStepToLocalPlan(goal, step, date)
+  closeBottomSheet()
+  
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
     await updateGoalSteps({
@@ -1324,9 +1355,69 @@ async function scheduleStepToDay(goal, step, date) {
       }]
     })
     await loadWeeklySteps()
-    closeBottomSheet()
   } catch (error) {
     console.error('[Planning] Error scheduling step:', error)
+    // В DEV_MODE данные уже сохранены локально, всё ок
+    if (DEBUG_MODE) {
+      console.log('[Planning] DEV_MODE: Step saved locally')
+    }
+  }
+}
+
+function saveStepToLocalPlan(goal, step, date) {
+  const weekStart = weekDays.value[0]?.date
+  if (!weekStart) return
+  
+  // Использовать универсальные ключи
+  const goalKey = goal.backendId || goal.id
+  const stepKey = step.backendId || step.id
+  
+  // Найти или создать план на неделю
+  let plan = store.weeklyPlans.find(p => p.weekStart === weekStart)
+  if (!plan) {
+    plan = { weekStart, scheduledTasks: [] }
+    store.weeklyPlans.push(plan)
+  }
+  
+  // Удалить старую запись этого шага если есть (проверяем оба варианта ID)
+  plan.scheduledTasks = (plan.scheduledTasks || []).filter(
+    t => !((t.goalId === goal.id || t.goalId === goal.backendId) && 
+           (t.stepId === step.id || t.stepId === step.backendId))
+  )
+  
+  // Добавить новую задачу
+  plan.scheduledTasks.push({
+    id: `local-${goalKey}-${stepKey}`,
+    goalId: goalKey,
+    stepId: stepKey,
+    stepTitle: step.title,
+    goalTitle: goal.text || goal.title,
+    scheduledDate: date,
+    timeEstimate: step.timeEstimate || '',
+    priority: step.priority || '',
+    completed: step.completed || false
+  })
+  
+  // Обновить дату в шаге для isStepScheduled (в обеих коллекциях)
+  updateStepDateInCollections(goal.id, step.id, date)
+  
+  // Сохранить в localStorage
+  store.saveToLocalStorage()
+}
+
+function updateStepDateInCollections(goalId, stepId, date) {
+  // Обновить в rawIdeas
+  const rawGoal = rawIdeas.value.find(g => g.id === goalId || g.backendId === goalId)
+  if (rawGoal) {
+    const rawStep = rawGoal.steps?.find(s => s.id === stepId || s.backendId === stepId)
+    if (rawStep) rawStep.date = date
+  }
+  
+  // Обновить в workingGoals
+  const workGoal = workingGoals.value.find(g => g.id === goalId || g.backendId === goalId)
+  if (workGoal) {
+    const workStep = workGoal.steps?.find(s => s.id === stepId || s.backendId === stepId)
+    if (workStep) workStep.date = date
   }
 }
 
