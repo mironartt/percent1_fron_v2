@@ -3930,10 +3930,16 @@ function formatDate(dateString) {
 
 .modal-footer-redesigned {
   display: flex;
+  flex-direction: row;
   justify-content: flex-end;
   gap: 0.75rem;
   padding: 1rem 1.25rem;
   border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.modal-footer-redesigned .btn {
+  flex: 1;
+  justify-content: center;
 }
 
 .form-input-large {
