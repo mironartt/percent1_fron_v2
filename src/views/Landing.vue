@@ -19,6 +19,7 @@
     </header>
 
     <main>
+      <!-- 1. HERO — захват внимания -->
       <section class="hero">
         <div class="container">
           <div class="hero-content">
@@ -40,6 +41,37 @@
         <div class="hero-bg"></div>
       </section>
 
+      <!-- 2. PROBLEM — резонанс с болью -->
+      <section class="problem-section">
+        <div class="container">
+          <h2 class="section-title">Знакомо?</h2>
+          <div class="pain-cards">
+            <div class="pain-card">
+              <div class="pain-icon"><Frown :size="36" /></div>
+              <h3>Не хватает дисциплины</h3>
+              <p class="pain-text">Начинаю, бросаю, снова начинаю... Сила воли заканчивается через неделю.</p>
+              <div class="solution-arrow"><TrendingUp :size="20" /></div>
+              <p class="solution-text">Система делает дисциплину ненужной — маленькие шаги + привычки + AI-напоминания.</p>
+            </div>
+            <div class="pain-card">
+              <div class="pain-icon"><Wallet :size="36" /></div>
+              <h3>Хочу расти в доходе</h3>
+              <p class="pain-text">Работаю много, но финансового роста нет. Не понимаю, что конкретно делать.</p>
+              <div class="solution-arrow"><TrendingUp :size="20" /></div>
+              <p class="solution-text">Сфера "Карьера/Деньги" → конкретные цели → ежедневные действия. Рост = система.</p>
+            </div>
+            <div class="pain-card">
+              <div class="pain-icon"><HelpCircle :size="36" /></div>
+              <h3>Не знаю, что делать</h3>
+              <p class="pain-text">Много идей, но непонятно с чего начать. Ступор и прокрастинация.</p>
+              <div class="solution-arrow"><TrendingUp :size="20" /></div>
+              <p class="solution-text">AI Mentor анализирует ситуацию и предлагает следующий шаг. Никакого ступора.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. EFFECT 1% — простая идея решения -->
       <section class="effect-section">
         <div class="container">
           <h2 class="section-title">Эффект 1%: маленькие шаги → большие результаты</h2>
@@ -85,35 +117,64 @@
         </div>
       </section>
 
-      <section class="problem-section">
+      <!-- 4. AI MENTOR — главное УТП (поднято выше!) -->
+      <section class="ai-mentor-section">
         <div class="container">
-          <h2 class="section-title">Знакомо?</h2>
-          <div class="pain-cards">
-            <div class="pain-card">
-              <div class="pain-icon"><Frown :size="36" /></div>
-              <h3>Не хватает дисциплины</h3>
-              <p class="pain-text">Начинаю, бросаю, снова начинаю... Сила воли заканчивается через неделю.</p>
-              <div class="solution-arrow"><TrendingUp :size="20" /></div>
-              <p class="solution-text">Система делает дисциплину ненужной — маленькие шаги + привычки + AI-напоминания. Не сила воли, а правильная среда.</p>
+          <div class="mentor-header">
+            <div class="mentor-avatar"><Bot :size="48" /></div>
+            <h2 class="section-title">AI Mentor — твой проводник в системе 1%</h2>
+            <p class="mentor-tagline">Он видит то, что сложно заметить в рутине, и помогает каждый день делать маленький шаг в плюс</p>
+          </div>
+          
+          <div class="mentor-benefits">
+            <div class="mentor-card">
+              <div class="mentor-icon"><Target :size="24" /></div>
+              <h3>Ясность вместо хаоса</h3>
+              <p>Перестань гадать, что делать. Ментор анализирует твои сферы жизни и помогает поставить цели, которые действительно важны именно тебе.</p>
             </div>
-            <div class="pain-card">
-              <div class="pain-icon"><Wallet :size="36" /></div>
-              <h3>Хочу расти в доходе</h3>
-              <p class="pain-text">Работаю много, но финансового роста нет. Не понимаю, что конкретно делать.</p>
-              <div class="solution-arrow"><TrendingUp :size="20" /></div>
-              <p class="solution-text">Сфера "Карьера/Деньги" в Колесе баланса → конкретные цели → ежедневные действия. Рост = система, не удача.</p>
+            <div class="mentor-card">
+              <div class="mentor-icon"><Calendar :size="24" /></div>
+              <h3>Неделя спланирована за минуту</h3>
+              <p>Не трать время на раскладывание задач. Ментор сам распределяет шаги по дням с учётом твоей загрузки и приоритетов.</p>
             </div>
-            <div class="pain-card">
-              <div class="pain-icon"><HelpCircle :size="36" /></div>
-              <h3>Не знаю, что делать</h3>
-              <p class="pain-text">Много идей, но непонятно с чего начать. Ступор и прокрастинация.</p>
-              <div class="solution-arrow"><TrendingUp :size="20" /></div>
-              <p class="solution-text">AI Mentor анализирует твою ситуацию и предлагает следующий шаг. Больше никакого ступора.</p>
+            <div class="mentor-card">
+              <div class="mentor-icon"><Eye :size="24" /></div>
+              <h3>Видишь то, что упускаешь</h3>
+              <p>В рутине легко не заметить перегрузку или дисбаланс. Ментор подсвечивает паттерны и предупреждает до того, как ты выгоришь.</p>
+            </div>
+            <div class="mentor-card">
+              <div class="mentor-icon"><Lightbulb :size="24" /></div>
+              <h3>Знаешь следующий шаг</h3>
+              <p>Никакого ступора "а что теперь?". Получаешь персональные рекомендации на основе твоего реального прогресса.</p>
+            </div>
+          </div>
+
+          <div class="mentor-chat-demo">
+            <div class="chat-window">
+              <div class="chat-header">
+                <div class="chat-avatar"><Bot :size="24" /></div>
+                <div class="chat-info">
+                  <span class="chat-name">AI Mentor</span>
+                  <span class="chat-status">Онлайн</span>
+                </div>
+              </div>
+              <div class="chat-messages">
+                <div class="message mentor">
+                  <p>Привет! Вижу, что на этой неделе ты запланировал 12 шагов, но выполнил только 4. Похоже на перегрузку. Давай уберём 3 менее важных?</p>
+                </div>
+                <div class="message user">
+                  <p>Да, ты прав. Какие убрать?</p>
+                </div>
+                <div class="message mentor">
+                  <p>Рекомендую оставить шаги по сфере "Карьера" — они двигают тебя к цели быстрее. Остальное перенесём на следующую неделю.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
+      <!-- 5. APP PREVIEW — как это работает -->
       <section class="app-preview-section">
         <div class="container">
           <h2 class="section-title">Посмотри, как это выглядит</h2>
@@ -205,199 +266,87 @@
         </div>
       </section>
 
-      <section class="ai-mentor-section">
+      <!-- 6. LEGENDS — социальное доказательство (известные люди) -->
+      <section class="legends-section">
         <div class="container">
-          <div class="mentor-header">
-            <div class="mentor-avatar"><Bot :size="48" /></div>
-            <h2 class="section-title">AI Mentor — твой проводник в системе 1%</h2>
-            <p class="mentor-tagline">Он видит то, что сложно заметить в рутине, и помогает каждый день делать маленький шаг в плюс</p>
-          </div>
-          
-          <div class="mentor-benefits">
-            <div class="mentor-card">
-              <div class="mentor-icon"><Target :size="24" /></div>
-              <h3>Ясность вместо хаоса</h3>
-              <p>Перестань гадать, что делать. Ментор анализирует твои сферы жизни и помогает поставить цели, которые действительно важны именно тебе.</p>
-            </div>
-            <div class="mentor-card">
-              <div class="mentor-icon"><Calendar :size="24" /></div>
-              <h3>Неделя спланирована за минуту</h3>
-              <p>Не трать время на раскладывание задач. Ментор сам распределяет шаги по дням с учётом твоей загрузки и приоритетов.</p>
-            </div>
-            <div class="mentor-card">
-              <div class="mentor-icon"><Eye :size="24" /></div>
-              <h3>Видишь то, что упускаешь</h3>
-              <p>В рутине легко не заметить перегрузку или дисбаланс. Ментор подсвечивает паттерны и предупреждает до того, как ты выгоришь.</p>
-            </div>
-            <div class="mentor-card">
-              <div class="mentor-icon"><Lightbulb :size="24" /></div>
-              <h3>Знаешь следующий шаг</h3>
-              <p>Никакого ступора "а что теперь?". Получаешь персональные рекомендации на основе твоего реального прогресса.</p>
-            </div>
-            <div class="mentor-card">
-              <div class="mentor-icon"><Heart :size="24" /></div>
-              <h3>Глубже понимаешь себя</h3>
-              <p>Вечерняя рефлексия с правильными вопросами. Фиксируешь победы, учишься на ошибках, растёшь осознанно.</p>
-            </div>
-            <div class="mentor-card">
-              <div class="mentor-icon"><Zap :size="24" /></div>
-              <h3>Меньше рутины — больше действий</h3>
-              <p>Напоминания, приоритизация, адаптация плана — всё автоматически. Ты фокусируешься на главном.</p>
-            </div>
-          </div>
-
-          <div class="mentor-chat-demo">
-            <div class="chat-window">
-              <div class="chat-header">
-                <div class="chat-avatar"><Bot :size="24" /></div>
-                <div class="chat-info">
-                  <span class="chat-name">AI Mentor</span>
-                  <span class="chat-status">Онлайн</span>
-                </div>
-              </div>
-              <div class="chat-messages">
-                <div class="message mentor">
-                  <p>Привет! Вижу, что на этой неделе ты запланировал 12 шагов, но выполнил только 4. Похоже на перегрузку. Давай уберём 3 менее важных и сфокусируемся на главном?</p>
-                </div>
-                <div class="message user">
-                  <p>Да, ты прав. Какие убрать?</p>
-                </div>
-                <div class="message mentor">
-                  <p>Рекомендую оставить шаги по сфере "Карьера" — они двигают тебя к цели быстрее. "Разобрать почту" и "Обновить резюме" можно перенести на следующую неделю.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="features" class="features">
-        <div class="container">
-          <h2 class="section-title">Все инструменты в одном месте</h2>
+          <h2 class="section-title">Проверено временем</h2>
           <p class="section-subtitle">
-            8 модулей для системного роста — от диагностики до геймификации
+            Величайшие умы истории использовали системный подход к развитию задолго до нас
           </p>
           
-          <div class="features-grid">
-            <div class="feature-card">
-              <div class="feature-icon"><Target :size="28" /></div>
-              <h3>Колесо баланса</h3>
-              <p>Оцени 6 сфер жизни и найди зоны роста. Визуальная карта твоего прогресса.</p>
+          <div class="legends-grid">
+            <div class="legend-card">
+              <div class="legend-avatar">
+                <Feather :size="32" />
+              </div>
+              <div class="legend-content">
+                <h3>Бенджамин Франклин</h3>
+                <span class="legend-role">Политик, учёный, изобретатель</span>
+                <blockquote class="legend-quote">
+                  <Quote :size="16" class="quote-icon" />
+                  «Маленькие удары валят большие дубы»
+                </blockquote>
+                <p class="legend-method">
+                  Создал систему 13 добродетелей: каждую неделю фокусировался на одном качестве, вёл дневник самоанализа.
+                </p>
+              </div>
             </div>
-            <div class="feature-card">
-              <div class="feature-icon"><ClipboardList :size="28" /></div>
-              <h3>Банк целей</h3>
-              <p>Собери все мечты, отфильтруй важное, разбей на конкретные шаги.</p>
+            
+            <div class="legend-card">
+              <div class="legend-avatar">
+                <BookMarked :size="32" />
+              </div>
+              <div class="legend-content">
+                <h3>Джеймс Клир</h3>
+                <span class="legend-role">Автор «Atomic Habits»</span>
+                <blockquote class="legend-quote">
+                  <Quote :size="16" class="quote-icon" />
+                  «Привычки — это сложные проценты самосовершенствования»
+                </blockquote>
+                <p class="legend-method">
+                  Популяризировал концепцию 1%: если каждый день улучшаться на 1%, за год станешь лучше в 37 раз.
+                </p>
+              </div>
             </div>
-            <div class="feature-card">
-              <div class="feature-icon"><Calendar :size="28" /></div>
-              <h3>Недельный планировщик</h3>
-              <p>Распредели шаги по дням. Утром — фокус, вечером — рефлексия.</p>
+            
+            <div class="legend-card">
+              <div class="legend-avatar">
+                <TrendingUp :size="32" />
+              </div>
+              <div class="legend-content">
+                <h3>Уоррен Баффетт</h3>
+                <span class="legend-role">Инвестор, миллиардер</span>
+                <blockquote class="legend-quote">
+                  <Quote :size="16" class="quote-icon" />
+                  «Я просто сижу в офисе и читаю целый день»
+                </blockquote>
+                <p class="legend-method">
+                  Правило 5 часов: ежедневно инвестирует минимум час в обучение и рефлексию. 80% рабочего времени — чтение.
+                </p>
+              </div>
             </div>
-            <div class="feature-card">
-              <div class="feature-icon"><Bot :size="28" /></div>
-              <h3>AI Mentor</h3>
-              <p>Персональный коуч 24/7. Помогает анализировать день и держать курс.</p>
-            </div>
-            <div class="feature-card">
-              <div class="feature-icon"><BookOpen :size="28" /></div>
-              <h3>Дневник рефлексии</h3>
-              <p>4 вопроса каждый вечер. Фиксируй победы и уроки дня.</p>
-            </div>
-            <div class="feature-card">
-              <div class="feature-icon"><Flame :size="28" /></div>
-              <h3>Трекер привычек</h3>
-              <p>Формируй полезные привычки. Серии выполнения, XP за каждый день, гибкое расписание.</p>
-            </div>
-            <div class="feature-card">
-              <div class="feature-icon"><Trophy :size="28" /></div>
-              <h3>Достижения</h3>
-              <p>19 бейджей в 4 категориях. Отслеживай прогресс, получай награды за системность.</p>
-            </div>
-            <div class="feature-card">
-              <div class="feature-icon"><Star :size="28" /></div>
-              <h3>XP и награды</h3>
-              <p>Зарабатывай опыт за привычки, шаги и цели. Обменивай на награды из вишлиста.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="journey-section">
-        <div class="container">
-          <h2 class="section-title">Система 1%: 6 шагов к росту</h2>
-          <p class="section-subtitle">Простой путь от хаоса к ясности</p>
-          
-          <div class="journey-grid">
-            <div class="journey-card">
-              <div class="journey-icon"><Target :size="28" /></div>
-              <div class="journey-num">01</div>
-              <h3>Определи себя</h3>
-              <p class="journey-tool">Колесо баланса</p>
-              <p class="journey-benefit">Ясность вместо хаоса в голове</p>
-            </div>
-            <div class="journey-card">
-              <div class="journey-icon"><ClipboardList :size="28" /></div>
-              <div class="journey-num">02</div>
-              <h3>Поставь цели</h3>
-              <p class="journey-tool">Банк целей + AI</p>
-              <p class="journey-benefit">Фокус на том, что реально важно</p>
-            </div>
-            <div class="journey-card">
-              <div class="journey-icon"><Layers :size="28" /></div>
-              <div class="journey-num">03</div>
-              <h3>Разбей путь</h3>
-              <p class="journey-tool">Декомпозиция</p>
-              <p class="journey-benefit">Большое → понятные шаги</p>
-            </div>
-            <div class="journey-card">
-              <div class="journey-icon"><Calendar :size="28" /></div>
-              <div class="journey-num">04</div>
-              <h3>Действуй каждый день</h3>
-              <p class="journey-tool">Планировщик + Привычки</p>
-              <p class="journey-benefit">Прогресс без перегрузки</p>
-            </div>
-            <div class="journey-card">
-              <div class="journey-icon"><Bot :size="28" /></div>
-              <div class="journey-num">05</div>
-              <h3>Получай обратную связь</h3>
-              <p class="journey-tool">AI Mentor</p>
-              <p class="journey-benefit">Корректировка курса на ходу</p>
-            </div>
-            <div class="journey-card">
-              <div class="journey-icon"><TrendingUp :size="28" /></div>
-              <div class="journey-num">06</div>
-              <h3>Фиксируй прогресс</h3>
-              <p class="journey-tool">Дневник + XP</p>
-              <p class="journey-benefit">Видишь результат, растёт мотивация</p>
+            
+            <div class="legend-card">
+              <div class="legend-avatar">
+                <PenTool :size="32" />
+              </div>
+              <div class="legend-content">
+                <h3>Леонардо да Винчи</h3>
+                <span class="legend-role">Художник, учёный, изобретатель</span>
+                <blockquote class="legend-quote">
+                  <Quote :size="16" class="quote-icon" />
+                  «Препятствия не могут сокрушить меня»
+                </blockquote>
+                <p class="legend-method">
+                  Вёл легендарные записные книжки: 7000+ страниц наблюдений, идей и планов. Ежедневная практика.
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="audience-section">
-        <div class="container">
-          <h2 class="section-title">Кому подойдёт One Percent</h2>
-          <div class="audience-grid">
-            <div class="audience-card">
-              <div class="audience-icon"><Rocket :size="32" /></div>
-              <h3>Предпринимателям</h3>
-              <p>С нагрузкой и хаосом, которые хотят структуру без потери гибкости</p>
-            </div>
-            <div class="audience-card">
-              <div class="audience-icon"><PenTool :size="32" /></div>
-              <h3>Фрилансерам</h3>
-              <p>Которые хотят систему планирования и стабильный рост дохода</p>
-            </div>
-            <div class="audience-card">
-              <div class="audience-icon"><BarChart3 :size="32" /></div>
-              <h3>Менеджерам</h3>
-              <p>Которые ищут баланс между работой и личной жизнью</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
+      <!-- 7. TESTIMONIALS — отзывы -->
       <section class="testimonials-section">
         <div class="container">
           <h2 class="section-title">Инсайты участников</h2>
@@ -446,120 +395,7 @@
         </div>
       </section>
 
-      <section class="club-section">
-        <div class="container">
-          <div class="club-header">
-            <span class="club-badge"><Trophy :size="16" /> Сообщество</span>
-            <h2 class="section-title">Клуб 1%</h2>
-            <p class="section-subtitle">
-              Присоединяйся к сообществу людей, которые выбрали путь системного роста
-            </p>
-          </div>
-          
-          <div class="club-benefits">
-            <div class="club-card">
-              <div class="club-icon"><Users :size="32" /></div>
-              <h3>Единомышленники</h3>
-              <p>Окружение, которое поддерживает и вдохновляет. Люди с похожими целями и ценностями.</p>
-            </div>
-            <div class="club-card">
-              <div class="club-icon"><BookOpen :size="32" /></div>
-              <h3>Эксклюзивный контент</h3>
-              <p>Закрытые материалы, разборы кейсов, практические гайды от экспертов.</p>
-            </div>
-            <div class="club-card">
-              <div class="club-icon"><Target :size="32" /></div>
-              <h3>Челленджи и спринты</h3>
-              <p>Регулярные групповые активности для прорывов в ключевых сферах жизни.</p>
-            </div>
-            <div class="club-card">
-              <div class="club-icon"><MessageCircle :size="32" /></div>
-              <h3>Мастермайнды</h3>
-              <p>Групповые сессии взаимной поддержки и обмена опытом с другими участниками.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="legends-section">
-        <div class="container">
-          <h2 class="section-title">Проверено временем</h2>
-          <p class="section-subtitle">
-            Величайшие умы истории использовали системный подход к развитию задолго до нас
-          </p>
-          
-          <div class="legends-grid">
-            <div class="legend-card">
-              <div class="legend-avatar">
-                <Feather :size="32" />
-              </div>
-              <div class="legend-content">
-                <h3>Бенджамин Франклин</h3>
-                <span class="legend-role">Политик, учёный, изобретатель</span>
-                <blockquote class="legend-quote">
-                  <Quote :size="16" class="quote-icon" />
-                  «Маленькие удары валят большие дубы»
-                </blockquote>
-                <p class="legend-method">
-                  Создал систему 13 добродетелей: каждую неделю фокусировался на одном качестве, вёл дневник самоанализа. За 13 недель — полный цикл личного развития.
-                </p>
-              </div>
-            </div>
-            
-            <div class="legend-card">
-              <div class="legend-avatar">
-                <BookMarked :size="32" />
-              </div>
-              <div class="legend-content">
-                <h3>Джеймс Клир</h3>
-                <span class="legend-role">Автор «Atomic Habits»</span>
-                <blockquote class="legend-quote">
-                  <Quote :size="16" class="quote-icon" />
-                  «Привычки — это сложные проценты самосовершенствования»
-                </blockquote>
-                <p class="legend-method">
-                  Популяризировал концепцию 1%: если каждый день улучшаться на 1%, за год станешь лучше в 37 раз. Его книга — бестселлер с 15+ млн копий.
-                </p>
-              </div>
-            </div>
-            
-            <div class="legend-card">
-              <div class="legend-avatar">
-                <TrendingUp :size="32" />
-              </div>
-              <div class="legend-content">
-                <h3>Уоррен Баффетт</h3>
-                <span class="legend-role">Инвестор, миллиардер</span>
-                <blockquote class="legend-quote">
-                  <Quote :size="16" class="quote-icon" />
-                  «Я просто сижу в офисе и читаю целый день»
-                </blockquote>
-                <p class="legend-method">
-                  Правило 5 часов: ежедневно инвестирует минимум час в обучение и рефлексию. 80% рабочего времени — чтение и анализ. Состояние: $130+ млрд.
-                </p>
-              </div>
-            </div>
-            
-            <div class="legend-card">
-              <div class="legend-avatar">
-                <PenTool :size="32" />
-              </div>
-              <div class="legend-content">
-                <h3>Леонардо да Винчи</h3>
-                <span class="legend-role">Художник, учёный, изобретатель</span>
-                <blockquote class="legend-quote">
-                  <Quote :size="16" class="quote-icon" />
-                  «Препятствия не могут сокрушить меня; каждое — шаг вперёд»
-                </blockquote>
-                <p class="legend-method">
-                  Вёл легендарные записные книжки: 7000+ страниц наблюдений, идей и планов. Ежедневная практика документирования мыслей и экспериментов.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
+      <!-- 9. PRICING — тарифы (раньше, пока горячий) -->
       <section class="pricing-section">
         <div class="container">
           <h2 class="section-title">Простая и честная стоимость</h2>
