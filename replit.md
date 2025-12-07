@@ -40,3 +40,31 @@ The application uses a modular structure with dedicated components, services, vi
 - **Lucide Vue Next**: Used for minimalist line icons.
 - **Vite**: Frontend build tool providing fast development and a proxy to the Django backend.
 - **Telegram OAuth**: Integrated for user registration and login.
+
+## Recent Changes (December 2024)
+
+### Habits Backend API Integration
+Integrated the Habits module with Django REST API backend through 18 endpoints:
+
+**Files Created/Modified:**
+- `src/services/habitsApi.js` - Full API service with 18+ methods for all habits endpoints
+- `src/stores/habits.js` - Pinia store with reactive state, caching, and fallback to localStorage
+- `src/views/Habits.vue` - Integrated with habitsStore for CRUD operations and settings
+
+**API Integration Pattern:**
+- Optimistic UI updates with rollback on error
+- Parallel data loading (settings + habits + stats-panel)
+- LocalStorage fallback when backend unavailable (dev mode)
+- Rate limiting to prevent API spam
+- Backend ID mapping for habit synchronization
+
+**Integrated Endpoints:**
+- Settings: /settings/get/, /settings/update/
+- Habits: /get/, /update/ (CRUD operations)
+- Completions: /completions/update/
+- Amnesty: /amnesty/apply/, /amnesty/revoke/
+- Analytics: /analytics/, /achievements/
+- Stats: /stats-panel/
+- XP/Rewards: /xp/, /rewards/
+
+**Note:** Django backend runs on port 8017 (not included in this Replit). ECONNREFUSED errors are expected when backend is not running - app falls back to localStorage.

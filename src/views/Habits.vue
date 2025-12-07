@@ -1441,10 +1441,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useAppStore } from '../stores/app'
 import { useXpStore, XP_REWARDS } from '../stores/xp'
 import { useToastStore } from '../stores/toast'
+import { useHabitsStore } from '../stores/habits'
 import { DEBUG_MODE } from '@/config/settings.js'
 import { 
   Flame, Plus, Minus, Zap, CheckCircle, Sparkles, Shield, Bot,
@@ -1456,6 +1457,7 @@ import {
 const appStore = useAppStore()
 const xpStore = useXpStore()
 const toast = useToastStore()
+const habitsStore = useHabitsStore()
 
 const showModal = ref(false)
 const showSettingsModal = ref(false)
@@ -1716,7 +1718,9 @@ const deletedHabits = computed(() => {
     }))
 })
 
-const habitStreak = computed(() => appStore.habitStreak)
+const habitStreak = computed(() => {
+  return habitsStore.statsPanel?.streak ?? appStore.habitStreak
+})
 const scheduledToday = computed(() => {
   const today = new Date().getDay()
   return allHabits.value.filter(h => isScheduledForDay(h, today))
@@ -1730,7 +1734,15 @@ const todayCompleted = computed(() => {
 
 const todayTotal = computed(() => scheduledToday.value.length)
 
+const todayProgressFromStore = computed(() => {
+  return habitsStore.statsPanel?.today_progress ?? null
+})
+
 const weekXpFromHabits = computed(() => {
+  if (habitsStore.statsPanel?.week_xp !== undefined) {
+    return habitsStore.statsPanel.week_xp
+  }
+  
   const weekAgo = new Date()
   weekAgo.setDate(weekAgo.getDate() - 7)
   return xpStore.xpHistory
@@ -2766,7 +2778,7 @@ const dayEditWeekStats = computed(() => {
   return { xpEarned, xpPenalty }
 })
 
-function toggleHabitCompletion(habit) {
+async function toggleHabitCompletion(habit) {
   if (isPastWeek.value) {
     toast.showToast({ title: 'Нельзя изменять статусы в прошлых неделях', type: 'info' })
     return
@@ -2777,6 +2789,7 @@ function toggleHabitCompletion(habit) {
   }
   
   const result = appStore.toggleHabit(habit.id)
+  const todayStr = new Date().toISOString().split('T')[0]
   
   if (result.completed) {
     const xpAmount = habit.xpReward || XP_REWARDS.HABIT_COMPLETED
@@ -2789,6 +2802,11 @@ function toggleHabitCompletion(habit) {
     setTimeout(() => {
       showXpPopup.value = null
     }, 1200)
+    
+    const backendResult = await habitsStore.markCompleted(habit.backendId || habit.id, todayStr)
+    if (!backendResult.success && DEBUG_MODE) {
+      console.log('[Habits] Backend completion sync failed, will retry later')
+    }
   } else {
     const lastEvent = xpStore.xpHistory.find(
       e => e.source === 'habit_completed' && 
@@ -2797,6 +2815,11 @@ function toggleHabitCompletion(habit) {
     )
     if (lastEvent) {
       xpStore.revokeXP(lastEvent.id)
+    }
+    
+    const backendResult = await habitsStore.unmarkCompleted(habit.backendId || habit.id, todayStr)
+    if (!backendResult.success && DEBUG_MODE) {
+      console.log('[Habits] Backend undo sync failed, will retry later')
     }
   }
 }
@@ -2889,8 +2912,12 @@ function isDayActiveBySchedule(dayKey) {
   return false
 }
 
-function saveHabit() {
+async function saveHabit() {
   if (!formData.value.name.trim()) return
+  
+  const scheduleDays = formData.value.frequencyType === 'custom' ? formData.value.scheduleDays :
+                       formData.value.frequencyType === 'weekdays' ? [1, 2, 3, 4, 5] :
+                       formData.value.frequencyType === 'weekends' ? [0, 6] : [0, 1, 2, 3, 4, 5, 6]
   
   const habitData = {
     name: formData.value.name.trim(),
@@ -2899,56 +2926,90 @@ function saveHabit() {
     xpReward: formData.value.xpReward,
     xpPenalty: formData.value.xpPenalty,
     frequencyType: formData.value.frequencyType,
-    scheduleDays: formData.value.frequencyType === 'custom' ? formData.value.scheduleDays :
-                  formData.value.frequencyType === 'weekdays' ? [1, 2, 3, 4, 5] :
-                  formData.value.frequencyType === 'weekends' ? [0, 6] : [0, 1, 2, 3, 4, 5, 6],
+    scheduleDays: scheduleDays,
     reminderTime: formData.value.reminderTime
+  }
+  
+  const backendHabitData = {
+    name: habitData.name,
+    description: habitData.description || '',
+    icon_name: habitData.icon,
+    xp_reward: habitData.xpReward,
+    xp_penalty: habitData.xpPenalty || 0,
+    schedule_days: scheduleDays
   }
   
   if (editingHabit.value) {
     appStore.updateHabit(editingHabit.value.id, habitData)
     toast.showToast({ title: 'Привычка обновлена', type: 'success' })
+    
+    const backendId = editingHabit.value.backendId || editingHabit.value.id
+    const backendResult = await habitsStore.updateHabit(backendId, backendHabitData)
+    if (backendResult.success && backendResult.data?.id) {
+      appStore.updateHabit(editingHabit.value.id, { backendId: backendResult.data.id })
+    }
   } else {
-    appStore.addHabit(habitData)
+    const localHabit = appStore.addHabit(habitData)
     toast.showToast({ title: 'Привычка создана', type: 'success' })
     
     if (allHabits.value.length === 0 && gameSettings.value.aiCoachEnabled) {
       coachHint.value = 'Отлично! Первый шаг сделан. Старайтесь выполнять привычку каждый день — так она закрепится быстрее.'
+    }
+    
+    const backendResult = await habitsStore.createHabit(backendHabitData)
+    if (backendResult.success && backendResult.habitId) {
+      appStore.updateHabit(localHabit.id, { backendId: backendResult.habitId })
     }
   }
   
   closeModal()
 }
 
-function deleteHabit() {
+async function deleteHabit() {
   if (editingHabit.value) {
     appStore.removeHabit(editingHabit.value.id)
     toast.showToast({ title: 'Привычка удалена', type: 'info' })
+    
+    const backendId = editingHabit.value.backendId || editingHabit.value.id
+    await habitsStore.deleteHabit(backendId)
+    
     closeModal()
   }
 }
 
-function archiveHabit(habit) {
+async function archiveHabit(habit) {
   appStore.updateHabit(habit.id, { archived: true })
   toast.showToast({ title: 'Привычка архивирована', type: 'info' })
+  
+  const backendId = habit.backendId || habit.id
+  await habitsStore.archiveHabit(backendId)
 }
 
-function confirmDeleteHabit(habit) {
+async function confirmDeleteHabit(habit) {
   if (confirm(`Удалить привычку "${habit.name}"?`)) {
     appStore.removeHabit(habit.id)
     toast.showToast({ title: 'Привычка удалена', message: 'Её можно восстановить в блоке "Удалённые привычки"', type: 'info' })
+    
+    const backendId = habit.backendId || habit.id
+    await habitsStore.deleteHabit(backendId)
   }
 }
 
-function restoreHabit(habit) {
+async function restoreHabit(habit) {
   appStore.restoreHabit(habit.id)
   toast.showToast({ title: 'Привычка восстановлена', type: 'success' })
+  
+  const backendId = habit.backendId || habit.id
+  await habitsStore.restoreHabit(backendId)
 }
 
-function permanentlyDeleteHabit(habit) {
+async function permanentlyDeleteHabit(habit) {
   if (confirm(`Удалить привычку "${habit.name}" навсегда? Это действие нельзя отменить.`)) {
     appStore.permanentlyDeleteHabit(habit.id)
     toast.showToast({ title: 'Привычка удалена навсегда', type: 'warning' })
+    
+    const backendId = habit.backendId || habit.id
+    await habitsStore.permanentlyDeleteHabit(backendId)
   }
 }
 
@@ -2982,18 +3043,27 @@ function setDifficulty(mode) {
   saveGameSettings()
 }
 
-function saveGameSettings() {
+async function saveGameSettings() {
   try {
     localStorage.setItem('onepercent_game_settings', JSON.stringify(gameSettings.value))
+    
+    const backendSettings = {
+      difficulty_mode: gameSettings.value.difficultyMode,
+      xp_penalty_planning: gameSettings.value.planningPenalty ? gameSettings.value.planningPenaltyAmount : 0,
+      xp_penalty_journal: gameSettings.value.journalPenalty ? gameSettings.value.journalPenaltyAmount : 0
+    }
+    
+    const result = await habitsStore.saveSettings(backendSettings)
+    
     if (DEBUG_MODE) {
-      console.log('[Habits] Game settings saved:', gameSettings.value)
+      console.log('[Habits] Game settings saved:', gameSettings.value, 'Backend result:', result.success)
     }
   } catch (e) {
     console.error('[Habits] Failed to save game settings:', e)
   }
 }
 
-function loadGameSettings() {
+async function loadGameSettings() {
   try {
     const stored = localStorage.getItem('onepercent_game_settings')
     if (stored) {
@@ -3007,34 +3077,111 @@ function loadGameSettings() {
         }
       }
     }
+    
+    const result = await habitsStore.loadSettings()
+    if (result.success && result.data) {
+      gameSettings.value.difficultyMode = result.data.difficulty_mode || gameSettings.value.difficultyMode
+      gameSettings.value.penaltiesEnabled = result.data.difficulty_mode !== 'soft'
+      gameSettings.value.amnestiedDates = result.data.amnestied_dates || []
+      
+      if (result.data.xp_penalty_planning !== undefined) {
+        gameSettings.value.planningPenalty = result.data.xp_penalty_planning > 0
+        gameSettings.value.planningPenaltyAmount = result.data.xp_penalty_planning || 10
+      }
+      if (result.data.xp_penalty_journal !== undefined) {
+        gameSettings.value.journalPenalty = result.data.xp_penalty_journal > 0
+        gameSettings.value.journalPenaltyAmount = result.data.xp_penalty_journal || 10
+      }
+      if (result.data.amnesty_remaining !== undefined) {
+        const maxAmnesty = result.data.amnesty_per_week || 1
+        gameSettings.value.weeklyAmnestyCount = maxAmnesty
+        gameSettings.value.amnestiesUsedThisWeek = maxAmnesty - result.data.amnesty_remaining
+      }
+      
+      if (DEBUG_MODE) {
+        console.log('[Habits] Settings loaded from backend:', result.data)
+      }
+    }
   } catch (e) {
     console.error('[Habits] Failed to load game settings:', e)
   }
 }
 
-function useAmnesty() {
-  const now = new Date()
-  const weekStart = getWeekStart(now)
-  
-  if (!gameSettings.value.amnestyWeekStart || 
-      new Date(gameSettings.value.amnestyWeekStart).getTime() !== weekStart.getTime()) {
-    gameSettings.value.amnestyWeekStart = weekStart.toISOString()
-    gameSettings.value.amnestiesUsedThisWeek = 0
+async function useAmnesty(date = null) {
+  const targetDate = date || selectedAmnestyDate.value
+  if (!targetDate) {
+    toast.showToast({ title: 'Ошибка', message: 'Выберите день для амнистии', type: 'error' })
+    return
   }
   
-  gameSettings.value.amnestiesUsedThisWeek++
-  gameSettings.value.weeklyAmnestyUsed = now.toISOString()
-  saveGameSettings()
+  const result = await habitsStore.applyAmnesty(targetDate)
   
-  const remaining = amnestiesRemaining.value
-  const message = remaining > 0 
-    ? `Штрафы за сегодня отменены. Осталось амнистий: ${remaining}` 
-    : 'Штрафы за сегодня отменены. Это была последняя амнистия на этой неделе'
-  toast.showToast({ title: 'Амнистия активирована!', message, type: 'success' })
+  if (result.success) {
+    const now = new Date()
+    const weekStart = getWeekStart(now)
+    
+    if (!gameSettings.value.amnestyWeekStart || 
+        new Date(gameSettings.value.amnestyWeekStart).getTime() !== weekStart.getTime()) {
+      gameSettings.value.amnestyWeekStart = weekStart.toISOString()
+      gameSettings.value.amnestiesUsedThisWeek = 0
+    }
+    
+    gameSettings.value.amnestiesUsedThisWeek++
+    gameSettings.value.weeklyAmnestyUsed = now.toISOString()
+    gameSettings.value.amnestiedDates = [...(gameSettings.value.amnestiedDates || []), targetDate]
+    saveGameSettings()
+    
+    const xpRestored = result.xpRestored || 0
+    const remaining = habitsStore.amnestyRemaining
+    const message = xpRestored > 0 
+      ? `+${xpRestored} XP возвращено. Осталось амнистий: ${remaining}` 
+      : `Штрафы отменены. Осталось амнистий: ${remaining}`
+    toast.showToast({ title: 'Амнистия применена!', message, type: 'success' })
+    
+    selectedAmnestyDate.value = null
+    showAmnestyModal.value = false
+  } else {
+    const errorMsg = result.error?.message || 'Не удалось применить амнистию'
+    toast.showToast({ title: 'Ошибка', message: errorMsg, type: 'error' })
+  }
 }
 
-onMounted(() => {
+async function revokeAmnesty(date) {
+  const result = await habitsStore.revokeAmnesty(date)
+  
+  if (result.success) {
+    gameSettings.value.amnestiedDates = (gameSettings.value.amnestiedDates || []).filter(d => d !== date)
+    gameSettings.value.amnestiesUsedThisWeek = Math.max(0, gameSettings.value.amnestiesUsedThisWeek - 1)
+    saveGameSettings()
+    
+    toast.showToast({ title: 'Амнистия отменена', message: 'Штрафы снова активны для этого дня', type: 'info' })
+  } else {
+    const errorMsg = result.error?.message || 'Не удалось отменить амнистию'
+    toast.showToast({ title: 'Ошибка', message: errorMsg, type: 'error' })
+  }
+}
+
+const selectedAmnestyDate = ref(null)
+const analyticsLoaded = ref(false)
+const achievementsLoaded = ref(false)
+
+watch(activeTab, async (newTab) => {
+  if (newTab === 'analytics') {
+    if (!analyticsLoaded.value) {
+      await habitsStore.loadAnalytics()
+      analyticsLoaded.value = true
+    }
+    if (!achievementsLoaded.value) {
+      await habitsStore.loadAchievements()
+      achievementsLoaded.value = true
+    }
+  }
+})
+
+onMounted(async () => {
   loadGameSettings()
+  
+  await habitsStore.initialize()
   
   if (gameSettings.value.aiCoachEnabled && habitStreak.value >= 7 && habitStreak.value % 7 === 0) {
     coachHint.value = `Потрясающе! ${habitStreak.value} дней подряд — это уже настоящая привычка! Так держать!`
