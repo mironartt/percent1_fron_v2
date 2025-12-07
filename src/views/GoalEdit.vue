@@ -134,10 +134,32 @@
             </div>
             <h3>Добавьте шаги декомпозиции</h3>
             <p>Разбейте цель на конкретные действия,<br>чтобы начать планирование</p>
-            <button class="btn btn-primary" @click="openAddStepModal">
-              <Plus :size="16" />
-              Добавить первый шаг
-            </button>
+            <div class="empty-state-actions">
+              <button class="btn btn-primary" @click="openAddStepModal">
+                <Plus :size="16" />
+                Добавить первый шаг
+              </button>
+              <div class="ai-steps-generate-empty">
+                <button 
+                  class="btn-ai-steps"
+                  :class="{ generating: isGeneratingSteps }"
+                  :disabled="isGeneratingSteps"
+                  @click="generateStepsAI"
+                  @mouseenter="showAIStepsTooltip = true"
+                  @mouseleave="showAIStepsTooltip = false"
+                >
+                  <Loader2 v-if="isGeneratingSteps" :size="16" class="spin" />
+                  <Sparkles v-else :size="16" />
+                  <span>{{ isGeneratingSteps ? 'Генерация...' : 'Добавить с ИИ' }}</span>
+                </button>
+                <transition name="tooltip-fade">
+                  <div v-if="showAIStepsTooltip && !isGeneratingSteps" class="ai-steps-tooltip ai-steps-tooltip-empty">
+                    <strong>ИИ-помощник</strong>
+                    <p>Сгенерирует 3-7 шагов для достижения этой цели</p>
+                  </div>
+                </transition>
+              </div>
+            </div>
           </div>
 
           <div 
@@ -2933,6 +2955,39 @@ function formatDate(dateString) {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.empty-state-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ai-steps-generate-empty {
+  position: relative;
+}
+
+.ai-steps-tooltip-empty {
+  bottom: auto;
+  top: calc(100% + 8px);
+}
+
+.ai-steps-tooltip-empty::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-bottom-color: var(--border-color, #e5e7eb);
+}
+
+@media (min-width: 480px) {
+  .empty-state-actions {
+    flex-direction: row;
+    gap: 0.75rem;
+  }
 }
 
 .edit-layout {
