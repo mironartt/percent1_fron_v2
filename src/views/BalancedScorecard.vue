@@ -540,7 +540,7 @@ onMounted(async () => {
 
 <style scoped>
 .ssp-container {
-  max-width: 800px;
+  max-width: var(--content-width-narrow);
   margin: 0 auto;
   padding: 1.5rem;
   padding-bottom: 100px;

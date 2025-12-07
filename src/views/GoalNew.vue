@@ -224,7 +224,7 @@ function goBack() {
 
 <style scoped>
 .goal-new-container {
-  max-width: 1400px;
+  max-width: var(--content-width-narrow);
   margin: 0 auto;
 }
 

@@ -470,7 +470,7 @@ function markLessonComplete() {
 
 <style scoped>
 .learning-center {
-  max-width: 1000px;
+  max-width: var(--content-width-narrow);
   margin: 0 auto;
 }
 

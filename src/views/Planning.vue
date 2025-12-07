@@ -1715,7 +1715,7 @@ onUnmounted(() => {
 
 <style scoped>
 .planning-container {
-  max-width: 800px;
+  max-width: var(--content-width-narrow);
   margin: 0 auto;
   padding: 1rem;
   padding-bottom: 100px;

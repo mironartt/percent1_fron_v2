@@ -2657,7 +2657,7 @@ function formatDate(dateString) {
 
 <style scoped>
 .goal-edit-container {
-  max-width: 1400px;
+  max-width: var(--content-width-narrow);
   margin: 0 auto;
   position: relative;
 }

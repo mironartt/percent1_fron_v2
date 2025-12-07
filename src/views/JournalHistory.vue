@@ -372,7 +372,7 @@ function onEntrySaved() {
 
 <style scoped>
 .journal-history {
-  max-width: 900px;
+  max-width: var(--content-width-narrow);
   width: 100%;
   margin: 0 auto;
   padding: 0 1.5rem;

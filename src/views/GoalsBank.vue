@@ -2047,7 +2047,7 @@ onUnmounted(() => {
 
 <style scoped>
 .goals-bank-container {
-  max-width: 1400px;
+  max-width: var(--content-width-wide);
   margin: 0 auto;
   padding-bottom: 2rem;
 }

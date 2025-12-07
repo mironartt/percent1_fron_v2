@@ -27,6 +27,10 @@
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
+  
+  /* Content width */
+  --content-width-narrow: 900px;
+  --content-width-wide: 1200px;
 }
 
 :root.dark {
