@@ -854,7 +854,9 @@ function goToGoalsBank() {
 }
 
 function goToDecomposition(goal) {
-  router.push(`/app/goals/${goal.id}`)
+  // In dev mode use local-{id}, in prod use backendId
+  const goalId = goal.backendId || `local-${goal.id}`
+  router.push(`/app/goals/${goalId}`)
 }
 
 function getSphereIcon(sphereId) {
