@@ -516,14 +516,15 @@ function closeGoalModal() {
 async function createGoal() {
   if (!newGoal.title || !selectedSphereForGoal.value) return
   
-  const goal = {
-    title: newGoal.title,
-    sphere: selectedSphereForGoal.value.id,
-    motivation: newGoal.motivation,
-    status: 'draft'
+  const idea = {
+    text: newGoal.title,
+    sphereId: selectedSphereForGoal.value.id,
+    whyImportant: newGoal.motivation,
+    status: 'raw',
+    source: 'ssp'
   }
   
-  store.addGoal(goal)
+  store.addRawIdea(idea, { insertAtTop: true })
   closeGoalModal()
   
   router.push('/app/goals-bank')

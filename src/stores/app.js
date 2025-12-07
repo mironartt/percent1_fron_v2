@@ -2570,6 +2570,7 @@ export const useAppStore = defineStore('app', () => {
       decomposition: idea.decomposition || '',
       status: idea.status || 'raw',
       validated: idea.status === 'validated',
+      source: idea.source || 'manual',
       threeWhys: {
         why1: idea.whyImportant || idea.threeWhys?.why1 || '',
         why2: idea.threeWhys?.why2 || '',
