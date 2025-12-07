@@ -296,39 +296,30 @@
             </button>
           </div>
 
-          <!-- Tab Navigation -->
+          <!-- Tab Navigation (Simplified: 2 tabs) -->
           <div class="modal-tabs">
             <button 
               class="modal-tab" 
               :class="{ active: editModalTab === 'main' }"
-              title="Основное"
+              title="Цель"
               @click="editModalTab = 'main'"
             >
               <FileText :size="16" />
-              <span>Основное</span>
+              <span>Цель</span>
             </button>
             <button 
               class="modal-tab" 
-              :class="{ active: editModalTab === 'motivation' }"
-              title="Мотивация"
-              @click="editModalTab = 'motivation'"
-            >
-              <Heart :size="16" />
-              <span>Мотивация</span>
-            </button>
-            <button 
-              class="modal-tab" 
-              :class="{ active: editModalTab === 'status' }"
-              title="Статус"
-              @click="editModalTab = 'status'"
+              :class="{ active: editModalTab === 'settings' }"
+              title="Настройки"
+              @click="editModalTab = 'settings'"
             >
               <Settings :size="16" />
-              <span>Статус</span>
+              <span>Настройки</span>
             </button>
           </div>
 
           <div class="modal-body modal-body-tabs" v-if="editingGoal">
-            <!-- Tab: Main -->
+            <!-- Tab: Goal (merged Main + Motivation) -->
             <div v-show="editModalTab === 'main'" class="tab-content">
               <div class="form-group">
                 <label class="form-label">Название цели</label>
@@ -356,71 +347,36 @@
                   </button>
                 </div>
               </div>
-            </div>
-
-            <!-- Tab: Motivation -->
-            <div v-show="editModalTab === 'motivation'" class="tab-content">
-              <div class="motivation-intro">
-                <Lightbulb :size="20" class="motivation-icon" />
-                <p>Ответьте на вопросы, чтобы понять истинную ценность цели</p>
-              </div>
 
               <div class="form-group">
-                <label class="form-label">1. Почему для меня это важно?</label>
+                <label class="form-label">Почему это важно?</label>
                 <textarea 
                   v-model="editingGoal.whyImportant"
                   class="form-textarea form-textarea-visible"
                   placeholder="Опишите, почему эта цель важна для вас..."
-                  rows="3"
+                  rows="2"
                 ></textarea>
               </div>
 
               <div class="form-group">
-                <label class="form-label">2. Как это изменит мою жизнь?</label>
+                <label class="form-label">Как это изменит жизнь?</label>
                 <textarea 
                   v-model="editingGoal.why2"
                   class="form-textarea form-textarea-visible"
-                  placeholder="Опишите, как достижение этой цели изменит вашу жизнь..."
-                  rows="3"
+                  placeholder="Опишите ожидаемые изменения..."
+                  rows="2"
                 ></textarea>
               </div>
             </div>
 
-            <!-- Tab: Status -->
-            <div v-show="editModalTab === 'status'" class="tab-content">
-              <!-- Work Status Toggle -->
-              <div class="status-card" v-if="editingGoal.status === 'validated'">
-                <div class="status-card-header">
-                  <Target :size="20" />
-                  <span>Статус работы</span>
-                </div>
-                <div class="status-toggle-row">
-                  <span class="toggle-label">В работе</span>
-                  <button 
-                    class="toggle-switch"
-                    :class="{ active: isGoalTransferred(editingGoal.id) }"
-                    @click="toggleWorkStatus"
-                  >
-                    <span class="toggle-slider"></span>
-                  </button>
-                </div>
-                <p class="status-hint" v-if="isGoalTransferred(editingGoal.id)">
-                  Цель добавлена в активные. Вы можете декомпозировать её на шаги.
-                </p>
-                <p class="status-hint" v-else>
-                  Включите, чтобы начать работу над целью.
-                </p>
-              </div>
-
+            <!-- Tab: Settings (simplified Status) -->
+            <div v-show="editModalTab === 'settings'" class="tab-content">
               <!-- Validation Section -->
               <div class="status-card">
                 <div class="status-card-header">
                   <Shield :size="20" />
                   <span>Оценка цели</span>
                 </div>
-                <p class="status-description">
-                  Подтверждённая цель отвечает на вопросы «почему важно?» и «как изменит жизнь?»
-                </p>
                 <div class="validation-buttons-new">
                   <button 
                     class="btn-validation-new btn-confirm"
@@ -457,14 +413,19 @@
             </div>
           </div>
 
-          <div class="modal-footer modal-footer-redesigned">
-            <button class="btn btn-secondary" @click="closeEditModal">
-              Отмена
+          <div class="modal-footer modal-footer-redesigned modal-footer-with-delete">
+            <button class="btn btn-danger-ghost" @click="deleteGoalFromModal">
+              <Trash2 :size="16" />
             </button>
-            <button class="btn btn-primary" @click="saveGoalEdit">
-              <Check :size="16" :stroke-width="2" />
-              Сохранить
-            </button>
+            <div class="modal-footer-actions">
+              <button class="btn btn-secondary" @click="closeEditModal">
+                Отмена
+              </button>
+              <button class="btn btn-primary" @click="saveGoalEdit">
+                <Check :size="16" :stroke-width="2" />
+                Сохранить
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -5925,6 +5886,29 @@ onUnmounted(() => {
   gap: 0.75rem;
   padding: 1rem 1.25rem;
   border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.modal-footer-with-delete {
+  justify-content: space-between;
+}
+
+.modal-footer-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btn-danger-ghost {
+  background: transparent;
+  color: #ef4444;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-danger-ghost:hover {
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .btn-secondary {
