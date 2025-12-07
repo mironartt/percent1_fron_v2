@@ -705,19 +705,30 @@ const localGoalId = computed(() => isLocalId.value ? goalBackendId.value.replace
 const goal = computed(() => {
   // Dev mode: handle local ids
   if (DEBUG_MODE && SKIP_AUTH_CHECK && isLocalId.value) {
-    // Find by local id in rawIdeas
+    // Find by local id in rawIdeas - return direct reference for reactivity
     const rawGoal = store.goalsBank.rawIdeas.find(g => g.id === localGoalId.value)
     if (rawGoal) {
+      // Ensure steps array exists on rawGoal for reactivity
+      if (!rawGoal.steps) rawGoal.steps = []
+      // Return proxy object that reads from rawGoal but provides mapped property names
+      // This maintains reactivity while providing consistent interface
       return {
-        id: rawGoal.id,
-        backendId: rawGoal.backendId,
-        title: rawGoal.title,
-        description: rawGoal.description || rawGoal.why,
-        sphereId: rawGoal.category,
-        status: rawGoal.status,
-        steps: [],
-        source: 'goals-bank',
-        sourceId: rawGoal.id
+        get id() { return rawGoal.id },
+        get backendId() { return rawGoal.backendId },
+        get title() { return rawGoal.title || rawGoal.text },
+        get text() { return rawGoal.text || rawGoal.title },
+        get description() { return rawGoal.description || rawGoal.why },
+        get sphereId() { return rawGoal.category || rawGoal.sphereId },
+        get category() { return rawGoal.category },
+        get status() { return rawGoal.status },
+        get steps() { return rawGoal.steps },
+        set steps(val) { rawGoal.steps = val },
+        get progress() { return rawGoal.progress || 0 },
+        get source() { return 'goals-bank' },
+        get sourceId() { return rawGoal.id },
+        get whyImportant() { return rawGoal.whyImportant },
+        get why2() { return rawGoal.why2 },
+        _rawGoal: rawGoal
       }
     }
     // Also try in goals
@@ -1234,7 +1245,8 @@ function mapPriorityFromBackend(priority) {
 async function loadStepsWithFilters() {
   // Use goalBackendId from URL directly
   const backendId = goalBackendId.value
-  if (!backendId) return
+  // Skip for local goals (dev mode)
+  if (!backendId || isLocalId.value) return
   
   const currentBackendId = backendId
   
@@ -1579,8 +1591,9 @@ async function loadStepsFromBackend(page = 1, append = false) {
   // route.params.id IS the backendId now
   const backendId = goalBackendId.value
   
-  if (!backendId) {
-    console.log('[GoalEdit] No backendId in URL, skipping backend load')
+  // Skip backend load for local goals (dev mode)
+  if (!backendId || isLocalId.value) {
+    console.log('[GoalEdit] Skipping backend load for local goal')
     return
   }
   
@@ -2166,7 +2179,11 @@ function getChangedSteps(currentSteps) {
 
 // Sync only changed steps to backend
 async function syncStepsToBackend(steps) {
-  if (!goalBackendId.value) return
+  // Don't sync to backend for local goals (dev mode)
+  if (!goalBackendId.value || isLocalId.value) {
+    console.log('[GoalEdit] Skipping backend sync for local goal')
+    return
+  }
   
   const changedSteps = getChangedSteps(steps)
   

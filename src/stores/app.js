@@ -1432,9 +1432,21 @@ export const useAppStore = defineStore('app', () => {
   }
 
   function updateGoal(goalId, updates) {
-    const goal = goals.value.find(g => g.id === goalId)
+    // First try in goals
+    let goal = goals.value.find(g => g.id === goalId)
     if (goal) {
       Object.assign(goal, updates)
+      saveToLocalStorage()
+      return
+    }
+    
+    // Then try in rawIdeas (for local goals in dev mode)
+    const rawIdea = goalsBank.value.rawIdeas.find(g => g.id === goalId)
+    if (rawIdea) {
+      Object.assign(rawIdea, updates)
+      if (DEBUG_MODE) {
+        console.log('[Store] Updated rawIdea with steps:', goalId, updates)
+      }
       saveToLocalStorage()
     }
   }
