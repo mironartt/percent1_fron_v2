@@ -1,5 +1,5 @@
 <template>
-  <button class="mobile-menu-btn" @click="toggleMobile" :class="{ hidden: isMobileOpen }">
+  <button class="mobile-menu-btn" @click="toggleMobile" :class="{ hidden: isMobileOpen, 'scroll-hidden': isScrollHidden }">
     <Menu :size="24" :stroke-width="1.5" />
   </button>
   
@@ -179,6 +179,9 @@ const copied = ref(false)
 const linkInput = ref(null)
 const isMobileOpen = ref(false)
 const isMobile = ref(false)
+const isScrollHidden = ref(false)
+let lastScrollY = 0
+let scrollThreshold = 50
 
 function toggleMobile() {
   isMobileOpen.value = !isMobileOpen.value
@@ -202,6 +205,20 @@ function checkMobile() {
   } else {
     closeMobile()
   }
+}
+
+function handleScroll() {
+  if (!isMobile.value) return
+  
+  const currentScrollY = window.scrollY
+  
+  if (currentScrollY > lastScrollY && currentScrollY > scrollThreshold) {
+    isScrollHidden.value = true
+  } else if (currentScrollY < lastScrollY) {
+    isScrollHidden.value = false
+  }
+  
+  lastScrollY = currentScrollY
 }
 
 function copyLink() {
@@ -238,10 +255,12 @@ onMounted(() => {
   
   checkMobile()
   window.addEventListener('resize', checkMobile)
+  window.addEventListener('scroll', handleScroll, { passive: true })
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
+  window.removeEventListener('scroll', handleScroll)
   document.body.style.overflow = ''
 })
 
@@ -802,6 +821,12 @@ const menuItems = [
 }
 
 .mobile-menu-btn.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mobile-menu-btn.scroll-hidden {
+  transform: translateY(-100px);
   opacity: 0;
   pointer-events: none;
 }
