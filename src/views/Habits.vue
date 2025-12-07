@@ -1674,33 +1674,50 @@ const allHabits = computed(() => {
   const weekStartDate = weekDays.value[0]?.date
   const weekEndDate = weekDays.value[6]?.date
   
-  return appStore.habits
-    .filter(h => !h.archived)
+  const storeHabits = habitsStore.habits
+  const habitsSource = storeHabits.length > 0 ? storeHabits : appStore.habits
+  
+  if (DEBUG_MODE) {
+    console.log('[Habits.vue] allHabits computed - habitsStore.habits:', storeHabits.length, storeHabits)
+    console.log('[Habits.vue] allHabits computed - using source:', storeHabits.length > 0 ? 'habitsStore' : 'appStore')
+  }
+  
+  return habitsSource
+    .filter(h => !h.archived && !h.is_archived)
     .filter(h => {
-      if (!h.deletedAt) return true
+      const deletedDate = h.deletedAt || h.date_deleted
+      if (!deletedDate) return true
       if (isPastWeek.value) {
-        const deletedDate = h.deletedAt.split('T')[0]
-        return deletedDate > weekStartDate
+        const deleted = deletedDate.split('T')[0]
+        return deleted > weekStartDate
       }
       return false
     })
     .map(habit => {
       let wasDeletedThisWeek = false
       let deletedDuringWeek = null
+      const deletedDate = habit.deletedAt || habit.date_deleted
       
-      if (habit.deletedAt && isPastWeek.value) {
-        const deletedDate = habit.deletedAt.split('T')[0]
-        if (deletedDate >= weekStartDate && deletedDate <= weekEndDate) {
+      if (deletedDate && isPastWeek.value) {
+        const deleted = deletedDate.split('T')[0]
+        if (deleted >= weekStartDate && deleted <= weekEndDate) {
           wasDeletedThisWeek = true
-          deletedDuringWeek = deletedDate
+          deletedDuringWeek = deleted
         }
       }
       
       return {
         ...habit,
-        frequencyType: habit.frequencyType || 'daily',
-        scheduleDays: habit.scheduleDays || [1, 2, 3, 4, 5, 6, 0],
-        xpPenalty: habit.xpPenalty || 0,
+        id: habit.id || habit.habit_id,
+        habit_id: habit.habit_id || habit.id,
+        frequencyType: habit.frequencyType || habit.frequency_type || 'daily',
+        frequency_type: habit.frequency_type || habit.frequencyType || 'daily',
+        scheduleDays: habit.scheduleDays || habit.schedule_days || [1, 2, 3, 4, 5, 6, 0],
+        schedule_days: habit.schedule_days || habit.scheduleDays || [1, 2, 3, 4, 5, 6, 0],
+        xpPenalty: habit.xpPenalty || habit.xp_penalty || 0,
+        xp_penalty: habit.xp_penalty || habit.xpPenalty || 0,
+        xpReward: habit.xpReward || habit.xp_reward || 5,
+        xp_reward: habit.xp_reward || habit.xpReward || 5,
         wasDeletedThisWeek,
         deletedDuringWeek
       }
@@ -1708,13 +1725,20 @@ const allHabits = computed(() => {
 })
 
 const deletedHabits = computed(() => {
-  return appStore.habits
-    .filter(h => !h.archived && h.deletedAt)
+  const habitsSource = habitsStore.habits.length > 0 ? habitsStore.habits : appStore.habits
+  
+  return habitsSource
+    .filter(h => !h.archived && !h.is_archived && (h.deletedAt || h.date_deleted))
     .map(habit => ({
       ...habit,
-      frequencyType: habit.frequencyType || 'daily',
-      scheduleDays: habit.scheduleDays || [1, 2, 3, 4, 5, 6, 0],
-      xpPenalty: habit.xpPenalty || 0
+      id: habit.id || habit.habit_id,
+      habit_id: habit.habit_id || habit.id,
+      frequencyType: habit.frequencyType || habit.frequency_type || 'daily',
+      frequency_type: habit.frequency_type || habit.frequencyType || 'daily',
+      scheduleDays: habit.scheduleDays || habit.schedule_days || [1, 2, 3, 4, 5, 6, 0],
+      schedule_days: habit.schedule_days || habit.scheduleDays || [1, 2, 3, 4, 5, 6, 0],
+      xpPenalty: habit.xpPenalty || habit.xp_penalty || 0,
+      xp_penalty: habit.xp_penalty || habit.xpPenalty || 0
     }))
 })
 
@@ -1728,6 +1752,15 @@ const scheduledToday = computed(() => {
 
 const todayCompleted = computed(() => {
   const todayStr = new Date().toISOString().split('T')[0]
+  
+  if (habitsStore.habits.length > 0) {
+    return habitsStore.habits.filter(habit => {
+      if (habit.date_deleted) return false
+      const todaySchedule = habit.week_schedule?.find(s => s.date === todayStr)
+      return todaySchedule?.status === 'completed'
+    }).length
+  }
+  
   const completedIds = appStore.habitLog[todayStr] || []
   return scheduledToday.value.filter(h => completedIds.includes(h.id)).length
 })
@@ -1873,10 +1906,13 @@ const amnestiesRemaining = computed(() => {
 })
 
 function isScheduledForDay(habit, dayKey) {
-  if (habit.frequencyType === 'daily') return true
-  if (habit.frequencyType === 'weekdays') return dayKey >= 1 && dayKey <= 5
-  if (habit.frequencyType === 'weekends') return dayKey === 0 || dayKey === 6
-  return habit.scheduleDays?.includes(dayKey)
+  const freqType = habit.frequencyType || habit.frequency_type
+  const schedDays = habit.scheduleDays || habit.schedule_days
+  
+  if (freqType === 'daily') return true
+  if (freqType === 'weekdays') return dayKey >= 1 && dayKey <= 5
+  if (freqType === 'weekends') return dayKey === 0 || dayKey === 6
+  return schedDays?.includes(dayKey)
 }
 
 const missedDaysForAmnesty = computed(() => {
@@ -3185,7 +3221,7 @@ watch(activeTab, async (newTab) => {
 onMounted(async () => {
   loadGameSettings()
   
-  await habitsStore.initialize()
+  await habitsStore.initialize({ force: true })
   
   if (gameSettings.value.aiCoachEnabled && habitStreak.value >= 7 && habitStreak.value % 7 === 0) {
     coachHint.value = `Потрясающе! ${habitStreak.value} дней подряд — это уже настоящая привычка! Так держать!`

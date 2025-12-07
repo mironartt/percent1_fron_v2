@@ -115,7 +115,9 @@ export const useHabitsStore = defineStore('habits', () => {
         initialized.value = true
         
         if (DEBUG_MODE) {
-          console.log('[HabitsStore] Loaded habits:', habits.value.length)
+          console.log('[HabitsStore] Loaded habits:', habits.value.length, habits.value)
+          console.log('[HabitsStore] Week dates:', weekDates.value)
+          console.log('[HabitsStore] Settings:', settings.value)
         }
         
         return { success: true, data: result.data }
