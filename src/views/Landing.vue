@@ -810,6 +810,7 @@ onUnmounted(() => {
   transition: all 0.2s;
   border: none;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .btn-primary {
