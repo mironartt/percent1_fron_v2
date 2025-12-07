@@ -540,129 +540,91 @@
       </div>
     </transition>
 
-    <!-- Bottom Sheet модалка редактирования шага -->
+    <!-- Bottom Sheet модалка редактирования шага (упрощённая) -->
     <transition name="bottom-sheet">
       <div v-if="showEditStepModal" class="bottom-sheet-overlay" @click.self="closeEditStepModal">
-        <div class="bottom-sheet step-bottom-sheet">
-          <!-- Ручка для свайпа -->
+        <div class="bottom-sheet step-bottom-sheet step-bottom-sheet-simple">
           <div class="bottom-sheet-handle"></div>
           
-          <!-- Quick Actions вверху -->
-          <div class="quick-actions">
-            <button 
-              class="quick-action-btn"
-              :class="{ active: editStepForm.completed }"
-              @click="toggleEditStepComplete"
-            >
-              <CheckCircle :size="20" />
-              <span>{{ editStepForm.completed ? 'Выполнен' : 'Выполнить' }}</span>
-            </button>
-            <button 
-              class="quick-action-btn"
-              @click="openScheduleForStep"
-            >
-              <Calendar :size="20" />
-              <span>Запланировать</span>
-            </button>
-            <button 
-              class="quick-action-btn danger"
-              @click="deleteStepFromModal"
-            >
-              <Trash2 :size="20" />
-              <span>Удалить</span>
-            </button>
-          </div>
-          
-          <!-- Табы -->
-          <div class="step-modal-tabs">
-            <button 
-              class="tab-btn"
-              :class="{ active: editStepTab === 'main' }"
-              @click="editStepTab = 'main'"
-            >
-              Основное
-            </button>
-            <button 
-              class="tab-btn"
-              :class="{ active: editStepTab === 'params' }"
-              @click="editStepTab = 'params'"
-            >
-              Параметры
-            </button>
-          </div>
-          
-          <!-- Контент табов -->
           <div class="bottom-sheet-body">
-            <!-- Таб Основное -->
-            <div v-show="editStepTab === 'main'" class="tab-content">
-              <div class="form-group">
-                <label class="form-label">Название шага</label>
-                <input 
-                  v-model="editStepForm.title"
-                  type="text"
-                  class="form-input"
-                  placeholder="Введите название шага"
-                  ref="editStepTitleInput"
-                />
-              </div>
-              
-              <div class="form-group">
-                <label class="form-label">Комментарий</label>
-                <textarea 
-                  v-model="editStepForm.comment"
-                  class="form-input form-textarea"
-                  placeholder="Дополнительные заметки..."
-                  rows="3"
-                ></textarea>
-              </div>
+            <div class="form-group">
+              <label class="form-label">Название шага</label>
+              <input 
+                v-model="editStepForm.title"
+                type="text"
+                class="form-input"
+                placeholder="Введите название шага"
+                ref="editStepTitleInput"
+              />
             </div>
             
-            <!-- Таб Параметры -->
-            <div v-show="editStepTab === 'params'" class="tab-content">
-              <div class="form-group">
-                <label class="form-label">Приоритет</label>
-                <div class="priority-selector">
-                  <button 
-                    v-for="p in priorityOptions" 
-                    :key="p.value"
-                    class="priority-option"
-                    :class="{ active: editStepForm.priority === p.value, [p.value]: true }"
-                    @click="editStepForm.priority = p.value"
-                  >
-                    <span class="priority-dot"></span>
-                    {{ p.label }}
-                  </button>
-                </div>
+            <div class="form-group">
+              <label class="form-label">Комментарий</label>
+              <textarea 
+                v-model="editStepForm.comment"
+                class="form-input form-textarea"
+                placeholder="Дополнительные заметки..."
+                rows="2"
+              ></textarea>
+            </div>
+
+            <div class="step-params-row">
+              <div class="param-chip" @click="showTimeSelector = !showTimeSelector">
+                <Clock :size="14" />
+                <span>{{ editStepForm.timeEstimate ? editStepForm.timeEstimate + 'ч' : 'Время' }}</span>
               </div>
-              
-              <div class="form-group">
-                <label class="form-label">Время на выполнение (часов)</label>
-                <input 
-                  v-model="editStepForm.timeEstimate"
-                  type="number"
-                  class="form-input"
-                  placeholder="2"
-                  min="0.5"
-                  max="24"
-                  step="0.5"
-                />
+              <div class="param-chip" @click="showDatePicker = !showDatePicker">
+                <Calendar :size="14" />
+                <span>{{ formatParamDate(editStepForm.scheduledDate) || 'Дата' }}</span>
               </div>
-              
-              <div class="form-group">
-                <label class="form-label">Дата выполнения</label>
-                <input 
-                  v-model="editStepForm.scheduledDate"
-                  type="date"
-                  class="form-input"
-                />
+              <div 
+                class="param-chip priority-chip"
+                :class="editStepForm.priority || 'none'"
+                @click="cyclePriority"
+              >
+                <Circle :size="14" />
+                <span>{{ getPriorityLabel(editStepForm.priority) || 'Приоритет' }}</span>
               </div>
+            </div>
+
+            <div v-if="showTimeSelector" class="param-dropdown">
+              <input 
+                v-model="editStepForm.timeEstimate"
+                type="number"
+                class="form-input form-input-small"
+                placeholder="Часов"
+                min="0.5"
+                max="24"
+                step="0.5"
+              />
+            </div>
+
+            <div v-if="showDatePicker" class="param-dropdown">
+              <input 
+                v-model="editStepForm.scheduledDate"
+                type="date"
+                class="form-input"
+              />
             </div>
           </div>
           
-          <div class="bottom-sheet-footer">
-            <button class="btn btn-secondary" @click="closeEditStepModal">
-              Отмена
+          <div class="bottom-sheet-footer step-footer-simple">
+            <button 
+              class="icon-btn"
+              :class="{ active: editStepForm.completed }"
+              @click="toggleEditStepComplete"
+              title="Выполнить"
+            >
+              <CheckCircle :size="22" />
             </button>
+            <button 
+              class="icon-btn danger"
+              @click="deleteStepFromModal"
+              title="Удалить"
+            >
+              <Trash2 :size="22" />
+            </button>
+            <div class="footer-spacer"></div>
             <button class="btn btn-primary" @click="saveEditStepModal">
               <Check :size="16" />
               Сохранить
@@ -928,7 +890,8 @@ async function saveStepFromModal() {
 
 // Модалка редактирования шага
 const showEditStepModal = ref(false)
-const editStepTab = ref('main')
+const showTimeSelector = ref(false)
+const showDatePicker = ref(false)
 const editStepForm = ref({
   title: '',
   comment: '',
@@ -948,7 +911,8 @@ const priorityOptions = [
 ]
 
 function openEditStepModal(step, index) {
-  editStepTab.value = 'main'
+  showTimeSelector.value = false
+  showDatePicker.value = false
   editStepForm.value = {
     title: step.title || '',
     comment: step.comment || '',
@@ -968,11 +932,29 @@ function toggleEditStepComplete() {
   editStepForm.value.completed = !editStepForm.value.completed
 }
 
+function cyclePriority() {
+  const priorities = ['', 'low', 'medium', 'high']
+  const current = editStepForm.value.priority || ''
+  const idx = priorities.indexOf(current)
+  editStepForm.value.priority = priorities[(idx + 1) % priorities.length]
+}
+
+
+function formatParamDate(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const today = new Date()
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  
+  if (date.toDateString() === today.toDateString()) return 'Сегодня'
+  if (date.toDateString() === tomorrow.toDateString()) return 'Завтра'
+  
+  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+}
+
 function openScheduleForStep() {
-  editStepTab.value = 'params'
-  nextTick(() => {
-    // Фокус на поле даты
-  })
+  showDatePicker.value = true
 }
 
 function closeEditStepModal() {
@@ -1493,9 +1475,12 @@ function getPriorityLabel(priority) {
     'critical': 'Критично',
     'desirable': 'Желательно',
     'attention': 'Внимание',
-    'optional': 'Опционально'
+    'optional': 'Опционально',
+    'low': 'Низкий',
+    'medium': 'Средний',
+    'high': 'Высокий'
   }
-  return labels[priority] || priority
+  return labels[priority] || priority || ''
 }
 
 function formatScheduledDate(dateStr) {
@@ -3285,6 +3270,105 @@ function formatDate(dateString) {
 
 .bottom-sheet-footer .btn {
   flex: 1;
+}
+
+.step-bottom-sheet-simple {
+  max-height: 80vh;
+}
+
+.step-params-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.param-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--bg-secondary, #f3f4f6);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.param-chip:hover {
+  background: var(--bg-hover, #e5e7eb);
+}
+
+.param-chip.priority-chip.low {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+}
+
+.param-chip.priority-chip.medium {
+  background: rgba(234, 179, 8, 0.15);
+  color: #ca8a04;
+}
+
+.param-chip.priority-chip.high {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+}
+
+.param-dropdown {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: var(--bg-secondary, #f9fafb);
+  border-radius: 8px;
+}
+
+.form-input-small {
+  max-width: 120px;
+}
+
+.step-footer-simple {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.step-footer-simple .btn {
+  flex: none;
+}
+
+.footer-spacer {
+  flex: 1;
+}
+
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: var(--bg-secondary, #f3f4f6);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-secondary, #6b7280);
+}
+
+.icon-btn:hover {
+  background: var(--bg-hover, #e5e7eb);
+}
+
+.icon-btn.active {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+}
+
+.icon-btn.danger {
+  color: #ef4444;
+}
+
+.icon-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.1);
 }
 
 /* Bottom Sheet transition */
