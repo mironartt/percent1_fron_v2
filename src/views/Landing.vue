@@ -100,11 +100,102 @@
         </div>
       </section>
 
+      <section class="app-preview-section">
+        <div class="container">
+          <h2 class="section-title">Посмотри, как это выглядит</h2>
+          <p class="section-subtitle">
+            Современное веб-приложение с интуитивным интерфейсом
+          </p>
+          
+          <div class="preview-tabs">
+            <button 
+              v-for="(tab, index) in previewTabs" 
+              :key="index"
+              class="preview-tab"
+              :class="{ active: activePreview === index }"
+              @click="activePreview = index"
+            >
+              {{ tab.icon }} {{ tab.name }}
+            </button>
+          </div>
+          
+          <div class="preview-content">
+            <div class="preview-mockup">
+              <div class="mockup-header">
+                <div class="mockup-dots">
+                  <span></span><span></span><span></span>
+                </div>
+                <span class="mockup-title">OnePercent</span>
+              </div>
+              <div class="mockup-body">
+                <div class="mockup-sidebar">
+                  <div class="sidebar-item active">📊 Главная</div>
+                  <div class="sidebar-item" :class="{ active: activePreview === 0 }">🎯 ССП</div>
+                  <div class="sidebar-item" :class="{ active: activePreview === 1 }">📅 Планирование</div>
+                  <div class="sidebar-item" :class="{ active: activePreview === 2 }">🔥 Привычки</div>
+                  <div class="sidebar-item" :class="{ active: activePreview === 3 }">🏆 Достижения</div>
+                </div>
+                <div class="mockup-content">
+                  <div v-if="activePreview === 0" class="preview-screen">
+                    <h4>Колесо баланса</h4>
+                    <div class="wheel-preview">
+                      <div class="wheel-segment" v-for="n in 6" :key="n" :style="{ transform: `rotate(${n * 60}deg)` }"></div>
+                    </div>
+                    <div class="preview-stats">
+                      <div class="stat-item"><span>Средний балл</span><strong>7.2</strong></div>
+                      <div class="stat-item"><span>Зона роста</span><strong>Здоровье</strong></div>
+                    </div>
+                  </div>
+                  <div v-else-if="activePreview === 1" class="preview-screen">
+                    <h4>Недельное планирование</h4>
+                    <div class="week-preview">
+                      <div class="day-tab" v-for="day in ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']" :key="day">{{ day }}</div>
+                    </div>
+                    <div class="tasks-preview">
+                      <div class="task-item"><span class="priority high"></span>Утренняя тренировка</div>
+                      <div class="task-item"><span class="priority med"></span>Работа над проектом</div>
+                      <div class="task-item completed"><span class="priority low"></span>Чтение 30 минут</div>
+                    </div>
+                  </div>
+                  <div v-else-if="activePreview === 2" class="preview-screen">
+                    <h4>Мои привычки</h4>
+                    <div class="habits-preview">
+                      <div class="habit-item"><span class="habit-icon">🏃</span>Утренняя зарядка<span class="streak">🔥 12 дней</span></div>
+                      <div class="habit-item"><span class="habit-icon">📚</span>Чтение<span class="streak">🔥 8 дней</span></div>
+                      <div class="habit-item"><span class="habit-icon">💧</span>Вода 2л<span class="streak">🔥 5 дней</span></div>
+                    </div>
+                    <div class="xp-bar"><span style="width: 65%"></span></div>
+                    <p class="xp-text">+45 XP сегодня</p>
+                  </div>
+                  <div v-else class="preview-screen">
+                    <h4>Достижения</h4>
+                    <div class="badges-preview">
+                      <div class="badge unlocked">🥇<span>Первые шаги</span></div>
+                      <div class="badge unlocked">🔥<span>7 дней подряд</span></div>
+                      <div class="badge locked">🏆<span>30 дней</span></div>
+                      <div class="badge locked">💎<span>Мастер</span></div>
+                    </div>
+                    <div class="progress-text">Разблокировано: 8 / 19</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="preview-description">
+              <h3>{{ previewTabs[activePreview].title }}</h3>
+              <p>{{ previewTabs[activePreview].description }}</p>
+              <ul class="preview-features">
+                <li v-for="(feature, i) in previewTabs[activePreview].features" :key="i">{{ feature }}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="features" class="features">
         <div class="container">
-          <h2 class="section-title">Как это работает внутри</h2>
+          <h2 class="section-title">Все инструменты в одном месте</h2>
           <p class="section-subtitle">
-            Веб-приложение с ИИ-наставником, который помогает держать фокус и работать над эффективностью
+            8 модулей для системного роста — от диагностики до геймификации
           </p>
           
           <div class="features-grid">
@@ -134,9 +225,19 @@
               <p>4 вопроса каждый вечер. Фиксируй победы и уроки дня.</p>
             </div>
             <div class="feature-card">
+              <div class="feature-icon">🔥</div>
+              <h3>Трекер привычек</h3>
+              <p>Формируй полезные привычки. Серии выполнения, XP за каждый день, гибкое расписание.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">🏆</div>
+              <h3>Достижения</h3>
+              <p>19 бейджей в 4 категориях. Отслеживай прогресс, получай награды за системность.</p>
+            </div>
+            <div class="feature-card">
               <div class="feature-icon">⭐</div>
-              <h3>Геймификация</h3>
-              <p>Зарабатывай XP за привычки и шаги. Трекер прогресса и достижения.</p>
+              <h3>XP и награды</h3>
+              <p>Зарабатывай опыт за привычки, шаги и цели. Обменивай на награды из вишлиста.</p>
             </div>
           </div>
         </div>
@@ -301,6 +402,58 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 const days = ref(90)
 const isScrolled = ref(false)
+const activePreview = ref(0)
+
+const previewTabs = [
+  {
+    icon: '🎯',
+    name: 'ССП',
+    title: 'Колесо баланса (ССП)',
+    description: 'Оцени 6 ключевых сфер жизни по шкале от 1 до 10. Увидь общую картину и найди зоны, которые тянут вниз.',
+    features: [
+      'Интерактивная диаграмма баланса',
+      'История оценок и динамика',
+      'Рефлексия по каждой сфере',
+      'Автоматические рекомендации целей'
+    ]
+  },
+  {
+    icon: '📅',
+    name: 'Планирование',
+    title: 'Недельный планировщик',
+    description: 'Распредели шаги по дням недели. Визуальный календарь с приоритетами и временными оценками.',
+    features: [
+      'Drag & drop шагов по дням',
+      'Цветовые приоритеты (критично / желательно / внимание)',
+      'Оценка времени на каждый шаг',
+      'Статистика выполнения'
+    ]
+  },
+  {
+    icon: '🔥',
+    name: 'Привычки',
+    title: 'Трекер привычек',
+    description: 'Формируй полезные привычки и отслеживай серии выполнения. Гибкое расписание и XP за каждый день.',
+    features: [
+      'Серии выполнения (streaks)',
+      'XP за каждую привычку (1-100)',
+      'Гибкое расписание (ежедневно / будни / выходные)',
+      '4 режима геймификации'
+    ]
+  },
+  {
+    icon: '🏆',
+    name: 'Достижения',
+    title: 'Система достижений',
+    description: '19 бейджей в 4 категориях: Серии, Выполнение, Объём, Разнообразие. Мотивация через прогресс.',
+    features: [
+      'Визуальные бейджи с прогрессом',
+      'Уведомления о новых достижениях',
+      'Статистика профиля',
+      'Вишлист наград за XP'
+    ]
+  }
+]
 
 const multiplier = computed(() => {
   return Math.pow(1.01, days.value).toFixed(2)
@@ -723,6 +876,348 @@ onUnmounted(() => {
 .audience-card p {
   color: #6b7280;
   line-height: 1.5;
+}
+
+.app-preview-section {
+  padding: 5rem 0;
+  background: linear-gradient(180deg, #fafafa 0%, #f0f0ff 100%);
+}
+
+.preview-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.preview-tab {
+  padding: 0.75rem 1.25rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  background: white;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.preview-tab:hover {
+  border-color: #a5b4fc;
+}
+
+.preview-tab.active {
+  border-color: #6366f1;
+  background: #6366f1;
+  color: white;
+}
+
+.preview-content {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.preview-mockup {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.mockup-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.mockup-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.mockup-dots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #d1d5db;
+}
+
+.mockup-dots span:first-child { background: #ef4444; }
+.mockup-dots span:nth-child(2) { background: #f59e0b; }
+.mockup-dots span:last-child { background: #22c55e; }
+
+.mockup-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.mockup-body {
+  display: flex;
+  min-height: 320px;
+}
+
+.mockup-sidebar {
+  width: 140px;
+  background: #f9fafb;
+  border-right: 1px solid #e5e7eb;
+  padding: 1rem 0;
+}
+
+.sidebar-item {
+  padding: 0.625rem 1rem;
+  font-size: 0.8125rem;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.sidebar-item.active {
+  background: #eef2ff;
+  color: #6366f1;
+  font-weight: 500;
+}
+
+.mockup-content {
+  flex: 1;
+  padding: 1.5rem;
+}
+
+.preview-screen h4 {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  color: #1a1a2e;
+}
+
+.wheel-preview {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 1rem;
+  position: relative;
+  border-radius: 50%;
+  background: conic-gradient(
+    #6366f1 0deg 60deg,
+    #8b5cf6 60deg 120deg,
+    #a78bfa 120deg 180deg,
+    #c4b5fd 180deg 240deg,
+    #ddd6fe 240deg 300deg,
+    #ede9fe 300deg 360deg
+  );
+}
+
+.preview-stats {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-item span {
+  display: block;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.stat-item strong {
+  font-size: 1.125rem;
+  color: #1a1a2e;
+}
+
+.week-preview {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.day-tab {
+  flex: 1;
+  padding: 0.5rem;
+  text-align: center;
+  font-size: 0.75rem;
+  background: #f3f4f6;
+  border-radius: 6px;
+}
+
+.day-tab:nth-child(7) {
+  background: #6366f1;
+  color: white;
+}
+
+.tasks-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+}
+
+.task-item.completed {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.priority {
+  width: 4px;
+  height: 20px;
+  border-radius: 2px;
+}
+
+.priority.high { background: #ef4444; }
+.priority.med { background: #f59e0b; }
+.priority.low { background: #3b82f6; }
+
+.habits-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.habit-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+}
+
+.habit-icon {
+  font-size: 1rem;
+}
+
+.streak {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: #f59e0b;
+}
+
+.xp-bar {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.xp-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  border-radius: 4px;
+}
+
+.xp-text {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #6366f1;
+  font-weight: 600;
+}
+
+.badges-preview {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 10px;
+  font-size: 1.5rem;
+}
+
+.badge span {
+  font-size: 0.6875rem;
+  color: #6b7280;
+}
+
+.badge.locked {
+  opacity: 0.4;
+}
+
+.badge.unlocked {
+  background: #eef2ff;
+}
+
+.progress-text {
+  text-align: center;
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.preview-description h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: #1a1a2e;
+}
+
+.preview-description > p {
+  color: #6b7280;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.preview-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.preview-features li {
+  position: relative;
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: #4b5563;
+}
+
+.preview-features li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #6366f1;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .preview-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .mockup-sidebar {
+    display: none;
+  }
+  
+  .preview-description {
+    text-align: center;
+  }
+  
+  .preview-features {
+    text-align: left;
+    max-width: 300px;
+    margin: 0 auto;
+  }
 }
 
 .testimonials-section {
