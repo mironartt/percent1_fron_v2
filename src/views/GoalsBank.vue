@@ -104,7 +104,7 @@
             :key="goal.id" 
             class="goal-card" 
             :style="{ '--sphere-accent': getSphereColor(goal.sphereId) }"
-            @click="openEditModal(goal)"
+            @click="goToDecompose(goal.id)"
             @contextmenu.prevent="openBottomSheet(goal)"
             @touchstart="startLongPress(goal)"
             @touchend="cancelLongPress"
@@ -120,11 +120,11 @@
               <div class="goal-card-header">
                 <h3 class="goal-title">{{ goal.text }}</h3>
                 <button 
-                  class="btn-arrow" 
-                  @click.stop="goToDecompose(goal.id)" 
-                  v-if="goal.status === 'validated'"
+                  class="btn-settings-card" 
+                  @click.stop="openEditModal(goal)" 
+                  title="Настройки цели"
                 >
-                  <ChevronRight :size="20" />
+                  <Settings :size="18" />
                 </button>
               </div>
               <div class="goal-card-footer">
@@ -2387,6 +2387,32 @@ onUnmounted(() => {
 .btn-arrow:hover {
   background: var(--primary-color);
   color: white;
+}
+
+.btn-settings-card {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: all 0.2s;
+}
+
+.btn-settings-card:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  opacity: 1;
+}
+
+.goal-card:hover .btn-settings-card {
+  opacity: 1;
 }
 
 .goal-card-footer {
