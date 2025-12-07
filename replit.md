@@ -60,13 +60,24 @@ Integrated the Habits module with Django REST API backend through 18 endpoints:
 
 **API Base Path:** `/api/rest/front/app/habits`
 
-**Integrated Endpoints:**
+**Integrated Endpoints (18 total):**
 - Settings: /settings/get/, /settings/update/
 - Habits: /get/, /update/ (CRUD operations)
 - Completions: /completions/update/
 - Amnesty: /amnesty/apply/, /amnesty/revoke/
-- Analytics: /analytics/, /achievements/
-- Stats: /stats-panel/
-- XP/Rewards: /xp/, /rewards/
+- Analytics: /analytics/get/, /achievements/get/
+- Stats: /stats-panel/, /recommended/
+- XP: /xp/history/, /xp/stats/
+- Rewards: /rewards/get/, /rewards/create/, /rewards/redeem/, /rewards/update/, /rewards/delete/
+
+**CRITICAL: /update/ endpoint structure (December 2024 fix):**
+- `habits_data: [{...}]` - для создания (без habit_id) и обновления (с habit_id)
+- `deleted_habit_ids: [id, ...]` - для soft-delete
+- `restored_habit_ids: [id, ...]` - для восстановления
+- `permanently_deleted_ids: [id, ...]` - для полного удаления
+- НЕ использовать: `action`, `habits`, `habit_ids`, `permanent`
+
+**Completions structure:**
+- `completions_data: [{habit_id, date, status, note?, excuse_reason?}]`
 
 **Note:** Django backend runs on port 8017 (not included in this Replit). ECONNREFUSED errors are expected when backend is not running - app falls back to localStorage.

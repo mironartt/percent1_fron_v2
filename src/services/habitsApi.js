@@ -106,25 +106,23 @@ export async function getHabits(params = {}) {
 
 /**
  * Создать/обновить/удалить/восстановить привычки
- * @param {object} data - Данные операции
- * @param {string} data.action - 'create' | 'update' | 'delete' | 'restore'
- * @param {Array} data.habits - Массив привычек для операции
  * 
- * Для create:
- * - name: string (обязательно)
- * - icon: string (название иконки, например 'fire', 'strength')
- * - xp_reward: number (1-100)
- * - xp_penalty: number (0-200)
- * - frequency_type: 'daily' | 'weekly' | 'custom'
- * - schedule_days: number[] (0=Вс, 1=Пн, ... 6=Сб)
- * - description: string
+ * ПРАВИЛЬНАЯ СТРУКТУРА ЗАПРОСА:
+ * @param {object} data - Данные операции (все поля опциональны, но минимум одно обязательно)
+ * @param {Array} [data.habits_data] - Массив для создания/обновления привычек
+ * @param {Array} [data.deleted_habit_ids] - Массив ID для soft-delete
+ * @param {Array} [data.restored_habit_ids] - Массив ID для восстановления
+ * @param {Array} [data.permanently_deleted_ids] - Массив ID для полного удаления
  * 
- * Для update:
- * - habit_id: number (обязательно)
- * - ...любые поля для обновления
- * 
- * Для delete/restore:
- * - habit_id: number (обязательно)
+ * Структура habits_data:
+ * - habit_id?: number (если есть - обновление, если нет - создание)
+ * - name: string (обязательно для создания)
+ * - icon?: string (название иконки, например 'fire', 'strength', по умолчанию 'fire')
+ * - xp_reward?: number (1-100, по умолчанию 5)
+ * - xp_penalty?: number (0-200, по умолчанию 0)
+ * - frequency_type?: 'daily' | 'weekdays' | 'weekends' | 'custom'
+ * - schedule_days?: number[] (0=Вс, 1=Пн, ... 6=Сб)
+ * - description?: string (до 500 символов)
  * 
  * @returns {Promise<{success: boolean, data?: object, error?: object}>}
  */
@@ -134,72 +132,102 @@ export async function updateHabits(data) {
 
 /**
  * Хелпер: создать одну привычку
+ * @param {object} habitData - Данные привычки (без habit_id)
  */
 export async function createHabit(habitData) {
   return updateHabits({
-    action: 'create',
-    habits: [habitData]
+    habits_data: [habitData]
   })
 }
 
 /**
  * Хелпер: создать несколько привычек
+ * @param {Array} habitsArray - Массив данных привычек (без habit_id)
  */
 export async function createHabits(habitsArray) {
   return updateHabits({
-    action: 'create',
-    habits: habitsArray
+    habits_data: habitsArray
   })
 }
 
 /**
  * Хелпер: обновить одну привычку
+ * @param {number} habitId - ID привычки
+ * @param {object} habitData - Поля для обновления
  */
 export async function updateHabit(habitId, habitData) {
   return updateHabits({
-    action: 'update',
-    habits: [{ habit_id: habitId, ...habitData }]
+    habits_data: [{ habit_id: habitId, ...habitData }]
   })
 }
 
 /**
- * Хелпер: удалить привычку (soft-delete)
+ * Хелпер: удалить привычку (soft-delete, можно восстановить)
+ * @param {number} habitId - ID привычки
  */
 export async function deleteHabit(habitId) {
   return updateHabits({
-    action: 'delete',
-    habits: [{ habit_id: habitId }]
+    deleted_habit_ids: [habitId]
+  })
+}
+
+/**
+ * Хелпер: удалить несколько привычек (soft-delete)
+ * @param {Array<number>} habitIds - Массив ID привычек
+ */
+export async function deleteHabits(habitIds) {
+  return updateHabits({
+    deleted_habit_ids: habitIds
   })
 }
 
 /**
  * Хелпер: восстановить привычку
+ * @param {number} habitId - ID привычки
  */
 export async function restoreHabit(habitId) {
   return updateHabits({
-    action: 'restore',
-    habits: [{ habit_id: habitId }]
+    restored_habit_ids: [habitId]
+  })
+}
+
+/**
+ * Хелпер: восстановить несколько привычек
+ * @param {Array<number>} habitIds - Массив ID привычек
+ */
+export async function restoreHabits(habitIds) {
+  return updateHabits({
+    restored_habit_ids: habitIds
   })
 }
 
 /**
  * Хелпер: архивировать привычку (обновление с is_archived: true)
+ * @param {number} habitId - ID привычки
  */
 export async function archiveHabit(habitId) {
   return updateHabits({
-    action: 'update',
-    habits: [{ habit_id: habitId, is_archived: true }]
+    habits_data: [{ habit_id: habitId, is_archived: true }]
   })
 }
 
 /**
- * Хелпер: полностью удалить привычку (delete с permanent: true)
+ * Хелпер: полностью удалить привычку (БЕЗВОЗВРАТНО!)
+ * @param {number} habitId - ID привычки
  */
 export async function permanentlyDeleteHabit(habitId) {
   return updateHabits({
-    action: 'delete',
-    habits: [{ habit_id: habitId }],
-    permanent: true
+    permanently_deleted_ids: [habitId]
+  })
+}
+
+/**
+ * Хелпер: полностью удалить несколько привычек (БЕЗВОЗВРАТНО!)
+ * @param {Array<number>} habitIds - Массив ID привычек
+ */
+export async function permanentlyDeleteHabits(habitIds) {
+  return updateHabits({
+    permanently_deleted_ids: habitIds
   })
 }
 
@@ -209,12 +237,12 @@ export async function permanentlyDeleteHabit(habitId) {
 
 /**
  * Обновить статус выполнения привычек
- * @param {Array} completions - Массив изменений
- * @param {number} completions[].habit_id - ID привычки
- * @param {string} completions[].date - Дата (YYYY-MM-DD)
- * @param {string} completions[].status - 'completed' | 'missed' | 'excused' | null
- * @param {string} [completions[].note] - Заметка
- * @param {string} [completions[].excuse_reason] - Причина (для excused)
+ * @param {Array} completionsData - Массив изменений
+ * @param {number} completionsData[].habit_id - ID привычки
+ * @param {string} completionsData[].date - Дата (YYYY-MM-DD)
+ * @param {string} completionsData[].status - 'completed' | 'missed' | 'excused' | null
+ * @param {string} [completionsData[].note] - Заметка
+ * @param {string} [completionsData[].excuse_reason] - Причина (для excused)
  * @returns {Promise<{success: boolean, data?: object, error?: object}>}
  * 
  * Возвращает:
@@ -222,8 +250,8 @@ export async function permanentlyDeleteHabit(habitId) {
  * - xp_changes: массив изменений XP
  * - new_achievements: массив новых достижений (если есть)
  */
-export async function updateCompletions(completions) {
-  return habitsRequest('/completions/update/', { completions })
+export async function updateCompletions(completionsData) {
+  return habitsRequest('/completions/update/', { completions_data: completionsData })
 }
 
 /**
