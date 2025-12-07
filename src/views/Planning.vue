@@ -67,32 +67,54 @@
 
       <div class="tasks-list" v-if="getTasksForDay(selectedDay).length > 0">
         <div 
-          v-for="task in getTasksForDay(selectedDay)" 
-          :key="task.id"
-          class="task-card"
-          :class="[
-            { completed: task.completed },
-            'priority-' + (task.priority || 'none')
-          ]"
-          @click="openTaskActions(task)"
-          @touchstart="handleTouchStart(task, $event)"
-          @touchend="handleTouchEnd"
-          @touchmove="handleTouchMove"
+          v-for="group in getGroupedTasksForDay(selectedDay)" 
+          :key="group.goalId"
+          class="task-group"
         >
-          <button 
-            class="task-checkbox"
-            :class="{ completed: task.completed }"
-            @click.stop="toggleTaskComplete(task)"
-          >
-            <Check v-if="task.completed" :size="16" />
-          </button>
-          <div class="task-info">
-            <span class="task-title">{{ task.stepTitle }}</span>
-            <span class="task-goal">{{ task.goalTitle }}</span>
+          <div class="group-header" v-if="getGroupedTasksForDay(selectedDay).length > 1 || group.tasks.length > 1">
+            <span class="group-title">{{ group.goalTitle }}</span>
+            <div class="group-meta">
+              <span class="group-count">{{ group.completedCount }}/{{ group.tasks.length }}</span>
+              <span v-if="group.totalMinutes" class="group-time">
+                <Clock :size="12" />
+                {{ formatGroupTime(group.totalMinutes) }}
+              </span>
+            </div>
           </div>
-          <div class="task-meta">
-            <span v-if="task.timeEstimate" class="time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
-            <span v-if="task.priority" class="priority-dot" :class="'priority-' + task.priority"></span>
+          <div 
+            v-for="task in group.tasks" 
+            :key="task.id"
+            class="task-card"
+            :class="[
+              { completed: task.completed },
+              'priority-' + (task.priority || 'none')
+            ]"
+            @click="openTaskActions(task)"
+            @touchstart="handleTouchStart(task, $event)"
+            @touchend="handleTouchEnd"
+            @touchmove="handleTouchMove"
+          >
+            <div class="priority-stripe" :class="'priority-' + (task.priority || 'none')"></div>
+            <button 
+              class="task-checkbox"
+              :class="{ completed: task.completed }"
+              @click.stop="toggleTaskComplete(task)"
+            >
+              <Check v-if="task.completed" :size="16" />
+            </button>
+            <div class="task-info">
+              <span class="task-title">{{ task.stepTitle }}</span>
+              <span class="task-goal" v-if="getGroupedTasksForDay(selectedDay).length === 1 && group.tasks.length === 1">{{ task.goalTitle }}</span>
+            </div>
+            <div class="task-meta">
+              <span v-if="task.timeEstimate" class="time-badge">
+                <Clock :size="12" />
+                {{ formatTimeShort(task.timeEstimate) }}
+              </span>
+              <span v-if="task.priority" class="priority-icon-badge" :class="'priority-' + task.priority">
+                {{ getPriorityIcon(task.priority) }}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -210,16 +232,25 @@
             class="step-card"
             :class="{ 
               scheduled: isStepScheduled(goal.id, step.id),
-              completed: step.completed
+              completed: step.completed,
+              ['priority-' + getScheduledPriority(goal.id, step.id)]: isStepScheduled(goal.id, step.id)
             }"
             @click="openStepActions(goal, step)"
           >
+            <div class="priority-stripe" :class="'priority-' + (getScheduledPriority(goal.id, step.id) || 'none')"></div>
             <div class="step-content">
               <span class="step-title">{{ step.title }}</span>
               <div class="step-badges" v-if="isStepScheduled(goal.id, step.id)">
-                <span class="date-badge">{{ formatStepDate(goal.id, step.id) }}</span>
-                <span v-if="getScheduledPriority(goal.id, step.id)" class="priority-badge" :class="'priority-' + getScheduledPriority(goal.id, step.id)">
-                  {{ getPriorityShort(getScheduledPriority(goal.id, step.id)) }}
+                <span class="date-badge">
+                  <Calendar :size="12" />
+                  {{ formatStepDate(goal.id, step.id) }}
+                </span>
+                <span v-if="getScheduledTime(goal.id, step.id)" class="time-badge">
+                  <Clock :size="12" />
+                  {{ formatTimeShort(getScheduledTime(goal.id, step.id)) }}
+                </span>
+                <span v-if="getScheduledPriority(goal.id, step.id)" class="priority-icon-badge" :class="'priority-' + getScheduledPriority(goal.id, step.id)">
+                  {{ getPriorityIcon(getScheduledPriority(goal.id, step.id)) }}
                 </span>
               </div>
             </div>
@@ -729,6 +760,43 @@ function getTotalTimeForDay(dateStr) {
   return minutes > 0 ? `${hours}ч ${minutes}м` : `${hours}ч`
 }
 
+function getGroupedTasksForDay(dateStr) {
+  const tasks = getTasksForDay(dateStr)
+  const groups = {}
+  const timeValues = { '30min': 30, '1h': 60, '2h': 120, '3h': 180, '4h': 240 }
+  
+  for (const task of tasks) {
+    const goalKey = task.goalId || task.goalTitle
+    if (!groups[goalKey]) {
+      groups[goalKey] = {
+        goalId: task.goalId,
+        goalTitle: task.goalTitle,
+        goalCategory: task.goalCategory,
+        tasks: [],
+        totalMinutes: 0,
+        completedCount: 0
+      }
+    }
+    groups[goalKey].tasks.push(task)
+    groups[goalKey].totalMinutes += timeValues[task.timeEstimate] || 0
+    if (task.completed) groups[goalKey].completedCount++
+  }
+  
+  return Object.values(groups).sort((a, b) => {
+    const maxPriorityA = Math.min(...a.tasks.map(t => priorityOrder[t.priority] ?? 4))
+    const maxPriorityB = Math.min(...b.tasks.map(t => priorityOrder[t.priority] ?? 4))
+    return maxPriorityA - maxPriorityB
+  })
+}
+
+function formatGroupTime(minutes) {
+  if (minutes === 0) return ''
+  if (minutes < 60) return `${minutes}м`
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  return mins > 0 ? `${hours}ч ${mins}м` : `${hours}ч`
+}
+
 const weeklyTotalTasks = computed(() => {
   let total = 0
   for (const day of weekDays.value) {
@@ -953,6 +1021,23 @@ function formatStepDate(goalId, stepId) {
 function getPriorityShort(priority) {
   const labels = { 'critical': '!!!', 'desirable': '!!', 'attention': '!', 'optional': '○' }
   return labels[priority] || ''
+}
+
+function getPriorityIcon(priority) {
+  const icons = { 'critical': '🔥', 'desirable': '⚡', 'attention': '👁', 'optional': '○' }
+  return icons[priority] || ''
+}
+
+function getScheduledTime(goalId, stepId) {
+  const task = weeklyStepsData.value.find(t => 
+    (t.goalId === goalId || t.goal_id === goalId) && 
+    (t.stepId === stepId || t.step_id === stepId)
+  )
+  if (task) return task.timeEstimate || task.time_estimate || ''
+  
+  const localTask = store.weeklyPlans.flatMap(p => p.scheduledTasks || [])
+    .find(t => (t.goalId === goalId) && (t.stepId === stepId))
+  return localTask?.timeEstimate || ''
 }
 
 function toggleGoal(goalId) {
@@ -1694,7 +1779,53 @@ onUnmounted(() => {
 .tasks-list {
   display: flex;
   flex-direction: column;
+  gap: 0.75rem;
+}
+
+.task-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  background: var(--bg-secondary, #f8fafc);
+  border-radius: 8px;
+  margin-bottom: 0.25rem;
+}
+
+.group-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
+}
+
+.group-meta {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
+}
+
+.group-count {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.group-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
 }
 
 .task-card {
@@ -1702,12 +1833,28 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem;
+  padding-left: 0;
   background: var(--bg);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
-  border-left: 3px solid transparent;
+  position: relative;
+  overflow: hidden;
 }
+
+.priority-stripe {
+  width: 4px;
+  min-height: 100%;
+  align-self: stretch;
+  border-radius: 4px 0 0 4px;
+  flex-shrink: 0;
+}
+
+.priority-stripe.priority-critical { background: var(--danger, #ef4444); }
+.priority-stripe.priority-desirable { background: var(--warning, #f59e0b); }
+.priority-stripe.priority-attention { background: var(--info, #3b82f6); }
+.priority-stripe.priority-optional { background: var(--text-muted, #9ca3af); }
+.priority-stripe.priority-none { background: var(--border-color, #e5e7eb); }
 
 .task-card:hover {
   background: var(--hover-bg, #f3f4f6);
@@ -1717,25 +1864,6 @@ onUnmounted(() => {
   opacity: 0.6;
 }
 
-.task-card.priority-critical {
-  border-left-color: var(--danger, #ef4444);
-}
-
-.task-card.priority-desirable {
-  border-left-color: var(--warning, #f59e0b);
-}
-
-.task-card.priority-attention {
-  border-left-color: var(--info, #3b82f6);
-}
-
-.task-card.priority-optional {
-  border-left-color: var(--text-muted, #9ca3af);
-}
-
-.task-card.priority-none {
-  border-left-color: var(--border-color, #e5e7eb);
-}
 
 .task-checkbox {
   width: 24px;
@@ -1796,24 +1924,43 @@ onUnmounted(() => {
 }
 
 .time-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   font-size: 0.75rem;
   padding: 0.125rem 0.5rem;
-  background: var(--bg);
+  background: var(--bg-secondary, #f3f4f6);
   border-radius: 10px;
   color: var(--text-secondary);
 }
 
-.priority-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+.time-badge svg {
+  opacity: 0.7;
 }
 
-.priority-dot.priority-critical { background: var(--danger, #ef4444); }
-.priority-dot.priority-desirable { background: var(--warning, #f59e0b); }
-.priority-dot.priority-attention { background: var(--info, #3b82f6); }
-.priority-dot.priority-optional { background: var(--text-muted, #9ca3af); }
-.priority-dot.priority-none { background: var(--border-color, #e5e7eb); }
+.priority-icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  min-width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: transparent;
+}
+
+.priority-icon-badge.priority-critical { 
+  background: rgba(239, 68, 68, 0.15);
+}
+.priority-icon-badge.priority-desirable { 
+  background: rgba(245, 158, 11, 0.15);
+}
+.priority-icon-badge.priority-attention { 
+  background: rgba(59, 130, 246, 0.15);
+}
+.priority-icon-badge.priority-optional { 
+  background: rgba(156, 163, 175, 0.15);
+}
 
 .empty-day {
   text-align: center;
@@ -2033,10 +2180,16 @@ onUnmounted(() => {
   justify-content: space-between;
   gap: 0.5rem;
   padding: 0.75rem;
+  padding-left: 0;
   background: var(--bg);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
+  overflow: hidden;
+}
+
+.step-card .priority-stripe {
+  margin-right: 0.5rem;
 }
 
 .step-card:hover {
@@ -2045,6 +2198,18 @@ onUnmounted(() => {
 
 .step-card.scheduled {
   background: var(--primary-light, rgba(99, 102, 241, 0.1));
+}
+
+.step-card.scheduled.priority-critical {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.step-card.scheduled.priority-desirable {
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.step-card.scheduled.priority-attention {
+  background: rgba(59, 130, 246, 0.08);
 }
 
 .step-card.completed {
@@ -2067,16 +2232,25 @@ onUnmounted(() => {
 
 .step-badges {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.375rem;
   margin-top: 0.25rem;
+  align-items: center;
 }
 
 .date-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   font-size: 0.6875rem;
   padding: 0.125rem 0.375rem;
   background: var(--primary, #6366f1);
   color: white;
   border-radius: 6px;
+}
+
+.date-badge svg {
+  opacity: 0.8;
 }
 
 .priority-badge {
