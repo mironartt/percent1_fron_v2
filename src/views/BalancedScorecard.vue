@@ -800,9 +800,20 @@ onMounted(async () => {
 
 .edit-actions {
   display: flex;
+  flex-direction: row;
   justify-content: flex-end;
   gap: 0.5rem;
   margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .edit-actions {
+    justify-content: stretch;
+  }
+  
+  .edit-actions .btn {
+    flex: 1;
+  }
 }
 
 .reflection-view {
@@ -1153,6 +1164,7 @@ onMounted(async () => {
 
 .modal-actions {
   display: flex;
+  flex-direction: row;
   gap: 0.75rem;
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--border-color);
@@ -1164,6 +1176,7 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  white-space: nowrap;
 }
 
 @media (max-width: 768px) {
