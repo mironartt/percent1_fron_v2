@@ -340,15 +340,6 @@
         </div>
       </div>
       
-      <!-- FAB кнопка добавления шага (скрыта если inline-поле в фокусе) -->
-      <button 
-        class="fab-add-step"
-        @click="openAddStepModal"
-        title="Добавить шаг"
-      >
-        <Plus :size="24" />
-      </button>
-
       <!-- Мини-журнал цели -->
       <div class="mini-journal-section">
         <button class="mini-journal-toggle" @click="toggleMiniJournal">
