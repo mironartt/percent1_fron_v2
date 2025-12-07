@@ -668,22 +668,27 @@ function formatTimeShort(time) {
   return labels[time] || time
 }
 
-const goals = computed(() => store.goalsBank?.rawIdeas || [])
+const rawIdeas = computed(() => store.goalsBank?.rawIdeas || [])
+const workingGoals = computed(() => store.goals || [])
 const lifeSpheres = computed(() => store.lifeSpheres)
 
+function isGoalTransferred(goalId) {
+  return workingGoals.value.some(g => g.sourceId === goalId && g.source === 'goals-bank' && g.status !== 'completed')
+}
+
 const goalsWithSteps = computed(() => {
-  const activeStatuses = ['in_progress', 'active', 'in-progress']
-  return goals.value.filter(g => 
-    activeStatuses.includes(g.status) && 
+  return rawIdeas.value.filter(g => 
+    g.status === 'validated' && 
+    isGoalTransferred(g.id) &&
     g.steps && 
     g.steps.length > 0
   )
 })
 
 const goalsWithoutSteps = computed(() => {
-  const activeStatuses = ['in_progress', 'active', 'in-progress']
-  return goals.value.filter(g => 
-    activeStatuses.includes(g.status) && 
+  return rawIdeas.value.filter(g => 
+    g.status === 'validated' && 
+    isGoalTransferred(g.id) &&
     (!g.steps || g.steps.length === 0)
   )
 })
