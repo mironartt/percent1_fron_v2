@@ -446,6 +446,123 @@
         </div>
       </section>
 
+      <section class="club-section">
+        <div class="container">
+          <div class="club-header">
+            <span class="club-badge">🏆 Сообщество</span>
+            <h2 class="section-title">Клуб 1%</h2>
+            <p class="section-subtitle">
+              Присоединяйся к сообществу людей, которые выбрали путь системного роста
+            </p>
+          </div>
+          
+          <div class="club-benefits">
+            <div class="club-card">
+              <div class="club-icon">👥</div>
+              <h3>Единомышленники</h3>
+              <p>Окружение, которое поддерживает и вдохновляет. Люди с похожими целями и ценностями.</p>
+            </div>
+            <div class="club-card">
+              <div class="club-icon">📚</div>
+              <h3>Эксклюзивный контент</h3>
+              <p>Закрытые материалы, разборы кейсов, практические гайды от экспертов.</p>
+            </div>
+            <div class="club-card">
+              <div class="club-icon">🎯</div>
+              <h3>Челленджи и спринты</h3>
+              <p>Регулярные групповые активности для прорывов в ключевых сферах жизни.</p>
+            </div>
+            <div class="club-card">
+              <div class="club-icon">💬</div>
+              <h3>Мастермайнды</h3>
+              <p>Групповые сессии взаимной поддержки и обмена опытом с другими участниками.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="pricing-section">
+        <div class="container">
+          <h2 class="section-title">Простая и честная стоимость</h2>
+          <p class="section-subtitle">
+            Без скрытых платежей. Отмена в любой момент.
+          </p>
+          
+          <div class="pricing-cards">
+            <div class="pricing-card">
+              <div class="pricing-header">
+                <h3>Бесплатно</h3>
+                <div class="price">
+                  <span class="amount">0 ₽</span>
+                  <span class="period">навсегда</span>
+                </div>
+              </div>
+              <ul class="pricing-features">
+                <li><span class="check">✓</span> Колесо баланса (ССП)</li>
+                <li><span class="check">✓</span> Банк целей (до 5 целей)</li>
+                <li><span class="check">✓</span> Базовое планирование</li>
+                <li><span class="check">✓</span> Трекер привычек (до 3)</li>
+                <li><span class="check">✓</span> Дневник рефлексии</li>
+                <li class="disabled"><span class="cross">×</span> AI Mentor</li>
+                <li class="disabled"><span class="cross">×</span> Клуб 1%</li>
+              </ul>
+              <router-link to="/auth/register" class="btn btn-outline">
+                Начать бесплатно
+              </router-link>
+            </div>
+            
+            <div class="pricing-card featured">
+              <div class="popular-badge">Популярный выбор</div>
+              <div class="pricing-header">
+                <h3>Pro</h3>
+                <div class="price">
+                  <span class="amount">990 ₽</span>
+                  <span class="period">/ месяц</span>
+                </div>
+              </div>
+              <ul class="pricing-features">
+                <li><span class="check">✓</span> Всё из бесплатного плана</li>
+                <li><span class="check">✓</span> Безлимитные цели и привычки</li>
+                <li><span class="check">✓</span> AI Mentor — персональный коуч</li>
+                <li><span class="check">✓</span> Продвинутая аналитика</li>
+                <li><span class="check">✓</span> Приоритетная поддержка</li>
+                <li><span class="check">✓</span> Экспорт данных</li>
+                <li class="disabled"><span class="cross">×</span> Клуб 1%</li>
+              </ul>
+              <router-link to="/auth/register" class="btn btn-primary">
+                Попробовать Pro
+              </router-link>
+            </div>
+            
+            <div class="pricing-card premium">
+              <div class="pricing-header">
+                <h3>Клуб 1%</h3>
+                <div class="price">
+                  <span class="amount">2 990 ₽</span>
+                  <span class="period">/ месяц</span>
+                </div>
+              </div>
+              <ul class="pricing-features">
+                <li><span class="check">✓</span> Всё из Pro плана</li>
+                <li><span class="check">✓</span> Доступ в закрытое сообщество</li>
+                <li><span class="check">✓</span> Эксклюзивные материалы</li>
+                <li><span class="check">✓</span> Еженедельные мастермайнды</li>
+                <li><span class="check">✓</span> Групповые челленджи</li>
+                <li><span class="check">✓</span> Персональные разборы</li>
+                <li><span class="check">✓</span> Ранний доступ к новым функциям</li>
+              </ul>
+              <router-link to="/auth/register" class="btn btn-premium">
+                Вступить в Клуб
+              </router-link>
+            </div>
+          </div>
+          
+          <p class="pricing-note">
+            💡 Начни бесплатно и переходи на Pro, когда почувствуешь, что готов к следующему уровню
+          </p>
+        </div>
+      </section>
+
       <section class="cta-section">
         <div class="container">
           <div class="cta-content">
@@ -1671,6 +1788,299 @@ onUnmounted(() => {
 
 .benefit-icon {
   font-size: 1.25rem;
+}
+
+.club-section {
+  padding: 5rem 0;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+}
+
+.club-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.club-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.club-benefits {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.club-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s;
+}
+
+.club-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(99, 102, 241, 0.15);
+  border-color: #a5b4fc;
+}
+
+.club-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.club-card h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #1a1a2e;
+}
+
+.club-card p {
+  font-size: 0.9375rem;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .club-benefits {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .club-section {
+    padding: 3rem 0;
+  }
+  
+  .club-benefits {
+    grid-template-columns: 1fr;
+  }
+  
+  .club-card {
+    padding: 1.5rem;
+  }
+  
+  .club-icon {
+    font-size: 2rem;
+  }
+}
+
+.pricing-section {
+  padding: 5rem 0;
+  background: white;
+}
+
+.pricing-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  max-width: 1100px;
+  margin: 0 auto 2rem;
+}
+
+.pricing-card {
+  background: #f9fafb;
+  border-radius: 20px;
+  padding: 2rem;
+  border: 2px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s;
+}
+
+.pricing-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+}
+
+.pricing-card.featured {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  position: relative;
+  transform: scale(1.05);
+}
+
+.pricing-card.featured:hover {
+  transform: scale(1.08);
+}
+
+.pricing-card.premium {
+  background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%);
+  color: white;
+  border: 2px solid #fbbf24;
+}
+
+.popular-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fbbf24;
+  color: #1a1a2e;
+  padding: 0.25rem 1rem;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pricing-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.pricing-card.featured .pricing-header,
+.pricing-card.premium .pricing-header {
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+.pricing-header h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.price .amount {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.price .period {
+  font-size: 0.875rem;
+  opacity: 0.7;
+}
+
+.pricing-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem;
+  flex: 1;
+}
+
+.pricing-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
+.pricing-features li.disabled {
+  opacity: 0.5;
+}
+
+.pricing-features .check {
+  color: #22c55e;
+  font-weight: 700;
+}
+
+.pricing-card.featured .check,
+.pricing-card.premium .check {
+  color: #a7f3d0;
+}
+
+.pricing-features .cross {
+  color: #9ca3af;
+}
+
+.pricing-card .btn {
+  width: 100%;
+  text-align: center;
+  padding: 1rem;
+  font-weight: 600;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 2px solid #6366f1;
+  color: #6366f1;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.btn-outline:hover {
+  background: #6366f1;
+  color: white;
+}
+
+.btn-premium {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #1a1a2e;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.btn-premium:hover {
+  box-shadow: 0 10px 30px rgba(251, 191, 36, 0.4);
+}
+
+.pricing-note {
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.9375rem;
+}
+
+@media (max-width: 900px) {
+  .pricing-card.featured {
+    transform: scale(1);
+  }
+  
+  .pricing-card.featured:hover {
+    transform: translateY(-5px);
+  }
+}
+
+@media (max-width: 768px) {
+  .pricing-cards {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pricing-section {
+    padding: 3rem 0;
+  }
+  
+  .pricing-card {
+    padding: 1.5rem;
+  }
+  
+  .price .amount {
+    font-size: 2rem;
+  }
+  
+  .pricing-features li {
+    font-size: 0.875rem;
+  }
 }
 
 .cta-section {
