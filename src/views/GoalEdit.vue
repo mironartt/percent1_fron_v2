@@ -106,7 +106,21 @@
             Перетаскивание шагов отключено при активных фильтрах
           </div>
 
+          <!-- Empty state когда нет шагов -->
+          <div v-if="totalStepsCount === 0 && newSteps.length === 0" class="steps-empty-state">
+            <div class="empty-icon-circle">
+              <Target :size="32" />
+            </div>
+            <h3>Добавьте шаги декомпозиции</h3>
+            <p>Разбейте цель на конкретные действия,<br>чтобы начать планирование</p>
+            <button class="btn btn-primary" @click="openAddStepModal">
+              <Plus :size="16" />
+              Добавить первый шаг
+            </button>
+          </div>
+
           <div 
+            v-show="totalStepsCount > 0 || newSteps.length > 0"
             ref="stepsContainer"
             class="steps-section" 
             :class="{ 'has-scroll': hasMoreStepsToLoad || paginatedSteps.length > 6 }"
@@ -2472,6 +2486,48 @@ function formatDate(dateString) {
 .empty-state p {
   color: var(--text-secondary);
   margin-bottom: 2rem;
+}
+
+.steps-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 1.5rem;
+  min-height: 300px;
+}
+
+.steps-empty-state .empty-icon-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--bg-tertiary, #f3f4f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary, #6b7280);
+  margin-bottom: 1rem;
+}
+
+.steps-empty-state h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  margin: 0 0 0.5rem 0;
+}
+
+.steps-empty-state p {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6b7280);
+  margin: 0 0 1.5rem 0;
+  line-height: 1.5;
+}
+
+.steps-empty-state .btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .edit-layout {
