@@ -16,11 +16,11 @@
 import { request } from '@/services/api.js'
 import { DEBUG_MODE } from '@/config/settings.js'
 
-const HABITS_API_PREFIX = '/api/app/habits'
+const HABITS_API_PREFIX = '/api/rest/front/app/habits'
 
 /**
  * Обёртка для запросов к Habits API
- * @param {string} endpoint - Путь относительно /api/app/habits
+ * @param {string} endpoint - Путь относительно /api/rest/front/app/habits
  * @param {object} data - Данные запроса
  * @returns {Promise<object>} - Ответ API
  */

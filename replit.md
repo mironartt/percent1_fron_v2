@@ -58,6 +58,8 @@ Integrated the Habits module with Django REST API backend through 18 endpoints:
 - Rate limiting to prevent API spam
 - Backend ID mapping for habit synchronization
 
+**API Base Path:** `/api/rest/front/app/habits`
+
 **Integrated Endpoints:**
 - Settings: /settings/get/, /settings/update/
 - Habits: /get/, /update/ (CRUD operations)
