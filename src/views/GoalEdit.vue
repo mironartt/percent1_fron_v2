@@ -1621,10 +1621,6 @@ function getSphereNameOnly(sphereId) {
   return sphere ? sphere.name : ''
 }
 
-function goToPlanning() {
-  router.push('/app/planning')
-}
-
 async function saveEditModal() {
   if (!editingGoal.value) return
   
