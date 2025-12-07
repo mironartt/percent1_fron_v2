@@ -170,7 +170,7 @@
           @click="goToDecomposition(goal)"
         >
           <span class="goal-sphere-mini">{{ getSphereIcon(goal.sphereId) }}</span>
-          <span class="goal-title-mini">{{ goal.title }}</span>
+          <span class="goal-title-mini">{{ goal.text || goal.title }}</span>
           <ChevronRight :size="16" class="go-icon" />
         </div>
       </div>
@@ -193,7 +193,7 @@
         <div class="goal-header" @click="toggleGoal(goal.id)">
           <div class="goal-main">
             <span class="goal-sphere-badge">{{ getSphereName(goal.sphereId) }}</span>
-            <h3 class="goal-title">{{ goal.title }}</h3>
+            <h3 class="goal-title">{{ goal.text || goal.title }}</h3>
           </div>
           <div class="goal-meta">
             <span class="steps-badge">
@@ -854,7 +854,7 @@ function goToGoalsBank() {
 }
 
 function goToDecomposition(goal) {
-  router.push(`/app/goal/${goal.id}`)
+  router.push(`/app/goals/${goal.id}`)
 }
 
 function getSphereIcon(sphereId) {
