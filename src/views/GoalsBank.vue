@@ -42,15 +42,30 @@
       <div class="goals-content" v-if="rawIdeas.length > 0 || hasActiveFilters">
         <!-- Combined Search + Filter Bar -->
         <div class="search-filter-bar">
-          <div class="search-input-wrapper">
-            <Search :size="16" :stroke-width="2" class="search-icon" />
-            <input 
-              v-model="searchQuery"
-              type="text"
-              class="search-input"
-              placeholder="Поиск..."
-              @input="onSearchInput"
-            />
+          <div class="search-expandable" :class="{ expanded: showSearchInput }">
+            <button 
+              v-if="!showSearchInput" 
+              class="search-toggle-btn"
+              @click="toggleSearch"
+              title="Поиск"
+            >
+              <Search :size="18" :stroke-width="2" />
+            </button>
+            <div v-else class="search-input-wrapper">
+              <Search :size="16" :stroke-width="2" class="search-icon" />
+              <input 
+                ref="searchInputRef"
+                v-model="searchQuery"
+                type="text"
+                class="search-input"
+                placeholder="Поиск..."
+                @input="onSearchInput"
+                @blur="onSearchBlur"
+              />
+              <button class="search-close-btn" @click="closeSearch">
+                <X :size="14" />
+              </button>
+            </div>
           </div>
           
           <div class="filter-chips-scroll">
@@ -543,7 +558,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
@@ -594,7 +609,8 @@ import {
   Wand2,
   Bot,
   Loader2,
-  Info
+  Info,
+  X
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -656,10 +672,32 @@ const addingNewGoal = ref(false)
 const filterSphere = ref('')
 const filterStatus = ref('')
 const searchQuery = ref('')
+const showSearchInput = ref(false)
+const searchInputRef = ref(null)
 const displayLimit = ref(6)
 
 // Debounce timer for search
 let searchDebounceTimer = null
+
+function toggleSearch() {
+  showSearchInput.value = true
+  nextTick(() => {
+    searchInputRef.value?.focus()
+  })
+}
+
+function closeSearch() {
+  searchQuery.value = ''
+  showSearchInput.value = false
+}
+
+function onSearchBlur() {
+  if (!searchQuery.value) {
+    setTimeout(() => {
+      showSearchInput.value = false
+    }, 150)
+  }
+}
 const selectedBankGoals = ref([])
 
 const showEditModal = ref(false)
@@ -2153,15 +2191,68 @@ onUnmounted(() => {
   margin-bottom: 1rem;
 }
 
-.search-filter-bar .search-input-wrapper {
+.search-expandable {
   flex-shrink: 0;
-  width: 160px;
-  min-width: 120px;
+  display: flex;
+  align-items: center;
 }
 
-.search-filter-bar .search-input {
-  padding: 0.5rem 0.75rem 0.5rem 2rem;
+.search-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.search-toggle-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.search-expandable.expanded .search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  animation: expandSearch 0.2s ease forwards;
+}
+
+@keyframes expandSearch {
+  from { width: 36px; opacity: 0; }
+  to { width: 160px; opacity: 1; }
+}
+
+.search-expandable .search-input {
+  padding: 0.5rem 2rem 0.5rem 2rem;
   font-size: 0.875rem;
+  width: 160px;
+}
+
+.search-close-btn {
+  position: absolute;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.search-close-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
 }
 
 .search-filter-bar .search-icon {
@@ -4318,14 +4409,24 @@ onUnmounted(() => {
     gap: 0.5rem;
   }
   
-  .search-filter-bar .search-input-wrapper {
-    width: 110px;
-    min-width: 100px;
+  .search-toggle-btn {
+    width: 32px;
+    height: 32px;
   }
   
-  .search-filter-bar .search-input {
-    padding: 0.375rem 0.5rem 0.375rem 1.75rem;
+  .search-expandable.expanded .search-input-wrapper {
+    animation: expandSearchMobile 0.2s ease forwards;
+  }
+  
+  @keyframes expandSearchMobile {
+    from { width: 32px; opacity: 0; }
+    to { width: 120px; opacity: 1; }
+  }
+  
+  .search-expandable .search-input {
+    padding: 0.375rem 1.75rem;
     font-size: 0.8125rem;
+    width: 120px;
   }
   
   .filter-chips-inner {
