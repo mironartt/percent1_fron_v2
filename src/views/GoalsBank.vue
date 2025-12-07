@@ -171,19 +171,19 @@
               <span>Редактировать</span>
             </button>
             <button 
-              v-if="bottomSheetGoal?.status === 'validated'" 
+              v-if="isGoalTransferred(bottomSheetGoal?.id)" 
               class="bottom-sheet-action" 
               @click="handleBottomSheetDecompose"
             >
               <GitBranch :size="20" />
-              <span>Декомпозиция</span>
+              <span>Шаги</span>
             </button>
             <button 
-              v-if="bottomSheetGoal?.status === 'validated' && !isGoalTransferred(bottomSheetGoal?.id) && !isGoalCompleted(bottomSheetGoal?.id)"
+              v-if="!isGoalTransferred(bottomSheetGoal?.id) && !isGoalCompleted(bottomSheetGoal?.id)"
               class="bottom-sheet-action" 
               @click="handleBottomSheetTakeToWork"
             >
-              <Plus :size="20" />
+              <Play :size="20" />
               <span>Взять в работу</span>
             </button>
             <button 
@@ -199,8 +199,8 @@
               class="bottom-sheet-action action-danger" 
               @click="handleBottomSheetRemoveFromWork"
             >
-              <X :size="20" />
-              <span>Убрать из работы</span>
+              <RotateCcw :size="20" />
+              <span>Вернуть в банк</span>
             </button>
             <button class="bottom-sheet-action action-cancel" @click="closeBottomSheet">
               <span>Отмена</span>
@@ -261,25 +261,25 @@
           <!-- Quick Actions -->
           <div class="quick-actions" v-if="editingGoal">
             <button 
-              v-if="editingGoal.status === 'validated' && !isGoalTransferred(editingGoal.id)"
+              v-if="!isGoalTransferred(editingGoal.id) && !isGoalCompleted(editingGoal.id)"
               class="quick-action-btn action-work"
               title="Взять цель в работу"
               @click="handleQuickTakeToWork"
             >
               <Play :size="16" />
-              <span>В работу</span>
+              <span>Взять в работу</span>
+            </button>
+            <button 
+              v-if="isGoalTransferred(editingGoal.id) && !isGoalCompleted(editingGoal.id)"
+              class="quick-action-btn action-remove-work"
+              title="Вернуть цель в банк"
+              @click="handleQuickRemoveFromWork"
+            >
+              <RotateCcw :size="16" />
+              <span>Вернуть в банк</span>
             </button>
             <button 
               v-if="isGoalTransferred(editingGoal.id)"
-              class="quick-action-btn action-remove-work"
-              title="Убрать из работы"
-              @click="handleQuickRemoveFromWork"
-            >
-              <Pause :size="16" />
-              <span>Убрать</span>
-            </button>
-            <button 
-              v-if="editingGoal.status === 'validated'"
               class="quick-action-btn action-decompose"
               title="Перейти к декомпозиции на шаги"
               @click="goToDecompose(editingGoal.id)"
@@ -328,25 +328,43 @@
                 </div>
               </div>
 
-              <div class="form-group">
-                <label class="form-label">Почему это важно?</label>
-                <textarea 
-                  v-model="editingGoal.whyImportant"
-                  class="form-textarea form-textarea-visible"
-                  placeholder="Опишите, почему эта цель важна для вас..."
-                  rows="2"
-                ></textarea>
+              <!-- Collapsible Reflection Section -->
+              <div class="reflection-toggle-section">
+                <button 
+                  type="button"
+                  class="reflection-toggle-btn"
+                  @click="showEditReflection = !showEditReflection"
+                >
+                  <MessageSquare :size="16" />
+                  <span>{{ showEditReflection ? 'Скрыть рефлексию' : 'Добавить рефлексию' }}</span>
+                  <span class="optional-badge" v-if="!showEditReflection">опционально</span>
+                  <ChevronDown :size="16" class="toggle-chevron" :class="{ rotated: showEditReflection }" />
+                </button>
               </div>
 
-              <div class="form-group">
-                <label class="form-label">Как это изменит жизнь?</label>
-                <textarea 
-                  v-model="editingGoal.why2"
-                  class="form-textarea form-textarea-visible"
-                  placeholder="Опишите ожидаемые изменения..."
-                  rows="2"
-                ></textarea>
-              </div>
+              <transition name="slide-fade">
+                <div v-if="showEditReflection" class="reflection-fields">
+                  <div class="form-group">
+                    <label class="form-label">Почему это важно?</label>
+                    <textarea 
+                      v-model="editingGoal.whyImportant"
+                      class="form-textarea form-textarea-visible"
+                      placeholder="Опишите, почему эта цель важна для вас..."
+                      rows="2"
+                    ></textarea>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Как это изменит жизнь?</label>
+                    <textarea 
+                      v-model="editingGoal.why2"
+                      class="form-textarea form-textarea-visible"
+                      placeholder="Опишите ожидаемые изменения..."
+                      rows="2"
+                    ></textarea>
+                  </div>
+                </div>
+              </transition>
             </div>
           </div>
 
@@ -635,6 +653,7 @@ const selectedBankGoals = ref([])
 
 const showEditModal = ref(false)
 const editingGoal = ref(null)
+const showEditReflection = ref(false)
 
 const showBottomSheet = ref(false)
 const bottomSheetGoal = ref(null)
@@ -1705,6 +1724,7 @@ function openEditModal(goal) {
     status: goal.status || 'raw'
   }
   resetAccordion(true)
+  showEditReflection.value = !!(editingGoal.value.whyImportant || editingGoal.value.why2)
   showEditModal.value = true
 }
 
@@ -1739,6 +1759,7 @@ function toggleWorkStatus() {
 
 function closeEditModal() {
   showEditModal.value = false
+  showEditReflection.value = false
   resetAccordion(true)
   editingGoal.value = null
 }
@@ -6365,6 +6386,10 @@ onUnmounted(() => {
   padding: 0.75rem;
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
+}
+
+.reflection-fields {
+  margin-top: 0.75rem;
 }
 
 /* Шаблоны целей */
