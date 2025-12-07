@@ -1902,7 +1902,6 @@ onUnmounted(() => {
   opacity: 0.6;
 }
 
-
 .task-checkbox {
   width: 24px;
   height: 24px;
