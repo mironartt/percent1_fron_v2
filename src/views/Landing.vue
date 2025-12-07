@@ -2244,6 +2244,11 @@ onUnmounted(() => {
     display: none;
   }
   
+  .header-nav .btn {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8125rem;
+  }
+  
   .hero {
     padding: 7rem 0 4rem;
   }
