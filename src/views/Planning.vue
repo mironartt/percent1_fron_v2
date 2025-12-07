@@ -155,6 +155,34 @@
       </div>
     </div>
 
+    <!-- Баннер: цели без шагов -->
+    <div class="needs-decomposition-banner" v-if="goalsWithoutSteps.length > 0">
+      <div class="banner-header">
+        <AlertCircle :size="20" class="banner-icon" />
+        <span class="banner-title">{{ goalsWithoutSteps.length }} {{ goalsWithoutSteps.length === 1 ? 'цель требует' : 'целей требуют' }} декомпозиции</span>
+      </div>
+      <p class="banner-text">Чтобы планировать, разбейте цели на конкретные шаги</p>
+      <div class="banner-goals">
+        <div 
+          v-for="goal in goalsWithoutSteps.slice(0, 3)" 
+          :key="goal.id" 
+          class="banner-goal-item"
+          @click="goToDecomposition(goal)"
+        >
+          <span class="goal-sphere-mini">{{ getSphereIcon(goal.sphereId) }}</span>
+          <span class="goal-title-mini">{{ goal.title }}</span>
+          <ChevronRight :size="16" class="go-icon" />
+        </div>
+      </div>
+      <button 
+        v-if="goalsWithoutSteps.length > 3" 
+        class="btn btn-outline btn-small"
+        @click="goToGoalsBank"
+      >
+        Показать все ({{ goalsWithoutSteps.length }})
+      </button>
+    </div>
+
     <div class="goals-list" v-if="filteredGoalsWithSteps.length > 0">
       <div 
         v-for="goal in paginatedGoals" 
@@ -387,7 +415,8 @@ import {
   Filter,
   Search,
   Flag,
-  Trash2
+  Trash2,
+  AlertCircle
 } from 'lucide-vue-next'
 
 const store = useAppStore()
@@ -651,6 +680,14 @@ const goalsWithSteps = computed(() => {
   )
 })
 
+const goalsWithoutSteps = computed(() => {
+  const activeStatuses = ['in_progress', 'active', 'in-progress']
+  return goals.value.filter(g => 
+    activeStatuses.includes(g.status) && 
+    (!g.steps || g.steps.length === 0)
+  )
+})
+
 const spheresWithGoals = computed(() => {
   const sphereCounts = {}
   for (const goal of goalsWithSteps.value) {
@@ -809,6 +846,15 @@ function clearFilters() {
 
 function goToGoalsBank() {
   router.push('/app/goals-bank')
+}
+
+function goToDecomposition(goal) {
+  router.push(`/app/goal/${goal.id}`)
+}
+
+function getSphereIcon(sphereId) {
+  const sphere = lifeSpheres.value.find(s => s.id === sphereId)
+  return sphere?.icon || '🎯'
 }
 
 function handleTouchStart(task, event) {
@@ -1659,6 +1705,84 @@ onUnmounted(() => {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+.needs-decomposition-banner {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1px solid #f59e0b;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.banner-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.banner-icon {
+  color: #d97706;
+  flex-shrink: 0;
+}
+
+.banner-title {
+  font-weight: 600;
+  color: #92400e;
+  font-size: 0.9375rem;
+}
+
+.banner-text {
+  color: #a16207;
+  font-size: 0.8125rem;
+  margin: 0 0 0.75rem;
+}
+
+.banner-goals {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.banner-goal-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.banner-goal-item:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.goal-sphere-mini {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.goal-title-mini {
+  flex: 1;
+  font-size: 0.875rem;
+  color: #78350f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.go-icon {
+  color: #d97706;
+  flex-shrink: 0;
+}
+
+.btn-small {
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  margin-top: 0.75rem;
 }
 
 .empty-state {
