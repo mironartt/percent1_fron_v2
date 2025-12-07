@@ -609,8 +609,7 @@ import {
   Wand2,
   Bot,
   Loader2,
-  Info,
-  X
+  Info
 } from 'lucide-vue-next'
 
 const sphereIcons = {
