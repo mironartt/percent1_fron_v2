@@ -1376,13 +1376,6 @@ function closeEditModal() {
   editModalTab.value = 'main'
 }
 
-function handleQuickComplete() {
-  if (editingGoal.value) {
-    editingGoal.value.workStatus = 'complete'
-    saveEditModal()
-  }
-}
-
 function deleteGoalFromModal() {
   if (editingGoal.value && confirm('Удалить эту цель?')) {
     store.deleteRawIdea(editingGoal.value.id)
