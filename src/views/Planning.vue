@@ -242,15 +242,15 @@
               <span class="step-title">{{ step.title }}</span>
               <div class="step-badges" v-if="isStepScheduled(goal.id, step.id)">
                 <span class="date-badge">
-                  <Calendar :size="12" />
+                  <Calendar :size="11" />
                   {{ formatStepDate(goal.id, step.id) }}
                 </span>
-                <span v-if="getScheduledTime(goal.id, step.id)" class="time-badge">
-                  <Clock :size="12" />
-                  {{ formatTimeShort(getScheduledTime(goal.id, step.id)) }}
+                <span class="time-badge" :class="{ empty: !getScheduledTime(goal.id, step.id) }">
+                  <Clock :size="11" />
+                  {{ getScheduledTime(goal.id, step.id) ? formatTimeShort(getScheduledTime(goal.id, step.id)) : '—' }}
                 </span>
-                <span v-if="getScheduledPriority(goal.id, step.id)" class="priority-icon-badge" :class="'priority-' + getScheduledPriority(goal.id, step.id)">
-                  {{ getPriorityIcon(getScheduledPriority(goal.id, step.id)) }}
+                <span class="priority-icon-badge" :class="'priority-' + (getScheduledPriority(goal.id, step.id) || 'none')">
+                  {{ getScheduledPriority(goal.id, step.id) ? getPriorityIcon(getScheduledPriority(goal.id, step.id)) : '○' }}
                 </span>
               </div>
             </div>
@@ -1854,7 +1854,7 @@ onUnmounted(() => {
 .priority-stripe.priority-desirable { background: var(--warning, #f59e0b); }
 .priority-stripe.priority-attention { background: var(--info, #3b82f6); }
 .priority-stripe.priority-optional { background: var(--text-muted, #9ca3af); }
-.priority-stripe.priority-none { background: var(--border-color, #e5e7eb); }
+.priority-stripe.priority-none { background: #c7d2fe; }
 
 .task-card:hover {
   background: var(--hover-bg, #f3f4f6);
@@ -1960,6 +1960,14 @@ onUnmounted(() => {
 }
 .priority-icon-badge.priority-optional { 
   background: rgba(156, 163, 175, 0.15);
+}
+.priority-icon-badge.priority-none {
+  background: rgba(199, 210, 254, 0.3);
+  color: var(--text-muted, #9ca3af);
+}
+
+.time-badge.empty {
+  opacity: 0.5;
 }
 
 .empty-day {
@@ -2179,17 +2187,21 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.75rem;
+  padding: 0.5rem 0.625rem;
   padding-left: 0;
   background: var(--bg);
-  border-radius: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color, #e5e7eb);
   cursor: pointer;
   transition: all 0.2s;
   overflow: hidden;
+  min-height: 44px;
 }
 
 .step-card .priority-stripe {
-  margin-right: 0.5rem;
+  margin-right: 0.375rem;
+  min-height: 100%;
+  align-self: stretch;
 }
 
 .step-card:hover {
