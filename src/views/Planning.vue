@@ -793,7 +793,8 @@ function isStepScheduled(goalId, stepId) {
     return true
   }
   
-  const goal = goals.value.find(g => g.id === goalId)
+  // Check in both rawIdeas and workingGoals
+  const goal = rawIdeas.value.find(g => g.id === goalId) || workingGoals.value.find(g => g.id === goalId)
   const step = goal?.steps?.find(s => s.id === stepId)
   return !!step?.date
 }
@@ -808,7 +809,7 @@ function getScheduledDate(goalId, stepId) {
   const task = plan?.scheduledTasks?.find(t => t.goalId === goalId && t.stepId === stepId)
   if (task) return task.scheduledDate
   
-  const goal = goals.value.find(g => g.id === goalId)
+  const goal = rawIdeas.value.find(g => g.id === goalId) || workingGoals.value.find(g => g.id === goalId)
   const step = goal?.steps?.find(s => s.id === stepId)
   return step?.date || ''
 }
