@@ -53,6 +53,30 @@
         </div>
       </header>
 
+      <!-- Collapsible Reflection Block -->
+      <div class="goal-reflection-block" v-if="hasReflection">
+        <button 
+          class="reflection-toggle-btn"
+          @click="showGoalReflection = !showGoalReflection"
+        >
+          <MessageSquare :size="16" />
+          <span>Рефлексия</span>
+          <ChevronDown :size="16" class="toggle-chevron" :class="{ rotated: showGoalReflection }" />
+        </button>
+        <transition name="slide">
+          <div v-show="showGoalReflection" class="reflection-content">
+            <div v-if="goalForm.whyImportant || goalForm.description" class="reflection-item">
+              <label>Почему это важно?</label>
+              <p>{{ goalForm.whyImportant || goalForm.description }}</p>
+            </div>
+            <div v-if="goalForm.why2" class="reflection-item">
+              <label>Как это изменит жизнь?</label>
+              <p>{{ goalForm.why2 }}</p>
+            </div>
+          </div>
+        </transition>
+      </div>
+
       <div class="main-content">
         <div class="card card-no-header">
           <!-- Combined Search + Filter Bar -->
@@ -772,7 +796,7 @@ import {
   Square, CheckSquare, Search, CheckCircle2, AlertCircle,
   CheckCircle, XCircle, Check, Filter, Settings, Clock, Calendar, Circle,
   FileText, Lightbulb, Shield, BarChart2, Play, Pause, GitBranch,
-  BookOpen, ChevronDown, Send
+  BookOpen, ChevronDown, Send, MessageSquare
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -999,6 +1023,13 @@ async function addInlineStep() {
     inlineStepInput.value?.focus()
   })
 }
+
+// Рефлексия (свёрнута по умолчанию)
+const showGoalReflection = ref(false)
+
+const hasReflection = computed(() => {
+  return Boolean(goalForm.value?.whyImportant || goalForm.value?.description || goalForm.value?.why2)
+})
 
 // Мини-журнал цели
 const showMiniJournal = ref(false)
@@ -3664,6 +3695,80 @@ function formatDate(dateString) {
   border-radius: 11px;
   font-size: 0.8rem;
   font-weight: 600;
+}
+
+/* Блок рефлексии (свёрнут по умолчанию) */
+.goal-reflection-block {
+  margin: 0.75rem 1rem 0;
+  padding: 0;
+}
+
+.reflection-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--card-bg, #f9fafb);
+  border: 1px solid var(--border-light, #e5e7eb);
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary, #374151);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reflection-toggle-btn:hover {
+  background: var(--card-bg-hover, #f3f4f6);
+}
+
+.reflection-toggle-btn svg:first-child {
+  color: var(--primary, #6366f1);
+}
+
+.toggle-chevron {
+  margin-left: auto;
+  transition: transform 0.25s;
+  color: var(--text-secondary, #9ca3af);
+}
+
+.toggle-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.reflection-content {
+  padding: 1rem;
+  background: var(--card-bg, #f9fafb);
+  border: 1px solid var(--border-light, #e5e7eb);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  margin-top: -1px;
+}
+
+.reflection-item {
+  margin-bottom: 0.75rem;
+}
+
+.reflection-item:last-child {
+  margin-bottom: 0;
+}
+
+.reflection-item label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  margin-bottom: 0.25rem;
+}
+
+.reflection-item p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-primary, #374151);
+  line-height: 1.5;
 }
 
 /* Slide transition */
