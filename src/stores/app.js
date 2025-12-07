@@ -2583,6 +2583,8 @@ export const useAppStore = defineStore('app', () => {
       status: idea.status || 'raw',
       validated: idea.status === 'validated',
       source: idea.source || 'manual',
+      generatedByAI: idea.generatedByAI || false,
+      steps: idea.steps || [],
       threeWhys: {
         why1: idea.whyImportant || idea.threeWhys?.why1 || '',
         why2: idea.threeWhys?.why2 || '',

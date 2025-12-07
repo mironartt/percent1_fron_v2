@@ -124,6 +124,9 @@
                 <span class="sphere-chip" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
                   {{ getSphereNameOnly(goal.sphereId) }}
                 </span>
+                <span v-if="goal.generatedByAI" class="ai-badge" title="Создано с помощью ИИ">
+                  <Bot :size="12" />
+                </span>
                 <span v-if="getStatusText(goal)" class="status-chip" :class="getStatusClass(goal)">
                   {{ getStatusText(goal) }}
                 </span>
@@ -444,13 +447,57 @@
 
             <div class="form-group">
               <label class="form-label">Название цели</label>
-              <input 
-                v-model="newGoal.text"
-                type="text"
-                class="form-input"
-                placeholder="Введите название цели"
-              />
+              <div class="input-with-ai">
+                <input 
+                  v-model="newGoal.text"
+                  type="text"
+                  class="form-input"
+                  placeholder="Введите название цели"
+                />
+                <div class="ai-generate-wrapper">
+                  <button 
+                    class="btn-ai-generate"
+                    :class="{ generating: isGeneratingWithAI }"
+                    :disabled="!newGoal.text.trim() || isGeneratingWithAI"
+                    @click="generateWithAI"
+                    @mouseenter="showAITooltip = true"
+                    @mouseleave="showAITooltip = false"
+                  >
+                    <Loader2 v-if="isGeneratingWithAI" :size="18" class="spin" />
+                    <Wand2 v-else :size="18" />
+                  </button>
+                  <transition name="tooltip-fade">
+                    <div v-if="showAITooltip && !isGeneratingWithAI" class="ai-tooltip">
+                      <strong>Создать с ИИ</strong>
+                      <p>ИИ уточнит формулировку цели и создаст готовый план с шагами</p>
+                    </div>
+                  </transition>
+                </div>
+              </div>
             </div>
+
+            <!-- AI Generated Steps Preview -->
+            <transition name="slide-fade">
+              <div v-if="aiGeneratedPreview && aiGeneratedPreview.steps.length > 0" class="ai-preview-section">
+                <div class="ai-preview-header">
+                  <Bot :size="16" />
+                  <span>ИИ создал {{ aiGeneratedPreview.steps.length }} шагов</span>
+                </div>
+                <div class="ai-steps-preview">
+                  <div 
+                    v-for="(step, idx) in aiGeneratedPreview.steps.slice(0, 3)" 
+                    :key="idx"
+                    class="ai-step-item"
+                  >
+                    <span class="step-number">{{ idx + 1 }}</span>
+                    <span class="step-title">{{ step.title }}</span>
+                  </div>
+                  <div v-if="aiGeneratedPreview.steps.length > 3" class="ai-steps-more">
+                    +{{ aiGeneratedPreview.steps.length - 3 }} ещё
+                  </div>
+                </div>
+              </div>
+            </transition>
 
             <div class="form-group">
               <label class="form-label">Сфера жизни</label>
@@ -544,6 +591,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
+import { generateGoalWithAI } from '@/services/aiGoalService.js'
 import { 
   Lightbulb, 
   CheckCircle, 
@@ -587,7 +635,11 @@ import {
   Pause,
   FileText,
   Settings,
-  MessageSquare
+  MessageSquare,
+  Wand2,
+  Bot,
+  Loader2,
+  Info
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -673,8 +725,14 @@ const newGoal = ref({
   sphereId: '',
   whyImportant: '',
   why2: '',
-  status: null
+  status: null,
+  generatedByAI: false,
+  steps: []
 })
+
+const isGeneratingWithAI = ref(false)
+const aiGeneratedPreview = ref(null)
+const showAITooltip = ref(false)
 
 // Accordion state for question fields
 const whyAccordion = ref({
@@ -843,8 +901,12 @@ function addNewGoal() {
     sphereId: '',
     whyImportant: '',
     why2: '',
-    status: null
+    status: null,
+    generatedByAI: false,
+    steps: []
   }
+  aiGeneratedPreview.value = null
+  isGeneratingWithAI.value = false
   resetAccordion(false)
   showReflectionSection.value = false
   showTemplates.value = false
@@ -855,13 +917,49 @@ function closeAddModal() {
   showAddModal.value = false
   showReflectionSection.value = false
   showTemplates.value = false
+  aiGeneratedPreview.value = null
+  isGeneratingWithAI.value = false
   resetAccordion(false)
   newGoal.value = {
     text: '',
     sphereId: '',
     whyImportant: '',
     why2: '',
-    status: null
+    status: null,
+    generatedByAI: false,
+    steps: []
+  }
+}
+
+async function generateWithAI() {
+  if (!newGoal.value.text.trim()) {
+    return
+  }
+  
+  isGeneratingWithAI.value = true
+  aiGeneratedPreview.value = null
+  
+  try {
+    const result = await generateGoalWithAI(newGoal.value.text, newGoal.value.sphereId)
+    
+    if (result.success) {
+      aiGeneratedPreview.value = result.data
+      newGoal.value.text = result.data.title
+      newGoal.value.whyImportant = result.data.whyImportant
+      newGoal.value.why2 = result.data.howChangesLife
+      newGoal.value.generatedByAI = true
+      newGoal.value.steps = result.data.steps
+      
+      if (result.data.whyImportant || result.data.howChangesLife) {
+        showReflectionSection.value = true
+      }
+    } else {
+      console.error('[GoalsBank] AI generation failed:', result.error)
+    }
+  } catch (error) {
+    console.error('[GoalsBank] AI generation error:', error)
+  } finally {
+    isGeneratingWithAI.value = false
   }
 }
 
@@ -878,7 +976,9 @@ async function saveNewGoal() {
     threeWhys: {
       why1: newGoal.value.whyImportant,
       why2: newGoal.value.why2
-    }
+    },
+    generatedByAI: newGoal.value.generatedByAI,
+    steps: newGoal.value.steps || []
   }
   
   // Optimistic UI: add to local state first
@@ -2390,6 +2490,171 @@ onUnmounted(() => {
   border-radius: 1rem;
   background: var(--bg-tertiary);
   color: var(--text-secondary);
+}
+
+.ai-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  color: white;
+}
+
+/* Input with AI button */
+.input-with-ai {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.input-with-ai .form-input {
+  flex: 1;
+}
+
+.ai-generate-wrapper {
+  position: relative;
+}
+
+.btn-ai-generate {
+  width: 40px;
+  height: 40px;
+  border-radius: 0.5rem;
+  border: none;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-ai-generate:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.btn-ai-generate:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-ai-generate.generating {
+  background: linear-gradient(135deg, #a78bfa, #818cf8);
+}
+
+.btn-ai-generate .spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.ai-tooltip {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 220px;
+  padding: 0.75rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+}
+
+.ai-tooltip strong {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.ai-tooltip p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.tooltip-fade-enter-active,
+.tooltip-fade-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.tooltip-fade-enter-from,
+.tooltip-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+/* AI Preview Section */
+.ai-preview-section {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(99, 102, 241, 0.1));
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.ai-preview-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #7c3aed;
+  margin-bottom: 0.5rem;
+}
+
+.ai-steps-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.ai-step-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.5rem;
+  background: var(--bg-primary);
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.ai-step-item .step-number {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #7c3aed;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ai-step-item .step-title {
+  color: var(--text-primary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-steps-more {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  padding: 0.25rem;
 }
 
 /* FAB Button */

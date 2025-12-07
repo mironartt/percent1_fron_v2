@@ -16,6 +16,11 @@ export default defineConfig({
     open: false,
     allowedHosts: true,
     proxy: {
+      '/api/ai': {
+        target: 'http://127.0.0.1:3001',
+        changeOrigin: true,
+        secure: false
+      },
       '/api': {
         target: 'http://127.0.0.1:8017',
         changeOrigin: true,
