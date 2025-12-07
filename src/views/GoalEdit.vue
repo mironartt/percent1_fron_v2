@@ -150,7 +150,7 @@
                 >
                   <Loader2 v-if="isGeneratingSteps" :size="16" class="spin" />
                   <Sparkles v-else :size="16" />
-                  <span>{{ isGeneratingSteps ? 'Генерация...' : 'Добавить с ИИ' }}</span>
+                  <span>{{ isGeneratingSteps ? 'Генерация...' : 'Помощь от ментора' }}</span>
                 </button>
                 <transition name="tooltip-fade">
                   <div v-if="showAIStepsTooltip && !isGeneratingSteps" class="ai-steps-tooltip ai-steps-tooltip-empty">
@@ -368,7 +368,7 @@
                 >
                   <Loader2 v-if="isGeneratingSteps" :size="16" class="spin" />
                   <Sparkles v-else :size="16" />
-                  <span>{{ isGeneratingSteps ? 'Генерация...' : 'Добавить шаги с ИИ' }}</span>
+                  <span>{{ isGeneratingSteps ? 'Генерация...' : 'Помощь от ментора' }}</span>
                 </button>
                 <transition name="tooltip-fade">
                   <div v-if="showAIStepsTooltip && !isGeneratingSteps" class="ai-steps-tooltip">
