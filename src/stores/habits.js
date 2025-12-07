@@ -531,6 +531,46 @@ export const useHabitsStore = defineStore('habits', () => {
     }
   }
 
+  async function updateCompletionNote(habitId, date, note, status = null) {
+    const habit = habits.value.find(h => h.habit_id === habitId)
+    if (!habit) return { success: false, error: { message: 'Привычка не найдена' } }
+    
+    const existingIndex = habit.completions?.findIndex(c => c.date === date)
+    const previousNote = existingIndex >= 0 ? habit.completions[existingIndex].note : null
+    
+    if (existingIndex >= 0) {
+      habit.completions[existingIndex].note = note
+    }
+    
+    try {
+      const completionStatus = status || (existingIndex >= 0 ? habit.completions[existingIndex].status : 'completed')
+      const result = await habitsApi.updateCompletions([{
+        habit_id: habitId,
+        date,
+        status: completionStatus,
+        note
+      }])
+      
+      if (result.success) {
+        if (DEBUG_MODE) {
+          console.log('[HabitsStore] Completion note updated:', habitId, date, note)
+        }
+        return { success: true }
+      } else {
+        if (existingIndex >= 0) {
+          habit.completions[existingIndex].note = previousNote
+        }
+        return { success: false, error: result.error }
+      }
+    } catch (e) {
+      if (existingIndex >= 0) {
+        habit.completions[existingIndex].note = previousNote
+      }
+      if (DEBUG_MODE) console.error('[HabitsStore] Update note error:', e)
+      return { success: false, error: { message: e.message } }
+    }
+  }
+
   async function applyAmnesty(date) {
     const previousAmnestiedDates = [...(settings.value.amnestied_dates || [])]
     const previousRemaining = settings.value.amnesty_remaining
@@ -1010,6 +1050,7 @@ export const useHabitsStore = defineStore('habits', () => {
     markCompleted,
     unmarkCompleted,
     markExcused,
+    updateCompletionNote,
     
     applyAmnesty,
     revokeAmnesty,

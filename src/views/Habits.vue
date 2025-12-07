@@ -2681,13 +2681,35 @@ function closeDayEditModal() {
   dayEditNote.value = ''
 }
 
-function saveNoteAndClose() {
+async function saveNoteAndClose() {
+  if (!selectedHabitForEdit.value || !selectedDayForEdit.value) {
+    closeDayEditModal()
+    return
+  }
+  
   saveCurrentDayData()
-  toast.showToast({ type: 'success', title: 'Заметка сохранена' })
+  
+  const habit = selectedHabitForEdit.value
+  const habitId = habit.habit_id || habit.id
+  const dateStr = selectedDayForEdit.value.date
+  const currentStatus = getDayStatus(habit, dateStr)
+  
+  if (dayEditNote.value && currentStatus) {
+    const result = await habitsStore.updateCompletionNote(habitId, dateStr, dayEditNote.value, currentStatus)
+    
+    if (result.success) {
+      toast.showToast({ type: 'success', title: 'Заметка сохранена' })
+    } else {
+      toast.showToast({ type: 'error', title: 'Ошибка сохранения', message: result.error?.message })
+    }
+  } else {
+    toast.showToast({ type: 'success', title: 'Заметка сохранена' })
+  }
+  
   closeDayEditModal()
 }
 
-function setDayAsCompleted() {
+async function setDayAsCompleted() {
   if (!selectedHabitForEdit.value || !selectedDayForEdit.value) return
   if (isFutureDay.value) {
     toast.showToast({ type: 'warning', title: 'Нельзя изменить статус будущего дня' })
@@ -2697,6 +2719,7 @@ function setDayAsCompleted() {
   saveCurrentDayData()
   
   const habit = selectedHabitForEdit.value
+  const habitId = habit.habit_id || habit.id
   const dateStr = selectedDayForEdit.value.date
   
   if (!appStore.habitLog[dateStr]) {
@@ -2711,10 +2734,16 @@ function setDayAsCompleted() {
     saveSkipData()
   }
   
-  toast.showToast({ type: 'success', title: `Отмечено как выполненное` })
+  const result = await habitsStore.markCompleted(habitId, dateStr, dayEditNote.value)
+  
+  if (result.success) {
+    toast.showToast({ type: 'success', title: `Отмечено как выполненное` })
+  } else {
+    toast.showToast({ type: 'error', title: 'Ошибка сохранения', message: result.error?.message })
+  }
 }
 
-function setDayAsMissed() {
+async function setDayAsMissed() {
   if (!selectedHabitForEdit.value || !selectedDayForEdit.value) return
   if (isFutureDay.value) {
     toast.showToast({ type: 'warning', title: 'Нельзя изменить статус будущего дня' })
@@ -2724,6 +2753,7 @@ function setDayAsMissed() {
   saveCurrentDayData()
   
   const habit = selectedHabitForEdit.value
+  const habitId = habit.habit_id || habit.id
   const dateStr = selectedDayForEdit.value.date
   
   if (appStore.habitLog[dateStr]) {
@@ -2741,10 +2771,16 @@ function setDayAsMissed() {
     saveSkipData()
   }
   
-  toast.showToast({ type: 'info', title: `Отмечено как пропущенное` })
+  const result = await habitsStore.unmarkCompleted(habitId, dateStr)
+  
+  if (result.success) {
+    toast.showToast({ type: 'info', title: `Отмечено как пропущенное` })
+  } else {
+    toast.showToast({ type: 'error', title: 'Ошибка сохранения', message: result.error?.message })
+  }
 }
 
-function setDayAsExcused() {
+async function setDayAsExcused() {
   if (!selectedHabitForEdit.value || !selectedDayForEdit.value) return
   if (isFutureDay.value) {
     toast.showToast({ type: 'warning', title: 'Нельзя изменить статус будущего дня' })
@@ -2754,6 +2790,7 @@ function setDayAsExcused() {
   saveCurrentDayData()
   
   const habit = selectedHabitForEdit.value
+  const habitId = habit.habit_id || habit.id
   const dateStr = selectedDayForEdit.value.date
   
   if (appStore.habitLog[dateStr]) {
@@ -2769,7 +2806,13 @@ function setDayAsExcused() {
   }
   saveSkipData()
   
-  toast.showToast({ type: 'success', title: `Уважительный пропуск (без штрафа)` })
+  const result = await habitsStore.markExcused(habitId, dateStr, dayEditSkipReason.value)
+  
+  if (result.success) {
+    toast.showToast({ type: 'success', title: `Уважительный пропуск (без штрафа)` })
+  } else {
+    toast.showToast({ type: 'error', title: 'Ошибка сохранения', message: result.error?.message })
+  }
 }
 
 function cancelAmnestyForDay() {
