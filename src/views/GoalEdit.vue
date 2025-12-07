@@ -381,6 +381,15 @@
         </transition>
       </div>
 
+      <!-- Кнопка "Запланировать шаги" -->
+      <div v-if="hasUnscheduledSteps" class="plan-steps-section">
+        <button class="plan-steps-btn" @click="goToPlanning">
+          <Calendar :size="18" />
+          <span>Запланировать шаги</span>
+          <span class="unscheduled-count">{{ unscheduledStepsCount }}</span>
+        </button>
+      </div>
+
     </div>
 
     <!-- Модальное окно редактирования цели (унифицировано с GoalsBank) -->
@@ -997,6 +1006,19 @@ const miniJournalEntry = ref('')
 const miniJournalEntries = computed(() => {
   return goalForm.value?.journal || []
 })
+
+const unscheduledStepsCount = computed(() => {
+  if (!goalForm.value?.steps) return 0
+  return goalForm.value.steps.filter(s => !s.completed && !s.scheduledDate).length
+})
+
+const hasUnscheduledSteps = computed(() => {
+  return unscheduledStepsCount.value > 0
+})
+
+function goToPlanning() {
+  router.push('/app/planning')
+}
 
 function toggleMiniJournal() {
   showMiniJournal.value = !showMiniJournal.value
@@ -3596,6 +3618,52 @@ function formatDate(dateString) {
 .journal-empty p {
   margin: 0;
   font-size: 0.9rem;
+}
+
+/* Кнопка "Запланировать шаги" */
+.plan-steps-section {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+}
+
+.plan-steps-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.plan-steps-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.plan-steps-btn:active {
+  transform: translateY(0);
+}
+
+.unscheduled-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 11px;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 /* Slide transition */

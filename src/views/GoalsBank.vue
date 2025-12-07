@@ -519,76 +519,58 @@
               </div>
             </div>
 
-            <div class="why-section-divider">
-              <span>Проверка цели</span>
-            </div>
+            <!-- Опциональная секция рефлексии (скрыта по умолчанию) -->
+            <div class="reflection-toggle-section">
+              <button class="reflection-toggle-btn" @click="showReflectionSection = !showReflectionSection">
+                <MessageSquare :size="16" />
+                <span>Добавить рефлексию</span>
+                <span class="optional-badge">опционально</span>
+                <ChevronDown :size="16" class="toggle-chevron" :class="{ rotated: showReflectionSection }" />
+              </button>
+              
+              <transition name="slide-fade">
+                <div v-if="showReflectionSection" class="reflection-content">
+                  <div class="accordion-group">
+                    <div 
+                      class="accordion-header" 
+                      :class="{ open: whyAccordion.question1Open, filled: newGoal.whyImportant?.trim() }"
+                      @click="toggleWhyQuestion(1)"
+                    >
+                      <span class="accordion-title">1. Почему для меня это важно?</span>
+                      <span v-if="newGoal.whyImportant?.trim() && !whyAccordion.question1Open" class="accordion-preview">{{ newGoal.whyImportant.slice(0, 30) }}...</span>
+                      <ChevronDown :size="16" class="accordion-chevron" :class="{ open: whyAccordion.question1Open }" />
+                    </div>
+                    <div class="accordion-content" v-show="whyAccordion.question1Open">
+                      <textarea 
+                        v-model="newGoal.whyImportant"
+                        class="form-textarea"
+                        placeholder="Опишите, почему эта цель важна для вас"
+                        rows="3"
+                      ></textarea>
+                    </div>
+                  </div>
 
-            <div class="accordion-group">
-              <div 
-                class="accordion-header" 
-                :class="{ open: whyAccordion.question1Open, filled: newGoal.whyImportant?.trim() }"
-                @click="toggleWhyQuestion(1)"
-              >
-                <span class="accordion-title">1. Почему для меня это важно?</span>
-                <span v-if="newGoal.whyImportant?.trim() && !whyAccordion.question1Open" class="accordion-preview">{{ newGoal.whyImportant.slice(0, 30) }}...</span>
-                <ChevronDown :size="16" class="accordion-chevron" :class="{ open: whyAccordion.question1Open }" />
-              </div>
-              <div class="accordion-content" v-show="whyAccordion.question1Open">
-                <textarea 
-                  v-model="newGoal.whyImportant"
-                  class="form-textarea"
-                  placeholder="Опишите, почему эта цель важна для вас"
-                  rows="3"
-                ></textarea>
-              </div>
-            </div>
-
-            <div class="accordion-group">
-              <div 
-                class="accordion-header" 
-                :class="{ open: whyAccordion.question2Open, filled: newGoal.why2?.trim() }"
-                @click="toggleWhyQuestion(2)"
-              >
-                <span class="accordion-title">2. Как это изменит мою жизнь?</span>
-                <span v-if="newGoal.why2?.trim() && !whyAccordion.question2Open" class="accordion-preview">{{ newGoal.why2.slice(0, 30) }}...</span>
-                <ChevronDown :size="16" class="accordion-chevron" :class="{ open: whyAccordion.question2Open }" />
-              </div>
-              <div class="accordion-content" v-show="whyAccordion.question2Open">
-                <textarea 
-                  v-model="newGoal.why2"
-                  class="form-textarea"
-                  placeholder="Опишите, как достижение этой цели изменит вашу жизнь"
-                  rows="3"
-                ></textarea>
-              </div>
-            </div>
-
-            <div class="validation-section">
-              <div class="validation-label">
-                Оценка цели:
-                <span class="tooltip-wrapper">
-                  <HelpCircle :size="16" :stroke-width="2" class="help-icon" />
-                  <span class="tooltip-text">Истинная цель отвечает на вопросы «почему важно?» и «как изменит жизнь?». Ложная — навязана извне или не ведёт к переменам.</span>
-                </span>
-              </div>
-              <div class="validation-buttons">
-                <button 
-                  class="btn btn-validation btn-true-goal"
-                  :class="{ active: newGoal.status === 'validated' }"
-                  @click="selectNewGoalValidationStatus(true)"
-                >
-                  <CheckCircle :size="18" :stroke-width="2" />
-                  Истинная
-                </button>
-                <button 
-                  class="btn btn-validation btn-false-goal"
-                  :class="{ active: newGoal.status === 'rejected' }"
-                  @click="selectNewGoalValidationStatus(false)"
-                >
-                  <XCircle :size="18" :stroke-width="2" />
-                  Ложная
-                </button>
-              </div>
+                  <div class="accordion-group">
+                    <div 
+                      class="accordion-header" 
+                      :class="{ open: whyAccordion.question2Open, filled: newGoal.why2?.trim() }"
+                      @click="toggleWhyQuestion(2)"
+                    >
+                      <span class="accordion-title">2. Как это изменит мою жизнь?</span>
+                      <span v-if="newGoal.why2?.trim() && !whyAccordion.question2Open" class="accordion-preview">{{ newGoal.why2.slice(0, 30) }}...</span>
+                      <ChevronDown :size="16" class="accordion-chevron" :class="{ open: whyAccordion.question2Open }" />
+                    </div>
+                    <div class="accordion-content" v-show="whyAccordion.question2Open">
+                      <textarea 
+                        v-model="newGoal.why2"
+                        class="form-textarea"
+                        placeholder="Опишите, как достижение этой цели изменит вашу жизнь"
+                        rows="3"
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
+              </transition>
             </div>
           </div>
 
@@ -656,7 +638,8 @@ import {
   FileText,
   Settings,
   Shield,
-  BarChart2
+  BarChart2,
+  MessageSquare
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -738,6 +721,7 @@ const infiniteScrollTrigger = ref(null)
 let infiniteScrollObserver = null
 
 const showAddModal = ref(false)
+const showReflectionSection = ref(false)
 const newGoal = ref({
   text: '',
   sphereId: '',
@@ -923,11 +907,15 @@ function addNewGoal() {
     status: null
   }
   resetAccordion(false)
+  showReflectionSection.value = false
+  showTemplates.value = false
   showAddModal.value = true
 }
 
 function closeAddModal() {
   showAddModal.value = false
+  showReflectionSection.value = false
+  showTemplates.value = false
   resetAccordion(false)
   newGoal.value = {
     text: '',
@@ -6437,6 +6425,57 @@ onUnmounted(() => {
 .form-textarea:focus {
   outline: none;
   border-color: var(--primary-color);
+}
+
+/* Секция рефлексии (опциональная) */
+.reflection-toggle-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.reflection-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reflection-toggle-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.reflection-toggle-btn .toggle-chevron {
+  margin-left: auto;
+  transition: transform 0.2s;
+}
+
+.reflection-toggle-btn .toggle-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.optional-badge {
+  font-size: 0.7rem;
+  padding: 0.125rem 0.375rem;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border-radius: 4px;
+}
+
+.reflection-content {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
 }
 
 /* Шаблоны целей */
