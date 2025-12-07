@@ -319,6 +319,37 @@
             </button>
           </div>
 
+          <!-- Quick Actions -->
+          <div class="quick-actions" v-if="editingGoal">
+            <button 
+              v-if="editingGoal.status === 'validated' && !isGoalInWork"
+              class="quick-action-btn action-work"
+              title="Взять цель в работу"
+              @click="handleQuickTakeToWork"
+            >
+              <Play :size="16" />
+              <span>В работу</span>
+            </button>
+            <button 
+              v-if="isGoalInWork"
+              class="quick-action-btn action-remove-work"
+              title="Убрать из работы"
+              @click="handleQuickRemoveFromWork"
+            >
+              <Pause :size="16" />
+              <span>Убрать</span>
+            </button>
+            <button 
+              v-if="isGoalInWork && !isGoalCompleted"
+              class="quick-action-btn action-complete"
+              title="Завершить цель"
+              @click="handleQuickComplete"
+            >
+              <CheckCircle :size="16" />
+              <span>Завершить</span>
+            </button>
+          </div>
+
           <!-- Tab Navigation -->
           <div class="modal-tabs">
             <button 
@@ -408,8 +439,8 @@
 
             <!-- Tab: Status -->
             <div v-show="editModalTab === 'status'" class="tab-content">
-              <!-- Work Status -->
-              <div class="status-card">
+              <!-- Work Status Toggle (only for validated goals) -->
+              <div class="status-card" v-if="editingGoal.status === 'validated' || goal?.status === 'validated'">
                 <div class="status-card-header">
                   <Target :size="20" />
                   <span>Статус работы</span>
@@ -418,14 +449,14 @@
                   <span class="toggle-label">В работе</span>
                   <button 
                     class="toggle-switch"
-                    :class="{ active: editingGoal.workStatus === 'work' }"
-                    @click="editingGoal.workStatus = editingGoal.workStatus === 'work' ? 'idle' : 'work'"
+                    :class="{ active: isGoalInWork }"
+                    @click="toggleWorkStatus"
                   >
                     <span class="toggle-slider"></span>
                   </button>
                 </div>
-                <p class="status-hint" v-if="editingGoal.workStatus === 'work'">
-                  Цель в активной работе.
+                <p class="status-hint" v-if="isGoalInWork">
+                  Цель добавлена в активные. Вы можете декомпозировать её на шаги.
                 </p>
                 <p class="status-hint" v-else>
                   Включите, чтобы начать работу над целью.
@@ -444,16 +475,16 @@
                 <div class="validation-buttons-new">
                   <button 
                     class="btn-validation-new btn-confirm"
-                    :class="{ active: editingGoal.validationStatus === 'validated' }"
-                    @click="editingGoal.validationStatus = 'validated'"
+                    :class="{ active: editingGoal.status === 'validated' || goal?.status === 'validated' }"
+                    @click="setValidationStatus(true)"
                   >
                     <CheckCircle :size="20" />
                     <span>Подтвердить</span>
                   </button>
                   <button 
                     class="btn-validation-new btn-reject"
-                    :class="{ active: editingGoal.validationStatus === 'rejected' }"
-                    @click="editingGoal.validationStatus = 'rejected'"
+                    :class="{ active: editingGoal.status === 'rejected' || goal?.status === 'rejected' }"
+                    @click="setValidationStatus(false)"
                   >
                     <XCircle :size="20" />
                     <span>Отклонить</span>
@@ -461,8 +492,8 @@
                 </div>
               </div>
 
-              <!-- Progress -->
-              <div class="status-card">
+              <!-- Progress (only if goal is in work) -->
+              <div class="status-card" v-if="isGoalInWork">
                 <div class="status-card-header">
                   <BarChart2 :size="20" />
                   <span>Прогресс</span>
@@ -700,7 +731,7 @@ import {
   Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target,
   Square, CheckSquare, Search, CheckCircle2, AlertCircle,
   CheckCircle, XCircle, Check, Filter, Settings, Clock, Calendar, Circle,
-  FileText, Lightbulb, Shield, BarChart2
+  FileText, Lightbulb, Shield, BarChart2, Play, Pause, GitBranch
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -794,6 +825,95 @@ function showToast(message, type = 'success') {
 const showEditModal = ref(false)
 const editingGoal = ref(null)
 const editModalTab = ref('main')
+
+// Quick Actions computed properties
+const isGoalInWork = computed(() => {
+  if (!goal.value) return false
+  // Check if goal is transferred to active goals
+  const transferred = store.goals.find(g => 
+    (g.sourceId === goal.value.id || g.backendId === goal.value.backendId) && 
+    g.source === 'goals-bank'
+  )
+  return !!transferred
+})
+
+const isGoalCompleted = computed(() => {
+  if (!goal.value) return false
+  return goal.value.status === 'completed'
+})
+
+// Quick Actions functions
+async function handleQuickTakeToWork() {
+  if (!editingGoal.value) return
+  
+  // Create transferred goal
+  const newGoal = {
+    id: Date.now().toString(),
+    title: editingGoal.value.title || editingGoal.value.text,
+    sphereId: editingGoal.value.sphereId,
+    source: 'goals-bank',
+    sourceId: goal.value?.id,
+    backendId: goal.value?.backendId,
+    status: 'active',
+    steps: goalForm.value.steps || [],
+    progress: 0,
+    createdAt: new Date().toISOString()
+  }
+  
+  store.addGoal(newGoal)
+  showToast('Цель взята в работу')
+  closeEditModal()
+}
+
+async function handleQuickRemoveFromWork() {
+  if (!goal.value) return
+  
+  if (confirm('Убрать эту цель из работы?')) {
+    const transferred = store.goals.find(g => 
+      (g.sourceId === goal.value.id || g.backendId === goal.value.backendId) && 
+      g.source === 'goals-bank'
+    )
+    if (transferred) {
+      store.deleteGoal(transferred.id)
+      showToast('Цель убрана из работы')
+    }
+    closeEditModal()
+  }
+}
+
+async function handleQuickComplete() {
+  if (!goal.value) return
+  
+  const transferred = store.goals.find(g => 
+    (g.sourceId === goal.value.id || g.backendId === goal.value.backendId) && 
+    g.source === 'goals-bank'
+  )
+  if (transferred) {
+    store.updateGoal(transferred.id, { 
+      status: 'completed',
+      completedAt: new Date().toISOString()
+    })
+    showToast('Цель завершена!')
+  }
+  closeEditModal()
+}
+
+// Toggle work status for goal (in Status tab)
+function toggleWorkStatus() {
+  if (isGoalInWork.value) {
+    // Remove from work
+    handleQuickRemoveFromWork()
+  } else {
+    // Add to work
+    handleQuickTakeToWork()
+  }
+}
+
+// Set validation status
+function setValidationStatus(validated) {
+  if (!editingGoal.value) return
+  editingGoal.value.status = validated ? 'validated' : 'rejected'
+}
 
 // Модалка добавления шага (мобильная версия)
 const showAddStepModal = ref(false)
