@@ -721,6 +721,17 @@ export const useAppStore = defineStore('app', () => {
     completed: false,
     data: null
   })
+  
+  // История оценок SSP
+  const sspHistory = ref([])
+  
+  function addSSPHistoryEntry(entry) {
+    sspHistory.value.push(entry)
+    saveToLocalStorage()
+    if (DEBUG_MODE) {
+      console.log('[SSP] Added history entry:', entry)
+    }
+  }
 
   // Банк целей - полноценная система
   const goalsBank = ref({
@@ -1524,6 +1535,7 @@ export const useAppStore = defineStore('app', () => {
       onboarding: onboarding.value,
       sspGoalsBank: sspGoalsBank.value,
       sspModuleCompleted: sspModuleCompleted.value,
+      sspHistory: sspHistory.value,
       goalsBank: goalsBank.value,
       decompositionModule: decompositionModule.value,
       planningModule: planningModule.value,
@@ -1561,6 +1573,7 @@ export const useAppStore = defineStore('app', () => {
         if (parsed.onboarding) onboarding.value = parsed.onboarding
         if (parsed.sspGoalsBank) sspGoalsBank.value = parsed.sspGoalsBank
         if (parsed.sspModuleCompleted) sspModuleCompleted.value = parsed.sspModuleCompleted
+        if (parsed.sspHistory) sspHistory.value = parsed.sspHistory
         if (parsed.goalsBank) goalsBank.value = { ...goalsBank.value, ...parsed.goalsBank }
         if (parsed.decompositionModule) decompositionModule.value = { ...decompositionModule.value, ...parsed.decompositionModule }
         if (parsed.planningModule) planningModule.value = { ...planningModule.value, ...parsed.planningModule }
@@ -2956,6 +2969,8 @@ export const useAppStore = defineStore('app', () => {
     lifeSpheres,
     sspGoalsBank,
     sspModuleCompleted,
+    sspHistory,
+    addSSPHistoryEntry,
     goals,
     weeklyPlan,
     dailyPlan,
