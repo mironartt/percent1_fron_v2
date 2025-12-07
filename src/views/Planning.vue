@@ -130,51 +130,49 @@
       <span>Цели и шаги</span>
     </div>
 
-    <div class="filters-section">
-      <div class="chip-filters">
-        <button 
-          class="chip"
-          :class="{ active: filterSphere === '' }"
-          @click="filterSphere = ''"
-        >
-          Все сферы
-          <span class="chip-count">{{ goalsWithSteps.length }}</span>
-        </button>
-        <button 
-          v-for="sphere in spheresWithGoals" 
-          :key="sphere.id"
-          class="chip"
-          :class="{ active: filterSphere === sphere.id }"
-          @click="filterSphere = sphere.id"
-        >
-          {{ sphere.icon }} {{ sphere.name }}
-          <span class="chip-count">{{ sphere.goalCount }}</span>
-        </button>
-      </div>
+    <div class="filters-row">
+      <button 
+        class="chip sphere-chip"
+        :class="{ active: filterSphere === '' }"
+        @click="filterSphere = ''"
+      >
+        Все сферы
+        <span class="chip-count">{{ goalsWithSteps.length }}</span>
+      </button>
+      <button 
+        v-for="sphere in spheresWithGoals" 
+        :key="sphere.id"
+        class="chip sphere-chip"
+        :class="{ active: filterSphere === sphere.id }"
+        @click="filterSphere = sphere.id"
+      >
+        {{ sphere.icon }} {{ sphere.name }}
+        <span class="chip-count">{{ sphere.goalCount }}</span>
+      </button>
       
-      <div class="status-chips">
-        <button 
-          class="chip small"
-          :class="{ active: filterStatus === '' }"
-          @click="filterStatus = ''"
-        >
-          Все
-        </button>
-        <button 
-          class="chip small"
-          :class="{ active: filterStatus === 'unscheduled' }"
-          @click="filterStatus = 'unscheduled'"
-        >
-          Незапланированные
-        </button>
-        <button 
-          class="chip small"
-          :class="{ active: filterStatus === 'scheduled' }"
-          @click="filterStatus = 'scheduled'"
-        >
-          Запланированные
-        </button>
-      </div>
+      <span class="filter-divider">|</span>
+      
+      <button 
+        class="chip status-chip"
+        :class="{ active: filterStatus === '' }"
+        @click="filterStatus = ''"
+      >
+        Все
+      </button>
+      <button 
+        class="chip status-chip"
+        :class="{ active: filterStatus === 'unscheduled' }"
+        @click="filterStatus = 'unscheduled'"
+      >
+        Незапл.
+      </button>
+      <button 
+        class="chip status-chip"
+        :class="{ active: filterStatus === 'scheduled' }"
+        @click="filterStatus = 'scheduled'"
+      >
+        Запл.
+      </button>
     </div>
 
     <!-- Баннер: цели без шагов -->
@@ -218,6 +216,13 @@
             <h3 class="goal-title">{{ goal.text || goal.title }}</h3>
           </div>
           <div class="goal-meta">
+            <button 
+              class="decompose-btn" 
+              @click.stop="goToDecomposition(goal)"
+              title="Добавить шаги"
+            >
+              <Plus :size="16" />
+            </button>
             <span class="steps-badge">
               {{ getUnscheduledStepsCount(goal) }}/{{ getUncompletedSteps(goal).length }}
             </span>
@@ -1228,6 +1233,10 @@ async function rescheduleStep(newDate) {
 async function updateStepPriority(priority) {
   if (!selectedGoal.value || !selectedStep.value) return
   
+  // Сначала обновляем локально
+  updateStepInLocalPlan(selectedGoal.value, selectedStep.value, { priority })
+  closeBottomSheet()
+  
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
     await updateGoalSteps({
@@ -1238,7 +1247,6 @@ async function updateStepPriority(priority) {
       }]
     })
     await loadWeeklySteps()
-    closeBottomSheet()
   } catch (error) {
     console.error('[Planning] Error updating step priority:', error)
   }
@@ -1246,6 +1254,10 @@ async function updateStepPriority(priority) {
 
 async function updateStepTime(time) {
   if (!selectedGoal.value || !selectedStep.value) return
+  
+  // Сначала обновляем локально
+  updateStepInLocalPlan(selectedGoal.value, selectedStep.value, { timeEstimate: time })
+  closeBottomSheet()
   
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
@@ -1257,7 +1269,6 @@ async function updateStepTime(time) {
       }]
     })
     await loadWeeklySteps()
-    closeBottomSheet()
   } catch (error) {
     console.error('[Planning] Error updating step time:', error)
   }
@@ -1300,6 +1311,33 @@ function removeStepFromLocalPlan(goal, step) {
   
   // Убрать дату из шага (в обеих коллекциях)
   updateStepDateInCollections(goal.id, step.id, null)
+  
+  store.saveToLocalStorage()
+}
+
+function updateStepInLocalPlan(goal, step, updates) {
+  const weekStart = weekDays.value[0]?.date
+  if (!weekStart) return
+  
+  const goalId = goal.backendId || goal.id
+  const stepId = step.backendId || step.id
+  
+  let plan = store.weeklyPlans.find(p => p.weekStart === weekStart)
+  if (!plan) {
+    plan = { weekStart, scheduledTasks: [] }
+    store.weeklyPlans.push(plan)
+  }
+  
+  const task = plan.scheduledTasks.find(
+    t => (t.goalId === goalId || t.goalId === goal.id) && 
+         (t.stepId === stepId || t.stepId === step.id)
+  )
+  
+  if (task) {
+    if (updates.priority !== undefined) task.priority = updates.priority
+    if (updates.timeEstimate !== undefined) task.timeEstimate = updates.timeEstimate
+    if (updates.completed !== undefined) task.completed = updates.completed
+  }
   
   store.saveToLocalStorage()
 }
@@ -2012,49 +2050,29 @@ onUnmounted(() => {
   color: var(--text-secondary);
 }
 
-.filters-section {
+.filters-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.5rem 0;
   margin-bottom: 1rem;
-  position: relative;
 }
 
-.filters-section::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 40px;
-  height: calc(100% - 0.5rem);
-  background: linear-gradient(to right, transparent, var(--bg-secondary, #f9fafb));
-  pointer-events: none;
-  opacity: 0.9;
+.filter-divider {
+  color: var(--border-color, #d1d5db);
+  font-weight: 300;
+  margin: 0 0.125rem;
 }
 
-.chip-filters {
-  display: flex;
-  gap: 0.5rem;
-  overflow-x: auto;
-  padding-bottom: 0.5rem;
-  margin-bottom: 0.5rem;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  -webkit-overflow-scrolling: touch;
+.sphere-chip {
+  padding: 0.375rem 0.625rem;
+  font-size: 0.8125rem;
 }
 
-.chip-filters::-webkit-scrollbar {
-  display: none;
-}
-
-.status-chips {
-  display: flex;
-  gap: 0.5rem;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-.status-chips::-webkit-scrollbar {
-  display: none;
+.status-chip {
+  padding: 0.375rem 0.625rem;
+  font-size: 0.75rem;
 }
 
 .chip {
@@ -2150,6 +2168,26 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   flex-shrink: 0;
+}
+
+.decompose-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--primary, #6366f1);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.decompose-btn:hover {
+  background: var(--primary, #6366f1);
+  color: white;
+  border-color: var(--primary, #6366f1);
 }
 
 .steps-badge {
