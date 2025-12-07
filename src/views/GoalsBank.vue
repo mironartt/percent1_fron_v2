@@ -305,31 +305,9 @@
             </button>
           </div>
 
-          <!-- Tab Navigation (Simplified: 2 tabs) -->
-          <div class="modal-tabs">
-            <button 
-              class="modal-tab" 
-              :class="{ active: editModalTab === 'main' }"
-              title="Цель"
-              @click="editModalTab = 'main'"
-            >
-              <FileText :size="16" />
-              <span>Цель</span>
-            </button>
-            <button 
-              class="modal-tab" 
-              :class="{ active: editModalTab === 'settings' }"
-              title="Настройки"
-              @click="editModalTab = 'settings'"
-            >
-              <Settings :size="16" />
-              <span>Настройки</span>
-            </button>
-          </div>
-
           <div class="modal-body modal-body-tabs" v-if="editingGoal">
-            <!-- Tab: Goal (merged Main + Motivation) -->
-            <div v-show="editModalTab === 'main'" class="tab-content">
+            <!-- Goal editing content -->
+            <div class="tab-content">
               <div class="form-group">
                 <label class="form-label">Название цели</label>
                 <input 
@@ -375,49 +353,6 @@
                   placeholder="Опишите ожидаемые изменения..."
                   rows="2"
                 ></textarea>
-              </div>
-            </div>
-
-            <!-- Tab: Settings (simplified Status) -->
-            <div v-show="editModalTab === 'settings'" class="tab-content">
-              <!-- Validation Section -->
-              <div class="status-card">
-                <div class="status-card-header">
-                  <Shield :size="20" />
-                  <span>Оценка цели</span>
-                </div>
-                <div class="validation-buttons-new">
-                  <button 
-                    class="btn-validation-new btn-confirm"
-                    :class="{ active: editingGoal.status === 'validated' }"
-                    @click="selectValidationStatus(true)"
-                  >
-                    <CheckCircle :size="20" />
-                    <span>Подтвердить</span>
-                  </button>
-                  <button 
-                    class="btn-validation-new btn-reject"
-                    :class="{ active: editingGoal.status === 'rejected' }"
-                    @click="selectValidationStatus(false)"
-                  >
-                    <XCircle :size="20" />
-                    <span>Отклонить</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Progress (if in work) -->
-              <div class="status-card" v-if="isGoalTransferred(editingGoal.id)">
-                <div class="status-card-header">
-                  <BarChart2 :size="20" />
-                  <span>Прогресс</span>
-                </div>
-                <div class="progress-info">
-                  <div class="progress-bar-container">
-                    <div class="progress-bar-fill" :style="{ width: getGoalProgress(editingGoal.id) + '%' }"></div>
-                  </div>
-                  <span class="progress-text">{{ getGoalProgressText(editingGoal.id) }}</span>
-                </div>
               </div>
             </div>
           </div>
@@ -637,8 +572,6 @@ import {
   Pause,
   FileText,
   Settings,
-  Shield,
-  BarChart2,
   MessageSquare
 } from 'lucide-vue-next'
 
@@ -711,7 +644,6 @@ const selectedBankGoals = ref([])
 
 const showEditModal = ref(false)
 const editingGoal = ref(null)
-const editModalTab = ref('main')
 
 const showBottomSheet = ref(false)
 const bottomSheetGoal = ref(null)
@@ -1813,7 +1745,6 @@ function openEditModal(goal) {
     sphereId: goal.sphereId,
     status: goal.status || 'raw'
   }
-  editModalTab.value = 'main'
   resetAccordion(true)
   showEditModal.value = true
 }
@@ -1845,28 +1776,6 @@ function toggleWorkStatus() {
   } else {
     takeGoalToWork(editingGoal.value)
   }
-}
-
-function getGoalProgress(goalId) {
-  const transferredGoal = allGoals.value.find(g => g.sourceId === goalId && g.source === 'goals-bank')
-  if (!transferredGoal) return 0
-  
-  const stepsArray = store.steps || []
-  const steps = stepsArray.filter(s => s.goalId === transferredGoal.id || s.sourceGoalId === transferredGoal.id)
-  if (steps.length === 0) return 0
-  const completed = steps.filter(s => s.status === 'completed' || s.completed).length
-  return Math.round((completed / steps.length) * 100)
-}
-
-function getGoalProgressText(goalId) {
-  const transferredGoal = allGoals.value.find(g => g.sourceId === goalId && g.source === 'goals-bank')
-  if (!transferredGoal) return 'Не в работе'
-  
-  const stepsArray = store.steps || []
-  const steps = stepsArray.filter(s => s.goalId === transferredGoal.id || s.sourceGoalId === transferredGoal.id)
-  if (steps.length === 0) return 'Нет шагов'
-  const completed = steps.filter(s => s.status === 'completed' || s.completed).length
-  return `${completed} из ${steps.length} шагов`
 }
 
 function closeEditModal() {
@@ -1901,11 +1810,6 @@ async function saveGoalEdit() {
   if (backendId) {
     store.updateGoalOnBackend(backendId, updates)
   }
-}
-
-function selectValidationStatus(isTrue) {
-  if (!editingGoal.value) return
-  editingGoal.value.status = isTrue ? 'validated' : 'rejected'
 }
 
 function removeGoalFromWork() {
