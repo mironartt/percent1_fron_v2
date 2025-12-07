@@ -127,6 +127,10 @@
                 <span v-if="getStatusText(goal)" class="status-chip" :class="getStatusClass(goal)">
                   {{ getStatusText(goal) }}
                 </span>
+                <span v-if="getStepsProgress(goal)" class="steps-progress">
+                  <ListChecks :size="14" />
+                  {{ getStepsProgress(goal).completed }}/{{ getStepsProgress(goal).total }}
+                </span>
               </div>
             </div>
           </div>
@@ -911,6 +915,35 @@ function getStatusText(goal) {
   if (isGoalCompleted(goal.id)) return 'Завершена'
   if (isGoalTransferred(goal.id)) return 'В работе'
   return ''
+}
+
+function getStepsProgress(goal) {
+  // First check rawIdea's totalStepsData (from syncGoalsFromBackend)
+  if (goal.totalStepsData?.total_steps > 0) {
+    return {
+      completed: goal.totalStepsData.completed_steps || 0,
+      total: goal.totalStepsData.total_steps
+    }
+  }
+  
+  // Fallback: check transferred goal in work
+  const transferredGoal = allGoals.value.find(g => g.sourceId === goal.id && g.source === 'goals-bank')
+  if (transferredGoal) {
+    if (transferredGoal.totalStepsData?.total_steps > 0) {
+      return {
+        completed: transferredGoal.totalStepsData.completed_steps || 0,
+        total: transferredGoal.totalStepsData.total_steps
+      }
+    }
+    if (transferredGoal.steps && transferredGoal.steps.length > 0) {
+      return {
+        completed: transferredGoal.steps.filter(s => s.completed).length,
+        total: transferredGoal.steps.length
+      }
+    }
+  }
+  
+  return null
 }
 
 const expandedGoalId = ref(null)
@@ -2336,6 +2369,17 @@ onUnmounted(() => {
 .status-chip.available {
   background: #f3e8ff;
   color: #7c3aed;
+}
+
+.steps-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 1rem;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
 }
 
 /* FAB Button */
