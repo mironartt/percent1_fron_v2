@@ -11,6 +11,14 @@ I prefer simple language and iterative development. Ask before making major chan
 ### UI/UX Decisions
 The application employs a guided, multi-step workflow for core modules. It features an interactive "Wheel of Life," a collapsible sidebar, dark/light theme, responsive design, and a consistent color priority system. Lucide Vue Next provides minimalist line icons. Mobile responsiveness is a key design consideration, with a primary breakpoint at 768px, hamburger menus for mobile navigation, and adaptive layouts for components like the MentorWidget and modals. A global MentorPanel ensures a unified experience across devices, with independent state management for desktop and mobile views.
 
+**Unified Layout System (Merge 20):**
+- Global CSS variables for content width: `--content-width-narrow: 900px`, `--content-width-wide: 1200px`
+- Global CSS variables for padding: `--container-padding: 1.5rem`, `--container-padding-mobile: 1rem`
+- Automatic mobile padding switch via `@media (max-width: 768px)`
+- All page headers centered (`text-align: center`) for consistent mobile UX
+- Burger menu hides on scroll down, shows on scroll up (Instagram/Twitter pattern)
+- Expandable search icon in GoalsBank (collapsed icon → expanded input field)
+
 
 ### Technical Implementations
 The frontend is built with Vue 3 (Composition API, script setup), Vite (with proxy to Django backend), Vue Router (with authentication guards), and Pinia for state management (with localStorage persistence). A custom Django-style configuration system (`settings.js` + `local_settings.js`) is used. Authentication is cookie-based with CSRF protection.
