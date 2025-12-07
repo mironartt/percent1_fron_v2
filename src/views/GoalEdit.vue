@@ -4444,8 +4444,9 @@ function formatDate(dateString) {
   }
 
   .modal-footer.modal-footer-redesigned {
-    flex-direction: row;
+    flex-direction: row !important;
     gap: 0.75rem;
+    justify-content: flex-end;
   }
 
   .modal-footer-left,
