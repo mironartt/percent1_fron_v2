@@ -333,6 +333,28 @@
                   <Check :size="18" />
                 </button>
               </div>
+              
+              <!-- AI генерация шагов -->
+              <div class="ai-steps-generate">
+                <button 
+                  class="btn-ai-steps"
+                  :class="{ generating: isGeneratingSteps }"
+                  :disabled="isGeneratingSteps"
+                  @click="generateStepsAI"
+                  @mouseenter="showAIStepsTooltip = true"
+                  @mouseleave="showAIStepsTooltip = false"
+                >
+                  <Loader2 v-if="isGeneratingSteps" :size="16" class="spin" />
+                  <Sparkles v-else :size="16" />
+                  <span>{{ isGeneratingSteps ? 'Генерация...' : 'Добавить шаги с ИИ' }}</span>
+                </button>
+                <transition name="tooltip-fade">
+                  <div v-if="showAIStepsTooltip && !isGeneratingSteps" class="ai-steps-tooltip">
+                    <strong>ИИ-помощник</strong>
+                    <p>Сгенерирует 3-7 шагов для достижения этой цели на основе её названия</p>
+                  </div>
+                </transition>
+              </div>
             </div>
 
           </div>
@@ -784,8 +806,9 @@ import {
   Square, CheckSquare, Search, CheckCircle2, AlertCircle,
   CheckCircle, XCircle, Check, Filter, Settings, Clock, Calendar, Circle,
   FileText, Lightbulb, Shield, BarChart2, Play, Pause, GitBranch,
-  BookOpen, ChevronDown, Send, MessageSquare
+  BookOpen, ChevronDown, Send, MessageSquare, Wand2, Loader2, Sparkles
 } from 'lucide-vue-next'
+import { generateStepsWithAI } from '@/services/aiGoalService.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -983,6 +1006,50 @@ function setValidationStatus(validated) {
 const inlineStepInput = ref(null)
 const inlineStepTitle = ref('')
 const inlineInputFocused = ref(false)
+const isGeneratingSteps = ref(false)
+const showAIStepsTooltip = ref(false)
+
+async function generateStepsAI() {
+  if (isGeneratingSteps.value || !goal.value) return
+  
+  const goalTitle = goalForm.value.title || goal.value.title || goal.value.text
+  if (!goalTitle) return
+  
+  isGeneratingSteps.value = true
+  
+  try {
+    const result = await generateStepsWithAI(goalTitle, goalForm.value.sphereId)
+    
+    if (result.success && result.data?.steps?.length > 0) {
+      const existingStepsCount = goalForm.value.steps?.length || 0
+      
+      result.data.steps.forEach((step, idx) => {
+        const newStep = {
+          id: `ai-${Date.now()}-${idx}`,
+          title: step.title,
+          description: step.description || '',
+          completed: false,
+          isNew: true,
+          order: existingStepsCount + idx + 1,
+          priority: null,
+          timeEstimate: step.timeEstimate || null,
+          scheduledDate: null,
+          checklist: []
+        }
+        goalForm.value.steps.push(newStep)
+      })
+      
+      showToast(`ИИ добавил ${result.data.steps.length} шагов`, 'success')
+    } else {
+      showToast('Не удалось сгенерировать шаги', 'error')
+    }
+  } catch (error) {
+    console.error('[GoalEdit] AI steps generation error:', error)
+    showToast('Ошибка генерации', 'error')
+  } finally {
+    isGeneratingSteps.value = false
+  }
+}
 
 async function addInlineStep() {
   if (!inlineStepTitle.value.trim()) return
@@ -3415,6 +3482,97 @@ function formatDate(dateString) {
   .inline-add-step-input {
     font-size: 1rem;
   }
+}
+
+/* AI генерация шагов */
+.ai-steps-generate {
+  position: relative;
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: center;
+}
+
+.btn-ai-steps {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.25);
+}
+
+.btn-ai-steps:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35);
+}
+
+.btn-ai-steps:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-ai-steps:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-ai-steps.generating {
+  background: linear-gradient(135deg, #a78bfa 0%, #818cf8 100%);
+}
+
+.btn-ai-steps .spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.ai-steps-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  width: 220px;
+  text-align: center;
+}
+
+.ai-steps-tooltip strong {
+  display: block;
+  color: var(--primary, #6366f1);
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.ai-steps-tooltip p {
+  color: var(--text-secondary, #6b7280);
+  font-size: 0.8rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.tooltip-fade-enter-active,
+.tooltip-fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.tooltip-fade-enter-from,
+.tooltip-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(4px);
 }
 
 /* FAB кнопка добавления шага */

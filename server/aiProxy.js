@@ -96,6 +96,80 @@ app.post('/api/ai/generate-goal', async (req, res) => {
   }
 })
 
+app.post('/api/ai/generate-steps', async (req, res) => {
+  try {
+    const { goalTitle, sphereId } = req.body
+    
+    if (!goalTitle || !goalTitle.trim()) {
+      return res.status(400).json({ success: false, error: 'Goal title is required' })
+    }
+
+    const systemPrompt = `Ты - эксперт по декомпозиции целей. Пользователь даёт тебе цель, а ты создаёшь конкретные шаги для её достижения.
+
+Верни JSON объект со следующей структурой:
+{
+  "steps": [
+    {
+      "title": "Название шага (краткое, до 80 символов)",
+      "description": "Описание шага (опционально, до 150 символов)",
+      "timeEstimate": 2
+    }
+  ]
+}
+
+Правила:
+- Создай 3-7 конкретных, измеримых шагов
+- Шаги должны быть последовательными и логичными
+- Используй глаголы действия в начале каждого шага
+- timeEstimate - примерное время выполнения в часах (0.5 - 8)
+- Отвечай ТОЛЬКО валидным JSON без markdown-разметки`
+
+    const userPrompt = sphereId 
+      ? `Цель: "${goalTitle}"\nСфера жизни: ${sphereId}`
+      : `Цель: "${goalTitle}"`
+
+    const response = await openai.chat.completions.create({
+      model: MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      response_format: { type: 'json_object' },
+      max_completion_tokens: 4096
+    })
+
+    const content = response.choices?.[0]?.message?.content
+    if (!content) {
+      console.error('[AI Proxy] Empty response for steps. Finish reason:', response.choices?.[0]?.finish_reason)
+      throw new Error('Empty response from AI')
+    }
+
+    const parsed = JSON.parse(content)
+    
+    if (!Array.isArray(parsed.steps) || parsed.steps.length === 0) {
+      throw new Error('Invalid response format from AI')
+    }
+
+    res.json({
+      success: true,
+      data: {
+        steps: parsed.steps.map((step, index) => ({
+          title: step.title,
+          description: step.description || '',
+          timeEstimate: step.timeEstimate || null,
+          order: index + 1
+        }))
+      }
+    })
+  } catch (error) {
+    console.error('[AI Proxy] Generate steps error:', error)
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error generating steps'
+    })
+  }
+})
+
 app.get('/api/ai/health', (req, res) => {
   res.json({ status: 'ok' })
 })

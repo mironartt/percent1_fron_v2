@@ -447,57 +447,13 @@
 
             <div class="form-group">
               <label class="form-label">Название цели</label>
-              <div class="input-with-ai">
-                <input 
-                  v-model="newGoal.text"
-                  type="text"
-                  class="form-input"
-                  placeholder="Введите название цели"
-                />
-                <div class="ai-generate-wrapper">
-                  <button 
-                    class="btn-ai-generate"
-                    :class="{ generating: isGeneratingWithAI }"
-                    :disabled="!newGoal.text.trim() || isGeneratingWithAI"
-                    @click="generateWithAI"
-                    @mouseenter="showAITooltip = true"
-                    @mouseleave="showAITooltip = false"
-                  >
-                    <Loader2 v-if="isGeneratingWithAI" :size="18" class="spin" />
-                    <Wand2 v-else :size="18" />
-                  </button>
-                  <transition name="tooltip-fade">
-                    <div v-if="showAITooltip && !isGeneratingWithAI" class="ai-tooltip">
-                      <strong>Создать с ИИ</strong>
-                      <p>ИИ уточнит формулировку цели и создаст готовый план с шагами</p>
-                    </div>
-                  </transition>
-                </div>
-              </div>
+              <input 
+                v-model="newGoal.text"
+                type="text"
+                class="form-input"
+                placeholder="Введите название цели"
+              />
             </div>
-
-            <!-- AI Generated Steps Preview -->
-            <transition name="slide-fade">
-              <div v-if="aiGeneratedPreview && aiGeneratedPreview.steps.length > 0" class="ai-preview-section">
-                <div class="ai-preview-header">
-                  <Bot :size="16" />
-                  <span>ИИ создал {{ aiGeneratedPreview.steps.length }} шагов</span>
-                </div>
-                <div class="ai-steps-preview">
-                  <div 
-                    v-for="(step, idx) in aiGeneratedPreview.steps.slice(0, 3)" 
-                    :key="idx"
-                    class="ai-step-item"
-                  >
-                    <span class="step-number">{{ idx + 1 }}</span>
-                    <span class="step-title">{{ step.title }}</span>
-                  </div>
-                  <div v-if="aiGeneratedPreview.steps.length > 3" class="ai-steps-more">
-                    +{{ aiGeneratedPreview.steps.length - 3 }} ещё
-                  </div>
-                </div>
-              </div>
-            </transition>
 
             <div class="form-group">
               <label class="form-label">Сфера жизни</label>
@@ -591,7 +547,6 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
-import { generateGoalWithAI } from '@/services/aiGoalService.js'
 import { 
   Lightbulb, 
   CheckCircle, 
@@ -729,10 +684,6 @@ const newGoal = ref({
   generatedByAI: false,
   steps: []
 })
-
-const isGeneratingWithAI = ref(false)
-const aiGeneratedPreview = ref(null)
-const showAITooltip = ref(false)
 
 // Accordion state for question fields
 const whyAccordion = ref({
@@ -905,8 +856,6 @@ function addNewGoal() {
     generatedByAI: false,
     steps: []
   }
-  aiGeneratedPreview.value = null
-  isGeneratingWithAI.value = false
   resetAccordion(false)
   showReflectionSection.value = false
   showTemplates.value = false
@@ -917,8 +866,6 @@ function closeAddModal() {
   showAddModal.value = false
   showReflectionSection.value = false
   showTemplates.value = false
-  aiGeneratedPreview.value = null
-  isGeneratingWithAI.value = false
   resetAccordion(false)
   newGoal.value = {
     text: '',
@@ -928,38 +875,6 @@ function closeAddModal() {
     status: null,
     generatedByAI: false,
     steps: []
-  }
-}
-
-async function generateWithAI() {
-  if (!newGoal.value.text.trim()) {
-    return
-  }
-  
-  isGeneratingWithAI.value = true
-  aiGeneratedPreview.value = null
-  
-  try {
-    const result = await generateGoalWithAI(newGoal.value.text, newGoal.value.sphereId)
-    
-    if (result.success) {
-      aiGeneratedPreview.value = result.data
-      newGoal.value.text = result.data.title
-      newGoal.value.whyImportant = result.data.whyImportant
-      newGoal.value.why2 = result.data.howChangesLife
-      newGoal.value.generatedByAI = true
-      newGoal.value.steps = result.data.steps
-      
-      if (result.data.whyImportant || result.data.howChangesLife) {
-        showReflectionSection.value = true
-      }
-    } else {
-      console.error('[GoalsBank] AI generation failed:', result.error)
-    }
-  } catch (error) {
-    console.error('[GoalsBank] AI generation error:', error)
-  } finally {
-    isGeneratingWithAI.value = false
   }
 }
 
