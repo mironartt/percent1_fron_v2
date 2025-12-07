@@ -404,19 +404,73 @@
             </div>
           </template>
           
-          <!-- Незапланированный шаг: показываем выбор дня -->
+          <!-- Незапланированный шаг: показываем все опции -->
           <template v-else>
-            <p class="sheet-hint">Выберите день для планирования:</p>
-            <div class="sheet-actions days-grid">
+            <div class="inline-options-section">
+              <div class="option-label">
+                <Calendar :size="16" />
+                <span>День</span>
+              </div>
+              <div class="option-chips">
+                <button 
+                  v-for="day in futureDays" 
+                  :key="day.date"
+                  class="chip"
+                  :class="{ active: newStepDay === day.date, today: isToday(day.date) }"
+                  @click="newStepDay = day.date"
+                >
+                  {{ day.shortName }} {{ day.dayNum }}
+                </button>
+              </div>
+            </div>
+            
+            <div class="inline-options-section">
+              <div class="option-label">
+                <Flag :size="16" />
+                <span>Приоритет</span>
+              </div>
+              <div class="option-chips">
+                <button 
+                  v-for="priority in priorities" 
+                  :key="priority.value"
+                  class="chip"
+                  :class="{ 
+                    active: newStepPriority === priority.value,
+                    ['priority-' + priority.value]: true
+                  }"
+                  @click="newStepPriority = priority.value"
+                >
+                  {{ priority.label }}
+                </button>
+              </div>
+            </div>
+            
+            <div class="inline-options-section">
+              <div class="option-label">
+                <Clock :size="16" />
+                <span>Время</span>
+              </div>
+              <div class="option-chips">
+                <button 
+                  v-for="time in timeOptions" 
+                  :key="time.value"
+                  class="chip"
+                  :class="{ active: newStepTime === time.value }"
+                  @click="newStepTime = time.value"
+                >
+                  {{ time.label }}
+                </button>
+              </div>
+            </div>
+            
+            <div class="sheet-actions" style="margin-top: 0.75rem;">
               <button 
-                v-for="day in weekDays" 
-                :key="day.date"
-                class="sheet-action day-option"
-                :class="{ today: isToday(day.date) }"
-                @click="scheduleStepToDay(selectedGoal, selectedStep, day.date)"
+                class="sheet-action primary"
+                :disabled="!newStepDay"
+                @click="scheduleNewStep"
               >
-                <span class="day-label">{{ day.label }}</span>
-                <span class="day-date">{{ day.dayNum }}</span>
+                <CheckCircle :size="20" />
+                <span>Запланировать</span>
               </button>
             </div>
           </template>
@@ -606,6 +660,15 @@ const weekDays = computed(() => {
 })
 
 const isCurrentWeek = computed(() => weekOffset.value === 0)
+
+const futureDays = computed(() => {
+  const todayStr = formatDateLocal(new Date())
+  return weekDays.value.filter(day => day.date >= todayStr)
+})
+
+const newStepDay = ref(null)
+const newStepPriority = ref('')
+const newStepTime = ref('')
 
 const weekRangeText = computed(() => {
   if (weekDays.value.length < 7) return ''
@@ -1075,6 +1138,9 @@ function openTaskActions(task) {
 function openStepActions(goal, step) {
   selectedGoal.value = goal
   selectedStep.value = step
+  newStepDay.value = null
+  newStepPriority.value = ''
+  newStepTime.value = ''
   bottomSheetMode.value = 'step'
   showBottomSheet.value = true
 }
@@ -1474,6 +1540,43 @@ async function scheduleStepToDay(goal, step, date) {
     if (DEBUG_MODE) {
       console.log('[Planning] DEV_MODE: Step saved locally')
     }
+  }
+}
+
+async function scheduleNewStep() {
+  if (!selectedGoal.value || !selectedStep.value || !newStepDay.value) return
+  
+  const goal = selectedGoal.value
+  const step = selectedStep.value
+  const date = newStepDay.value
+  
+  // Сохраняем с приоритетом и временем
+  saveStepToLocalPlan(goal, step, date)
+  
+  // Обновляем приоритет и время если заданы
+  if (newStepPriority.value || newStepTime.value) {
+    updateStepInLocalPlan(goal, step, { 
+      priority: newStepPriority.value, 
+      timeEstimate: newStepTime.value 
+    })
+  }
+  
+  closeBottomSheet()
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: goal.backendId || goal.id,
+        step_id: step.backendId || step.id,
+        dt: date,
+        priority: newStepPriority.value || undefined,
+        time_estimate: newStepTime.value || undefined
+      }]
+    })
+    await loadWeeklySteps()
+  } catch (error) {
+    console.error('[Planning] Error scheduling new step:', error)
   }
 }
 
@@ -2690,6 +2793,26 @@ onUnmounted(() => {
 
 .sheet-action.danger {
   color: var(--danger);
+}
+
+.sheet-action.primary {
+  background: var(--primary, #6366f1);
+  color: white;
+  font-weight: 500;
+}
+
+.sheet-action.primary:hover {
+  background: var(--primary-dark, #4f46e5);
+}
+
+.sheet-action.primary:disabled {
+  background: var(--border-color, #e5e7eb);
+  color: var(--text-muted, #9ca3af);
+  cursor: not-allowed;
+}
+
+.chip.today {
+  border-color: var(--primary, #6366f1);
 }
 
 .sheet-action.active {
