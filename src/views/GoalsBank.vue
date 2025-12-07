@@ -918,7 +918,7 @@ function getStatusText(goal) {
 }
 
 function getStepsProgress(goal) {
-  // First check rawIdea's totalStepsData (from syncGoalsFromBackend)
+  // 1. Check rawIdea's totalStepsData (from backend)
   if (goal.totalStepsData?.total_steps > 0) {
     return {
       completed: goal.totalStepsData.completed_steps || 0,
@@ -926,8 +926,18 @@ function getStepsProgress(goal) {
     }
   }
   
-  // Fallback: check transferred goal in work
-  const transferredGoal = allGoals.value.find(g => g.sourceId === goal.id && g.source === 'goals-bank')
+  // 2. Check rawIdea's steps directly (for local/demo mode)
+  if (goal.steps && goal.steps.length > 0) {
+    return {
+      completed: goal.steps.filter(s => s.completed).length,
+      total: goal.steps.length
+    }
+  }
+  
+  // 3. Find transferred goal in work (by sourceId or by id)
+  const transferredGoal = allGoals.value.find(g => 
+    (g.sourceId === goal.id && g.source === 'goals-bank') || g.id === goal.id
+  )
   if (transferredGoal) {
     if (transferredGoal.totalStepsData?.total_steps > 0) {
       return {
