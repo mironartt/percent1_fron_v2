@@ -243,6 +243,17 @@
                     Добавить
                   </button>
                 </div>
+                
+                <div class="sphere-cta">
+                  <button 
+                    class="btn btn-ghost btn-sm sphere-create-goal-btn"
+                    @click.stop="createGoalForSphere(sphere)"
+                    :style="{ '--sphere-color': getSphereColor(sphere.id) }"
+                  >
+                    <Plus :size="16" />
+                    Создать цель для сферы
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -250,8 +261,13 @@
       </div>
 
       <div class="summary-actions">
+        <button class="btn btn-secondary btn-lg" @click="startReassessment">
+          <RefreshCcw :size="18" />
+          Переоценить
+        </button>
         <button class="btn btn-primary btn-lg" @click="goToGoalsBank">
-          🏦 Перейти в Банк целей
+          <Target :size="18" />
+          Перейти в Банк целей
         </button>
       </div>
     </div>
@@ -586,6 +602,7 @@ import {
   Target,
   ArrowRight,
   RotateCcw,
+  RefreshCcw,
   TrendingUp,
   Pencil,
   Check,
@@ -593,7 +610,8 @@ import {
   Lightbulb,
   ChartPie,
   Sparkles,
-  Settings
+  Settings,
+  Plus
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -735,12 +753,16 @@ function hasReflectionContent(sphere) {
          sphere.reflection.prevents || sphere.reflection.desired
 }
 
+const hasSSPData = computed(() => {
+  return sspModuleCompleted.value?.completed || lifeSpheres.value.some(s => s.score > 0)
+})
+
 const showEmptyState = computed(() => {
-  return false
+  return !hasSSPData.value && !lessonStarted.value
 })
 
 const showSummary = computed(() => {
-  return true
+  return hasSSPData.value && !lessonStarted.value
 })
 
 const averageScore = computed(() => {
@@ -804,8 +826,20 @@ function startLesson() {
   lessonStarted.value = true
 }
 
+function startReassessment() {
+  currentStep.value = 2
+  lessonStarted.value = true
+}
+
 function goToGoalsBank() {
   router.push('/app/goals-bank')
+}
+
+function createGoalForSphere(sphere) {
+  router.push({
+    path: '/app/goals/new',
+    query: { sphere: sphere.id }
+  })
 }
 
 function restartLesson() {
@@ -1425,6 +1459,13 @@ watch(() => route.query.spp_step, () => {
   justify-content: center;
   gap: 1rem;
   flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.summary-actions .btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 @media (max-width: 768px) {
@@ -1444,6 +1485,16 @@ watch(() => route.query.spp_step, () => {
   .score-bar {
     flex: 1;
     min-width: 150px;
+  }
+  
+  .summary-actions {
+    flex-direction: column;
+    padding: 0 1rem;
+  }
+  
+  .summary-actions .btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
@@ -2098,6 +2149,29 @@ watch(() => route.query.spp_step, () => {
 
 .no-reflection .btn {
   font-style: normal;
+}
+
+/* Sphere CTA Button */
+.sphere-cta {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.sphere-create-goal-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--sphere-color, var(--primary-color));
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.sphere-create-goal-btn:hover {
+  background: color-mix(in srgb, var(--sphere-color, var(--primary-color)) 10%, transparent);
 }
 
 /* Accordion Right Side */
