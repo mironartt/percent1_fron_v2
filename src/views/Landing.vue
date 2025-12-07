@@ -87,15 +87,29 @@
 
       <section class="problem-section">
         <div class="container">
-          <h2 class="section-title">Почему большинство не растут — хотя стараются каждый день</h2>
-          <div class="problem-content">
-            <p class="problem-text">
-              Проблема не в мотивации, а в отсутствии системы.<br>
-              Люди делают всё подряд, теряют фокус и выгорают.
-            </p>
-            <p class="solution-text">
-              <strong>One Percent решает это просто:</strong> каждый день — маленький шаг в плюс.
-            </p>
+          <h2 class="section-title">Знакомо?</h2>
+          <div class="pain-cards">
+            <div class="pain-card">
+              <div class="pain-icon">😩</div>
+              <h3>Не хватает дисциплины</h3>
+              <p class="pain-text">Начинаю, бросаю, снова начинаю... Сила воли заканчивается через неделю.</p>
+              <div class="solution-arrow">↓</div>
+              <p class="solution-text">Система делает дисциплину ненужной — маленькие шаги + привычки + AI-напоминания. Не сила воли, а правильная среда.</p>
+            </div>
+            <div class="pain-card">
+              <div class="pain-icon">💸</div>
+              <h3>Хочу расти в доходе</h3>
+              <p class="pain-text">Работаю много, но финансового роста нет. Не понимаю, что конкретно делать.</p>
+              <div class="solution-arrow">↓</div>
+              <p class="solution-text">Сфера "Карьера/Деньги" в Колесе баланса → конкретные цели → ежедневные действия. Рост = система, не удача.</p>
+            </div>
+            <div class="pain-card">
+              <div class="pain-icon">🤷</div>
+              <h3>Не знаю, что делать</h3>
+              <p class="pain-text">Много идей, но непонятно с чего начать. Ступор и прокрастинация.</p>
+              <div class="solution-arrow">↓</div>
+              <p class="solution-text">AI Mentor анализирует твою ситуацию и предлагает следующий шаг. Больше никакого ступора.</p>
+            </div>
           </div>
         </div>
       </section>
@@ -191,6 +205,72 @@
         </div>
       </section>
 
+      <section class="ai-mentor-section">
+        <div class="container">
+          <div class="mentor-header">
+            <div class="mentor-avatar">🤖</div>
+            <h2 class="section-title">AI Mentor — твой проводник в системе 1%</h2>
+            <p class="mentor-tagline">Он видит то, что сложно заметить в рутине, и помогает каждый день делать маленький шаг в плюс</p>
+          </div>
+          
+          <div class="mentor-benefits">
+            <div class="mentor-card">
+              <div class="mentor-icon">🎯</div>
+              <h3>Ясность вместо хаоса</h3>
+              <p>Перестань гадать, что делать. Ментор анализирует твои сферы жизни и помогает поставить цели, которые действительно важны именно тебе.</p>
+            </div>
+            <div class="mentor-card">
+              <div class="mentor-icon">📅</div>
+              <h3>Неделя спланирована за минуту</h3>
+              <p>Не трать время на раскладывание задач. Ментор сам распределяет шаги по дням с учётом твоей загрузки и приоритетов.</p>
+            </div>
+            <div class="mentor-card">
+              <div class="mentor-icon">👁️</div>
+              <h3>Видишь то, что упускаешь</h3>
+              <p>В рутине легко не заметить перегрузку или дисбаланс. Ментор подсвечивает паттерны и предупреждает до того, как ты выгоришь.</p>
+            </div>
+            <div class="mentor-card">
+              <div class="mentor-icon">💡</div>
+              <h3>Знаешь следующий шаг</h3>
+              <p>Никакого ступора "а что теперь?". Получаешь персональные рекомендации на основе твоего реального прогресса.</p>
+            </div>
+            <div class="mentor-card">
+              <div class="mentor-icon">🪞</div>
+              <h3>Глубже понимаешь себя</h3>
+              <p>Вечерняя рефлексия с правильными вопросами. Фиксируешь победы, учишься на ошибках, растёшь осознанно.</p>
+            </div>
+            <div class="mentor-card">
+              <div class="mentor-icon">⚡</div>
+              <h3>Меньше рутины — больше действий</h3>
+              <p>Напоминания, приоритизация, адаптация плана — всё автоматически. Ты фокусируешься на главном.</p>
+            </div>
+          </div>
+
+          <div class="mentor-chat-demo">
+            <div class="chat-window">
+              <div class="chat-header">
+                <div class="chat-avatar">🤖</div>
+                <div class="chat-info">
+                  <span class="chat-name">AI Mentor</span>
+                  <span class="chat-status">Онлайн</span>
+                </div>
+              </div>
+              <div class="chat-messages">
+                <div class="message mentor">
+                  <p>Привет! Вижу, что на этой неделе ты запланировал 12 шагов, но выполнил только 4. Похоже на перегрузку. Давай уберём 3 менее важных и сфокусируемся на главном?</p>
+                </div>
+                <div class="message user">
+                  <p>Да, ты прав. Какие убрать?</p>
+                </div>
+                <div class="message mentor">
+                  <p>Рекомендую оставить шаги по сфере "Карьера" — они двигают тебя к цели быстрее. "Разобрать почту" и "Обновить резюме" можно перенести на следующую неделю.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="features" class="features">
         <div class="container">
           <h2 class="section-title">Все инструменты в одном месте</h2>
@@ -245,43 +325,51 @@
 
       <section class="journey-section">
         <div class="container">
-          <h2 class="section-title">Как выглядит путь One Percent</h2>
+          <h2 class="section-title">Система 1%: 6 шагов к росту</h2>
+          <p class="section-subtitle">Простой путь от хаоса к ясности</p>
           
-          <div class="journey-steps">
-            <div class="journey-step">
-              <div class="step-number">01</div>
-              <div class="step-content">
-                <h3>Диагностика → Осознание</h3>
-                <p>Смотришь внутрь себя, выявляешь точки утечки энергии. Понимаешь, что мешает действовать стабильно.</p>
-              </div>
+          <div class="journey-grid">
+            <div class="journey-card">
+              <div class="journey-icon">🎯</div>
+              <div class="journey-num">01</div>
+              <h3>Определи себя</h3>
+              <p class="journey-tool">Колесо баланса</p>
+              <p class="journey-benefit">Ясность вместо хаоса в голове</p>
             </div>
-            <div class="journey-step">
-              <div class="step-number">02</div>
-              <div class="step-content">
-                <h3>Осознание → Фокус</h3>
-                <p>Определяешь, что действительно важно сейчас. Энергия на одном шаге, который реально двигает вперёд.</p>
-              </div>
+            <div class="journey-card">
+              <div class="journey-icon">🏦</div>
+              <div class="journey-num">02</div>
+              <h3>Поставь цели</h3>
+              <p class="journey-tool">Банк целей + AI</p>
+              <p class="journey-benefit">Фокус на том, что реально важно</p>
             </div>
-            <div class="journey-step">
-              <div class="step-number">03</div>
-              <div class="step-content">
-                <h3>Фокус → Системность</h3>
-                <p>Выстраиваешь ритм дня и недели. Привычка действовать по системе, а не по настроению.</p>
-              </div>
+            <div class="journey-card">
+              <div class="journey-icon">🔀</div>
+              <div class="journey-num">03</div>
+              <h3>Разбей путь</h3>
+              <p class="journey-tool">Декомпозиция</p>
+              <p class="journey-benefit">Большое → понятные шаги</p>
             </div>
-            <div class="journey-step">
-              <div class="step-number">04</div>
-              <div class="step-content">
-                <h3>Системность → Энергия</h3>
-                <p>Учишься управлять состоянием. Работаешь в ресурсе, без перегрузок и выгорания.</p>
-              </div>
+            <div class="journey-card">
+              <div class="journey-icon">📅</div>
+              <div class="journey-num">04</div>
+              <h3>Действуй каждый день</h3>
+              <p class="journey-tool">Планировщик + Привычки</p>
+              <p class="journey-benefit">Прогресс без перегрузки</p>
             </div>
-            <div class="journey-step">
-              <div class="step-number">05</div>
-              <div class="step-content">
-                <h3>Энергия → Рост</h3>
-                <p>Закрепляешь результаты, ставишь новые цели. Каждый день +1% — спокойно и последовательно.</p>
-              </div>
+            <div class="journey-card">
+              <div class="journey-icon">🤖</div>
+              <div class="journey-num">05</div>
+              <h3>Получай обратную связь</h3>
+              <p class="journey-tool">AI Mentor</p>
+              <p class="journey-benefit">Корректировка курса на ходу</p>
+            </div>
+            <div class="journey-card">
+              <div class="journey-icon">📈</div>
+              <div class="journey-num">06</div>
+              <h3>Фиксируй прогресс</h3>
+              <p class="journey-tool">Дневник + XP</p>
+              <p class="journey-benefit">Видишь результат, растёт мотивация</p>
             </div>
           </div>
         </div>
@@ -732,24 +820,295 @@ onUnmounted(() => {
 
 .problem-section .section-title {
   color: white;
+  margin-bottom: 2.5rem;
 }
 
-.problem-content {
-  text-align: center;
-  max-width: 600px;
+.pain-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
-.problem-text {
-  font-size: 1.25rem;
-  color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 1.5rem;
-  line-height: 1.7;
+.pain-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
 }
 
-.solution-text {
+.pain-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.pain-card h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: white;
+}
+
+.pain-text {
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.solution-arrow {
   font-size: 1.5rem;
   color: #a5b4fc;
+  margin: 0.5rem 0;
+}
+
+.pain-card .solution-text {
+  font-size: 0.9375rem;
+  color: #a5b4fc;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .pain-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .pain-card {
+    padding: 1.5rem;
+  }
+  
+  .pain-card h3 {
+    font-size: 1.125rem;
+  }
+  
+  .pain-text,
+  .pain-card .solution-text {
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .pain-card {
+    padding: 1.25rem;
+  }
+  
+  .pain-icon {
+    font-size: 2rem;
+  }
+  
+  .pain-card h3 {
+    font-size: 1rem;
+  }
+  
+  .pain-text,
+  .pain-card .solution-text {
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+}
+
+.ai-mentor-section {
+  padding: 5rem 0;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+}
+
+.mentor-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.mentor-avatar {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.ai-mentor-section .section-title {
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.mentor-tagline {
+  font-size: 1.25rem;
+  opacity: 0.9;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.mentor-benefits {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.mentor-card {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.mentor-icon {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.mentor-card h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: white;
+}
+
+.mentor-card p {
+  font-size: 0.9375rem;
+  opacity: 0.85;
+  line-height: 1.6;
+}
+
+.mentor-chat-demo {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.chat-window {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.chat-avatar {
+  font-size: 1.5rem;
+}
+
+.chat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.chat-status {
+  font-size: 0.75rem;
+  color: #22c55e;
+}
+
+.chat-messages {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.message {
+  max-width: 85%;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.message.mentor {
+  background: #eef2ff;
+  color: #1a1a2e;
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+}
+
+.message.user {
+  background: #6366f1;
+  color: white;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+
+.message p {
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .mentor-benefits {
+    grid-template-columns: 1fr;
+  }
+  
+  .mentor-tagline {
+    font-size: 1rem;
+  }
+  
+  .mentor-chat-demo {
+    max-width: 100%;
+    padding: 0 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .ai-mentor-section {
+    padding: 3rem 0;
+  }
+  
+  .mentor-avatar {
+    font-size: 3rem;
+  }
+  
+  .ai-mentor-section .section-title {
+    font-size: 1.25rem;
+  }
+  
+  .mentor-tagline {
+    font-size: 0.875rem;
+  }
+  
+  .mentor-card {
+    padding: 1rem;
+  }
+  
+  .mentor-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .mentor-card h3 {
+    font-size: 1rem;
+  }
+  
+  .mentor-card p {
+    font-size: 0.8125rem;
+  }
+  
+  .chat-window {
+    border-radius: 12px;
+  }
+  
+  .chat-messages {
+    padding: 0.75rem;
+  }
+  
+  .message {
+    max-width: 90%;
+    padding: 0.625rem 0.75rem;
+    font-size: 0.8125rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
 }
 
 .features {
@@ -798,48 +1157,92 @@ onUnmounted(() => {
   background: white;
 }
 
-.journey-steps {
-  max-width: 700px;
+.journey-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
-.journey-step {
-  display: flex;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-  padding-bottom: 2rem;
-  border-bottom: 1px solid #e5e7eb;
+.journey-card {
+  position: relative;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s;
 }
 
-.journey-step:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
-  padding-bottom: 0;
+.journey-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.1);
+  border-color: #a5b4fc;
 }
 
-.step-number {
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: white;
+.journey-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.journey-num {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  border-radius: 12px;
+  color: #a5b4fc;
 }
 
-.step-content h3 {
+.journey-card h3 {
   font-size: 1.125rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
   color: #1a1a2e;
 }
 
-.step-content p {
+.journey-tool {
+  font-size: 0.8125rem;
+  color: #6366f1;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.journey-benefit {
+  font-size: 0.875rem;
   color: #6b7280;
-  line-height: 1.6;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .journey-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .journey-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .journey-card {
+    padding: 1.25rem;
+  }
+  
+  .journey-icon {
+    font-size: 1.5rem;
+  }
+  
+  .journey-card h3 {
+    font-size: 1rem;
+  }
+  
+  .journey-tool,
+  .journey-benefit {
+    font-size: 0.75rem;
+  }
 }
 
 .audience-section {
@@ -1379,15 +1782,6 @@ onUnmounted(() => {
     flex-direction: column;
     gap: 1.5rem;
     text-align: center;
-  }
-  
-  .journey-step {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .step-number {
-    margin: 0 auto;
   }
 }
 </style>
