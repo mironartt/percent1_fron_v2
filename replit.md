@@ -52,6 +52,13 @@ Created comprehensive design system documentation at `docs/STYLE_GUIDE.md`:
 - Do's and Don'ts with visual examples
 - References to source files for each pattern
 
+Added global utility CSS classes to `src/assets/main.css`:
+- .btn-ghost, .page-container, .page-header, .page-title, .page-subtitle
+- .section-card, .status-chip (success/warning/danger/info/purple)
+- .chip-filter, .count-badge, .tab-container, .tab-btn
+- .empty-state, .stats-panel, .stat-chip, .modal-* components
+- .progress-bar, .toast (success/error/info/warning), .skeleton-* loading
+
 ### Stats Panel API v2 Integration for Modals (December 8, 2024)
 Integrated new Stats Panel API fields for "XP за привычки" and "Серия выполнений" modals:
 - Added `month_xp`, `week_xp_by_day`, `streak_days` fields to `statsPanel` in habits store
