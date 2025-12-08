@@ -161,8 +161,8 @@ Moved theme toggle and logout button:
 - Added "Выйти" button to Settings → Дополнительно section
 - Added `handleLogout()` function and LogOut icon import to Settings.vue
 
-### SSP Reassessment Bottom Sheet Redesign (December 8, 2024)
-Complete redesign of the "Переоценить" Bottom Sheet with two modes:
+### SSP Reassessment Modal Redesign (December 8, 2024)
+Complete redesign of the "Переоценить" flow as a centered modal popup (replaced Bottom Sheet):
 - **Select Mode**: Intro screen with importance text, last assessment date, recommendation tip (monthly)
 - **Manual Mode**: Enhanced cards with sphere icons, hints, score display, and styled sliders with 0/5/10 labels
 - **AI Mode**: Dialogic reassessment with AI mentor, progress bar, chat interface, score suggestions
