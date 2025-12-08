@@ -122,3 +122,46 @@ if (result.data.updated_day) {
   habit.week_schedule[weekDayIndex] = { ...existing, ...result.data.updated_day }
 }
 ```
+
+### Habit CRUD Refresh Fix (December 8, 2024)
+Fixed issue where newly created habits didn't appear in the list:
+
+**Problem:**
+- After creating a habit, it was added to local state without `week_schedule`
+- UI functions (`isHabitCompletedToday`, `getDayStatus`) require `week_schedule` to work correctly
+
+**Solution:**
+- After successful create/update/delete/restore, call `loadHabits(lastFetchParams, force=true)`
+- Added version tokens to prevent race conditions between concurrent loads
+- Only the latest request updates state; stale responses are ignored
+
+**loadHabits() race condition prevention:**
+```javascript
+loadVersion++
+const currentVersion = loadVersion
+
+// After API response:
+if (currentVersion !== loadVersion) {
+  return { success: false, reason: 'stale' }  // Ignore stale response
+}
+// Only update state if version matches
+```
+
+**CRUD operations now reload data:**
+- `createHabit()`: Calls `loadHabits(lastFetchParams, true)` after success
+- `updateHabit()`: Same pattern
+- `deleteHabit()`: Same pattern
+- `restoreHabit()`: Same pattern
+
+### Today Modal Sync Fix (December 8, 2024)
+Fixed issue where "Сегодня" modal didn't show correct completion status:
+
+**Problem:**
+- `isHabitCompletedToday()` was using `appStore.habitLog` (local storage)
+- This wasn't synced with backend data in `habitsStore`
+
+**Solution:**
+- Updated `isHabitCompletedToday()` to check backend data first:
+  1. Check `habit.week_schedule` for today's date with status 'completed'
+  2. Check `habit.completions` for today's date with status 'completed'
+  3. Fallback to `appStore.habitLog` for backward compatibility
