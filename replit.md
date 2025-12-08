@@ -96,15 +96,13 @@ Synchronized icon names between frontend and backend API (32 icons):
 - Updated `iconMap` in HabitTracker.vue to match backend icon list
 - Valid icons: fire, strength, brain, heart, book, run, water, sleep, meditation, target, money, graph, sun, moon, shield, palette, smile, apple, weight, calendar, trophy, star, rocket, leaf, coffee, music, camera, laptop, dumbbell, yoga, bicycle, swimmer
 
-### Achievements Page Style Guide Adaptation (December 8, 2024)
-Adapted Profile.vue (/app/achievements) to comply with Style Guide:
-- Standard Page Header with .page-title "Достижения" and .page-subtitle
-- Stats Panel converted to horizontal format with .stat-chip components
-- All hardcoded colors replaced with CSS variables:
-  - stat-icon-* classes use --status-warning-text, --status-info-text, --status-success-text, --status-purple-text
-  - history-icon.* classes use --status-*-bg and --status-*-text pairs
-  - reward-mini-progress, progress-bar use --status-purple-bg
-  - Gradient fills use --status-purple-text to --status-info-text
-  - next-reward gradient uses --status-purple-bg to --status-info-bg
-- User card uses .section-card styling
-- Dark theme works automatically via CSS variable switching
+### Achievements Page UX Improvements (December 8, 2024)
+Improved Profile.vue (/app/achievements) UX based on user feedback:
+- Removed duplicate "Следующая награда" block (was confusing)
+- Renamed "Пользователь" to "Мой прогресс" with clear explanation
+- Split Stats Panel into logical groups:
+  - "Серии" section with "Непрерывные дни активности" hint (дней привычек, записей дневника)
+  - XP metrics inside "Мой прогресс" card (сегодня, за неделю, всего заработано)
+- Added explanatory text: "Зарабатывайте XP за привычки, задачи и дневник. Обменивайте на награды из списка желаний."
+- Compact reward progress inside progress card
+- All CSS uses Style Guide variables for dark/light theme support
