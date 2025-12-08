@@ -223,6 +223,9 @@
                 </div>
               </div>
               
+              <!-- Шеврон - индикатор кликабельности -->
+              <ChevronRight :size="18" class="step-chevron" />
+              
               <!-- Чекбокс справа для быстрого выполнения -->
               <button 
                 class="step-checkbox-btn"
@@ -840,7 +843,7 @@ import {
   Square, CheckSquare, Search, CheckCircle2, AlertCircle,
   CheckCircle, XCircle, Check, Filter, Settings, Clock, Calendar, Circle,
   FileText, Lightbulb, Shield, BarChart2, Play, Pause, GitBranch,
-  BookOpen, ChevronDown, Send, MessageSquare, Wand2, Loader2, Sparkles
+  BookOpen, ChevronDown, ChevronRight, Send, MessageSquare, Wand2, Loader2, Sparkles
 } from 'lucide-vue-next'
 import { generateStepsWithAI } from '@/services/aiGoalService.js'
 
@@ -3726,6 +3729,19 @@ function formatDate(dateString) {
   height: 6px;
   border-radius: 50%;
   background: currentColor;
+}
+
+/* Шеврон - индикатор кликабельности */
+.step-chevron {
+  color: var(--text-muted, #9ca3af);
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.step-card-clickable:hover .step-chevron {
+  opacity: 1;
+  transform: translateX(2px);
 }
 
 /* Чекбокс справа */
