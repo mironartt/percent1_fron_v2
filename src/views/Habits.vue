@@ -3191,7 +3191,7 @@ async function saveHabit() {
   const backendHabitData = {
     name: habitData.name,
     description: habitData.description || '',
-    icon_name: habitData.icon,
+    icon: habitData.icon,
     xp_reward: habitData.xpReward,
     xp_penalty: habitData.xpPenalty || 0,
     schedule_days: scheduleDays

@@ -1,7 +1,7 @@
 # OnePercent MVP
 
 ## Overview
-The OnePercent MVP is a Vue 3 + Vite application for personal life management and goal tracking, inspired by the "1% improvement" philosophy. Its core purpose is to empower users with tools for self-improvement and consistent growth. Key capabilities include a Balanced Scorecard (SSP) module for life balance assessment, a Goals Bank for structured goal setting with a guided workflow, and an AI Mentor for user engagement. The project aims to establish a market-leading platform for personal development, leveraging a Django REST API backend for data persistence and authentication.
+The OnePercent MVP is a Vue 3 + Vite application for personal life management and goal tracking, inspired by the "1% improvement" philosophy. It provides tools for self-improvement and consistent growth through a Balanced Scorecard (SSP) module for life balance assessment, a Goals Bank for structured goal setting, and an AI Mentor for user engagement. The project aims to be a market-leading platform for personal development, supported by a Django REST API backend.
 
 ## User Preferences
 I prefer simple language and iterative development. Ask before making major changes. I prefer detailed explanations. Do not make changes to the folder `Z`. Do not make changes to the file `Y`.
@@ -9,262 +9,33 @@ I prefer simple language and iterative development. Ask before making major chan
 ## System Architecture
 
 ### UI/UX Decisions
-The application features a guided, multi-step workflow for core modules, an interactive "Wheel of Life," a collapsible sidebar, dark/light theme, and responsive design with a consistent color priority system. Lucide Vue Next provides minimalist line icons. Mobile responsiveness is a primary consideration, with adaptive layouts, hamburger menus for navigation, and a global MentorPanel for a unified experience across devices.
+The application features a guided, multi-step workflow, an interactive "Wheel of Life," a collapsible sidebar, dark/light themes, and responsive design with a consistent color priority system. It utilizes Lucide Vue Next for minimalist icons and prioritizes mobile responsiveness with adaptive layouts and a global MentorPanel.
 
 ### Technical Implementations
-The frontend uses Vue 3 (Composition API, script setup), Vite (with proxy to Django backend), Vue Router (with authentication guards), and Pinia for state management (with localStorage persistence). Authentication is cookie-based with CSRF protection, and a custom Django-style configuration system (`settings.js` + `local_settings.js`) is employed.
+The frontend is built with Vue 3 (Composition API, script setup), Vite (with proxy to Django backend), Vue Router (with authentication guards), and Pinia for state management (with localStorage persistence). Authentication is cookie-based with CSRF protection, and a custom Django-style configuration system (`settings.js` + `local_settings.js`) is used.
 
 ### Feature Specifications
-- **SSP Module**: Tab-based interface for life balance assessment with "Колесо", "Рефлексия", and "История" sections. Includes a Bottom Sheet for reassessment and a GoalEdit modal for goal creation.
-- **Goals Bank Module**: Enhanced goal management with visual cards, templates, inline editing, and a simplified two-status system ("В работе", "Завершена").
-- **Goal Details Page (GoalEdit)**: Mobile-first design with inline step addition, step checklists, a mini-journal, and auto-save functionality.
-- **Planning Module**: Mobile-first, single-page planner with a Week Bar, chip filters, card-based step grid, and inline step completion.
-- **Authentication**: Integrates with Django backend for user login, registration, logout, and Telegram authentication.
-- **Onboarding (AI-Powered)**: A 5-step process with SSP diagnosis, AI analysis, auto-generated goals, and a post-onboarding Goals Review System.
-- **AI Mentor**: Provides contextual help and analysis via a Dashboard Widget and a Floating Button.
-- **First Steps**: A 7-step checklist with auto-completion triggers and AI Mentor encouragement.
-- **Learning Center**: Dedicated page for tutorial content with progress tracking.
-- **Dashboard ("День пользователя")**: Redesigned for daily retention, featuring a context-aware header, "Focus of the Day," habit tracker, and evening reflection.
-- **Journal/Diary Module**: Daily reflection with 4 questions, AI coach responses, streak tracking, and calendar history.
-- **XP/Gamification System**: Extrinsic motivation system with XP for habits, focus tasks, and goals, including a reward wishlist.
-- **Habit Tracker**: Dashboard-integrated widget and a dedicated Habits Page for full management, scheduling, and gamification settings. Includes redesigned analytics (Выполнение, Календарь, Достижения) and habit suggestions.
-- **Bidirectional Calendar ↔ Goals Block Sync**: Synchronizes step dates, completion, priority, and time estimates.
-- **Marketing Landing Page** (`/` route): Conversion-focused landing page with an interactive 1% effect slider, app preview, feature cards, and calls to action.
+-   **SSP Module**: Tab-based interface for life balance assessment with "Колесо", "Рефлексия", and "История" sections, including a Bottom Sheet for reassessment and a GoalEdit modal.
+-   **Goals Bank Module**: Enhanced goal management with visual cards, templates, inline editing, and a two-status system.
+-   **Goal Details Page (GoalEdit)**: Mobile-first design with inline step addition, checklists, a mini-journal, and auto-save.
+-   **Planning Module**: Mobile-first, single-page planner with a Week Bar, chip filters, card-based step grid, and inline step completion.
+-   **Authentication**: Integrates with Django backend for user login, registration, logout, and Telegram authentication.
+-   **Onboarding (AI-Powered)**: A 5-step process including SSP diagnosis, AI analysis, auto-generated goals, and a post-onboarding Goals Review System.
+-   **AI Mentor**: Provides contextual help and analysis via a Dashboard Widget and a Floating Button.
+-   **First Steps**: A 7-step checklist with auto-completion triggers and AI Mentor encouragement.
+-   **Learning Center**: Dedicated page for tutorial content with progress tracking.
+-   **Dashboard ("День пользователя")**: Redesigned for daily retention, featuring a context-aware header, "Focus of the Day," habit tracker, and evening reflection.
+-   **Journal/Diary Module**: Daily reflection with 4 questions, AI coach responses, streak tracking, and calendar history.
+-   **XP/Gamification System**: Extrinsic motivation system with XP for habits, focus tasks, and goals, including a reward wishlist.
+-   **Habit Tracker**: Dashboard-integrated widget and a dedicated Habits Page for full management, scheduling, and gamification settings, including redesigned analytics and habit suggestions.
+-   **Bidirectional Calendar ↔ Goals Block Sync**: Synchronizes step dates, completion, priority, and time estimates.
+-   **Marketing Landing Page** (`/` route): Conversion-focused landing page with an interactive 1% effect slider, app preview, feature cards, and calls to action.
 
 ### System Design Choices
-The application uses a modular structure with dedicated components, services, views, router, and Pinia stores for state management. It prioritizes user guidance, visual feedback, and a clean interface. The AI Mentor is a central value proposition. Backend synchronization includes immediate UI feedback, goal routing with `backendId`, race condition prevention, optimized step synchronization, and API pagination.
+The application uses a modular structure with dedicated components, services, views, router, and Pinia stores. It emphasizes user guidance, visual feedback, and a clean interface. The AI Mentor is a core value proposition. Backend synchronization includes immediate UI feedback, goal routing with `backendId`, race condition prevention, optimized step synchronization, and API pagination.
 
 ## External Dependencies
-- **Django REST API Backend**: Provides user authentication, profile management, SSP data, goals bank, decomposition, planning, onboarding, journal, and habits services.
-- **Lucide Vue Next**: Used for minimalist line icons.
-- **Vite**: Frontend build tool providing fast development and a proxy to the Django backend.
-- **Telegram OAuth**: Integrated for user registration and login.
-
-## Recent Changes (December 2024)
-
-### Habits API Integration
-- API response format: `{ "status": "ok", "data": {...} }` (not wrapped in "response")
-- Error format: `{ "status": "error", "error_data": {...} }`
-
-### Schedule Display Fix (December 8, 2024)
-Fixed issue where days with `is_scheduled: false` were displayed as scheduled:
-- Created `isScheduledFromWeekSchedule(habit, dateStr)` that checks `is_scheduled` from `week_schedule`
-- Updated `getDayStatus()` to prioritize `is_scheduled === false` before status check
-- Backend may return `status: 'future'` for days with `is_scheduled: false` - must check `is_scheduled` first
-
-**Key functions:**
-```javascript
-// Check schedule from week_schedule (priority) or schedule_days (fallback)
-isScheduledFromWeekSchedule(habit, dateStr)
-
-// Get day status - returns: completed, missed, excused, amnestied, today, future, not-scheduled
-getDayStatus(habit, dateStr)
-
-// Get raw week_schedule data
-getDayScheduleData(habit, dateStr)
-```
-
-**week_schedule fields from backend:**
-- `date`, `weekday`, `status`, `is_scheduled`, `note`, `excuse_reason`
-- `xp_earned`, `xp_penalty`, `is_amnestied`
-
-### Completion Status Fix (December 8, 2024)
-Fixed error when saving notes for future dates - backend only accepts 3 statuses:
-- `completed`, `missed`, `excused` - valid statuses for saving
-- `future`, `pending`, `not-scheduled` - display-only statuses, must NOT be sent
-
-**Implementation:**
-- `updateCompletionNote()` now omits `status` field for future dates
-- Only sends: `{ habit_id, date, note }` for future dates
-- Uses local date (not UTC) to determine if date is in future
-
-### Week Navigation API Loading (December 8, 2024)
-Fixed issue where week navigation in calendar didn't fetch data from backend:
-
-**Implementation:**
-- Added `formatLocalDate()` helper for timezone-safe date formatting
-- Updated `weekDays` computed to use local date components instead of `toISOString()`
-- Added `watch(weekOffset)` that calls `habitsStore.loadHabits()` with `date_from`, `date_to`, `include_deleted`
-- Added `pendingWeekLoad` + loading watcher for retry on rapid navigation
-
-**API call on week change:**
-```javascript
-habitsStore.loadHabits({
-  date_from: '2024-12-02',  // Monday of selected week
-  date_to: '2024-12-08',    // Sunday of selected week
-  include_deleted: true
-})
-```
-
-### UI Sync Fixes (December 8, 2024)
-Fixed multiple UI synchronization issues in habits tracker:
-
-**Stats Panel Sync:**
-- Added `loadStatsPanel()` calls after `toggleHabitCompletion`, `setDayAsCompleted`, `setDayAsMissed`, `setDayAsExcused`
-- Counter (0/2) now updates immediately after marking habits
-
-**week_schedule Sync:**
-- `markCompleted`: Updates week_schedule entry to `status: 'completed'` for immediate UI feedback
-- `unmarkCompleted`: Prefers server's `updated_day` if returned, otherwise calculates status (pending/future/missed)
-- `markExcused`: Updates week_schedule entry to `status: 'excused'`
-- All operations use rollback on error to restore previous state
-
-**Note Auto-save:**
-- `saveNoteOnBlur(habit, dateStr)` with status validation
-- Only sends valid statuses (completed/missed/excused) to API
-- Button "Сохранить заметку" with loading indicator
-- `lastSavedNote` tracking prevents duplicate saves
-
-**Key implementation pattern:**
-```javascript
-// After successful API call, update week_schedule from server
-if (result.data.updated_day) {
-  habit.week_schedule[weekDayIndex] = { ...existing, ...result.data.updated_day }
-}
-```
-
-### Habit CRUD Refresh Fix (December 8, 2024)
-Fixed issue where newly created habits didn't appear in the list:
-
-**Problem:**
-- After creating a habit, it was added to local state without `week_schedule`
-- UI functions (`isHabitCompletedToday`, `getDayStatus`) require `week_schedule` to work correctly
-
-**Solution:**
-- After successful create/update/delete/restore, call `loadHabits(lastFetchParams, force=true)`
-- Added version tokens to prevent race conditions between concurrent loads
-- Only the latest request updates state; stale responses are ignored
-
-**loadHabits() race condition prevention:**
-```javascript
-loadVersion++
-const currentVersion = loadVersion
-
-// After API response:
-if (currentVersion !== loadVersion) {
-  return { success: false, reason: 'stale' }  // Ignore stale response
-}
-// Only update state if version matches
-```
-
-**CRUD operations now reload data:**
-- `createHabit()`: Calls `loadHabits(lastFetchParams, true)` after success
-- `updateHabit()`: Same pattern
-- `deleteHabit()`: Same pattern
-- `restoreHabit()`: Same pattern
-
-### Today Modal Sync Fix (December 8, 2024)
-Fixed issue where "Сегодня" modal didn't show correct completion status:
-
-**Problem:**
-- `isHabitCompletedToday()` was using `appStore.habitLog` (local storage)
-- This wasn't synced with backend data in `habitsStore`
-
-**Solution:**
-- Updated `isHabitCompletedToday()` to check backend data first:
-  1. Check `habit.week_schedule` for today's date with status 'completed'
-  2. Check `habit.completions` for today's date with status 'completed'
-  3. Fallback to `appStore.habitLog` for backward compatibility
-
-### Gamification Settings Fix (December 8, 2024)
-Fixed mismatch between frontend and backend field names for penalty settings:
-
-**Problem:**
-- Frontend was sending: `xp_penalty_planning`, `xp_penalty_journal`
-- Backend expects: `planning_penalty_enabled`, `planning_penalty_amount`, `journal_penalty_enabled`, `journal_penalty_amount`
-
-**Solution:**
-- Updated `saveGameSettings()` to use correct field names
-- Updated `loadGameSettings()` to read from correct field names
-- Updated store defaults in `settings` ref and `resetStore()`
-- Use nullish coalescing (`??`) instead of `||` to preserve zero values
-- When penalty is disabled, send `amount: 0` to backend
-
-**Backend field mapping:**
-```javascript
-// saveGameSettings() sends:
-{
-  difficulty_mode: 'balanced',
-  planning_penalty_enabled: true,
-  planning_penalty_amount: 10,  // or 0 if disabled
-  journal_penalty_enabled: true,
-  journal_penalty_amount: 10    // or 0 if disabled
-}
-```
-
-### Amnesty Modal API Integration (December 8, 2024)
-Integrated new backend endpoint for amnesty available days data:
-
-**New endpoint:**
-- POST `/api/rest/front/app/habits/amnesty/available-days/`
-
-**Response structure:**
-```javascript
-{
-  "status": "ok",
-  "data": {
-    "week_start": "2025-12-08",
-    "week_end": "2025-12-14",
-    "amnesty_available": {
-      "total": 1,
-      "used": 0,
-      "remaining": 1
-    },
-    "days": [
-      {
-        "date": "2025-12-08",
-        "weekday": 1,
-        "is_amnestied": false,
-        "can_apply": true,
-        "total_penalty": 25,
-        "missed_habits_count": 2
-      }
-    ]
-  }
-}
-```
-
-**Implementation:**
-- `habitsApi.getAmnestyAvailableDays(weekStart)` - API method
-- `habitsStore.loadAmnestyAvailableDays()` - loads data into store
-- `habitsStore.amnestyData` - reactive state for API response
-- `habitsStore.amnestyDataLoading` - loading state for spinner
-- Computed properties (`missedDaysForAmnesty`, `amnestiedDaysInWeek`, `amnestiesRemaining`, `maxAmnesties`) prioritize API data with fallback to local calculations
-- Modal shows loading spinner while fetching data
-- `applyAmnestyForDay()` and `cancelAmnestyFromModal()` now use store methods and reload data
-
-### Stats Panel Blocks Data Source Fix (December 8, 2024)
-Fixed synchronization issues in the top stats panel blocks (streak, today, XP, amnesty, mode):
-
-**Problem 1: Amnesty block showing stale values**
-- After changing amnesty count in settings (e.g., from 1 to 4), the block continued showing "1/1"
-- `maxAmnesties` computed always returned default value `1` from `habitsStore.amnestyData`
-- Default `amnestyData` structure in store had `amnesty_available: { total: 1, ... }` which was always truthy
-
-**Solution:**
-- Added `amnestyDataWasLoaded` computed to check if data was actually loaded from backend (`week_start !== null`)
-- `maxAmnesties` now checks `amnestyDataWasLoaded` before using store data, otherwise uses `gameSettings.weeklyAmnestyCount`
-- `amnestiesRemaining` now also checks `habitsStore.statsPanel.amnesty_remaining` as middle fallback
-- `saveGameSettings()` now syncs values from `habitsStore.settings` after successful save
-
-**Data source priority:**
-```javascript
-// maxAmnesties:
-1. habitsStore.amnestyData.amnesty_available.total (if loaded from API)
-2. gameSettings.weeklyAmnestyCount (from localStorage/settings API)
-3. Default based on difficulty_mode
-
-// amnestiesRemaining:
-1. habitsStore.amnestyData.amnesty_available.remaining (if loaded from API)
-2. habitsStore.statsPanel.amnesty_remaining (from stats-panel API)
-3. Local calculation based on gameSettings
-```
-
-**Problem 2: Card highlighting on past weeks**
-- When navigating to past weeks, habit cards were still highlighted as "completed today"
-- `isHabitCompletedToday()` and `isScheduledForToday()` always checked real current date
-
-**Solution:**
-- Added `weekOffset !== 0` check at the start of both functions
-- When viewing past weeks (`weekOffset < 0`), functions return `false` / `true` respectively
-- Cards no longer show false "completed today" highlighting on historical weeks
+-   **Django REST API Backend**: Provides user authentication, profile management, SSP data, goals bank, decomposition, planning, onboarding, journal, and habits services.
+-   **Lucide Vue Next**: Used for minimalist line icons.
+-   **Vite**: Frontend build tool providing fast development and a proxy to the Django backend.
+-   **Telegram OAuth**: Integrated for user registration and login.
