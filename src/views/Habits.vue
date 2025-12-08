@@ -62,28 +62,24 @@
     </div>
 
     <div class="week-navigation" v-if="activeTab === 'tracker' && (allHabits.length > 0 || deletedHabits.length > 0)">
-      <button class="week-nav-btn" @click="goToPreviousWeek" title="Предыдущая неделя">
-        <ChevronLeft :size="20" :stroke-width="2" />
+      <button class="nav-btn" @click="goToPreviousWeek" aria-label="Предыдущая неделя">
+        <ChevronLeft :size="20" />
       </button>
-      <div class="week-label" :class="{ past: isPastWeek }">
-        <span class="week-text">{{ currentWeekLabel }}</span>
-        <button 
-          v-if="isPastWeek" 
-          class="btn-return-current" 
-          @click="goToCurrentWeek"
-          title="Вернуться к текущей неделе"
-        >
-          <RotateCcw :size="14" :stroke-width="2" />
-          Сейчас
-        </button>
-      </div>
+      <span class="week-range">{{ currentWeekLabel }}</span>
       <button 
-        class="week-nav-btn" 
+        class="nav-btn" 
         @click="goToNextWeek" 
         :disabled="isCurrentWeek"
-        title="Следующая неделя"
+        aria-label="Следующая неделя"
       >
-        <ChevronRight :size="20" :stroke-width="2" />
+        <ChevronRight :size="20" />
+      </button>
+      <button 
+        v-if="isPastWeek" 
+        class="today-btn"
+        @click="goToCurrentWeek"
+      >
+        Сегодня
       </button>
     </div>
 
@@ -4601,71 +4597,54 @@ onMounted(async () => {
 .week-navigation {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 0.5rem;
   margin-bottom: 0.75rem;
-  padding: 0.5rem;
-  background: var(--bg-secondary);
-  border-radius: 10px;
-  border: 1px solid var(--border-color);
 }
 
-.week-nav-btn {
+.week-navigation .nav-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: var(--card-bg);
-  border-radius: 8px;
-  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
 }
 
-.week-nav-btn:hover:not(:disabled) {
-  background: var(--primary-color);
-  color: white;
+.week-navigation .nav-btn:hover:not(:disabled) {
+  background: var(--hover-bg, #f3f4f6);
 }
 
-.week-nav-btn:disabled {
+.week-navigation .nav-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
 
-.week-label {
+.week-range {
   flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
+  text-align: center;
   font-weight: 500;
   color: var(--text-primary);
 }
 
-.week-label.past .week-text {
-  color: var(--text-muted);
-}
-
-.btn-return-current {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.6rem;
-  background: var(--primary-color);
-  border: none;
-  border-radius: 6px;
-  color: white;
-  font-size: 0.75rem;
-  font-weight: 500;
+.today-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  border: 1px solid var(--primary-color);
+  background: transparent;
+  color: var(--primary-color);
+  font-size: 0.875rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
 }
 
-.btn-return-current:hover {
-  background: var(--primary-hover, #6d28d9);
-  transform: translateY(-1px);
+.today-btn:hover {
+  background: var(--primary-color);
+  color: white;
 }
 
 .past-week-notice {
