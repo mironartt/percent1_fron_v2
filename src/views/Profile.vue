@@ -226,8 +226,11 @@ function formatTime(timestamp) {
 
 .page-subtitle {
   color: var(--text-secondary);
-  margin: 0;
+  margin: 0 auto;
   font-size: 0.9rem;
+  text-align: center;
+  display: block;
+  width: 100%;
 }
 
 .stats-section {
