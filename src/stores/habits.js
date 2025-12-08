@@ -543,13 +543,24 @@ export const useHabitsStore = defineStore('habits', () => {
     }
     
     try {
-      const completionStatus = status || (existingIndex >= 0 ? habit.completions[existingIndex].status : 'completed')
-      const result = await habitsApi.updateCompletions([{
+      const now = new Date()
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+      const isFutureDate = date > today
+      
+      const completionData = {
         habit_id: habitId,
         date,
-        status: completionStatus,
         note
-      }])
+      }
+      
+      if (!isFutureDate && status) {
+        const validStatuses = ['completed', 'missed', 'excused']
+        if (validStatuses.includes(status)) {
+          completionData.status = status
+        }
+      }
+      
+      const result = await habitsApi.updateCompletions([completionData])
       
       if (result.success) {
         if (DEBUG_MODE) {

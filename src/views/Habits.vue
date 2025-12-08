@@ -2737,8 +2737,9 @@ async function saveNoteAndClose() {
   const dateStr = selectedDayForEdit.value.date
   const currentStatus = getDayStatus(habit, dateStr)
   
-  if (dayEditNote.value && currentStatus) {
-    const result = await habitsStore.updateCompletionNote(habitId, dateStr, dayEditNote.value, currentStatus)
+  if (dayEditNote.value) {
+    const statusToSend = isFutureDay.value ? null : currentStatus
+    const result = await habitsStore.updateCompletionNote(habitId, dateStr, dayEditNote.value, statusToSend)
     
     if (result.success) {
       toast.showToast({ type: 'success', title: 'Заметка сохранена' })
