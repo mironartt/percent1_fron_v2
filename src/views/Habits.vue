@@ -5328,7 +5328,7 @@ onMounted(async () => {
 }
 
 .clickable-schedule:hover .schedule-day:not(.not-scheduled) {
-  transform: translateY(-1px);
+  filter: brightness(1.1);
 }
 
 .schedule-day {
