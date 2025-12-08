@@ -456,7 +456,7 @@
             <div class="ai-confirm-icon">
               <Sparkles :size="24" />
             </div>
-            <h3>Генерация шагов с помощью ИИ</h3>
+            <h3>Декомпозиция цели от ментора</h3>
             <button class="modal-close" @click="closeAIConfirmModal">
               <X :size="20" />
             </button>
