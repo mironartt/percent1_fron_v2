@@ -314,13 +314,13 @@ const menuItems = [
   position: fixed;
   left: 0;
   top: 0;
+  z-index: 9999;
   width: 280px;
   height: 100vh;
   background: var(--bg-primary);
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  z-index: 100;
   transition: width 0.3s ease;
 }
 
@@ -853,7 +853,7 @@ const menuItems = [
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 99;
+  z-index: 9998;
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
