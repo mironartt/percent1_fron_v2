@@ -1771,13 +1771,17 @@ const scheduledToday = computed(() => {
 })
 
 const todayCompleted = computed(() => {
-  const todayStr = new Date().toISOString().split('T')[0]
+  const today = new Date()
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
   
   if (habitsStore.habits.length > 0) {
     return habitsStore.habits.filter(habit => {
       if (habit.date_deleted) return false
       const todaySchedule = habit.week_schedule?.find(s => s.date === todayStr)
-      return todaySchedule?.status === 'completed'
+      if (todaySchedule && todaySchedule.is_scheduled !== false) {
+        return todaySchedule.status === 'completed'
+      }
+      return false
     }).length
   }
   
@@ -1883,7 +1887,23 @@ const xpByDay = computed(() => {
 })
 
 function isHabitCompletedToday(habit) {
-  const todayStr = new Date().toISOString().split('T')[0]
+  const today = new Date()
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  
+  if (habit.week_schedule) {
+    const todaySchedule = habit.week_schedule.find(s => s.date === todayStr)
+    if (todaySchedule) {
+      return todaySchedule.status === 'completed'
+    }
+  }
+  
+  if (habit.completions) {
+    const todayCompletion = habit.completions.find(c => c.date === todayStr)
+    if (todayCompletion) {
+      return todayCompletion.status === 'completed'
+    }
+  }
+  
   const completedIds = appStore.habitLog[todayStr] || []
   return completedIds.includes(habit.id)
 }
