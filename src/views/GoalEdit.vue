@@ -791,20 +791,28 @@
             </div>
 
             <div class="step-params-row">
-              <div class="param-chip" @click="showTimeSelector = !showTimeSelector">
-                <Clock :size="14" />
+              <div 
+                class="param-chip" 
+                :class="{ 'has-value': editStepForm.timeEstimate }"
+                @click="showTimeSelector = !showTimeSelector"
+              >
+                <Clock :size="18" />
                 <span>{{ editStepForm.timeEstimate ? editStepForm.timeEstimate + 'ч' : 'Время' }}</span>
               </div>
-              <div class="param-chip" @click="showDatePicker = !showDatePicker">
-                <Calendar :size="14" />
+              <div 
+                class="param-chip" 
+                :class="{ 'has-value': editStepForm.scheduledDate }"
+                @click="showDatePicker = !showDatePicker"
+              >
+                <Calendar :size="18" />
                 <span>{{ formatParamDate(editStepForm.scheduledDate) || 'Дата' }}</span>
               </div>
               <div 
                 class="param-chip priority-chip"
-                :class="editStepForm.priority || 'none'"
+                :class="[editStepForm.priority || 'none', { 'has-value': editStepForm.priority }]"
                 @click="cyclePriority"
               >
-                <Circle :size="14" />
+                <Circle :size="18" />
                 <span>{{ getPriorityLabel(editStepForm.priority) || 'Приоритет' }}</span>
               </div>
             </div>
@@ -830,26 +838,51 @@
             </div>
           </div>
           
-          <div class="bottom-sheet-footer step-footer-simple">
-            <button 
-              class="icon-btn"
-              :class="{ active: editStepForm.completed }"
-              @click="toggleEditStepComplete"
-              title="Выполнить"
-            >
-              <CheckCircle :size="22" />
+          <div class="bottom-sheet-footer step-footer-redesigned">
+            <div class="footer-actions-left">
+              <button 
+                class="action-btn action-complete"
+                :class="{ active: editStepForm.completed }"
+                @click="toggleEditStepComplete"
+              >
+                <CheckCircle :size="20" />
+                <span>{{ editStepForm.completed ? 'Выполнен' : 'Выполнить' }}</span>
+              </button>
+            </div>
+            <div class="footer-actions-right">
+              <button 
+                class="action-btn action-delete"
+                @click="confirmDeleteStep"
+              >
+                <Trash2 :size="18" />
+                <span>Удалить</span>
+              </button>
+              <button class="btn btn-primary btn-save" @click="saveEditStepModal">
+                <Check :size="18" />
+                <span>Сохранить</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Модальное окно подтверждения удаления шага -->
+    <transition name="modal-fade">
+      <div v-if="showDeleteStepConfirm" class="modal-overlay delete-confirm-overlay" @click.self="cancelDeleteStep">
+        <div class="delete-confirm-modal">
+          <div class="delete-confirm-icon">
+            <Trash2 :size="28" />
+          </div>
+          <h3>Удалить шаг?</h3>
+          <p>Шаг "{{ editStepForm.title || 'Без названия' }}" будет удалён. Это действие нельзя отменить.</p>
+          <div class="delete-confirm-actions">
+            <button class="btn btn-secondary" @click="cancelDeleteStep">
+              Отмена
             </button>
-            <button 
-              class="icon-btn danger"
-              @click="deleteStepFromModal"
-              title="Удалить"
-            >
-              <Trash2 :size="22" />
-            </button>
-            <div class="footer-spacer"></div>
-            <button class="btn btn-primary" @click="saveEditStepModal">
-              <Check :size="16" />
-              Сохранить
+            <button class="btn btn-danger" @click="executeDeleteStep">
+              <Trash2 :size="16" />
+              Удалить
             </button>
           </div>
         </div>
@@ -1412,6 +1445,22 @@ async function deleteStepFromModal() {
   if (index >= 0 && index < goalForm.value.steps.length) {
     await removeStep(index)
   }
+}
+
+// Подтверждение удаления шага
+const showDeleteStepConfirm = ref(false)
+
+function confirmDeleteStep() {
+  showDeleteStepConfirm.value = true
+}
+
+function cancelDeleteStep() {
+  showDeleteStepConfirm.value = false
+}
+
+async function executeDeleteStep() {
+  showDeleteStepConfirm.value = false
+  await deleteStepFromModal()
 }
 
 // Фильтры
@@ -4485,20 +4534,21 @@ function formatDate(dateString) {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.25rem 0;
+  padding: 0.5rem 0;
+  min-height: 48px;
 }
 
 .checklist-checkbox {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
   border: none;
   background: transparent;
   color: var(--text-secondary, #9ca3af);
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 8px;
   transition: all 0.15s;
   flex-shrink: 0;
 }
@@ -4536,16 +4586,22 @@ function formatDate(dateString) {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 44px;
+  height: 44px;
   border: none;
   background: transparent;
   color: var(--text-secondary, #9ca3af);
   cursor: pointer;
-  border-radius: 4px;
-  opacity: 0;
+  border-radius: 8px;
+  opacity: 0.5;
   transition: all 0.15s;
   flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .checklist-remove {
+    opacity: 1;
+  }
 }
 
 .checklist-item:hover .checklist-remove {
@@ -4585,14 +4641,23 @@ function formatDate(dateString) {
 .param-chip {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.4rem 0.75rem;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  min-height: 44px;
   background: var(--bg-secondary, #f3f4f6);
-  border-radius: 20px;
-  font-size: 0.8rem;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-md, 8px);
+  font-size: 0.875rem;
+  font-weight: 500;
   color: var(--text-secondary, #6b7280);
   cursor: pointer;
   transition: all 0.2s;
+}
+
+.param-chip.has-value {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: var(--primary-color, #6366f1);
+  color: var(--primary-color, #6366f1);
 }
 
 .param-chip:hover {
@@ -4625,6 +4690,168 @@ function formatDate(dateString) {
   max-width: 120px;
 }
 
+/* Redesigned Step Footer */
+.step-footer-redesigned {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-primary, #fff);
+  position: sticky;
+  bottom: 0;
+}
+
+.footer-actions-left,
+.footer-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  min-height: 44px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-secondary, #f3f4f6);
+  border-radius: var(--radius-md, 8px);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.action-btn:hover {
+  background: var(--bg-hover, #e5e7eb);
+}
+
+.action-btn.action-complete.active {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: #22c55e;
+  color: #16a34a;
+}
+
+.action-btn.action-delete {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.action-btn.action-delete:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: #ef4444;
+}
+
+.btn-save {
+  min-height: 44px;
+  padding: 0.625rem 1.25rem;
+}
+
+/* Delete Confirm Modal */
+.delete-confirm-overlay {
+  z-index: 1100;
+}
+
+.delete-confirm-modal {
+  background: var(--bg-primary, #fff);
+  border-radius: var(--radius-lg, 12px);
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 340px;
+  text-align: center;
+  box-shadow: var(--shadow-xl);
+}
+
+.delete-confirm-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ef4444;
+}
+
+.delete-confirm-modal h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: var(--text-primary, #111827);
+}
+
+.delete-confirm-modal p {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6b7280);
+  margin: 0 0 1.25rem;
+  line-height: 1.5;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.delete-confirm-actions .btn {
+  flex: 1;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+@media (max-width: 768px) {
+  .step-footer-redesigned {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+  
+  .footer-actions-left {
+    order: 2;
+    width: 100%;
+  }
+  
+  .footer-actions-right {
+    order: 1;
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .action-btn.action-complete {
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .action-btn.action-delete span,
+  .action-btn.action-complete span {
+    display: inline;
+  }
+  
+  .btn-save {
+    flex: 1;
+  }
+}
+
+/* Legacy styles kept for compatibility */
 .step-footer-simple {
   display: flex;
   align-items: center;
@@ -4643,8 +4870,8 @@ function formatDate(dateString) {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border: none;
   background: var(--bg-secondary, #f3f4f6);
   border-radius: 50%;
