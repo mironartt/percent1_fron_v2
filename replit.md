@@ -77,3 +77,21 @@ Fixed error when saving notes for future dates - backend only accepts 3 statuses
 - `updateCompletionNote()` now omits `status` field for future dates
 - Only sends: `{ habit_id, date, note }` for future dates
 - Uses local date (not UTC) to determine if date is in future
+
+### Week Navigation API Loading (December 8, 2024)
+Fixed issue where week navigation in calendar didn't fetch data from backend:
+
+**Implementation:**
+- Added `formatLocalDate()` helper for timezone-safe date formatting
+- Updated `weekDays` computed to use local date components instead of `toISOString()`
+- Added `watch(weekOffset)` that calls `habitsStore.loadHabits()` with `date_from`, `date_to`, `include_deleted`
+- Added `pendingWeekLoad` + loading watcher for retry on rapid navigation
+
+**API call on week change:**
+```javascript
+habitsStore.loadHabits({
+  date_from: '2024-12-02',  // Monday of selected week
+  date_to: '2024-12-08',    // Sunday of selected week
+  include_deleted: true
+})
+```
