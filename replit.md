@@ -125,3 +125,20 @@ Integrated HabitTracker component on Dashboard with backend data:
 - `habitStreak` uses `statsPanel.streak` from backend if available
 - `handleToggle()` calls `habitsStore.markCompleted/unmarkCompleted` for backend habits
 - XP awarded only on API success (`result?.success` check)
+
+### Goals Bank Filter Bar Redesign (December 8, 2024)
+Replaced horizontal sphere chips with unified filter bar:
+- Unified filter-bar with dropdown (left) + status tabs (right)
+- Sphere dropdown with Filter icon, shows "Все сферы" or selected sphere name
+- ChevronDown icon rotates on open/close
+- Status tabs: "Все", "В работе", "Завершены"
+- Dropdown menu with sphere icons and smooth fade transition
+
+### Goals Bank Pagination Redesign (December 8, 2024)
+Replaced infinite scroll with page-based pagination:
+- 10 goals per page (GOALS_PER_PAGE constant)
+- Navigation with ChevronLeft/ChevronRight arrows
+- Visible page numbers with ellipsis for long lists
+- Active page highlighted with primary color
+- Smooth scroll to top on page change
+- Reset to page 1 when filters change
