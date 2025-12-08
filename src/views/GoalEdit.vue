@@ -78,21 +78,29 @@
         <div class="card card-no-header">
           <!-- Combined Search + Filter Bar -->
           <div class="search-filter-bar">
-            <div class="search-input-wrapper">
-              <Search :size="16" class="search-icon" />
-              <input 
-                v-model="searchQuery"
-                type="text"
-                class="search-input"
-                placeholder="Поиск..."
-              />
+            <div class="search-expandable" :class="{ expanded: showSearchInput }">
               <button 
-                v-if="searchQuery" 
-                class="search-clear"
-                @click="searchQuery = ''"
+                v-if="!showSearchInput" 
+                class="search-icon-btn"
+                @click="toggleSearch"
+                title="Поиск"
               >
-                <X :size="14" />
+                <Search :size="18" />
               </button>
+              <div v-else class="search-input-wrapper">
+                <Search :size="16" class="search-icon" />
+                <input 
+                  ref="searchInputRef"
+                  v-model="searchQuery"
+                  type="text"
+                  class="search-input"
+                  placeholder="Поиск..."
+                  @blur="onSearchBlur"
+                />
+                <button class="search-close-btn" @click="closeSearch">
+                  <X :size="14" />
+                </button>
+              </div>
             </div>
             
             <div class="filter-chips-scroll">
@@ -120,6 +128,18 @@
                 </button>
               </div>
             </div>
+
+            <button 
+              class="btn-ai-steps-inline"
+              :class="{ generating: isGeneratingSteps }"
+              :disabled="isGeneratingSteps"
+              @click="generateStepsAI"
+              title="ИИ сгенерирует 3-7 шагов для достижения цели"
+            >
+              <Loader2 v-if="isGeneratingSteps" :size="16" class="spin" />
+              <Sparkles v-else :size="16" />
+              <span class="btn-ai-label">{{ isGeneratingSteps ? 'Генерация...' : 'Помощь от ментора' }}</span>
+            </button>
           </div>
 
           <!-- Подсказка о drag/drop -->
@@ -1361,6 +1381,26 @@ async function deleteStepFromModal() {
 const searchQuery = ref('')
 const filterStatus = ref('')
 const sortBy = ref('order')
+const showSearchInput = ref(false)
+const searchInputRef = ref(null)
+
+function toggleSearch() {
+  showSearchInput.value = true
+  nextTick(() => {
+    searchInputRef.value?.focus()
+  })
+}
+
+function closeSearch() {
+  searchQuery.value = ''
+  showSearchInput.value = false
+}
+
+function onSearchBlur() {
+  if (!searchQuery.value) {
+    showSearchInput.value = false
+  }
+}
 const sortDirection = ref('asc')
 const showFilterDropdown = ref(false)
 
@@ -2811,6 +2851,123 @@ function formatDate(dateString) {
   gap: 0.5rem;
   padding: 2px 4px;
   white-space: nowrap;
+}
+
+/* Expandable Search */
+.search-expandable {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.search-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.search-icon-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--primary-color);
+}
+
+.search-expandable.expanded .search-input-wrapper {
+  width: 160px;
+  animation: expandSearch 0.2s ease-out;
+}
+
+@keyframes expandSearch {
+  from {
+    width: 36px;
+    opacity: 0;
+  }
+  to {
+    width: 160px;
+    opacity: 1;
+  }
+}
+
+.search-close-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.search-close-btn:hover {
+  background: var(--danger-color);
+  color: #fff;
+}
+
+/* AI Steps Inline Button */
+.btn-ai-steps-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-ai-steps-inline:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.btn-ai-steps-inline:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-ai-steps-inline.generating {
+  background: linear-gradient(135deg, #9ca3af, #6b7280);
+}
+
+@media (max-width: 768px) {
+  .search-icon-btn {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .search-expandable.expanded .search-input-wrapper {
+    width: 120px;
+  }
+  
+  .btn-ai-steps-inline {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .btn-ai-steps-inline .btn-ai-label {
+    display: none;
+  }
 }
 
 /* Toast уведомления */
