@@ -2845,28 +2845,28 @@ onUnmounted(() => {
 }
 
 .status-chip.in-work {
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: var(--status-success-bg);
+  color: var(--status-success-text);
 }
 
 .status-chip.completed {
-  background: #e3f2fd;
-  color: #1565c0;
+  background: var(--status-info-bg);
+  color: var(--status-info-text);
 }
 
 .status-chip.raw {
-  background: #fff3e0;
-  color: #e65100;
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
 }
 
 .status-chip.rejected {
-  background: #ffebee;
-  color: #c62828;
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
 }
 
 .status-chip.available {
-  background: #f3e8ff;
-  color: #7c3aed;
+  background: var(--status-purple-bg);
+  color: var(--status-purple-text);
 }
 
 .steps-progress {
@@ -3137,11 +3137,11 @@ onUnmounted(() => {
 }
 
 .bottom-sheet-action.action-success {
-  color: #2e7d32;
+  color: var(--success-color);
 }
 
 .bottom-sheet-action.action-danger {
-  color: #c62828;
+  color: var(--danger-color);
 }
 
 .bottom-sheet-action.action-cancel {
@@ -3375,8 +3375,8 @@ onUnmounted(() => {
 }
 
 .btn-ghost:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  background: var(--status-danger-bg);
+  color: var(--danger-color);
 }
 
 .weak-sphere-indicator {
@@ -3547,12 +3547,12 @@ onUnmounted(() => {
 }
 
 .status-badge.in-work.clickable:hover {
-  background: #4f46e5;
+  background: var(--primary-dark);
   box-shadow: 0 2px 6px rgba(99, 102, 241, 0.4);
 }
 
 .status-badge.completed {
-  background: #10b981;
+  background: var(--success-color);
   color: white;
   box-shadow: 0 1px 4px rgba(16, 185, 129, 0.25);
   white-space: nowrap;
@@ -3576,7 +3576,7 @@ onUnmounted(() => {
 }
 
 .status-badge.validated {
-  background: #22c55e;
+  background: var(--success-color);
   color: white;
   padding: 0.375rem 0.75rem;
   border-radius: var(--radius-md);
@@ -3584,7 +3584,7 @@ onUnmounted(() => {
 }
 
 .status-badge.rejected {
-  background: #ef4444;
+  background: var(--danger-color);
   color: white;
   padding: 0.375rem 0.75rem;
   border-radius: var(--radius-md);
@@ -3592,7 +3592,7 @@ onUnmounted(() => {
 }
 
 .status-badge.raw {
-  background: #f59e0b;
+  background: var(--warning-color);
   color: white;
   padding: 0.375rem 0.75rem;
   border-radius: var(--radius-md);

@@ -1956,4 +1956,87 @@ onMounted(async () => {
     display: none;
   }
 }
+
+/* Dark theme overrides */
+:root.dark .stat-card {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+:root.dark .sphere-item {
+  background: var(--bg-tertiary);
+}
+
+:root.dark .sphere-name {
+  color: var(--text-primary);
+}
+
+:root.dark .score-positive {
+  color: var(--success-color);
+  background: var(--status-success-bg);
+}
+
+:root.dark .score-negative {
+  color: var(--danger-color);
+  background: var(--status-danger-bg);
+}
+
+:root.dark .reassess-modal {
+  background: var(--bg-primary);
+}
+
+:root.dark .sphere-card {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+}
+
+:root.dark .ai-message {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+:root.dark .ssp-container {
+  background: var(--bg-secondary);
+}
+
+:root.dark .tab-container {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+}
+
+:root.dark .tab-btn {
+  color: var(--text-secondary);
+}
+
+:root.dark .tab-btn:hover {
+  background: var(--bg-hover);
+}
+
+:root.dark .tab-btn.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+:root.dark .history-item {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+:root.dark .history-item:hover {
+  background: var(--bg-tertiary);
+}
+
+:root.dark .reflection-card {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+:root.dark .slider-container {
+  background: var(--bg-tertiary);
+}
+
+:root.dark .sphere-hint {
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+}
 </style>

@@ -14,11 +14,22 @@
   --bg-primary: #ffffff;
   --bg-secondary: #f9fafb;
   --bg-tertiary: #f3f4f6;
+  --bg-hover: #e5e7eb;
   --card-bg: #ffffff;
   --text-primary: #111827;
   --text-secondary: #6b7280;
   --text-tertiary: #9ca3af;
   --border-color: #e5e7eb;
+  --status-success-bg: #e8f5e9;
+  --status-success-text: #2e7d32;
+  --status-info-bg: #e3f2fd;
+  --status-info-text: #1565c0;
+  --status-warning-bg: #fff3e0;
+  --status-warning-text: #e65100;
+  --status-danger-bg: #ffebee;
+  --status-danger-text: #c62828;
+  --status-purple-bg: #f3e8ff;
+  --status-purple-text: #7c3aed;
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
@@ -47,11 +58,22 @@
   --bg-primary: #1f2937;
   --bg-secondary: #111827;
   --bg-tertiary: #374151;
+  --bg-hover: #4b5563;
   --card-bg: #1f2937;
   --text-primary: #f9fafb;
   --text-secondary: #d1d5db;
   --text-tertiary: #9ca3af;
   --border-color: #374151;
+  --status-success-bg: rgba(52, 211, 153, 0.15);
+  --status-success-text: #34d399;
+  --status-info-bg: rgba(96, 165, 250, 0.15);
+  --status-info-text: #60a5fa;
+  --status-warning-bg: rgba(251, 191, 36, 0.15);
+  --status-warning-text: #fbbf24;
+  --status-danger-bg: rgba(248, 113, 113, 0.15);
+  --status-danger-text: #f87171;
+  --status-purple-bg: rgba(167, 139, 250, 0.15);
+  --status-purple-text: #a78bfa;
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
@@ -318,4 +340,117 @@ p {
   :root {
     --container-padding: var(--container-padding-mobile);
   }
+}
+
+/* Dark theme color overrides for common patterns */
+:root.dark .icon-green,
+:root.dark .text-green,
+:root.dark .status-success { color: var(--success-color) !important; }
+
+:root.dark .icon-red,
+:root.dark .text-red,
+:root.dark .status-danger { color: var(--danger-color) !important; }
+
+:root.dark .icon-amber,
+:root.dark .text-amber,
+:root.dark .text-warning,
+:root.dark .status-warning { color: var(--warning-color) !important; }
+
+:root.dark .icon-blue,
+:root.dark .text-blue { color: #60a5fa !important; }
+
+:root.dark .icon-purple,
+:root.dark .text-purple { color: var(--secondary-color) !important; }
+
+:root.dark .icon-indigo { color: var(--primary-color) !important; }
+
+:root.dark .icon-teal { color: #2dd4bf !important; }
+
+:root.dark .bg-success { background: var(--success-color) !important; }
+:root.dark .bg-danger { background: var(--danger-color) !important; }
+:root.dark .bg-warning { background: var(--warning-color) !important; }
+
+/* Semantic status colors for dark theme */
+:root.dark [class*="completed"],
+:root.dark [class*="success"] {
+  --local-success: var(--success-color);
+}
+
+:root.dark [class*="rejected"],
+:root.dark [class*="danger"],
+:root.dark [class*="error"] {
+  --local-danger: var(--danger-color);
+}
+
+/* Common hardcoded color overrides */
+:root.dark .stat-icon.soft { background: rgba(52, 211, 153, 0.15) !important; color: var(--success-color) !important; }
+:root.dark .stat-icon.balanced { background: rgba(251, 191, 36, 0.15) !important; color: var(--warning-color) !important; }
+:root.dark .stat-icon.hardcore { background: rgba(248, 113, 113, 0.15) !important; color: var(--danger-color) !important; }
+:root.dark .stat-icon.custom { background: rgba(167, 139, 250, 0.15) !important; color: var(--secondary-color) !important; }
+
+/* Pink/Magenta color adjustments for dark theme */
+:root.dark .text-pink,
+:root.dark [style*="color: #ec4899"] { color: #f472b6 !important; }
+
+/* Form inputs in dark theme */
+:root.dark input,
+:root.dark textarea,
+:root.dark select {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+:root.dark input::placeholder,
+:root.dark textarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+:root.dark input:focus,
+:root.dark textarea:focus,
+:root.dark select:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
+}
+
+:root.dark input:hover:not(:focus),
+:root.dark textarea:hover:not(:focus),
+:root.dark select:hover:not(:focus) {
+  border-color: var(--text-tertiary);
+}
+
+/* Button hover states for dark theme */
+:root.dark .btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+:root.dark .btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+:root.dark .btn-secondary:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+/* Dropdown menus dark theme */
+:root.dark .dropdown-menu,
+:root.dark [class*="dropdown-menu"] {
+  background: var(--bg-primary);
+  border-color: var(--border-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Cards and panels dark theme enhancement */
+:root.dark .card,
+:root.dark [class*="-card"] {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+/* Modal backdrop darker in dark theme */
+:root.dark .modal-overlay,
+:root.dark [class*="overlay"] {
+  background: rgba(0, 0, 0, 0.7);
 }

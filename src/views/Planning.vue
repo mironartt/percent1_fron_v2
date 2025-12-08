@@ -3123,4 +3123,51 @@ onUnmounted(() => {
     margin-bottom: 2rem;
   }
 }
+
+/* Dark theme overrides */
+:root.dark .step-card {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+:root.dark .step-title {
+  color: var(--text-primary);
+}
+
+:root.dark .step-meta {
+  color: var(--text-secondary);
+}
+
+:root.dark .day-tab {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+:root.dark .day-tab.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+:root.dark .day-tab:hover:not(.active) {
+  background: var(--bg-hover);
+}
+
+:root.dark .priority-badge.priority-none {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+:root.dark .bottom-sheet {
+  background: var(--bg-primary);
+}
+
+:root.dark .chip-filter {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+:root.dark .chip-filter.active {
+  background: var(--primary-color);
+  color: white;
+}
 </style>

@@ -1080,4 +1080,26 @@ function pluralize(n, one, few, many) {
   background: var(--bg-tertiary);
   color: var(--text-primary);
 }
+
+/* Dark theme overrides */
+:root.dark .habit-streak {
+  color: var(--warning-color);
+}
+
+:root.dark .habit-info {
+  color: #60a5fa;
+}
+
+:root.dark .habit-complete {
+  color: var(--secondary-color);
+}
+
+:root.dark .section-card {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+:root.dark .stat-value {
+  color: var(--text-primary);
+}
 </style>

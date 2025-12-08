@@ -885,4 +885,35 @@ onUnmounted(() => {
     height: 52px;
   }
 }
+
+/* Dark theme overrides */
+:root.dark .mentor-panel {
+  background: var(--bg-primary);
+  border-color: var(--border-color);
+}
+
+:root.dark .mentor-header {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+}
+
+:root.dark .chat-message.user {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+:root.dark .chat-message.assistant {
+  background: rgba(129, 140, 248, 0.15);
+  color: var(--text-primary);
+}
+
+:root.dark .mentor-input {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+:root.dark .mentor-input::placeholder {
+  color: var(--text-tertiary);
+}
 </style>

@@ -970,4 +970,33 @@ const menuItems = [
     display: none;
   }
 }
+
+/* Dark theme overrides */
+:root.dark .sidebar {
+  background: var(--bg-primary);
+  border-color: var(--border-color);
+}
+
+:root.dark .nav-item {
+  color: var(--text-secondary);
+}
+
+:root.dark .nav-item:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+:root.dark .nav-item.active {
+  background: rgba(129, 140, 248, 0.15);
+  color: var(--primary-color);
+}
+
+:root.dark .sidebar-footer {
+  border-color: var(--border-color);
+}
+
+:root.dark .coming-soon-badge {
+  background: var(--bg-tertiary);
+  color: var(--text-tertiary);
+}
 </style>

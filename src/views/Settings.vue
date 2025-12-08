@@ -658,4 +658,36 @@ function goToTelegramSettings() {
     justify-self: center;
   }
 }
+
+/* Dark theme overrides */
+:root.dark .settings-card {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+:root.dark .setting-label {
+  color: var(--text-primary);
+}
+
+:root.dark .setting-description {
+  color: var(--text-secondary);
+}
+
+:root.dark .price-card {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+}
+
+:root.dark .price-card.active {
+  border-color: var(--primary-color);
+}
+
+:root.dark .btn-logout {
+  background: var(--status-danger-bg);
+  color: var(--danger-color);
+}
+
+:root.dark .btn-logout:hover {
+  background: rgba(248, 113, 113, 0.25);
+}
 </style>

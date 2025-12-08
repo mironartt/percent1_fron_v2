@@ -8536,4 +8536,116 @@ onMounted(async () => {
     font-size: 0.9rem;
   }
 }
+
+/* Dark theme overrides */
+:root.dark .stat-item.streak .stat-icon {
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--warning-color);
+}
+
+:root.dark .stat-item.today .stat-icon {
+  background: rgba(52, 211, 153, 0.15);
+  color: var(--success-color);
+}
+
+:root.dark .stat-item.xp .stat-icon {
+  background: rgba(167, 139, 250, 0.15);
+  color: var(--secondary-color);
+}
+
+:root.dark .stat-item.mode .stat-icon {
+  background: rgba(96, 165, 250, 0.15);
+  color: #60a5fa;
+}
+
+:root.dark .stat-item.amnesty .stat-icon {
+  background: rgba(244, 114, 182, 0.15);
+  color: #f472b6;
+}
+
+:root.dark .stat-item.amnesty.has-missed {
+  border-color: rgba(244, 114, 182, 0.3);
+  background: linear-gradient(135deg, var(--card-bg) 0%, rgba(244, 114, 182, 0.08) 100%);
+}
+
+:root.dark .habit-card {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+:root.dark .habit-name {
+  color: var(--text-primary);
+}
+
+:root.dark .habit-schedule {
+  color: var(--text-secondary);
+}
+
+:root.dark .btn-amnesty {
+  background: rgba(244, 114, 182, 0.15);
+  color: #f472b6;
+  border-color: rgba(244, 114, 182, 0.3);
+}
+
+:root.dark .btn-amnesty:hover {
+  background: rgba(244, 114, 182, 0.25);
+}
+
+:root.dark .analytics-modal {
+  background: var(--bg-primary);
+}
+
+:root.dark .modal-section {
+  background: var(--bg-tertiary);
+}
+
+:root.dark .habits-container {
+  background: var(--bg-secondary);
+}
+
+:root.dark .habits-list {
+  background: var(--bg-secondary);
+}
+
+:root.dark .habit-card:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--primary-color);
+}
+
+:root.dark .day-cell {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+}
+
+:root.dark .day-cell.completed {
+  background: rgba(52, 211, 153, 0.2);
+  border-color: var(--success-color);
+}
+
+:root.dark .day-cell.missed {
+  background: rgba(248, 113, 113, 0.2);
+  border-color: var(--danger-color);
+}
+
+:root.dark .section-divider {
+  border-color: var(--border-color);
+}
+
+:root.dark .analytics-card {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+:root.dark .heatmap-cell {
+  background: var(--bg-tertiary);
+}
+
+:root.dark .month-card {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+}
+
+:root.dark .habit-day-cell-small {
+  background: var(--bg-tertiary);
+}
 </style>
