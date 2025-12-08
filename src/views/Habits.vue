@@ -5124,9 +5124,6 @@ onMounted(async () => {
 
 .habit-card:hover .habit-schedule-inline {
   background: rgba(124, 58, 237, 0.06);
-  border-radius: 8px;
-  padding: 4px;
-  margin: -4px;
 }
 
 .habit-row-top {
@@ -5316,11 +5313,12 @@ onMounted(async () => {
   gap: 3px;
   margin-left: auto;
   margin-right: 0.5rem;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease;
   padding: 4px;
   margin: -4px;
   margin-left: auto;
   border-radius: 8px;
+  background: transparent;
 }
 
 .clickable-schedule {
@@ -5339,7 +5337,7 @@ onMounted(async () => {
   justify-content: center;
   border-radius: 6px;
   background: var(--bg-secondary);
-  transition: all 0.2s ease;
+  transition: background 0.2s ease, filter 0.2s ease;
   cursor: pointer;
 }
 
