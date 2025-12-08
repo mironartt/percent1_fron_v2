@@ -43,6 +43,9 @@ export const useHabitsStore = defineStore('habits', () => {
     today_completed: 0,
     today_total: 0,
     week_xp: 0,
+    month_xp: 0,
+    week_xp_by_day: [],
+    streak_days: [],
     amnesty_remaining: 1,
     difficulty_mode: 'balanced'
   })
@@ -87,6 +90,9 @@ export const useHabitsStore = defineStore('habits', () => {
   const todayCompleted = computed(() => statsPanel.value.today_completed)
   const todayTotal = computed(() => statsPanel.value.today_total)
   const weekXp = computed(() => statsPanel.value.week_xp)
+  const monthXp = computed(() => statsPanel.value.month_xp)
+  const weekXpByDay = computed(() => statsPanel.value.week_xp_by_day || [])
+  const streakDays = computed(() => statsPanel.value.streak_days || [])
   const amnestyRemaining = computed(() => settings.value.amnesty_remaining)
   const amnestiedDates = computed(() => settings.value.amnestied_dates || [])
   const difficultyMode = computed(() => settings.value.difficulty_mode)
@@ -1174,6 +1180,9 @@ export const useHabitsStore = defineStore('habits', () => {
     todayCompleted,
     todayTotal,
     weekXp,
+    monthXp,
+    weekXpByDay,
+    streakDays,
     amnestyRemaining,
     amnestiedDates,
     difficultyMode,

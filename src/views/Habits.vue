@@ -884,7 +884,14 @@
                   v-for="day in week.days" 
                   :key="day.date"
                   class="streak-day"
-                  :class="{ success: day.allCompleted, partial: day.partialCompleted, missed: day.missed, today: day.isToday, future: day.isFuture }"
+                  :class="{ 
+                    success: day.allCompleted, 
+                    partial: day.partialCompleted, 
+                    missed: day.missed, 
+                    today: day.isToday, 
+                    future: day.isFuture,
+                    'not-scheduled': day.notScheduled
+                  }"
                   :title="day.label"
                 >
                   <span class="day-letter">{{ day.letter }}</span>
@@ -1840,6 +1847,10 @@ const weekXpFromHabits = computed(() => {
 })
 
 const monthXpFromHabits = computed(() => {
+  if (habitsStore.monthXp !== undefined && habitsStore.monthXp !== null) {
+    return habitsStore.monthXp
+  }
+  
   const monthAgo = new Date()
   monthAgo.setDate(monthAgo.getDate() - 30)
   return xpStore.xpHistory
@@ -1855,7 +1866,61 @@ const todayProgressPercent = computed(() => {
 const streakCalendar = computed(() => {
   const weeks = []
   const today = new Date()
+  const todayStr = today.toISOString().split('T')[0]
   const dayLetters = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
+  
+  if (habitsStore.streakDays && habitsStore.streakDays.length > 0) {
+    const streakMap = new Map()
+    habitsStore.streakDays.forEach(day => {
+      streakMap.set(day.date, day)
+    })
+    
+    for (let w = 2; w >= 0; w--) {
+      const weekStart = new Date(today)
+      weekStart.setDate(today.getDate() - today.getDay() - (w * 7) + 1)
+      
+      const days = []
+      for (let d = 0; d < 7; d++) {
+        const date = new Date(weekStart)
+        date.setDate(weekStart.getDate() + d)
+        const dateStr = date.toISOString().split('T')[0]
+        const isFuture = date > today
+        const isToday = dateStr === todayStr
+        
+        const apiDay = streakMap.get(dateStr)
+        
+        if (apiDay) {
+          days.push({
+            date: dateStr,
+            letter: dayLetters[date.getDay()],
+            isToday,
+            isFuture,
+            allCompleted: apiDay.is_in_streak && apiDay.is_scheduled,
+            partialCompleted: false,
+            missed: !apiDay.is_in_streak && apiDay.is_scheduled && !isFuture && !isToday,
+            notScheduled: !apiDay.is_scheduled,
+            streakCount: apiDay.streak_count,
+            label: `${date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}: ${apiDay.is_in_streak ? 'в серии' : apiDay.is_scheduled ? 'пропуск' : 'нет привычек'}`
+          })
+        } else {
+          days.push({
+            date: dateStr,
+            letter: dayLetters[date.getDay()],
+            isToday,
+            isFuture,
+            allCompleted: false,
+            partialCompleted: false,
+            missed: false,
+            notScheduled: true,
+            streakCount: 0,
+            label: `${date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`
+          })
+        }
+      }
+      weeks.push({ weekNum: w, days })
+    }
+    return weeks
+  }
   
   for (let w = 2; w >= 0; w--) {
     const weekStart = new Date(today)
@@ -1866,7 +1931,6 @@ const streakCalendar = computed(() => {
       const date = new Date(weekStart)
       date.setDate(weekStart.getDate() + d)
       const dateStr = date.toISOString().split('T')[0]
-      const todayStr = today.toISOString().split('T')[0]
       const isFuture = date > today
       const isToday = dateStr === todayStr
       
@@ -1892,15 +1956,30 @@ const streakCalendar = computed(() => {
 })
 
 const xpByDay = computed(() => {
-  const days = []
   const today = new Date()
+  const todayStr = today.toISOString().split('T')[0]
   const dayLabels = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
   
+  if (habitsStore.weekXpByDay && habitsStore.weekXpByDay.length > 0) {
+    const days = habitsStore.weekXpByDay.map(item => {
+      const date = new Date(item.date)
+      return {
+        date: item.date,
+        xp: item.xp,
+        label: dayLabels[date.getDay()],
+        isToday: item.date === todayStr
+      }
+    })
+    
+    const maxXp = Math.max(...days.map(d => d.xp), 1)
+    return days.map(d => ({ ...d, height: (d.xp / maxXp) * 100 }))
+  }
+  
+  const days = []
   for (let i = 6; i >= 0; i--) {
     const date = new Date(today)
     date.setDate(today.getDate() - i)
     const dateStr = date.toISOString().split('T')[0]
-    const todayStr = today.toISOString().split('T')[0]
     
     const xp = xpStore.xpHistory
       .filter(e => e.source === 'habit_completed' && e.timestamp.startsWith(dateStr))
@@ -7327,6 +7406,12 @@ onMounted(async () => {
 
 .streak-day.future {
   opacity: 0.4;
+}
+
+.streak-day.not-scheduled {
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  opacity: 0.6;
 }
 
 .streak-tip {
