@@ -1,0 +1,37 @@
+    # ============= HABITS ENDPOINTS =============
+
+    # Settings
+    path('app/habits/settings/get/', habits.GetHabitSettingsRestAPIView.as_view(), name='rest_habit_settings_get'),
+    path('app/habits/settings/update/', habits.UpdateHabitSettingsRestAPIView.as_view(), name='rest_habit_settings_update'),
+
+    # Habits CRUD
+    path('app/habits/get/', habits.GetHabitsRestAPIView.as_view(), name='rest_habits_get'),
+    path('app/habits/update/', habits.UpdateHabitsRestAPIView.as_view(), name='rest_habits_update'),
+
+    # Completions
+    path('app/habits/completions/update/', habits.UpdateCompletionsRestAPIView.as_view(), name='rest_completions_update'),
+
+    # Amnesty
+    path('app/habits/amnesty/apply/', habits.ApplyAmnestyRestAPIView.as_view(), name='rest_amnesty_apply'),
+    path('app/habits/amnesty/revoke/', habits.RevokeAmnestyRestAPIView.as_view(), name='rest_amnesty_revoke'),
+
+    # Analytics
+    path('app/habits/analytics/get/', habits.GetAnalyticsRestAPIView.as_view(), name='rest_analytics_get'),
+
+    # Achievements
+    path('app/habits/achievements/get/', habits.GetAchievementsRestAPIView.as_view(), name='rest_achievements_get'),
+
+    # Stats Panel & Recommendations
+    path('app/habits/stats-panel/', habits.GetHabitsStatsPanelRestAPIView.as_view(), name='rest_habits_stats_panel'),
+    path('app/habits/recommended/', habits.GetRecommendedHabitsRestAPIView.as_view(), name='rest_habits_recommended'),
+
+    # XP
+    path('app/habits/xp/history/', habits.GetXPHistoryRestAPIView.as_view(), name='rest_xp_history'),
+    path('app/habits/xp/stats/', habits.GetXPStatsRestAPIView.as_view(), name='rest_xp_stats'),
+
+    # Rewards
+    path('app/habits/rewards/get/', habits.GetRewardsRestAPIView.as_view(), name='rest_rewards_get'),
+    path('app/habits/rewards/create/', habits.CreateRewardRestAPIView.as_view(), name='rest_rewards_create'),
+    path('app/habits/rewards/redeem/', habits.RedeemRewardRestAPIView.as_view(), name='rest_rewards_redeem'),
+    path('app/habits/rewards/update/', habits.UpdateRewardRestAPIView.as_view(), name='rest_rewards_update'),
+    path('app/habits/rewards/delete/', habits.DeleteRewardRestAPIView.as_view(), name='rest_rewards_delete'),

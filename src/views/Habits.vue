@@ -60,7 +60,7 @@
           'has-missed': missedDaysForAmnesty.length > 0 && amnestiesRemaining > 0,
           'depleted': amnestiesRemaining === 0
         }"
-        @click="showAmnestyModal = true" 
+        @click="openAmnestyModal" 
         title="Амнистия"
       >
         <div class="stat-icon">
@@ -236,7 +236,7 @@
       </div>
 
       <div class="habits-per-habit-analytics">
-        <h4>По привычкам</h4>
+        <h4>По привычкам <span class="analytics-period">(30 дней)</span></h4>
         <div class="habit-analytics-list">
           <div v-for="habit in allHabits" :key="habit.id" class="habit-analytics-item">
             <div class="habit-analytics-header">
@@ -247,19 +247,14 @@
                 {{ getHabitStreak(habit) }} дн.
               </span>
             </div>
-            <div class="habit-week-view">
+            <div class="habit-month-view">
               <div 
-                v-for="day in last14Days" 
+                v-for="day in last30Days" 
                 :key="day.date"
-                class="habit-day-cell"
-                :class="{ 
-                  completed: isCompletedOnDay(habit, day.date),
-                  scheduled: isScheduledForDay(habit, new Date(day.date).getDay()),
-                  'not-scheduled': !isScheduledForDay(habit, new Date(day.date).getDay())
-                }"
-                :title="formatCalendarDate(day.date)"
+                class="habit-day-cell-small"
+                :class="'status-' + getHabitDayStatus(habit, day.date)"
+                :title="getStatusTooltip(day.date, getHabitDayStatus(habit, day.date))"
               >
-                <Check v-if="isCompletedOnDay(habit, day.date)" :size="10" :stroke-width="2.5" />
               </div>
             </div>
             <div class="habit-analytics-stats">
@@ -1001,64 +996,71 @@
             </button>
           </div>
           <div class="modal-content">
-            <div class="amnesty-status">
-              <div class="amnesty-counter">
-                <span class="amnesty-remaining">{{ amnestiesRemaining }}</span>
-                <span class="amnesty-separator">/</span>
-                <span class="amnesty-total">{{ maxAmnesties }}</span>
-              </div>
-              <span class="amnesty-hint">использований на этой неделе</span>
+            <div v-if="habitsStore.amnestyDataLoading" class="amnesty-loading">
+              <Loader2 :size="24" :stroke-width="1.5" class="spinning" />
+              <span>Загрузка данных...</span>
             </div>
+            
+            <template v-else>
+              <div class="amnesty-status">
+                <div class="amnesty-counter">
+                  <span class="amnesty-remaining">{{ amnestiesRemaining }}</span>
+                  <span class="amnesty-separator">/</span>
+                  <span class="amnesty-total">{{ maxAmnesties }}</span>
+                </div>
+                <span class="amnesty-hint">использований на этой неделе</span>
+              </div>
 
-            <div v-if="amnestiedDaysInWeek.length > 0" class="amnesty-days-section amnestied-section">
-              <p class="amnesty-instruction amnestied-label">Амнистия уже применена:</p>
-              <div class="amnesty-days-grid">
-                <div 
-                  v-for="day in amnestiedDaysInWeek" 
-                  :key="day.date"
-                  class="amnesty-day-card amnestied"
-                >
-                  <div class="amnestied-badge">
-                    <Heart :size="14" :stroke-width="1.5" />
-                  </div>
-                  <span class="day-name">{{ day.dayName }}</span>
-                  <span class="day-date">{{ formatAmnestyDate(day.date) }}</span>
-                  <span class="day-missed">{{ day.missedCount }} {{ pluralizeHabits(day.missedCount) }}</span>
-                  <span class="day-penalty saved">+{{ day.penaltyXp }} XP</span>
-                  <button 
-                    class="btn-cancel-amnesty"
-                    @click="cancelAmnestyFromModal(day.date)"
-                    title="Отменить амнистию"
+              <div v-if="amnestiedDaysInWeek.length > 0" class="amnesty-days-section amnestied-section">
+                <p class="amnesty-instruction amnestied-label">Амнистия уже применена:</p>
+                <div class="amnesty-days-grid">
+                  <div 
+                    v-for="day in amnestiedDaysInWeek" 
+                    :key="day.date"
+                    class="amnesty-day-card amnestied"
                   >
-                    <X :size="14" :stroke-width="2" />
+                    <div class="amnestied-badge">
+                      <Heart :size="14" :stroke-width="1.5" />
+                    </div>
+                    <span class="day-name">{{ day.dayName }}</span>
+                    <span class="day-date">{{ formatAmnestyDate(day.date) }}</span>
+                    <span class="day-missed">{{ day.missedCount }} {{ pluralizeHabits(day.missedCount) }}</span>
+                    <span class="day-penalty saved">+{{ day.penaltyXp }} XP</span>
+                    <button 
+                      class="btn-cancel-amnesty"
+                      @click="cancelAmnestyFromModal(day.date)"
+                      title="Отменить амнистию"
+                    >
+                      <X :size="14" :stroke-width="2" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="missedDaysForAmnesty.length > 0" class="amnesty-days-section">
+                <p class="amnesty-instruction">Выберите день для прощения:</p>
+                <div class="amnesty-days-grid">
+                  <button 
+                    v-for="day in missedDaysForAmnesty" 
+                    :key="day.date"
+                    class="amnesty-day-card"
+                    :disabled="amnestiesRemaining <= 0"
+                    @click="applyAmnestyForDay(day.date)"
+                  >
+                    <span class="day-name">{{ day.dayName }}</span>
+                    <span class="day-date">{{ formatAmnestyDate(day.date) }}</span>
+                    <span class="day-missed">{{ day.missedCount }} {{ pluralizeHabits(day.missedCount) }}</span>
+                    <span class="day-penalty">-{{ day.penaltyXp }} XP</span>
                   </button>
                 </div>
               </div>
-            </div>
 
-            <div v-if="missedDaysForAmnesty.length > 0" class="amnesty-days-section">
-              <p class="amnesty-instruction">Выберите день для прощения:</p>
-              <div class="amnesty-days-grid">
-                <button 
-                  v-for="day in missedDaysForAmnesty" 
-                  :key="day.date"
-                  class="amnesty-day-card"
-                  :disabled="amnestiesRemaining <= 0"
-                  @click="applyAmnestyForDay(day.date)"
-                >
-                  <span class="day-name">{{ day.dayName }}</span>
-                  <span class="day-date">{{ formatAmnestyDate(day.date) }}</span>
-                  <span class="day-missed">{{ day.missedCount }} {{ pluralizeHabits(day.missedCount) }}</span>
-                  <span class="day-penalty">-{{ day.penaltyXp }} XP</span>
-                </button>
+              <div v-if="missedDaysForAmnesty.length === 0 && amnestiedDaysInWeek.length === 0" class="amnesty-empty">
+                <CheckCircle :size="32" :stroke-width="1.5" />
+                <p>Нет пропущенных дней для амнистии</p>
+                <span class="amnesty-empty-hint">Пропущенные дни за последнюю неделю появятся здесь</span>
               </div>
-            </div>
-
-            <div v-if="missedDaysForAmnesty.length === 0 && amnestiedDaysInWeek.length === 0" class="amnesty-empty">
-              <CheckCircle :size="32" :stroke-width="1.5" />
-              <p>Нет пропущенных дней для амнистии</p>
-              <span class="amnesty-empty-hint">Пропущенные дни за последнюю неделю появятся здесь</span>
-            </div>
+            </template>
           </div>
         </div>
       </div>
@@ -1091,7 +1093,7 @@
                   getDayStatus(selectedHabitForEdit, day.date), 
                   { 
                     current: day.date === selectedDayForEdit.date,
-                    clickable: isScheduledForDay(selectedHabitForEdit, new Date(day.date).getDay())
+                    clickable: isScheduledFromWeekSchedule(selectedHabitForEdit, day.date)
                   }
                 ]"
                 @click="switchToDay(day)"
@@ -1118,15 +1120,21 @@
             </div>
 
             <div class="day-edit-current-status">
-              <span class="status-label">Текущий статус:</span>
-              <span 
-                class="status-value" 
-                :class="isSelectedDayToday && getDayStatus(selectedHabitForEdit, selectedDayForEdit.date) !== 'completed' ? 'today' : getDayStatus(selectedHabitForEdit, selectedDayForEdit.date)"
-              >
-                {{ isSelectedDayToday && getDayStatus(selectedHabitForEdit, selectedDayForEdit.date) !== 'completed' 
-                   ? 'Сегодня' 
-                   : getDayStatusLabel(getDayStatus(selectedHabitForEdit, selectedDayForEdit.date)) }}
-              </span>
+              <div class="status-row">
+                <span class="status-label">Текущий статус:</span>
+                <span 
+                  class="status-value" 
+                  :class="isSelectedDayToday && getDayStatus(selectedHabitForEdit, selectedDayForEdit.date) !== 'completed' ? 'today' : getDayStatus(selectedHabitForEdit, selectedDayForEdit.date)"
+                >
+                  {{ isSelectedDayToday && getDayStatus(selectedHabitForEdit, selectedDayForEdit.date) !== 'completed' 
+                     ? 'Сегодня' 
+                     : getDayStatusLabel(getDayStatus(selectedHabitForEdit, selectedDayForEdit.date)) }}
+                </span>
+              </div>
+              <div class="xp-row" v-if="selectedDayXpInfo.xpEarned > 0 || selectedDayXpInfo.xpPenalty > 0">
+                <span v-if="selectedDayXpInfo.xpEarned > 0" class="xp-badge positive">+{{ selectedDayXpInfo.xpEarned }} XP</span>
+                <span v-if="selectedDayXpInfo.xpPenalty > 0" class="xp-badge negative">-{{ selectedDayXpInfo.xpPenalty }} XP</span>
+              </div>
             </div>
 
             <div class="day-edit-notes">
@@ -1135,7 +1143,14 @@
                 v-model="dayEditNote" 
                 placeholder="Как прошло выполнение? Что получилось? Что можно улучшить?"
                 rows="2"
+                @blur="saveNoteOnBlur"
               ></textarea>
+              <div class="note-save-row" v-if="dayEditNote">
+                <button class="btn-save-note-inline" @click="saveNoteOnBlur" :disabled="noteSaving">
+                  <Save :size="14" :stroke-width="2" />
+                  {{ noteSaving ? 'Сохраняю...' : 'Сохранить заметку' }}
+                </button>
+              </div>
             </div>
 
             <div v-if="showSkipReasonField" class="day-edit-reason">
@@ -1186,7 +1201,7 @@
             </div>
 
             <div 
-              v-if="!isFutureDay && gameSettings.amnestiedDates?.includes(selectedDayForEdit.date)" 
+              v-if="!isFutureDay && getDayStatus(selectedHabitForEdit, selectedDayForEdit.date) === 'amnestied'" 
               class="day-edit-amnesty-warning"
             >
               <div class="amnesty-info-row">
@@ -1333,11 +1348,18 @@
                   <span class="bw-value">{{ bestWeekRate }}%</span>
                 </div>
               </div>
-              <div class="worst-card">
+              <div class="worst-card" v-if="worstHabitName">
                 <TrendingUp :size="16" :stroke-width="1.5" class="down" />
                 <div class="bw-content">
                   <span class="bw-label">Нужно улучшить</span>
-                  <span class="bw-value">{{ worstWeekRate }}%</span>
+                  <span class="bw-value">{{ worstHabitName }} ({{ worstHabitRate }}%)</span>
+                </div>
+              </div>
+              <div class="worst-card" v-else>
+                <TrendingUp :size="16" :stroke-width="1.5" class="down" />
+                <div class="bw-content">
+                  <span class="bw-label">Нужно улучшить</span>
+                  <span class="bw-value">Нет данных</span>
                 </div>
               </div>
             </div>
@@ -1369,8 +1391,12 @@
                 <span class="year-stat-value">{{ yearActiveDays }}</span>
                 <span class="year-stat-label">Активных дней</span>
               </div>
-              <div class="year-stat accent">
+              <div class="year-stat accent" v-if="bestMonthName && bestMonthName !== '-'">
                 <span class="year-stat-value">{{ bestMonthName }}</span>
+                <span class="year-stat-label">Лучший месяц ({{ bestMonthRate }}%)</span>
+              </div>
+              <div class="year-stat accent" v-else>
+                <span class="year-stat-value">-</span>
                 <span class="year-stat-label">Лучший месяц</span>
               </div>
             </div>
@@ -1441,21 +1467,23 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useAppStore } from '../stores/app'
 import { useXpStore, XP_REWARDS } from '../stores/xp'
 import { useToastStore } from '../stores/toast'
+import { useHabitsStore } from '../stores/habits'
 import { DEBUG_MODE } from '@/config/settings.js'
 import { 
   Flame, Plus, Minus, Zap, CheckCircle, Sparkles, Shield, Bot,
   Check, Pencil, X, Trash2, Settings, Gift, Archive, Info, TrendingUp, Calendar, Award,
   Ellipsis, CircleAlert, Lightbulb, Heart, ChevronLeft, ChevronRight, RotateCcw, Lock,
-  ChartBar, CalendarDays, Target
+  ChartBar, CalendarDays, Target, Save, Loader2
 } from 'lucide-vue-next'
 
 const appStore = useAppStore()
 const xpStore = useXpStore()
 const toast = useToastStore()
+const habitsStore = useHabitsStore()
 
 const showModal = ref(false)
 const showSettingsModal = ref(false)
@@ -1482,7 +1510,10 @@ const selectedHabitForEdit = ref(null)
 const dayEditSkipReason = ref('')
 const dayEditNote = ref('')
 const weekOffset = ref(0)
+const pendingWeekLoad = ref(null)
 const showDeletedHabits = ref(false)
+const noteSaving = ref(false)
+const lastSavedNote = ref('')
 
 const habitSuggestions = [
   {
@@ -1581,6 +1612,25 @@ const weekDaysConfig = [
   { key: 0, name: 'Воскресенье', short: 'Вс' }
 ]
 
+const MONTH_NAMES_RU = {
+  'January': 'Январь',
+  'February': 'Февраль',
+  'March': 'Март',
+  'April': 'Апрель',
+  'May': 'Май',
+  'June': 'Июнь',
+  'July': 'Июль',
+  'August': 'Август',
+  'September': 'Сентябрь',
+  'October': 'Октябрь',
+  'November': 'Ноябрь',
+  'December': 'Декабрь'
+}
+
+function translateMonth(monthName) {
+  return MONTH_NAMES_RU[monthName] || monthName
+}
+
 
 const formData = ref({
   name: '',
@@ -1622,6 +1672,10 @@ const gameSettings = ref({
   amnestiedDates: []
 })
 
+function formatLocalDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 const weekDays = computed(() => {
   const today = new Date()
   const currentDay = today.getDay()
@@ -1633,7 +1687,7 @@ const weekDays = computed(() => {
     date.setDate(monday.getDate() + index)
     return {
       ...day,
-      date: date.toISOString().split('T')[0],
+      date: formatLocalDate(date),
       isToday: date.toDateString() === today.toDateString()
     }
   })
@@ -1672,33 +1726,50 @@ const allHabits = computed(() => {
   const weekStartDate = weekDays.value[0]?.date
   const weekEndDate = weekDays.value[6]?.date
   
-  return appStore.habits
-    .filter(h => !h.archived)
+  const storeHabits = habitsStore.habits
+  const habitsSource = storeHabits.length > 0 ? storeHabits : appStore.habits
+  
+  if (DEBUG_MODE) {
+    console.log('[Habits.vue] allHabits computed - habitsStore.habits:', storeHabits.length, storeHabits)
+    console.log('[Habits.vue] allHabits computed - using source:', storeHabits.length > 0 ? 'habitsStore' : 'appStore')
+  }
+  
+  return habitsSource
+    .filter(h => !h.archived && !h.is_archived)
     .filter(h => {
-      if (!h.deletedAt) return true
+      const deletedDate = h.deletedAt || h.date_deleted
+      if (!deletedDate) return true
       if (isPastWeek.value) {
-        const deletedDate = h.deletedAt.split('T')[0]
-        return deletedDate > weekStartDate
+        const deleted = deletedDate.split('T')[0]
+        return deleted > weekStartDate
       }
       return false
     })
     .map(habit => {
       let wasDeletedThisWeek = false
       let deletedDuringWeek = null
+      const deletedDate = habit.deletedAt || habit.date_deleted
       
-      if (habit.deletedAt && isPastWeek.value) {
-        const deletedDate = habit.deletedAt.split('T')[0]
-        if (deletedDate >= weekStartDate && deletedDate <= weekEndDate) {
+      if (deletedDate && isPastWeek.value) {
+        const deleted = deletedDate.split('T')[0]
+        if (deleted >= weekStartDate && deleted <= weekEndDate) {
           wasDeletedThisWeek = true
-          deletedDuringWeek = deletedDate
+          deletedDuringWeek = deleted
         }
       }
       
       return {
         ...habit,
-        frequencyType: habit.frequencyType || 'daily',
-        scheduleDays: habit.scheduleDays || [1, 2, 3, 4, 5, 6, 0],
-        xpPenalty: habit.xpPenalty || 0,
+        id: habit.id || habit.habit_id,
+        habit_id: habit.habit_id || habit.id,
+        frequencyType: habit.frequencyType || habit.frequency_type || 'daily',
+        frequency_type: habit.frequency_type || habit.frequencyType || 'daily',
+        scheduleDays: habit.scheduleDays || habit.schedule_days || [1, 2, 3, 4, 5, 6, 0],
+        schedule_days: habit.schedule_days || habit.scheduleDays || [1, 2, 3, 4, 5, 6, 0],
+        xpPenalty: habit.xpPenalty || habit.xp_penalty || 0,
+        xp_penalty: habit.xp_penalty || habit.xpPenalty || 0,
+        xpReward: habit.xpReward || habit.xp_reward || 5,
+        xp_reward: habit.xp_reward || habit.xpReward || 5,
         wasDeletedThisWeek,
         deletedDuringWeek
       }
@@ -1706,31 +1777,61 @@ const allHabits = computed(() => {
 })
 
 const deletedHabits = computed(() => {
-  return appStore.habits
-    .filter(h => !h.archived && h.deletedAt)
+  const habitsSource = habitsStore.habits.length > 0 ? habitsStore.habits : appStore.habits
+  
+  return habitsSource
+    .filter(h => !h.archived && !h.is_archived && (h.deletedAt || h.date_deleted))
     .map(habit => ({
       ...habit,
-      frequencyType: habit.frequencyType || 'daily',
-      scheduleDays: habit.scheduleDays || [1, 2, 3, 4, 5, 6, 0],
-      xpPenalty: habit.xpPenalty || 0
+      id: habit.id || habit.habit_id,
+      habit_id: habit.habit_id || habit.id,
+      frequencyType: habit.frequencyType || habit.frequency_type || 'daily',
+      frequency_type: habit.frequency_type || habit.frequencyType || 'daily',
+      scheduleDays: habit.scheduleDays || habit.schedule_days || [1, 2, 3, 4, 5, 6, 0],
+      schedule_days: habit.schedule_days || habit.scheduleDays || [1, 2, 3, 4, 5, 6, 0],
+      xpPenalty: habit.xpPenalty || habit.xp_penalty || 0,
+      xp_penalty: habit.xp_penalty || habit.xpPenalty || 0
     }))
 })
 
-const habitStreak = computed(() => appStore.habitStreak)
+const habitStreak = computed(() => {
+  return habitsStore.statsPanel?.streak ?? appStore.habitStreak
+})
 const scheduledToday = computed(() => {
   const today = new Date().getDay()
   return allHabits.value.filter(h => isScheduledForDay(h, today))
 })
 
 const todayCompleted = computed(() => {
-  const todayStr = new Date().toISOString().split('T')[0]
+  const today = new Date()
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  
+  if (habitsStore.habits.length > 0) {
+    return habitsStore.habits.filter(habit => {
+      if (habit.date_deleted) return false
+      const todaySchedule = habit.week_schedule?.find(s => s.date === todayStr)
+      if (todaySchedule && todaySchedule.is_scheduled !== false) {
+        return todaySchedule.status === 'completed'
+      }
+      return false
+    }).length
+  }
+  
   const completedIds = appStore.habitLog[todayStr] || []
   return scheduledToday.value.filter(h => completedIds.includes(h.id)).length
 })
 
 const todayTotal = computed(() => scheduledToday.value.length)
 
+const todayProgressFromStore = computed(() => {
+  return habitsStore.statsPanel?.today_progress ?? null
+})
+
 const weekXpFromHabits = computed(() => {
+  if (habitsStore.statsPanel?.week_xp !== undefined) {
+    return habitsStore.statsPanel.week_xp
+  }
+  
   const weekAgo = new Date()
   weekAgo.setDate(weekAgo.getDate() - 7)
   return xpStore.xpHistory
@@ -1818,7 +1919,27 @@ const xpByDay = computed(() => {
 })
 
 function isHabitCompletedToday(habit) {
-  const todayStr = new Date().toISOString().split('T')[0]
+  if (weekOffset.value !== 0) {
+    return false
+  }
+  
+  const today = new Date()
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  
+  if (habit.week_schedule) {
+    const todaySchedule = habit.week_schedule.find(s => s.date === todayStr)
+    if (todaySchedule) {
+      return todaySchedule.status === 'completed'
+    }
+  }
+  
+  if (habit.completions) {
+    const todayCompletion = habit.completions.find(c => c.date === todayStr)
+    if (todayCompletion) {
+      return todayCompletion.status === 'completed'
+    }
+  }
+  
   const completedIds = appStore.habitLog[todayStr] || []
   return completedIds.includes(habit.id)
 }
@@ -1842,13 +1963,28 @@ const currentPenaltyPercent = computed(() => {
   return gameSettings.value.customPenaltyPercent
 })
 
+const amnestyDataWasLoaded = computed(() => {
+  return habitsStore.amnestyData.week_start !== null
+})
+
 const maxAmnesties = computed(() => {
+  if (amnestyDataWasLoaded.value && habitsStore.amnestyData.amnesty_available?.total !== undefined) {
+    return habitsStore.amnestyData.amnesty_available.total
+  }
   const mode = gameSettings.value.difficultyMode
   if (mode === 'soft') return 0
   return gameSettings.value.weeklyAmnestyCount || 0
 })
 
 const amnestiesRemaining = computed(() => {
+  if (amnestyDataWasLoaded.value && habitsStore.amnestyData.amnesty_available?.remaining !== undefined) {
+    return habitsStore.amnestyData.amnesty_available.remaining
+  }
+  
+  if (habitsStore.statsPanel?.amnesty_remaining !== undefined) {
+    return habitsStore.statsPanel.amnesty_remaining
+  }
+  
   const now = new Date()
   const weekStart = getWeekStart(now)
   
@@ -1860,14 +1996,39 @@ const amnestiesRemaining = computed(() => {
   return Math.max(0, maxAmnesties.value - gameSettings.value.amnestiesUsedThisWeek)
 })
 
+async function openAmnestyModal() {
+  showAmnestyModal.value = true
+  await habitsStore.loadAmnestyAvailableDays()
+}
+
 function isScheduledForDay(habit, dayKey) {
-  if (habit.frequencyType === 'daily') return true
-  if (habit.frequencyType === 'weekdays') return dayKey >= 1 && dayKey <= 5
-  if (habit.frequencyType === 'weekends') return dayKey === 0 || dayKey === 6
-  return habit.scheduleDays?.includes(dayKey)
+  const freqType = habit.frequencyType || habit.frequency_type
+  const schedDays = habit.scheduleDays || habit.schedule_days
+  
+  if (freqType === 'daily') return true
+  if (freqType === 'weekdays') return dayKey >= 1 && dayKey <= 5
+  if (freqType === 'weekends') return dayKey === 0 || dayKey === 6
+  return schedDays?.includes(dayKey)
 }
 
 const missedDaysForAmnesty = computed(() => {
+  const apiDays = habitsStore.amnestyData.days || []
+  if (apiDays.length > 0) {
+    const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
+    return apiDays
+      .filter(day => day.can_apply && !day.is_amnestied && day.missed_habits_count > 0)
+      .map(day => {
+        const date = new Date(day.date)
+        const dayOfWeek = date.getDay()
+        return {
+          date: day.date,
+          dayName: dayNames[dayOfWeek] + ', ' + date.getDate(),
+          missedCount: day.missed_habits_count,
+          penaltyXp: day.total_penalty
+        }
+      })
+  }
+  
   if (gameSettings.value.difficultyMode === 'soft') return []
   if (!gameSettings.value.penaltiesEnabled) return []
   
@@ -1908,6 +2069,23 @@ const missedDaysForAmnesty = computed(() => {
 })
 
 const amnestiedDaysInWeek = computed(() => {
+  const apiDays = habitsStore.amnestyData.days || []
+  if (apiDays.length > 0) {
+    const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
+    return apiDays
+      .filter(day => day.is_amnestied)
+      .map(day => {
+        const date = new Date(day.date)
+        const dayOfWeek = date.getDay()
+        return {
+          date: day.date,
+          dayName: dayNames[dayOfWeek] + ', ' + date.getDate(),
+          missedCount: day.missed_habits_count,
+          penaltyXp: day.total_penalty
+        }
+      })
+  }
+  
   const amnestiedDates = gameSettings.value.amnestiedDates || []
   if (amnestiedDates.length === 0) return []
   
@@ -1944,48 +2122,40 @@ const amnestiedDaysInWeek = computed(() => {
   return days
 })
 
-function cancelAmnestyFromModal(dateStr) {
-  const amnestiedDates = gameSettings.value.amnestiedDates || []
-  if (!amnestiedDates.includes(dateStr)) return
-  
-  gameSettings.value.amnestiedDates = amnestiedDates.filter(d => d !== dateStr)
-  if (gameSettings.value.amnestiesUsedThisWeek > 0) {
-    gameSettings.value.amnestiesUsedThisWeek--
-  }
-  saveGameSettings()
-  
+async function cancelAmnestyFromModal(dateStr) {
   const dayInfo = amnestiedDaysInWeek.value.find(d => d.date === dateStr)
   const xpPenalty = dayInfo?.penaltyXp || 0
   
-  toast.showToast({ type: 'info', title: `Амнистия отменена. Штраф -${xpPenalty} XP восстановлен` })
+  const result = await habitsStore.revokeAmnesty(dateStr)
+  
+  if (result.success) {
+    toast.showToast({ type: 'info', title: `Амнистия отменена. Штраф -${xpPenalty} XP` })
+    await habitsStore.loadAmnestyAvailableDays()
+    habitsStore.loadStatsPanel()
+  } else {
+    toast.showToast({ type: 'error', title: 'Ошибка отмены амнистии' })
+  }
 }
 
-function applyAmnestyForDay(dateStr) {
+async function applyAmnestyForDay(dateStr) {
   if (amnestiesRemaining.value <= 0) {
     toast.showToast({ type: 'warning', title: 'Нет доступных амнистий' })
     return
   }
   
-  const now = new Date()
-  const weekStart = getWeekStart(now)
-  
-  if (!gameSettings.value.amnestyWeekStart || 
-      new Date(gameSettings.value.amnestyWeekStart).getTime() !== weekStart.getTime()) {
-    gameSettings.value.amnestyWeekStart = weekStart.toISOString()
-    gameSettings.value.amnestiesUsedThisWeek = 0
-  }
-  
-  if (!gameSettings.value.amnestiedDates) {
-    gameSettings.value.amnestiedDates = []
-  }
-  gameSettings.value.amnestiedDates.push(dateStr)
-  gameSettings.value.amnestiesUsedThisWeek++
-  saveGameSettings()
-  
   const dayInfo = missedDaysForAmnesty.value.find(d => d.date === dateStr)
   const xpRecovered = dayInfo?.penaltyXp || 0
   
-  toast.showToast({ type: 'success', title: `Амнистия применена! Возвращено ${xpRecovered} XP` })
+  const result = await habitsStore.applyAmnesty(dateStr)
+  
+  if (result.success) {
+    const actualXp = result.xpRestored || xpRecovered
+    toast.showToast({ type: 'success', title: `Амнистия применена! Возвращено ${actualXp} XP` })
+    await habitsStore.loadAmnestyAvailableDays()
+    habitsStore.loadStatsPanel()
+  } else {
+    toast.showToast({ type: 'error', title: 'Ошибка применения амнистии' })
+  }
 }
 
 function getWeekStart(date) {
@@ -2006,9 +2176,38 @@ const weeklyAmnestyAvailable = computed(() => {
 function getCompletionForDate(dateStr) {
   const dayOfWeek = new Date(dateStr).getDay()
   const scheduledForDay = allHabits.value.filter(h => isScheduledForDay(h, dayOfWeek))
-  const completedIds = appStore.habitLog[dateStr] || []
-  const completed = scheduledForDay.filter(h => completedIds.includes(h.id)).length
-  return { completed, total: scheduledForDay.length }
+  const scheduledTotal = scheduledForDay.length
+  
+  const calendarData = habitsStore.analytics?.calendar_data
+  if (calendarData && calendarData[dateStr] !== undefined) {
+    const count = calendarData[dateStr]
+    return { 
+      completed: count, 
+      total: Math.max(scheduledTotal, count), 
+      useCountLevel: true 
+    }
+  }
+  
+  let completed = 0
+  scheduledForDay.forEach(habit => {
+    const habitBackendId = String(habit.habit_id || habit.backendId || habit.id)
+    const backendHabit = habitsStore.habits.find(h => 
+      String(h.habit_id) === habitBackendId || String(h.id) === habitBackendId
+    )
+    if (backendHabit?.completions) {
+      const hasCompletion = backendHabit.completions.some(c => c.date === dateStr && c.status === 'completed')
+      if (hasCompletion) {
+        completed++
+        return
+      }
+    }
+    
+    if (appStore.habitLog[dateStr]?.includes(habit.id)) {
+      completed++
+    }
+  })
+  
+  return { completed, total: scheduledTotal, useCountLevel: false }
 }
 
 const last14Days = computed(() => {
@@ -2024,7 +2223,23 @@ const last14Days = computed(() => {
   return days
 })
 
+const last30Days = computed(() => {
+  const days = []
+  const today = new Date()
+  for (let i = 29; i >= 0; i--) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - i)
+    const dateStr = date.toISOString().split('T')[0]
+    const { completed, total } = getCompletionForDate(dateStr)
+    days.push({ date: dateStr, completed, total })
+  }
+  return days
+})
+
 const weekCompletionRate = computed(() => {
+  if (habitsStore.analytics?.completion_rate_7 !== undefined) {
+    return habitsStore.analytics.completion_rate_7
+  }
   let totalCompleted = 0
   let totalScheduled = 0
   const today = new Date()
@@ -2040,6 +2255,9 @@ const weekCompletionRate = computed(() => {
 })
 
 const monthCompletionRate = computed(() => {
+  if (habitsStore.analytics?.completion_rate_30 !== undefined) {
+    return habitsStore.analytics.completion_rate_30
+  }
   let totalCompleted = 0
   let totalScheduled = 0
   const today = new Date()
@@ -2055,6 +2273,17 @@ const monthCompletionRate = computed(() => {
 })
 
 function getHabitStreak(habit) {
+  const analyticsData = habitsStore.analytics?.habits_data
+  if (analyticsData) {
+    const habitData = analyticsData.find(h => h.habit_id === habit.backendId)
+    if (habitData?.streak !== undefined) {
+      return habitData.streak
+    }
+  }
+  
+  const backendHabit = habitsStore.habits.find(h => h.habit_id === habit.backendId)
+  const completions = backendHabit?.completions || []
+  
   let streak = 0
   const today = new Date()
   
@@ -2066,7 +2295,10 @@ function getHabitStreak(habit) {
     
     if (!isScheduledForDay(habit, dayOfWeek)) continue
     
-    if (appStore.habitLog[dateStr]?.includes(habit.id)) {
+    const completion = completions.find(c => c.date === dateStr)
+    if (completion?.status === 'completed') {
+      streak++
+    } else if (appStore.habitLog[dateStr]?.includes(habit.id)) {
       streak++
     } else {
       break
@@ -2076,6 +2308,22 @@ function getHabitStreak(habit) {
 }
 
 function getHabitCompletionRate(habit, days) {
+  const analyticsData = habitsStore.analytics?.habits_data
+  if (analyticsData) {
+    const habitData = analyticsData.find(h => h.habit_id === habit.backendId)
+    if (habitData) {
+      if (days === 7 && habitData.completion_rate_7 !== undefined) {
+        return habitData.completion_rate_7
+      }
+      if (days === 30 && habitData.completion_rate_30 !== undefined) {
+        return habitData.completion_rate_30
+      }
+    }
+  }
+  
+  const backendHabit = habitsStore.habits.find(h => h.habit_id === habit.backendId)
+  const completions = backendHabit?.completions || []
+  
   let completed = 0
   let scheduled = 0
   const today = new Date()
@@ -2088,7 +2336,10 @@ function getHabitCompletionRate(habit, days) {
     
     if (isScheduledForDay(habit, dayOfWeek)) {
       scheduled++
-      if (appStore.habitLog[dateStr]?.includes(habit.id)) {
+      const completion = completions.find(c => c.date === dateStr)
+      if (completion?.status === 'completed') {
+        completed++
+      } else if (appStore.habitLog[dateStr]?.includes(habit.id)) {
         completed++
       }
     }
@@ -2171,8 +2422,8 @@ const calendarWeeks = computed(() => {
       const date = new Date(today)
       date.setDate(date.getDate() - (w * 7 + (6 - d)))
       const dateStr = date.toISOString().split('T')[0]
-      const { completed, total } = getCompletionForDate(dateStr)
-      weekDays.push({ date: dateStr, completed, total })
+      const { completed, total, useCountLevel } = getCompletionForDate(dateStr)
+      weekDays.push({ date: dateStr, completed, total, useCountLevel })
     }
     weeks.push({ weekNum: 3 - w, days: weekDays })
   }
@@ -2180,6 +2431,13 @@ const calendarWeeks = computed(() => {
 })
 
 function getHeatmapClass(day) {
+  if (day.useCountLevel) {
+    if (day.completed === 0) return 'level-0'
+    if (day.completed === 1) return 'level-1'
+    if (day.completed === 2) return 'level-2'
+    return 'level-3'
+  }
+  
   if (day.total === 0) return 'level-0'
   const rate = day.completed / day.total
   if (rate === 0) return 'level-0'
@@ -2250,8 +2508,18 @@ const badgeCategories = computed(() => {
   ]
 })
 
-// Данные для модального окна "Выполнение"
+const weeklyLabels = ['7н', '6н', '5н', '4н', '3н', '2н', '1н', 'Сейчас']
+
 const weeklyCompletionData = computed(() => {
+  if (habitsStore.analytics?.weekly_trend && habitsStore.analytics.weekly_trend.length === 8) {
+    return habitsStore.analytics.weekly_trend.map((rate, index) => ({
+      label: weeklyLabels[index],
+      rate: rate || 0,
+      completed: 0,
+      total: 0
+    }))
+  }
+  
   const weeks = []
   const today = new Date()
   
@@ -2279,9 +2547,8 @@ const weeklyCompletionData = computed(() => {
       })
     }
     
-    const weekNum = w === 0 ? 'Эта' : w === 1 ? 'Прошлая' : `-${w} нед.`
     weeks.push({
-      label: weekNum,
+      label: weeklyLabels[7 - w],
       rate: total > 0 ? Math.round(completed / total * 100) : 0,
       completed,
       total
@@ -2292,15 +2559,45 @@ const weeklyCompletionData = computed(() => {
 })
 
 const bestWeekRate = computed(() => {
+  if (habitsStore.analytics?.best_week_rate !== undefined) {
+    return habitsStore.analytics.best_week_rate
+  }
   return Math.max(...weeklyCompletionData.value.map(w => w.rate), 0)
 })
 
-const worstWeekRate = computed(() => {
-  const rates = weeklyCompletionData.value.filter(w => w.total > 0).map(w => w.rate)
-  return rates.length > 0 ? Math.min(...rates) : 0
+const worstHabitName = computed(() => {
+  if (habitsStore.analytics?.worst_habit_name !== undefined) {
+    return habitsStore.analytics.worst_habit_name
+  }
+  const distribution = habitCompletionDistribution.value
+  if (distribution.length === 0) return null
+  const worst = distribution[distribution.length - 1]
+  return worst?.name || null
+})
+
+const worstHabitRate = computed(() => {
+  if (habitsStore.analytics?.worst_habit_rate !== undefined) {
+    return habitsStore.analytics.worst_habit_rate
+  }
+  const distribution = habitCompletionDistribution.value
+  if (distribution.length === 0) return 0
+  const worst = distribution[distribution.length - 1]
+  return worst?.rate || 0
 })
 
 const habitCompletionDistribution = computed(() => {
+  if (habitsStore.analytics?.habits_data && habitsStore.analytics.habits_data.length > 0) {
+    return habitsStore.analytics.habits_data.map(habit => ({
+      id: habit.habit_id,
+      name: habit.name,
+      icon: habit.icon,
+      rate: habit.completion_rate_30 || 0,
+      streak: habit.streak || 0,
+      completed: habit.total_completions || 0,
+      total: 0
+    })).sort((a, b) => b.rate - a.rate)
+  }
+  
   const today = new Date()
   
   return allHabits.value.map(habit => {
@@ -2331,13 +2628,21 @@ const habitCompletionDistribution = computed(() => {
   }).sort((a, b) => b.rate - a.rate)
 })
 
-// Данные для модального окна "Календарь"
+function getHeatmapLevel(count) {
+  if (count === 0) return 'level-0'
+  if (count === 1) return 'level-1'
+  if (count === 2) return 'level-2'
+  if (count <= 4) return 'level-3'
+  return 'level-3'
+}
+
 const yearlyHeatmapData = computed(() => {
+  const calendarData = habitsStore.analytics?.calendar_data
   const weeks = []
   const today = new Date()
   const startDate = new Date(today)
   startDate.setFullYear(today.getFullYear() - 1)
-  startDate.setDate(startDate.getDate() - startDate.getDay() + 1) // Начало недели
+  startDate.setDate(startDate.getDate() - startDate.getDay() + 1)
   
   let currentDate = new Date(startDate)
   
@@ -2354,25 +2659,36 @@ const yearlyHeatmapData = computed(() => {
       }
       
       const dateStr = date.toISOString().split('T')[0]
-      let completed = 0
-      let total = 0
       
-      allHabits.value.forEach(habit => {
-        if (isScheduledForDay(habit, date.getDay())) {
-          total++
-          if (appStore.habitLog[dateStr]?.includes(habit.id)) {
-            completed++
+      if (calendarData && calendarData[dateStr] !== undefined) {
+        const count = calendarData[dateStr]
+        week.push({ 
+          date: dateStr, 
+          completed: count, 
+          total: count, 
+          level: getHeatmapLevel(count) 
+        })
+      } else {
+        let completed = 0
+        let total = 0
+        
+        allHabits.value.forEach(habit => {
+          if (isScheduledForDay(habit, date.getDay())) {
+            total++
+            if (appStore.habitLog[dateStr]?.includes(habit.id)) {
+              completed++
+            }
           }
-        }
-      })
-      
-      const rate = total > 0 ? completed / total : 0
-      let level = 'level-0'
-      if (rate > 0 && rate < 0.33) level = 'level-1'
-      else if (rate >= 0.33 && rate < 0.66) level = 'level-2'
-      else if (rate >= 0.66) level = 'level-3'
-      
-      week.push({ date: dateStr, completed, total, level })
+        })
+        
+        const rate = total > 0 ? completed / total : 0
+        let level = 'level-0'
+        if (rate > 0 && rate < 0.33) level = 'level-1'
+        else if (rate >= 0.33 && rate < 0.66) level = 'level-2'
+        else if (rate >= 0.66) level = 'level-3'
+        
+        week.push({ date: dateStr, completed, total, level })
+      }
     }
     
     weeks.push(week)
@@ -2397,14 +2713,43 @@ const monthLabels = computed(() => {
 })
 
 const yearTotalCompletions = computed(() => {
+  if (habitsStore.analytics?.year_completions !== undefined) {
+    return habitsStore.analytics.year_completions
+  }
   return Object.values(appStore.habitLog).flat().length
 })
 
 const yearActiveDays = computed(() => {
+  if (habitsStore.analytics?.year_active_days !== undefined) {
+    return habitsStore.analytics.year_active_days
+  }
   return Object.keys(appStore.habitLog).filter(date => appStore.habitLog[date].length > 0).length
 })
 
+const bestMonthRate = computed(() => {
+  if (habitsStore.analytics?.best_month_rate !== undefined) {
+    return habitsStore.analytics.best_month_rate
+  }
+  const best = monthlyStats.value.find(m => m.isBest)
+  return best ? best.rate : 0
+})
+
 const monthlyStats = computed(() => {
+  if (habitsStore.analytics?.monthly_stats && habitsStore.analytics.monthly_stats.length > 0) {
+    const apiStats = habitsStore.analytics.monthly_stats
+    const bestRate = Math.max(...apiStats.map(m => m.completion_rate))
+    const currentMonth = new Date().getMonth() + 1
+    
+    return apiStats.map(month => ({
+      name: translateMonth(month.month_name),
+      rate: month.completion_rate || 0,
+      completed: month.completed || 0,
+      total: month.scheduled || 0,
+      isCurrent: month.month === currentMonth,
+      isBest: month.completion_rate === bestRate && month.scheduled > 0
+    }))
+  }
+  
   const today = new Date()
   const months = []
   const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 
@@ -2447,7 +2792,6 @@ const monthlyStats = computed(() => {
     })
   }
   
-  // Найти лучший месяц
   const maxRate = Math.max(...months.filter(m => m.total > 0).map(m => m.rate))
   months.forEach(m => {
     if (m.rate === maxRate && m.total > 0) m.isBest = true
@@ -2457,17 +2801,78 @@ const monthlyStats = computed(() => {
 })
 
 const bestMonthName = computed(() => {
+  if (habitsStore.analytics?.best_month_name) {
+    return translateMonth(habitsStore.analytics.best_month_name)
+  }
   const best = monthlyStats.value.find(m => m.isBest)
   return best ? best.name : '-'
 })
 
 function isScheduledForToday(habit) {
+  if (weekOffset.value !== 0) {
+    return true
+  }
   const today = new Date().getDay()
   return isScheduledForDay(habit, today)
 }
 
 function isCompletedOnDay(habit, dateStr) {
+  const backendHabit = habitsStore.habits.find(h => h.habit_id === habit.backendId)
+  if (backendHabit?.completions) {
+    const completion = backendHabit.completions.find(c => c.date === dateStr)
+    if (completion?.status === 'completed') return true
+  }
   return appStore.habitLog[dateStr]?.includes(habit.id)
+}
+
+function getHabitDayStatus(habit, dateStr) {
+  const habitBackendId = String(habit.habit_id || habit.backendId || habit.id)
+  
+  const analyticsData = habitsStore.analytics?.habits_data
+  if (analyticsData) {
+    const habitData = analyticsData.find(h => String(h.habit_id) === habitBackendId)
+    if (habitData?.completion_history) {
+      const dayData = habitData.completion_history.find(d => d.date === dateStr)
+      if (dayData) {
+        return dayData.status
+      }
+    }
+  }
+  
+  const backendHabit = habitsStore.habits.find(h => 
+    String(h.habit_id) === habitBackendId || String(h.id) === habitBackendId
+  )
+  if (backendHabit?.completions) {
+    const completion = backendHabit.completions.find(c => c.date === dateStr)
+    if (completion) {
+      return completion.status
+    }
+  }
+  
+  if (appStore.habitLog[dateStr]?.includes(habit.id)) {
+    return 'completed'
+  }
+  
+  if (isScheduledFromWeekSchedule(habit, dateStr)) {
+    return 'missed'
+  }
+  
+  return 'not_scheduled'
+}
+
+function getStatusLabel(status) {
+  const labels = {
+    'completed': 'Выполнена',
+    'missed': 'Пропущена',
+    'excused': 'Уважительная причина',
+    'amnestied': 'Амнистия',
+    'not_scheduled': 'Не запланирована'
+  }
+  return labels[status] || status
+}
+
+function getStatusTooltip(dateStr, status) {
+  return `${formatCalendarDate(dateStr)}: ${getStatusLabel(status)}`
 }
 
 function getFrequencyLabel(habit) {
@@ -2520,6 +2925,17 @@ function saveSkipData() {
 }
 
 function getDayStatus(habit, dateStr) {
+  const daySchedule = habit.week_schedule?.find(s => s.date === dateStr)
+  if (daySchedule) {
+    if (daySchedule.is_scheduled === false) {
+      return 'not-scheduled'
+    }
+    const status = daySchedule.status
+    if (status === 'pending') return 'today'
+    if (status === 'not-scheduled') return 'not-scheduled'
+    return status
+  }
+  
   const date = new Date(dateStr)
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -2541,6 +2957,18 @@ function getDayStatus(habit, dateStr) {
   if (isPast) return 'missed'
   if (isToday) return 'today'
   return 'scheduled'
+}
+
+function getDayScheduleData(habit, dateStr) {
+  return habit.week_schedule?.find(s => s.date === dateStr) || null
+}
+
+function isScheduledFromWeekSchedule(habit, dateStr) {
+  const daySchedule = habit.week_schedule?.find(s => s.date === dateStr)
+  if (daySchedule !== undefined && daySchedule.is_scheduled !== undefined) {
+    return daySchedule.is_scheduled === true
+  }
+  return isScheduledForDay(habit, new Date(dateStr).getDay())
 }
 
 function getDayStatusLabel(status) {
@@ -2571,6 +2999,17 @@ const isSelectedDayToday = computed(() => {
   return selectedDateStr === todayStr
 })
 
+const selectedDayXpInfo = computed(() => {
+  if (!selectedHabitForEdit.value || !selectedDayForEdit.value) {
+    return { xpEarned: 0, xpPenalty: 0 }
+  }
+  const daySchedule = getDayScheduleData(selectedHabitForEdit.value, selectedDayForEdit.value.date)
+  return {
+    xpEarned: daySchedule?.xp_earned || 0,
+    xpPenalty: daySchedule?.xp_penalty || 0
+  }
+})
+
 const showSkipReasonField = computed(() => {
   if (!selectedHabitForEdit.value || !selectedDayForEdit.value) return false
   const status = getDayStatus(selectedHabitForEdit.value, selectedDayForEdit.value.date)
@@ -2578,34 +3017,36 @@ const showSkipReasonField = computed(() => {
 })
 
 function openDayEditModal(habit, day) {
-  if (isPastWeek.value) {
-    toast.showToast({ type: 'info', title: 'Нельзя редактировать дни в прошлых неделях' })
-    return
-  }
-  if (!isScheduledForDay(habit, new Date(day.date).getDay())) {
+  if (!isScheduledFromWeekSchedule(habit, day.date)) {
     toast.showToast({ type: 'info', title: 'Привычка не запланирована на этот день' })
     return
   }
   
   selectedHabitForEdit.value = habit
   selectedDayForEdit.value = day
-  dayEditSkipReason.value = skipReasons.value[day.date]?.[habit.id] || ''
-  dayEditNote.value = habitNotes.value[day.date]?.[habit.id] || ''
+  
+  const daySchedule = getDayScheduleData(habit, day.date)
+  dayEditSkipReason.value = daySchedule?.excuse_reason || skipReasons.value[day.date]?.[habit.id] || ''
+  dayEditNote.value = daySchedule?.note || habitNotes.value[day.date]?.[habit.id] || ''
+  lastSavedNote.value = dayEditNote.value
   showDayEditModal.value = true
 }
 
-function switchToDay(day) {
+async function switchToDay(day) {
   if (!selectedHabitForEdit.value) return
-  if (!isScheduledForDay(selectedHabitForEdit.value, new Date(day.date).getDay())) {
+  if (!isScheduledFromWeekSchedule(selectedHabitForEdit.value, day.date)) {
     toast.showToast({ type: 'info', title: 'Привычка не запланирована на этот день' })
     return
   }
   
+  await saveNoteOnBlur()
   saveCurrentDayData()
   
   selectedDayForEdit.value = day
-  dayEditSkipReason.value = skipReasons.value[day.date]?.[selectedHabitForEdit.value.id] || ''
-  dayEditNote.value = habitNotes.value[day.date]?.[selectedHabitForEdit.value.id] || ''
+  const daySchedule = getDayScheduleData(selectedHabitForEdit.value, day.date)
+  dayEditSkipReason.value = daySchedule?.excuse_reason || skipReasons.value[day.date]?.[selectedHabitForEdit.value.id] || ''
+  dayEditNote.value = daySchedule?.note || habitNotes.value[day.date]?.[selectedHabitForEdit.value.id] || ''
+  lastSavedNote.value = dayEditNote.value
 }
 
 function saveCurrentDayData() {
@@ -2633,13 +3074,67 @@ function closeDayEditModal() {
   dayEditNote.value = ''
 }
 
-function saveNoteAndClose() {
+async function saveNoteAndClose() {
+  if (!selectedHabitForEdit.value || !selectedDayForEdit.value) {
+    closeDayEditModal()
+    return
+  }
+  
   saveCurrentDayData()
-  toast.showToast({ type: 'success', title: 'Заметка сохранена' })
+  
+  const habit = selectedHabitForEdit.value
+  const habitId = habit.habit_id || habit.id
+  const dateStr = selectedDayForEdit.value.date
+  const currentStatus = getDayStatus(habit, dateStr)
+  
+  if (dayEditNote.value) {
+    const statusToSend = isFutureDay.value ? null : currentStatus
+    const result = await habitsStore.updateCompletionNote(habitId, dateStr, dayEditNote.value, statusToSend)
+    
+    if (result.success) {
+      toast.showToast({ type: 'success', title: 'Заметка сохранена' })
+    } else {
+      toast.showToast({ type: 'error', title: 'Ошибка сохранения', message: result.error?.message })
+    }
+  } else {
+    toast.showToast({ type: 'success', title: 'Заметка сохранена' })
+  }
+  
   closeDayEditModal()
 }
 
-function setDayAsCompleted() {
+async function saveNoteOnBlur() {
+  if (!selectedHabitForEdit.value || !selectedDayForEdit.value) return
+  if (noteSaving.value) return
+  if (dayEditNote.value === lastSavedNote.value) return
+  if (!dayEditNote.value && !lastSavedNote.value) return
+  
+  noteSaving.value = true
+  
+  const habit = selectedHabitForEdit.value
+  const habitId = habit.habit_id || habit.id
+  const dateStr = selectedDayForEdit.value.date
+  const currentStatus = getDayStatus(habit, dateStr)
+  
+  saveCurrentDayData()
+  
+  const validStatuses = ['completed', 'missed', 'excused']
+  const statusToSend = validStatuses.includes(currentStatus) ? currentStatus : null
+  const result = await habitsStore.updateCompletionNote(habitId, dateStr, dayEditNote.value, statusToSend)
+  
+  noteSaving.value = false
+  
+  if (result.success) {
+    lastSavedNote.value = dayEditNote.value
+    if (DEBUG_MODE) {
+      console.log('[Habits] Note saved successfully:', dateStr, dayEditNote.value)
+    }
+  } else {
+    toast.showToast({ type: 'error', title: 'Ошибка сохранения заметки', message: result.error?.message })
+  }
+}
+
+async function setDayAsCompleted() {
   if (!selectedHabitForEdit.value || !selectedDayForEdit.value) return
   if (isFutureDay.value) {
     toast.showToast({ type: 'warning', title: 'Нельзя изменить статус будущего дня' })
@@ -2649,6 +3144,7 @@ function setDayAsCompleted() {
   saveCurrentDayData()
   
   const habit = selectedHabitForEdit.value
+  const habitId = habit.habit_id || habit.id
   const dateStr = selectedDayForEdit.value.date
   
   if (!appStore.habitLog[dateStr]) {
@@ -2663,10 +3159,17 @@ function setDayAsCompleted() {
     saveSkipData()
   }
   
-  toast.showToast({ type: 'success', title: `Отмечено как выполненное` })
+  const result = await habitsStore.markCompleted(habitId, dateStr, dayEditNote.value)
+  
+  if (result.success) {
+    toast.showToast({ type: 'success', title: `Отмечено как выполненное` })
+    await habitsStore.loadStatsPanel()
+  } else {
+    toast.showToast({ type: 'error', title: 'Ошибка сохранения', message: result.error?.message })
+  }
 }
 
-function setDayAsMissed() {
+async function setDayAsMissed() {
   if (!selectedHabitForEdit.value || !selectedDayForEdit.value) return
   if (isFutureDay.value) {
     toast.showToast({ type: 'warning', title: 'Нельзя изменить статус будущего дня' })
@@ -2676,6 +3179,7 @@ function setDayAsMissed() {
   saveCurrentDayData()
   
   const habit = selectedHabitForEdit.value
+  const habitId = habit.habit_id || habit.id
   const dateStr = selectedDayForEdit.value.date
   
   if (appStore.habitLog[dateStr]) {
@@ -2693,10 +3197,17 @@ function setDayAsMissed() {
     saveSkipData()
   }
   
-  toast.showToast({ type: 'info', title: `Отмечено как пропущенное` })
+  const result = await habitsStore.unmarkCompleted(habitId, dateStr)
+  
+  if (result.success) {
+    toast.showToast({ type: 'info', title: `Отмечено как пропущенное` })
+    await habitsStore.loadStatsPanel()
+  } else {
+    toast.showToast({ type: 'error', title: 'Ошибка сохранения', message: result.error?.message })
+  }
 }
 
-function setDayAsExcused() {
+async function setDayAsExcused() {
   if (!selectedHabitForEdit.value || !selectedDayForEdit.value) return
   if (isFutureDay.value) {
     toast.showToast({ type: 'warning', title: 'Нельзя изменить статус будущего дня' })
@@ -2706,6 +3217,7 @@ function setDayAsExcused() {
   saveCurrentDayData()
   
   const habit = selectedHabitForEdit.value
+  const habitId = habit.habit_id || habit.id
   const dateStr = selectedDayForEdit.value.date
   
   if (appStore.habitLog[dateStr]) {
@@ -2721,7 +3233,14 @@ function setDayAsExcused() {
   }
   saveSkipData()
   
-  toast.showToast({ type: 'success', title: `Уважительный пропуск (без штрафа)` })
+  const result = await habitsStore.markExcused(habitId, dateStr, dayEditSkipReason.value)
+  
+  if (result.success) {
+    toast.showToast({ type: 'success', title: `Уважительный пропуск (без штрафа)` })
+    await habitsStore.loadStatsPanel()
+  } else {
+    toast.showToast({ type: 'error', title: 'Ошибка сохранения', message: result.error?.message })
+  }
 }
 
 function cancelAmnestyForDay() {
@@ -2766,7 +3285,7 @@ const dayEditWeekStats = computed(() => {
   return { xpEarned, xpPenalty }
 })
 
-function toggleHabitCompletion(habit) {
+async function toggleHabitCompletion(habit) {
   if (isPastWeek.value) {
     toast.showToast({ title: 'Нельзя изменять статусы в прошлых неделях', type: 'info' })
     return
@@ -2777,6 +3296,7 @@ function toggleHabitCompletion(habit) {
   }
   
   const result = appStore.toggleHabit(habit.id)
+  const todayStr = new Date().toISOString().split('T')[0]
   
   if (result.completed) {
     const xpAmount = habit.xpReward || XP_REWARDS.HABIT_COMPLETED
@@ -2789,6 +3309,13 @@ function toggleHabitCompletion(habit) {
     setTimeout(() => {
       showXpPopup.value = null
     }, 1200)
+    
+    const backendResult = await habitsStore.markCompleted(habit.backendId || habit.id, todayStr)
+    if (backendResult.success) {
+      await habitsStore.loadStatsPanel()
+    } else if (DEBUG_MODE) {
+      console.log('[Habits] Backend completion sync failed, will retry later')
+    }
   } else {
     const lastEvent = xpStore.xpHistory.find(
       e => e.source === 'habit_completed' && 
@@ -2797,6 +3324,13 @@ function toggleHabitCompletion(habit) {
     )
     if (lastEvent) {
       xpStore.revokeXP(lastEvent.id)
+    }
+    
+    const backendResult = await habitsStore.unmarkCompleted(habit.backendId || habit.id, todayStr)
+    if (backendResult.success) {
+      await habitsStore.loadStatsPanel()
+    } else if (DEBUG_MODE) {
+      console.log('[Habits] Backend undo sync failed, will retry later')
     }
   }
 }
@@ -2823,17 +3357,55 @@ function openAddModal() {
 
 function editHabit(habit) {
   editingHabit.value = habit
+  
+  const scheduleDays = habit.scheduleDays || habit.schedule_days || []
+  const frequencyType = determineFrequencyType(habit.frequencyType || habit.frequency_type, scheduleDays)
+  
   formData.value = {
     name: habit.name,
     icon: normalizeIconName(habit.icon),
     description: habit.description || '',
-    xpReward: habit.xpReward || 5,
-    xpPenalty: habit.xpPenalty || 0,
-    frequencyType: habit.frequencyType || 'daily',
-    scheduleDays: habit.scheduleDays || [1, 2, 3, 4, 5, 6, 0],
-    reminderTime: habit.reminderTime || ''
+    xpReward: habit.xpReward || habit.xp_reward || 5,
+    xpPenalty: habit.xpPenalty || habit.xp_penalty || 0,
+    frequencyType: frequencyType,
+    scheduleDays: scheduleDays.length > 0 ? [...scheduleDays] : [1, 2, 3, 4, 5, 6, 0],
+    reminderTime: habit.reminderTime || habit.reminder_time || ''
   }
   showModal.value = true
+}
+
+function determineFrequencyType(existingType, scheduleDays) {
+  if (existingType && existingType !== 'daily') {
+    return existingType
+  }
+  
+  if (!scheduleDays || scheduleDays.length === 0) {
+    return 'daily'
+  }
+  
+  const sortedDays = [...scheduleDays].sort((a, b) => a - b)
+  const allDays = [0, 1, 2, 3, 4, 5, 6]
+  const weekdays = [1, 2, 3, 4, 5]
+  const weekends = [0, 6]
+  
+  const arraysEqual = (a, b) => {
+    if (a.length !== b.length) return false
+    const sortedA = [...a].sort((x, y) => x - y)
+    const sortedB = [...b].sort((x, y) => x - y)
+    return sortedA.every((val, i) => val === sortedB[i])
+  }
+  
+  if (arraysEqual(sortedDays, allDays)) {
+    return 'daily'
+  }
+  if (arraysEqual(sortedDays, weekdays)) {
+    return 'weekdays'
+  }
+  if (arraysEqual(sortedDays, weekends)) {
+    return 'weekends'
+  }
+  
+  return 'custom'
 }
 
 function closeModal() {
@@ -2889,8 +3461,12 @@ function isDayActiveBySchedule(dayKey) {
   return false
 }
 
-function saveHabit() {
+async function saveHabit() {
   if (!formData.value.name.trim()) return
+  
+  const scheduleDays = formData.value.frequencyType === 'custom' ? formData.value.scheduleDays :
+                       formData.value.frequencyType === 'weekdays' ? [1, 2, 3, 4, 5] :
+                       formData.value.frequencyType === 'weekends' ? [0, 6] : [0, 1, 2, 3, 4, 5, 6]
   
   const habitData = {
     name: formData.value.name.trim(),
@@ -2899,56 +3475,94 @@ function saveHabit() {
     xpReward: formData.value.xpReward,
     xpPenalty: formData.value.xpPenalty,
     frequencyType: formData.value.frequencyType,
-    scheduleDays: formData.value.frequencyType === 'custom' ? formData.value.scheduleDays :
-                  formData.value.frequencyType === 'weekdays' ? [1, 2, 3, 4, 5] :
-                  formData.value.frequencyType === 'weekends' ? [0, 6] : [0, 1, 2, 3, 4, 5, 6],
+    scheduleDays: scheduleDays,
     reminderTime: formData.value.reminderTime
+  }
+  
+  const backendHabitData = {
+    name: habitData.name,
+    description: habitData.description || '',
+    icon: habitData.icon,
+    xp_reward: habitData.xpReward,
+    xp_penalty: habitData.xpPenalty || 0,
+    schedule_days: scheduleDays
   }
   
   if (editingHabit.value) {
     appStore.updateHabit(editingHabit.value.id, habitData)
     toast.showToast({ title: 'Привычка обновлена', type: 'success' })
+    
+    const backendId = editingHabit.value.backendId || editingHabit.value.id
+    const backendResult = await habitsStore.updateHabit(backendId, backendHabitData)
+    if (backendResult.success && backendResult.data?.id) {
+      appStore.updateHabit(editingHabit.value.id, { backendId: backendResult.data.id })
+    }
   } else {
-    appStore.addHabit(habitData)
+    const localHabit = appStore.addHabit(habitData)
     toast.showToast({ title: 'Привычка создана', type: 'success' })
     
     if (allHabits.value.length === 0 && gameSettings.value.aiCoachEnabled) {
       coachHint.value = 'Отлично! Первый шаг сделан. Старайтесь выполнять привычку каждый день — так она закрепится быстрее.'
+    }
+    
+    console.log('[Habits] Creating habit on backend:', backendHabitData)
+    const backendResult = await habitsStore.createHabit(backendHabitData)
+    console.log('[Habits] Backend create result:', backendResult)
+    
+    if (backendResult.success && backendResult.habitId) {
+      appStore.updateHabit(localHabit.id, { backendId: backendResult.habitId })
+      console.log('[Habits] Habit synced with backend, id:', backendResult.habitId)
     }
   }
   
   closeModal()
 }
 
-function deleteHabit() {
+async function deleteHabit() {
   if (editingHabit.value) {
     appStore.removeHabit(editingHabit.value.id)
     toast.showToast({ title: 'Привычка удалена', type: 'info' })
+    
+    const backendId = editingHabit.value.backendId || editingHabit.value.id
+    await habitsStore.deleteHabit(backendId)
+    
     closeModal()
   }
 }
 
-function archiveHabit(habit) {
+async function archiveHabit(habit) {
   appStore.updateHabit(habit.id, { archived: true })
   toast.showToast({ title: 'Привычка архивирована', type: 'info' })
+  
+  const backendId = habit.backendId || habit.id
+  await habitsStore.archiveHabit(backendId)
 }
 
-function confirmDeleteHabit(habit) {
+async function confirmDeleteHabit(habit) {
   if (confirm(`Удалить привычку "${habit.name}"?`)) {
     appStore.removeHabit(habit.id)
     toast.showToast({ title: 'Привычка удалена', message: 'Её можно восстановить в блоке "Удалённые привычки"', type: 'info' })
+    
+    const backendId = habit.backendId || habit.id
+    await habitsStore.deleteHabit(backendId)
   }
 }
 
-function restoreHabit(habit) {
+async function restoreHabit(habit) {
   appStore.restoreHabit(habit.id)
   toast.showToast({ title: 'Привычка восстановлена', type: 'success' })
+  
+  const backendId = habit.backendId || habit.id
+  await habitsStore.restoreHabit(backendId)
 }
 
-function permanentlyDeleteHabit(habit) {
+async function permanentlyDeleteHabit(habit) {
   if (confirm(`Удалить привычку "${habit.name}" навсегда? Это действие нельзя отменить.`)) {
     appStore.permanentlyDeleteHabit(habit.id)
     toast.showToast({ title: 'Привычка удалена навсегда', type: 'warning' })
+    
+    const backendId = habit.backendId || habit.id
+    await habitsStore.permanentlyDeleteHabit(backendId)
   }
 }
 
@@ -2982,18 +3596,46 @@ function setDifficulty(mode) {
   saveGameSettings()
 }
 
-function saveGameSettings() {
+async function saveGameSettings() {
   try {
     localStorage.setItem('onepercent_game_settings', JSON.stringify(gameSettings.value))
+
+    const backendSettings = {
+      difficulty_mode: gameSettings.value.difficultyMode,
+      planning_penalty_enabled: gameSettings.value.planningPenalty ?? false,
+      planning_penalty_amount: gameSettings.value.planningPenalty ? (gameSettings.value.planningPenaltyAmount ?? 10) : 0,
+      journal_penalty_enabled: gameSettings.value.journalPenalty ?? false,
+      journal_penalty_amount: gameSettings.value.journalPenalty ? (gameSettings.value.journalPenaltyAmount ?? 10) : 0,
+      weekly_amnesty_count: gameSettings.value.weeklyAmnestyCount ?? 1
+    }
+
+    const result = await habitsStore.saveSettings(backendSettings)
+
+    if (result.success) {
+      if (amnestyDataWasLoaded.value) {
+        const newTotal = gameSettings.value.weeklyAmnestyCount ?? 1
+        const used = habitsStore.amnestyData.amnesty_available.used || 0
+        habitsStore.amnestyData.amnesty_available.total = newTotal
+        habitsStore.amnestyData.amnesty_available.remaining = Math.max(0, newTotal - used)
+      }
+      
+      if (habitsStore.settings?.weekly_amnesty_count !== undefined) {
+        gameSettings.value.weeklyAmnestyCount = habitsStore.settings.weekly_amnesty_count
+      }
+      if (habitsStore.settings?.amnesty_remaining !== undefined) {
+        gameSettings.value.amnestiesUsedThisWeek = (gameSettings.value.weeklyAmnestyCount ?? 1) - habitsStore.settings.amnesty_remaining
+      }
+    }
+
     if (DEBUG_MODE) {
-      console.log('[Habits] Game settings saved:', gameSettings.value)
+      console.log('[Habits] Game settings saved:', gameSettings.value, 'Backend result:', result.success)
     }
   } catch (e) {
     console.error('[Habits] Failed to save game settings:', e)
   }
 }
 
-function loadGameSettings() {
+async function loadGameSettings() {
   try {
     const stored = localStorage.getItem('onepercent_game_settings')
     if (stored) {
@@ -3007,34 +3649,153 @@ function loadGameSettings() {
         }
       }
     }
+    
+    const result = await habitsStore.loadSettings()
+    if (result.success && result.data) {
+      gameSettings.value.difficultyMode = result.data.difficulty_mode || gameSettings.value.difficultyMode
+      gameSettings.value.penaltiesEnabled = result.data.difficulty_mode !== 'soft'
+      gameSettings.value.amnestiedDates = result.data.amnestied_dates || []
+      
+      if (result.data.planning_penalty_enabled !== undefined) {
+        gameSettings.value.planningPenalty = result.data.planning_penalty_enabled
+        gameSettings.value.planningPenaltyAmount = result.data.planning_penalty_amount ?? 10
+      }
+      if (result.data.journal_penalty_enabled !== undefined) {
+        gameSettings.value.journalPenalty = result.data.journal_penalty_enabled
+        gameSettings.value.journalPenaltyAmount = result.data.journal_penalty_amount ?? 10
+      }
+      if (result.data.amnesty_remaining !== undefined) {
+        const maxAmnesty = result.data.weekly_amnesty_count ?? 1
+        gameSettings.value.weeklyAmnestyCount = maxAmnesty
+        gameSettings.value.amnestiesUsedThisWeek = maxAmnesty - result.data.amnesty_remaining
+      }
+      
+      if (DEBUG_MODE) {
+        console.log('[Habits] Settings loaded from backend:', result.data)
+      }
+    }
   } catch (e) {
     console.error('[Habits] Failed to load game settings:', e)
   }
 }
 
-function useAmnesty() {
-  const now = new Date()
-  const weekStart = getWeekStart(now)
-  
-  if (!gameSettings.value.amnestyWeekStart || 
-      new Date(gameSettings.value.amnestyWeekStart).getTime() !== weekStart.getTime()) {
-    gameSettings.value.amnestyWeekStart = weekStart.toISOString()
-    gameSettings.value.amnestiesUsedThisWeek = 0
+async function useAmnesty(date = null) {
+  const targetDate = date || selectedAmnestyDate.value
+  if (!targetDate) {
+    toast.showToast({ title: 'Ошибка', message: 'Выберите день для амнистии', type: 'error' })
+    return
   }
   
-  gameSettings.value.amnestiesUsedThisWeek++
-  gameSettings.value.weeklyAmnestyUsed = now.toISOString()
-  saveGameSettings()
+  const result = await habitsStore.applyAmnesty(targetDate)
   
-  const remaining = amnestiesRemaining.value
-  const message = remaining > 0 
-    ? `Штрафы за сегодня отменены. Осталось амнистий: ${remaining}` 
-    : 'Штрафы за сегодня отменены. Это была последняя амнистия на этой неделе'
-  toast.showToast({ title: 'Амнистия активирована!', message, type: 'success' })
+  if (result.success) {
+    const now = new Date()
+    const weekStart = getWeekStart(now)
+    
+    if (!gameSettings.value.amnestyWeekStart || 
+        new Date(gameSettings.value.amnestyWeekStart).getTime() !== weekStart.getTime()) {
+      gameSettings.value.amnestyWeekStart = weekStart.toISOString()
+      gameSettings.value.amnestiesUsedThisWeek = 0
+    }
+    
+    gameSettings.value.amnestiesUsedThisWeek++
+    gameSettings.value.weeklyAmnestyUsed = now.toISOString()
+    gameSettings.value.amnestiedDates = [...(gameSettings.value.amnestiedDates || []), targetDate]
+    saveGameSettings()
+    
+    const xpRestored = result.xpRestored || 0
+    const remaining = habitsStore.amnestyRemaining
+    const message = xpRestored > 0 
+      ? `+${xpRestored} XP возвращено. Осталось амнистий: ${remaining}` 
+      : `Штрафы отменены. Осталось амнистий: ${remaining}`
+    toast.showToast({ title: 'Амнистия применена!', message, type: 'success' })
+    
+    selectedAmnestyDate.value = null
+    showAmnestyModal.value = false
+  } else {
+    const errorMsg = result.error?.message || 'Не удалось применить амнистию'
+    toast.showToast({ title: 'Ошибка', message: errorMsg, type: 'error' })
+  }
 }
 
-onMounted(() => {
+async function revokeAmnesty(date) {
+  const result = await habitsStore.revokeAmnesty(date)
+  
+  if (result.success) {
+    gameSettings.value.amnestiedDates = (gameSettings.value.amnestiedDates || []).filter(d => d !== date)
+    gameSettings.value.amnestiesUsedThisWeek = Math.max(0, gameSettings.value.amnestiesUsedThisWeek - 1)
+    saveGameSettings()
+    
+    toast.showToast({ title: 'Амнистия отменена', message: 'Штрафы снова активны для этого дня', type: 'info' })
+  } else {
+    const errorMsg = result.error?.message || 'Не удалось отменить амнистию'
+    toast.showToast({ title: 'Ошибка', message: errorMsg, type: 'error' })
+  }
+}
+
+const selectedAmnestyDate = ref(null)
+const analyticsLoaded = ref(false)
+const achievementsLoaded = ref(false)
+
+watch(activeTab, async (newTab) => {
+  if (newTab === 'analytics') {
+    if (!analyticsLoaded.value) {
+      await habitsStore.loadAnalytics()
+      analyticsLoaded.value = true
+    }
+    if (!achievementsLoaded.value) {
+      await habitsStore.loadAchievements()
+      achievementsLoaded.value = true
+    }
+  }
+})
+
+watch(weekOffset, async (newOffset, oldOffset) => {
+  if (newOffset === oldOffset) return
+  
+  const days = weekDays.value
+  if (!days.length) return
+  
+  const dateFrom = days[0].date
+  const dateTo = days[6].date
+  
+  if (DEBUG_MODE) {
+    console.log('[Habits.vue] Week changed, loading data:', { dateFrom, dateTo, weekOffset: newOffset })
+  }
+  
+  const params = {
+    date_from: dateFrom,
+    date_to: dateTo,
+    include_deleted: true
+  }
+  
+  const result = await habitsStore.loadHabits(params)
+  
+  if (!result.success && result.reason === 'loading') {
+    pendingWeekLoad.value = params
+    if (DEBUG_MODE) {
+      console.log('[Habits.vue] Load in progress, queued for retry:', params)
+    }
+  }
+})
+
+watch(() => habitsStore.loading, async (isLoading, wasLoading) => {
+  if (wasLoading && !isLoading && pendingWeekLoad.value) {
+    const params = pendingWeekLoad.value
+    pendingWeekLoad.value = null
+    
+    if (DEBUG_MODE) {
+      console.log('[Habits.vue] Retrying pending week load:', params)
+    }
+    
+    await habitsStore.loadHabits(params)
+  }
+})
+
+onMounted(async () => {
   loadGameSettings()
+  
+  await habitsStore.initialize({ force: true })
   
   if (gameSettings.value.aiCoachEnabled && habitStreak.value >= 7 && habitStreak.value % 7 === 0) {
     coachHint.value = `Потрясающе! ${habitStreak.value} дней подряд — это уже настоящая привычка! Так держать!`
@@ -3384,6 +4145,24 @@ onMounted(() => {
   font-weight: 500;
 }
 
+.amnesty-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2rem 1rem;
+  color: var(--text-muted);
+}
+
+.amnesty-loading .spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .amnesty-empty {
   display: flex;
   flex-direction: column;
@@ -3557,13 +4336,43 @@ onMounted(() => {
 
 .day-edit-current-status {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 0.5rem;
   padding: 0.5rem 0.75rem;
   background: var(--bg-secondary);
   border-radius: 8px;
   margin-bottom: 1rem;
   font-size: 0.85rem;
+}
+
+.day-edit-current-status .status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.day-edit-current-status .xp-row {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.day-edit-current-status .xp-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+}
+
+.day-edit-current-status .xp-badge.positive {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.day-edit-current-status .xp-badge.negative {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
 }
 
 .day-edit-current-status .status-label {
@@ -3605,6 +4414,37 @@ onMounted(() => {
 .day-edit-notes,
 .day-edit-reason {
   margin-bottom: 1rem;
+}
+
+.note-save-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.btn-save-note-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--primary-color);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-save-note-inline:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-save-note-inline:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .day-edit-notes label,
@@ -4171,6 +5011,55 @@ onMounted(() => {
   margin-bottom: 0.5rem;
 }
 
+.habit-month-view {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.habit-month-view::-webkit-scrollbar {
+  display: none;
+}
+
+.habit-day-cell-small {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.habit-day-cell-small.status-completed {
+  background: #10b981;
+}
+
+.habit-day-cell-small.status-missed {
+  background: #ef4444;
+}
+
+.habit-day-cell-small.status-excused {
+  background: #f59e0b;
+}
+
+.habit-day-cell-small.status-amnestied {
+  background: #8b5cf6;
+}
+
+.habit-day-cell-small.status-not_scheduled {
+  background: var(--border-color);
+  opacity: 0.4;
+}
+
+.analytics-period {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 0.85em;
+}
+
 .habit-day-cell {
   width: 18px;
   height: 18px;
@@ -4180,6 +5069,31 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+}
+
+.habit-day-cell.status-completed {
+  background: #10b981;
+  color: white;
+}
+
+.habit-day-cell.status-missed {
+  background: #ef4444;
+  color: white;
+}
+
+.habit-day-cell.status-excused {
+  background: #f59e0b;
+  color: white;
+}
+
+.habit-day-cell.status-amnestied {
+  background: #8b5cf6;
+  color: white;
+}
+
+.habit-day-cell.status-not_scheduled {
+  background: var(--border-color);
+  opacity: 0.4;
 }
 
 .habit-day-cell.scheduled {

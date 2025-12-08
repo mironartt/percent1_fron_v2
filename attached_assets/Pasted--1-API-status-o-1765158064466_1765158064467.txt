@@ -1,0 +1,108 @@
+  Ответы на вопросы по интеграции
+
+  1. Формат ответа API
+
+  Правильный формат:
+  {
+    "status": "ok",
+    "data": { ... }
+  }
+
+  НЕ {"response": {"status": "ok", ...}} — это ошибка в документации frontend_api_guide.md.
+
+  Формат ошибки:
+  {
+    "status": "error",
+    "error_data": {
+      "error": "ERROR_KEY",
+      "message": "Описание ошибки",
+      "error_code": "уникальный_код",
+      "status_code": 400
+    }
+  }
+
+  ---
+  2. Базовый URL
+
+  Правильный полный URL: /api/rest/front/app/habits/...
+
+  Примеры:
+  - /api/rest/front/app/habits/get/
+  - /api/rest/front/app/habits/settings/get/
+  - /api/rest/front/app/habits/completions/update/
+
+  Источник: core/urls_front_api.py:49-86
+
+  ---
+  3. Статус amnestied vs is_amnestied
+
+  Это разные вещи:
+
+  | Поле         | Тип     | Описание                              |
+  |--------------|---------|---------------------------------------|
+  | status       | string  | Отображаемый статус дня (7 вариантов) |
+  | is_amnestied | boolean | Флаг применения амнистии              |
+
+  Логика приоритета:
+  - Если is_amnestied = true → status автоматически становится "amnestied"
+  - Если is_amnestied = false → status показывает реальный статус (completed, missed, excused)
+
+  Пример: Когда status = "missed" и is_amnestied = true — это невозможная комбинация. Бэкенд переопределяет status на "amnestied" если амнистия применена.
+
+  Все 7 статусов:
+  | Статус        | Описание                           |
+  |---------------|------------------------------------|
+  | completed     | Выполнено                          |
+  | missed        | Пропущено (со штрафом)             |
+  | excused       | Уважительный пропуск (без штрафа)  |
+  | amnestied     | Амнистия применена (штраф отменён) |
+  | pending       | Сегодня, ожидает выполнения        |
+  | future        | Будущий день                       |
+  | not-scheduled | День не в расписании               |
+
+  ---
+  4. Поля xp_earned и xp_penalty в week_schedule
+
+  Да, они возвращаются для каждого дня:
+
+  {
+    "date": "2024-12-06",
+    "status": "completed",
+    "xp_earned": 10,
+    "xp_penalty": 0,
+    "is_amnestied": false
+  }
+
+  Использование:
+  - xp_earned — XP за выполнение (показывать при status: completed)
+  - xp_penalty — штраф за пропуск (показывать при status: missed)
+  - При amnestied — xp_penalty = 0 (штраф отменён)
+
+  Рекомендация: Можно отображать эти значения в UI для информирования пользователя о заработанных/потерянных XP.
+
+  ---
+  5. Статус pending vs future
+
+  Полагайтесь на статус от бэкенда!
+
+  | Статус  | Условие                             |
+  |---------|-------------------------------------|
+  | pending | date == today И is_scheduled = true |
+  | future  | date > today                        |
+
+  Бэкенд уже делает эту логику в get_habits_data():
+  if day > current_date:
+      status = 'future'
+  elif day == current_date:
+      status = 'pending' if is_scheduled else 'not-scheduled'
+
+  Преимущество: Если пользователь уже выполнил привычку сегодня, status будет completed, а не pending.
+
+  ---
+  Резюме рекомендаций
+
+  1. Формат ответа: Используй response.status и response.data (без wrapper response)
+  2. URL: /api/rest/front/app/habits/...
+  3. Амнистия: Проверяй только status === 'amnestied', is_amnestied — вспомогательный флаг
+  4. XP поля: Можно использовать для отображения заработанных/потерянных очков
+  5. Статусы: Полагайся на status от бэкенда, не проверяй даты вручную

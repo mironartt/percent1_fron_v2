@@ -1,0 +1,227 @@
+Вижу странное поведение.
+Открываю страницу `/app/habits`
+Вижу идет запрос на бэк: `/api/rest/front/app/habits/settings/get/`, но не вижу запроса на `/api/rest/front/app/habits/get/`.
+Нужно: чтобы при каждом открытие страницы привычек, происходил запрос на получение данных по привычкам - `/api/rest/front/app/habits/get/`.
+
+Если я обноляю страницу привычек, то вижу что фронт отправляет запрос на `/api/rest/front/app/habits/get/`, и бэк возвращает данные:
+```
+{
+  "status": "ok",
+  "data": {
+    "date_from": "2025-12-01",
+    "date_to": "2025-12-07",
+    "habits": [
+      {
+        "habit_id": 2,
+        "name": "Прогулка 30 минут",
+        "icon": "fire",
+        "xp_reward": 69,
+        "xp_penalty": 0,
+        "frequency_type": "daily",
+        "schedule_days": [
+          1,
+          2,
+          4,
+          5,
+          0
+        ],
+        "description": "Свежий воздух и движение",
+        "date_created": "2025-12-07 11:49:42",
+        "date_deleted": null,
+        "week_schedule": [
+          {
+            "date": "2025-12-01",
+            "weekday": 1,
+            "status": "missed",
+            "is_scheduled": true,
+            "note": null,
+            "excuse_reason": null,
+            "xp_earned": 0,
+            "xp_penalty": 0,
+            "is_amnestied": false
+          },
+          {
+            "date": "2025-12-02",
+            "weekday": 2,
+            "status": "missed",
+            "is_scheduled": true,
+            "note": null,
+            "excuse_reason": null,
+            "xp_earned": 0,
+            "xp_penalty": 0,
+            "is_amnestied": false
+          },
+          {
+            "date": "2025-12-03",
+            "weekday": 3,
+            "status": "not-scheduled",
+            "is_scheduled": false,
+            "note": null,
+            "excuse_reason": null,
+            "xp_earned": 0,
+            "xp_penalty": 0,
+            "is_amnestied": false
+          },
+          {
+            "date": "2025-12-04",
+            "weekday": 4,
+            "status": "missed",
+            "is_scheduled": true,
+            "note": null,
+            "excuse_reason": null,
+            "xp_earned": 0,
+            "xp_penalty": 0,
+            "is_amnestied": false
+          },
+          {
+            "date": "2025-12-05",
+            "weekday": 5,
+            "status": "missed",
+            "is_scheduled": true,
+            "note": null,
+            "excuse_reason": null,
+            "xp_earned": 0,
+            "xp_penalty": 0,
+            "is_amnestied": false
+          },
+          {
+            "date": "2025-12-06",
+            "weekday": 6,
+            "status": "not-scheduled",
+            "is_scheduled": false,
+            "note": null,
+            "excuse_reason": null,
+            "xp_earned": 0,
+            "xp_penalty": 0,
+            "is_amnestied": false
+          },
+          {
+            "date": "2025-12-07",
+            "weekday": 0,
+            "status": "pending",
+            "is_scheduled": true,
+            "note": null,
+            "excuse_reason": null,
+            "xp_earned": 0,
+            "xp_penalty": 0,
+            "is_amnestied": false
+          }
+        ]
+      },
+      {
+        "habit_id": 1,
+        "name": "Планирование дня",
+        "icon": "fire",
+        "xp_reward": 8,
+        "xp_penalty": 0,
+        "frequency_type": "daily",
+        "schedule_days": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "description": "Составить список задач на день",
+        "date_created": "2025-12-07 11:49:05",
+        "date_deleted": null,
+        "week_schedule": [
+          {
+            "date": "2025-12-01",
+            "weekday": 1,
+            "status": "missed",
+            "is_scheduled": true,
+            "note": null,
+            "excuse_reason": null,
+            "xp_earned": 0,
+            "xp_penalty": 0,
+            "is_amnestied": false
+          },
+          {
+            "date": "2025-12-02",
+            "weekday": 2,
+            "status": "missed",
+            "is_scheduled": true,
+            "note": null,
+            "excuse_reason": null,
+            "xp_earned": 0,
+            "xp_penalty": 0,
+            "is_amnestied": false
+          },
+          {
+            "date": "2025-12-03",
+            "weekday": 3,
+            "status": "missed",
+            "is_scheduled": true,
+            "note": null,
+            "excuse_reason": null,
+            "xp_earned": 0,
+            "xp_penalty": 0,
+            "is_amnestied": false
+          },
+          {
+            "date": "2025-12-04",
+            "weekday": 4,
+            "status": "missed",
+            "is_scheduled": true,
+            "note": null,
+            "excuse_reason": null,
+            "xp_earned": 0,
+            "xp_penalty": 0,
+            "is_amnestied": false
+          },
+          {
+            "date": "2025-12-05",
+            "weekday": 5,
+            "status": "missed",
+            "is_scheduled": true,
+            "note": null,
+            "excuse_reason": null,
+            "xp_earned": 0,
+            "xp_penalty": 0,
+            "is_amnestied": false
+          },
+          {
+            "date": "2025-12-06",
+            "weekday": 6,
+            "status": "not-scheduled",
+            "is_scheduled": false,
+            "note": null,
+            "excuse_reason": null,
+            "xp_earned": 0,
+            "xp_penalty": 0,
+            "is_amnestied": false
+          },
+          {
+            "date": "2025-12-07",
+            "weekday": 0,
+            "status": "not-scheduled",
+            "is_scheduled": false,
+            "note": null,
+            "excuse_reason": null,
+            "xp_earned": 0,
+            "xp_penalty": 0,
+            "is_amnestied": false
+          }
+        ]
+      }
+    ],
+    "settings": {
+      "difficulty_mode": "soft",
+      "penalty_multiplier": 0.0,
+      "weekly_amnesty_count": 0,
+      "planning_penalty_enabled": false,
+      "planning_penalty_amount": 0,
+      "journal_penalty_enabled": false,
+      "journal_penalty_amount": 0,
+      "amnestied_dates": [],
+      "amnestied_this_week": 0,
+      "amnesty_remaining": 0
+    }
+  }
+}
+```
+Т.е. бэк вернул данные по двум привычкам.
+Но фронт, ничего не отрисовал на странице.
+
+Изучи указанные проблемы - и исправь их.

@@ -1,0 +1,110 @@
+Я обдумывал вопрос:
+2. Данные для модального окна амнистии — где бэк возвращает эти данные чтобы фронт мог отрисовать в верхнем блоке нужное и в модальном окне также.
+
+Ответы:
+- 2. Анализ текущего функционала
+
+  Что ЕСТЬ:
+
+  ✅ Эндпоинты:
+  - /app/habits/amnesty/apply/ — применить амнистию к дате
+  - /app/habits/amnesty/revoke/ — отменить амнистию
+
+  ✅ Данные в ответе:
+  - amnestied_dates — список дат с амнистией
+  - amnesty_remaining — сколько осталось
+
+  ✅ Логика:
+  - Амнистия отменяет все штрафы за день (строки 2247-2258)
+  - Возвращает XP за каждое пропущенное выполнение
+
+  ---
+  Что НЕ ХВАТАЕТ для модального окна:
+
+  ❌ Список всех дней текущей недели с детальной информацией:
+  - Какие дни можно выбрать для амнистии
+  - Сколько XP вернется за каждый день
+  - Количество пропущенных привычек по дням
+
+  Фронту нужны данные вида:
+  {
+    "amnesty_stats": {
+      "total_available": 1,
+      "used_this_week": 0,
+      "remaining": 1
+    },
+    "days": [
+      {
+        "date": "2025-12-08",
+        "is_amnestied": false,
+        "can_apply": true,
+        "total_penalty": 25,        // ← сколько XP вернется
+        "missed_habits_count": 2     // ← количество пропущенных
+      },
+      ...
+    ]
+  }
+
+  ---
+  Нужно добавить
+
+  1. Новый эндпоинт /app/habits/amnesty/get-available-days/
+  2. Метод в модели User для расчета данных по дням
+  3. Сериализаторы для запроса/ответа
+
+----
+
+ Реализация завершена! ✅
+
+  Добавлен новый эндпоинт для получения доступных дней для амнистии.
+
+  Что реализовано:
+
+  1. Метод в модели User (core/models/globals.py:2406-2478)
+  - get_amnesty_available_days() — возвращает список всех дней недели с информацией для модального окна
+
+  2. Сериализаторы (core/serializers/habits.py:626-717)
+  - GetAmnestyAvailableDaysRequestSerializer
+  - AmnestyDaySerializer
+  - AmnestyStatsSerializer
+  - GetAmnestyAvailableDaysDataSerializer
+  - GetAmnestyAvailableDaysResponseSerializer
+
+  3. View (core/views/drf/front_api_methods/habits.py:453-493)
+  - GetAmnestyAvailableDaysRestAPIView
+
+  4. URL (core/urls_front_api.py:65)
+  - POST /api/rest/front/app/habits/amnesty/available-days/
+
+  5. Документация (core/HABITS_BE.md:233, 246-249)
+  - Обновлён счётчик endpoints: 18 → 19
+  - Добавлено описание в секцию "Амнистия"
+
+  ---
+  Структура ответа:
+
+  {
+    "status": "ok",
+    "data": {
+      "week_start": "2025-12-08",
+      "week_end": "2025-12-14",
+      "amnesty_available": {
+        "total": 1,
+        "used": 0,
+        "remaining": 1
+      },
+      "days": [
+        {
+          "date": "2025-12-08",
+          "weekday": 1,
+          "is_amnestied": false,
+          "can_apply": true,
+          "total_penalty": 25,
+          "missed_habits_count": 2
+        },
+        ...
+      ]
+    }
+  }
+
+  Теперь фронт может получить все необходимые данные для отображения модального окна выбора дня для амнистии!
