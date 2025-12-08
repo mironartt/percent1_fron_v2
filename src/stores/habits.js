@@ -20,6 +20,8 @@ export const useHabitsStore = defineStore('habits', () => {
   const loading = ref(false)
   const initialized = ref(false)
   const error = ref(null)
+  let pendingLoadPromise = null
+  let loadVersion = 0
 
   const habits = ref([])
   const weekDates = ref([])
@@ -94,44 +96,70 @@ export const useHabitsStore = defineStore('habits', () => {
   const unlockedAchievementsCount = computed(() => achievements.value?.unlocked_count || 0)
   const totalAchievementsCount = computed(() => achievements.value?.total_count || 0)
 
-  async function loadHabits(params = {}) {
-    if (loading.value) return { success: false, reason: 'loading' }
+  async function loadHabits(params = {}, force = false) {
+    if (pendingLoadPromise && !force) {
+      return pendingLoadPromise
+    }
+    
+    if (loading.value && !force) return { success: false, reason: 'loading' }
+    
+    loadVersion++
+    const currentVersion = loadVersion
     
     loading.value = true
     error.value = null
     
-    try {
-      const result = await habitsApi.getHabits(params)
-      
-      if (result.success) {
-        habits.value = result.data.habits || []
-        weekDates.value = result.data.week_dates || []
+    const doLoad = async () => {
+      try {
+        const result = await habitsApi.getHabits(params)
         
-        if (result.data.settings) {
-          Object.assign(settings.value, result.data.settings)
+        if (currentVersion !== loadVersion) {
+          if (DEBUG_MODE) {
+            console.log('[HabitsStore] Ignoring stale response, version:', currentVersion, 'current:', loadVersion)
+          }
+          return { success: false, reason: 'stale' }
         }
         
-        lastFetchParams.value = params
-        initialized.value = true
-        
-        if (DEBUG_MODE) {
-          console.log('[HabitsStore] Loaded habits:', habits.value.length, habits.value)
-          console.log('[HabitsStore] Week dates:', weekDates.value)
-          console.log('[HabitsStore] Settings:', settings.value)
+        if (result.success) {
+          habits.value = result.data.habits || []
+          weekDates.value = result.data.week_dates || []
+          
+          if (result.data.settings) {
+            Object.assign(settings.value, result.data.settings)
+          }
+          
+          lastFetchParams.value = params
+          initialized.value = true
+          
+          if (DEBUG_MODE) {
+            console.log('[HabitsStore] Loaded habits:', habits.value.length, habits.value)
+            console.log('[HabitsStore] Week dates:', weekDates.value)
+            console.log('[HabitsStore] Settings:', settings.value)
+          }
+          
+          return { success: true, data: result.data }
+        } else {
+          if (currentVersion === loadVersion) {
+            error.value = result.error
+          }
+          return { success: false, error: result.error }
         }
-        
-        return { success: true, data: result.data }
-      } else {
-        error.value = result.error
-        return { success: false, error: result.error }
+      } catch (e) {
+        if (currentVersion === loadVersion) {
+          error.value = { message: e.message }
+        }
+        if (DEBUG_MODE) console.error('[HabitsStore] Load error:', e)
+        return { success: false, error: { message: e.message } }
+      } finally {
+        if (currentVersion === loadVersion) {
+          loading.value = false
+          pendingLoadPromise = null
+        }
       }
-    } catch (e) {
-      error.value = { message: e.message }
-      if (DEBUG_MODE) console.error('[HabitsStore] Load error:', e)
-      return { success: false, error: { message: e.message } }
-    } finally {
-      loading.value = false
     }
+    
+    pendingLoadPromise = doLoad()
+    return pendingLoadPromise
   }
 
   async function loadStatsPanel() {
@@ -213,16 +241,7 @@ export const useHabitsStore = defineStore('habits', () => {
       if (result.success) {
         const newId = result.data?.created_ids?.[0]
         
-        if (newId) {
-          const newHabit = {
-            habit_id: newId,
-            ...habitData,
-            completions: [],
-            date_created: new Date().toISOString()
-          }
-          habits.value.push(newHabit)
-        }
-        
+        await loadHabits(lastFetchParams.value || {}, true)
         await loadStatsPanel()
         
         if (DEBUG_MODE) {
@@ -250,6 +269,9 @@ export const useHabitsStore = defineStore('habits', () => {
       const result = await habitsApi.updateHabit(habitId, habitData)
       
       if (result.success) {
+        await loadHabits(lastFetchParams.value || {}, true)
+        await loadStatsPanel()
+        
         if (DEBUG_MODE) {
           console.log('[HabitsStore] Habit updated:', habitId)
         }
@@ -281,6 +303,9 @@ export const useHabitsStore = defineStore('habits', () => {
       const result = await habitsApi.deleteHabit(habitId)
       
       if (result.success) {
+        await loadHabits(lastFetchParams.value || {}, true)
+        await loadStatsPanel()
+        
         if (DEBUG_MODE) {
           console.log('[HabitsStore] Habit deleted:', habitId)
         }
@@ -312,6 +337,9 @@ export const useHabitsStore = defineStore('habits', () => {
       const result = await habitsApi.restoreHabit(habitId)
       
       if (result.success) {
+        await loadHabits(lastFetchParams.value || {}, true)
+        await loadStatsPanel()
+        
         if (DEBUG_MODE) {
           console.log('[HabitsStore] Habit restored:', habitId)
         }
