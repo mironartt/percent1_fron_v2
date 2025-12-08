@@ -29,8 +29,10 @@ export const useHabitsStore = defineStore('habits', () => {
 
   const settings = ref({
     difficulty_mode: 'balanced',
-    xp_penalty_planning: 50,
-    xp_penalty_journal: 50,
+    planning_penalty_enabled: true,
+    planning_penalty_amount: 10,
+    journal_penalty_enabled: true,
+    journal_penalty_amount: 10,
     amnesty_per_week: 1,
     amnesty_remaining: 1,
     amnestied_dates: []
@@ -1062,8 +1064,10 @@ export const useHabitsStore = defineStore('habits', () => {
     weekDates.value = []
     settings.value = {
       difficulty_mode: 'balanced',
-      xp_penalty_planning: 50,
-      xp_penalty_journal: 50,
+      planning_penalty_enabled: true,
+      planning_penalty_amount: 10,
+      journal_penalty_enabled: true,
+      journal_penalty_amount: 10,
       amnesty_per_week: 1,
       amnesty_remaining: 1,
       amnestied_dates: []

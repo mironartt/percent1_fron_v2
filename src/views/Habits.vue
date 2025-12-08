@@ -3251,8 +3251,10 @@ async function saveGameSettings() {
     
     const backendSettings = {
       difficulty_mode: gameSettings.value.difficultyMode,
-      xp_penalty_planning: gameSettings.value.planningPenalty ? gameSettings.value.planningPenaltyAmount : 0,
-      xp_penalty_journal: gameSettings.value.journalPenalty ? gameSettings.value.journalPenaltyAmount : 0
+      planning_penalty_enabled: gameSettings.value.planningPenalty ?? false,
+      planning_penalty_amount: gameSettings.value.planningPenalty ? (gameSettings.value.planningPenaltyAmount ?? 10) : 0,
+      journal_penalty_enabled: gameSettings.value.journalPenalty ?? false,
+      journal_penalty_amount: gameSettings.value.journalPenalty ? (gameSettings.value.journalPenaltyAmount ?? 10) : 0
     }
     
     const result = await habitsStore.saveSettings(backendSettings)
@@ -3286,13 +3288,13 @@ async function loadGameSettings() {
       gameSettings.value.penaltiesEnabled = result.data.difficulty_mode !== 'soft'
       gameSettings.value.amnestiedDates = result.data.amnestied_dates || []
       
-      if (result.data.xp_penalty_planning !== undefined) {
-        gameSettings.value.planningPenalty = result.data.xp_penalty_planning > 0
-        gameSettings.value.planningPenaltyAmount = result.data.xp_penalty_planning || 10
+      if (result.data.planning_penalty_enabled !== undefined) {
+        gameSettings.value.planningPenalty = result.data.planning_penalty_enabled
+        gameSettings.value.planningPenaltyAmount = result.data.planning_penalty_amount ?? 10
       }
-      if (result.data.xp_penalty_journal !== undefined) {
-        gameSettings.value.journalPenalty = result.data.xp_penalty_journal > 0
-        gameSettings.value.journalPenaltyAmount = result.data.xp_penalty_journal || 10
+      if (result.data.journal_penalty_enabled !== undefined) {
+        gameSettings.value.journalPenalty = result.data.journal_penalty_enabled
+        gameSettings.value.journalPenaltyAmount = result.data.journal_penalty_amount ?? 10
       }
       if (result.data.amnesty_remaining !== undefined) {
         const maxAmnesty = result.data.amnesty_per_week || 1
