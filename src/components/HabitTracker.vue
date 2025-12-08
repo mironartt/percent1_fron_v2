@@ -14,20 +14,20 @@
     <div class="habits-list" v-if="scheduledHabits.length > 0">
       <div 
         v-for="habit in scheduledHabits" 
-        :key="habit.id"
+        :key="getDisplayId(habit)"
         class="habit-item"
-        :class="{ completed: habit.completed }"
+        :class="{ completed: getHabitCompleted(habit) }"
         @click="handleToggle(habit)"
       >
         <div class="habit-check">
-          <div class="checkbox" :class="{ checked: habit.completed }">
-            <Check v-if="habit.completed" :size="12" :stroke-width="2.5" />
+          <div class="checkbox" :class="{ checked: getHabitCompleted(habit) }">
+            <Check v-if="getHabitCompleted(habit)" :size="12" :stroke-width="2.5" />
           </div>
         </div>
-        <span class="habit-icon">{{ habit.icon }}</span>
+        <span class="habit-icon">{{ getDisplayIcon(habit) }}</span>
         <span class="habit-name">{{ habit.name }}</span>
         <transition name="xp-fade">
-          <span v-if="showXP === habit.id" class="xp-popup">+{{ habit.xpReward || 5 }} XP</span>
+          <span v-if="showXP === getDisplayId(habit)" class="xp-popup">+{{ habit.xpReward || 5 }} XP</span>
         </transition>
       </div>
     </div>
@@ -48,59 +48,169 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAppStore } from '../stores/app'
+import { useHabitsStore } from '../stores/habits'
 import { useXpStore, XP_REWARDS } from '../stores/xp'
 import { Flame, Check, Zap, ChevronRight, Plus } from 'lucide-vue-next'
 
 const appStore = useAppStore()
+const habitsStore = useHabitsStore()
 const xpStore = useXpStore()
 
 const showXP = ref(null)
+const isToggling = ref(false)
 
 const todayDayOfWeek = new Date().getDay()
+const todayDateStr = new Date().toISOString().split('T')[0]
+
+onMounted(async () => {
+  if (!habitsStore.initialized) {
+    await habitsStore.loadHabits()
+  }
+})
 
 function isScheduledForToday(habit) {
+  if (habit.schedule_days && Array.isArray(habit.schedule_days)) {
+    return habit.schedule_days.includes(todayDayOfWeek)
+  }
+  
   if (!habit.frequencyType || habit.frequencyType === 'daily') return true
   if (habit.frequencyType === 'weekdays') return todayDayOfWeek >= 1 && todayDayOfWeek <= 5
   if (habit.frequencyType === 'weekends') return todayDayOfWeek === 0 || todayDayOfWeek === 6
   return habit.scheduleDays?.includes(todayDayOfWeek) ?? true
 }
 
+function isCompletedToday(habit) {
+  if (habit.completions && Array.isArray(habit.completions)) {
+    return habit.completions.some(c => c.date === todayDateStr && c.status === 'completed')
+  }
+  
+  return appStore.habitLog[todayDateStr]?.includes(habit.id) || false
+}
+
+function getHabitIcon(habit) {
+  if (habit.icon && typeof habit.icon === 'string') {
+    const iconMap = {
+      'book': '📚', 'dumbbell': '💪', 'droplet': '💧', 'brain': '🧠',
+      'heart': '❤️', 'star': '⭐', 'coffee': '☕', 'moon': '🌙',
+      'sun': '☀️', 'leaf': '🍃', 'music': '🎵', 'palette': '🎨',
+      'code': '💻', 'pencil': '✏️', 'target': '🎯', 'flame': '🔥',
+      'trophy': '🏆', 'zap': '⚡', 'clock': '⏰', 'smile': '😊'
+    }
+    return iconMap[habit.icon] || habit.icon
+  }
+  return habit.icon || '📌'
+}
+
+const allHabits = computed(() => {
+  if (habitsStore.habits && habitsStore.habits.length > 0) {
+    return habitsStore.habits.filter(h => !h.date_deleted)
+  }
+  
+  return appStore.todayHabits
+})
+
+function getDisplayId(habit) {
+  return habit.habit_id || habit.id
+}
+
+function getDisplayIcon(habit) {
+  return getHabitIcon(habit)
+}
+
+function getHabitCompleted(habit) {
+  if (habit.completions && Array.isArray(habit.completions)) {
+    return habit.completions.some(c => c.date === todayDateStr && c.status === 'completed')
+  }
+  if (habit.completed !== undefined) {
+    return habit.completed
+  }
+  return appStore.habitLog[todayDateStr]?.includes(habit.id) || false
+}
+
 const scheduledHabits = computed(() => {
-  return appStore.todayHabits.filter(h => isScheduledForToday(h))
+  return allHabits.value.filter(h => isScheduledForToday(h))
 })
 
 const completedCount = computed(() => {
-  return scheduledHabits.value.filter(h => h.completed).length
+  return scheduledHabits.value.filter(h => getHabitCompleted(h)).length
 })
 
 const scheduledCount = computed(() => scheduledHabits.value.length)
 
-const habitStreak = computed(() => appStore.habitStreak)
+const habitStreak = computed(() => {
+  if (habitsStore.statsPanel?.streak !== undefined) {
+    return habitsStore.statsPanel.streak
+  }
+  return appStore.habitStreak
+})
 
-function handleToggle(habit) {
-  const result = appStore.toggleHabit(habit.id)
+async function handleToggle(habit) {
+  if (isToggling.value) return
   
-  if (result.completed) {
-    const xpAmount = habit.xpReward || XP_REWARDS.HABIT_COMPLETED
-    xpStore.awardXP(xpAmount, 'habit_completed', { 
-      habitId: habit.id, 
-      habitName: habit.name 
-    })
-    
-    showXP.value = habit.id
-    setTimeout(() => {
-      showXP.value = null
-    }, 1200)
+  const habitId = getDisplayId(habit)
+  const isFromBackend = habit.habit_id !== undefined
+  const wasCompleted = getHabitCompleted(habit)
+  
+  if (isFromBackend) {
+    isToggling.value = true
+    try {
+      if (wasCompleted) {
+        const result = await habitsStore.unmarkCompleted(habit.habit_id, todayDateStr)
+        
+        if (result?.success) {
+          const lastEvent = xpStore.xpHistory.find(
+            e => e.source === 'habit_completed' && 
+                 e.metadata?.habitId === habit.habit_id &&
+                 new Date(e.timestamp).toDateString() === new Date().toDateString()
+          )
+          if (lastEvent) {
+            xpStore.revokeXP(lastEvent.id)
+          }
+        }
+      } else {
+        const result = await habitsStore.markCompleted(habit.habit_id, todayDateStr)
+        
+        if (result?.success) {
+          const xpAmount = habit.xpReward || XP_REWARDS.HABIT_COMPLETED
+          xpStore.awardXP(xpAmount, 'habit_completed', { 
+            habitId: habit.habit_id, 
+            habitName: habit.name 
+          })
+          
+          showXP.value = habitId
+          setTimeout(() => {
+            showXP.value = null
+          }, 1200)
+        }
+      }
+    } finally {
+      isToggling.value = false
+    }
   } else {
-    const lastEvent = xpStore.xpHistory.find(
-      e => e.source === 'habit_completed' && 
-           e.metadata?.habitId === habit.id &&
-           new Date(e.timestamp).toDateString() === new Date().toDateString()
-    )
-    if (lastEvent) {
-      xpStore.revokeXP(lastEvent.id)
+    const result = appStore.toggleHabit(habit.id)
+    
+    if (result.completed) {
+      const xpAmount = habit.xpReward || XP_REWARDS.HABIT_COMPLETED
+      xpStore.awardXP(xpAmount, 'habit_completed', { 
+        habitId: habit.id, 
+        habitName: habit.name 
+      })
+      
+      showXP.value = habit.id
+      setTimeout(() => {
+        showXP.value = null
+      }, 1200)
+    } else {
+      const lastEvent = xpStore.xpHistory.find(
+        e => e.source === 'habit_completed' && 
+             e.metadata?.habitId === habit.id &&
+             new Date(e.timestamp).toDateString() === new Date().toDateString()
+      )
+      if (lastEvent) {
+        xpStore.revokeXP(lastEvent.id)
+      }
     }
   }
 }

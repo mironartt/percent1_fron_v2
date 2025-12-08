@@ -106,3 +106,22 @@ Fixed issue where mini heatmap "Календарь - последние 4 нед
 - Updated `getHeatmapClass()` to use count-based levels (like modal) when API data available
 - Fixed `total` calculation to use `Math.max(scheduledTotal, count)` for correct percentages
 - Now mini heatmap and yearly modal use consistent data sources and level calculations
+
+### Analytics "По привычкам" Block Extended to 30 Days (December 8, 2024)
+Extended habit analytics block from 14 days to 30 days display:
+- Added `last30Days` computed property (30-day history)
+- Updated template to use `last30Days` in "По привычкам" block
+- New CSS classes `.habit-month-view` and `.habit-day-cell-small` for compact 30-cell display
+- Cells are 8x8px with horizontal scroll for narrow screens
+- Updated header to show "(30 дней)" period indicator
+
+### HabitTracker Dashboard Backend Integration (December 8, 2024)
+Integrated HabitTracker component on Dashboard with backend data:
+- Added `habitsStore` import and data loading on mount
+- `allHabits` computed: prioritizes `habitsStore.habits`, falls back to `appStore.todayHabits`
+- `isScheduledForToday()` supports `schedule_days` array from backend
+- `isCompletedToday()` checks `completions` array from API
+- `getHabitIcon()` converts string icon names to emojis
+- `habitStreak` uses `statsPanel.streak` from backend if available
+- `handleToggle()` calls `habitsStore.markCompleted/unmarkCompleted` for backend habits
+- XP awarded only on API success (`result?.success` check)

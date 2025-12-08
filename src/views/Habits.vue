@@ -236,7 +236,7 @@
       </div>
 
       <div class="habits-per-habit-analytics">
-        <h4>По привычкам</h4>
+        <h4>По привычкам <span class="analytics-period">(30 дней)</span></h4>
         <div class="habit-analytics-list">
           <div v-for="habit in allHabits" :key="habit.id" class="habit-analytics-item">
             <div class="habit-analytics-header">
@@ -247,18 +247,14 @@
                 {{ getHabitStreak(habit) }} дн.
               </span>
             </div>
-            <div class="habit-week-view">
+            <div class="habit-month-view">
               <div 
-                v-for="day in last14Days" 
+                v-for="day in last30Days" 
                 :key="day.date"
-                class="habit-day-cell"
+                class="habit-day-cell-small"
                 :class="'status-' + getHabitDayStatus(habit, day.date)"
                 :title="getStatusTooltip(day.date, getHabitDayStatus(habit, day.date))"
               >
-                <Check v-if="getHabitDayStatus(habit, day.date) === 'completed'" :size="10" :stroke-width="2.5" />
-                <X v-else-if="getHabitDayStatus(habit, day.date) === 'missed'" :size="10" :stroke-width="2" />
-                <CircleAlert v-else-if="getHabitDayStatus(habit, day.date) === 'excused'" :size="10" :stroke-width="2" />
-                <Shield v-else-if="getHabitDayStatus(habit, day.date) === 'amnestied'" :size="10" :stroke-width="2" />
               </div>
             </div>
             <div class="habit-analytics-stats">
@@ -2218,6 +2214,19 @@ const last14Days = computed(() => {
   const days = []
   const today = new Date()
   for (let i = 13; i >= 0; i--) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - i)
+    const dateStr = date.toISOString().split('T')[0]
+    const { completed, total } = getCompletionForDate(dateStr)
+    days.push({ date: dateStr, completed, total })
+  }
+  return days
+})
+
+const last30Days = computed(() => {
+  const days = []
+  const today = new Date()
+  for (let i = 29; i >= 0; i--) {
     const date = new Date(today)
     date.setDate(date.getDate() - i)
     const dateStr = date.toISOString().split('T')[0]
@@ -5000,6 +5009,55 @@ onMounted(async () => {
   display: flex;
   gap: 4px;
   margin-bottom: 0.5rem;
+}
+
+.habit-month-view {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.habit-month-view::-webkit-scrollbar {
+  display: none;
+}
+
+.habit-day-cell-small {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.habit-day-cell-small.status-completed {
+  background: #10b981;
+}
+
+.habit-day-cell-small.status-missed {
+  background: #ef4444;
+}
+
+.habit-day-cell-small.status-excused {
+  background: #f59e0b;
+}
+
+.habit-day-cell-small.status-amnestied {
+  background: #8b5cf6;
+}
+
+.habit-day-cell-small.status-not_scheduled {
+  background: var(--border-color);
+  opacity: 0.4;
+}
+
+.analytics-period {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 0.85em;
 }
 
 .habit-day-cell {
