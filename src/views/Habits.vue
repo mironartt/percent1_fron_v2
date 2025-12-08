@@ -3,11 +3,8 @@
     <header class="page-header">
       <div class="header-content">
         <div class="title-section">
-          <h1>
-            <Flame :size="28" :stroke-width="1.5" />
-            Мои привычки
-          </h1>
-          <p class="subtitle">Маленькие шаги к большим изменениям</p>
+          <h1 class="page-title">Мои привычки</h1>
+          <p class="page-subtitle">Маленькие шаги к большим изменениям</p>
         </div>
         <button class="btn btn-primary desktop-only" @click="openAddModal">
           <Plus :size="18" :stroke-width="1.5" />
@@ -16,46 +13,19 @@
       </div>
     </header>
 
-    <div class="stats-bar" :class="{ 'has-amnesty': showAmnestyButton }">
-      <button class="stat-item streak clickable" @click="showStreakModal = true" title="Нажмите для просмотра серии">
-        <div class="stat-icon">
-          <Zap :size="20" :stroke-width="1.5" />
-        </div>
-        <div class="stat-content">
-          <span class="stat-value">{{ habitStreak }}</span>
-          <span class="stat-label">{{ pluralizeDays(habitStreak) }} подряд</span>
-        </div>
-        <div class="stat-action-hint">
-          <TrendingUp :size="12" :stroke-width="1.5" />
-        </div>
+    <div class="stats-panel">
+      <button class="stat-chip clickable" @click="showStreakModal = true" title="Серия выполнений">
+        <span class="stat-value">{{ habitStreak }}</span> {{ pluralizeDays(habitStreak) }} подряд
       </button>
-      <button class="stat-item today clickable" @click="showTodayModal = true" title="Нажмите для просмотра сегодня">
-        <div class="stat-icon">
-          <CheckCircle :size="20" :stroke-width="1.5" />
-        </div>
-        <div class="stat-content">
-          <span class="stat-value">{{ todayCompleted }}/{{ todayTotal }}</span>
-          <span class="stat-label">сегодня</span>
-        </div>
-        <div class="stat-action-hint">
-          <TrendingUp :size="12" :stroke-width="1.5" />
-        </div>
+      <button class="stat-chip clickable" @click="showTodayModal = true" title="Сегодня">
+        <span class="stat-value">{{ todayCompleted }}/{{ todayTotal }}</span> сегодня
       </button>
-      <button class="stat-item xp clickable" @click="showXpModal = true" title="Нажмите для просмотра XP">
-        <div class="stat-icon">
-          <Sparkles :size="20" :stroke-width="1.5" />
-        </div>
-        <div class="stat-content">
-          <span class="stat-value">{{ weekXpFromHabits }}</span>
-          <span class="stat-label">XP за неделю</span>
-        </div>
-        <div class="stat-action-hint">
-          <TrendingUp :size="12" :stroke-width="1.5" />
-        </div>
+      <button class="stat-chip clickable" @click="showXpModal = true" title="XP за неделю">
+        <span class="stat-value">{{ weekXpFromHabits }}</span> XP
       </button>
       <button 
         v-if="showAmnestyButton" 
-        class="stat-item amnesty clickable" 
+        class="stat-chip clickable amnesty-chip" 
         :class="{ 
           'has-missed': missedDaysForAmnesty.length > 0 && amnestiesRemaining > 0,
           'depleted': amnestiesRemaining === 0
@@ -63,29 +33,16 @@
         @click="openAmnestyModal" 
         title="Амнистия"
       >
-        <div class="stat-icon">
-          <Heart :size="20" :stroke-width="1.5" />
-        </div>
-        <div class="stat-content">
-          <span class="stat-value">{{ amnestiesRemaining }}/{{ maxAmnesties }}</span>
-          <span class="stat-label">амнистия</span>
-        </div>
-        <div class="stat-action-hint" v-if="missedDaysForAmnesty.length > 0 && amnestiesRemaining > 0">
-          <span class="amnesty-badge">{{ missedDaysForAmnesty.length }}</span>
-        </div>
+        <span class="stat-value">{{ amnestiesRemaining }}/{{ maxAmnesties }}</span> амнистия
+        <span v-if="missedDaysForAmnesty.length > 0 && amnestiesRemaining > 0" class="count-badge">{{ missedDaysForAmnesty.length }}</span>
       </button>
-      <button class="stat-item mode settings clickable compact-mode" @click="showSettingsModal = true" title="Настройки геймификации">
-        <div class="stat-icon" :class="gameSettings.difficultyMode">
-          <Shield :size="18" :stroke-width="1.5" />
-        </div>
-        <div class="stat-content-inline">
-          <span class="mode-label">режим: <strong>{{ difficultyLabel }}</strong></span>
-        </div>
-        <Settings :size="14" :stroke-width="1.5" class="settings-icon" />
+      <button class="stat-chip clickable settings-chip" @click="showSettingsModal = true" title="Настройки">
+        <Settings :size="14" :stroke-width="1.5" />
+        {{ difficultyLabel }}
       </button>
     </div>
 
-    <div class="tabs-navigation" v-if="allHabits.length > 0 || deletedHabits.length > 0">
+    <div class="tab-container" v-if="allHabits.length > 0 || deletedHabits.length > 0">
       <button 
         class="tab-btn" 
         :class="{ active: activeTab === 'tracker' }"
@@ -3905,140 +3862,57 @@ onMounted(async () => {
   text-align: center;
 }
 
-.title-section h1 {
+.stats-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  justify-content: center;
+}
+
+.stat-chip {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  font-size: 1.75rem;
-  margin: 0 0 0.25rem 0;
-}
-
-.title-section h1 svg {
-  color: #f97316;
-}
-
-.subtitle {
-  color: var(--text-muted);
-  margin: 0;
-}
-
-.stats-bar {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1.5fr;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-}
-
-.stats-bar.has-amnesty {
-  grid-template-columns: 1fr 1fr 1fr 1fr 1.5fr;
-}
-
-.stat-item {
-  background: var(--card-bg);
-  border-radius: 12px;
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  position: relative;
-}
-
-.stat-item.mode {
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: var(--bg-tertiary);
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  border: none;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.stat-item.mode:hover {
-  border-color: var(--primary-color);
+.stat-chip:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
-.stat-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+.stat-chip .stat-value {
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
-.stat-item.streak .stat-icon {
-  background: rgba(234, 179, 8, 0.1);
-  color: #eab308;
-}
-
-.stat-item.today .stat-icon {
-  background: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
-}
-
-.stat-item.xp .stat-icon {
-  background: rgba(124, 58, 237, 0.1);
-  color: #7c3aed;
-}
-
-.stat-item.mode .stat-icon {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
-}
-
-.stat-item.mode .stat-icon.soft { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
-.stat-item.mode .stat-icon.balanced { background: rgba(234, 179, 8, 0.1); color: #eab308; }
-.stat-item.mode .stat-icon.hardcore { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
-
-.stat-content {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-value {
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.stat-item.mode .stat-icon.custom { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
-
-.stat-item.amnesty .stat-icon {
+.stat-chip.amnesty-chip.has-missed {
   background: rgba(236, 72, 153, 0.1);
-  color: #ec4899;
+  color: var(--text-primary);
 }
 
-.stat-item.amnesty.has-missed {
-  border-color: rgba(236, 72, 153, 0.3);
-  background: linear-gradient(135deg, var(--card-bg) 0%, rgba(236, 72, 153, 0.05) 100%);
-}
-
-.stat-item.amnesty.depleted {
+.stat-chip.amnesty-chip.depleted {
   opacity: 0.6;
 }
 
-.stat-item.amnesty.depleted .stat-icon {
-  color: var(--text-muted);
+.stat-chip.settings-chip {
+  gap: 0.25rem;
 }
 
-.stat-item.amnesty.depleted .stat-value {
-  color: var(--text-muted);
+.stat-chip.settings-chip svg {
+  color: var(--text-tertiary);
 }
 
-.stat-item.amnesty .amnesty-badge {
-  background: #ec4899;
-  color: white;
-  font-size: 0.65rem;
-  font-weight: 700;
-  min-width: 16px;
-  height: 16px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 4px;
+.tab-container {
+  margin-bottom: 0.75rem;
 }
 
 .amnesty-modal .amnesty-header h3 {
@@ -4143,12 +4017,12 @@ onMounted(async () => {
 
 .amnesty-day-card .day-penalty {
   font-weight: 600;
-  color: #ef4444;
+  color: var(--danger-color);
   font-size: 0.85rem;
 }
 
 .amnesty-day-card .day-penalty.saved {
-  color: #22c55e;
+  color: var(--success-color);
 }
 
 .amnesty-day-card:disabled {
@@ -4209,8 +4083,8 @@ onMounted(async () => {
 
 .btn-cancel-amnesty:hover {
   background: #fee2e2;
-  border-color: #ef4444;
-  color: #ef4444;
+  border-color: var(--danger-color);
+  color: var(--danger-color);
 }
 
 .amnestied-section {
@@ -4252,7 +4126,7 @@ onMounted(async () => {
 }
 
 .amnesty-empty svg {
-  color: #22c55e;
+  color: var(--success-color);
 }
 
 .amnesty-empty p {
@@ -4328,7 +4202,7 @@ onMounted(async () => {
 }
 
 .schedule-day-mini.completed {
-  background: #22c55e;
+  background: var(--success-color);
 }
 
 .schedule-day-mini.completed .day-letter {
@@ -4340,7 +4214,7 @@ onMounted(async () => {
 }
 
 .schedule-day-mini.missed .day-letter {
-  color: #ef4444;
+  color: var(--danger-color);
 }
 
 .schedule-day-mini.amnestied {
@@ -4356,7 +4230,7 @@ onMounted(async () => {
 }
 
 .schedule-day-mini.excused .day-letter {
-  color: #eab308;
+  color: var(--warning-color);
 }
 
 .schedule-day-mini.scheduled,
@@ -4395,7 +4269,7 @@ onMounted(async () => {
 }
 
 .stat-item-mini.positive .stat-value {
-  color: #22c55e;
+  color: var(--success-color);
   font-weight: 700;
 }
 
@@ -4404,7 +4278,7 @@ onMounted(async () => {
 }
 
 .stat-item-mini.negative .stat-value {
-  color: #ef4444;
+  color: var(--danger-color);
   font-weight: 700;
 }
 
@@ -4446,12 +4320,12 @@ onMounted(async () => {
 
 .day-edit-current-status .xp-badge.positive {
   background: rgba(34, 197, 94, 0.15);
-  color: #22c55e;
+  color: var(--success-color);
 }
 
 .day-edit-current-status .xp-badge.negative {
   background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
+  color: var(--danger-color);
 }
 
 .day-edit-current-status .status-label {
@@ -4466,12 +4340,12 @@ onMounted(async () => {
 
 .day-edit-current-status .status-value.completed {
   background: rgba(34, 197, 94, 0.15);
-  color: #22c55e;
+  color: var(--success-color);
 }
 
 .day-edit-current-status .status-value.missed {
   background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
+  color: var(--danger-color);
 }
 
 .day-edit-current-status .status-value.amnestied {
@@ -4481,7 +4355,7 @@ onMounted(async () => {
 
 .day-edit-current-status .status-value.excused {
   background: rgba(234, 179, 8, 0.15);
-  color: #eab308;
+  color: var(--warning-color);
 }
 
 .day-edit-current-status .status-value.today,
@@ -4586,7 +4460,7 @@ onMounted(async () => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: #7c3aed;
+  background: var(--primary-color);
   border: none;
   border-radius: 8px;
   color: white;
@@ -4598,7 +4472,7 @@ onMounted(async () => {
 }
 
 .btn-save-note:hover {
-  background: #6d28d9;
+  background: var(--primary-dark);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
 }
@@ -4662,22 +4536,22 @@ onMounted(async () => {
 .btn-status.completed:hover,
 .btn-status.completed.active {
   background: rgba(34, 197, 94, 0.1);
-  border-color: #22c55e;
-  color: #22c55e;
+  border-color: var(--success-color);
+  color: var(--success-color);
 }
 
 .btn-status.missed:hover,
 .btn-status.missed.active {
   background: rgba(239, 68, 68, 0.1);
-  border-color: #ef4444;
-  color: #ef4444;
+  border-color: var(--danger-color);
+  color: var(--danger-color);
 }
 
 .btn-status.excused:hover,
 .btn-status.excused.active {
   background: rgba(234, 179, 8, 0.1);
-  border-color: #eab308;
-  color: #eab308;
+  border-color: var(--warning-color);
+  color: var(--warning-color);
 }
 
 .day-edit-amnesty-warning {
@@ -4717,7 +4591,7 @@ onMounted(async () => {
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: 6px;
-  color: #ef4444;
+  color: var(--danger-color);
   font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
@@ -4726,16 +4600,6 @@ onMounted(async () => {
 
 .btn-cancel-amnesty:hover {
   background: rgba(239, 68, 68, 0.2);
-}
-
-.tabs-navigation {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-  padding: 4px;
-  background: var(--bg-secondary);
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
 }
 
 .week-navigation {
@@ -4891,7 +4755,7 @@ onMounted(async () => {
   background: rgba(239, 68, 68, 0.1);
   border-radius: 6px;
   font-size: 0.65rem;
-  color: #ef4444;
+  color: var(--danger-color);
 }
 
 .habit-card.deleted-during-week {
@@ -4910,7 +4774,7 @@ onMounted(async () => {
   border-radius: 8px;
   font-size: 0.7rem;
   font-weight: 500;
-  color: #ef4444;
+  color: var(--danger-color);
 }
 
 .habit-deleted-during-week-badge svg {
@@ -4946,32 +4810,6 @@ onMounted(async () => {
 
 .btn-icon.restore:hover {
   background: rgba(34, 197, 94, 0.1);
-}
-
-.tab-btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border: none;
-  background: transparent;
-  border-radius: 8px;
-  font-weight: 500;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.tab-btn:hover {
-  color: var(--text-primary);
-}
-
-.tab-btn.active {
-  background: var(--card-bg);
-  color: var(--primary-color);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .analytics-mini {
@@ -5078,7 +4916,7 @@ onMounted(async () => {
   gap: 0.25rem;
   padding: 0.25rem 0.5rem;
   background: rgba(234, 179, 8, 0.1);
-  color: #eab308;
+  color: var(--warning-color);
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -5117,7 +4955,7 @@ onMounted(async () => {
 }
 
 .habit-day-cell-small.status-missed {
-  background: #ef4444;
+  background: var(--danger-color);
 }
 
 .habit-day-cell-small.status-excused {
@@ -5156,7 +4994,7 @@ onMounted(async () => {
 }
 
 .habit-day-cell.status-missed {
-  background: #ef4444;
+  background: var(--danger-color);
   color: white;
 }
 
@@ -5397,12 +5235,12 @@ onMounted(async () => {
 
 .xp-badge.positive {
   background: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
+  color: var(--success-color);
 }
 
 .xp-badge.negative {
   background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  color: var(--danger-color);
 }
 
 .btn-edit-habit {
@@ -5529,7 +5367,7 @@ onMounted(async () => {
 }
 
 .schedule-day.completed {
-  background: #22c55e;
+  background: var(--success-color);
 }
 
 .schedule-day.completed .day-letter {
@@ -5541,7 +5379,7 @@ onMounted(async () => {
 }
 
 .schedule-day.missed .day-letter {
-  color: #ef4444;
+  color: var(--danger-color);
 }
 
 .schedule-day.amnestied {
@@ -5557,7 +5395,7 @@ onMounted(async () => {
 }
 
 .schedule-day.excused .day-letter {
-  color: #eab308;
+  color: var(--warning-color);
 }
 
 .schedule-day.today {
@@ -5586,7 +5424,7 @@ onMounted(async () => {
 
 .btn-icon.danger:hover {
   background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  color: var(--danger-color);
 }
 
 .stat-item.clickable {
@@ -5795,7 +5633,7 @@ onMounted(async () => {
 .heatmap-cell.level-0 { background: var(--bg-secondary); }
 .heatmap-cell.level-1 { background: rgba(34, 197, 94, 0.3); }
 .heatmap-cell.level-2 { background: rgba(34, 197, 94, 0.6); }
-.heatmap-cell.level-3 { background: #22c55e; }
+.heatmap-cell.level-3 { background: var(--success-color); }
 
 .heatmap-legend {
   display: flex;
@@ -5820,7 +5658,7 @@ onMounted(async () => {
 .legend-cell.level-0 { background: var(--bg-secondary); }
 .legend-cell.level-1 { background: rgba(34, 197, 94, 0.3); }
 .legend-cell.level-2 { background: rgba(34, 197, 94, 0.6); }
-.legend-cell.level-3 { background: #22c55e; }
+.legend-cell.level-3 { background: var(--success-color); }
 
 .badges-list {
   display: flex;
@@ -5982,7 +5820,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: #22c55e;
+  color: var(--success-color);
 }
 
 .amnesty-info-text {
@@ -6004,7 +5842,7 @@ onMounted(async () => {
   justify-content: center;
   gap: 0.5rem;
   padding: 0.6rem 1rem;
-  background: #22c55e;
+  background: var(--success-color);
   border: none;
   border-radius: 8px;
   color: white;
@@ -6070,7 +5908,7 @@ onMounted(async () => {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #22c55e;
+  background: var(--success-color);
   color: white;
   display: flex;
   align-items: center;
@@ -6132,7 +5970,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #7c3aed;
+  color: var(--primary-color);
   flex-shrink: 0;
 }
 
@@ -6170,7 +6008,7 @@ onMounted(async () => {
 }
 
 .btn-danger {
-  background: #ef4444;
+  background: var(--danger-color);
   color: white;
 }
 
@@ -6484,11 +6322,11 @@ onMounted(async () => {
 }
 
 .xp-label.positive {
-  color: #22c55e;
+  color: var(--success-color);
 }
 
 .xp-label.negative {
-  color: #ef4444;
+  color: var(--danger-color);
 }
 
 .input-with-suffix.compact .form-input {
@@ -6965,7 +6803,7 @@ onMounted(async () => {
   background: rgba(124, 58, 237, 0.1);
   border-radius: 8px;
   font-size: 0.85rem;
-  color: #7c3aed;
+  color: var(--primary-color);
 }
 
 .amnesty-info svg {
@@ -7145,7 +6983,7 @@ onMounted(async () => {
 }
 
 .xp-slider.penalty::-webkit-slider-thumb {
-  background: #ef4444;
+  background: var(--danger-color);
 }
 
 .xp-slider-value {
@@ -7157,7 +6995,7 @@ onMounted(async () => {
 }
 
 .xp-slider-value.penalty {
-  color: #ef4444;
+  color: var(--danger-color);
 }
 
 .optional-actions {
@@ -7189,7 +7027,7 @@ onMounted(async () => {
 }
 
 .optional-btn.penalty:hover {
-  color: #ef4444;
+  color: var(--danger-color);
 }
 
 .penalty-field {
@@ -7201,7 +7039,7 @@ onMounted(async () => {
 }
 
 .penalty-field .slider-label {
-  color: #ef4444;
+  color: var(--danger-color);
 }
 
 .icon-grid-dropdown {
@@ -7330,7 +7168,7 @@ onMounted(async () => {
 
 .btn-icon-only.danger:hover {
   background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
+  color: var(--danger-color);
 }
 
 .modal-mini {
@@ -7386,7 +7224,7 @@ onMounted(async () => {
 }
 
 .streak-day.success {
-  background: #22c55e;
+  background: var(--success-color);
   color: white;
 }
 
@@ -7512,8 +7350,8 @@ onMounted(async () => {
 }
 
 .checkbox-mini.checked {
-  background: #22c55e;
-  border-color: #22c55e;
+  background: var(--success-color);
+  border-color: var(--success-color);
   color: white;
 }
 
@@ -7539,11 +7377,11 @@ onMounted(async () => {
 
 .habit-xp-reward.earned {
   background: rgba(34, 197, 94, 0.2);
-  color: #22c55e;
+  color: var(--success-color);
 }
 
 .today-habit-item .check-icon {
-  color: #22c55e;
+  color: var(--success-color);
 }
 
 .xp-summary {
@@ -7682,17 +7520,6 @@ onMounted(async () => {
     text-align: center;
   }
   
-  .tabs-navigation {
-    width: 100%;
-  }
-  
-  .tabs-navigation .tab-btn {
-    flex: 1;
-    justify-content: center;
-    padding: 0.875rem;
-    min-height: 44px;
-  }
-  
   .habit-schedule {
     display: none;
   }
@@ -7701,38 +7528,13 @@ onMounted(async () => {
     display: none;
   }
   
-  .stats-bar {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem;
+  .stats-panel {
+    justify-content: flex-start;
   }
   
-  .stat-item {
-    padding: 0.625rem;
-    min-height: 50px;
-  }
-  
-  .stat-item .settings-cta {
-    display: none;
-  }
-  
-  .stat-action-hint {
-    display: none;
-  }
-  
-  .stat-item.compact-mode {
-    grid-column: span 2;
-  }
-  
-  .stat-item.amnesty {
-    grid-column: span 1;
-  }
-  
-  .stats-bar.has-amnesty {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .stats-bar.has-amnesty .stat-item.compact-mode {
-    grid-column: span 2;
+  .stat-chip {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.6rem;
   }
   
   .amnesty-day-card {
@@ -8000,7 +7802,7 @@ onMounted(async () => {
   align-items: center;
   gap: 0.35rem;
   font-size: 0.75rem;
-  color: #22c55e;
+  color: var(--success-color);
   font-weight: 500;
   margin-top: 0.25rem;
 }
@@ -8179,7 +7981,7 @@ onMounted(async () => {
 }
 
 .best-card svg {
-  color: #22c55e;
+  color: var(--success-color);
 }
 
 .worst-card {
@@ -8187,7 +7989,7 @@ onMounted(async () => {
 }
 
 .worst-card svg {
-  color: #eab308;
+  color: var(--warning-color);
 }
 
 .worst-card svg.down {
@@ -8210,11 +8012,11 @@ onMounted(async () => {
 }
 
 .best-card .bw-value {
-  color: #22c55e;
+  color: var(--success-color);
 }
 
 .worst-card .bw-value {
-  color: #eab308;
+  color: var(--warning-color);
 }
 
 /* Calendar Modal */
@@ -8317,7 +8119,7 @@ onMounted(async () => {
 .heatmap-day.level-0 { background: var(--border-color); }
 .heatmap-day.level-1 { background: rgba(34, 197, 94, 0.3); }
 .heatmap-day.level-2 { background: rgba(34, 197, 94, 0.6); }
-.heatmap-day.level-3 { background: #22c55e; }
+.heatmap-day.level-3 { background: var(--success-color); }
 
 .heatmap-legend.yearly {
   margin-top: 0.75rem;
@@ -8370,7 +8172,7 @@ onMounted(async () => {
 }
 
 .month-card.best .month-rate {
-  color: #22c55e;
+  color: var(--success-color);
 }
 
 .month-bar {
@@ -8389,7 +8191,7 @@ onMounted(async () => {
 }
 
 .month-card.best .month-bar-fill {
-  background: #22c55e;
+  background: var(--success-color);
 }
 
 .month-completions {
@@ -8538,34 +8340,12 @@ onMounted(async () => {
 }
 
 /* Dark theme overrides */
-:root.dark .stat-item.streak .stat-icon {
-  background: rgba(251, 191, 36, 0.15);
-  color: var(--warning-color);
+:root.dark .stat-chip {
+  background: var(--bg-tertiary);
 }
 
-:root.dark .stat-item.today .stat-icon {
-  background: rgba(52, 211, 153, 0.15);
-  color: var(--success-color);
-}
-
-:root.dark .stat-item.xp .stat-icon {
-  background: rgba(167, 139, 250, 0.15);
-  color: var(--secondary-color);
-}
-
-:root.dark .stat-item.mode .stat-icon {
-  background: rgba(96, 165, 250, 0.15);
-  color: #60a5fa;
-}
-
-:root.dark .stat-item.amnesty .stat-icon {
-  background: rgba(244, 114, 182, 0.15);
-  color: #f472b6;
-}
-
-:root.dark .stat-item.amnesty.has-missed {
-  border-color: rgba(244, 114, 182, 0.3);
-  background: linear-gradient(135deg, var(--card-bg) 0%, rgba(244, 114, 182, 0.08) 100%);
+:root.dark .stat-chip:hover {
+  background: var(--bg-hover);
 }
 
 :root.dark .habit-card {
