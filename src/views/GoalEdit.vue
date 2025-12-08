@@ -133,7 +133,7 @@
               class="btn-ai-steps-inline"
               :class="{ generating: isGeneratingSteps }"
               :disabled="isGeneratingSteps"
-              @click="generateStepsAI"
+              @click="openAIConfirmModal"
               title="ИИ сгенерирует 3-7 шагов для достижения цели"
             >
               <Loader2 v-if="isGeneratingSteps" :size="16" class="spin" />
@@ -159,26 +159,6 @@
                 <Plus :size="16" />
                 Добавить первый шаг
               </button>
-              <div class="ai-steps-generate-empty">
-                <button 
-                  class="btn-ai-steps"
-                  :class="{ generating: isGeneratingSteps }"
-                  :disabled="isGeneratingSteps"
-                  @click="generateStepsAI"
-                  @mouseenter="showAIStepsTooltip = true"
-                  @mouseleave="showAIStepsTooltip = false"
-                >
-                  <Loader2 v-if="isGeneratingSteps" :size="16" class="spin" />
-                  <Sparkles v-else :size="16" />
-                  <span>{{ isGeneratingSteps ? 'Генерация...' : 'Помощь от ментора' }}</span>
-                </button>
-                <transition name="tooltip-fade">
-                  <div v-if="showAIStepsTooltip && !isGeneratingSteps" class="ai-steps-tooltip ai-steps-tooltip-empty">
-                    <strong>ИИ-помощник</strong>
-                    <p>Сгенерирует 3-7 шагов для достижения этой цели</p>
-                  </div>
-                </transition>
-              </div>
             </div>
           </div>
 
@@ -467,6 +447,47 @@
       </div>
 
     </div>
+
+    <!-- Модальное окно подтверждения AI генерации -->
+    <transition name="modal-fade">
+      <div v-if="showAIConfirmModal" class="modal-overlay" @click.self="closeAIConfirmModal">
+        <div class="ai-confirm-modal">
+          <div class="ai-confirm-header">
+            <div class="ai-confirm-icon">
+              <Sparkles :size="24" />
+            </div>
+            <h3>Генерация шагов с помощью ИИ</h3>
+            <button class="modal-close" @click="closeAIConfirmModal">
+              <X :size="20" />
+            </button>
+          </div>
+          <div class="ai-confirm-body">
+            <p class="ai-confirm-description">
+              ИИ-ментор проанализирует вашу цель и предложит <strong>3-7 конкретных шагов</strong> для её достижения.
+            </p>
+            <div class="ai-confirm-warning">
+              <AlertCircle :size="18" />
+              <div>
+                <strong>Важно:</strong> Убедитесь, что название цели сформулировано чётко и понятно. Чем конкретнее цель — тем точнее будут шаги.
+              </div>
+            </div>
+            <div class="ai-confirm-goal">
+              <label>Ваша цель:</label>
+              <p class="goal-title-preview">{{ goalForm.title || 'Без названия' }}</p>
+            </div>
+          </div>
+          <div class="ai-confirm-footer">
+            <button class="btn btn-secondary" @click="closeAIConfirmModal">
+              Отмена
+            </button>
+            <button class="btn btn-primary" @click="confirmAndGenerateSteps">
+              <Sparkles :size="16" />
+              Запустить
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
 
     <!-- Модальное окно редактирования цели (унифицировано с GoalsBank) -->
     <transition name="modal-fade">
@@ -954,6 +975,22 @@ function showToast(message, type = 'success') {
 const showEditModal = ref(false)
 const editingGoal = ref(null)
 const editModalTab = ref('main')
+
+// Модальное окно подтверждения AI генерации
+const showAIConfirmModal = ref(false)
+
+function openAIConfirmModal() {
+  showAIConfirmModal.value = true
+}
+
+function closeAIConfirmModal() {
+  showAIConfirmModal.value = false
+}
+
+function confirmAndGenerateSteps() {
+  closeAIConfirmModal()
+  generateStepsAI()
+}
 
 // Quick Actions computed properties
 const isGoalInWork = computed(() => {
@@ -2967,6 +3004,120 @@ function formatDate(dateString) {
   
   .btn-ai-steps-inline .btn-ai-label {
     display: none;
+  }
+}
+
+/* AI Confirm Modal */
+.ai-confirm-modal {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 480px;
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+}
+
+.ai-confirm-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.ai-confirm-header h3 {
+  flex: 1;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.ai-confirm-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.ai-confirm-body {
+  padding: 1.5rem;
+}
+
+.ai-confirm-description {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.ai-confirm-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+}
+
+.ai-confirm-warning svg {
+  color: #f59e0b;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.ai-confirm-warning div {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.ai-confirm-goal {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+
+.ai-confirm-goal label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.goal-title-preview {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.ai-confirm-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.ai-confirm-footer .btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .ai-confirm-modal {
+    margin: 1rem;
+    max-width: calc(100% - 2rem);
   }
 }
 
