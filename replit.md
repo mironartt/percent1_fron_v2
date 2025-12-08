@@ -42,6 +42,15 @@ The application uses a modular structure with dedicated components, services, vi
 
 ## Recent Changes (December 2024)
 
+### Landing Page "Goals" Preview Tab (December 8, 2024)
+Added new "Цели" (Goals) tab to landing page preview section:
+- New previewTabs entry with icon 🏦, title "Банк целей", description and 4 features
+- Sidebar mockup shows new "Цели" menu item with active state
+- Preview screen displays goal cards with sphere icons, titles, progress bars
+- AI decomposition hint at bottom of preview
+- CSS styles for .goals-preview, .goal-card, .goal-header, .goal-progress, .ai-hint
+- Updated indices: ССП=0, Цели=1, Планирование=2, Привычки=3, Достижения=4
+
 ### Analytics API Integration for Habits (December 8, 2024)
 Integrated new Analytics API v2 with 8+ computed properties:
 - Added MONTH_NAMES_RU constant and translateMonth() function for Russian localization
