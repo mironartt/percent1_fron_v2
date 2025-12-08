@@ -60,7 +60,7 @@
           'has-missed': missedDaysForAmnesty.length > 0 && amnestiesRemaining > 0,
           'depleted': amnestiesRemaining === 0
         }"
-        @click="showAmnestyModal = true" 
+        @click="openAmnestyModal" 
         title="Амнистия"
       >
         <div class="stat-icon">
@@ -1001,64 +1001,71 @@
             </button>
           </div>
           <div class="modal-content">
-            <div class="amnesty-status">
-              <div class="amnesty-counter">
-                <span class="amnesty-remaining">{{ amnestiesRemaining }}</span>
-                <span class="amnesty-separator">/</span>
-                <span class="amnesty-total">{{ maxAmnesties }}</span>
-              </div>
-              <span class="amnesty-hint">использований на этой неделе</span>
+            <div v-if="habitsStore.amnestyDataLoading" class="amnesty-loading">
+              <Loader2 :size="24" :stroke-width="1.5" class="spinning" />
+              <span>Загрузка данных...</span>
             </div>
+            
+            <template v-else>
+              <div class="amnesty-status">
+                <div class="amnesty-counter">
+                  <span class="amnesty-remaining">{{ amnestiesRemaining }}</span>
+                  <span class="amnesty-separator">/</span>
+                  <span class="amnesty-total">{{ maxAmnesties }}</span>
+                </div>
+                <span class="amnesty-hint">использований на этой неделе</span>
+              </div>
 
-            <div v-if="amnestiedDaysInWeek.length > 0" class="amnesty-days-section amnestied-section">
-              <p class="amnesty-instruction amnestied-label">Амнистия уже применена:</p>
-              <div class="amnesty-days-grid">
-                <div 
-                  v-for="day in amnestiedDaysInWeek" 
-                  :key="day.date"
-                  class="amnesty-day-card amnestied"
-                >
-                  <div class="amnestied-badge">
-                    <Heart :size="14" :stroke-width="1.5" />
-                  </div>
-                  <span class="day-name">{{ day.dayName }}</span>
-                  <span class="day-date">{{ formatAmnestyDate(day.date) }}</span>
-                  <span class="day-missed">{{ day.missedCount }} {{ pluralizeHabits(day.missedCount) }}</span>
-                  <span class="day-penalty saved">+{{ day.penaltyXp }} XP</span>
-                  <button 
-                    class="btn-cancel-amnesty"
-                    @click="cancelAmnestyFromModal(day.date)"
-                    title="Отменить амнистию"
+              <div v-if="amnestiedDaysInWeek.length > 0" class="amnesty-days-section amnestied-section">
+                <p class="amnesty-instruction amnestied-label">Амнистия уже применена:</p>
+                <div class="amnesty-days-grid">
+                  <div 
+                    v-for="day in amnestiedDaysInWeek" 
+                    :key="day.date"
+                    class="amnesty-day-card amnestied"
                   >
-                    <X :size="14" :stroke-width="2" />
+                    <div class="amnestied-badge">
+                      <Heart :size="14" :stroke-width="1.5" />
+                    </div>
+                    <span class="day-name">{{ day.dayName }}</span>
+                    <span class="day-date">{{ formatAmnestyDate(day.date) }}</span>
+                    <span class="day-missed">{{ day.missedCount }} {{ pluralizeHabits(day.missedCount) }}</span>
+                    <span class="day-penalty saved">+{{ day.penaltyXp }} XP</span>
+                    <button 
+                      class="btn-cancel-amnesty"
+                      @click="cancelAmnestyFromModal(day.date)"
+                      title="Отменить амнистию"
+                    >
+                      <X :size="14" :stroke-width="2" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="missedDaysForAmnesty.length > 0" class="amnesty-days-section">
+                <p class="amnesty-instruction">Выберите день для прощения:</p>
+                <div class="amnesty-days-grid">
+                  <button 
+                    v-for="day in missedDaysForAmnesty" 
+                    :key="day.date"
+                    class="amnesty-day-card"
+                    :disabled="amnestiesRemaining <= 0"
+                    @click="applyAmnestyForDay(day.date)"
+                  >
+                    <span class="day-name">{{ day.dayName }}</span>
+                    <span class="day-date">{{ formatAmnestyDate(day.date) }}</span>
+                    <span class="day-missed">{{ day.missedCount }} {{ pluralizeHabits(day.missedCount) }}</span>
+                    <span class="day-penalty">-{{ day.penaltyXp }} XP</span>
                   </button>
                 </div>
               </div>
-            </div>
 
-            <div v-if="missedDaysForAmnesty.length > 0" class="amnesty-days-section">
-              <p class="amnesty-instruction">Выберите день для прощения:</p>
-              <div class="amnesty-days-grid">
-                <button 
-                  v-for="day in missedDaysForAmnesty" 
-                  :key="day.date"
-                  class="amnesty-day-card"
-                  :disabled="amnestiesRemaining <= 0"
-                  @click="applyAmnestyForDay(day.date)"
-                >
-                  <span class="day-name">{{ day.dayName }}</span>
-                  <span class="day-date">{{ formatAmnestyDate(day.date) }}</span>
-                  <span class="day-missed">{{ day.missedCount }} {{ pluralizeHabits(day.missedCount) }}</span>
-                  <span class="day-penalty">-{{ day.penaltyXp }} XP</span>
-                </button>
+              <div v-if="missedDaysForAmnesty.length === 0 && amnestiedDaysInWeek.length === 0" class="amnesty-empty">
+                <CheckCircle :size="32" :stroke-width="1.5" />
+                <p>Нет пропущенных дней для амнистии</p>
+                <span class="amnesty-empty-hint">Пропущенные дни за последнюю неделю появятся здесь</span>
               </div>
-            </div>
-
-            <div v-if="missedDaysForAmnesty.length === 0 && amnestiedDaysInWeek.length === 0" class="amnesty-empty">
-              <CheckCircle :size="32" :stroke-width="1.5" />
-              <p>Нет пропущенных дней для амнистии</p>
-              <span class="amnesty-empty-hint">Пропущенные дни за последнюю неделю появятся здесь</span>
-            </div>
+            </template>
           </div>
         </div>
       </div>
@@ -1464,7 +1471,7 @@ import {
   Flame, Plus, Minus, Zap, CheckCircle, Sparkles, Shield, Bot,
   Check, Pencil, X, Trash2, Settings, Gift, Archive, Info, TrendingUp, Calendar, Award,
   Ellipsis, CircleAlert, Lightbulb, Heart, ChevronLeft, ChevronRight, RotateCcw, Lock,
-  ChartBar, CalendarDays, Target, Save
+  ChartBar, CalendarDays, Target, Save, Loader2
 } from 'lucide-vue-next'
 
 const appStore = useAppStore()
@@ -1928,12 +1935,18 @@ const currentPenaltyPercent = computed(() => {
 })
 
 const maxAmnesties = computed(() => {
+  if (habitsStore.amnestyData.amnesty_available?.total !== undefined) {
+    return habitsStore.amnestyData.amnesty_available.total
+  }
   const mode = gameSettings.value.difficultyMode
   if (mode === 'soft') return 0
   return gameSettings.value.weeklyAmnestyCount || 0
 })
 
 const amnestiesRemaining = computed(() => {
+  if (habitsStore.amnestyData.amnesty_available?.remaining !== undefined) {
+    return habitsStore.amnestyData.amnesty_available.remaining
+  }
   const now = new Date()
   const weekStart = getWeekStart(now)
   
@@ -1944,6 +1957,11 @@ const amnestiesRemaining = computed(() => {
   
   return Math.max(0, maxAmnesties.value - gameSettings.value.amnestiesUsedThisWeek)
 })
+
+async function openAmnestyModal() {
+  showAmnestyModal.value = true
+  await habitsStore.loadAmnestyAvailableDays()
+}
 
 function isScheduledForDay(habit, dayKey) {
   const freqType = habit.frequencyType || habit.frequency_type
@@ -1956,6 +1974,23 @@ function isScheduledForDay(habit, dayKey) {
 }
 
 const missedDaysForAmnesty = computed(() => {
+  const apiDays = habitsStore.amnestyData.days || []
+  if (apiDays.length > 0) {
+    const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
+    return apiDays
+      .filter(day => day.can_apply && !day.is_amnestied && day.missed_habits_count > 0)
+      .map(day => {
+        const date = new Date(day.date)
+        const dayOfWeek = date.getDay()
+        return {
+          date: day.date,
+          dayName: dayNames[dayOfWeek] + ', ' + date.getDate(),
+          missedCount: day.missed_habits_count,
+          penaltyXp: day.total_penalty
+        }
+      })
+  }
+  
   if (gameSettings.value.difficultyMode === 'soft') return []
   if (!gameSettings.value.penaltiesEnabled) return []
   
@@ -1996,6 +2031,23 @@ const missedDaysForAmnesty = computed(() => {
 })
 
 const amnestiedDaysInWeek = computed(() => {
+  const apiDays = habitsStore.amnestyData.days || []
+  if (apiDays.length > 0) {
+    const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
+    return apiDays
+      .filter(day => day.is_amnestied)
+      .map(day => {
+        const date = new Date(day.date)
+        const dayOfWeek = date.getDay()
+        return {
+          date: day.date,
+          dayName: dayNames[dayOfWeek] + ', ' + date.getDate(),
+          missedCount: day.missed_habits_count,
+          penaltyXp: day.total_penalty
+        }
+      })
+  }
+  
   const amnestiedDates = gameSettings.value.amnestiedDates || []
   if (amnestiedDates.length === 0) return []
   
@@ -2032,48 +2084,40 @@ const amnestiedDaysInWeek = computed(() => {
   return days
 })
 
-function cancelAmnestyFromModal(dateStr) {
-  const amnestiedDates = gameSettings.value.amnestiedDates || []
-  if (!amnestiedDates.includes(dateStr)) return
-  
-  gameSettings.value.amnestiedDates = amnestiedDates.filter(d => d !== dateStr)
-  if (gameSettings.value.amnestiesUsedThisWeek > 0) {
-    gameSettings.value.amnestiesUsedThisWeek--
-  }
-  saveGameSettings()
-  
+async function cancelAmnestyFromModal(dateStr) {
   const dayInfo = amnestiedDaysInWeek.value.find(d => d.date === dateStr)
   const xpPenalty = dayInfo?.penaltyXp || 0
   
-  toast.showToast({ type: 'info', title: `Амнистия отменена. Штраф -${xpPenalty} XP восстановлен` })
+  const result = await habitsStore.revokeAmnesty(dateStr)
+  
+  if (result.success) {
+    toast.showToast({ type: 'info', title: `Амнистия отменена. Штраф -${xpPenalty} XP` })
+    await habitsStore.loadAmnestyAvailableDays()
+    habitsStore.loadStatsPanel()
+  } else {
+    toast.showToast({ type: 'error', title: 'Ошибка отмены амнистии' })
+  }
 }
 
-function applyAmnestyForDay(dateStr) {
+async function applyAmnestyForDay(dateStr) {
   if (amnestiesRemaining.value <= 0) {
     toast.showToast({ type: 'warning', title: 'Нет доступных амнистий' })
     return
   }
   
-  const now = new Date()
-  const weekStart = getWeekStart(now)
-  
-  if (!gameSettings.value.amnestyWeekStart || 
-      new Date(gameSettings.value.amnestyWeekStart).getTime() !== weekStart.getTime()) {
-    gameSettings.value.amnestyWeekStart = weekStart.toISOString()
-    gameSettings.value.amnestiesUsedThisWeek = 0
-  }
-  
-  if (!gameSettings.value.amnestiedDates) {
-    gameSettings.value.amnestiedDates = []
-  }
-  gameSettings.value.amnestiedDates.push(dateStr)
-  gameSettings.value.amnestiesUsedThisWeek++
-  saveGameSettings()
-  
   const dayInfo = missedDaysForAmnesty.value.find(d => d.date === dateStr)
   const xpRecovered = dayInfo?.penaltyXp || 0
   
-  toast.showToast({ type: 'success', title: `Амнистия применена! Возвращено ${xpRecovered} XP` })
+  const result = await habitsStore.applyAmnesty(dateStr)
+  
+  if (result.success) {
+    const actualXp = result.xpRestored || xpRecovered
+    toast.showToast({ type: 'success', title: `Амнистия применена! Возвращено ${actualXp} XP` })
+    await habitsStore.loadAmnestyAvailableDays()
+    habitsStore.loadStatsPanel()
+  } else {
+    toast.showToast({ type: 'error', title: 'Ошибка применения амнистии' })
+  }
 }
 
 function getWeekStart(date) {
@@ -3775,6 +3819,24 @@ onMounted(async () => {
 .amnesty-instruction.amnestied-label {
   color: #ec4899;
   font-weight: 500;
+}
+
+.amnesty-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2rem 1rem;
+  color: var(--text-muted);
+}
+
+.amnesty-loading .spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .amnesty-empty {
