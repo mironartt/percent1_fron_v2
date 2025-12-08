@@ -397,9 +397,9 @@
                 <Trash2 :size="20" />
                 <span>Убрать из плана</span>
               </button>
-              <button class="sheet-action success" @click="toggleStepComplete">
-                <CheckCircle :size="20" />
-                <span>{{ selectedStep?.completed ? 'Отменить' : 'Выполнено' }}</span>
+              <button class="sheet-action primary" @click="closeBottomSheet">
+                <Check :size="20" />
+                <span>Сохранить</span>
               </button>
             </div>
           </template>
@@ -2825,13 +2825,13 @@ onUnmounted(() => {
   font-weight: 500;
 }
 
-.sheet-action.success {
-  background: rgba(34, 197, 94, 0.1);
-  color: #16a34a;
+.sheet-action.primary {
+  background: var(--primary-color, #6366f1);
+  color: #fff;
 }
 
-.sheet-action.success:hover {
-  background: rgba(34, 197, 94, 0.15);
+.sheet-action.primary:hover {
+  background: var(--primary-dark, #4f46e5);
 }
 
 .inline-options-section {
