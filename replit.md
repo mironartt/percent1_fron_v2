@@ -142,3 +142,13 @@ Replaced infinite scroll with page-based pagination:
 - Active page highlighted with primary color
 - Smooth scroll to top on page change
 - Reset to page 1 when filters change
+
+### Goals Bank Local Filtering & Status Dropdown (December 8, 2024)
+Added local filtering and mobile-friendly status dropdown:
+- `filteredGoals` now filters locally by `sphereId` and `workStatus` (uses backend semantics)
+- Status tabs replaced with dropdown (consistent with sphere filter)
+- Added `showStatusDropdown`, `toggleStatusDropdown()`, `selectStatus()`, `getStatusLabel()`
+- Dropdowns close each other when opening (mutual exclusion)
+- Added `handleClickOutside()` for closing dropdowns on outside click
+- Event listeners added in onMounted/onUnmounted for proper cleanup
+- Renamed old `getStatusLabel` to `getGoalStatusEmoji` to avoid conflict

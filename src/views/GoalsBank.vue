@@ -76,29 +76,41 @@
             </transition>
           </div>
 
-          <!-- Status Tabs -->
-          <div class="status-tabs">
+          <!-- Status Dropdown (mobile-friendly) -->
+          <div class="status-dropdown-wrapper">
             <button 
-              class="status-tab" 
-              :class="{ active: filterStatus === '' }" 
-              @click="setFilterStatus('')"
+              class="status-dropdown-btn"
+              :class="{ active: filterStatus !== '' }"
+              @click="toggleStatusDropdown"
             >
-              Все
+              <span>{{ getStatusLabel(filterStatus) }}</span>
+              <ChevronDown :size="14" :class="{ rotated: showStatusDropdown }" />
             </button>
-            <button 
-              class="status-tab" 
-              :class="{ active: filterStatus === 'work' }" 
-              @click="setFilterStatus('work')"
-            >
-              В работе
-            </button>
-            <button 
-              class="status-tab" 
-              :class="{ active: filterStatus === 'complete' }" 
-              @click="setFilterStatus('complete')"
-            >
-              Завершены
-            </button>
+            <transition name="dropdown-fade">
+              <div v-if="showStatusDropdown" class="status-dropdown-menu">
+                <button 
+                  class="status-dropdown-item"
+                  :class="{ active: filterStatus === '' }"
+                  @click="selectStatus('')"
+                >
+                  Все
+                </button>
+                <button 
+                  class="status-dropdown-item"
+                  :class="{ active: filterStatus === 'work' }"
+                  @click="selectStatus('work')"
+                >
+                  В работе
+                </button>
+                <button 
+                  class="status-dropdown-item"
+                  :class="{ active: filterStatus === 'complete' }"
+                  @click="selectStatus('complete')"
+                >
+                  Завершены
+                </button>
+              </div>
+            </transition>
           </div>
 
           <!-- Search -->
@@ -727,6 +739,7 @@ const showSearchInput = ref(false)
 const searchInputRef = ref(null)
 const displayLimit = ref(10)
 const showSphereDropdown = ref(false)
+const showStatusDropdown = ref(false)
 
 // Debounce timer for search
 let searchDebounceTimer = null
@@ -1017,11 +1030,45 @@ function setFilterSphere(sphereId) {
 
 function toggleSphereDropdown() {
   showSphereDropdown.value = !showSphereDropdown.value
+  showStatusDropdown.value = false
 }
 
 function selectSphere(sphereId) {
   setFilterSphere(sphereId)
   showSphereDropdown.value = false
+}
+
+function toggleStatusDropdown() {
+  showStatusDropdown.value = !showStatusDropdown.value
+  showSphereDropdown.value = false
+}
+
+function selectStatus(status) {
+  setFilterStatus(status)
+  showStatusDropdown.value = false
+}
+
+function getStatusLabel(status) {
+  if (status === 'work') return 'В работе'
+  if (status === 'complete') return 'Завершены'
+  return 'Все'
+}
+
+function closeAllDropdowns() {
+  showSphereDropdown.value = false
+  showStatusDropdown.value = false
+}
+
+function handleClickOutside(event) {
+  const sphereDropdown = document.querySelector('.sphere-dropdown-wrapper')
+  const statusDropdown = document.querySelector('.status-dropdown-wrapper')
+  
+  if (sphereDropdown && !sphereDropdown.contains(event.target)) {
+    showSphereDropdown.value = false
+  }
+  if (statusDropdown && !statusDropdown.contains(event.target)) {
+    showStatusDropdown.value = false
+  }
 }
 
 function getStatusClass(goal) {
@@ -1184,7 +1231,25 @@ function isGoalCompleted(goalId) {
 
 // Backend already filters by: category_filter, status_filter, query_filter
 // No local filtering needed - just return rawIdeas
-const filteredGoals = computed(() => rawIdeas.value)
+const filteredGoals = computed(() => {
+  let goals = rawIdeas.value
+  
+  // Local filtering by sphere
+  if (filterSphere.value) {
+    goals = goals.filter(goal => goal.sphereId === filterSphere.value)
+  }
+  
+  // Local filtering by status (based on workStatus from backend)
+  if (filterStatus.value) {
+    if (filterStatus.value === 'work') {
+      goals = goals.filter(goal => goal.workStatus === 'work')
+    } else if (filterStatus.value === 'complete') {
+      goals = goals.filter(goal => goal.workStatus === 'complete')
+    }
+  }
+  
+  return goals
+})
 
 const GOALS_PER_PAGE = 10
 const currentPageLocal = ref(1)
@@ -1893,7 +1958,7 @@ function getGoalsCountForSphere(sphereId) {
   return rawIdeas.value.filter(i => i.sphereId === sphereId).length
 }
 
-function getStatusLabel(status) {
+function getGoalStatusEmoji(status) {
   const labels = {
     raw: '📝',
     validated: '✅',
@@ -2114,6 +2179,9 @@ onMounted(async () => {
   
   // Setup Infinite Scroll Observer
   setupInfiniteScroll()
+  
+  // Add click outside listener for dropdowns
+  document.addEventListener('click', handleClickOutside)
 })
 
 function setupInfiniteScroll() {
@@ -2142,6 +2210,7 @@ onUnmounted(() => {
   if (infiniteScrollObserver) {
     infiniteScrollObserver.disconnect()
   }
+  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
@@ -2374,19 +2443,19 @@ onUnmounted(() => {
   transform: translateY(-4px);
 }
 
-/* Status Tabs */
-.status-tabs {
-  display: flex;
-  background: var(--bg-secondary, #f3f4f6);
-  border-radius: 8px;
-  padding: 3px;
+/* Status Dropdown */
+.status-dropdown-wrapper {
+  position: relative;
 }
 
-.status-tab {
+.status-dropdown-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.5rem 0.875rem;
-  background: none;
-  border: none;
-  border-radius: 6px;
+  background: var(--bg-secondary, #f3f4f6);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-secondary, #6b7280);
@@ -2395,13 +2464,54 @@ onUnmounted(() => {
   transition: all 0.2s;
 }
 
-.status-tab:hover {
-  color: var(--text-primary, #374151);
+.status-dropdown-btn:hover {
+  background: var(--bg-hover, #e5e7eb);
 }
 
-.status-tab.active {
-  background: var(--primary-color, #6366f1);
-  color: white;
+.status-dropdown-btn.active {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: var(--primary-color, #6366f1);
+  color: var(--primary-color, #6366f1);
+}
+
+.status-dropdown-btn svg.rotated {
+  transform: rotate(180deg);
+}
+
+.status-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 140px;
+  background: var(--bg-primary, white);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.status-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  background: none;
+  border: none;
+  font-size: 0.875rem;
+  color: var(--text-primary, #374151);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.status-dropdown-item:hover {
+  background: var(--bg-secondary, #f3f4f6);
+}
+
+.status-dropdown-item.active {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--primary-color, #6366f1);
 }
 
 /* Pagination */
