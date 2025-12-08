@@ -8,7 +8,7 @@
  * - Единая обработка ошибок
  */
 
-import { API_BASE_URL, MIN_REQUEST_INTERVAL, DEBUG_MODE } from '@/config/settings.js'
+import { API_BASE_URL, MIN_REQUEST_INTERVAL, DEBUG_MODE, CREDENTIALS_MODE } from '@/config/settings.js'
 
 // Хранилище последних запросов для rate limiting
 const requestTimestamps = new Map()
@@ -36,6 +36,19 @@ export function getCsrfToken() {
 }
 
 /**
+ * Определить режим credentials для запроса
+ * Приоритет: CREDENTIALS_MODE из настроек > авто-определение по API_BASE_URL
+ * @returns {RequestCredentials} - 'include' | 'same-origin'
+ */
+function getCredentialsMode() {
+  if (CREDENTIALS_MODE) {
+    return CREDENTIALS_MODE
+  }
+  const isCrossOrigin = API_BASE_URL && API_BASE_URL.length > 0
+  return isCrossOrigin ? 'include' : 'same-origin'
+}
+
+/**
  * Централизованная обёртка над fetch с автоматическим CSRF токеном
  * Используйте эту функцию вместо нативного fetch для всех запросов к бэкенду
  * 
@@ -44,8 +57,6 @@ export function getCsrfToken() {
  * @returns {Promise<Response>} - Response объект
  */
 export async function apiFetch(url, options = {}) {
-  const isCrossOrigin = API_BASE_URL && API_BASE_URL.length > 0
-  
   const headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -60,7 +71,7 @@ export async function apiFetch(url, options = {}) {
   const config = {
     ...options,
     headers,
-    credentials: options.credentials || (isCrossOrigin ? 'include' : 'same-origin')
+    credentials: options.credentials || getCredentialsMode()
   }
   
   return fetch(url, config)
@@ -125,28 +136,8 @@ export async function request(method, endpoint, data = null, options = {}) {
   
   const url = `${API_BASE_URL}${endpoint}`
   
-  const headers = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
-  }
-  
-  // Добавляем CSRF токен из cookie если не пропускаем
-  if (!skipCsrf) {
-    const csrfToken = getCookie('csrftoken')
-    if (csrfToken) {
-      headers['X-CSRFToken'] = csrfToken
-    }
-  }
-  
-  // Определяем credentials в зависимости от того, куда идёт запрос
-  // 'include' - для cross-origin запросов (когда API_BASE_URL указан)
-  // 'same-origin' - для запросов на тот же домен (через proxy)
-  const isCrossOrigin = API_BASE_URL && API_BASE_URL.length > 0
-  
   const config = {
-    method,
-    headers,
-    credentials: isCrossOrigin ? 'include' : 'same-origin' // Cookie-based auth
+    method
   }
   
   if (data && method !== 'GET') {
