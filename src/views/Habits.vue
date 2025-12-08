@@ -1490,6 +1490,7 @@ const selectedHabitForEdit = ref(null)
 const dayEditSkipReason = ref('')
 const dayEditNote = ref('')
 const weekOffset = ref(0)
+const pendingWeekLoad = ref(null)
 const showDeletedHabits = ref(false)
 
 const habitSuggestions = [
@@ -1630,6 +1631,10 @@ const gameSettings = ref({
   amnestiedDates: []
 })
 
+function formatLocalDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 const weekDays = computed(() => {
   const today = new Date()
   const currentDay = today.getDay()
@@ -1641,7 +1646,7 @@ const weekDays = computed(() => {
     date.setDate(monday.getDate() + index)
     return {
       ...day,
-      date: date.toISOString().split('T')[0],
+      date: formatLocalDate(date),
       isToday: date.toDateString() === today.toDateString()
     }
   })
@@ -3302,6 +3307,48 @@ watch(activeTab, async (newTab) => {
       await habitsStore.loadAchievements()
       achievementsLoaded.value = true
     }
+  }
+})
+
+watch(weekOffset, async (newOffset, oldOffset) => {
+  if (newOffset === oldOffset) return
+  
+  const days = weekDays.value
+  if (!days.length) return
+  
+  const dateFrom = days[0].date
+  const dateTo = days[6].date
+  
+  if (DEBUG_MODE) {
+    console.log('[Habits.vue] Week changed, loading data:', { dateFrom, dateTo, weekOffset: newOffset })
+  }
+  
+  const params = {
+    date_from: dateFrom,
+    date_to: dateTo,
+    include_deleted: true
+  }
+  
+  const result = await habitsStore.loadHabits(params)
+  
+  if (!result.success && result.reason === 'loading') {
+    pendingWeekLoad.value = params
+    if (DEBUG_MODE) {
+      console.log('[Habits.vue] Load in progress, queued for retry:', params)
+    }
+  }
+})
+
+watch(() => habitsStore.loading, async (isLoading, wasLoading) => {
+  if (wasLoading && !isLoading && pendingWeekLoad.value) {
+    const params = pendingWeekLoad.value
+    pendingWeekLoad.value = null
+    
+    if (DEBUG_MODE) {
+      console.log('[Habits.vue] Retrying pending week load:', params)
+    }
+    
+    await habitsStore.loadHabits(params)
   }
 })
 
