@@ -165,9 +165,10 @@ Moved theme toggle and logout button:
 Complete redesign of the "Переоценить" flow as a centered modal popup (replaced Bottom Sheet):
 - **Select Mode**: Intro screen with importance text, last assessment date, recommendation tip (monthly)
 - **Manual Mode**: Enhanced cards with sphere icons, hints, score display, and styled sliders with 0/5/10 labels
-- **AI Mode**: Dialogic reassessment with AI mentor, progress bar, chat interface, score suggestions
+- **AI Mode**: Coaching-style reassessment - AI asks questions, user reflects and scores themselves
 - Added `getSphereHint()` function with hints for all 6 life spheres
-- Added `reassessmentMode`, `aiCurrentSphereIndex`, `aiMessages`, `aiUserInput`, `aiLoading`, `aiWaitingForScore`, `aiSuggestedScore`, `aiCompleted` reactive state
-- AI dialog: sequential questions per sphere, sentiment analysis fallback, score adjustment controls
-- New API endpoint `/api/ai/reassess-sphere` in aiProxy.js for AI-powered assessment
+- Added `reassessmentMode`, `aiCurrentSphereIndex`, `aiMessages`, `aiUserInput`, `aiLoading`, `aiReadyToScore`, `aiUserScore`, `aiCompleted` reactive state
+- AI acts as coach (not evaluator): asks coaching questions, NEVER suggests scores
+- User controls scoring: "Готов оценить" button + user-controlled slider
+- New API endpoint `/api/ai/reassess-sphere` in aiProxy.js with coaching-style prompts
 - Time warning for AI mode (5-10 min) and skip sphere functionality

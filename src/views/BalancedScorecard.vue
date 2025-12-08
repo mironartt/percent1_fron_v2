@@ -341,14 +341,28 @@
               </div>
             </div>
             
-            <div v-if="aiWaitingForScore" class="ai-score-prompt">
-              <p>Предлагаю оценку: <strong>{{ aiSuggestedScore }}/10</strong></p>
+            <div v-if="aiReadyToScore" class="ai-score-input">
+              <p class="score-label">Оцените сферу "{{ currentAISphere?.name }}":</p>
+              <div class="user-score-slider">
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="10" 
+                  v-model.number="aiUserScore"
+                  class="sphere-slider"
+                  :style="{ '--progress': (aiUserScore / 10) * 100 + '%', '--sphere-color': getSphereColor(currentAISphere?.id) }"
+                />
+                <div class="slider-labels">
+                  <span>0</span>
+                  <span>5</span>
+                  <span>10</span>
+                </div>
+              </div>
+              <div class="score-display">{{ aiUserScore }}/10</div>
               <div class="score-actions">
-                <button class="btn btn-sm btn-secondary" @click="adjustAIScore(-1)" :disabled="aiSuggestedScore <= 0">-1</button>
-                <span class="current-ai-score">{{ aiSuggestedScore }}</span>
-                <button class="btn btn-sm btn-secondary" @click="adjustAIScore(1)" :disabled="aiSuggestedScore >= 10">+1</button>
-                <button class="btn btn-sm btn-primary" @click="confirmAIScore">
-                  <Check :size="14" /> Принять
+                <button class="btn btn-secondary" @click="aiReadyToScore = false">Назад к диалогу</button>
+                <button class="btn btn-primary" @click="confirmUserScore">
+                  <Check :size="14" /> Подтвердить
                 </button>
               </div>
             </div>
@@ -383,8 +397,11 @@
             </div>
           </div>
           
-          <div v-if="!aiCompleted && !aiWaitingForScore" class="ai-nav-hint">
+          <div v-if="!aiCompleted && !aiReadyToScore" class="ai-nav-actions">
             <button class="btn btn-link" @click="skipCurrentSphere">Пропустить сферу</button>
+            <button class="btn btn-secondary" @click="readyToScore" :disabled="!aiMessages.some(m => m.role === 'user')">
+              <Check :size="16" /> Готов оценить
+            </button>
           </div>
         </div>
       </div>
@@ -591,8 +608,8 @@ const aiCurrentSphereIndex = ref(0)
 const aiMessages = ref([])
 const aiUserInput = ref('')
 const aiLoading = ref(false)
-const aiWaitingForScore = ref(false)
-const aiSuggestedScore = ref(5)
+const aiReadyToScore = ref(false)
+const aiUserScore = ref(5)
 const aiCompleted = ref(false)
 const aiMessagesRef = ref(null)
 
@@ -632,8 +649,8 @@ function resetAIState() {
   aiMessages.value = []
   aiUserInput.value = ''
   aiLoading.value = false
-  aiWaitingForScore.value = false
-  aiSuggestedScore.value = 5
+  aiReadyToScore.value = false
+  aiUserScore.value = 5
   aiCompleted.value = false
 }
 
@@ -644,7 +661,8 @@ async function startAISphereDialog() {
   const previousScore = sphere.score
   
   aiMessages.value = []
-  aiWaitingForScore.value = false
+  aiReadyToScore.value = false
+  aiUserScore.value = previousScore
   
   const introMessage = `Давайте поговорим о сфере "${sphere.name}" (${getSphereHint(sphere.id)}). 
   
@@ -687,30 +705,17 @@ async function sendAIMessage() {
     if (response.ok) {
       const data = await response.json()
       aiMessages.value.push({ role: 'assistant', content: data.message })
-      
-      if (data.suggestedScore !== undefined) {
-        aiSuggestedScore.value = data.suggestedScore
-        aiWaitingForScore.value = true
-      }
     } else {
-      const suggestedScore = analyzeSentiment(userMessage, sphere.score)
-      aiSuggestedScore.value = suggestedScore
-      
       aiMessages.value.push({ 
         role: 'assistant', 
-        content: `Спасибо за ваш ответ! На основе того, что вы рассказали, я бы предложил оценку ${suggestedScore}/10. Вы можете скорректировать её, если считаете нужным.`
+        content: 'Спасибо за ваш ответ! Расскажите подробнее — что для вас сейчас важнее всего в этой сфере?'
       })
-      aiWaitingForScore.value = true
     }
   } catch (error) {
-    const suggestedScore = analyzeSentiment(userMessage, currentAISphere.value?.score || 5)
-    aiSuggestedScore.value = suggestedScore
-    
     aiMessages.value.push({ 
       role: 'assistant', 
-      content: `Спасибо за ваш ответ! На основе того, что вы рассказали, я бы предложил оценку ${suggestedScore}/10. Вы можете скорректировать её, если считаете нужным.`
+      content: 'Спасибо за ваш ответ! Когда будете готовы оценить эту сферу, нажмите кнопку "Готов оценить".'
     })
-    aiWaitingForScore.value = true
   } finally {
     aiLoading.value = false
     setTimeout(() => {
@@ -721,35 +726,21 @@ async function sendAIMessage() {
   }
 }
 
-function analyzeSentiment(text, previousScore) {
-  const positiveWords = ['хорошо', 'отлично', 'прекрасно', 'улучшил', 'достиг', 'успех', 'прогресс', 'рад', 'доволен', 'лучше', 'супер', 'здорово']
-  const negativeWords = ['плохо', 'ужасно', 'проблемы', 'сложно', 'трудно', 'хуже', 'не получается', 'застой', 'упадок', 'стресс', 'устал', 'разочарован']
-  
-  const lowerText = text.toLowerCase()
-  let score = previousScore
-  
-  positiveWords.forEach(word => {
-    if (lowerText.includes(word)) score += 0.5
-  })
-  
-  negativeWords.forEach(word => {
-    if (lowerText.includes(word)) score -= 0.5
-  })
-  
-  return Math.max(0, Math.min(10, Math.round(score)))
-}
-
-function adjustAIScore(delta) {
-  aiSuggestedScore.value = Math.max(0, Math.min(10, aiSuggestedScore.value + delta))
-}
-
-function confirmAIScore() {
+function readyToScore() {
   const sphere = currentAISphere.value
   if (sphere) {
-    reassessScores[sphere.id] = aiSuggestedScore.value
+    aiUserScore.value = sphere.score
+  }
+  aiReadyToScore.value = true
+}
+
+function confirmUserScore() {
+  const sphere = currentAISphere.value
+  if (sphere) {
+    reassessScores[sphere.id] = aiUserScore.value
   }
   
-  aiWaitingForScore.value = false
+  aiReadyToScore.value = false
   
   if (aiCurrentSphereIndex.value < lifeSpheres.value.length - 1) {
     aiCurrentSphereIndex.value++
@@ -1753,31 +1744,46 @@ onMounted(async () => {
   30% { opacity: 1; transform: translateY(-4px); }
 }
 
-.ai-score-prompt {
+.ai-score-input {
   background: var(--bg-secondary);
   border-radius: var(--radius-lg);
-  padding: 1rem;
+  padding: 1.5rem;
   text-align: center;
   margin-top: 1rem;
 }
 
-.ai-score-prompt p {
-  margin: 0 0 0.75rem 0;
+.score-label {
+  margin: 0 0 1rem 0;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.user-score-slider {
+  margin-bottom: 0.5rem;
+}
+
+.score-display {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin: 0.5rem 0 1rem 0;
 }
 
 .score-actions {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
-.current-ai-score {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary-color);
-  min-width: 40px;
-  text-align: center;
+.ai-nav-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
 }
 
 .ai-input-area {
@@ -1848,10 +1854,6 @@ onMounted(async () => {
   color: var(--primary-color);
 }
 
-.ai-nav-hint {
-  text-align: center;
-  padding-top: 0.5rem;
-}
 
 .btn-link {
   background: none;
