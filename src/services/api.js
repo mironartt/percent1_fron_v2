@@ -13,6 +13,9 @@ import { API_BASE_URL, MIN_REQUEST_INTERVAL, DEBUG_MODE, CREDENTIALS_MODE } from
 // Хранилище последних запросов для rate limiting
 const requestTimestamps = new Map()
 
+// Хранилище CSRF токена в памяти (для cross-origin запросов)
+let csrfTokenInMemory = null
+
 /**
  * Утилита для получения значения cookie по имени
  * @param {string} name - Имя cookie
@@ -28,11 +31,23 @@ function getCookie(name) {
 }
 
 /**
- * Получить текущий CSRF токен из cookie
+ * Установить CSRF токен в память (для cross-origin сценариев)
+ * @param {string} token - CSRF токен
+ */
+export function setCsrfToken(token) {
+  csrfTokenInMemory = token
+  if (DEBUG_MODE) {
+    console.log('[API] CSRF token saved to memory')
+  }
+}
+
+/**
+ * Получить текущий CSRF токен
+ * Приоритет: память > cookie (для поддержки cross-origin)
  * @returns {string|null} - CSRF токен или null
  */
 export function getCsrfToken() {
-  return getCookie('csrftoken')
+  return csrfTokenInMemory || getCookie('csrftoken')
 }
 
 /**
@@ -63,7 +78,7 @@ export async function apiFetch(url, options = {}) {
     ...options.headers
   }
   
-  const csrfToken = getCookie('csrftoken')
+  const csrfToken = getCsrfToken()
   if (csrfToken) {
     headers['X-CSRFToken'] = csrfToken
   }
@@ -228,7 +243,8 @@ function buildUrl(endpoint) {
 
 /**
  * Инициализация/обновление CSRF токена
- * Делает запрос к серверу, который устанавливает cookie 'csrftoken'
+ * Делает запрос к серверу и сохраняет токен из ответа
+ * Поддерживает cross-origin сценарии (токен из JSON/заголовка)
  * Должен вызываться при загрузке приложения и при переходе на страницы
  */
 export async function initCsrf() {
@@ -239,23 +255,45 @@ export async function initCsrf() {
       console.log('[API] Refreshing CSRF token from:', url)
     }
     
-    await apiFetch(url, {
+    const response = await apiFetch(url, {
       method: 'POST',
       body: JSON.stringify({})
     })
     
-    // Проверяем что cookie установлена
-    const token = getCookie('csrftoken')
+    let token = null
     
-    if (DEBUG_MODE) {
-      if (token) {
-        console.log('[API] CSRF token initialized from cookie')
-      } else {
-        console.warn('[API] CSRF cookie not set after request')
+    // 1. Пробуем получить токен из заголовка ответа
+    token = response.headers.get('X-CSRFToken')
+    
+    // 2. Пробуем получить токен из JSON ответа
+    if (!token) {
+      try {
+        const data = await response.json()
+        token = data.csrfToken || data.csrf_token || data.token
+      } catch (e) {
+        // JSON парсинг не удался - игнорируем
       }
     }
     
-    return !!token
+    // 3. Fallback на cookie (для same-origin)
+    if (!token) {
+      token = getCookie('csrftoken')
+    }
+    
+    // Сохраняем токен в память
+    if (token) {
+      setCsrfToken(token)
+      if (DEBUG_MODE) {
+        console.log('[API] CSRF token initialized')
+      }
+      return true
+    }
+    
+    if (DEBUG_MODE) {
+      console.warn('[API] CSRF token not found in response')
+    }
+    return false
+    
   } catch (error) {
     if (DEBUG_MODE) {
       console.error('[API] Failed to initialize CSRF token:', error)
