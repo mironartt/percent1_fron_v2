@@ -252,14 +252,13 @@
                 v-for="day in last14Days" 
                 :key="day.date"
                 class="habit-day-cell"
-                :class="{ 
-                  completed: isCompletedOnDay(habit, day.date),
-                  scheduled: isScheduledFromWeekSchedule(habit, day.date),
-                  'not-scheduled': !isScheduledFromWeekSchedule(habit, day.date)
-                }"
-                :title="formatCalendarDate(day.date)"
+                :class="'status-' + getHabitDayStatus(habit, day.date)"
+                :title="getStatusTooltip(day.date, getHabitDayStatus(habit, day.date))"
               >
-                <Check v-if="isCompletedOnDay(habit, day.date)" :size="10" :stroke-width="2.5" />
+                <Check v-if="getHabitDayStatus(habit, day.date) === 'completed'" :size="10" :stroke-width="2.5" />
+                <X v-else-if="getHabitDayStatus(habit, day.date) === 'missed'" :size="10" :stroke-width="2" />
+                <CircleAlert v-else-if="getHabitDayStatus(habit, day.date) === 'excused'" :size="10" :stroke-width="2" />
+                <Shield v-else-if="getHabitDayStatus(habit, day.date) === 'amnestied'" :size="10" :stroke-width="2" />
               </div>
             </div>
             <div class="habit-analytics-stats">
@@ -2781,6 +2780,56 @@ function isCompletedOnDay(habit, dateStr) {
   return appStore.habitLog[dateStr]?.includes(habit.id)
 }
 
+function getHabitDayStatus(habit, dateStr) {
+  const habitBackendId = String(habit.habit_id || habit.backendId || habit.id)
+  
+  const analyticsData = habitsStore.analytics?.habits_data
+  if (analyticsData) {
+    const habitData = analyticsData.find(h => String(h.habit_id) === habitBackendId)
+    if (habitData?.completion_history) {
+      const dayData = habitData.completion_history.find(d => d.date === dateStr)
+      if (dayData) {
+        return dayData.status
+      }
+    }
+  }
+  
+  const backendHabit = habitsStore.habits.find(h => 
+    String(h.habit_id) === habitBackendId || String(h.id) === habitBackendId
+  )
+  if (backendHabit?.completions) {
+    const completion = backendHabit.completions.find(c => c.date === dateStr)
+    if (completion) {
+      return completion.status
+    }
+  }
+  
+  if (appStore.habitLog[dateStr]?.includes(habit.id)) {
+    return 'completed'
+  }
+  
+  if (isScheduledFromWeekSchedule(habit, dateStr)) {
+    return 'missed'
+  }
+  
+  return 'not_scheduled'
+}
+
+function getStatusLabel(status) {
+  const labels = {
+    'completed': 'Выполнена',
+    'missed': 'Пропущена',
+    'excused': 'Уважительная причина',
+    'amnestied': 'Амнистия',
+    'not_scheduled': 'Не запланирована'
+  }
+  return labels[status] || status
+}
+
+function getStatusTooltip(dateStr, status) {
+  return `${formatCalendarDate(dateStr)}: ${getStatusLabel(status)}`
+}
+
 function getFrequencyLabel(habit) {
   if (habit.frequencyType === 'daily') return 'Ежедневно'
   if (habit.frequencyType === 'weekdays') return 'Будни'
@@ -4926,6 +4975,31 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+}
+
+.habit-day-cell.status-completed {
+  background: #10b981;
+  color: white;
+}
+
+.habit-day-cell.status-missed {
+  background: #ef4444;
+  color: white;
+}
+
+.habit-day-cell.status-excused {
+  background: #f59e0b;
+  color: white;
+}
+
+.habit-day-cell.status-amnestied {
+  background: #8b5cf6;
+  color: white;
+}
+
+.habit-day-cell.status-not_scheduled {
+  background: var(--border-color);
+  opacity: 0.4;
 }
 
 .habit-day-cell.scheduled {

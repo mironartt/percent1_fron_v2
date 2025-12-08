@@ -64,6 +64,14 @@ Fixed issue where analytics block showed 0% for habits with past completions:
 - All functions now have fallback to `appStore.habitLog` (localStorage) when API data unavailable
 - 14-day circles in analytics now correctly display completions from backend data
 
+### Completion History Integration (December 8, 2024)
+Integrated completion_history from Analytics API v3 into "По привычкам" block:
+- Added `getHabitDayStatus()` function to get status from API completion_history with fallback
+- Added `getStatusLabel()` and `getStatusTooltip()` helper functions for localization
+- Updated template to show different icons for each status (Check, X, CircleAlert, Shield)
+- Added CSS styles for 5 statuses: completed (green), missed (red), excused (orange), amnestied (purple), not_scheduled (gray)
+- Fixed habit ID matching to use `habit.habit_id` instead of `habit.backendId` for correct API data lookup
+
 ### Habit Icon Field Name Fix (December 8, 2024)
 Fixed incorrect field name when creating/updating habits:
 - Changed `icon_name` to `icon` in `backendHabitData` object
