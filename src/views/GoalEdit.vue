@@ -762,7 +762,6 @@
                 :class="['priority-' + (editStepForm.priority || 'none'), { 'has-value': editStepForm.priority }]"
                 @click="cyclePriority"
               >
-                <span class="priority-dot"></span>
                 <span>{{ getPriorityLabel(editStepForm.priority) || 'Приоритет' }}</span>
               </div>
             </div>
