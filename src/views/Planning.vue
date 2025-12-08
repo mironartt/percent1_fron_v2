@@ -1034,14 +1034,24 @@ function getScheduledDate(goalId, stepId) {
 }
 
 function getScheduledPriority(goalId, stepId) {
+  // Сначала проверяем локальные данные (обновляются сразу при выборе)
+  const plan = store.weeklyPlans.find(p => p.weekStart === weekDays.value[0]?.date)
+  const localTask = plan?.scheduledTasks?.find(t => 
+    (t.goalId === goalId || t.goalId === String(goalId)) && 
+    (t.stepId === stepId || t.stepId === String(stepId))
+  )
+  if (localTask?.priority) return localTask.priority
+  
+  // Затем проверяем данные с бэкенда
   for (const day of weeklyStepsData.value) {
-    const step = day.steps_data?.find(s => s.goal_id === goalId && s.step_id === stepId)
+    const step = day.steps_data?.find(s => 
+      (s.goal_id === goalId || s.goal_id === String(goalId)) && 
+      (s.step_id === stepId || s.step_id === String(stepId))
+    )
     if (step) return priorityBackendToFrontend[step.step_priority] || step.step_priority || ''
   }
   
-  const plan = store.weeklyPlans.find(p => p.weekStart === weekDays.value[0]?.date)
-  const task = plan?.scheduledTasks?.find(t => t.goalId === goalId && t.stepId === stepId)
-  return task?.priority || ''
+  return ''
 }
 
 function getScheduledTimeEstimate(goalId, stepId) {
