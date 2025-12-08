@@ -56,6 +56,14 @@ Integrated new Analytics API v2 with 8+ computed properties:
 - Modal "Годовой календарь" now shows bestMonthRate in percentage
 - All computed properties have fallback to local calculations when API data unavailable
 
+### Analytics Block "По привычкам" Data Source Fix (December 8, 2024)
+Fixed issue where analytics block showed 0% for habits with past completions:
+- Updated `isCompletedOnDay()` to check `habitsStore.habits[].completions` from backend first
+- Updated `getHabitStreak()` to use `habitsStore.analytics.habits_data[].streak` from API
+- Updated `getHabitCompletionRate()` to use `completion_rate_7/30` from `habits_data`
+- All functions now have fallback to `appStore.habitLog` (localStorage) when API data unavailable
+- 14-day circles in analytics now correctly display completions from backend data
+
 ### Habit Icon Field Name Fix (December 8, 2024)
 Fixed incorrect field name when creating/updating habits:
 - Changed `icon_name` to `icon` in `backendHabitData` object
