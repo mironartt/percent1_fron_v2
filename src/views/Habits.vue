@@ -1353,11 +1353,18 @@
                   <span class="bw-value">{{ bestWeekRate }}%</span>
                 </div>
               </div>
-              <div class="worst-card">
+              <div class="worst-card" v-if="worstHabitName">
                 <TrendingUp :size="16" :stroke-width="1.5" class="down" />
                 <div class="bw-content">
                   <span class="bw-label">Нужно улучшить</span>
-                  <span class="bw-value">{{ worstWeekRate }}%</span>
+                  <span class="bw-value">{{ worstHabitName }} ({{ worstHabitRate }}%)</span>
+                </div>
+              </div>
+              <div class="worst-card" v-else>
+                <TrendingUp :size="16" :stroke-width="1.5" class="down" />
+                <div class="bw-content">
+                  <span class="bw-label">Нужно улучшить</span>
+                  <span class="bw-value">Нет данных</span>
                 </div>
               </div>
             </div>
@@ -1389,8 +1396,12 @@
                 <span class="year-stat-value">{{ yearActiveDays }}</span>
                 <span class="year-stat-label">Активных дней</span>
               </div>
-              <div class="year-stat accent">
+              <div class="year-stat accent" v-if="bestMonthName && bestMonthName !== '-'">
                 <span class="year-stat-value">{{ bestMonthName }}</span>
+                <span class="year-stat-label">Лучший месяц ({{ bestMonthRate }}%)</span>
+              </div>
+              <div class="year-stat accent" v-else>
+                <span class="year-stat-value">-</span>
                 <span class="year-stat-label">Лучший месяц</span>
               </div>
             </div>
@@ -1605,6 +1616,25 @@ const weekDaysConfig = [
   { key: 6, name: 'Суббота', short: 'Сб' },
   { key: 0, name: 'Воскресенье', short: 'Вс' }
 ]
+
+const MONTH_NAMES_RU = {
+  'January': 'Январь',
+  'February': 'Февраль',
+  'March': 'Март',
+  'April': 'Апрель',
+  'May': 'Май',
+  'June': 'Июнь',
+  'July': 'Июль',
+  'August': 'Август',
+  'September': 'Сентябрь',
+  'October': 'Октябрь',
+  'November': 'Ноябрь',
+  'December': 'Декабрь'
+}
+
+function translateMonth(monthName) {
+  return MONTH_NAMES_RU[monthName] || monthName
+}
 
 
 const formData = ref({
@@ -2170,6 +2200,9 @@ const last14Days = computed(() => {
 })
 
 const weekCompletionRate = computed(() => {
+  if (habitsStore.analytics?.completion_rate_7 !== undefined) {
+    return habitsStore.analytics.completion_rate_7
+  }
   let totalCompleted = 0
   let totalScheduled = 0
   const today = new Date()
@@ -2185,6 +2218,9 @@ const weekCompletionRate = computed(() => {
 })
 
 const monthCompletionRate = computed(() => {
+  if (habitsStore.analytics?.completion_rate_30 !== undefined) {
+    return habitsStore.analytics.completion_rate_30
+  }
   let totalCompleted = 0
   let totalScheduled = 0
   const today = new Date()
@@ -2395,8 +2431,18 @@ const badgeCategories = computed(() => {
   ]
 })
 
-// Данные для модального окна "Выполнение"
+const weeklyLabels = ['7н', '6н', '5н', '4н', '3н', '2н', '1н', 'Сейчас']
+
 const weeklyCompletionData = computed(() => {
+  if (habitsStore.analytics?.weekly_trend && habitsStore.analytics.weekly_trend.length === 8) {
+    return habitsStore.analytics.weekly_trend.map((rate, index) => ({
+      label: weeklyLabels[index],
+      rate: rate || 0,
+      completed: 0,
+      total: 0
+    }))
+  }
+  
   const weeks = []
   const today = new Date()
   
@@ -2424,9 +2470,8 @@ const weeklyCompletionData = computed(() => {
       })
     }
     
-    const weekNum = w === 0 ? 'Эта' : w === 1 ? 'Прошлая' : `-${w} нед.`
     weeks.push({
-      label: weekNum,
+      label: weeklyLabels[7 - w],
       rate: total > 0 ? Math.round(completed / total * 100) : 0,
       completed,
       total
@@ -2437,15 +2482,45 @@ const weeklyCompletionData = computed(() => {
 })
 
 const bestWeekRate = computed(() => {
+  if (habitsStore.analytics?.best_week_rate !== undefined) {
+    return habitsStore.analytics.best_week_rate
+  }
   return Math.max(...weeklyCompletionData.value.map(w => w.rate), 0)
 })
 
-const worstWeekRate = computed(() => {
-  const rates = weeklyCompletionData.value.filter(w => w.total > 0).map(w => w.rate)
-  return rates.length > 0 ? Math.min(...rates) : 0
+const worstHabitName = computed(() => {
+  if (habitsStore.analytics?.worst_habit_name !== undefined) {
+    return habitsStore.analytics.worst_habit_name
+  }
+  const distribution = habitCompletionDistribution.value
+  if (distribution.length === 0) return null
+  const worst = distribution[distribution.length - 1]
+  return worst?.name || null
+})
+
+const worstHabitRate = computed(() => {
+  if (habitsStore.analytics?.worst_habit_rate !== undefined) {
+    return habitsStore.analytics.worst_habit_rate
+  }
+  const distribution = habitCompletionDistribution.value
+  if (distribution.length === 0) return 0
+  const worst = distribution[distribution.length - 1]
+  return worst?.rate || 0
 })
 
 const habitCompletionDistribution = computed(() => {
+  if (habitsStore.analytics?.habits_data && habitsStore.analytics.habits_data.length > 0) {
+    return habitsStore.analytics.habits_data.map(habit => ({
+      id: habit.habit_id,
+      name: habit.name,
+      icon: habit.icon,
+      rate: habit.completion_rate_30 || 0,
+      streak: habit.streak || 0,
+      completed: habit.total_completions || 0,
+      total: 0
+    })).sort((a, b) => b.rate - a.rate)
+  }
+  
   const today = new Date()
   
   return allHabits.value.map(habit => {
@@ -2476,13 +2551,21 @@ const habitCompletionDistribution = computed(() => {
   }).sort((a, b) => b.rate - a.rate)
 })
 
-// Данные для модального окна "Календарь"
+function getHeatmapLevel(count) {
+  if (count === 0) return 'level-0'
+  if (count === 1) return 'level-1'
+  if (count === 2) return 'level-2'
+  if (count <= 4) return 'level-3'
+  return 'level-3'
+}
+
 const yearlyHeatmapData = computed(() => {
+  const calendarData = habitsStore.analytics?.calendar_data
   const weeks = []
   const today = new Date()
   const startDate = new Date(today)
   startDate.setFullYear(today.getFullYear() - 1)
-  startDate.setDate(startDate.getDate() - startDate.getDay() + 1) // Начало недели
+  startDate.setDate(startDate.getDate() - startDate.getDay() + 1)
   
   let currentDate = new Date(startDate)
   
@@ -2499,25 +2582,36 @@ const yearlyHeatmapData = computed(() => {
       }
       
       const dateStr = date.toISOString().split('T')[0]
-      let completed = 0
-      let total = 0
       
-      allHabits.value.forEach(habit => {
-        if (isScheduledForDay(habit, date.getDay())) {
-          total++
-          if (appStore.habitLog[dateStr]?.includes(habit.id)) {
-            completed++
+      if (calendarData && calendarData[dateStr] !== undefined) {
+        const count = calendarData[dateStr]
+        week.push({ 
+          date: dateStr, 
+          completed: count, 
+          total: count, 
+          level: getHeatmapLevel(count) 
+        })
+      } else {
+        let completed = 0
+        let total = 0
+        
+        allHabits.value.forEach(habit => {
+          if (isScheduledForDay(habit, date.getDay())) {
+            total++
+            if (appStore.habitLog[dateStr]?.includes(habit.id)) {
+              completed++
+            }
           }
-        }
-      })
-      
-      const rate = total > 0 ? completed / total : 0
-      let level = 'level-0'
-      if (rate > 0 && rate < 0.33) level = 'level-1'
-      else if (rate >= 0.33 && rate < 0.66) level = 'level-2'
-      else if (rate >= 0.66) level = 'level-3'
-      
-      week.push({ date: dateStr, completed, total, level })
+        })
+        
+        const rate = total > 0 ? completed / total : 0
+        let level = 'level-0'
+        if (rate > 0 && rate < 0.33) level = 'level-1'
+        else if (rate >= 0.33 && rate < 0.66) level = 'level-2'
+        else if (rate >= 0.66) level = 'level-3'
+        
+        week.push({ date: dateStr, completed, total, level })
+      }
     }
     
     weeks.push(week)
@@ -2542,14 +2636,43 @@ const monthLabels = computed(() => {
 })
 
 const yearTotalCompletions = computed(() => {
+  if (habitsStore.analytics?.year_completions !== undefined) {
+    return habitsStore.analytics.year_completions
+  }
   return Object.values(appStore.habitLog).flat().length
 })
 
 const yearActiveDays = computed(() => {
+  if (habitsStore.analytics?.year_active_days !== undefined) {
+    return habitsStore.analytics.year_active_days
+  }
   return Object.keys(appStore.habitLog).filter(date => appStore.habitLog[date].length > 0).length
 })
 
+const bestMonthRate = computed(() => {
+  if (habitsStore.analytics?.best_month_rate !== undefined) {
+    return habitsStore.analytics.best_month_rate
+  }
+  const best = monthlyStats.value.find(m => m.isBest)
+  return best ? best.rate : 0
+})
+
 const monthlyStats = computed(() => {
+  if (habitsStore.analytics?.monthly_stats && habitsStore.analytics.monthly_stats.length > 0) {
+    const apiStats = habitsStore.analytics.monthly_stats
+    const bestRate = Math.max(...apiStats.map(m => m.completion_rate))
+    const currentMonth = new Date().getMonth() + 1
+    
+    return apiStats.map(month => ({
+      name: translateMonth(month.month_name),
+      rate: month.completion_rate || 0,
+      completed: month.completed || 0,
+      total: month.scheduled || 0,
+      isCurrent: month.month === currentMonth,
+      isBest: month.completion_rate === bestRate && month.scheduled > 0
+    }))
+  }
+  
   const today = new Date()
   const months = []
   const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 
@@ -2592,7 +2715,6 @@ const monthlyStats = computed(() => {
     })
   }
   
-  // Найти лучший месяц
   const maxRate = Math.max(...months.filter(m => m.total > 0).map(m => m.rate))
   months.forEach(m => {
     if (m.rate === maxRate && m.total > 0) m.isBest = true
@@ -2602,6 +2724,9 @@ const monthlyStats = computed(() => {
 })
 
 const bestMonthName = computed(() => {
+  if (habitsStore.analytics?.best_month_name) {
+    return translateMonth(habitsStore.analytics.best_month_name)
+  }
   const best = monthlyStats.value.find(m => m.isBest)
   return best ? best.name : '-'
 })
