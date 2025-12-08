@@ -7,12 +7,20 @@
   
   <aside class="sidebar" :class="{ collapsed: isCollapsed, 'mobile-open': isMobileOpen }">
     <div class="sidebar-header">
-      <h1 class="logo" v-show="!isCollapsed">OnePercent</h1>
-      <h1 class="logo-short" v-show="isCollapsed">1%</h1>
+      <div class="header-top">
+        <div class="logo-wrapper">
+          <h1 class="logo" v-show="!isCollapsed">OnePercent</h1>
+          <h1 class="logo-short" v-show="isCollapsed">1%</h1>
+        </div>
+        <button class="theme-toggle-icon" @click="toggleTheme" :title="isDark ? 'Светлая тема' : 'Тёмная тема'">
+          <Sun v-if="isDark" :size="20" :stroke-width="1.5" />
+          <Moon v-else :size="20" :stroke-width="1.5" />
+        </button>
+        <button class="mobile-close-btn" @click="closeMobile">
+          <X :size="24" :stroke-width="1.5" />
+        </button>
+      </div>
       <p class="tagline" v-show="!isCollapsed">+1% каждый день</p>
-      <button class="mobile-close-btn" @click="closeMobile">
-        <X :size="24" :stroke-width="1.5" />
-      </button>
     </div>
 
     <button class="collapse-btn" @click="toggleCollapse" :title="isCollapsed ? 'Развернуть меню' : 'Свернуть меню'">
@@ -44,42 +52,16 @@
         >
           <component :is="item.icon" class="icon" :size="20" :stroke-width="1.5" />
           <span class="nav-label">{{ item.label }}</span>
+          <span v-if="item.comingSoon && !isCollapsed" class="coming-soon-badge">Скоро</span>
           <Lock v-if="item.showLock && !isCollapsed" class="lock-icon" :size="14" :stroke-width="1.5" />
         </div>
       </div>
     </nav>
 
     <div class="sidebar-footer">
-      <div class="theme-toggle" @click="toggleTheme" :title="isDark ? 'Светлая тема' : 'Тёмная тема'">
-        <Sun v-if="isDark" class="theme-icon" :size="20" :stroke-width="1.5" />
-        <Moon v-else class="theme-icon" :size="20" :stroke-width="1.5" />
-        <span class="nav-label">{{ isDark ? 'Светлая тема' : 'Тёмная тема' }}</span>
-      </div>
-      
-      <!-- User info and Telegram bot temporarily hidden
-      <div class="user-info" v-if="store.isAuthenticated && !isCollapsed">
-        <User class="user-avatar" :size="24" :stroke-width="1.5" />
-        <span class="user-name">{{ store.displayName }}</span>
-      </div>
-      
-      <button 
-        v-if="store.user.telegram_bot_link"
-        class="telegram-btn" 
-        @click="showTelegramModal = true"
-        :title="isCollapsed ? 'Телеграм бот' : ''"
-      >
-        <Send class="icon telegram-icon" :size="20" :stroke-width="1.5" />
-        <span class="nav-label">Телеграм бот</span>
-      </button>
-      -->
-      
       <router-link to="/app/settings" class="settings-link" :title="isCollapsed ? 'Настройки' : ''">
         <Settings class="icon" :size="20" :stroke-width="1.5" />
         <span class="nav-label">Настройки</span>
-      </router-link>
-      <router-link to="/auth/logout" class="logout-link" :title="isCollapsed ? 'Выйти' : ''">
-        <LogOut class="icon" :size="20" :stroke-width="1.5" />
-        <span class="nav-label">Выйти</span>
       </router-link>
     </div>
   </aside>
@@ -302,9 +284,9 @@ const menuItems = [
   { path: '/app/habits', icon: Flame, label: 'Привычки', locked: false, showLock: false },
   { path: '/app/achievements', icon: Award, label: 'Достижения', locked: false, showLock: false },
   { path: '/app/learning', icon: GraduationCap, label: 'Обучение', locked: false, showLock: false },
-  { path: '/app/energy', icon: Zap, label: 'Ресурс и энергия', locked: true, showLock: false },
-  { path: '/app/principles', icon: Gem, label: 'Принципы и убеждения', locked: true, showLock: false },
-  { path: '/app/club', icon: Users, label: 'Клуб 1%', locked: true, showLock: false }
+  { path: '/app/energy', icon: Zap, label: 'Ресурс и энергия', locked: true, showLock: false, comingSoon: true },
+  { path: '/app/principles', icon: Gem, label: 'Принципы и убеждения', locked: true, showLock: false, comingSoon: true },
+  { path: '/app/club', icon: Users, label: 'Клуб 1%', locked: true, showLock: false, comingSoon: true }
 ]
 </script>
 
@@ -313,13 +295,13 @@ const menuItems = [
   position: fixed;
   left: 0;
   top: 0;
+  z-index: 9999;
   width: 280px;
   height: 100vh;
   background: var(--bg-primary);
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  z-index: 100;
   transition: width 0.3s ease;
 }
 
@@ -328,14 +310,48 @@ const menuItems = [
 }
 
 .sidebar-header {
-  padding: 2rem 1.5rem 1.5rem;
+  padding: 1.5rem 1.5rem 1rem;
   border-bottom: 1px solid var(--border-color);
-  min-height: 100px;
+  min-height: 80px;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.logo-wrapper {
+  flex: 1;
+}
+
+.theme-toggle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-toggle-icon:hover {
+  background: var(--bg-hover);
+  color: var(--primary-color);
 }
 
 .sidebar.collapsed .sidebar-header {
-  padding: 2rem 0.75rem 1.5rem;
+  padding: 1.5rem 0.75rem 1rem;
   text-align: center;
+}
+
+.sidebar.collapsed .theme-toggle-icon {
+  display: none;
 }
 
 .logo {
@@ -480,6 +496,19 @@ const menuItems = [
   height: 14px;
   color: #9ca3af;
   opacity: 0.6;
+}
+
+.coming-soon-badge {
+  margin-left: auto;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: #fff;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .nav-item.has-lock {
@@ -839,7 +868,7 @@ const menuItems = [
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 99;
+  z-index: 9998;
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;

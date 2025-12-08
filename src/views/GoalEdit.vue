@@ -33,7 +33,7 @@
           <button class="btn-back" @click="goBack" title="Назад">
             <ArrowLeft :size="20" />
           </button>
-          <div class="header-title-section" @click="openEditModal">
+          <div class="header-title-section">
             <h1 class="header-goal-title">{{ goalForm.title || 'Без названия' }}</h1>
             <span class="header-sphere-badge" :style="{ '--sphere-color': getSphereColor(goalForm.sphereId) }">
               {{ getSphereNameOnly(goalForm.sphereId) }}
@@ -78,21 +78,29 @@
         <div class="card card-no-header">
           <!-- Combined Search + Filter Bar -->
           <div class="search-filter-bar">
-            <div class="search-input-wrapper">
-              <Search :size="16" class="search-icon" />
-              <input 
-                v-model="searchQuery"
-                type="text"
-                class="search-input"
-                placeholder="Поиск..."
-              />
+            <div class="search-expandable" :class="{ expanded: showSearchInput }">
               <button 
-                v-if="searchQuery" 
-                class="search-clear"
-                @click="searchQuery = ''"
+                v-if="!showSearchInput" 
+                class="search-icon-btn"
+                @click="toggleSearch"
+                title="Поиск"
               >
-                <X :size="14" />
+                <Search :size="18" />
               </button>
+              <div v-else class="search-input-wrapper">
+                <Search :size="16" class="search-icon" />
+                <input 
+                  ref="searchInputRef"
+                  v-model="searchQuery"
+                  type="text"
+                  class="search-input"
+                  placeholder="Поиск..."
+                  @blur="onSearchBlur"
+                />
+                <button class="search-close-btn" @click="closeSearch">
+                  <X :size="14" />
+                </button>
+              </div>
             </div>
             
             <div class="filter-chips-scroll">
@@ -120,6 +128,18 @@
                 </button>
               </div>
             </div>
+
+            <button 
+              class="btn-ai-steps-inline"
+              :class="{ generating: isGeneratingSteps }"
+              :disabled="isGeneratingSteps"
+              @click="openAIConfirmModal"
+              title="ИИ сгенерирует 3-7 шагов для достижения цели"
+            >
+              <Loader2 v-if="isGeneratingSteps" :size="16" class="spin" />
+              <Sparkles v-else :size="16" />
+              <span class="btn-ai-label">{{ isGeneratingSteps ? 'Генерация...' : 'Помощь от ментора' }}</span>
+            </button>
           </div>
 
           <!-- Подсказка о drag/drop -->
@@ -139,26 +159,6 @@
                 <Plus :size="16" />
                 Добавить первый шаг
               </button>
-              <div class="ai-steps-generate-empty">
-                <button 
-                  class="btn-ai-steps"
-                  :class="{ generating: isGeneratingSteps }"
-                  :disabled="isGeneratingSteps"
-                  @click="generateStepsAI"
-                  @mouseenter="showAIStepsTooltip = true"
-                  @mouseleave="showAIStepsTooltip = false"
-                >
-                  <Loader2 v-if="isGeneratingSteps" :size="16" class="spin" />
-                  <Sparkles v-else :size="16" />
-                  <span>{{ isGeneratingSteps ? 'Генерация...' : 'Помощь от ментора' }}</span>
-                </button>
-                <transition name="tooltip-fade">
-                  <div v-if="showAIStepsTooltip && !isGeneratingSteps" class="ai-steps-tooltip ai-steps-tooltip-empty">
-                    <strong>ИИ-помощник</strong>
-                    <p>Сгенерирует 3-7 шагов для достижения этой цели</p>
-                  </div>
-                </transition>
-              </div>
             </div>
           </div>
 
@@ -222,6 +222,9 @@
                   </span>
                 </div>
               </div>
+              
+              <!-- Шеврон - индикатор кликабельности -->
+              <ChevronRight :size="18" class="step-chevron" />
               
               <!-- Чекбокс справа для быстрого выполнения -->
               <button 
@@ -356,27 +359,6 @@
                 </button>
               </div>
               
-              <!-- AI генерация шагов -->
-              <div class="ai-steps-generate">
-                <button 
-                  class="btn-ai-steps"
-                  :class="{ generating: isGeneratingSteps }"
-                  :disabled="isGeneratingSteps"
-                  @click="generateStepsAI"
-                  @mouseenter="showAIStepsTooltip = true"
-                  @mouseleave="showAIStepsTooltip = false"
-                >
-                  <Loader2 v-if="isGeneratingSteps" :size="16" class="spin" />
-                  <Sparkles v-else :size="16" />
-                  <span>{{ isGeneratingSteps ? 'Генерация...' : 'Помощь от ментора' }}</span>
-                </button>
-                <transition name="tooltip-fade">
-                  <div v-if="showAIStepsTooltip && !isGeneratingSteps" class="ai-steps-tooltip">
-                    <strong>ИИ-помощник</strong>
-                    <p>Сгенерирует 3-7 шагов для достижения этой цели на основе её названия</p>
-                  </div>
-                </transition>
-              </div>
             </div>
 
           </div>
@@ -447,6 +429,47 @@
       </div>
 
     </div>
+
+    <!-- Модальное окно подтверждения AI генерации -->
+    <transition name="modal-fade">
+      <div v-if="showAIConfirmModal" class="modal-overlay" @click.self="closeAIConfirmModal">
+        <div class="ai-confirm-modal">
+          <div class="ai-confirm-header">
+            <div class="ai-confirm-icon">
+              <Sparkles :size="24" />
+            </div>
+            <h3>Декомпозиция цели от ментора</h3>
+            <button class="modal-close" @click="closeAIConfirmModal">
+              <X :size="20" />
+            </button>
+          </div>
+          <div class="ai-confirm-body">
+            <p class="ai-confirm-description">
+              ИИ-ментор проанализирует вашу цель и предложит <strong>3-7 конкретных шагов</strong> для её достижения.
+            </p>
+            <div class="ai-confirm-warning">
+              <AlertCircle :size="18" />
+              <div>
+                <strong>Важно:</strong> Убедитесь, что название цели сформулировано чётко и понятно. Чем конкретнее цель — тем точнее будут шаги.
+              </div>
+            </div>
+            <div class="ai-confirm-goal">
+              <label>Ваша цель:</label>
+              <p class="goal-title-preview">{{ goalForm.title || 'Без названия' }}</p>
+            </div>
+          </div>
+          <div class="ai-confirm-footer">
+            <button class="btn btn-secondary" @click="closeAIConfirmModal">
+              Отмена
+            </button>
+            <button class="btn btn-primary" @click="confirmAndGenerateSteps">
+              <Sparkles :size="16" />
+              Запустить
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
 
     <!-- Модальное окно редактирования цели (унифицировано с GoalsBank) -->
     <transition name="modal-fade">
@@ -701,7 +724,16 @@
               />
             </div>
             
-            <div class="form-group">
+            <button 
+              v-if="!showCommentField && !editStepForm.comment"
+              class="btn-link add-comment-btn"
+              @click="showCommentField = true"
+            >
+              <Plus :size="14" />
+              Добавить комментарий
+            </button>
+            
+            <div v-if="showCommentField || editStepForm.comment" class="form-group">
               <label class="form-label">Комментарий</label>
               <textarea 
                 v-model="editStepForm.comment"
@@ -711,76 +743,46 @@
               ></textarea>
             </div>
 
-            <div class="form-group checklist-section">
-              <label class="form-label">Чеклист</label>
-              <div class="checklist-items">
-                <div 
-                  v-for="(item, index) in editStepForm.checklist" 
-                  :key="item.id"
-                  class="checklist-item"
-                >
-                  <button 
-                    class="checklist-checkbox"
-                    :class="{ checked: item.completed }"
-                    @click="toggleChecklistItem(index)"
-                  >
-                    <CheckSquare v-if="item.completed" :size="18" />
-                    <Square v-else :size="18" />
-                  </button>
-                  <input 
-                    v-model="item.text"
-                    type="text"
-                    class="checklist-input"
-                    :class="{ completed: item.completed }"
-                    placeholder="Подзадача..."
-                    @keydown.enter="addChecklistItem"
-                  />
-                  <button 
-                    class="checklist-remove"
-                    @click="removeChecklistItem(index)"
-                  >
-                    <X :size="14" />
-                  </button>
-                </div>
-              </div>
-              <button class="btn-link add-checklist-btn" @click="addChecklistItem">
-                <Plus :size="14" />
-                Добавить подзадачу
-              </button>
-            </div>
-
             <div class="step-params-row">
-              <div class="param-chip" @click="showTimeSelector = !showTimeSelector">
-                <Clock :size="14" />
-                <span>{{ editStepForm.timeEstimate ? editStepForm.timeEstimate + 'ч' : 'Время' }}</span>
+              <div 
+                class="param-chip" 
+                :class="{ 'has-value': editStepForm.timeEstimate }"
+                @click="showTimeSelector = !showTimeSelector"
+              >
+                <Clock :size="18" />
+                <span>{{ formatTimeEstimate(editStepForm.timeEstimate) || 'Время' }}</span>
               </div>
-              <div class="param-chip" @click="showDatePicker = !showDatePicker">
-                <Calendar :size="14" />
+              <div 
+                class="param-chip" 
+                :class="{ 'has-value': editStepForm.scheduledDate }"
+                @click="showDatePicker = !showDatePicker"
+              >
+                <Calendar :size="18" />
                 <span>{{ formatParamDate(editStepForm.scheduledDate) || 'Дата' }}</span>
               </div>
               <div 
                 class="param-chip priority-chip"
-                :class="editStepForm.priority || 'none'"
+                :class="['priority-' + (editStepForm.priority || 'none'), { 'has-value': editStepForm.priority }]"
                 @click="cyclePriority"
               >
-                <Circle :size="14" />
                 <span>{{ getPriorityLabel(editStepForm.priority) || 'Приоритет' }}</span>
               </div>
             </div>
 
-            <div v-if="showTimeSelector" class="param-dropdown">
-              <input 
-                v-model="editStepForm.timeEstimate"
-                type="number"
-                class="form-input form-input-small"
-                placeholder="Часов"
-                min="0.5"
-                max="24"
-                step="0.5"
-              />
+            <div v-if="showTimeSelector" class="time-options-row">
+              <button 
+                v-for="time in timeOptions" 
+                :key="time.value"
+                class="time-chip"
+                :class="{ active: editStepForm.timeEstimate === time.value }"
+                @click="editStepForm.timeEstimate = time.value"
+              >
+                {{ time.label }}
+              </button>
             </div>
 
-            <div v-if="showDatePicker" class="param-dropdown">
+            <div v-if="showDatePicker" class="param-input-group date-picker-row">
+              <label>Дата</label>
               <input 
                 v-model="editStepForm.scheduledDate"
                 type="date"
@@ -789,26 +791,39 @@
             </div>
           </div>
           
-          <div class="bottom-sheet-footer step-footer-simple">
+          <div class="bottom-sheet-footer step-footer-redesigned">
             <button 
-              class="icon-btn"
-              :class="{ active: editStepForm.completed }"
-              @click="toggleEditStepComplete"
-              title="Выполнить"
+              class="action-btn action-delete"
+              @click="confirmDeleteStep"
             >
-              <CheckCircle :size="22" />
+              <Trash2 :size="18" />
+              <span>Удалить</span>
             </button>
-            <button 
-              class="icon-btn danger"
-              @click="deleteStepFromModal"
-              title="Удалить"
-            >
-              <Trash2 :size="22" />
+            <button class="btn btn-primary btn-save" @click="saveEditStepModal">
+              <Check :size="18" />
+              <span>Сохранить</span>
             </button>
-            <div class="footer-spacer"></div>
-            <button class="btn btn-primary" @click="saveEditStepModal">
-              <Check :size="16" />
-              Сохранить
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Модальное окно подтверждения удаления шага -->
+    <transition name="modal-fade">
+      <div v-if="showDeleteStepConfirm" class="modal-overlay delete-confirm-overlay" @click.self="cancelDeleteStep">
+        <div class="delete-confirm-modal">
+          <div class="delete-confirm-icon">
+            <Trash2 :size="28" />
+          </div>
+          <h3>Удалить шаг?</h3>
+          <p>Шаг "{{ editStepForm.title || 'Без названия' }}" будет удалён. Это действие нельзя отменить.</p>
+          <div class="delete-confirm-actions">
+            <button class="btn btn-secondary" @click="cancelDeleteStep">
+              Отмена
+            </button>
+            <button class="btn btn-danger" @click="executeDeleteStep">
+              <Trash2 :size="16" />
+              Удалить
             </button>
           </div>
         </div>
@@ -828,7 +843,7 @@ import {
   Square, CheckSquare, Search, CheckCircle2, AlertCircle,
   CheckCircle, XCircle, Check, Filter, Settings, Clock, Calendar, Circle,
   FileText, Lightbulb, Shield, BarChart2, Play, Pause, GitBranch,
-  BookOpen, ChevronDown, Send, MessageSquare, Wand2, Loader2, Sparkles
+  BookOpen, ChevronDown, ChevronRight, Send, MessageSquare, Wand2, Loader2, Sparkles
 } from 'lucide-vue-next'
 import { generateStepsWithAI } from '@/services/aiGoalService.js'
 
@@ -934,6 +949,22 @@ function showToast(message, type = 'success') {
 const showEditModal = ref(false)
 const editingGoal = ref(null)
 const editModalTab = ref('main')
+
+// Модальное окно подтверждения AI генерации
+const showAIConfirmModal = ref(false)
+
+function openAIConfirmModal() {
+  showAIConfirmModal.value = true
+}
+
+function closeAIConfirmModal() {
+  showAIConfirmModal.value = false
+}
+
+function confirmAndGenerateSteps() {
+  closeAIConfirmModal()
+  generateStepsAI()
+}
 
 // Quick Actions computed properties
 const isGoalInWork = computed(() => {
@@ -1233,6 +1264,16 @@ async function saveStepFromModal() {
 const showEditStepModal = ref(false)
 const showTimeSelector = ref(false)
 const showDatePicker = ref(false)
+const showCommentField = ref(false)
+
+const timeOptions = [
+  { value: '30min', label: '30 минут' },
+  { value: '1h', label: '1 час' },
+  { value: '2h', label: '2 часа' },
+  { value: '3h', label: '3 часа' },
+  { value: '4h', label: '4 часа' },
+  { value: '', label: 'Без оценки' }
+]
 const editStepForm = ref({
   title: '',
   comment: '',
@@ -1255,6 +1296,7 @@ const priorityOptions = [
 function openEditStepModal(step, index) {
   showTimeSelector.value = false
   showDatePicker.value = false
+  showCommentField.value = false
   editStepForm.value = {
     title: step.title || '',
     comment: step.comment || '',
@@ -1293,7 +1335,7 @@ function toggleEditStepComplete() {
 }
 
 function cyclePriority() {
-  const priorities = ['', 'low', 'medium', 'high']
+  const priorities = ['', 'optional', 'attention', 'desirable', 'critical']
   const current = editStepForm.value.priority || ''
   const idx = priorities.indexOf(current)
   editStepForm.value.priority = priorities[(idx + 1) % priorities.length]
@@ -1357,10 +1399,46 @@ async function deleteStepFromModal() {
   }
 }
 
+// Подтверждение удаления шага
+const showDeleteStepConfirm = ref(false)
+
+function confirmDeleteStep() {
+  showDeleteStepConfirm.value = true
+}
+
+function cancelDeleteStep() {
+  showDeleteStepConfirm.value = false
+}
+
+async function executeDeleteStep() {
+  showDeleteStepConfirm.value = false
+  await deleteStepFromModal()
+}
+
 // Фильтры
 const searchQuery = ref('')
 const filterStatus = ref('')
 const sortBy = ref('order')
+const showSearchInput = ref(false)
+const searchInputRef = ref(null)
+
+function toggleSearch() {
+  showSearchInput.value = true
+  nextTick(() => {
+    searchInputRef.value?.focus()
+  })
+}
+
+function closeSearch() {
+  searchQuery.value = ''
+  showSearchInput.value = false
+}
+
+function onSearchBlur() {
+  if (!searchQuery.value) {
+    showSearchInput.value = false
+  }
+}
 const sortDirection = ref('asc')
 const showFilterDropdown = ref(false)
 
@@ -1830,14 +1908,11 @@ function getPriorityColor(priority) {
 function getPriorityLabel(priority) {
   const labels = {
     'critical': 'Критично',
-    'desirable': 'Желательно',
-    'attention': 'Внимание',
-    'optional': 'Опционально',
-    'low': 'Низкий',
-    'medium': 'Средний',
-    'high': 'Высокий'
+    'desirable': 'Важно',
+    'attention': 'В поле внимания',
+    'optional': 'По возможности'
   }
-  return labels[priority] || priority || ''
+  return labels[priority] || ''
 }
 
 function formatScheduledDate(dateStr) {
@@ -1856,14 +1931,13 @@ function formatScheduledDate(dateStr) {
 function formatTimeEstimate(timeEstimate) {
   if (!timeEstimate) return ''
   const timeLabels = {
-    '15': '15мин',
-    '30': '30мин',
-    '60': '1ч',
-    '120': '2ч',
-    '180': '3ч',
-    '240': '4ч'
+    '30min': '30м',
+    '1h': '1ч',
+    '2h': '2ч',
+    '3h': '3ч',
+    '4h': '4ч'
   }
-  return timeLabels[timeEstimate] || timeEstimate + 'ч'
+  return timeLabels[timeEstimate] || timeEstimate
 }
 
 async function toggleStepComplete(step, index) {
@@ -2058,11 +2132,11 @@ async function loadMoreStepsFromBackend() {
 // Map backend time duration to frontend
 function mapTimeFromBackend(timeDuration) {
   const map = {
-    'half': '30',
-    'one': '60',
-    'two': '120',
-    'three': '180',
-    'four': '240'
+    'half': '30min',
+    'one': '1h',
+    'two': '2h',
+    'three': '3h',
+    'four': '4h'
   }
   return map[timeDuration] || ''
 }
@@ -2070,12 +2144,11 @@ function mapTimeFromBackend(timeDuration) {
 // Map frontend time to backend
 function mapTimeToBackend(timeEstimate) {
   const map = {
-    '15': 'half',
-    '30': 'half',
-    '60': 'one',
-    '120': 'two',
-    '180': 'three',
-    '240': 'four'
+    '30min': 'half',
+    '1h': 'one',
+    '2h': 'two',
+    '3h': 'three',
+    '4h': 'four'
   }
   return map[timeEstimate] || null
 }
@@ -2813,6 +2886,237 @@ function formatDate(dateString) {
   white-space: nowrap;
 }
 
+/* Expandable Search */
+.search-expandable {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.search-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.search-icon-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--primary-color);
+}
+
+.search-expandable.expanded .search-input-wrapper {
+  width: 160px;
+  animation: expandSearch 0.2s ease-out;
+}
+
+@keyframes expandSearch {
+  from {
+    width: 36px;
+    opacity: 0;
+  }
+  to {
+    width: 160px;
+    opacity: 1;
+  }
+}
+
+.search-close-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.search-close-btn:hover {
+  background: var(--danger-color);
+  color: #fff;
+}
+
+/* AI Steps Inline Button */
+.btn-ai-steps-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-ai-steps-inline:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.btn-ai-steps-inline:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-ai-steps-inline.generating {
+  background: linear-gradient(135deg, #9ca3af, #6b7280);
+}
+
+@media (max-width: 768px) {
+  .search-icon-btn {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .search-expandable.expanded .search-input-wrapper {
+    width: 120px;
+  }
+  
+  .btn-ai-steps-inline {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .btn-ai-steps-inline .btn-ai-label {
+    display: none;
+  }
+}
+
+/* AI Confirm Modal */
+.ai-confirm-modal {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 480px;
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+}
+
+.ai-confirm-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.ai-confirm-header h3 {
+  flex: 1;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.ai-confirm-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.ai-confirm-body {
+  padding: 1.5rem;
+}
+
+.ai-confirm-description {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.ai-confirm-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+}
+
+.ai-confirm-warning svg {
+  color: #f59e0b;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.ai-confirm-warning div {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.ai-confirm-goal {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+
+.ai-confirm-goal label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.goal-title-preview {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.ai-confirm-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.ai-confirm-footer .btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .ai-confirm-modal {
+    margin: 1rem;
+    max-width: calc(100% - 2rem);
+  }
+}
+
 /* Toast уведомления */
 .toast-container {
   position: fixed;
@@ -3425,6 +3729,19 @@ function formatDate(dateString) {
   height: 6px;
   border-radius: 50%;
   background: currentColor;
+}
+
+/* Шеврон - индикатор кликабельности */
+.step-chevron {
+  color: var(--text-muted, #9ca3af);
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.step-card-clickable:hover .step-chevron {
+  opacity: 1;
+  transform: translateX(2px);
 }
 
 /* Чекбокс справа */
@@ -4177,20 +4494,21 @@ function formatDate(dateString) {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.25rem 0;
+  padding: 0.5rem 0;
+  min-height: 48px;
 }
 
 .checklist-checkbox {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
   border: none;
   background: transparent;
   color: var(--text-secondary, #9ca3af);
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 8px;
   transition: all 0.15s;
   flex-shrink: 0;
 }
@@ -4228,16 +4546,22 @@ function formatDate(dateString) {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 44px;
+  height: 44px;
   border: none;
   background: transparent;
   color: var(--text-secondary, #9ca3af);
   cursor: pointer;
-  border-radius: 4px;
-  opacity: 0;
+  border-radius: 8px;
+  opacity: 0.5;
   transition: all 0.15s;
   flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .checklist-remove {
+    opacity: 1;
+  }
 }
 
 .checklist-item:hover .checklist-remove {
@@ -4270,40 +4594,89 @@ function formatDate(dateString) {
 .step-params-row {
   display: flex;
   gap: 0.5rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   margin-top: 0.5rem;
 }
 
 .param-chip {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.4rem 0.75rem;
+  justify-content: center;
+  gap: 0.375rem;
+  flex: 1;
+  padding: 0.625rem 0.5rem;
+  min-height: 44px;
   background: var(--bg-secondary, #f3f4f6);
-  border-radius: 20px;
-  font-size: 0.8rem;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-md, 8px);
+  font-size: 0.8125rem;
+  font-weight: 500;
   color: var(--text-secondary, #6b7280);
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.param-chip.has-value {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: var(--primary-color, #6366f1);
+  color: var(--primary-color, #6366f1);
 }
 
 .param-chip:hover {
   background: var(--bg-hover, #e5e7eb);
 }
 
-.param-chip.priority-chip.low {
-  background: rgba(34, 197, 94, 0.15);
-  color: #16a34a;
-}
-
-.param-chip.priority-chip.medium {
-  background: rgba(234, 179, 8, 0.15);
-  color: #ca8a04;
-}
-
-.param-chip.priority-chip.high {
-  background: rgba(239, 68, 68, 0.15);
+.param-chip.priority-chip.priority-critical {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: #ef4444;
   color: #dc2626;
+}
+
+.param-chip.priority-chip.priority-desirable {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: #f59e0b;
+  color: #d97706;
+}
+
+.param-chip.priority-chip.priority-attention {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: #3b82f6;
+  color: #2563eb;
+}
+
+.param-chip.priority-chip.priority-optional {
+  background: rgba(156, 163, 175, 0.12);
+  border-color: #9ca3af;
+  color: #6b7280;
+}
+
+.priority-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.add-comment-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-muted, #9ca3af);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.add-comment-btn:hover {
+  color: var(--primary-color, #6366f1);
 }
 
 .param-dropdown {
@@ -4313,10 +4686,222 @@ function formatDate(dateString) {
   border-radius: 8px;
 }
 
-.form-input-small {
-  max-width: 120px;
+.param-inputs-row {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  padding: 1rem;
+  background: var(--bg-secondary, #f9fafb);
+  border-radius: var(--radius-md, 8px);
 }
 
+.time-options-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary, #f9fafb);
+  border-radius: var(--radius-md, 8px);
+}
+
+.time-chip {
+  padding: 0.5rem 1rem;
+  min-height: 44px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  background: var(--bg-primary, #fff);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.time-chip:hover {
+  border-color: var(--primary-color, #6366f1);
+}
+
+.time-chip.active {
+  background: var(--primary-color, #6366f1);
+  color: #fff;
+  border-color: var(--primary-color, #6366f1);
+}
+
+.date-picker-row {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary, #f9fafb);
+  border-radius: var(--radius-md, 8px);
+}
+
+.param-input-group {
+  flex: 1;
+  min-width: 0;
+}
+
+.param-input-group label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted, #9ca3af);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.param-input-group .form-input {
+  width: 100%;
+}
+
+.form-input-small {
+  max-width: 100%;
+}
+
+/* Redesigned Step Footer */
+.step-footer-redesigned {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-primary, #fff);
+  position: sticky;
+  bottom: 0;
+}
+
+.step-footer-redesigned .btn-save {
+  flex: 1;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  min-height: 44px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-secondary, #f3f4f6);
+  border-radius: var(--radius-md, 8px);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.action-btn:hover {
+  background: var(--bg-hover, #e5e7eb);
+}
+
+.action-btn.action-complete.active {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: #22c55e;
+  color: #16a34a;
+}
+
+.action-btn.action-delete {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.action-btn.action-delete:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: #ef4444;
+}
+
+.btn-save {
+  min-height: 44px;
+  padding: 0.625rem 1.25rem;
+}
+
+/* Delete Confirm Modal */
+.delete-confirm-overlay {
+  z-index: 1100;
+}
+
+.delete-confirm-modal {
+  background: var(--bg-primary, #fff);
+  border-radius: var(--radius-lg, 12px);
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 340px;
+  text-align: center;
+  box-shadow: var(--shadow-xl);
+}
+
+.delete-confirm-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ef4444;
+}
+
+.delete-confirm-modal h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: var(--text-primary, #111827);
+}
+
+.delete-confirm-modal p {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6b7280);
+  margin: 0 0 1.25rem;
+  line-height: 1.5;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.delete-confirm-actions .btn {
+  flex: 1;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+@media (max-width: 768px) {
+  .step-footer-redesigned {
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+  
+  .action-btn.action-delete {
+    flex-shrink: 0;
+  }
+  
+  .btn-save {
+    flex: 1;
+  }
+  
+  .param-inputs-row {
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+}
+
+/* Legacy styles kept for compatibility */
 .step-footer-simple {
   display: flex;
   align-items: center;
@@ -4335,8 +4920,8 @@ function formatDate(dateString) {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border: none;
   background: var(--bg-secondary, #f3f4f6);
   border-radius: 50%;

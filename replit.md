@@ -42,6 +42,15 @@ The application uses a modular structure with dedicated components, services, vi
 
 ## Recent Changes (December 2024)
 
+### Landing Page "Goals" Preview Tab (December 8, 2024)
+Added new "Цели" (Goals) tab to landing page preview section:
+- New previewTabs entry with icon 🏦, title "Банк целей", description and 4 features
+- Sidebar mockup shows new "Цели" menu item with active state
+- Preview screen displays goal cards with sphere icons, titles, progress bars
+- AI decomposition hint at bottom of preview
+- CSS styles for .goals-preview, .goal-card, .goal-header, .goal-progress, .ai-hint
+- Updated indices: ССП=0, Цели=1, Планирование=2, Привычки=3, Достижения=4
+
 ### Analytics API Integration for Habits (December 8, 2024)
 Integrated new Analytics API v2 with 8+ computed properties:
 - Added MONTH_NAMES_RU constant and translateMonth() function for Russian localization
@@ -137,3 +146,50 @@ Integrated new Stats Panel API fields for "XP за привычки" and "Сер
 - Added `.not-scheduled` class to template for days without scheduled habits
 - Added CSS style `.streak-day.not-scheduled` with gray/muted appearance
 - All computed properties have fallback to local calculations when API data unavailable
+
+### Goals Bank Filter Bar Redesign (December 8, 2024)
+Replaced horizontal sphere chips with unified filter bar:
+- Unified filter-bar with dropdown (left) + status tabs (right)
+- Sphere dropdown with Filter icon, shows "Все сферы" or selected sphere name
+- ChevronDown icon rotates on open/close
+- Status tabs: "Все", "В работе", "Завершены"
+- Dropdown menu with sphere icons and smooth fade transition
+
+### Goals Bank Pagination Redesign (December 8, 2024)
+Replaced infinite scroll with page-based pagination:
+- 10 goals per page (GOALS_PER_PAGE constant)
+- Navigation with ChevronLeft/ChevronRight arrows
+- Visible page numbers with ellipsis for long lists
+- Active page highlighted with primary color
+- Smooth scroll to top on page change
+- Reset to page 1 when filters change
+
+### Goals Bank Local Filtering & Status Dropdown (December 8, 2024)
+Added local filtering and mobile-friendly status dropdown:
+- `filteredGoals` now filters locally by `sphereId` and `workStatus` (uses backend semantics)
+- Status tabs replaced with dropdown (consistent with sphere filter)
+- Added `showStatusDropdown`, `toggleStatusDropdown()`, `selectStatus()`, `getStatusLabel()`
+- Dropdowns close each other when opening (mutual exclusion)
+- Added `handleClickOutside()` for closing dropdowns on outside click
+- Event listeners added in onMounted/onUnmounted for proper cleanup
+- Renamed old `getStatusLabel` to `getGoalStatusEmoji` to avoid conflict
+
+### Sidebar UI Improvements (December 8, 2024)
+Moved theme toggle and logout button:
+- Theme toggle moved to sidebar header as icon (moon/sun) next to logo
+- Added `.header-top`, `.logo-wrapper`, `.theme-toggle-icon` styles
+- Removed "Выйти" button from sidebar footer
+- Added "Выйти" button to Settings → Дополнительно section
+- Added `handleLogout()` function and LogOut icon import to Settings.vue
+
+### SSP Reassessment Modal Redesign (December 8, 2024)
+Complete redesign of the "Переоценить" flow as a centered modal popup (replaced Bottom Sheet):
+- **Select Mode**: Intro screen with importance text, last assessment date, recommendation tip (monthly)
+- **Manual Mode**: Enhanced cards with sphere icons, hints, score display, and styled sliders with 0/5/10 labels
+- **AI Mode**: Coaching-style reassessment - AI asks questions, user reflects and scores themselves
+- Added `getSphereHint()` function with hints for all 6 life spheres
+- Added `reassessmentMode`, `aiCurrentSphereIndex`, `aiMessages`, `aiUserInput`, `aiLoading`, `aiReadyToScore`, `aiUserScore`, `aiCompleted` reactive state
+- AI acts as coach (not evaluator): asks coaching questions, NEVER suggests scores
+- User controls scoring: "Готов оценить" button + user-controlled slider
+- New API endpoint `/api/ai/reassess-sphere` in aiProxy.js with coaching-style prompts
+- Time warning for AI mode (5-10 min) and skip sphere functionality

@@ -246,6 +246,17 @@
             <button class="btn btn-secondary btn-sm">Импорт</button>
           </div>
 
+          <div class="setting-item">
+            <div>
+              <div class="setting-title">Выход из аккаунта</div>
+              <div class="setting-desc">Выйти из текущей сессии</div>
+            </div>
+            <button class="btn btn-secondary btn-sm" @click="handleLogout">
+              <LogOut :size="14" style="margin-right: 0.25rem" />
+              Выйти
+            </button>
+          </div>
+
           <div class="setting-item danger">
             <div>
               <div class="setting-title">Удалить аккаунт</div>
@@ -263,7 +274,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
-import { Bot, Sparkles, MessageCircle, VolumeX, User, CreditCard, Bell, FileText, Settings } from 'lucide-vue-next'
+import { Bot, Sparkles, MessageCircle, VolumeX, User, CreditCard, Bell, FileText, Settings, LogOut } from 'lucide-vue-next'
 
 const router = useRouter()
 const store = useAppStore()
@@ -306,6 +317,10 @@ function resetOnboarding() {
     store.resetOnboarding()
     window.location.href = '/'
   }
+}
+
+function handleLogout() {
+  router.push('/auth/logout')
 }
 
 function goToTelegramSettings() {

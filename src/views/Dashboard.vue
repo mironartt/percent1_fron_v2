@@ -32,10 +32,6 @@
             <Flame :size="16" :stroke-width="1.5" />
             <span>{{ journalStreak }} {{ pluralize(journalStreak, 'день', 'дня', 'дней') }}</span>
           </div>
-          <div class="balance-badge" @click="$router.push('/app/ssp')" title="Перейти к балансу жизни">
-            <Target :size="16" :stroke-width="1.5" />
-            <span>{{ averageScore }}/10</span>
-          </div>
         </div>
       </header>
 

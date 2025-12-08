@@ -206,9 +206,10 @@
                 <div class="mockup-sidebar">
                   <div class="sidebar-item active">📊 Главная</div>
                   <div class="sidebar-item" :class="{ active: activePreview === 0 }">🎯 ССП</div>
-                  <div class="sidebar-item" :class="{ active: activePreview === 1 }">📅 Планирование</div>
-                  <div class="sidebar-item" :class="{ active: activePreview === 2 }">🔥 Привычки</div>
-                  <div class="sidebar-item" :class="{ active: activePreview === 3 }">🏆 Достижения</div>
+                  <div class="sidebar-item" :class="{ active: activePreview === 1 }">🏦 Цели</div>
+                  <div class="sidebar-item" :class="{ active: activePreview === 2 }">📅 Планирование</div>
+                  <div class="sidebar-item" :class="{ active: activePreview === 3 }">🔥 Привычки</div>
+                  <div class="sidebar-item" :class="{ active: activePreview === 4 }">🏆 Достижения</div>
                 </div>
                 <div class="mockup-content">
                   <div v-if="activePreview === 0" class="preview-screen">
@@ -222,6 +223,32 @@
                     </div>
                   </div>
                   <div v-else-if="activePreview === 1" class="preview-screen">
+                    <h4>Банк целей</h4>
+                    <div class="goals-preview">
+                      <div class="goal-card">
+                        <div class="goal-header">
+                          <span class="goal-sphere">💰</span>
+                          <span class="goal-title">Накопить на отпуск</span>
+                        </div>
+                        <div class="goal-progress">
+                          <div class="progress-bar"><span style="width: 60%"></span></div>
+                          <span class="progress-text">3/5 шагов</span>
+                        </div>
+                      </div>
+                      <div class="goal-card">
+                        <div class="goal-header">
+                          <span class="goal-sphere">💪</span>
+                          <span class="goal-title">Пробежать 10 км</span>
+                        </div>
+                        <div class="goal-progress">
+                          <div class="progress-bar"><span style="width: 40%"></span></div>
+                          <span class="progress-text">2/5 шагов</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="ai-hint">🤖 AI разобьёт цель на шаги</div>
+                  </div>
+                  <div v-else-if="activePreview === 2" class="preview-screen">
                     <h4>Недельное планирование</h4>
                     <div class="week-preview">
                       <div class="day-tab" v-for="day in ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']" :key="day">{{ day }}</div>
@@ -232,7 +259,7 @@
                       <div class="task-item completed"><span class="priority low"></span>Чтение 30 минут</div>
                     </div>
                   </div>
-                  <div v-else-if="activePreview === 2" class="preview-screen">
+                  <div v-else-if="activePreview === 3" class="preview-screen">
                     <h4>Мои привычки</h4>
                     <div class="habits-preview">
                       <div class="habit-item"><span class="habit-icon">🏃</span>Утренняя зарядка<span class="streak">🔥 12 дней</span></div>
@@ -571,6 +598,18 @@ const previewTabs = [
       'История оценок и динамика',
       'Рефлексия по каждой сфере',
       'Автоматические рекомендации целей'
+    ]
+  },
+  {
+    icon: '🏦',
+    name: 'Цели',
+    title: 'Банк целей',
+    description: 'Ставь цели по SMART, разбивай на шаги с помощью AI, отслеживай прогресс. Все цели привязаны к сферам жизни.',
+    features: [
+      'AI-декомпозиция целей на шаги',
+      'Привязка к сферам жизни',
+      'Визуальные карточки с прогрессом',
+      'Чеклисты и мини-дневник цели'
     ]
   },
   {
@@ -1567,6 +1606,72 @@ onUnmounted(() => {
 .priority.high { background: #ef4444; }
 .priority.med { background: #f59e0b; }
 .priority.low { background: #3b82f6; }
+
+.goals-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.goal-card {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.goal-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.goal-sphere {
+  font-size: 1rem;
+}
+
+.goal-title {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #1a1a2e;
+}
+
+.goal-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.goal-progress .progress-bar {
+  flex: 1;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.goal-progress .progress-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #7c3aed, #a855f7);
+  border-radius: 3px;
+}
+
+.goal-progress .progress-text {
+  font-size: 0.7rem;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.ai-hint {
+  font-size: 0.75rem;
+  color: #7c3aed;
+  text-align: center;
+  padding: 0.5rem;
+  background: rgba(124, 58, 237, 0.08);
+  border-radius: 6px;
+}
 
 .habits-preview {
   display: flex;

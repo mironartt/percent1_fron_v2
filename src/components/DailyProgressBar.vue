@@ -7,7 +7,6 @@
       </div>
       <div class="progress-value">
         <span class="percentage">{{ progressPercent }}%</span>
-        <span class="details">{{ completedItems }}/{{ totalItems }}</span>
       </div>
     </div>
     

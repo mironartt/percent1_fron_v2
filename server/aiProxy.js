@@ -170,6 +170,84 @@ app.post('/api/ai/generate-steps', async (req, res) => {
   }
 })
 
+app.post('/api/ai/reassess-sphere', async (req, res) => {
+  try {
+    const { sphereId, sphereName, sphereHint, previousScore, userMessage, conversationHistory } = req.body
+    
+    if (!userMessage || !userMessage.trim()) {
+      return res.status(400).json({ success: false, error: 'User message is required' })
+    }
+
+    const systemPrompt = `Ты - эмпатичный AI-коуч для приложения личного развития. Помогаешь пользователю осмыслить сферу жизни "${sphereName}" (${sphereHint}).
+
+Предыдущая оценка пользователя: ${previousScore}/10
+
+Твоя роль - КОУЧ, а не оценщик:
+- НИКОГДА не предлагай оценку или балл
+- Задавай один наводящий вопрос за раз
+- Помогай пользователю самому осознать своё состояние в этой сфере
+- Используй технику мотивационного интервью
+
+Верни JSON:
+{
+  "message": "Твой ответ (2-3 предложения): краткая обратная связь + один наводящий вопрос"
+}
+
+Примеры хороших вопросов:
+- "Что для вас значит успех в этой сфере?"
+- "Что изменилось за последний месяц?"
+- "Что вам мешает продвинуться дальше?"
+- "Чем вы гордитесь в этой сфере?"
+- "Что бы вы хотели изменить?"
+
+Правила:
+- Будь кратким и поддерживающим
+- Один вопрос за раз, не перегружай
+- НЕ предлагай оценки — пользователь сам решит когда готов оценить
+- Отвечай на русском языке
+- Отвечай ТОЛЬКО валидным JSON`
+
+    const messages = [
+      { role: 'system', content: systemPrompt }
+    ]
+    
+    if (conversationHistory && conversationHistory.length > 0) {
+      conversationHistory.forEach(msg => {
+        if (msg.role === 'user' || msg.role === 'assistant') {
+          messages.push({ role: msg.role, content: msg.content })
+        }
+      })
+    }
+    
+    messages.push({ role: 'user', content: userMessage })
+
+    const response = await openai.chat.completions.create({
+      model: MODEL,
+      messages: messages,
+      response_format: { type: 'json_object' },
+      max_completion_tokens: 1024
+    })
+
+    const content = response.choices?.[0]?.message?.content
+    if (!content) {
+      throw new Error('Empty response from AI')
+    }
+
+    const parsed = JSON.parse(content)
+    
+    res.json({
+      success: true,
+      message: parsed.message || 'Спасибо за ваш ответ! Когда будете готовы, оцените эту сферу.'
+    })
+  } catch (error) {
+    console.error('[AI Proxy] Reassess sphere error:', error)
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error processing reassessment'
+    })
+  }
+})
+
 app.get('/api/ai/health', (req, res) => {
   res.json({ status: 'ok' })
 })
