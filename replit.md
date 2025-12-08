@@ -40,6 +40,7 @@ The application uses a modular structure with dedicated components, services, vi
 
 ## Recent Changes (December 2024)
 
+
 ### Stats Panel API v2 Integration for Modals (December 8, 2024)
 Integrated new Stats Panel API fields for "XP за привычки" and "Серия выполнений" modals:
 - Added `month_xp`, `week_xp_by_day`, `streak_days` fields to `statsPanel` in habits store
@@ -48,6 +49,27 @@ Integrated new Stats Panel API fields for "XP за привычки" and "Сер
 - Updated `xpByDay` to use `habitsStore.weekXpByDay` array from API
 - Updated `streakCalendar` to use `habitsStore.streakDays` with Map for fast lookup
 - Added `.not-scheduled` class for days without scheduled habits
+
+### Comprehensive Dark Theme Audit (December 8, 2024)
+Complete audit and fix of dark theme across all pages:
+- **main.css**: Added CSS variables (--bg-hover, status colors), form focus/hover states, button hover states
+- **GoalsBank.vue**: Replaced hardcoded colors with CSS variables for status chips and badges
+- **Habits.vue**: Extended dark theme for containers, habit-card hover, day-cell states, heatmap, analytics
+- **Dashboard.vue**: Dark theme overrides for habit colors and section cards
+- **BalancedScorecard.vue**: Full dark theme for containers, tabs, history items, sliders, sphere hints
+- **Planning.vue**: Dark theme for step-card, day-tab, priority badges, chip filters
+- **Settings.vue**: Dark theme for settings cards, labels, price cards
+- **Sidebar.vue**: Dark theme for navigation, active states, footer
+- **MentorPanel.vue**: Dark theme for panel, chat messages, input
+
+### Landing Page "Goals" Preview Tab (December 8, 2024)
+Added new "Цели" (Goals) tab to landing page preview section:
+- New previewTabs entry with icon 🏦, title "Банк целей", description and 4 features
+- Sidebar mockup shows new "Цели" menu item with active state
+- Preview screen displays goal cards with sphere icons, titles, progress bars
+- AI decomposition hint at bottom of preview
+- CSS styles for .goals-preview, .goal-card, .goal-header, .goal-progress, .ai-hint
+- Updated indices: ССП=0, Цели=1, Планирование=2, Привычки=3, Достижения=4
 
 ### Habit Icons Sync with Backend (December 8, 2024)
 Synchronized icon names between frontend and backend API (32 icons):
