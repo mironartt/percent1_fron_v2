@@ -40,6 +40,17 @@ The application uses a modular structure with dedicated components, services, vi
 
 ## Recent Changes (December 2024)
 
+### Style Guide / Brand Pack Created (December 8, 2024)
+Created comprehensive design system documentation at `docs/STYLE_GUIDE.md`:
+- 25 sections covering all UI components and patterns
+- Color palette with CSS variables for Light/Dark themes
+- Typography, buttons, cards, forms, tabs specifications
+- Component patterns: Week Bar, Empty States, Stats Panel, Modals
+- AI Mentor panel and Sidebar structure
+- SSP life spheres color coding (8 spheres)
+- Lucide icons usage rules, accessibility guidelines
+- Do's and Don'ts with visual examples
+- References to source files for each pattern
 
 ### Stats Panel API v2 Integration for Modals (December 8, 2024)
 Integrated new Stats Panel API fields for "XP за привычки" and "Серия выполнений" modals:
