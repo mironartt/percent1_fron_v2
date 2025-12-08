@@ -122,3 +122,8 @@ outputType = "console"
 [agent]
 expertMode = true
 integrations = ["javascript_openai_ai_integrations:1.0.0"]
+
+[userenv]
+
+[userenv.shared]
+VITE_API_BACKEND_URL = "https://1xt3xo-95-72-22-174.ru.tuna.am"

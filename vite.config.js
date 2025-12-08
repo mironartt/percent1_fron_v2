@@ -2,11 +2,15 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
 
+// Определяем бэкенд URL из переменной окружения или используем дефолт
+const API_BACKEND_URL = process.env.VITE_API_BACKEND_URL || 'http://127.0.0.1:8017'
+
 export default defineConfig({
   plugins: [vue()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@assets': path.resolve(__dirname, './attached_assets'),
     },
   },
   server: {
@@ -22,9 +26,10 @@ export default defineConfig({
         secure: false
       },
       '/api': {
-        target: 'http://127.0.0.1:8017',
+        target: API_BACKEND_URL,
         changeOrigin: true,
-        secure: false,
+        secure: true,
+        cookieDomainRewrite: '',
         rewrite: (path) => path.replace(/^\/api/, '/api')
       }
     }
