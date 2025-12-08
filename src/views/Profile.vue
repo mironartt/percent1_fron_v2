@@ -337,6 +337,7 @@ function formatTime(timestamp) {
   color: var(--text-muted);
   margin: 0 0 0.75rem 0;
   line-height: 1.4;
+  text-align: center;
 }
 
 .progress-stats {
