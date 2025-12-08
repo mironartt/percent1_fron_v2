@@ -67,3 +67,13 @@ getDayScheduleData(habit, dateStr)
 **week_schedule fields from backend:**
 - `date`, `weekday`, `status`, `is_scheduled`, `note`, `excuse_reason`
 - `xp_earned`, `xp_penalty`, `is_amnestied`
+
+### Completion Status Fix (December 8, 2024)
+Fixed error when saving notes for future dates - backend only accepts 3 statuses:
+- `completed`, `missed`, `excused` - valid statuses for saving
+- `future`, `pending`, `not-scheduled` - display-only statuses, must NOT be sent
+
+**Implementation:**
+- `updateCompletionNote()` now omits `status` field for future dates
+- Only sends: `{ habit_id, date, note }` for future dates
+- Uses local date (not UTC) to determine if date is in future
