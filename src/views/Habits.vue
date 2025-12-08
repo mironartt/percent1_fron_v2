@@ -7489,13 +7489,13 @@ onMounted(async () => {
 .add-button-container {
   padding: 1rem 0;
   margin-top: 0.5rem;
+  display: flex;
+  justify-content: center;
 }
 
 .btn-add-habit {
-  width: 100%;
-  justify-content: center;
-  padding: 0.875rem 1rem;
-  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
 }
 
 .pagination-bar {
