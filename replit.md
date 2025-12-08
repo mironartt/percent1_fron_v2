@@ -125,3 +125,15 @@ Integrated HabitTracker component on Dashboard with backend data:
 - `habitStreak` uses `statsPanel.streak` from backend if available
 - `handleToggle()` calls `habitsStore.markCompleted/unmarkCompleted` for backend habits
 - XP awarded only on API success (`result?.success` check)
+
+### Stats Panel API v2 Integration for Modals (December 8, 2024)
+Integrated new Stats Panel API fields for "XP за привычки" and "Серия выполнений" modals:
+- Added `month_xp`, `week_xp_by_day`, `streak_days` fields to `statsPanel` in habits store
+- Added `monthXp`, `weekXpByDay`, `streakDays` computed properties with export
+- Updated `monthXpFromHabits` to use `habitsStore.monthXp` from API with fallback to local xpHistory
+- Updated `xpByDay` to use `habitsStore.weekXpByDay` array from API with day label transformation
+- Updated `streakCalendar` to use `habitsStore.streakDays` with Map for fast lookup
+- Added `notScheduled` and `streakCount` fields to streakCalendar day objects
+- Added `.not-scheduled` class to template for days without scheduled habits
+- Added CSS style `.streak-day.not-scheduled` with gray/muted appearance
+- All computed properties have fallback to local calculations when API data unavailable
