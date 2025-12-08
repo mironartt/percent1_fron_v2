@@ -191,3 +191,44 @@ Fixed mismatch between frontend and backend field names for penalty settings:
   journal_penalty_amount: 10    // or 0 if disabled
 }
 ```
+
+### Amnesty Modal API Integration (December 8, 2024)
+Integrated new backend endpoint for amnesty available days data:
+
+**New endpoint:**
+- POST `/api/rest/front/app/habits/amnesty/available-days/`
+
+**Response structure:**
+```javascript
+{
+  "status": "ok",
+  "data": {
+    "week_start": "2025-12-08",
+    "week_end": "2025-12-14",
+    "amnesty_available": {
+      "total": 1,
+      "used": 0,
+      "remaining": 1
+    },
+    "days": [
+      {
+        "date": "2025-12-08",
+        "weekday": 1,
+        "is_amnestied": false,
+        "can_apply": true,
+        "total_penalty": 25,
+        "missed_habits_count": 2
+      }
+    ]
+  }
+}
+```
+
+**Implementation:**
+- `habitsApi.getAmnestyAvailableDays(weekStart)` - API method
+- `habitsStore.loadAmnestyAvailableDays()` - loads data into store
+- `habitsStore.amnestyData` - reactive state for API response
+- `habitsStore.amnestyDataLoading` - loading state for spinner
+- Computed properties (`missedDaysForAmnesty`, `amnestiedDaysInWeek`, `amnestiesRemaining`, `maxAmnesties`) prioritize API data with fallback to local calculations
+- Modal shows loading spinner while fetching data
+- `applyAmnestyForDay()` and `cancelAmnestyFromModal()` now use store methods and reload data
