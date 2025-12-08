@@ -40,6 +40,28 @@
 
       <!-- Goals Content -->
       <div class="goals-content" v-if="rawIdeas.length > 0 || hasActiveFilters">
+        <!-- Фильтр по сферам -->
+        <div class="sphere-filter-bar">
+          <button 
+            class="sphere-filter-chip"
+            :class="{ active: filterSphere === '' }"
+            @click="setFilterSphere('')"
+          >
+            Все сферы
+          </button>
+          <button 
+            v-for="sphere in lifeSpheres" 
+            :key="sphere.id"
+            class="sphere-filter-chip"
+            :class="{ active: filterSphere === sphere.id }"
+            :style="{ '--sphere-color': getSphereColor(sphere.id) }"
+            @click="setFilterSphere(sphere.id)"
+          >
+            <component :is="getSphereIcon(sphere.id)" :size="14" />
+            {{ getSphereNameOnly(sphere.id) }}
+          </button>
+        </div>
+
         <!-- Combined Search + Filter Bar -->
         <div class="search-filter-bar">
           <div class="search-expandable" :class="{ expanded: showSearchInput }">
@@ -673,7 +695,7 @@ const filterStatus = ref('')
 const searchQuery = ref('')
 const showSearchInput = ref(false)
 const searchInputRef = ref(null)
-const displayLimit = ref(6)
+const displayLimit = ref(10)
 
 // Debounce timer for search
 let searchDebounceTimer = null
@@ -957,6 +979,11 @@ function setFilterStatus(status) {
   onFilterChange()
 }
 
+function setFilterSphere(sphereId) {
+  filterSphere.value = sphereId
+  onFilterChange()
+}
+
 function getStatusClass(goal) {
   if (isGoalCompleted(goal.id)) return 'completed'
   if (isGoalTransferred(goal.id)) return 'in-work'
@@ -1151,12 +1178,12 @@ async function loadMoreGoals() {
     displayLimit.value = rawIdeas.value.length
   } else {
     // Fallback to local pagination
-    displayLimit.value += 6
+    displayLimit.value += 10
   }
 }
 
 function resetPagination() {
-  displayLimit.value = 6
+  displayLimit.value = 10
   currentPage.value = 1
 }
 
@@ -2179,6 +2206,55 @@ onUnmounted(() => {
 
 .summary-section .section-header .subtitle {
   color: var(--text-secondary);
+}
+
+/* Sphere Filter Bar */
+.sphere-filter-bar {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 1rem;
+  margin-bottom: 0.75rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 0.25rem;
+}
+
+.sphere-filter-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.sphere-filter-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  background: var(--bg-secondary, #f3f4f6);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 20px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.sphere-filter-chip:hover {
+  background: var(--bg-hover, #e5e7eb);
+}
+
+.sphere-filter-chip.active {
+  background: var(--sphere-color, var(--primary-color, #6366f1));
+  border-color: var(--sphere-color, var(--primary-color, #6366f1));
+  color: white;
+}
+
+.sphere-filter-chip.active:first-child {
+  background: var(--primary-color, #6366f1);
+  border-color: var(--primary-color, #6366f1);
 }
 
 /* Search Bar */
