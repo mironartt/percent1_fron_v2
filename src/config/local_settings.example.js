@@ -31,3 +31,9 @@ export const FORCE_SHOW_ONBOARDING = false
 // Принудительно показывать мини-задание (для тестирования и разработки)
 // Если true - мини-задание будет показано даже если уже пройдено
 export const FORCE_SHOW_MINITASK = false
+
+// Режим credentials для fetch запросов
+// 'include' - отправлять куки для cross-origin запросов
+// 'same-origin' - отправлять куки только для same-origin запросов
+// undefined - автоматический выбор на основе API_BASE_URL
+export const CREDENTIALS_MODE = undefined
