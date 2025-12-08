@@ -160,3 +160,14 @@ Moved theme toggle and logout button:
 - Removed "Выйти" button from sidebar footer
 - Added "Выйти" button to Settings → Дополнительно section
 - Added `handleLogout()` function and LogOut icon import to Settings.vue
+
+### SSP Reassessment Bottom Sheet Redesign (December 8, 2024)
+Complete redesign of the "Переоценить" Bottom Sheet with two modes:
+- **Select Mode**: Intro screen with importance text, last assessment date, recommendation tip (monthly)
+- **Manual Mode**: Enhanced cards with sphere icons, hints, score display, and styled sliders with 0/5/10 labels
+- **AI Mode**: Dialogic reassessment with AI mentor, progress bar, chat interface, score suggestions
+- Added `getSphereHint()` function with hints for all 6 life spheres
+- Added `reassessmentMode`, `aiCurrentSphereIndex`, `aiMessages`, `aiUserInput`, `aiLoading`, `aiWaitingForScore`, `aiSuggestedScore`, `aiCompleted` reactive state
+- AI dialog: sequential questions per sphere, sentiment analysis fallback, score adjustment controls
+- New API endpoint `/api/ai/reassess-sphere` in aiProxy.js for AI-powered assessment
+- Time warning for AI mode (5-10 min) and skip sphere functionality
