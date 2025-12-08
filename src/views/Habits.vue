@@ -2760,10 +2760,6 @@ const showSkipReasonField = computed(() => {
 })
 
 function openDayEditModal(habit, day) {
-  if (isPastWeek.value) {
-    toast.showToast({ type: 'info', title: 'Нельзя редактировать дни в прошлых неделях' })
-    return
-  }
   if (!isScheduledFromWeekSchedule(habit, day.date)) {
     toast.showToast({ type: 'info', title: 'Привычка не запланирована на этот день' })
     return
@@ -3104,17 +3100,55 @@ function openAddModal() {
 
 function editHabit(habit) {
   editingHabit.value = habit
+  
+  const scheduleDays = habit.scheduleDays || habit.schedule_days || []
+  const frequencyType = determineFrequencyType(habit.frequencyType || habit.frequency_type, scheduleDays)
+  
   formData.value = {
     name: habit.name,
     icon: normalizeIconName(habit.icon),
     description: habit.description || '',
     xpReward: habit.xpReward || habit.xp_reward || 5,
     xpPenalty: habit.xpPenalty || habit.xp_penalty || 0,
-    frequencyType: habit.frequencyType || habit.frequency_type || 'daily',
-    scheduleDays: habit.scheduleDays || habit.schedule_days || [1, 2, 3, 4, 5, 6, 0],
+    frequencyType: frequencyType,
+    scheduleDays: scheduleDays.length > 0 ? [...scheduleDays] : [1, 2, 3, 4, 5, 6, 0],
     reminderTime: habit.reminderTime || habit.reminder_time || ''
   }
   showModal.value = true
+}
+
+function determineFrequencyType(existingType, scheduleDays) {
+  if (existingType && existingType !== 'daily') {
+    return existingType
+  }
+  
+  if (!scheduleDays || scheduleDays.length === 0) {
+    return 'daily'
+  }
+  
+  const sortedDays = [...scheduleDays].sort((a, b) => a - b)
+  const allDays = [0, 1, 2, 3, 4, 5, 6]
+  const weekdays = [1, 2, 3, 4, 5]
+  const weekends = [0, 6]
+  
+  const arraysEqual = (a, b) => {
+    if (a.length !== b.length) return false
+    const sortedA = [...a].sort((x, y) => x - y)
+    const sortedB = [...b].sort((x, y) => x - y)
+    return sortedA.every((val, i) => val === sortedB[i])
+  }
+  
+  if (arraysEqual(sortedDays, allDays)) {
+    return 'daily'
+  }
+  if (arraysEqual(sortedDays, weekdays)) {
+    return 'weekdays'
+  }
+  if (arraysEqual(sortedDays, weekends)) {
+    return 'weekends'
+  }
+  
+  return 'custom'
 }
 
 function closeModal() {

@@ -39,3 +39,32 @@ The application uses a modular structure with dedicated components, services, vi
 -   **Lucide Vue Next**: Used for minimalist line icons.
 -   **Vite**: Frontend build tool providing fast development and a proxy to the Django backend.
 -   **Telegram OAuth**: Integrated for user registration and login.
+
+## Recent Changes (December 2024)
+
+### Habit Icon Field Name Fix (December 8, 2024)
+Fixed incorrect field name when creating/updating habits:
+- Changed `icon_name` to `icon` in `backendHabitData` object
+- Now habits correctly save with the selected icon
+
+### Past Week Day Details Modal Fix (December 8, 2024)
+Removed restriction that prevented opening day details modal on past weeks:
+- Removed `if (isPastWeek.value)` check from `openDayEditModal()` function
+- Users can now open and edit day details for any scheduled day regardless of week
+
+### Habit Schedule Display Fix in Edit Modal (December 8, 2024)
+Fixed issue where all days were highlighted when editing a habit:
+- Added `determineFrequencyType(existingType, scheduleDays)` helper function
+- Analyzes `schedule_days` array to determine actual frequency type:
+  - `[0,1,2,3,4,5,6]` → `'daily'`
+  - `[1,2,3,4,5]` → `'weekdays'`
+  - `[0,6]` → `'weekends'`
+  - Any other combination → `'custom'`
+- Now correctly highlights only the scheduled days in edit modal
+
+### Stats Panel Blocks Data Source Fix (December 8, 2024)
+Fixed synchronization issues in the top stats panel blocks (streak, today, XP, amnesty, mode):
+- Added `amnestyDataWasLoaded` computed to check if data was loaded from backend
+- `maxAmnesties` now checks API data first, then falls back to `gameSettings.weeklyAmnestyCount`
+- `saveGameSettings()` now syncs values from `habitsStore.settings` after successful save
+- Fixed card highlighting on past weeks by checking `weekOffset !== 0`
