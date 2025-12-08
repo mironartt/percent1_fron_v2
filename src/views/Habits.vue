@@ -1938,8 +1938,12 @@ const currentPenaltyPercent = computed(() => {
   return gameSettings.value.customPenaltyPercent
 })
 
+const amnestyDataWasLoaded = computed(() => {
+  return habitsStore.amnestyData.week_start !== null
+})
+
 const maxAmnesties = computed(() => {
-  if (habitsStore.amnestyData.amnesty_available?.total !== undefined) {
+  if (amnestyDataWasLoaded.value && habitsStore.amnestyData.amnesty_available?.total !== undefined) {
     return habitsStore.amnestyData.amnesty_available.total
   }
   const mode = gameSettings.value.difficultyMode
@@ -1948,9 +1952,14 @@ const maxAmnesties = computed(() => {
 })
 
 const amnestiesRemaining = computed(() => {
-  if (habitsStore.amnestyData.amnesty_available?.remaining !== undefined) {
+  if (amnestyDataWasLoaded.value && habitsStore.amnestyData.amnesty_available?.remaining !== undefined) {
     return habitsStore.amnestyData.amnesty_available.remaining
   }
+  
+  if (habitsStore.statsPanel?.amnesty_remaining !== undefined) {
+    return habitsStore.statsPanel.amnesty_remaining
+  }
+  
   const now = new Date()
   const weekStart = getWeekStart(now)
   
@@ -3311,12 +3320,20 @@ async function saveGameSettings() {
 
     const result = await habitsStore.saveSettings(backendSettings)
 
-    // Update amnestyData to reflect new weekly_amnesty_count
-    if (result.success && habitsStore.amnestyData.amnesty_available) {
-      const newTotal = gameSettings.value.weeklyAmnestyCount ?? 1
-      const used = habitsStore.amnestyData.amnesty_available.used || 0
-      habitsStore.amnestyData.amnesty_available.total = newTotal
-      habitsStore.amnestyData.amnesty_available.remaining = Math.max(0, newTotal - used)
+    if (result.success) {
+      if (amnestyDataWasLoaded.value) {
+        const newTotal = gameSettings.value.weeklyAmnestyCount ?? 1
+        const used = habitsStore.amnestyData.amnesty_available.used || 0
+        habitsStore.amnestyData.amnesty_available.total = newTotal
+        habitsStore.amnestyData.amnesty_available.remaining = Math.max(0, newTotal - used)
+      }
+      
+      if (habitsStore.settings?.weekly_amnesty_count !== undefined) {
+        gameSettings.value.weeklyAmnestyCount = habitsStore.settings.weekly_amnesty_count
+      }
+      if (habitsStore.settings?.amnesty_remaining !== undefined) {
+        gameSettings.value.amnestiesUsedThisWeek = (gameSettings.value.weeklyAmnestyCount ?? 1) - habitsStore.settings.amnesty_remaining
+      }
     }
 
     if (DEBUG_MODE) {

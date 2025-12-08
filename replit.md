@@ -232,3 +232,39 @@ Integrated new backend endpoint for amnesty available days data:
 - Computed properties (`missedDaysForAmnesty`, `amnestiedDaysInWeek`, `amnestiesRemaining`, `maxAmnesties`) prioritize API data with fallback to local calculations
 - Modal shows loading spinner while fetching data
 - `applyAmnestyForDay()` and `cancelAmnestyFromModal()` now use store methods and reload data
+
+### Stats Panel Blocks Data Source Fix (December 8, 2024)
+Fixed synchronization issues in the top stats panel blocks (streak, today, XP, amnesty, mode):
+
+**Problem 1: Amnesty block showing stale values**
+- After changing amnesty count in settings (e.g., from 1 to 4), the block continued showing "1/1"
+- `maxAmnesties` computed always returned default value `1` from `habitsStore.amnestyData`
+- Default `amnestyData` structure in store had `amnesty_available: { total: 1, ... }` which was always truthy
+
+**Solution:**
+- Added `amnestyDataWasLoaded` computed to check if data was actually loaded from backend (`week_start !== null`)
+- `maxAmnesties` now checks `amnestyDataWasLoaded` before using store data, otherwise uses `gameSettings.weeklyAmnestyCount`
+- `amnestiesRemaining` now also checks `habitsStore.statsPanel.amnesty_remaining` as middle fallback
+- `saveGameSettings()` now syncs values from `habitsStore.settings` after successful save
+
+**Data source priority:**
+```javascript
+// maxAmnesties:
+1. habitsStore.amnestyData.amnesty_available.total (if loaded from API)
+2. gameSettings.weeklyAmnestyCount (from localStorage/settings API)
+3. Default based on difficulty_mode
+
+// amnestiesRemaining:
+1. habitsStore.amnestyData.amnesty_available.remaining (if loaded from API)
+2. habitsStore.statsPanel.amnesty_remaining (from stats-panel API)
+3. Local calculation based on gameSettings
+```
+
+**Problem 2: Card highlighting on past weeks**
+- When navigating to past weeks, habit cards were still highlighted as "completed today"
+- `isHabitCompletedToday()` and `isScheduledForToday()` always checked real current date
+
+**Solution:**
+- Added `weekOffset !== 0` check at the start of both functions
+- When viewing past weeks (`weekOffset < 0`), functions return `false` / `true` respectively
+- Cards no longer show false "completed today" highlighting on historical weeks
