@@ -2236,6 +2236,17 @@ const monthCompletionRate = computed(() => {
 })
 
 function getHabitStreak(habit) {
+  const analyticsData = habitsStore.analytics?.habits_data
+  if (analyticsData) {
+    const habitData = analyticsData.find(h => h.habit_id === habit.backendId)
+    if (habitData?.streak !== undefined) {
+      return habitData.streak
+    }
+  }
+  
+  const backendHabit = habitsStore.habits.find(h => h.habit_id === habit.backendId)
+  const completions = backendHabit?.completions || []
+  
   let streak = 0
   const today = new Date()
   
@@ -2247,7 +2258,10 @@ function getHabitStreak(habit) {
     
     if (!isScheduledForDay(habit, dayOfWeek)) continue
     
-    if (appStore.habitLog[dateStr]?.includes(habit.id)) {
+    const completion = completions.find(c => c.date === dateStr)
+    if (completion?.status === 'completed') {
+      streak++
+    } else if (appStore.habitLog[dateStr]?.includes(habit.id)) {
       streak++
     } else {
       break
@@ -2257,6 +2271,22 @@ function getHabitStreak(habit) {
 }
 
 function getHabitCompletionRate(habit, days) {
+  const analyticsData = habitsStore.analytics?.habits_data
+  if (analyticsData) {
+    const habitData = analyticsData.find(h => h.habit_id === habit.backendId)
+    if (habitData) {
+      if (days === 7 && habitData.completion_rate_7 !== undefined) {
+        return habitData.completion_rate_7
+      }
+      if (days === 30 && habitData.completion_rate_30 !== undefined) {
+        return habitData.completion_rate_30
+      }
+    }
+  }
+  
+  const backendHabit = habitsStore.habits.find(h => h.habit_id === habit.backendId)
+  const completions = backendHabit?.completions || []
+  
   let completed = 0
   let scheduled = 0
   const today = new Date()
@@ -2269,7 +2299,10 @@ function getHabitCompletionRate(habit, days) {
     
     if (isScheduledForDay(habit, dayOfWeek)) {
       scheduled++
-      if (appStore.habitLog[dateStr]?.includes(habit.id)) {
+      const completion = completions.find(c => c.date === dateStr)
+      if (completion?.status === 'completed') {
+        completed++
+      } else if (appStore.habitLog[dateStr]?.includes(habit.id)) {
         completed++
       }
     }
@@ -2740,6 +2773,11 @@ function isScheduledForToday(habit) {
 }
 
 function isCompletedOnDay(habit, dateStr) {
+  const backendHabit = habitsStore.habits.find(h => h.habit_id === habit.backendId)
+  if (backendHabit?.completions) {
+    const completion = backendHabit.completions.find(c => c.date === dateStr)
+    if (completion?.status === 'completed') return true
+  }
   return appStore.habitLog[dateStr]?.includes(habit.id)
 }
 
