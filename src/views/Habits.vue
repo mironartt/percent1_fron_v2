@@ -3195,13 +3195,13 @@ async function setDayAsCompleted() {
     saveSkipData()
   }
   
+  toast.showToast({ type: 'success', title: `Отмечено как выполненное` })
+  closeDayEditModal()
+  
   const result = await habitsStore.markCompleted(habitId, dateStr, dayEditNote.value)
   
   if (result.success) {
-    toast.showToast({ type: 'success', title: `Отмечено как выполненное` })
     await habitsStore.loadStatsPanel()
-  } else {
-    toast.showToast({ type: 'error', title: 'Ошибка сохранения', message: result.error?.message })
   }
 }
 
@@ -3233,13 +3233,13 @@ async function setDayAsMissed() {
     saveSkipData()
   }
   
+  toast.showToast({ type: 'info', title: `Отмечено как пропущенное` })
+  closeDayEditModal()
+  
   const result = await habitsStore.unmarkCompleted(habitId, dateStr)
   
   if (result.success) {
-    toast.showToast({ type: 'info', title: `Отмечено как пропущенное` })
     await habitsStore.loadStatsPanel()
-  } else {
-    toast.showToast({ type: 'error', title: 'Ошибка сохранения', message: result.error?.message })
   }
 }
 
@@ -3269,13 +3269,13 @@ async function setDayAsExcused() {
   }
   saveSkipData()
   
+  toast.showToast({ type: 'success', title: `Уважительный пропуск (без штрафа)` })
+  closeDayEditModal()
+  
   const result = await habitsStore.markExcused(habitId, dateStr, dayEditSkipReason.value)
   
   if (result.success) {
-    toast.showToast({ type: 'success', title: `Уважительный пропуск (без штрафа)` })
     await habitsStore.loadStatsPanel()
-  } else {
-    toast.showToast({ type: 'error', title: 'Ошибка сохранения', message: result.error?.message })
   }
 }
 
