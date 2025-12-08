@@ -293,7 +293,7 @@ export async function markHabitExcused(habitId, date, excuseReason) {
 }
 
 // ========================================
-// 4. АМНИСТИЯ (2 endpoints)
+// 4. АМНИСТИЯ (3 endpoints)
 // ========================================
 
 /**
@@ -320,6 +320,29 @@ export async function applyAmnesty(date) {
  */
 export async function revokeAmnesty(date) {
   return habitsRequest('/amnesty/revoke/', { date })
+}
+
+/**
+ * Получить доступные дни для амнистии
+ * Возвращает детальную информацию для модального окна выбора дня
+ * @param {string} [weekStart] - Начало недели (YYYY-MM-DD), опционально
+ * @returns {Promise<{success: boolean, data?: object, error?: object}>}
+ * 
+ * Возвращает:
+ * - week_start: string (YYYY-MM-DD)
+ * - week_end: string (YYYY-MM-DD)
+ * - amnesty_available: { total: number, used: number, remaining: number }
+ * - days: массив дней недели с информацией:
+ *   - date: string (YYYY-MM-DD)
+ *   - weekday: number (1-7, понедельник = 1)
+ *   - is_amnestied: boolean
+ *   - can_apply: boolean
+ *   - total_penalty: number (сколько XP вернётся)
+ *   - missed_habits_count: number (количество пропущенных)
+ */
+export async function getAmnestyAvailableDays(weekStart = null) {
+  const params = weekStart ? { week_start: weekStart } : {}
+  return habitsRequest('/amnesty/available-days/', params)
 }
 
 // ========================================

@@ -68,6 +68,18 @@ export const useHabitsStore = defineStore('habits', () => {
 
   const pendingAchievements = ref([])
 
+  const amnestyData = ref({
+    week_start: null,
+    week_end: null,
+    amnesty_available: {
+      total: 1,
+      used: 0,
+      remaining: 1
+    },
+    days: []
+  })
+  const amnestyDataLoading = ref(false)
+
   const activeHabits = computed(() => habits.value.filter(h => !h.date_deleted))
   const deletedHabits = computed(() => habits.value.filter(h => h.date_deleted))
 
@@ -750,6 +762,43 @@ export const useHabitsStore = defineStore('habits', () => {
     }
   }
 
+  async function loadAmnestyAvailableDays(weekStart = null) {
+    amnestyDataLoading.value = true
+    
+    try {
+      const result = await habitsApi.getAmnestyAvailableDays(weekStart)
+      
+      if (result.success) {
+        amnestyData.value = {
+          week_start: result.data.week_start,
+          week_end: result.data.week_end,
+          amnesty_available: result.data.amnesty_available || {
+            total: 1,
+            used: 0,
+            remaining: 1
+          },
+          days: result.data.days || []
+        }
+        
+        if (result.data.amnesty_available?.remaining !== undefined) {
+          settings.value.amnesty_remaining = result.data.amnesty_available.remaining
+        }
+        
+        if (DEBUG_MODE) {
+          console.log('[HabitsStore] Amnesty available days loaded:', amnestyData.value)
+        }
+        
+        return { success: true, data: amnestyData.value }
+      }
+      return { success: false, error: result.error }
+    } catch (e) {
+      if (DEBUG_MODE) console.error('[HabitsStore] Load amnesty days error:', e)
+      return { success: false, error: { message: e.message } }
+    } finally {
+      amnestyDataLoading.value = false
+    }
+  }
+
   async function loadAnalytics(forceRefresh = false) {
     if (!forceRefresh && analytics.value && analyticsLastFetch.value) {
       if (Date.now() - analyticsLastFetch.value < CACHE_DURATION) {
@@ -1157,6 +1206,9 @@ export const useHabitsStore = defineStore('habits', () => {
     
     applyAmnesty,
     revokeAmnesty,
+    loadAmnestyAvailableDays,
+    amnestyData,
+    amnestyDataLoading,
     
     loadAnalytics,
     loadAchievements,
