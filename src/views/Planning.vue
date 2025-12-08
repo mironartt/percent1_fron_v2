@@ -335,13 +335,6 @@
           
           <!-- Запланированный шаг: показываем inline-действия -->
           <template v-if="isSelectedStepScheduled">
-            <div class="sheet-actions">
-              <button class="sheet-action" @click="toggleStepComplete">
-                <CheckCircle :size="20" />
-                <span>{{ selectedStep?.completed ? 'Отменить выполнение' : 'Выполнено' }}</span>
-              </button>
-            </div>
-            
             <div class="inline-options-section">
               <div class="option-label">
                 <Calendar :size="16" />
@@ -399,10 +392,14 @@
               </div>
             </div>
             
-            <div class="sheet-actions" style="margin-top: 0.5rem;">
+            <div class="sheet-actions-row">
               <button class="sheet-action danger" @click="removeStepFromSchedule">
                 <Trash2 :size="20" />
                 <span>Убрать из плана</span>
+              </button>
+              <button class="sheet-action success" @click="toggleStepComplete">
+                <CheckCircle :size="20" />
+                <span>{{ selectedStep?.completed ? 'Отменить' : 'Выполнено' }}</span>
               </button>
             </div>
           </template>
@@ -1279,7 +1276,6 @@ async function rescheduleStep(newDate) {
   
   // Сначала обновляем локально
   saveStepToLocalPlan(selectedGoal.value, selectedStep.value, newDate)
-  closeBottomSheet()
   
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
@@ -1301,7 +1297,6 @@ async function updateStepPriority(priority) {
   
   // Сначала обновляем локально
   updateStepInLocalPlan(selectedGoal.value, selectedStep.value, { priority })
-  closeBottomSheet()
   
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
@@ -1323,7 +1318,6 @@ async function updateStepTime(time) {
   
   // Сначала обновляем локально
   updateStepInLocalPlan(selectedGoal.value, selectedStep.value, { timeEstimate: time })
-  closeBottomSheet()
   
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
@@ -2721,8 +2715,9 @@ onUnmounted(() => {
   background: rgba(0, 0, 0, 0.5);
   z-index: 200;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
+  padding: 1rem;
 }
 
 .bottom-sheet {
@@ -2730,8 +2725,8 @@ onUnmounted(() => {
   max-width: 500px;
   max-height: 80vh;
   background: var(--card-bg);
-  border-radius: 20px 20px 0 0;
-  padding: 1rem 1rem 2rem;
+  border-radius: 16px;
+  padding: 1rem 1rem 1.5rem;
   overflow-y: auto;
 }
 
@@ -2812,6 +2807,31 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+}
+
+.sheet-actions-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.sheet-actions-row .sheet-action {
+  flex: 1;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.sheet-action.success {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+}
+
+.sheet-action.success:hover {
+  background: rgba(34, 197, 94, 0.15);
 }
 
 .inline-options-section {
