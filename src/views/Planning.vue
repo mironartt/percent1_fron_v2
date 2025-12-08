@@ -293,10 +293,6 @@
       </button>
     </div>
 
-    <button class="fab" @click="openAddStepModal" v-if="goalsWithSteps.length > 0">
-      <Plus :size="24" />
-    </button>
-
     <div class="bottom-sheet-overlay" v-if="showBottomSheet" @click="closeBottomSheet">
       <div class="bottom-sheet" @click.stop>
         <div class="sheet-handle"></div>
