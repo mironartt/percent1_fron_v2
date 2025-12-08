@@ -1,0 +1,120 @@
+У привычки есть расписание.
+Сейчас вижу проблему в отображение активных дней в расписание привычки.
+К примеру, бэк возвращает:
+```
+{
+  "status": "ok",
+  "data": {
+    "date_from": "2025-12-08",
+    "date_to": "2025-12-14",
+    "habits": [
+      {
+        "habit_id": 2,
+        "name": "Прогулка 30 минут",
+        "icon": "fire",
+        "xp_reward": 8,
+        "xp_penalty": 0,
+        "frequency_type": "daily",
+        "schedule_days": [1, 5, 3],
+        "description": "Свежий воздух и движение",
+        "date_created": "2025-12-08 04:57:51",
+        "date_deleted": null,
+        "week_schedule": [
+          {
+            "date": "2025-12-08",
+            "weekday": 1,
+            "status": "pending",
+            "is_scheduled": true,
+            "note": null,
+            "excuse_reason": null,
+            "xp_earned": 0,
+            "xp_penalty": 0,
+            "is_amnestied": false
+          },
+          {
+            "date": "2025-12-09",
+            "weekday": 2,
+            "status": "future",
+            "is_scheduled": false,
+            "note": null,
+            "excuse_reason": null,
+            "xp_earned": 0,
+            "xp_penalty": 0,
+            "is_amnestied": false
+          },
+          {
+            "date": "2025-12-10",
+            "weekday": 3,
+            "status": "future",
+            "is_scheduled": true,
+            "note": null,
+            "excuse_reason": null,
+            "xp_earned": 0,
+            "xp_penalty": 0,
+            "is_amnestied": false
+          },
+          {
+            "date": "2025-12-11",
+            "weekday": 4,
+            "status": "future",
+            "is_scheduled": false,
+            "note": null,
+            "excuse_reason": null,
+            "xp_earned": 0,
+            "xp_penalty": 0,
+            "is_amnestied": false
+          },
+          {
+            "date": "2025-12-12",
+            "weekday": 5,
+            "status": "future",
+            "is_scheduled": true,
+            "note": null,
+            "excuse_reason": null,
+            "xp_earned": 0,
+            "xp_penalty": 0,
+            "is_amnestied": false
+          },
+          {
+            "date": "2025-12-13",
+            "weekday": 6,
+            "status": "future",
+            "is_scheduled": false,
+            "note": null,
+            "excuse_reason": null,
+            "xp_earned": 0,
+            "xp_penalty": 0,
+            "is_amnestied": false
+          },
+          {
+            "date": "2025-12-14",
+            "weekday": 0,
+            "status": "future",
+            "is_scheduled": false,
+            "note": null,
+            "excuse_reason": null,
+            "xp_earned": 0,
+            "xp_penalty": 0,
+            "is_amnestied": false
+          }
+        ]
+      }
+    ],
+    "settings": {
+      "difficulty_mode": "soft",
+      "penalty_multiplier": 0.0,
+      "weekly_amnesty_count": 0,
+      "planning_penalty_enabled": false,
+      "planning_penalty_amount": 0,
+      "journal_penalty_enabled": false,
+      "journal_penalty_amount": 0,
+      "amnestied_dates": [],
+      "amnestied_this_week": 0,
+      "amnesty_remaining": 0
+    }
+  }
+}
+```
+Здесь видно, что есть 4 дня с `"is_scheduled": false,`, т.е. 4 дня вне расписания, аналогично он возвращает и данные в `"schedule_days": [1, 5, 3],`. Но фронт отображает их с синим фоном, как будто они включены в расписание.
+
+Нужно поправить данный момент. И также расписание должно корректно отображаться в модальных окнах: редактировани привычки и редактирования дня привычки.

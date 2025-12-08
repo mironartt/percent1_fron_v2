@@ -254,8 +254,8 @@
                 class="habit-day-cell"
                 :class="{ 
                   completed: isCompletedOnDay(habit, day.date),
-                  scheduled: isScheduledForDay(habit, new Date(day.date).getDay()),
-                  'not-scheduled': !isScheduledForDay(habit, new Date(day.date).getDay())
+                  scheduled: isScheduledFromWeekSchedule(habit, day.date),
+                  'not-scheduled': !isScheduledFromWeekSchedule(habit, day.date)
                 }"
                 :title="formatCalendarDate(day.date)"
               >
@@ -1091,7 +1091,7 @@
                   getDayStatus(selectedHabitForEdit, day.date), 
                   { 
                     current: day.date === selectedDayForEdit.date,
-                    clickable: isScheduledForDay(selectedHabitForEdit, new Date(day.date).getDay())
+                    clickable: isScheduledFromWeekSchedule(selectedHabitForEdit, day.date)
                   }
                 ]"
                 @click="switchToDay(day)"
@@ -2575,7 +2575,10 @@ function saveSkipData() {
 
 function getDayStatus(habit, dateStr) {
   const daySchedule = habit.week_schedule?.find(s => s.date === dateStr)
-  if (daySchedule?.status) {
+  if (daySchedule) {
+    if (daySchedule.is_scheduled === false) {
+      return 'not-scheduled'
+    }
     const status = daySchedule.status
     if (status === 'pending') return 'today'
     if (status === 'not-scheduled') return 'not-scheduled'
@@ -2607,6 +2610,14 @@ function getDayStatus(habit, dateStr) {
 
 function getDayScheduleData(habit, dateStr) {
   return habit.week_schedule?.find(s => s.date === dateStr) || null
+}
+
+function isScheduledFromWeekSchedule(habit, dateStr) {
+  const daySchedule = habit.week_schedule?.find(s => s.date === dateStr)
+  if (daySchedule !== undefined && daySchedule.is_scheduled !== undefined) {
+    return daySchedule.is_scheduled === true
+  }
+  return isScheduledForDay(habit, new Date(dateStr).getDay())
 }
 
 function getDayStatusLabel(status) {
@@ -2659,7 +2670,7 @@ function openDayEditModal(habit, day) {
     toast.showToast({ type: 'info', title: 'Нельзя редактировать дни в прошлых неделях' })
     return
   }
-  if (!isScheduledForDay(habit, new Date(day.date).getDay())) {
+  if (!isScheduledFromWeekSchedule(habit, day.date)) {
     toast.showToast({ type: 'info', title: 'Привычка не запланирована на этот день' })
     return
   }
@@ -2675,7 +2686,7 @@ function openDayEditModal(habit, day) {
 
 function switchToDay(day) {
   if (!selectedHabitForEdit.value) return
-  if (!isScheduledForDay(selectedHabitForEdit.value, new Date(day.date).getDay())) {
+  if (!isScheduledFromWeekSchedule(selectedHabitForEdit.value, day.date)) {
     toast.showToast({ type: 'info', title: 'Привычка не запланирована на этот день' })
     return
   }
@@ -2961,11 +2972,11 @@ function editHabit(habit) {
     name: habit.name,
     icon: normalizeIconName(habit.icon),
     description: habit.description || '',
-    xpReward: habit.xpReward || 5,
-    xpPenalty: habit.xpPenalty || 0,
-    frequencyType: habit.frequencyType || 'daily',
-    scheduleDays: habit.scheduleDays || [1, 2, 3, 4, 5, 6, 0],
-    reminderTime: habit.reminderTime || ''
+    xpReward: habit.xpReward || habit.xp_reward || 5,
+    xpPenalty: habit.xpPenalty || habit.xp_penalty || 0,
+    frequencyType: habit.frequencyType || habit.frequency_type || 'daily',
+    scheduleDays: habit.scheduleDays || habit.schedule_days || [1, 2, 3, 4, 5, 6, 0],
+    reminderTime: habit.reminderTime || habit.reminder_time || ''
   }
   showModal.value = true
 }
