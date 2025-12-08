@@ -152,3 +152,11 @@ Added local filtering and mobile-friendly status dropdown:
 - Added `handleClickOutside()` for closing dropdowns on outside click
 - Event listeners added in onMounted/onUnmounted for proper cleanup
 - Renamed old `getStatusLabel` to `getGoalStatusEmoji` to avoid conflict
+
+### Sidebar UI Improvements (December 8, 2024)
+Moved theme toggle and logout button:
+- Theme toggle moved to sidebar header as icon (moon/sun) next to logo
+- Added `.header-top`, `.logo-wrapper`, `.theme-toggle-icon` styles
+- Removed "Выйти" button from sidebar footer
+- Added "Выйти" button to Settings → Дополнительно section
+- Added `handleLogout()` function and LogOut icon import to Settings.vue

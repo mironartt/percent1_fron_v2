@@ -7,12 +7,20 @@
   
   <aside class="sidebar" :class="{ collapsed: isCollapsed, 'mobile-open': isMobileOpen }">
     <div class="sidebar-header">
-      <h1 class="logo" v-show="!isCollapsed">OnePercent</h1>
-      <h1 class="logo-short" v-show="isCollapsed">1%</h1>
+      <div class="header-top">
+        <div class="logo-wrapper">
+          <h1 class="logo" v-show="!isCollapsed">OnePercent</h1>
+          <h1 class="logo-short" v-show="isCollapsed">1%</h1>
+        </div>
+        <button class="theme-toggle-icon" @click="toggleTheme" :title="isDark ? 'Светлая тема' : 'Тёмная тема'">
+          <Sun v-if="isDark" :size="20" :stroke-width="1.5" />
+          <Moon v-else :size="20" :stroke-width="1.5" />
+        </button>
+        <button class="mobile-close-btn" @click="closeMobile">
+          <X :size="24" :stroke-width="1.5" />
+        </button>
+      </div>
       <p class="tagline" v-show="!isCollapsed">+1% каждый день</p>
-      <button class="mobile-close-btn" @click="closeMobile">
-        <X :size="24" :stroke-width="1.5" />
-      </button>
     </div>
 
     <button class="collapse-btn" @click="toggleCollapse" :title="isCollapsed ? 'Развернуть меню' : 'Свернуть меню'">
@@ -51,36 +59,9 @@
     </nav>
 
     <div class="sidebar-footer">
-      <div class="theme-toggle" @click="toggleTheme" :title="isDark ? 'Светлая тема' : 'Тёмная тема'">
-        <Sun v-if="isDark" class="theme-icon" :size="20" :stroke-width="1.5" />
-        <Moon v-else class="theme-icon" :size="20" :stroke-width="1.5" />
-        <span class="nav-label">{{ isDark ? 'Светлая тема' : 'Тёмная тема' }}</span>
-      </div>
-      
-      <!-- User info and Telegram bot temporarily hidden
-      <div class="user-info" v-if="store.isAuthenticated && !isCollapsed">
-        <User class="user-avatar" :size="24" :stroke-width="1.5" />
-        <span class="user-name">{{ store.displayName }}</span>
-      </div>
-      
-      <button 
-        v-if="store.user.telegram_bot_link"
-        class="telegram-btn" 
-        @click="showTelegramModal = true"
-        :title="isCollapsed ? 'Телеграм бот' : ''"
-      >
-        <Send class="icon telegram-icon" :size="20" :stroke-width="1.5" />
-        <span class="nav-label">Телеграм бот</span>
-      </button>
-      -->
-      
       <router-link to="/app/settings" class="settings-link" :title="isCollapsed ? 'Настройки' : ''">
         <Settings class="icon" :size="20" :stroke-width="1.5" />
         <span class="nav-label">Настройки</span>
-      </router-link>
-      <router-link to="/auth/logout" class="logout-link" :title="isCollapsed ? 'Выйти' : ''">
-        <LogOut class="icon" :size="20" :stroke-width="1.5" />
-        <span class="nav-label">Выйти</span>
       </router-link>
     </div>
   </aside>
@@ -329,14 +310,48 @@ const menuItems = [
 }
 
 .sidebar-header {
-  padding: 2rem 1.5rem 1.5rem;
+  padding: 1.5rem 1.5rem 1rem;
   border-bottom: 1px solid var(--border-color);
-  min-height: 100px;
+  min-height: 80px;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.logo-wrapper {
+  flex: 1;
+}
+
+.theme-toggle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-toggle-icon:hover {
+  background: var(--bg-hover);
+  color: var(--primary-color);
 }
 
 .sidebar.collapsed .sidebar-header {
-  padding: 2rem 0.75rem 1.5rem;
+  padding: 1.5rem 0.75rem 1rem;
   text-align: center;
+}
+
+.sidebar.collapsed .theme-toggle-icon {
+  display: none;
 }
 
 .logo {
