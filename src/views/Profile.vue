@@ -214,6 +214,7 @@ function formatTime(timestamp) {
 .page-header {
   text-align: center;
   margin-bottom: 1rem;
+  width: 100%;
 }
 
 .page-title {
