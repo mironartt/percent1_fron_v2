@@ -5,87 +5,72 @@
       <p class="page-subtitle">Ваш прогресс и награды</p>
     </header>
 
-    <div class="stats-panel">
-      <div class="stat-chip">
-        <Flame :size="16" :stroke-width="1.5" class="stat-icon-habits" />
-        <span class="stat-value">{{ habitStreak }}</span>
-        <span class="stat-label">дней подряд</span>
+    <!-- Секция: Серии -->
+    <div class="stats-section">
+      <div class="stats-section-header">
+        <span class="stats-section-title">Серии</span>
+        <span class="stats-section-hint">Непрерывные дни активности</span>
       </div>
-      <div class="stat-chip">
-        <BookOpen :size="16" :stroke-width="1.5" class="stat-icon-journal" />
-        <span class="stat-value">{{ journalStreak }}</span>
-        <span class="stat-label">записей</span>
-      </div>
-      <div class="stat-chip">
-        <CheckCircle :size="16" :stroke-width="1.5" class="stat-icon-tasks" />
-        <span class="stat-value">{{ todayXP }}</span>
-        <span class="stat-label">XP сегодня</span>
-      </div>
-      <div class="stat-chip">
-        <TrendingUp :size="16" :stroke-width="1.5" class="stat-icon-week" />
-        <span class="stat-value">{{ weekXP }}</span>
-        <span class="stat-label">XP неделя</span>
+      <div class="stats-panel">
+        <div class="stat-chip">
+          <Flame :size="16" :stroke-width="1.5" class="stat-icon-habits" />
+          <span class="stat-value">{{ habitStreak }}</span>
+          <span class="stat-label">дней привычек</span>
+        </div>
+        <div class="stat-chip">
+          <BookOpen :size="16" :stroke-width="1.5" class="stat-icon-journal" />
+          <span class="stat-value">{{ journalStreak }}</span>
+          <span class="stat-label">записей дневника</span>
+        </div>
       </div>
     </div>
 
-    <div class="user-card section-card">
-      <div class="user-card-main">
-        <div class="user-info">
-          <div class="avatar">
-            <User :size="24" :stroke-width="1.5" />
-          </div>
-          <div class="user-details">
-            <span class="user-name">{{ userName }}</span>
-          </div>
+    <!-- Секция: Мой прогресс -->
+    <div class="progress-card section-card">
+      <div class="progress-card-header">
+        <div class="progress-title">
+          <Trophy :size="18" :stroke-width="1.5" class="progress-icon" />
+          <span>Мой прогресс</span>
         </div>
         <div class="xp-display">
-          <div class="xp-balance">
-            <Sparkles :size="20" :stroke-width="1.5" />
-            <span class="xp-value">{{ xpBalance }}</span>
-            <span class="xp-label">XP</span>
-          </div>
-          <div class="xp-lifetime">
-            Всего: {{ lifetimeEarned }} XP
-          </div>
+          <Sparkles :size="18" :stroke-width="1.5" class="xp-icon" />
+          <span class="xp-value">{{ xpBalance }}</span>
+          <span class="xp-label">XP</span>
         </div>
       </div>
-      <div class="user-card-reward" v-if="nextReward">
-        <div class="reward-mini">
-          <span class="reward-mini-icon">{{ nextReward.icon }}</span>
-          <div class="reward-mini-progress">
+      <p class="progress-hint">Зарабатывайте XP за привычки, задачи и дневник. Обменивайте на награды из списка желаний.</p>
+      <div class="progress-stats">
+        <div class="progress-stat">
+          <span class="progress-stat-value">{{ todayXP }}</span>
+          <span class="progress-stat-label">сегодня</span>
+        </div>
+        <div class="progress-stat">
+          <span class="progress-stat-value">{{ weekXP }}</span>
+          <span class="progress-stat-label">за неделю</span>
+        </div>
+        <div class="progress-stat">
+          <span class="progress-stat-value">{{ lifetimeEarned }}</span>
+          <span class="progress-stat-label">всего заработано</span>
+        </div>
+      </div>
+      <div class="next-reward-compact" v-if="nextReward">
+        <div class="next-reward-info">
+          <span class="next-reward-icon">{{ nextReward.icon }}</span>
+          <span class="next-reward-name">{{ nextReward.name }}</span>
+        </div>
+        <div class="next-reward-progress">
+          <div class="progress-bar-mini">
             <div 
-              class="reward-mini-fill"
+              class="progress-fill-mini"
               :style="{ width: nextRewardProgress + '%' }"
             />
           </div>
-          <span class="reward-mini-text">{{ xpToNextReward }} XP</span>
+          <span class="next-reward-xp">{{ xpToNextReward }} XP до награды</span>
         </div>
       </div>
     </div>
 
     <div class="profile-content">
-
-      <div class="next-reward desktop-only" v-if="nextReward">
-        <div class="next-reward-header">
-          <Target :size="18" :stroke-width="1.5" />
-          <span>Следующая награда</span>
-        </div>
-        <div class="next-reward-content">
-          <span class="reward-icon">{{ nextReward.icon }}</span>
-          <div class="reward-details">
-            <span class="reward-name">{{ nextReward.name }}</span>
-            <div class="reward-progress">
-              <div class="progress-bar">
-                <div 
-                  class="progress-fill"
-                  :style="{ width: nextRewardProgress + '%' }"
-                />
-              </div>
-              <span class="progress-text">{{ xpToNextReward }} XP осталось</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <RewardWishlist />
 
@@ -135,17 +120,15 @@ import { useAppStore } from '../stores/app'
 import { useXpStore } from '../stores/xp'
 import RewardWishlist from '../components/RewardWishlist.vue'
 import { 
-  User, 
   Sparkles, 
   Flame, 
   BookOpen, 
-  CheckCircle, 
-  TrendingUp,
-  Target,
+  Trophy,
   History,
   Zap,
   Star,
-  ChevronDown
+  ChevronDown,
+  CheckCircle
 } from 'lucide-vue-next'
 
 const historyExpanded = ref(false)
@@ -246,10 +229,31 @@ function formatTime(timestamp) {
   font-size: 0.9rem;
 }
 
+.stats-section {
+  margin-bottom: 1rem;
+}
+
+.stats-section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.stats-section-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.stats-section-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
 .stats-panel {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 1rem;
   overflow-x: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -299,6 +303,118 @@ function formatTime(timestamp) {
   color: var(--status-purple-text);
 }
 
+.progress-card {
+  margin-bottom: 1rem;
+  padding: 1rem;
+}
+
+.progress-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.progress-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.progress-icon {
+  color: var(--status-purple-text);
+}
+
+.xp-icon {
+  color: var(--secondary-color);
+}
+
+.progress-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0 0 0.75rem 0;
+  line-height: 1.4;
+}
+
+.progress-stats {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+}
+
+.progress-stat {
+  flex: 1;
+  text-align: center;
+}
+
+.progress-stat-value {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.progress-stat-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.next-reward-compact {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.next-reward-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.next-reward-icon {
+  font-size: 1.25rem;
+}
+
+.next-reward-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.next-reward-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.progress-bar-mini {
+  flex: 1;
+  height: 6px;
+  background: var(--status-purple-bg);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill-mini {
+  height: 100%;
+  background: linear-gradient(90deg, var(--status-purple-text), var(--status-info-text));
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.next-reward-xp {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
 .user-card {
   margin-bottom: 1rem;
 }
@@ -335,23 +451,14 @@ function formatTime(timestamp) {
 }
 
 .xp-display {
-  text-align: right;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
   flex-shrink: 0;
 }
 
-.xp-balance {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  justify-content: flex-end;
-}
-
-.xp-balance svg {
-  color: var(--secondary-color);
-}
-
 .xp-value {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--primary-color);
 }
