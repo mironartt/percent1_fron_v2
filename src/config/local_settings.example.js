@@ -15,8 +15,19 @@ export const DEV_MODE = true
 // Пропустить проверку авторизации (удобно для разработки UI)
 export const SKIP_AUTH_CHECK = true
 
-// Базовый URL API (оставить пустым для использования proxy)
+// Базовый URL API
+// Оставить пустым '' для использования Vite proxy (рекомендуется)
+// Или указать URL для прямого подключения: 'https://api.example.com'
 export const API_BASE_URL = ''
+
+// URL бэкенда для Vite proxy (используется только при API_BASE_URL = '')
+// Vite проксирует /api/* запросы на этот адрес, решая проблему third-party cookies
+// Приоритет: local_settings.js → env VITE_API_BACKEND_URL → localhost:8017
+// Примеры:
+//   'http://127.0.0.1:8017'                    - локальный Django
+//   'https://myapp.tunnel.com'                 - туннель к локальному серверу
+//   'https://api.production.com'               - продакшен API
+export const VITE_PROXY_TARGET = 'http://127.0.0.1:8017'
 
 // Минимальный интервал между запросами (мс)
 export const MIN_REQUEST_INTERVAL = 500
