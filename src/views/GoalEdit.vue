@@ -356,27 +356,6 @@
                 </button>
               </div>
               
-              <!-- AI генерация шагов -->
-              <div class="ai-steps-generate">
-                <button 
-                  class="btn-ai-steps"
-                  :class="{ generating: isGeneratingSteps }"
-                  :disabled="isGeneratingSteps"
-                  @click="generateStepsAI"
-                  @mouseenter="showAIStepsTooltip = true"
-                  @mouseleave="showAIStepsTooltip = false"
-                >
-                  <Loader2 v-if="isGeneratingSteps" :size="16" class="spin" />
-                  <Sparkles v-else :size="16" />
-                  <span>{{ isGeneratingSteps ? 'Генерация...' : 'Помощь от ментора' }}</span>
-                </button>
-                <transition name="tooltip-fade">
-                  <div v-if="showAIStepsTooltip && !isGeneratingSteps" class="ai-steps-tooltip">
-                    <strong>ИИ-помощник</strong>
-                    <p>Сгенерирует 3-7 шагов для достижения этой цели на основе её названия</p>
-                  </div>
-                </transition>
-              </div>
             </div>
 
           </div>
@@ -817,51 +796,42 @@
               </div>
             </div>
 
-            <div v-if="showTimeSelector" class="param-dropdown">
-              <input 
-                v-model="editStepForm.timeEstimate"
-                type="number"
-                class="form-input form-input-small"
-                placeholder="Часов"
-                min="0.5"
-                max="24"
-                step="0.5"
-              />
-            </div>
-
-            <div v-if="showDatePicker" class="param-dropdown">
-              <input 
-                v-model="editStepForm.scheduledDate"
-                type="date"
-                class="form-input"
-              />
+            <div v-if="showTimeSelector || showDatePicker" class="param-inputs-row">
+              <div v-if="showTimeSelector" class="param-input-group">
+                <label>Время (часов)</label>
+                <input 
+                  v-model="editStepForm.timeEstimate"
+                  type="number"
+                  class="form-input form-input-small"
+                  placeholder="1.5"
+                  min="0.1"
+                  max="24"
+                  step="0.1"
+                />
+              </div>
+              <div v-if="showDatePicker" class="param-input-group">
+                <label>Дата</label>
+                <input 
+                  v-model="editStepForm.scheduledDate"
+                  type="date"
+                  class="form-input"
+                />
+              </div>
             </div>
           </div>
           
           <div class="bottom-sheet-footer step-footer-redesigned">
-            <div class="footer-actions-left">
-              <button 
-                class="action-btn action-complete"
-                :class="{ active: editStepForm.completed }"
-                @click="toggleEditStepComplete"
-              >
-                <CheckCircle :size="20" />
-                <span>{{ editStepForm.completed ? 'Выполнен' : 'Выполнить' }}</span>
-              </button>
-            </div>
-            <div class="footer-actions-right">
-              <button 
-                class="action-btn action-delete"
-                @click="confirmDeleteStep"
-              >
-                <Trash2 :size="18" />
-                <span>Удалить</span>
-              </button>
-              <button class="btn btn-primary btn-save" @click="saveEditStepModal">
-                <Check :size="18" />
-                <span>Сохранить</span>
-              </button>
-            </div>
+            <button 
+              class="action-btn action-delete"
+              @click="confirmDeleteStep"
+            >
+              <Trash2 :size="18" />
+              <span>Удалить</span>
+            </button>
+            <button class="btn btn-primary btn-save" @click="saveEditStepModal">
+              <Check :size="18" />
+              <span>Сохранить</span>
+            </button>
           </div>
         </div>
       </div>
@@ -4686,8 +4656,36 @@ function formatDate(dateString) {
   border-radius: 8px;
 }
 
+.param-inputs-row {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  padding: 1rem;
+  background: var(--bg-secondary, #f9fafb);
+  border-radius: var(--radius-md, 8px);
+}
+
+.param-input-group {
+  flex: 1;
+  min-width: 0;
+}
+
+.param-input-group label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted, #9ca3af);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.param-input-group .form-input {
+  width: 100%;
+}
+
 .form-input-small {
-  max-width: 120px;
+  max-width: 100%;
 }
 
 /* Redesigned Step Footer */
@@ -4695,7 +4693,7 @@ function formatDate(dateString) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem;
   padding: 1rem 1.25rem;
   border-top: 1px solid var(--border-color, #e5e7eb);
   background: var(--bg-primary, #fff);
@@ -4703,11 +4701,8 @@ function formatDate(dateString) {
   bottom: 0;
 }
 
-.footer-actions-left,
-.footer-actions-right {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+.step-footer-redesigned .btn-save {
+  flex: 1;
 }
 
 .action-btn {
@@ -4820,34 +4815,21 @@ function formatDate(dateString) {
 
 @media (max-width: 768px) {
   .step-footer-redesigned {
-    flex-wrap: wrap;
     gap: 0.75rem;
     padding: 1rem;
   }
   
-  .footer-actions-left {
-    order: 2;
-    width: 100%;
-  }
-  
-  .footer-actions-right {
-    order: 1;
-    width: 100%;
-    justify-content: space-between;
-  }
-  
-  .action-btn.action-complete {
-    flex: 1;
-    justify-content: center;
-  }
-  
-  .action-btn.action-delete span,
-  .action-btn.action-complete span {
-    display: inline;
+  .action-btn.action-delete {
+    flex-shrink: 0;
   }
   
   .btn-save {
     flex: 1;
+  }
+  
+  .param-inputs-row {
+    gap: 0.75rem;
+    padding: 0.75rem;
   }
 }
 
