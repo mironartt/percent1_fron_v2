@@ -1,13 +1,41 @@
 <template>
   <div class="profile-page">
-    <header class="profile-header">
-      <div class="header-main">
+    <header class="page-header">
+      <h1 class="page-title">Достижения</h1>
+      <p class="page-subtitle">Ваш прогресс и награды</p>
+    </header>
+
+    <div class="stats-panel">
+      <div class="stat-chip">
+        <Flame :size="16" :stroke-width="1.5" class="stat-icon-habits" />
+        <span class="stat-value">{{ habitStreak }}</span>
+        <span class="stat-label">дней подряд</span>
+      </div>
+      <div class="stat-chip">
+        <BookOpen :size="16" :stroke-width="1.5" class="stat-icon-journal" />
+        <span class="stat-value">{{ journalStreak }}</span>
+        <span class="stat-label">записей</span>
+      </div>
+      <div class="stat-chip">
+        <CheckCircle :size="16" :stroke-width="1.5" class="stat-icon-tasks" />
+        <span class="stat-value">{{ todayXP }}</span>
+        <span class="stat-label">XP сегодня</span>
+      </div>
+      <div class="stat-chip">
+        <TrendingUp :size="16" :stroke-width="1.5" class="stat-icon-week" />
+        <span class="stat-value">{{ weekXP }}</span>
+        <span class="stat-label">XP неделя</span>
+      </div>
+    </div>
+
+    <div class="user-card section-card">
+      <div class="user-card-main">
         <div class="user-info">
           <div class="avatar">
             <User :size="24" :stroke-width="1.5" />
           </div>
           <div class="user-details">
-            <h1>{{ userName }}</h1>
+            <span class="user-name">{{ userName }}</span>
           </div>
         </div>
         <div class="xp-display">
@@ -16,12 +44,12 @@
             <span class="xp-value">{{ xpBalance }}</span>
             <span class="xp-label">XP</span>
           </div>
-          <div class="xp-lifetime desktop-only">
-            Всего заработано: {{ lifetimeEarned }} XP
+          <div class="xp-lifetime">
+            Всего: {{ lifetimeEarned }} XP
           </div>
         </div>
       </div>
-      <div class="header-reward" v-if="nextReward">
+      <div class="user-card-reward" v-if="nextReward">
         <div class="reward-mini">
           <span class="reward-mini-icon">{{ nextReward.icon }}</span>
           <div class="reward-mini-progress">
@@ -30,53 +58,12 @@
               :style="{ width: nextRewardProgress + '%' }"
             />
           </div>
-          <span class="reward-mini-text">{{ xpToNextReward }}</span>
+          <span class="reward-mini-text">{{ xpToNextReward }} XP</span>
         </div>
       </div>
-    </header>
+    </div>
 
     <div class="profile-content">
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon habits">
-            <Flame :size="18" :stroke-width="1.5" />
-          </div>
-          <div class="stat-info">
-            <span class="stat-value">{{ habitStreak }}</span>
-            <span class="stat-label">дней</span>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon journal">
-            <BookOpen :size="18" :stroke-width="1.5" />
-          </div>
-          <div class="stat-info">
-            <span class="stat-value">{{ journalStreak }}</span>
-            <span class="stat-label">записей</span>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon tasks">
-            <CheckCircle :size="18" :stroke-width="1.5" />
-          </div>
-          <div class="stat-info">
-            <span class="stat-value">{{ todayXP }}</span>
-            <span class="stat-label">сегодня</span>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon week">
-            <TrendingUp :size="18" :stroke-width="1.5" />
-          </div>
-          <div class="stat-info">
-            <span class="stat-value">{{ weekXP }}</span>
-            <span class="stat-label">неделя</span>
-          </div>
-        </div>
-      </div>
 
       <div class="next-reward desktop-only" v-if="nextReward">
         <div class="next-reward-header">
@@ -241,15 +228,82 @@ function formatTime(timestamp) {
   box-sizing: border-box;
 }
 
-.profile-header {
-  background: var(--card-bg);
-  border-radius: 16px;
-  padding: 1rem 1.25rem;
+.page-header {
+  text-align: center;
   margin-bottom: 1rem;
-  border: 1px solid var(--border-color);
 }
 
-.header-main {
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem 0;
+  color: var(--text-primary);
+}
+
+.page-subtitle {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.stats-panel {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 0.25rem;
+}
+
+.stats-panel::-webkit-scrollbar {
+  display: none;
+}
+
+.stat-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.stat-chip .stat-value {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.stat-chip .stat-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.stat-icon-habits {
+  color: var(--status-warning-text);
+}
+
+.stat-icon-journal {
+  color: var(--status-info-text);
+}
+
+.stat-icon-tasks {
+  color: var(--status-success-text);
+}
+
+.stat-icon-week {
+  color: var(--status-purple-text);
+}
+
+.user-card {
+  margin-bottom: 1rem;
+}
+
+.user-card-main {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -266,7 +320,7 @@ function formatTime(timestamp) {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -274,18 +328,10 @@ function formatTime(timestamp) {
   flex-shrink: 0;
 }
 
-.user-details h1 {
+.user-name {
   font-size: 1.1rem;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.user-email {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  margin: 0.125rem 0 0 0;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .xp-display {
@@ -301,28 +347,28 @@ function formatTime(timestamp) {
 }
 
 .xp-balance svg {
-  color: #a855f7;
+  color: var(--secondary-color);
 }
 
 .xp-value {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #7c3aed;
+  color: var(--primary-color);
 }
 
 .xp-label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #a855f7;
+  color: var(--secondary-color);
 }
 
 .xp-lifetime {
   font-size: 0.8rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   margin-top: 0.125rem;
 }
 
-.header-reward {
+.user-card-reward {
   margin-top: 0.75rem;
   padding-top: 0.75rem;
   border-top: 1px solid var(--border-color);
@@ -342,21 +388,21 @@ function formatTime(timestamp) {
 .reward-mini-progress {
   flex: 1;
   height: 6px;
-  background: rgba(124, 58, 237, 0.15);
+  background: var(--status-purple-bg);
   border-radius: 3px;
   overflow: hidden;
 }
 
 .reward-mini-fill {
   height: 100%;
-  background: linear-gradient(90deg, #7c3aed, #a855f7);
+  background: linear-gradient(90deg, var(--status-purple-text), var(--status-info-text));
   border-radius: 3px;
   transition: width 0.4s ease;
 }
 
 .reward-mini-text {
   font-size: 0.8rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 
@@ -373,77 +419,12 @@ function formatTime(timestamp) {
 .profile-content {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.5rem;
-}
-
-.stat-card {
-  background: var(--card-bg);
-  border-radius: 12px;
-  padding: 0.75rem 0.5rem;
-  border: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 0.375rem;
-}
-
-.stat-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.stat-icon.habits {
-  background: rgba(249, 115, 22, 0.1);
-  color: #f97316;
-}
-
-.stat-icon.journal {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
-}
-
-.stat-icon.tasks {
-  background: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
-}
-
-.stat-icon.week {
-  background: rgba(124, 58, 237, 0.1);
-  color: #7c3aed;
-}
-
-.stat-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.stat-value {
-  font-size: 1.1rem;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.stat-label {
-  font-size: 0.65rem;
-  color: var(--text-muted);
-  line-height: 1.2;
+  gap: 1rem;
 }
 
 .next-reward {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(168, 85, 247, 0.1));
-  border: 1px solid rgba(124, 58, 237, 0.2);
+  background: linear-gradient(135deg, var(--status-purple-bg), var(--status-info-bg));
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 1.25rem;
 }
@@ -453,7 +434,7 @@ function formatTime(timestamp) {
   align-items: center;
   gap: 0.5rem;
   font-weight: 500;
-  color: #7c3aed;
+  color: var(--primary-color);
   margin-bottom: 1rem;
 }
 
@@ -487,14 +468,14 @@ function formatTime(timestamp) {
 .progress-bar {
   flex: 1;
   height: 8px;
-  background: rgba(124, 58, 237, 0.2);
+  background: var(--status-purple-bg);
   border-radius: 4px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #7c3aed, #a855f7);
+  background: linear-gradient(90deg, var(--status-purple-text), var(--status-info-text));
   border-radius: 4px;
   transition: width 0.5s ease;
 }
@@ -549,7 +530,7 @@ function formatTime(timestamp) {
 
 .summary-text {
   font-size: 0.85rem;
-  color: #22c55e;
+  color: var(--success-color);
   font-weight: 500;
 }
 
@@ -597,28 +578,28 @@ function formatTime(timestamp) {
 }
 
 .history-icon.habit {
-  background: rgba(249, 115, 22, 0.1);
-  color: #f97316;
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
 }
 
 .history-icon.task {
-  background: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
+  background: var(--status-success-bg);
+  color: var(--status-success-text);
 }
 
 .history-icon.step {
-  background: rgba(234, 179, 8, 0.1);
-  color: #eab308;
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
 }
 
 .history-icon.goal {
-  background: rgba(124, 58, 237, 0.1);
-  color: #7c3aed;
+  background: var(--status-purple-bg);
+  color: var(--status-purple-text);
 }
 
 .history-icon.journal {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  background: var(--status-info-bg);
+  color: var(--status-info-text);
 }
 
 .history-icon.other {
@@ -648,7 +629,7 @@ function formatTime(timestamp) {
 
 .history-amount {
   font-weight: 600;
-  color: #22c55e;
+  color: var(--success-color);
   font-size: 0.9rem;
 }
 
@@ -657,5 +638,6 @@ function formatTime(timestamp) {
   color: var(--text-muted);
   white-space: nowrap;
 }
+
 
 </style>
