@@ -1118,15 +1118,21 @@
             </div>
 
             <div class="day-edit-current-status">
-              <span class="status-label">Текущий статус:</span>
-              <span 
-                class="status-value" 
-                :class="isSelectedDayToday && getDayStatus(selectedHabitForEdit, selectedDayForEdit.date) !== 'completed' ? 'today' : getDayStatus(selectedHabitForEdit, selectedDayForEdit.date)"
-              >
-                {{ isSelectedDayToday && getDayStatus(selectedHabitForEdit, selectedDayForEdit.date) !== 'completed' 
-                   ? 'Сегодня' 
-                   : getDayStatusLabel(getDayStatus(selectedHabitForEdit, selectedDayForEdit.date)) }}
-              </span>
+              <div class="status-row">
+                <span class="status-label">Текущий статус:</span>
+                <span 
+                  class="status-value" 
+                  :class="isSelectedDayToday && getDayStatus(selectedHabitForEdit, selectedDayForEdit.date) !== 'completed' ? 'today' : getDayStatus(selectedHabitForEdit, selectedDayForEdit.date)"
+                >
+                  {{ isSelectedDayToday && getDayStatus(selectedHabitForEdit, selectedDayForEdit.date) !== 'completed' 
+                     ? 'Сегодня' 
+                     : getDayStatusLabel(getDayStatus(selectedHabitForEdit, selectedDayForEdit.date)) }}
+                </span>
+              </div>
+              <div class="xp-row" v-if="selectedDayXpInfo.xpEarned > 0 || selectedDayXpInfo.xpPenalty > 0">
+                <span v-if="selectedDayXpInfo.xpEarned > 0" class="xp-badge positive">+{{ selectedDayXpInfo.xpEarned }} XP</span>
+                <span v-if="selectedDayXpInfo.xpPenalty > 0" class="xp-badge negative">-{{ selectedDayXpInfo.xpPenalty }} XP</span>
+              </div>
             </div>
 
             <div class="day-edit-notes">
@@ -1186,7 +1192,7 @@
             </div>
 
             <div 
-              v-if="!isFutureDay && gameSettings.amnestiedDates?.includes(selectedDayForEdit.date)" 
+              v-if="!isFutureDay && getDayStatus(selectedHabitForEdit, selectedDayForEdit.date) === 'amnestied'" 
               class="day-edit-amnesty-warning"
             >
               <div class="amnesty-info-row">
@@ -2568,6 +2574,14 @@ function saveSkipData() {
 }
 
 function getDayStatus(habit, dateStr) {
+  const daySchedule = habit.week_schedule?.find(s => s.date === dateStr)
+  if (daySchedule?.status) {
+    const status = daySchedule.status
+    if (status === 'pending') return 'today'
+    if (status === 'not-scheduled') return 'not-scheduled'
+    return status
+  }
+  
   const date = new Date(dateStr)
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -2589,6 +2603,10 @@ function getDayStatus(habit, dateStr) {
   if (isPast) return 'missed'
   if (isToday) return 'today'
   return 'scheduled'
+}
+
+function getDayScheduleData(habit, dateStr) {
+  return habit.week_schedule?.find(s => s.date === dateStr) || null
 }
 
 function getDayStatusLabel(status) {
@@ -2619,6 +2637,17 @@ const isSelectedDayToday = computed(() => {
   return selectedDateStr === todayStr
 })
 
+const selectedDayXpInfo = computed(() => {
+  if (!selectedHabitForEdit.value || !selectedDayForEdit.value) {
+    return { xpEarned: 0, xpPenalty: 0 }
+  }
+  const daySchedule = getDayScheduleData(selectedHabitForEdit.value, selectedDayForEdit.value.date)
+  return {
+    xpEarned: daySchedule?.xp_earned || 0,
+    xpPenalty: daySchedule?.xp_penalty || 0
+  }
+})
+
 const showSkipReasonField = computed(() => {
   if (!selectedHabitForEdit.value || !selectedDayForEdit.value) return false
   const status = getDayStatus(selectedHabitForEdit.value, selectedDayForEdit.value.date)
@@ -2637,8 +2666,10 @@ function openDayEditModal(habit, day) {
   
   selectedHabitForEdit.value = habit
   selectedDayForEdit.value = day
-  dayEditSkipReason.value = skipReasons.value[day.date]?.[habit.id] || ''
-  dayEditNote.value = habitNotes.value[day.date]?.[habit.id] || ''
+  
+  const daySchedule = getDayScheduleData(habit, day.date)
+  dayEditSkipReason.value = daySchedule?.excuse_reason || skipReasons.value[day.date]?.[habit.id] || ''
+  dayEditNote.value = daySchedule?.note || habitNotes.value[day.date]?.[habit.id] || ''
   showDayEditModal.value = true
 }
 
@@ -2652,8 +2683,9 @@ function switchToDay(day) {
   saveCurrentDayData()
   
   selectedDayForEdit.value = day
-  dayEditSkipReason.value = skipReasons.value[day.date]?.[selectedHabitForEdit.value.id] || ''
-  dayEditNote.value = habitNotes.value[day.date]?.[selectedHabitForEdit.value.id] || ''
+  const daySchedule = getDayScheduleData(selectedHabitForEdit.value, day.date)
+  dayEditSkipReason.value = daySchedule?.excuse_reason || skipReasons.value[day.date]?.[selectedHabitForEdit.value.id] || ''
+  dayEditNote.value = daySchedule?.note || habitNotes.value[day.date]?.[selectedHabitForEdit.value.id] || ''
 }
 
 function saveCurrentDayData() {
@@ -3787,13 +3819,43 @@ onMounted(async () => {
 
 .day-edit-current-status {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 0.5rem;
   padding: 0.5rem 0.75rem;
   background: var(--bg-secondary);
   border-radius: 8px;
   margin-bottom: 1rem;
   font-size: 0.85rem;
+}
+
+.day-edit-current-status .status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.day-edit-current-status .xp-row {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.day-edit-current-status .xp-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+}
+
+.day-edit-current-status .xp-badge.positive {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.day-edit-current-status .xp-badge.negative {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
 }
 
 .day-edit-current-status .status-label {

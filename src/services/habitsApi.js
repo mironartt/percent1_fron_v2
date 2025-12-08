@@ -33,22 +33,25 @@ async function habitsRequest(endpoint, data = {}) {
   
   const result = await request('POST', fullEndpoint, data)
   
-  if (result.error) {
-    if (DEBUG_MODE) {
-      console.error(`[HabitsAPI] Error:`, result.error)
-    }
-    return { success: false, error: result.error }
-  }
-  
-  if (result.response?.status === 'ok') {
-    return { success: true, data: result.response.data }
-  }
-  
   if (result.status === 'ok') {
     return { success: true, data: result.data }
   }
   
-  return { success: false, error: result.error_data || { message: 'Неизвестная ошибка' } }
+  if (result.status === 'error') {
+    if (DEBUG_MODE) {
+      console.error(`[HabitsAPI] Error:`, result.error_data)
+    }
+    return { success: false, error: result.error_data || { message: 'Ошибка сервера' } }
+  }
+  
+  if (result.error) {
+    if (DEBUG_MODE) {
+      console.error(`[HabitsAPI] Request Error:`, result.error)
+    }
+    return { success: false, error: result.error }
+  }
+  
+  return { success: false, error: { message: 'Неизвестный формат ответа' } }
 }
 
 // ========================================

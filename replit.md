@@ -57,8 +57,28 @@ Integrated the Habits module with Django REST API backend through 18 endpoints:
 - LocalStorage fallback when backend unavailable (dev mode)
 - Rate limiting to prevent API spam
 - Backend ID mapping for habit synchronization
+- Status-based day rendering (uses `status` from `week_schedule` instead of manual date checks)
 
 **API Base Path:** `/api/rest/front/app/habits`
+
+**API Response Format:**
+```json
+{ "status": "ok", "data": {...} }
+```
+NOT `{"response": {"status": "ok", ...}}` (this is an error in old docs)
+
+**Error Format:**
+```json
+{
+  "status": "error",
+  "error_data": {
+    "error": "ERROR_KEY",
+    "message": "Описание ошибки",
+    "error_code": "код",
+    "status_code": 400
+  }
+}
+```
 
 **Integrated Endpoints (18 total):**
 - Settings: /settings/get/, /settings/update/
@@ -70,7 +90,7 @@ Integrated the Habits module with Django REST API backend through 18 endpoints:
 - XP: /xp/history/, /xp/stats/
 - Rewards: /rewards/get/, /rewards/create/, /rewards/redeem/, /rewards/update/, /rewards/delete/
 
-**CRITICAL: /update/ endpoint structure (December 2024 fix):**
+**CRITICAL: /update/ endpoint structure:**
 - `habits_data: [{...}]` - для создания (без habit_id) и обновления (с habit_id)
 - `deleted_habit_ids: [id, ...]` - для soft-delete
 - `restored_habit_ids: [id, ...]` - для восстановления
@@ -79,5 +99,27 @@ Integrated the Habits module with Django REST API backend through 18 endpoints:
 
 **Completions structure:**
 - `completions_data: [{habit_id, date, status, note?, excuse_reason?}]`
+
+**Day Statuses from Backend (7 types):**
+| Статус | Описание |
+|--------|----------|
+| `completed` | Выполнено |
+| `missed` | Пропущено (со штрафом) |
+| `excused` | Уважительный пропуск (без штрафа) |
+| `amnestied` | Амнистия применена (штраф отменён) |
+| `pending` | Сегодня, ожидает выполнения |
+| `future` | Будущий день |
+| `not-scheduled` | День не в расписании |
+
+**week_schedule fields:**
+- `date`, `weekday`, `status`, `is_scheduled`, `note`, `excuse_reason`
+- `xp_earned` - XP за выполнение (при status: completed)
+- `xp_penalty` - штраф за пропуск (при status: missed)
+- `is_amnestied` - вспомогательный флаг амнистии
+
+**Implementation Notes:**
+- Используй `status` из `week_schedule` напрямую, не проверяй даты вручную
+- Для амнистии проверяй `status === 'amnestied'`, а не `is_amnestied` или даты
+- Статус `pending` → отображается как "Сегодня" в UI
 
 **Note:** Django backend runs on port 8017 (not included in this Replit). ECONNREFUSED errors are expected when backend is not running - app falls back to localStorage.
