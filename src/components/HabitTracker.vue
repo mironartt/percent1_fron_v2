@@ -92,11 +92,14 @@ function isCompletedToday(habit) {
 function getHabitIcon(habit) {
   if (habit.icon && typeof habit.icon === 'string') {
     const iconMap = {
-      'book': '📚', 'dumbbell': '💪', 'droplet': '💧', 'brain': '🧠',
-      'heart': '❤️', 'star': '⭐', 'coffee': '☕', 'moon': '🌙',
-      'sun': '☀️', 'leaf': '🍃', 'music': '🎵', 'palette': '🎨',
-      'code': '💻', 'pencil': '✏️', 'target': '🎯', 'flame': '🔥',
-      'trophy': '🏆', 'zap': '⚡', 'clock': '⏰', 'smile': '😊'
+      'fire': '🔥', 'strength': '💪', 'brain': '🧠', 'heart': '❤️',
+      'book': '📚', 'run': '🏃', 'water': '💧', 'sleep': '😴',
+      'meditation': '🧘', 'target': '🎯', 'money': '💰', 'graph': '📈',
+      'sun': '☀️', 'moon': '🌙', 'shield': '🛡️', 'palette': '🎨',
+      'smile': '😊', 'apple': '🍎', 'weight': '⚖️', 'calendar': '📅',
+      'trophy': '🏆', 'star': '⭐', 'rocket': '🚀', 'leaf': '🌿',
+      'coffee': '☕', 'music': '🎵', 'camera': '📷', 'laptop': '💻',
+      'dumbbell': '🏋️', 'yoga': '🧘‍♀️', 'bicycle': '🚴', 'swimmer': '🏊'
     }
     return iconMap[habit.icon] || habit.icon
   }
