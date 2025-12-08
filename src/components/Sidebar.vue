@@ -44,6 +44,7 @@
         >
           <component :is="item.icon" class="icon" :size="20" :stroke-width="1.5" />
           <span class="nav-label">{{ item.label }}</span>
+          <span v-if="item.comingSoon && !isCollapsed" class="coming-soon-badge">Скоро</span>
           <Lock v-if="item.showLock && !isCollapsed" class="lock-icon" :size="14" :stroke-width="1.5" />
         </div>
       </div>
@@ -302,9 +303,9 @@ const menuItems = [
   { path: '/app/habits', icon: Flame, label: 'Привычки', locked: false, showLock: false },
   { path: '/app/achievements', icon: Award, label: 'Достижения', locked: false, showLock: false },
   { path: '/app/learning', icon: GraduationCap, label: 'Обучение', locked: false, showLock: false },
-  { path: '/app/energy', icon: Zap, label: 'Ресурс и энергия', locked: true, showLock: false },
-  { path: '/app/principles', icon: Gem, label: 'Принципы и убеждения', locked: true, showLock: false },
-  { path: '/app/club', icon: Users, label: 'Клуб 1%', locked: true, showLock: false }
+  { path: '/app/energy', icon: Zap, label: 'Ресурс и энергия', locked: true, showLock: false, comingSoon: true },
+  { path: '/app/principles', icon: Gem, label: 'Принципы и убеждения', locked: true, showLock: false, comingSoon: true },
+  { path: '/app/club', icon: Users, label: 'Клуб 1%', locked: true, showLock: false, comingSoon: true }
 ]
 </script>
 
@@ -480,6 +481,19 @@ const menuItems = [
   height: 14px;
   color: #9ca3af;
   opacity: 0.6;
+}
+
+.coming-soon-badge {
+  margin-left: auto;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: #fff;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .nav-item.has-lock {
