@@ -165,3 +165,29 @@ Fixed issue where "Сегодня" modal didn't show correct completion status:
   1. Check `habit.week_schedule` for today's date with status 'completed'
   2. Check `habit.completions` for today's date with status 'completed'
   3. Fallback to `appStore.habitLog` for backward compatibility
+
+### Gamification Settings Fix (December 8, 2024)
+Fixed mismatch between frontend and backend field names for penalty settings:
+
+**Problem:**
+- Frontend was sending: `xp_penalty_planning`, `xp_penalty_journal`
+- Backend expects: `planning_penalty_enabled`, `planning_penalty_amount`, `journal_penalty_enabled`, `journal_penalty_amount`
+
+**Solution:**
+- Updated `saveGameSettings()` to use correct field names
+- Updated `loadGameSettings()` to read from correct field names
+- Updated store defaults in `settings` ref and `resetStore()`
+- Use nullish coalescing (`??`) instead of `||` to preserve zero values
+- When penalty is disabled, send `amount: 0` to backend
+
+**Backend field mapping:**
+```javascript
+// saveGameSettings() sends:
+{
+  difficulty_mode: 'balanced',
+  planning_penalty_enabled: true,
+  planning_penalty_amount: 10,  // or 0 if disabled
+  journal_penalty_enabled: true,
+  journal_penalty_amount: 10    // or 0 if disabled
+}
+```
