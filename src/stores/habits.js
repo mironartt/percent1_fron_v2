@@ -398,12 +398,24 @@ export const useHabitsStore = defineStore('habits', () => {
     if (!habit) return { success: false, error: { message: 'Привычка не найдена' } }
     
     const previousCompletions = [...(habit.completions || [])]
+    const previousWeekSchedule = habit.week_schedule ? [...habit.week_schedule] : null
     
     const existingIndex = habit.completions?.findIndex(c => c.date === date)
     if (existingIndex >= 0) {
       habit.completions[existingIndex] = { ...habit.completions[existingIndex], status: 'completed', note }
     } else {
       habit.completions = [...(habit.completions || []), { date, status: 'completed', note }]
+    }
+    
+    if (habit.week_schedule) {
+      const weekDayIndex = habit.week_schedule.findIndex(s => s.date === date)
+      if (weekDayIndex >= 0) {
+        habit.week_schedule[weekDayIndex] = { 
+          ...habit.week_schedule[weekDayIndex], 
+          status: 'completed', 
+          note 
+        }
+      }
     }
     
     statsPanel.value.today_completed++
@@ -436,11 +448,17 @@ export const useHabitsStore = defineStore('habits', () => {
         }
       } else {
         habit.completions = previousCompletions
+        if (previousWeekSchedule) {
+          habit.week_schedule = previousWeekSchedule
+        }
         statsPanel.value.today_completed--
         return { success: false, error: result.error }
       }
     } catch (e) {
       habit.completions = previousCompletions
+      if (previousWeekSchedule) {
+        habit.week_schedule = previousWeekSchedule
+      }
       statsPanel.value.today_completed--
       if (DEBUG_MODE) console.error('[HabitsStore] Mark completed error:', e)
       return { success: false, error: { message: e.message } }
@@ -452,6 +470,7 @@ export const useHabitsStore = defineStore('habits', () => {
     if (!habit) return { success: false, error: { message: 'Привычка не найдена' } }
     
     const previousCompletions = [...(habit.completions || [])]
+    const previousWeekSchedule = habit.week_schedule ? [...habit.week_schedule] : null
     
     const existingIndex = habit.completions?.findIndex(c => c.date === date)
     if (existingIndex >= 0) {
@@ -473,6 +492,23 @@ export const useHabitsStore = defineStore('habits', () => {
           }
         }
         
+        if (habit.week_schedule) {
+          const weekDayIndex = habit.week_schedule.findIndex(s => s.date === date)
+          if (weekDayIndex >= 0 && result.data.updated_day) {
+            habit.week_schedule[weekDayIndex] = {
+              ...habit.week_schedule[weekDayIndex],
+              ...result.data.updated_day
+            }
+          } else if (weekDayIndex >= 0) {
+            const today = new Date()
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+            habit.week_schedule[weekDayIndex] = {
+              ...habit.week_schedule[weekDayIndex],
+              status: date === todayStr ? 'pending' : (date > todayStr ? 'future' : 'missed')
+            }
+          }
+        }
+        
         if (DEBUG_MODE) {
           console.log('[HabitsStore] Habit unmarked:', habitId, date)
         }
@@ -480,11 +516,17 @@ export const useHabitsStore = defineStore('habits', () => {
         return { success: true, xpChanges: result.data.xp_changes }
       } else {
         habit.completions = previousCompletions
+        if (previousWeekSchedule) {
+          habit.week_schedule = previousWeekSchedule
+        }
         statsPanel.value.today_completed++
         return { success: false, error: result.error }
       }
     } catch (e) {
       habit.completions = previousCompletions
+      if (previousWeekSchedule) {
+        habit.week_schedule = previousWeekSchedule
+      }
       statsPanel.value.today_completed++
       if (DEBUG_MODE) console.error('[HabitsStore] Unmark completed error:', e)
       return { success: false, error: { message: e.message } }
@@ -496,6 +538,7 @@ export const useHabitsStore = defineStore('habits', () => {
     if (!habit) return { success: false, error: { message: 'Привычка не найдена' } }
     
     const previousCompletions = [...(habit.completions || [])]
+    const previousWeekSchedule = habit.week_schedule ? [...habit.week_schedule] : null
     
     const existingIndex = habit.completions?.findIndex(c => c.date === date)
     if (existingIndex >= 0) {
@@ -512,6 +555,17 @@ export const useHabitsStore = defineStore('habits', () => {
       }]
     }
     
+    if (habit.week_schedule) {
+      const weekDayIndex = habit.week_schedule.findIndex(s => s.date === date)
+      if (weekDayIndex >= 0) {
+        habit.week_schedule[weekDayIndex] = { 
+          ...habit.week_schedule[weekDayIndex], 
+          status: 'excused',
+          excuse_reason: excuseReason
+        }
+      }
+    }
+    
     try {
       const result = await habitsApi.markHabitExcused(habitId, date, excuseReason)
       
@@ -522,10 +576,16 @@ export const useHabitsStore = defineStore('habits', () => {
         return { success: true }
       } else {
         habit.completions = previousCompletions
+        if (previousWeekSchedule) {
+          habit.week_schedule = previousWeekSchedule
+        }
         return { success: false, error: result.error }
       }
     } catch (e) {
       habit.completions = previousCompletions
+      if (previousWeekSchedule) {
+        habit.week_schedule = previousWeekSchedule
+      }
       if (DEBUG_MODE) console.error('[HabitsStore] Mark excused error:', e)
       return { success: false, error: { message: e.message } }
     }

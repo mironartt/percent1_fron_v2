@@ -1141,7 +1141,14 @@
                 v-model="dayEditNote" 
                 placeholder="Как прошло выполнение? Что получилось? Что можно улучшить?"
                 rows="2"
+                @blur="saveNoteOnBlur"
               ></textarea>
+              <div class="note-save-row" v-if="dayEditNote">
+                <button class="btn-save-note-inline" @click="saveNoteOnBlur" :disabled="noteSaving">
+                  <Save :size="14" :stroke-width="2" />
+                  {{ noteSaving ? 'Сохраняю...' : 'Сохранить заметку' }}
+                </button>
+              </div>
             </div>
 
             <div v-if="showSkipReasonField" class="day-edit-reason">
@@ -1457,7 +1464,7 @@ import {
   Flame, Plus, Minus, Zap, CheckCircle, Sparkles, Shield, Bot,
   Check, Pencil, X, Trash2, Settings, Gift, Archive, Info, TrendingUp, Calendar, Award,
   Ellipsis, CircleAlert, Lightbulb, Heart, ChevronLeft, ChevronRight, RotateCcw, Lock,
-  ChartBar, CalendarDays, Target
+  ChartBar, CalendarDays, Target, Save
 } from 'lucide-vue-next'
 
 const appStore = useAppStore()
@@ -1492,6 +1499,8 @@ const dayEditNote = ref('')
 const weekOffset = ref(0)
 const pendingWeekLoad = ref(null)
 const showDeletedHabits = ref(false)
+const noteSaving = ref(false)
+const lastSavedNote = ref('')
 
 const habitSuggestions = [
   {
@@ -2686,22 +2695,25 @@ function openDayEditModal(habit, day) {
   const daySchedule = getDayScheduleData(habit, day.date)
   dayEditSkipReason.value = daySchedule?.excuse_reason || skipReasons.value[day.date]?.[habit.id] || ''
   dayEditNote.value = daySchedule?.note || habitNotes.value[day.date]?.[habit.id] || ''
+  lastSavedNote.value = dayEditNote.value
   showDayEditModal.value = true
 }
 
-function switchToDay(day) {
+async function switchToDay(day) {
   if (!selectedHabitForEdit.value) return
   if (!isScheduledFromWeekSchedule(selectedHabitForEdit.value, day.date)) {
     toast.showToast({ type: 'info', title: 'Привычка не запланирована на этот день' })
     return
   }
   
+  await saveNoteOnBlur()
   saveCurrentDayData()
   
   selectedDayForEdit.value = day
   const daySchedule = getDayScheduleData(selectedHabitForEdit.value, day.date)
   dayEditSkipReason.value = daySchedule?.excuse_reason || skipReasons.value[day.date]?.[selectedHabitForEdit.value.id] || ''
   dayEditNote.value = daySchedule?.note || habitNotes.value[day.date]?.[selectedHabitForEdit.value.id] || ''
+  lastSavedNote.value = dayEditNote.value
 }
 
 function saveCurrentDayData() {
@@ -2758,6 +2770,37 @@ async function saveNoteAndClose() {
   closeDayEditModal()
 }
 
+async function saveNoteOnBlur() {
+  if (!selectedHabitForEdit.value || !selectedDayForEdit.value) return
+  if (noteSaving.value) return
+  if (dayEditNote.value === lastSavedNote.value) return
+  if (!dayEditNote.value && !lastSavedNote.value) return
+  
+  noteSaving.value = true
+  
+  const habit = selectedHabitForEdit.value
+  const habitId = habit.habit_id || habit.id
+  const dateStr = selectedDayForEdit.value.date
+  const currentStatus = getDayStatus(habit, dateStr)
+  
+  saveCurrentDayData()
+  
+  const validStatuses = ['completed', 'missed', 'excused']
+  const statusToSend = validStatuses.includes(currentStatus) ? currentStatus : null
+  const result = await habitsStore.updateCompletionNote(habitId, dateStr, dayEditNote.value, statusToSend)
+  
+  noteSaving.value = false
+  
+  if (result.success) {
+    lastSavedNote.value = dayEditNote.value
+    if (DEBUG_MODE) {
+      console.log('[Habits] Note saved successfully:', dateStr, dayEditNote.value)
+    }
+  } else {
+    toast.showToast({ type: 'error', title: 'Ошибка сохранения заметки', message: result.error?.message })
+  }
+}
+
 async function setDayAsCompleted() {
   if (!selectedHabitForEdit.value || !selectedDayForEdit.value) return
   if (isFutureDay.value) {
@@ -2787,6 +2830,7 @@ async function setDayAsCompleted() {
   
   if (result.success) {
     toast.showToast({ type: 'success', title: `Отмечено как выполненное` })
+    await habitsStore.loadStatsPanel()
   } else {
     toast.showToast({ type: 'error', title: 'Ошибка сохранения', message: result.error?.message })
   }
@@ -2824,6 +2868,7 @@ async function setDayAsMissed() {
   
   if (result.success) {
     toast.showToast({ type: 'info', title: `Отмечено как пропущенное` })
+    await habitsStore.loadStatsPanel()
   } else {
     toast.showToast({ type: 'error', title: 'Ошибка сохранения', message: result.error?.message })
   }
@@ -2859,6 +2904,7 @@ async function setDayAsExcused() {
   
   if (result.success) {
     toast.showToast({ type: 'success', title: `Уважительный пропуск (без штрафа)` })
+    await habitsStore.loadStatsPanel()
   } else {
     toast.showToast({ type: 'error', title: 'Ошибка сохранения', message: result.error?.message })
   }
@@ -2932,7 +2978,9 @@ async function toggleHabitCompletion(habit) {
     }, 1200)
     
     const backendResult = await habitsStore.markCompleted(habit.backendId || habit.id, todayStr)
-    if (!backendResult.success && DEBUG_MODE) {
+    if (backendResult.success) {
+      await habitsStore.loadStatsPanel()
+    } else if (DEBUG_MODE) {
       console.log('[Habits] Backend completion sync failed, will retry later')
     }
   } else {
@@ -2946,7 +2994,9 @@ async function toggleHabitCompletion(habit) {
     }
     
     const backendResult = await habitsStore.unmarkCompleted(habit.backendId || habit.id, todayStr)
-    if (!backendResult.success && DEBUG_MODE) {
+    if (backendResult.success) {
+      await habitsStore.loadStatsPanel()
+    } else if (DEBUG_MODE) {
       console.log('[Habits] Backend undo sync failed, will retry later')
     }
   }
@@ -3956,6 +4006,37 @@ onMounted(async () => {
 .day-edit-notes,
 .day-edit-reason {
   margin-bottom: 1rem;
+}
+
+.note-save-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.btn-save-note-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--primary-color);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-save-note-inline:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-save-note-inline:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .day-edit-notes label,
