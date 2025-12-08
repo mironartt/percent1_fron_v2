@@ -213,8 +213,8 @@
       </div>
     </div>
 
-    <div v-if="showReassessmentSheet" class="bottom-sheet-overlay" @click.self="closeReassessment">
-      <div class="bottom-sheet" :class="{ 'ai-mode': reassessmentMode === 'ai' }">
+    <div v-if="showReassessmentSheet" class="reassess-modal-overlay" @click.self="closeReassessment">
+      <div class="reassess-modal" :class="{ 'ai-mode': reassessmentMode === 'ai' }">
         <div class="sheet-header">
           <h3>Переоценка сфер</h3>
           <button class="btn-close" @click="closeReassessment">
@@ -1326,33 +1326,43 @@ onMounted(async () => {
   background: var(--bg-secondary);
 }
 
-.bottom-sheet-overlay {
+.reassess-modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
   z-index: 1000;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
 }
 
-.bottom-sheet {
+.reassess-modal {
   width: 100%;
+  max-width: 600px;
   max-height: 90vh;
   background: var(--bg-primary);
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  border-radius: var(--radius-xl);
   overflow: hidden;
-  animation: slideUp 0.3s ease;
+  animation: modalFadeIn 0.25s ease;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
-.bottom-sheet.ai-mode {
+.reassess-modal.ai-mode {
   max-height: 95vh;
 }
 
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+@keyframes modalFadeIn {
+  from { 
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .sheet-header {
@@ -1388,6 +1398,9 @@ onMounted(async () => {
 
 .sheet-intro {
   padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .intro-text {
@@ -1486,9 +1499,9 @@ onMounted(async () => {
 
 .sheet-content {
   padding: 1.5rem;
-  max-height: 65vh;
   overflow-y: auto;
   flex: 1;
+  min-height: 0;
 }
 
 .reassess-card {
