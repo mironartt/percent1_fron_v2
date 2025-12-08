@@ -1,17 +1,9 @@
-import { getCsrfToken } from '@/services/api.js'
+import { apiFetch } from '@/services/api.js'
 
 export async function generateGoalWithAI(goalText, sphereId = null) {
   try {
-    const headers = { 'Content-Type': 'application/json' }
-    const csrfToken = getCsrfToken()
-    if (csrfToken) {
-      headers['X-CSRFToken'] = csrfToken
-    }
-    
-    const response = await fetch('/api/ai/generate-goal', {
+    const response = await apiFetch('/api/ai/generate-goal', {
       method: 'POST',
-      headers,
-      credentials: 'same-origin',
       body: JSON.stringify({ goalText, sphereId })
     })
 
@@ -33,16 +25,8 @@ export async function generateGoalWithAI(goalText, sphereId = null) {
 
 export async function generateStepsWithAI(goalTitle, sphereId = null) {
   try {
-    const headers = { 'Content-Type': 'application/json' }
-    const csrfToken = getCsrfToken()
-    if (csrfToken) {
-      headers['X-CSRFToken'] = csrfToken
-    }
-    
-    const response = await fetch('/api/ai/generate-steps', {
+    const response = await apiFetch('/api/ai/generate-steps', {
       method: 'POST',
-      headers,
-      credentials: 'same-origin',
       body: JSON.stringify({ goalTitle, sphereId })
     })
 

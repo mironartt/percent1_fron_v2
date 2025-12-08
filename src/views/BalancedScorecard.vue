@@ -448,7 +448,7 @@ import { ref, computed, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { DEBUG_MODE } from '@/config/settings.js'
-import { getCsrfToken } from '@/services/api.js'
+import { apiFetch } from '@/services/api.js'
 import WheelOfLife from '../components/WheelOfLife.vue'
 import { 
   Wallet, 
@@ -690,16 +690,8 @@ async function sendAIMessage() {
   
   try {
     const sphere = currentAISphere.value
-    const headers = { 'Content-Type': 'application/json' }
-    const csrfToken = getCsrfToken()
-    if (csrfToken) {
-      headers['X-CSRFToken'] = csrfToken
-    }
-    
-    const response = await fetch('/api/ai/reassess-sphere', {
+    const response = await apiFetch('/api/ai/reassess-sphere', {
       method: 'POST',
-      headers,
-      credentials: 'same-origin',
       body: JSON.stringify({
         sphereId: sphere.id,
         sphereName: sphere.name,

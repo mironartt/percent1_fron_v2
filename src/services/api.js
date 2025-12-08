@@ -35,6 +35,37 @@ export function getCsrfToken() {
   return getCookie('csrftoken')
 }
 
+/**
+ * Централизованная обёртка над fetch с автоматическим CSRF токеном
+ * Используйте эту функцию вместо нативного fetch для всех запросов к бэкенду
+ * 
+ * @param {string} url - URL запроса
+ * @param {RequestInit} options - Опции fetch
+ * @returns {Promise<Response>} - Response объект
+ */
+export async function apiFetch(url, options = {}) {
+  const isCrossOrigin = API_BASE_URL && API_BASE_URL.length > 0
+  
+  const headers = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    ...options.headers
+  }
+  
+  const csrfToken = getCookie('csrftoken')
+  if (csrfToken) {
+    headers['X-CSRFToken'] = csrfToken
+  }
+  
+  const config = {
+    ...options,
+    headers,
+    credentials: options.credentials || (isCrossOrigin ? 'include' : 'same-origin')
+  }
+  
+  return fetch(url, config)
+}
+
 // Эндпоинты, освобождённые от rate limiting
 const RATE_LIMIT_EXEMPT = [
   '/api/rest/front/csrf/',
@@ -127,7 +158,7 @@ export async function request(method, endpoint, data = null, options = {}) {
   }
   
   try {
-    const response = await fetch(url, config)
+    const response = await apiFetch(url, config)
     
     // Парсим JSON ответ
     let result
@@ -217,15 +248,8 @@ export async function initCsrf() {
       console.log('[API] Refreshing CSRF token from:', url)
     }
     
-    // Определяем credentials в зависимости от того, куда идёт запрос
-    const isCrossOrigin = API_BASE_URL && API_BASE_URL.length > 0
-    
-    await fetch(url, {
+    await apiFetch(url, {
       method: 'POST',
-      credentials: isCrossOrigin ? 'include' : 'same-origin',
-      headers: {
-        'Content-Type': 'application/json'
-      },
       body: JSON.stringify({})
     })
     
