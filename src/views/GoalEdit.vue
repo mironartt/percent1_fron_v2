@@ -721,7 +721,16 @@
               />
             </div>
             
-            <div class="form-group">
+            <button 
+              v-if="!showCommentField && !editStepForm.comment"
+              class="btn-link add-comment-btn"
+              @click="showCommentField = true"
+            >
+              <Plus :size="14" />
+              Добавить комментарий
+            </button>
+            
+            <div v-if="showCommentField || editStepForm.comment" class="form-group">
               <label class="form-label">Комментарий</label>
               <textarea 
                 v-model="editStepForm.comment"
@@ -729,44 +738,6 @@
                 placeholder="Дополнительные заметки..."
                 rows="2"
               ></textarea>
-            </div>
-
-            <div class="form-group checklist-section">
-              <label class="form-label">Чеклист</label>
-              <div class="checklist-items">
-                <div 
-                  v-for="(item, index) in editStepForm.checklist" 
-                  :key="item.id"
-                  class="checklist-item"
-                >
-                  <button 
-                    class="checklist-checkbox"
-                    :class="{ checked: item.completed }"
-                    @click="toggleChecklistItem(index)"
-                  >
-                    <CheckSquare v-if="item.completed" :size="18" />
-                    <Square v-else :size="18" />
-                  </button>
-                  <input 
-                    v-model="item.text"
-                    type="text"
-                    class="checklist-input"
-                    :class="{ completed: item.completed }"
-                    placeholder="Подзадача..."
-                    @keydown.enter="addChecklistItem"
-                  />
-                  <button 
-                    class="checklist-remove"
-                    @click="removeChecklistItem(index)"
-                  >
-                    <X :size="14" />
-                  </button>
-                </div>
-              </div>
-              <button class="btn-link add-checklist-btn" @click="addChecklistItem">
-                <Plus :size="14" />
-                Добавить подзадачу
-              </button>
             </div>
 
             <div class="step-params-row">
@@ -788,10 +759,10 @@
               </div>
               <div 
                 class="param-chip priority-chip"
-                :class="[editStepForm.priority || 'none', { 'has-value': editStepForm.priority }]"
+                :class="['priority-' + (editStepForm.priority || 'none'), { 'has-value': editStepForm.priority }]"
                 @click="cyclePriority"
               >
-                <Circle :size="18" />
+                <span class="priority-dot"></span>
                 <span>{{ getPriorityLabel(editStepForm.priority) || 'Приоритет' }}</span>
               </div>
             </div>
@@ -1291,6 +1262,7 @@ async function saveStepFromModal() {
 const showEditStepModal = ref(false)
 const showTimeSelector = ref(false)
 const showDatePicker = ref(false)
+const showCommentField = ref(false)
 
 const timeOptions = [
   { value: '30min', label: '30 минут' },
@@ -1322,6 +1294,7 @@ const priorityOptions = [
 function openEditStepModal(step, index) {
   showTimeSelector.value = false
   showDatePicker.value = false
+  showCommentField.value = false
   editStepForm.value = {
     title: step.title || '',
     comment: step.comment || '',
@@ -4606,24 +4579,29 @@ function formatDate(dateString) {
 .step-params-row {
   display: flex;
   gap: 0.5rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   margin-top: 0.5rem;
 }
 
 .param-chip {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
+  justify-content: center;
+  gap: 0.375rem;
+  flex: 1;
+  padding: 0.625rem 0.5rem;
   min-height: 44px;
   background: var(--bg-secondary, #f3f4f6);
   border: 1px solid var(--border-color, #e5e7eb);
   border-radius: var(--radius-md, 8px);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--text-secondary, #6b7280);
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .param-chip.has-value {
@@ -4636,19 +4614,54 @@ function formatDate(dateString) {
   background: var(--bg-hover, #e5e7eb);
 }
 
-.param-chip.priority-chip.low {
-  background: rgba(34, 197, 94, 0.15);
-  color: #16a34a;
-}
-
-.param-chip.priority-chip.medium {
-  background: rgba(234, 179, 8, 0.15);
-  color: #ca8a04;
-}
-
-.param-chip.priority-chip.high {
-  background: rgba(239, 68, 68, 0.15);
+.param-chip.priority-chip.priority-critical {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: #ef4444;
   color: #dc2626;
+}
+
+.param-chip.priority-chip.priority-desirable {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: #f59e0b;
+  color: #d97706;
+}
+
+.param-chip.priority-chip.priority-attention {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: #3b82f6;
+  color: #2563eb;
+}
+
+.param-chip.priority-chip.priority-optional {
+  background: rgba(156, 163, 175, 0.12);
+  border-color: #9ca3af;
+  color: #6b7280;
+}
+
+.priority-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.add-comment-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-muted, #9ca3af);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.add-comment-btn:hover {
+  color: var(--primary-color, #6366f1);
 }
 
 .param-dropdown {
