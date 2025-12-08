@@ -944,7 +944,8 @@ function openGoalDetail(goal) {
 }
 
 function editGoal(goal) {
-  router.push(`/app/goals/${goal.id}`)
+  const goalId = goal.backendId || goal.id
+  router.push(`/app/goals/${goalId}`)
 }
 
 function deleteGoalConfirm(goal) {
@@ -1086,8 +1087,9 @@ function formatDate(dateString) {
 
 <style scoped>
 .goals-container {
-  max-width: 1400px;
+  max-width: var(--content-width-wide);
   margin: 0 auto;
+  padding: var(--container-padding);
 }
 
 /* Icon Wrapper System */

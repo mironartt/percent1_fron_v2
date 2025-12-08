@@ -67,32 +67,54 @@
 
       <div class="tasks-list" v-if="getTasksForDay(selectedDay).length > 0">
         <div 
-          v-for="task in getTasksForDay(selectedDay)" 
-          :key="task.id"
-          class="task-card"
-          :class="[
-            { completed: task.completed },
-            'priority-' + (task.priority || 'none')
-          ]"
-          @click="openTaskActions(task)"
-          @touchstart="handleTouchStart(task, $event)"
-          @touchend="handleTouchEnd"
-          @touchmove="handleTouchMove"
+          v-for="group in getGroupedTasksForDay(selectedDay)" 
+          :key="group.goalId"
+          class="task-group"
         >
-          <button 
-            class="task-checkbox"
-            :class="{ completed: task.completed }"
-            @click.stop="toggleTaskComplete(task)"
-          >
-            <Check v-if="task.completed" :size="16" />
-          </button>
-          <div class="task-info">
-            <span class="task-title">{{ task.stepTitle }}</span>
-            <span class="task-goal">{{ task.goalTitle }}</span>
+          <div class="group-header" v-if="getGroupedTasksForDay(selectedDay).length > 1 || group.tasks.length > 1">
+            <span class="group-title">{{ group.goalTitle }}</span>
+            <div class="group-meta">
+              <span class="group-count">{{ group.completedCount }}/{{ group.tasks.length }}</span>
+              <span v-if="group.totalMinutes" class="group-time">
+                <Clock :size="12" />
+                {{ formatGroupTime(group.totalMinutes) }}
+              </span>
+            </div>
           </div>
-          <div class="task-meta">
-            <span v-if="task.timeEstimate" class="time-badge">{{ formatTimeShort(task.timeEstimate) }}</span>
-            <span v-if="task.priority" class="priority-dot" :class="'priority-' + task.priority"></span>
+          <div 
+            v-for="task in group.tasks" 
+            :key="task.id"
+            class="task-card"
+            :class="[
+              { completed: task.completed },
+              'priority-' + (task.priority || 'none')
+            ]"
+            @click="openTaskActions(task)"
+            @touchstart="handleTouchStart(task, $event)"
+            @touchend="handleTouchEnd"
+            @touchmove="handleTouchMove"
+          >
+            <div class="priority-stripe" :class="'priority-' + (task.priority || 'none')"></div>
+            <button 
+              class="task-checkbox"
+              :class="{ completed: task.completed }"
+              @click.stop="toggleTaskComplete(task)"
+            >
+              <Check v-if="task.completed" :size="16" />
+            </button>
+            <div class="task-info">
+              <span class="task-title">{{ task.stepTitle }}</span>
+              <span class="task-goal" v-if="getGroupedTasksForDay(selectedDay).length === 1 && group.tasks.length === 1">{{ task.goalTitle }}</span>
+            </div>
+            <div class="task-meta">
+              <span v-if="task.timeEstimate" class="time-badge">
+                <Clock :size="12" />
+                {{ formatTimeShort(task.timeEstimate) }}
+              </span>
+              <span v-if="task.priority" class="priority-icon-badge" :class="'priority-' + task.priority">
+                {{ getPriorityIcon(task.priority) }}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -108,51 +130,87 @@
       <span>Цели и шаги</span>
     </div>
 
-    <div class="filters-section">
-      <div class="chip-filters">
-        <button 
-          class="chip"
-          :class="{ active: filterSphere === '' }"
-          @click="filterSphere = ''"
-        >
-          Все сферы
-          <span class="chip-count">{{ goalsWithSteps.length }}</span>
+    <div class="filters-row compact">
+      <div class="sphere-dropdown" :class="{ open: showSphereDropdown }">
+        <button class="dropdown-trigger" @click="showSphereDropdown = !showSphereDropdown">
+          <Filter :size="14" />
+          <span>{{ selectedSphereName }}</span>
+          <span class="dropdown-count" v-if="filterSphere">1</span>
+          <ChevronDown :size="14" class="dropdown-arrow" />
         </button>
-        <button 
-          v-for="sphere in spheresWithGoals" 
-          :key="sphere.id"
-          class="chip"
-          :class="{ active: filterSphere === sphere.id }"
-          @click="filterSphere = sphere.id"
-        >
-          {{ sphere.icon }} {{ sphere.name }}
-          <span class="chip-count">{{ sphere.goalCount }}</span>
-        </button>
+        <div class="dropdown-menu" v-if="showSphereDropdown" @click.stop>
+          <button 
+            class="dropdown-item"
+            :class="{ active: filterSphere === '' }"
+            @click="filterSphere = ''; showSphereDropdown = false"
+          >
+            Все сферы
+            <span class="item-count">{{ goalsWithSteps.length }}</span>
+          </button>
+          <button 
+            v-for="sphere in spheresWithGoals" 
+            :key="sphere.id"
+            class="dropdown-item"
+            :class="{ active: filterSphere === sphere.id }"
+            @click="filterSphere = sphere.id; showSphereDropdown = false"
+          >
+            {{ sphere.icon }} {{ sphere.name }}
+            <span class="item-count">{{ sphere.goalCount }}</span>
+          </button>
+        </div>
       </div>
       
-      <div class="status-chips">
+      <div class="segmented-control">
         <button 
-          class="chip small"
+          class="segment"
           :class="{ active: filterStatus === '' }"
           @click="filterStatus = ''"
         >
           Все
         </button>
         <button 
-          class="chip small"
+          class="segment"
           :class="{ active: filterStatus === 'unscheduled' }"
           @click="filterStatus = 'unscheduled'"
         >
-          Незапланированные
+          Незапл.
         </button>
         <button 
-          class="chip small"
+          class="segment"
           :class="{ active: filterStatus === 'scheduled' }"
           @click="filterStatus = 'scheduled'"
         >
-          Запланированные
+          Запл.
         </button>
       </div>
+    </div>
+
+    <!-- Баннер: цели без шагов -->
+    <div class="needs-decomposition-banner" v-if="goalsWithoutSteps.length > 0">
+      <div class="banner-header">
+        <AlertCircle :size="20" class="banner-icon" />
+        <span class="banner-title">{{ goalsWithoutSteps.length }} {{ goalsWithoutSteps.length === 1 ? 'цель требует' : 'целей требуют' }} декомпозиции</span>
+      </div>
+      <p class="banner-text">Чтобы планировать, разбейте цели на конкретные шаги</p>
+      <div class="banner-goals">
+        <div 
+          v-for="goal in goalsWithoutSteps.slice(0, 3)" 
+          :key="goal.id" 
+          class="banner-goal-item"
+          @click="goToDecomposition(goal)"
+        >
+          <span class="goal-sphere-mini">{{ getSphereIcon(goal.sphereId) }}</span>
+          <span class="goal-title-mini">{{ goal.text || goal.title }}</span>
+          <ChevronRight :size="16" class="go-icon" />
+        </div>
+      </div>
+      <button 
+        v-if="goalsWithoutSteps.length > 3" 
+        class="btn btn-outline btn-small"
+        @click="goToGoalsBank"
+      >
+        Показать все ({{ goalsWithoutSteps.length }})
+      </button>
     </div>
 
     <div class="goals-list" v-if="filteredGoalsWithSteps.length > 0">
@@ -165,7 +223,7 @@
         <div class="goal-header" @click="toggleGoal(goal.id)">
           <div class="goal-main">
             <span class="goal-sphere-badge">{{ getSphereName(goal.sphereId) }}</span>
-            <h3 class="goal-title">{{ goal.title }}</h3>
+            <h3 class="goal-title">{{ goal.text || goal.title }}</h3>
           </div>
           <div class="goal-meta">
             <span class="steps-badge">
@@ -182,26 +240,33 @@
             class="step-card"
             :class="{ 
               scheduled: isStepScheduled(goal.id, step.id),
-              completed: step.completed
+              completed: step.completed,
+              ['priority-' + getScheduledPriority(goal.id, step.id)]: isStepScheduled(goal.id, step.id)
             }"
             @click="openStepActions(goal, step)"
           >
+            <button 
+              class="step-checkbox"
+              :class="{ completed: step.completed }"
+              @click.stop="quickToggleStepComplete(goal, step)"
+              :title="step.completed ? 'Отменить выполнение' : 'Выполнить'"
+            >
+              <Check v-if="step.completed" :size="14" />
+            </button>
             <div class="step-content">
-              <span class="step-title">{{ step.title }}</span>
+              <span class="step-title" :class="{ completed: step.completed }">{{ step.title }}</span>
               <div class="step-badges" v-if="isStepScheduled(goal.id, step.id)">
-                <span class="date-badge">{{ formatStepDate(goal.id, step.id) }}</span>
-                <span v-if="getScheduledPriority(goal.id, step.id)" class="priority-badge" :class="'priority-' + getScheduledPriority(goal.id, step.id)">
-                  {{ getPriorityShort(getScheduledPriority(goal.id, step.id)) }}
+                <span class="date-badge">
+                  <Calendar :size="11" />
+                  {{ formatStepDate(goal.id, step.id) }}
+                </span>
+                <span class="time-badge" :class="{ empty: !getScheduledTime(goal.id, step.id) }">
+                  <Clock :size="11" />
+                  {{ getScheduledTime(goal.id, step.id) ? formatTimeShort(getScheduledTime(goal.id, step.id)) : '—' }}
                 </span>
               </div>
             </div>
-            <button 
-              v-if="!isStepScheduled(goal.id, step.id)"
-              class="quick-add-btn"
-              @click.stop="quickScheduleStep(goal, step)"
-            >
-              <Plus :size="18" />
-            </button>
+            <div class="priority-stripe" :class="'priority-' + (getScheduledPriority(goal.id, step.id) || 'none')"></div>
           </div>
         </div>
       </div>
@@ -266,20 +331,152 @@
 
         <template v-else-if="bottomSheetMode === 'step'">
           <h3 class="sheet-title">{{ selectedStep?.title }}</h3>
-          <p class="sheet-subtitle">{{ selectedGoal?.title }}</p>
+          <p class="sheet-subtitle">{{ selectedGoal?.text || selectedGoal?.title }}</p>
           
-          <div class="sheet-actions">
-            <button 
-              v-for="day in weekDays" 
-              :key="day.date"
-              class="sheet-action day-option"
-              :class="{ today: isToday(day.date) }"
-              @click="scheduleStepToDay(selectedGoal, selectedStep, day.date)"
-            >
-              <span class="day-label">{{ day.label }}</span>
-              <span class="day-date">{{ day.dayNum }}</span>
-            </button>
-          </div>
+          <!-- Запланированный шаг: показываем inline-действия -->
+          <template v-if="isSelectedStepScheduled">
+            <div class="sheet-actions">
+              <button class="sheet-action" @click="toggleStepComplete">
+                <CheckCircle :size="20" />
+                <span>{{ selectedStep?.completed ? 'Отменить выполнение' : 'Выполнено' }}</span>
+              </button>
+            </div>
+            
+            <div class="inline-options-section">
+              <div class="option-label">
+                <Calendar :size="16" />
+                <span>День</span>
+              </div>
+              <div class="option-chips">
+                <button 
+                  v-for="day in weekDays" 
+                  :key="day.date"
+                  class="chip"
+                  :class="{ active: getScheduledStepDate === day.date }"
+                  @click="rescheduleStep(day.date)"
+                >
+                  {{ day.label }} {{ day.dayNum }}
+                </button>
+              </div>
+            </div>
+            
+            <div class="inline-options-section">
+              <div class="option-label">
+                <Flag :size="16" />
+                <span>Приоритет</span>
+              </div>
+              <div class="option-chips">
+                <button 
+                  v-for="priority in priorities" 
+                  :key="priority.value"
+                  class="chip"
+                  :class="{ 
+                    active: getScheduledStepPriority === priority.value,
+                    ['priority-' + priority.value]: true
+                  }"
+                  @click="updateStepPriority(priority.value)"
+                >
+                  {{ priority.label }}
+                </button>
+              </div>
+            </div>
+            
+            <div class="inline-options-section">
+              <div class="option-label">
+                <Clock :size="16" />
+                <span>Время</span>
+              </div>
+              <div class="option-chips">
+                <button 
+                  v-for="time in timeOptions" 
+                  :key="time.value"
+                  class="chip"
+                  :class="{ active: getScheduledStepTime === time.value }"
+                  @click="updateStepTime(time.value)"
+                >
+                  {{ time.label }}
+                </button>
+              </div>
+            </div>
+            
+            <div class="sheet-actions" style="margin-top: 0.5rem;">
+              <button class="sheet-action danger" @click="removeStepFromSchedule">
+                <Trash2 :size="20" />
+                <span>Убрать из плана</span>
+              </button>
+            </div>
+          </template>
+          
+          <!-- Незапланированный шаг: показываем все опции -->
+          <template v-else>
+            <div class="inline-options-section">
+              <div class="option-label">
+                <Calendar :size="16" />
+                <span>День</span>
+              </div>
+              <div class="option-chips">
+                <button 
+                  v-for="day in futureDays" 
+                  :key="day.date"
+                  class="chip"
+                  :class="{ active: newStepDay === day.date, today: isToday(day.date) }"
+                  @click="newStepDay = day.date"
+                >
+                  {{ day.shortName }} {{ day.dayNum }}
+                </button>
+              </div>
+            </div>
+            
+            <div class="inline-options-section">
+              <div class="option-label">
+                <Flag :size="16" />
+                <span>Приоритет</span>
+              </div>
+              <div class="option-chips">
+                <button 
+                  v-for="priority in priorities" 
+                  :key="priority.value"
+                  class="chip"
+                  :class="{ 
+                    active: newStepPriority === priority.value,
+                    ['priority-' + priority.value]: true
+                  }"
+                  @click="newStepPriority = priority.value"
+                >
+                  {{ priority.label }}
+                </button>
+              </div>
+            </div>
+            
+            <div class="inline-options-section">
+              <div class="option-label">
+                <Clock :size="16" />
+                <span>Время</span>
+              </div>
+              <div class="option-chips">
+                <button 
+                  v-for="time in timeOptions" 
+                  :key="time.value"
+                  class="chip"
+                  :class="{ active: newStepTime === time.value }"
+                  @click="newStepTime = time.value"
+                >
+                  {{ time.label }}
+                </button>
+              </div>
+            </div>
+            
+            <div class="sheet-actions" style="margin-top: 0.75rem;">
+              <button 
+                class="sheet-action primary"
+                :disabled="!newStepDay"
+                @click="scheduleNewStep"
+              >
+                <CheckCircle :size="20" />
+                <span>Запланировать</span>
+              </button>
+            </div>
+          </template>
         </template>
 
         <template v-else-if="bottomSheetMode === 'reschedule'">
@@ -387,7 +584,8 @@ import {
   Filter,
   Search,
   Flag,
-  Trash2
+  Trash2,
+  AlertCircle
 } from 'lucide-vue-next'
 
 const store = useAppStore()
@@ -398,6 +596,7 @@ const weekOffset = ref(0)
 const selectedDay = ref(null)
 const filterSphere = ref('')
 const filterStatus = ref('')
+const showSphereDropdown = ref(false)
 const addStepSearch = ref('')
 const goalsDisplayLimit = ref(10)
 const expandedGoals = ref({})
@@ -465,6 +664,15 @@ const weekDays = computed(() => {
 })
 
 const isCurrentWeek = computed(() => weekOffset.value === 0)
+
+const futureDays = computed(() => {
+  const todayStr = formatDateLocal(new Date())
+  return weekDays.value.filter(day => day.date >= todayStr)
+})
+
+const newStepDay = ref(null)
+const newStepPriority = ref('')
+const newStepTime = ref('')
 
 const weekRangeText = computed(() => {
   if (weekDays.value.length < 7) return ''
@@ -601,6 +809,43 @@ function getTotalTimeForDay(dateStr) {
   return minutes > 0 ? `${hours}ч ${minutes}м` : `${hours}ч`
 }
 
+function getGroupedTasksForDay(dateStr) {
+  const tasks = getTasksForDay(dateStr)
+  const groups = {}
+  const timeValues = { '30min': 30, '1h': 60, '2h': 120, '3h': 180, '4h': 240 }
+  
+  for (const task of tasks) {
+    const goalKey = task.goalId || task.goalTitle
+    if (!groups[goalKey]) {
+      groups[goalKey] = {
+        goalId: task.goalId,
+        goalTitle: task.goalTitle,
+        goalCategory: task.goalCategory,
+        tasks: [],
+        totalMinutes: 0,
+        completedCount: 0
+      }
+    }
+    groups[goalKey].tasks.push(task)
+    groups[goalKey].totalMinutes += timeValues[task.timeEstimate] || 0
+    if (task.completed) groups[goalKey].completedCount++
+  }
+  
+  return Object.values(groups).sort((a, b) => {
+    const maxPriorityA = Math.min(...a.tasks.map(t => priorityOrder[t.priority] ?? 4))
+    const maxPriorityB = Math.min(...b.tasks.map(t => priorityOrder[t.priority] ?? 4))
+    return maxPriorityA - maxPriorityB
+  })
+}
+
+function formatGroupTime(minutes) {
+  if (minutes === 0) return ''
+  if (minutes < 60) return `${minutes}м`
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  return mins > 0 ? `${hours}ч ${mins}м` : `${hours}ч`
+}
+
 const weeklyTotalTasks = computed(() => {
   let total = 0
   for (const day of weekDays.value) {
@@ -639,15 +884,28 @@ function formatTimeShort(time) {
   return labels[time] || time
 }
 
-const goals = computed(() => store.goalsBank?.rawIdeas || [])
+const rawIdeas = computed(() => store.goalsBank?.rawIdeas || [])
+const workingGoals = computed(() => store.goals || [])
 const lifeSpheres = computed(() => store.lifeSpheres)
 
+function isGoalTransferred(goalId) {
+  return workingGoals.value.some(g => g.sourceId === goalId && g.source === 'goals-bank' && g.status !== 'completed')
+}
+
 const goalsWithSteps = computed(() => {
-  const activeStatuses = ['in_progress', 'active', 'in-progress']
-  return goals.value.filter(g => 
-    activeStatuses.includes(g.status) && 
+  return rawIdeas.value.filter(g => 
+    g.status === 'validated' && 
+    isGoalTransferred(g.id) &&
     g.steps && 
     g.steps.length > 0
+  )
+})
+
+const goalsWithoutSteps = computed(() => {
+  return rawIdeas.value.filter(g => 
+    g.status === 'validated' && 
+    isGoalTransferred(g.id) &&
+    (!g.steps || g.steps.length === 0)
   )
 })
 
@@ -667,6 +925,12 @@ const spheresWithGoals = computed(() => {
       ...s,
       goalCount: sphereCounts[s.id]
     }))
+})
+
+const selectedSphereName = computed(() => {
+  if (!filterSphere.value) return 'Все сферы'
+  const sphere = spheresWithGoals.value.find(s => s.id === filterSphere.value)
+  return sphere ? `${sphere.icon} ${sphere.name}` : 'Все сферы'
 })
 
 const filteredGoalsWithSteps = computed(() => {
@@ -751,7 +1015,8 @@ function isStepScheduled(goalId, stepId) {
     return true
   }
   
-  const goal = goals.value.find(g => g.id === goalId)
+  // Check in both rawIdeas and workingGoals
+  const goal = rawIdeas.value.find(g => g.id === goalId) || workingGoals.value.find(g => g.id === goalId)
   const step = goal?.steps?.find(s => s.id === stepId)
   return !!step?.date
 }
@@ -766,7 +1031,7 @@ function getScheduledDate(goalId, stepId) {
   const task = plan?.scheduledTasks?.find(t => t.goalId === goalId && t.stepId === stepId)
   if (task) return task.scheduledDate
   
-  const goal = goals.value.find(g => g.id === goalId)
+  const goal = rawIdeas.value.find(g => g.id === goalId) || workingGoals.value.find(g => g.id === goalId)
   const step = goal?.steps?.find(s => s.id === stepId)
   return step?.date || ''
 }
@@ -780,6 +1045,21 @@ function getScheduledPriority(goalId, stepId) {
   const plan = store.weeklyPlans.find(p => p.weekStart === weekDays.value[0]?.date)
   const task = plan?.scheduledTasks?.find(t => t.goalId === goalId && t.stepId === stepId)
   return task?.priority || ''
+}
+
+function getScheduledTimeEstimate(goalId, stepId) {
+  for (const day of weeklyStepsData.value) {
+    const step = day.steps_data?.find(s => s.goal_id === goalId && s.step_id === stepId)
+    if (step) return step.step_time_duration || step.time_estimate || ''
+  }
+  
+  const plan = store.weeklyPlans.find(p => p.weekStart === weekDays.value[0]?.date)
+  const task = plan?.scheduledTasks?.find(t => t.goalId === goalId && t.stepId === stepId)
+  if (task) return task.timeEstimate || task.step_time_duration || ''
+  
+  const goal = rawIdeas.value.find(g => g.id === goalId) || workingGoals.value.find(g => g.id === goalId)
+  const localStep = goal?.steps?.find(s => s.id === stepId)
+  return localStep?.timeEstimate || localStep?.time_estimate || ''
 }
 
 function formatStepDate(goalId, stepId) {
@@ -798,6 +1078,23 @@ function getPriorityShort(priority) {
   return labels[priority] || ''
 }
 
+function getPriorityIcon(priority) {
+  const icons = { 'critical': '🔥', 'desirable': '⚡', 'attention': '👁', 'optional': '○' }
+  return icons[priority] || ''
+}
+
+function getScheduledTime(goalId, stepId) {
+  const task = weeklyStepsData.value.find(t => 
+    (t.goalId === goalId || t.goal_id === goalId) && 
+    (t.stepId === stepId || t.step_id === stepId)
+  )
+  if (task) return task.timeEstimate || task.time_estimate || ''
+  
+  const localTask = store.weeklyPlans.flatMap(p => p.scheduledTasks || [])
+    .find(t => (t.goalId === goalId) && (t.stepId === stepId))
+  return localTask?.timeEstimate || ''
+}
+
 function toggleGoal(goalId) {
   expandedGoals.value[goalId] = !expandedGoals.value[goalId]
 }
@@ -809,6 +1106,17 @@ function clearFilters() {
 
 function goToGoalsBank() {
   router.push('/app/goals-bank')
+}
+
+function goToDecomposition(goal) {
+  // In dev mode use local-{id}, in prod use backendId
+  const goalId = goal.backendId || `local-${goal.id}`
+  router.push(`/app/goals/${goalId}`)
+}
+
+function getSphereIcon(sphereId) {
+  const sphere = lifeSpheres.value.find(s => s.id === sphereId)
+  return sphere?.icon || '🎯'
 }
 
 function handleTouchStart(task, event) {
@@ -840,6 +1148,9 @@ function openTaskActions(task) {
 function openStepActions(goal, step) {
   selectedGoal.value = goal
   selectedStep.value = step
+  newStepDay.value = null
+  newStepPriority.value = ''
+  newStepTime.value = ''
   bottomSheetMode.value = 'step'
   showBottomSheet.value = true
 }
@@ -854,6 +1165,247 @@ function openPrioritySheet() {
 
 function openTimeSheet() {
   bottomSheetMode.value = 'time'
+}
+
+// Computed свойства для работы с шагами из блока "Цели и шаги"
+const isSelectedStepScheduled = computed(() => {
+  if (!selectedGoal.value || !selectedStep.value) return false
+  return isStepScheduled(selectedGoal.value.id, selectedStep.value.id)
+})
+
+const getScheduledStepDate = computed(() => {
+  if (!selectedGoal.value || !selectedStep.value) return null
+  return getScheduledDate(selectedGoal.value.id, selectedStep.value.id) || null
+})
+
+const getScheduledStepPriority = computed(() => {
+  if (!selectedGoal.value || !selectedStep.value) return null
+  return getScheduledPriority(selectedGoal.value.id, selectedStep.value.id) || null
+})
+
+const getScheduledStepTime = computed(() => {
+  if (!selectedGoal.value || !selectedStep.value) return null
+  return getScheduledTimeEstimate(selectedGoal.value.id, selectedStep.value.id) || null
+})
+
+function formatScheduledDateLabel(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const today = new Date()
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  
+  if (date.toDateString() === today.toDateString()) return 'Сегодня'
+  if (date.toDateString() === tomorrow.toDateString()) return 'Завтра'
+  
+  return date.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' })
+}
+
+function getPriorityLabel(priority) {
+  const labels = {
+    'critical': 'Критично',
+    'desirable': 'Важно',
+    'attention': 'В поле внимания',
+    'optional': 'По возможности'
+  }
+  return labels[priority] || priority || ''
+}
+
+function formatTimeLabel(time) {
+  const labels = {
+    '30min': '30 мин',
+    '1h': '1 час',
+    '2h': '2 часа',
+    '3h': '3 часа',
+    '4h': '4 часа'
+  }
+  return labels[time] || time || ''
+}
+
+
+async function toggleStepComplete() {
+  if (!selectedGoal.value || !selectedStep.value) return
+  
+  const newCompleted = !selectedStep.value.completed
+  selectedStep.value.completed = newCompleted
+  
+  if (newCompleted) {
+    xpStore.addXP(10, 'step', `Выполнен шаг: ${selectedStep.value.title}`)
+  }
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: selectedGoal.value.backendId || selectedGoal.value.id,
+        step_id: selectedStep.value.backendId || selectedStep.value.id,
+        is_complete: newCompleted
+      }]
+    })
+    await loadWeeklySteps()
+    closeBottomSheet()
+  } catch (error) {
+    console.error('[Planning] Error toggling step complete:', error)
+    selectedStep.value.completed = !newCompleted
+  }
+}
+
+async function quickToggleStepComplete(goal, step) {
+  const newCompleted = !step.completed
+  step.completed = newCompleted
+  
+  if (newCompleted) {
+    xpStore.addXP(10, 'step', `Выполнен шаг: ${step.title}`)
+  }
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: goal.backendId || goal.id,
+        step_id: step.backendId || step.id,
+        is_complete: newCompleted
+      }]
+    })
+    await loadWeeklySteps()
+  } catch (error) {
+    console.error('[Planning] Error toggling step complete:', error)
+    step.completed = !newCompleted
+  }
+}
+
+async function rescheduleStep(newDate) {
+  if (!selectedGoal.value || !selectedStep.value) return
+  
+  // Сначала обновляем локально
+  saveStepToLocalPlan(selectedGoal.value, selectedStep.value, newDate)
+  closeBottomSheet()
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: selectedGoal.value.backendId || selectedGoal.value.id,
+        step_id: selectedStep.value.backendId || selectedStep.value.id,
+        dt: newDate
+      }]
+    })
+    await loadWeeklySteps()
+  } catch (error) {
+    console.error('[Planning] Error rescheduling step:', error)
+  }
+}
+
+async function updateStepPriority(priority) {
+  if (!selectedGoal.value || !selectedStep.value) return
+  
+  // Сначала обновляем локально
+  updateStepInLocalPlan(selectedGoal.value, selectedStep.value, { priority })
+  closeBottomSheet()
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: selectedGoal.value.backendId || selectedGoal.value.id,
+        step_id: selectedStep.value.backendId || selectedStep.value.id,
+        priority: priorityFrontendToBackend[priority] || priority || null
+      }]
+    })
+    await loadWeeklySteps()
+  } catch (error) {
+    console.error('[Planning] Error updating step priority:', error)
+  }
+}
+
+async function updateStepTime(time) {
+  if (!selectedGoal.value || !selectedStep.value) return
+  
+  // Сначала обновляем локально
+  updateStepInLocalPlan(selectedGoal.value, selectedStep.value, { timeEstimate: time })
+  closeBottomSheet()
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: selectedGoal.value.backendId || selectedGoal.value.id,
+        step_id: selectedStep.value.backendId || selectedStep.value.id,
+        time_estimate: time || null
+      }]
+    })
+    await loadWeeklySteps()
+  } catch (error) {
+    console.error('[Planning] Error updating step time:', error)
+  }
+}
+
+async function removeStepFromSchedule() {
+  if (!selectedGoal.value || !selectedStep.value) return
+  
+  // Сначала удаляем локально
+  removeStepFromLocalPlan(selectedGoal.value, selectedStep.value)
+  closeBottomSheet()
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: selectedGoal.value.backendId || selectedGoal.value.id,
+        step_id: selectedStep.value.backendId || selectedStep.value.id,
+        dt: null
+      }]
+    })
+    await loadWeeklySteps()
+  } catch (error) {
+    console.error('[Planning] Error removing step from schedule:', error)
+  }
+}
+
+function removeStepFromLocalPlan(goal, step) {
+  const weekStart = weekDays.value[0]?.date
+  if (!weekStart) return
+  
+  const plan = store.weeklyPlans.find(p => p.weekStart === weekStart)
+  if (plan) {
+    // Удалить по обоим вариантам ID
+    plan.scheduledTasks = (plan.scheduledTasks || []).filter(
+      t => !((t.goalId === goal.id || t.goalId === goal.backendId) && 
+             (t.stepId === step.id || t.stepId === step.backendId))
+    )
+  }
+  
+  // Убрать дату из шага (в обеих коллекциях)
+  updateStepDateInCollections(goal.id, step.id, null)
+  
+  store.saveToLocalStorage()
+}
+
+function updateStepInLocalPlan(goal, step, updates) {
+  const weekStart = weekDays.value[0]?.date
+  if (!weekStart) return
+  
+  const goalId = goal.backendId || goal.id
+  const stepId = step.backendId || step.id
+  
+  let plan = store.weeklyPlans.find(p => p.weekStart === weekStart)
+  if (!plan) {
+    plan = { weekStart, scheduledTasks: [] }
+    store.weeklyPlans.push(plan)
+  }
+  
+  const task = plan.scheduledTasks.find(
+    t => (t.goalId === goalId || t.goalId === goal.id) && 
+         (t.stepId === stepId || t.stepId === step.id)
+  )
+  
+  if (task) {
+    if (updates.priority !== undefined) task.priority = updates.priority
+    if (updates.timeEstimate !== undefined) task.timeEstimate = updates.timeEstimate
+    if (updates.completed !== undefined) task.completed = updates.completed
+  }
+  
+  store.saveToLocalStorage()
 }
 
 function openAddStepModal() {
@@ -976,6 +1528,12 @@ async function removeTaskFromSchedule(task) {
 async function scheduleStepToDay(goal, step, date) {
   if (!goal || !step || !date) return
   
+  const { DEBUG_MODE } = await import('@/config/settings.js')
+  
+  // Сначала обновляем локально для мгновенного отклика
+  saveStepToLocalPlan(goal, step, date)
+  closeBottomSheet()
+  
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
     await updateGoalSteps({
@@ -986,9 +1544,106 @@ async function scheduleStepToDay(goal, step, date) {
       }]
     })
     await loadWeeklySteps()
-    closeBottomSheet()
   } catch (error) {
     console.error('[Planning] Error scheduling step:', error)
+    // В DEV_MODE данные уже сохранены локально, всё ок
+    if (DEBUG_MODE) {
+      console.log('[Planning] DEV_MODE: Step saved locally')
+    }
+  }
+}
+
+async function scheduleNewStep() {
+  if (!selectedGoal.value || !selectedStep.value || !newStepDay.value) return
+  
+  const goal = selectedGoal.value
+  const step = selectedStep.value
+  const date = newStepDay.value
+  
+  // Сохраняем с приоритетом и временем
+  saveStepToLocalPlan(goal, step, date)
+  
+  // Обновляем приоритет и время если заданы
+  if (newStepPriority.value || newStepTime.value) {
+    updateStepInLocalPlan(goal, step, { 
+      priority: newStepPriority.value, 
+      timeEstimate: newStepTime.value 
+    })
+  }
+  
+  closeBottomSheet()
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: goal.backendId || goal.id,
+        step_id: step.backendId || step.id,
+        dt: date,
+        priority: newStepPriority.value || undefined,
+        time_estimate: newStepTime.value || undefined
+      }]
+    })
+    await loadWeeklySteps()
+  } catch (error) {
+    console.error('[Planning] Error scheduling new step:', error)
+  }
+}
+
+function saveStepToLocalPlan(goal, step, date) {
+  const weekStart = weekDays.value[0]?.date
+  if (!weekStart) return
+  
+  // Использовать универсальные ключи
+  const goalKey = goal.backendId || goal.id
+  const stepKey = step.backendId || step.id
+  
+  // Найти или создать план на неделю
+  let plan = store.weeklyPlans.find(p => p.weekStart === weekStart)
+  if (!plan) {
+    plan = { weekStart, scheduledTasks: [] }
+    store.weeklyPlans.push(plan)
+  }
+  
+  // Удалить старую запись этого шага если есть (проверяем оба варианта ID)
+  plan.scheduledTasks = (plan.scheduledTasks || []).filter(
+    t => !((t.goalId === goal.id || t.goalId === goal.backendId) && 
+           (t.stepId === step.id || t.stepId === step.backendId))
+  )
+  
+  // Добавить новую задачу
+  plan.scheduledTasks.push({
+    id: `local-${goalKey}-${stepKey}`,
+    goalId: goalKey,
+    stepId: stepKey,
+    stepTitle: step.title,
+    goalTitle: goal.text || goal.title,
+    scheduledDate: date,
+    timeEstimate: step.timeEstimate || '',
+    priority: step.priority || '',
+    completed: step.completed || false
+  })
+  
+  // Обновить дату в шаге для isStepScheduled (в обеих коллекциях)
+  updateStepDateInCollections(goal.id, step.id, date)
+  
+  // Сохранить в localStorage
+  store.saveToLocalStorage()
+}
+
+function updateStepDateInCollections(goalId, stepId, date) {
+  // Обновить в rawIdeas
+  const rawGoal = rawIdeas.value.find(g => g.id === goalId || g.backendId === goalId)
+  if (rawGoal) {
+    const rawStep = rawGoal.steps?.find(s => s.id === stepId || s.backendId === stepId)
+    if (rawStep) rawStep.date = date
+  }
+  
+  // Обновить в workingGoals
+  const workGoal = workingGoals.value.find(g => g.id === goalId || g.backendId === goalId)
+  if (workGoal) {
+    const workStep = workGoal.steps?.find(s => s.id === stepId || s.backendId === stepId)
+    if (workStep) workStep.date = date
   }
 }
 
@@ -1030,10 +1685,17 @@ watch(weekOffset, () => {
   initSelectedDay()
 })
 
+function closeSphereDropdown(e) {
+  if (!e.target.closest('.sphere-dropdown')) {
+    showSphereDropdown.value = false
+  }
+}
+
 onMounted(async () => {
   initSelectedDay()
   await loadWeeklySteps()
   setupInfiniteScroll()
+  document.addEventListener('click', closeSphereDropdown)
   
   if (filteredGoalsWithSteps.value.length > 0) {
     expandedGoals.value[filteredGoalsWithSteps.value[0].id] = true
@@ -1047,19 +1709,21 @@ onUnmounted(() => {
   if (touchTimer) {
     clearTimeout(touchTimer)
   }
+  document.removeEventListener('click', closeSphereDropdown)
 })
 </script>
 
 <style scoped>
 .planning-container {
-  max-width: 800px;
+  max-width: var(--content-width-narrow);
   margin: 0 auto;
-  padding: 1rem;
+  padding: var(--container-padding);
   padding-bottom: 100px;
 }
 
 .planning-header {
   margin-bottom: 1rem;
+  text-align: center;
 }
 
 .page-title {
@@ -1122,6 +1786,13 @@ onUnmounted(() => {
   margin-bottom: 1rem;
   overflow-x: auto;
   padding-bottom: 0.25rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.week-stats::-webkit-scrollbar {
+  display: none;
 }
 
 .stat-chip {
@@ -1151,6 +1822,13 @@ onUnmounted(() => {
   margin-bottom: 1rem;
   overflow-x: auto;
   padding-bottom: 0.25rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.week-bar::-webkit-scrollbar {
+  display: none;
 }
 
 .day-tab {
@@ -1251,7 +1929,53 @@ onUnmounted(() => {
 .tasks-list {
   display: flex;
   flex-direction: column;
+  gap: 0.75rem;
+}
+
+.task-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  background: var(--bg-secondary, #f8fafc);
+  border-radius: 8px;
+  margin-bottom: 0.25rem;
+}
+
+.group-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
+}
+
+.group-meta {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
+}
+
+.group-count {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.group-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
 }
 
 .task-card {
@@ -1259,12 +1983,28 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem;
+  padding-left: 0;
   background: var(--bg);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
-  border-left: 3px solid transparent;
+  position: relative;
+  overflow: hidden;
 }
+
+.priority-stripe {
+  width: 4px;
+  min-height: 100%;
+  align-self: stretch;
+  border-radius: 4px 0 0 4px;
+  flex-shrink: 0;
+}
+
+.priority-stripe.priority-critical { background: var(--danger, #ef4444); }
+.priority-stripe.priority-desirable { background: var(--warning, #f59e0b); }
+.priority-stripe.priority-attention { background: var(--info, #3b82f6); }
+.priority-stripe.priority-optional { background: var(--text-muted, #9ca3af); }
+.priority-stripe.priority-none { background: #c7d2fe; }
 
 .task-card:hover {
   background: var(--hover-bg, #f3f4f6);
@@ -1272,26 +2012,6 @@ onUnmounted(() => {
 
 .task-card.completed {
   opacity: 0.6;
-}
-
-.task-card.priority-critical {
-  border-left-color: var(--danger, #ef4444);
-}
-
-.task-card.priority-desirable {
-  border-left-color: var(--warning, #f59e0b);
-}
-
-.task-card.priority-attention {
-  border-left-color: var(--info, #3b82f6);
-}
-
-.task-card.priority-optional {
-  border-left-color: var(--text-muted, #9ca3af);
-}
-
-.task-card.priority-none {
-  border-left-color: var(--border-color, #e5e7eb);
 }
 
 .task-checkbox {
@@ -1353,24 +2073,51 @@ onUnmounted(() => {
 }
 
 .time-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   font-size: 0.75rem;
   padding: 0.125rem 0.5rem;
-  background: var(--bg);
+  background: var(--bg-secondary, #f3f4f6);
   border-radius: 10px;
   color: var(--text-secondary);
 }
 
-.priority-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+.time-badge svg {
+  opacity: 0.7;
 }
 
-.priority-dot.priority-critical { background: var(--danger, #ef4444); }
-.priority-dot.priority-desirable { background: var(--warning, #f59e0b); }
-.priority-dot.priority-attention { background: var(--info, #3b82f6); }
-.priority-dot.priority-optional { background: var(--text-muted, #9ca3af); }
-.priority-dot.priority-none { background: var(--border-color, #e5e7eb); }
+.priority-icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  min-width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: transparent;
+}
+
+.priority-icon-badge.priority-critical { 
+  background: rgba(239, 68, 68, 0.15);
+}
+.priority-icon-badge.priority-desirable { 
+  background: rgba(245, 158, 11, 0.15);
+}
+.priority-icon-badge.priority-attention { 
+  background: rgba(59, 130, 246, 0.15);
+}
+.priority-icon-badge.priority-optional { 
+  background: rgba(156, 163, 175, 0.15);
+}
+.priority-icon-badge.priority-none {
+  background: rgba(199, 210, 254, 0.3);
+  color: var(--text-muted, #9ca3af);
+}
+
+.time-badge.empty {
+  opacity: 0.5;
+}
 
 .empty-day {
   text-align: center;
@@ -1414,22 +2161,141 @@ onUnmounted(() => {
   color: var(--text-secondary);
 }
 
-.filters-section {
+.filters-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.5rem 0;
   margin-bottom: 1rem;
 }
 
-.chip-filters {
-  display: flex;
-  gap: 0.5rem;
-  overflow-x: auto;
-  padding-bottom: 0.5rem;
-  margin-bottom: 0.5rem;
+.filters-row.compact {
+  flex-wrap: nowrap;
+  gap: 0.75rem;
 }
 
-.status-chips {
+.sphere-dropdown {
+  position: relative;
+}
+
+.dropdown-trigger {
   display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg);
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.dropdown-trigger:hover {
+  border-color: var(--primary, #6366f1);
+}
+
+.sphere-dropdown.open .dropdown-trigger {
+  border-color: var(--primary, #6366f1);
+  background: var(--primary-light, rgba(99, 102, 241, 0.1));
+}
+
+.dropdown-arrow {
+  transition: transform 0.2s;
+}
+
+.sphere-dropdown.open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.dropdown-count {
+  font-size: 0.6875rem;
+  padding: 0.125rem 0.375rem;
+  background: var(--primary, #6366f1);
+  color: white;
+  border-radius: 10px;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 180px;
+  background: var(--card-bg, white);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
-  overflow-x: auto;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background: var(--hover-bg, #f3f4f6);
+}
+
+.dropdown-item.active {
+  background: var(--primary-light, rgba(99, 102, 241, 0.1));
+  color: var(--primary, #6366f1);
+}
+
+.item-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.dropdown-item.active .item-count {
+  color: var(--primary, #6366f1);
+}
+
+.segmented-control {
+  display: flex;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.segment {
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-right: 1px solid var(--border-color, #e5e7eb);
+}
+
+.segment:last-child {
+  border-right: none;
+}
+
+.segment:hover {
+  background: var(--hover-bg, #f3f4f6);
+}
+
+.segment.active {
+  background: var(--primary, #6366f1);
+  color: white;
 }
 
 .chip {
@@ -1560,13 +2426,55 @@ onUnmounted(() => {
 .step-card {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.75rem;
+  padding: 0.5rem 0.625rem;
   background: var(--bg);
-  border-radius: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color, #e5e7eb);
   cursor: pointer;
   transition: all 0.2s;
+  overflow: hidden;
+  min-height: 44px;
+  position: relative;
+}
+
+.step-checkbox {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color, #d1d5db);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: white;
+}
+
+.step-checkbox:hover {
+  border-color: var(--primary, #6366f1);
+  background: var(--primary-light, rgba(99, 102, 241, 0.1));
+}
+
+.step-checkbox.completed {
+  background: var(--success, #10b981);
+  border-color: var(--success, #10b981);
+}
+
+.step-title.completed {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.step-card .priority-stripe {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 0 10px 10px 0;
 }
 
 .step-card:hover {
@@ -1575,6 +2483,18 @@ onUnmounted(() => {
 
 .step-card.scheduled {
   background: var(--primary-light, rgba(99, 102, 241, 0.1));
+}
+
+.step-card.scheduled.priority-critical {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.step-card.scheduled.priority-desirable {
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.step-card.scheduled.priority-attention {
+  background: rgba(59, 130, 246, 0.08);
 }
 
 .step-card.completed {
@@ -1597,16 +2517,25 @@ onUnmounted(() => {
 
 .step-badges {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.375rem;
   margin-top: 0.25rem;
+  align-items: center;
 }
 
 .date-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   font-size: 0.6875rem;
   padding: 0.125rem 0.375rem;
   background: var(--primary, #6366f1);
   color: white;
   border-radius: 6px;
+}
+
+.date-badge svg {
+  opacity: 0.8;
 }
 
 .priority-badge {
@@ -1621,26 +2550,6 @@ onUnmounted(() => {
 .priority-badge.priority-optional { background: var(--text-muted, #9ca3af); color: white; }
 .priority-badge.priority-none { background: var(--border-color, #e5e7eb); color: var(--text-primary, #1f2937); }
 
-.quick-add-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px dashed var(--border-color, #e5e7eb);
-  background: transparent;
-  color: var(--text-muted, #9ca3af);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.quick-add-btn:hover {
-  border-color: var(--primary, #6366f1);
-  color: var(--primary, #6366f1);
-  background: var(--primary-light, rgba(99, 102, 241, 0.1));
-}
 
 .infinite-scroll-trigger {
   display: flex;
@@ -1659,6 +2568,84 @@ onUnmounted(() => {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+.needs-decomposition-banner {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1px solid #f59e0b;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.banner-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.banner-icon {
+  color: #d97706;
+  flex-shrink: 0;
+}
+
+.banner-title {
+  font-weight: 600;
+  color: #92400e;
+  font-size: 0.9375rem;
+}
+
+.banner-text {
+  color: #a16207;
+  font-size: 0.8125rem;
+  margin: 0 0 0.75rem;
+}
+
+.banner-goals {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.banner-goal-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.banner-goal-item:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.goal-sphere-mini {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.goal-title-mini {
+  flex: 1;
+  font-size: 0.875rem;
+  color: #78350f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.go-icon {
+  color: #d97706;
+  flex-shrink: 0;
+}
+
+.btn-small {
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  margin-top: 0.75rem;
 }
 
 .empty-state {
@@ -1769,10 +2756,130 @@ onUnmounted(() => {
   margin: 0 0 1rem;
 }
 
+.sheet-hint {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.75rem;
+}
+
+.step-info-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.info-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  background: var(--bg, #f3f4f6);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.info-badge svg {
+  opacity: 0.7;
+}
+
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0.5rem;
+}
+
+.days-grid .sheet-action.day-option {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  min-height: 60px;
+}
+
+.days-grid .day-label {
+  font-size: 0.875rem;
+}
+
+.days-grid .day-date {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 .sheet-actions {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+}
+
+.inline-options-section {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+.inline-options-section:last-of-type {
+  border-bottom: none;
+}
+
+.option-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.option-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.chip {
+  padding: 0.375rem 0.75rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg);
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.chip:hover {
+  border-color: var(--primary, #6366f1);
+  background: var(--primary-light, rgba(99, 102, 241, 0.1));
+}
+
+.chip.active {
+  background: var(--primary, #6366f1);
+  border-color: var(--primary, #6366f1);
+  color: white;
+}
+
+.chip.priority-critical.active {
+  background: var(--danger, #ef4444);
+  border-color: var(--danger, #ef4444);
+}
+
+.chip.priority-desirable.active {
+  background: var(--warning, #f59e0b);
+  border-color: var(--warning, #f59e0b);
+}
+
+.chip.priority-attention.active {
+  background: var(--info, #3b82f6);
+  border-color: var(--info, #3b82f6);
+}
+
+.chip.priority-optional.active {
+  background: var(--text-muted, #9ca3af);
+  border-color: var(--text-muted, #9ca3af);
 }
 
 .sheet-action {
@@ -1797,6 +2904,26 @@ onUnmounted(() => {
 
 .sheet-action.danger {
   color: var(--danger);
+}
+
+.sheet-action.primary {
+  background: var(--primary, #6366f1);
+  color: white;
+  font-weight: 500;
+}
+
+.sheet-action.primary:hover {
+  background: var(--primary-dark, #4f46e5);
+}
+
+.sheet-action.primary:disabled {
+  background: var(--border-color, #e5e7eb);
+  color: var(--text-muted, #9ca3af);
+  cursor: not-allowed;
+}
+
+.chip.today {
+  border-color: var(--primary, #6366f1);
 }
 
 .sheet-action.active {
@@ -1881,6 +3008,48 @@ onUnmounted(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+@media (max-width: 767px) {
+  .sheet-action {
+    min-height: 52px;
+    padding: 0.875rem 1rem;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .sheet-action:active {
+    background: var(--hover-bg, #f3f4f6);
+    transform: scale(0.98);
+  }
+  
+  .days-grid {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.35rem;
+  }
+  
+  .days-grid .sheet-action.day-option {
+    padding: 0.5rem 0.25rem;
+    min-height: 50px;
+  }
+  
+  .days-grid .day-label {
+    font-size: 0.7rem;
+  }
+  
+  .days-grid .day-date {
+    font-size: 0.95rem;
+  }
+  
+  .step-card {
+    min-height: 48px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .step-card:active {
+    transform: scale(0.98);
+    background: var(--hover-bg, #f3f4f6);
+  }
+  
 }
 
 @media (min-width: 768px) {

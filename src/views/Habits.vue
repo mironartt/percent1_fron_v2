@@ -3306,9 +3306,9 @@ onMounted(async () => {
 
 <style scoped>
 .habits-page {
-  max-width: 900px;
+  max-width: var(--content-width-narrow);
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: var(--container-padding);
 }
 
 .page-header {

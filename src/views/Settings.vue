@@ -315,12 +315,14 @@ function goToTelegramSettings() {
 
 <style scoped>
 .settings-container {
-  max-width: 1000px;
+  max-width: var(--content-width-narrow);
   margin: 0 auto;
+  padding: var(--container-padding);
 }
 
 .page-header {
   margin-bottom: 2rem;
+  text-align: center;
 }
 
 .page-header h1 {

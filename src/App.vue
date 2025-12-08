@@ -51,11 +51,15 @@ const isAuthPage = computed(() => {
   return route.name === 'register' || route.name === 'login'
 })
 
+const isLandingPage = computed(() => {
+  return route.name === 'landing' || route.path === '/'
+})
+
 const isOnboarding = computed(() => {
   return store.shouldShowOnboarding && route.path === '/app'
 })
 
-const hasSidebar = computed(() => !isAuthPage.value && !isOnboarding.value)
+const hasSidebar = computed(() => !isAuthPage.value && !isOnboarding.value && !isLandingPage.value)
 
 const isAppPage = computed(() => {
   return route.path === '/app' || route.path.startsWith('/app/')

@@ -125,7 +125,7 @@
                   v-for="goal in topGoals" 
                   :key="goal.id"
                   class="goal-item"
-                  @click="goToGoal(goal.id)"
+                  @click="goToGoal(goal)"
                 >
                   <div class="goal-info">
                     <span class="goal-sphere-badge" v-if="goal.sphereIcon">{{ goal.sphereIcon }}</span>
@@ -336,7 +336,8 @@ const topGoals = computed(() => {
   return allActiveGoals.value.slice(0, 3)
 })
 
-function goToGoal(goalId) {
+function goToGoal(goal) {
+  const goalId = goal.backendId || goal.id
   router.push(`/app/goals/${goalId}`)
 }
 

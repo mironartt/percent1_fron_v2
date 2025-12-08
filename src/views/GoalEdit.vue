@@ -39,9 +39,6 @@
               {{ getSphereNameOnly(goalForm.sphereId) }}
             </span>
           </div>
-          <button class="btn-settings" @click="openEditModal" title="Настройки цели">
-            <Settings :size="20" />
-          </button>
         </div>
         <div class="header-progress">
           <div class="progress-bar-wrapper">
@@ -52,6 +49,30 @@
           </div>
         </div>
       </header>
+
+      <!-- Collapsible Reflection Block -->
+      <div class="goal-reflection-block" v-if="hasReflection">
+        <button 
+          class="reflection-toggle-btn"
+          @click="showGoalReflection = !showGoalReflection"
+        >
+          <MessageSquare :size="16" />
+          <span>Рефлексия</span>
+          <ChevronDown :size="16" class="toggle-chevron" :class="{ rotated: showGoalReflection }" />
+        </button>
+        <transition name="slide">
+          <div v-show="showGoalReflection" class="reflection-content">
+            <div v-if="goalForm.whyImportant || goalForm.description" class="reflection-item">
+              <label>Почему это важно?</label>
+              <p>{{ goalForm.whyImportant || goalForm.description }}</p>
+            </div>
+            <div v-if="goalForm.why2" class="reflection-item">
+              <label>Как это изменит жизнь?</label>
+              <p>{{ goalForm.why2 }}</p>
+            </div>
+          </div>
+        </transition>
+      </div>
 
       <div class="main-content">
         <div class="card card-no-header">
@@ -106,7 +127,43 @@
             Перетаскивание шагов отключено при активных фильтрах
           </div>
 
+          <!-- Empty state когда нет шагов -->
+          <div v-if="totalStepsCount === 0 && newSteps.length === 0" class="steps-empty-state">
+            <div class="empty-icon-circle">
+              <Target :size="32" />
+            </div>
+            <h3>Добавьте шаги декомпозиции</h3>
+            <p>Разбейте цель на конкретные действия,<br>чтобы начать планирование</p>
+            <div class="empty-state-actions">
+              <button class="btn btn-primary" @click="openAddStepModal">
+                <Plus :size="16" />
+                Добавить первый шаг
+              </button>
+              <div class="ai-steps-generate-empty">
+                <button 
+                  class="btn-ai-steps"
+                  :class="{ generating: isGeneratingSteps }"
+                  :disabled="isGeneratingSteps"
+                  @click="generateStepsAI"
+                  @mouseenter="showAIStepsTooltip = true"
+                  @mouseleave="showAIStepsTooltip = false"
+                >
+                  <Loader2 v-if="isGeneratingSteps" :size="16" class="spin" />
+                  <Sparkles v-else :size="16" />
+                  <span>{{ isGeneratingSteps ? 'Генерация...' : 'Помощь от ментора' }}</span>
+                </button>
+                <transition name="tooltip-fade">
+                  <div v-if="showAIStepsTooltip && !isGeneratingSteps" class="ai-steps-tooltip ai-steps-tooltip-empty">
+                    <strong>ИИ-помощник</strong>
+                    <p>Сгенерирует 3-7 шагов для достижения этой цели</p>
+                  </div>
+                </transition>
+              </div>
+            </div>
+          </div>
+
           <div 
+            v-show="totalStepsCount > 0 || newSteps.length > 0"
             ref="stepsContainer"
             class="steps-section" 
             :class="{ 'has-scroll': hasMoreStepsToLoad || paginatedSteps.length > 6 }"
@@ -275,19 +332,119 @@
               </div>
             </template>
 
+            <!-- Inline добавление шага (как в Remente) -->
+            <div class="inline-add-step">
+              <div class="inline-add-step-input-wrapper">
+                <Plus :size="18" class="inline-add-icon" />
+                <input 
+                  ref="inlineStepInput"
+                  v-model="inlineStepTitle"
+                  type="text"
+                  class="inline-add-step-input"
+                  placeholder="Добавить шаг..."
+                  @keydown.enter="addInlineStep"
+                  @focus="inlineInputFocused = true"
+                  @blur="inlineInputFocused = false"
+                />
+                <button 
+                  v-if="inlineStepTitle.trim()"
+                  class="inline-add-btn"
+                  @click="addInlineStep"
+                  title="Добавить"
+                >
+                  <Check :size="18" />
+                </button>
+              </div>
+              
+              <!-- AI генерация шагов -->
+              <div class="ai-steps-generate">
+                <button 
+                  class="btn-ai-steps"
+                  :class="{ generating: isGeneratingSteps }"
+                  :disabled="isGeneratingSteps"
+                  @click="generateStepsAI"
+                  @mouseenter="showAIStepsTooltip = true"
+                  @mouseleave="showAIStepsTooltip = false"
+                >
+                  <Loader2 v-if="isGeneratingSteps" :size="16" class="spin" />
+                  <Sparkles v-else :size="16" />
+                  <span>{{ isGeneratingSteps ? 'Генерация...' : 'Помощь от ментора' }}</span>
+                </button>
+                <transition name="tooltip-fade">
+                  <div v-if="showAIStepsTooltip && !isGeneratingSteps" class="ai-steps-tooltip">
+                    <strong>ИИ-помощник</strong>
+                    <p>Сгенерирует 3-7 шагов для достижения этой цели на основе её названия</p>
+                  </div>
+                </transition>
+              </div>
+            </div>
+
           </div>
 
         </div>
       </div>
       
-      <!-- FAB кнопка добавления шага -->
-      <button 
-        class="fab-add-step"
-        @click="openAddStepModal"
-        title="Добавить шаг"
-      >
-        <Plus :size="24" />
-      </button>
+      <!-- Мини-журнал цели -->
+      <div class="mini-journal-section">
+        <button class="mini-journal-toggle" @click="toggleMiniJournal">
+          <BookOpen :size="18" />
+          <span>Заметки</span>
+          <span v-if="miniJournalEntries.length" class="journal-count">{{ miniJournalEntries.length }}</span>
+          <ChevronDown :size="16" class="toggle-icon" :class="{ rotated: showMiniJournal }" />
+        </button>
+        
+        <transition name="slide">
+          <div v-if="showMiniJournal" class="mini-journal-content">
+            <div class="journal-input-wrapper">
+              <textarea 
+                v-model="miniJournalEntry"
+                class="journal-input"
+                placeholder="Запишите мысли, прогресс или идеи..."
+                rows="2"
+                @keydown.ctrl.enter="addMiniJournalEntry"
+                @keydown.meta.enter="addMiniJournalEntry"
+              ></textarea>
+              <button 
+                class="journal-add-btn"
+                @click="addMiniJournalEntry"
+                :disabled="!miniJournalEntry.trim()"
+              >
+                <Send :size="16" />
+              </button>
+            </div>
+            
+            <div v-if="miniJournalEntries.length" class="journal-entries">
+              <div 
+                v-for="entry in miniJournalEntries" 
+                :key="entry.id" 
+                class="journal-entry"
+              >
+                <div class="entry-header">
+                  <span class="entry-date">{{ formatJournalDate(entry.createdAt) }}</span>
+                  <button class="entry-delete" @click="removeMiniJournalEntry(entry.id)">
+                    <X :size="14" />
+                  </button>
+                </div>
+                <p class="entry-text">{{ entry.text }}</p>
+              </div>
+            </div>
+            
+            <div v-else class="journal-empty">
+              <Lightbulb :size="24" />
+              <p>Записывайте идеи и прогресс по этой цели</p>
+            </div>
+          </div>
+        </transition>
+      </div>
+
+      <!-- Кнопка "Запланировать шаги" -->
+      <div v-if="hasUnscheduledSteps" class="plan-steps-section">
+        <button class="plan-steps-btn" @click="goToPlanning">
+          <Calendar :size="18" />
+          <span>Запланировать шаги</span>
+          <span class="unscheduled-count">{{ unscheduledStepsCount }}</span>
+        </button>
+      </div>
 
     </div>
 
@@ -305,36 +462,61 @@
             </button>
           </div>
 
-          <!-- Tab Navigation -->
+          <!-- Quick Actions -->
+          <div class="quick-actions" v-if="editingGoal">
+            <button 
+              v-if="editingGoal.status === 'validated' && !isGoalInWork"
+              class="quick-action-btn action-work"
+              title="Взять цель в работу"
+              @click="handleQuickTakeToWork"
+            >
+              <Play :size="16" />
+              <span>В работу</span>
+            </button>
+            <button 
+              v-if="isGoalInWork"
+              class="quick-action-btn action-remove-work"
+              title="Убрать из работы"
+              @click="handleQuickRemoveFromWork"
+            >
+              <Pause :size="16" />
+              <span>Убрать</span>
+            </button>
+            <button 
+              v-if="isGoalInWork && !isGoalCompleted"
+              class="quick-action-btn action-complete"
+              title="Завершить цель"
+              @click="handleQuickComplete"
+            >
+              <CheckCircle :size="16" />
+              <span>Завершить</span>
+            </button>
+          </div>
+
+          <!-- Tab Navigation (Simplified: 2 tabs) -->
           <div class="modal-tabs">
             <button 
               class="modal-tab" 
               :class="{ active: editModalTab === 'main' }"
+              title="Цель"
               @click="editModalTab = 'main'"
             >
               <FileText :size="16" />
-              <span>Основное</span>
+              <span>Цель</span>
             </button>
             <button 
               class="modal-tab" 
-              :class="{ active: editModalTab === 'motivation' }"
-              @click="editModalTab = 'motivation'"
-            >
-              <Heart :size="16" />
-              <span>Мотивация</span>
-            </button>
-            <button 
-              class="modal-tab" 
-              :class="{ active: editModalTab === 'status' }"
-              @click="editModalTab = 'status'"
+              :class="{ active: editModalTab === 'settings' }"
+              title="Настройки"
+              @click="editModalTab = 'settings'"
             >
               <Settings :size="16" />
-              <span>Статус</span>
+              <span>Настройки</span>
             </button>
           </div>
 
           <div class="modal-body modal-body-tabs" v-if="editingGoal">
-            <!-- Tab: Main -->
+            <!-- Tab: Goal (merged Main + Motivation) -->
             <div v-show="editModalTab === 'main'" class="tab-content">
               <div class="form-group">
                 <label class="form-label">Название цели</label>
@@ -362,84 +544,49 @@
                   </button>
                 </div>
               </div>
-            </div>
-
-            <!-- Tab: Motivation -->
-            <div v-show="editModalTab === 'motivation'" class="tab-content">
-              <div class="motivation-intro">
-                <Lightbulb :size="20" class="motivation-icon" />
-                <p>Ответьте на вопросы, чтобы понять истинную ценность цели</p>
-              </div>
 
               <div class="form-group">
-                <label class="form-label">1. Почему для меня это важно?</label>
+                <label class="form-label">Почему это важно?</label>
                 <textarea 
                   v-model="editingGoal.whyImportant"
                   class="form-textarea form-textarea-visible"
                   placeholder="Опишите, почему эта цель важна для вас..."
-                  rows="3"
+                  rows="2"
                 ></textarea>
               </div>
 
               <div class="form-group">
-                <label class="form-label">2. Как это изменит мою жизнь?</label>
+                <label class="form-label">Как это изменит жизнь?</label>
                 <textarea 
                   v-model="editingGoal.why2"
                   class="form-textarea form-textarea-visible"
-                  placeholder="Опишите, как достижение этой цели изменит вашу жизнь..."
-                  rows="3"
+                  placeholder="Опишите ожидаемые изменения..."
+                  rows="2"
                 ></textarea>
               </div>
             </div>
 
-            <!-- Tab: Status -->
-            <div v-show="editModalTab === 'status'" class="tab-content">
-              <!-- Work Status -->
-              <div class="status-card">
-                <div class="status-card-header">
-                  <Target :size="20" />
-                  <span>Статус работы</span>
-                </div>
-                <div class="status-toggle-row">
-                  <span class="toggle-label">В работе</span>
-                  <button 
-                    class="toggle-switch"
-                    :class="{ active: editingGoal.workStatus === 'work' }"
-                    @click="editingGoal.workStatus = editingGoal.workStatus === 'work' ? 'idle' : 'work'"
-                  >
-                    <span class="toggle-slider"></span>
-                  </button>
-                </div>
-                <p class="status-hint" v-if="editingGoal.workStatus === 'work'">
-                  Цель в активной работе.
-                </p>
-                <p class="status-hint" v-else>
-                  Включите, чтобы начать работу над целью.
-                </p>
-              </div>
-
+            <!-- Tab: Settings (simplified Status) -->
+            <div v-show="editModalTab === 'settings'" class="tab-content">
               <!-- Validation Section -->
               <div class="status-card">
                 <div class="status-card-header">
                   <Shield :size="20" />
                   <span>Оценка цели</span>
                 </div>
-                <p class="status-description">
-                  Подтверждённая цель отвечает на вопросы «почему важно?» и «как изменит жизнь?»
-                </p>
                 <div class="validation-buttons-new">
                   <button 
                     class="btn-validation-new btn-confirm"
-                    :class="{ active: editingGoal.validationStatus === 'validated' }"
-                    @click="editingGoal.validationStatus = 'validated'"
+                    :class="{ active: editingGoal.status === 'validated' || goal?.status === 'validated' }"
+                    @click="setValidationStatus(true)"
                   >
                     <CheckCircle :size="20" />
                     <span>Подтвердить</span>
                   </button>
                   <button 
                     class="btn-validation-new btn-reject"
-                    :class="{ active: editingGoal.validationStatus === 'rejected' }"
-                    @click="editingGoal.validationStatus = 'rejected'"
+                    :class="{ active: editingGoal.status === 'rejected' || goal?.status === 'rejected' }"
+                    @click="setValidationStatus(false)"
                   >
                     <XCircle :size="20" />
                     <span>Отклонить</span>
@@ -447,8 +594,8 @@
                 </div>
               </div>
 
-              <!-- Progress -->
-              <div class="status-card">
+              <!-- Progress (only if goal is in work) -->
+              <div class="status-card" v-if="isGoalInWork">
                 <div class="status-card-header">
                   <BarChart2 :size="20" />
                   <span>Прогресс</span>
@@ -460,28 +607,22 @@
                   <span class="progress-text">{{ completedStepsCount }}/{{ totalStepsCount }} шагов</span>
                 </div>
               </div>
-
-              <!-- Delete -->
-              <div class="status-card status-card-danger">
-                <button 
-                  class="btn btn-danger-outline btn-full" 
-                  @click="deleteGoalFromModal"
-                >
-                  <Trash2 :size="16" :stroke-width="2" />
-                  Удалить цель
-                </button>
-              </div>
             </div>
           </div>
 
-          <div class="modal-footer modal-footer-redesigned">
-            <button class="btn btn-secondary" @click="closeEditModal">
-              Отмена
+          <div class="modal-footer modal-footer-redesigned modal-footer-with-delete">
+            <button class="btn btn-danger-ghost" @click="deleteGoalFromModal">
+              <Trash2 :size="16" />
             </button>
-            <button class="btn btn-primary" @click="saveEditModal">
-              <Check :size="16" :stroke-width="2" />
-              Сохранить
-            </button>
+            <div class="modal-footer-actions">
+              <button class="btn btn-secondary" @click="closeEditModal">
+                Отмена
+              </button>
+              <button class="btn btn-primary" @click="saveEditModal">
+                <Check :size="16" :stroke-width="2" />
+                Сохранить
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -542,129 +683,129 @@
       </div>
     </transition>
 
-    <!-- Bottom Sheet модалка редактирования шага -->
+    <!-- Bottom Sheet модалка редактирования шага (упрощённая) -->
     <transition name="bottom-sheet">
       <div v-if="showEditStepModal" class="bottom-sheet-overlay" @click.self="closeEditStepModal">
-        <div class="bottom-sheet step-bottom-sheet">
-          <!-- Ручка для свайпа -->
+        <div class="bottom-sheet step-bottom-sheet step-bottom-sheet-simple">
           <div class="bottom-sheet-handle"></div>
           
-          <!-- Quick Actions вверху -->
-          <div class="quick-actions">
-            <button 
-              class="quick-action-btn"
-              :class="{ active: editStepForm.completed }"
-              @click="toggleEditStepComplete"
-            >
-              <CheckCircle :size="20" />
-              <span>{{ editStepForm.completed ? 'Выполнен' : 'Выполнить' }}</span>
-            </button>
-            <button 
-              class="quick-action-btn"
-              @click="openScheduleForStep"
-            >
-              <Calendar :size="20" />
-              <span>Запланировать</span>
-            </button>
-            <button 
-              class="quick-action-btn danger"
-              @click="deleteStepFromModal"
-            >
-              <Trash2 :size="20" />
-              <span>Удалить</span>
-            </button>
-          </div>
-          
-          <!-- Табы -->
-          <div class="step-modal-tabs">
-            <button 
-              class="tab-btn"
-              :class="{ active: editStepTab === 'main' }"
-              @click="editStepTab = 'main'"
-            >
-              Основное
-            </button>
-            <button 
-              class="tab-btn"
-              :class="{ active: editStepTab === 'params' }"
-              @click="editStepTab = 'params'"
-            >
-              Параметры
-            </button>
-          </div>
-          
-          <!-- Контент табов -->
           <div class="bottom-sheet-body">
-            <!-- Таб Основное -->
-            <div v-show="editStepTab === 'main'" class="tab-content">
-              <div class="form-group">
-                <label class="form-label">Название шага</label>
-                <input 
-                  v-model="editStepForm.title"
-                  type="text"
-                  class="form-input"
-                  placeholder="Введите название шага"
-                  ref="editStepTitleInput"
-                />
-              </div>
-              
-              <div class="form-group">
-                <label class="form-label">Комментарий</label>
-                <textarea 
-                  v-model="editStepForm.comment"
-                  class="form-input form-textarea"
-                  placeholder="Дополнительные заметки..."
-                  rows="3"
-                ></textarea>
-              </div>
+            <div class="form-group">
+              <label class="form-label">Название шага</label>
+              <input 
+                v-model="editStepForm.title"
+                type="text"
+                class="form-input"
+                placeholder="Введите название шага"
+                ref="editStepTitleInput"
+              />
             </div>
             
-            <!-- Таб Параметры -->
-            <div v-show="editStepTab === 'params'" class="tab-content">
-              <div class="form-group">
-                <label class="form-label">Приоритет</label>
-                <div class="priority-selector">
+            <div class="form-group">
+              <label class="form-label">Комментарий</label>
+              <textarea 
+                v-model="editStepForm.comment"
+                class="form-input form-textarea"
+                placeholder="Дополнительные заметки..."
+                rows="2"
+              ></textarea>
+            </div>
+
+            <div class="form-group checklist-section">
+              <label class="form-label">Чеклист</label>
+              <div class="checklist-items">
+                <div 
+                  v-for="(item, index) in editStepForm.checklist" 
+                  :key="item.id"
+                  class="checklist-item"
+                >
                   <button 
-                    v-for="p in priorityOptions" 
-                    :key="p.value"
-                    class="priority-option"
-                    :class="{ active: editStepForm.priority === p.value, [p.value]: true }"
-                    @click="editStepForm.priority = p.value"
+                    class="checklist-checkbox"
+                    :class="{ checked: item.completed }"
+                    @click="toggleChecklistItem(index)"
                   >
-                    <span class="priority-dot"></span>
-                    {{ p.label }}
+                    <CheckSquare v-if="item.completed" :size="18" />
+                    <Square v-else :size="18" />
+                  </button>
+                  <input 
+                    v-model="item.text"
+                    type="text"
+                    class="checklist-input"
+                    :class="{ completed: item.completed }"
+                    placeholder="Подзадача..."
+                    @keydown.enter="addChecklistItem"
+                  />
+                  <button 
+                    class="checklist-remove"
+                    @click="removeChecklistItem(index)"
+                  >
+                    <X :size="14" />
                   </button>
                 </div>
               </div>
-              
-              <div class="form-group">
-                <label class="form-label">Время на выполнение (часов)</label>
-                <input 
-                  v-model="editStepForm.timeEstimate"
-                  type="number"
-                  class="form-input"
-                  placeholder="2"
-                  min="0.5"
-                  max="24"
-                  step="0.5"
-                />
+              <button class="btn-link add-checklist-btn" @click="addChecklistItem">
+                <Plus :size="14" />
+                Добавить подзадачу
+              </button>
+            </div>
+
+            <div class="step-params-row">
+              <div class="param-chip" @click="showTimeSelector = !showTimeSelector">
+                <Clock :size="14" />
+                <span>{{ editStepForm.timeEstimate ? editStepForm.timeEstimate + 'ч' : 'Время' }}</span>
               </div>
-              
-              <div class="form-group">
-                <label class="form-label">Дата выполнения</label>
-                <input 
-                  v-model="editStepForm.scheduledDate"
-                  type="date"
-                  class="form-input"
-                />
+              <div class="param-chip" @click="showDatePicker = !showDatePicker">
+                <Calendar :size="14" />
+                <span>{{ formatParamDate(editStepForm.scheduledDate) || 'Дата' }}</span>
               </div>
+              <div 
+                class="param-chip priority-chip"
+                :class="editStepForm.priority || 'none'"
+                @click="cyclePriority"
+              >
+                <Circle :size="14" />
+                <span>{{ getPriorityLabel(editStepForm.priority) || 'Приоритет' }}</span>
+              </div>
+            </div>
+
+            <div v-if="showTimeSelector" class="param-dropdown">
+              <input 
+                v-model="editStepForm.timeEstimate"
+                type="number"
+                class="form-input form-input-small"
+                placeholder="Часов"
+                min="0.5"
+                max="24"
+                step="0.5"
+              />
+            </div>
+
+            <div v-if="showDatePicker" class="param-dropdown">
+              <input 
+                v-model="editStepForm.scheduledDate"
+                type="date"
+                class="form-input"
+              />
             </div>
           </div>
           
-          <div class="bottom-sheet-footer">
-            <button class="btn btn-secondary" @click="closeEditStepModal">
-              Отмена
+          <div class="bottom-sheet-footer step-footer-simple">
+            <button 
+              class="icon-btn"
+              :class="{ active: editStepForm.completed }"
+              @click="toggleEditStepComplete"
+              title="Выполнить"
+            >
+              <CheckCircle :size="22" />
             </button>
+            <button 
+              class="icon-btn danger"
+              @click="deleteStepFromModal"
+              title="Удалить"
+            >
+              <Trash2 :size="22" />
+            </button>
+            <div class="footer-spacer"></div>
             <button class="btn btn-primary" @click="saveEditStepModal">
               <Check :size="16" />
               Сохранить
@@ -686,8 +827,10 @@ import {
   Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target,
   Square, CheckSquare, Search, CheckCircle2, AlertCircle,
   CheckCircle, XCircle, Check, Filter, Settings, Clock, Calendar, Circle,
-  FileText, Lightbulb, Shield, BarChart2
+  FileText, Lightbulb, Shield, BarChart2, Play, Pause, GitBranch,
+  BookOpen, ChevronDown, Send, MessageSquare, Wand2, Loader2, Sparkles
 } from 'lucide-vue-next'
+import { generateStepsWithAI } from '@/services/aiGoalService.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -707,19 +850,30 @@ const localGoalId = computed(() => isLocalId.value ? goalBackendId.value.replace
 const goal = computed(() => {
   // Dev mode: handle local ids
   if (DEBUG_MODE && SKIP_AUTH_CHECK && isLocalId.value) {
-    // Find by local id in rawIdeas
+    // Find by local id in rawIdeas - return direct reference for reactivity
     const rawGoal = store.goalsBank.rawIdeas.find(g => g.id === localGoalId.value)
     if (rawGoal) {
+      // Ensure steps array exists on rawGoal for reactivity
+      if (!rawGoal.steps) rawGoal.steps = []
+      // Return proxy object that reads from rawGoal but provides mapped property names
+      // This maintains reactivity while providing consistent interface
       return {
-        id: rawGoal.id,
-        backendId: rawGoal.backendId,
-        title: rawGoal.title,
-        description: rawGoal.description || rawGoal.why,
-        sphereId: rawGoal.category,
-        status: rawGoal.status,
-        steps: [],
-        source: 'goals-bank',
-        sourceId: rawGoal.id
+        get id() { return rawGoal.id },
+        get backendId() { return rawGoal.backendId },
+        get title() { return rawGoal.title || rawGoal.text },
+        get text() { return rawGoal.text || rawGoal.title },
+        get description() { return rawGoal.description || rawGoal.why },
+        get sphereId() { return rawGoal.category || rawGoal.sphereId },
+        get category() { return rawGoal.category },
+        get status() { return rawGoal.status },
+        get steps() { return rawGoal.steps },
+        set steps(val) { rawGoal.steps = val },
+        get progress() { return rawGoal.progress || 0 },
+        get source() { return 'goals-bank' },
+        get sourceId() { return rawGoal.id },
+        get whyImportant() { return rawGoal.whyImportant },
+        get why2() { return rawGoal.why2 },
+        _rawGoal: rawGoal
       }
     }
     // Also try in goals
@@ -781,6 +935,253 @@ const showEditModal = ref(false)
 const editingGoal = ref(null)
 const editModalTab = ref('main')
 
+// Quick Actions computed properties
+const isGoalInWork = computed(() => {
+  if (!goal.value) return false
+  // Check if goal is transferred to active goals
+  const transferred = store.goals.find(g => 
+    (g.sourceId === goal.value.id || g.backendId === goal.value.backendId) && 
+    g.source === 'goals-bank'
+  )
+  return !!transferred
+})
+
+const isGoalCompleted = computed(() => {
+  if (!goal.value) return false
+  return goal.value.status === 'completed'
+})
+
+// Quick Actions functions
+async function handleQuickTakeToWork() {
+  if (!editingGoal.value) return
+  
+  // Create transferred goal
+  const newGoal = {
+    id: Date.now().toString(),
+    title: editingGoal.value.title || editingGoal.value.text,
+    sphereId: editingGoal.value.sphereId,
+    source: 'goals-bank',
+    sourceId: goal.value?.id,
+    backendId: goal.value?.backendId,
+    status: 'active',
+    steps: goalForm.value.steps || [],
+    progress: 0,
+    createdAt: new Date().toISOString()
+  }
+  
+  store.addGoal(newGoal)
+  showToast('Цель взята в работу')
+  closeEditModal()
+}
+
+async function handleQuickRemoveFromWork() {
+  if (!goal.value) return
+  
+  if (confirm('Убрать эту цель из работы?')) {
+    const transferred = store.goals.find(g => 
+      (g.sourceId === goal.value.id || g.backendId === goal.value.backendId) && 
+      g.source === 'goals-bank'
+    )
+    if (transferred) {
+      store.deleteGoal(transferred.id)
+      showToast('Цель убрана из работы')
+    }
+    closeEditModal()
+  }
+}
+
+async function handleQuickComplete() {
+  if (!goal.value) return
+  
+  const transferred = store.goals.find(g => 
+    (g.sourceId === goal.value.id || g.backendId === goal.value.backendId) && 
+    g.source === 'goals-bank'
+  )
+  if (transferred) {
+    store.updateGoal(transferred.id, { 
+      status: 'completed',
+      completedAt: new Date().toISOString()
+    })
+    showToast('Цель завершена!')
+  }
+  closeEditModal()
+}
+
+// Toggle work status for goal (in Status tab)
+function toggleWorkStatus() {
+  if (isGoalInWork.value) {
+    // Remove from work
+    handleQuickRemoveFromWork()
+  } else {
+    // Add to work
+    handleQuickTakeToWork()
+  }
+}
+
+// Set validation status
+function setValidationStatus(validated) {
+  if (!editingGoal.value) return
+  editingGoal.value.status = validated ? 'validated' : 'rejected'
+}
+
+// Inline добавление шага (как в Remente)
+const inlineStepInput = ref(null)
+const inlineStepTitle = ref('')
+const inlineInputFocused = ref(false)
+const isGeneratingSteps = ref(false)
+const showAIStepsTooltip = ref(false)
+
+async function generateStepsAI() {
+  if (isGeneratingSteps.value || !goal.value) return
+  
+  const goalTitle = goalForm.value.title || goal.value.title || goal.value.text
+  if (!goalTitle) return
+  
+  isGeneratingSteps.value = true
+  
+  try {
+    const result = await generateStepsWithAI(goalTitle, goalForm.value.sphereId)
+    
+    if (result.success && result.data?.steps?.length > 0) {
+      const existingStepsCount = goalForm.value.steps?.length || 0
+      
+      result.data.steps.forEach((step, idx) => {
+        const newStep = {
+          id: `ai-${Date.now()}-${idx}`,
+          title: step.title,
+          description: step.description || '',
+          completed: false,
+          isNew: true,
+          order: existingStepsCount + idx + 1,
+          priority: null,
+          timeEstimate: step.timeEstimate || null,
+          scheduledDate: null,
+          checklist: []
+        }
+        goalForm.value.steps.push(newStep)
+      })
+      
+      showToast(`ИИ добавил ${result.data.steps.length} шагов`, 'success')
+    } else {
+      showToast('Не удалось сгенерировать шаги', 'error')
+    }
+  } catch (error) {
+    console.error('[GoalEdit] AI steps generation error:', error)
+    showToast('Ошибка генерации', 'error')
+  } finally {
+    isGeneratingSteps.value = false
+  }
+}
+
+async function addInlineStep() {
+  if (!inlineStepTitle.value.trim()) return
+  
+  // Генерируем уникальный ID с суффиксом для избежания коллизий
+  const uniqueId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  
+  const newStep = { 
+    id: uniqueId,
+    title: inlineStepTitle.value.trim(),
+    completed: false,
+    comment: '',
+    timeEstimate: '',
+    priority: '',
+    scheduledDate: '',
+    status: 'pending',
+    isNew: false
+  }
+  
+  goalForm.value.steps.push(newStep)
+  inlineStepTitle.value = ''
+  autoSave()
+  
+  // Держим фокус на поле для быстрого добавления следующего шага
+  nextTick(() => {
+    inlineStepInput.value?.focus()
+  })
+}
+
+// Рефлексия (свёрнута по умолчанию)
+const showGoalReflection = ref(false)
+
+const hasReflection = computed(() => {
+  return Boolean(goalForm.value?.whyImportant || goalForm.value?.description || goalForm.value?.why2)
+})
+
+// Мини-журнал цели
+const showMiniJournal = ref(false)
+const miniJournalEntry = ref('')
+const miniJournalEntries = computed(() => {
+  return goalForm.value?.journal || []
+})
+
+const unscheduledStepsCount = computed(() => {
+  if (!goalForm.value?.steps) return 0
+  return goalForm.value.steps.filter(s => !s.completed && !s.scheduledDate).length
+})
+
+const hasUnscheduledSteps = computed(() => {
+  return unscheduledStepsCount.value > 0
+})
+
+function goToPlanning() {
+  router.push('/app/planning')
+}
+
+function toggleMiniJournal() {
+  showMiniJournal.value = !showMiniJournal.value
+}
+
+function addMiniJournalEntry() {
+  if (!miniJournalEntry.value.trim()) return
+  
+  const entry = {
+    id: `${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+    text: miniJournalEntry.value.trim(),
+    createdAt: new Date().toISOString()
+  }
+  
+  if (!goalForm.value.journal) {
+    goalForm.value.journal = []
+  }
+  goalForm.value.journal.unshift(entry)
+  miniJournalEntry.value = ''
+  saveJournal()
+}
+
+function removeMiniJournalEntry(entryId) {
+  if (!goalForm.value.journal) return
+  const index = goalForm.value.journal.findIndex(e => e.id === entryId)
+  if (index !== -1) {
+    goalForm.value.journal.splice(index, 1)
+    saveJournal()
+  }
+}
+
+function saveJournal() {
+  if (!goal.value) return
+  store.updateGoal(goal.value.id, {
+    journal: goalForm.value.journal || []
+  })
+}
+
+function formatJournalDate(dateStr) {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diff = now - date
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  
+  if (days === 0) {
+    return 'Сегодня'
+  } else if (days === 1) {
+    return 'Вчера'
+  } else if (days < 7) {
+    return `${days} дн. назад`
+  } else {
+    return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+  }
+}
+
 // Модалка добавления шага (мобильная версия)
 const showAddStepModal = ref(false)
 const newStepForm = ref({
@@ -830,7 +1231,8 @@ async function saveStepFromModal() {
 
 // Модалка редактирования шага
 const showEditStepModal = ref(false)
-const editStepTab = ref('main')
+const showTimeSelector = ref(false)
+const showDatePicker = ref(false)
 const editStepForm = ref({
   title: '',
   comment: '',
@@ -838,7 +1240,8 @@ const editStepForm = ref({
   priority: '',
   timeEstimate: '',
   scheduledDate: '',
-  stepIndex: -1
+  stepIndex: -1,
+  checklist: []
 })
 const editStepTitleInput = ref(null)
 
@@ -850,7 +1253,8 @@ const priorityOptions = [
 ]
 
 function openEditStepModal(step, index) {
-  editStepTab.value = 'main'
+  showTimeSelector.value = false
+  showDatePicker.value = false
   editStepForm.value = {
     title: step.title || '',
     comment: step.comment || '',
@@ -858,7 +1262,8 @@ function openEditStepModal(step, index) {
     priority: step.priority || '',
     timeEstimate: step.timeEstimate || '',
     scheduledDate: step.scheduledDate || '',
-    stepIndex: index
+    stepIndex: index,
+    checklist: step.checklist ? JSON.parse(JSON.stringify(step.checklist)) : []
   }
   showEditStepModal.value = true
   nextTick(() => {
@@ -866,15 +1271,50 @@ function openEditStepModal(step, index) {
   })
 }
 
+function addChecklistItem() {
+  const newItem = {
+    id: `${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+    text: '',
+    completed: false
+  }
+  editStepForm.value.checklist.push(newItem)
+}
+
+function removeChecklistItem(index) {
+  editStepForm.value.checklist.splice(index, 1)
+}
+
+function toggleChecklistItem(index) {
+  editStepForm.value.checklist[index].completed = !editStepForm.value.checklist[index].completed
+}
+
 function toggleEditStepComplete() {
   editStepForm.value.completed = !editStepForm.value.completed
 }
 
+function cyclePriority() {
+  const priorities = ['', 'low', 'medium', 'high']
+  const current = editStepForm.value.priority || ''
+  const idx = priorities.indexOf(current)
+  editStepForm.value.priority = priorities[(idx + 1) % priorities.length]
+}
+
+
+function formatParamDate(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const today = new Date()
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  
+  if (date.toDateString() === today.toDateString()) return 'Сегодня'
+  if (date.toDateString() === tomorrow.toDateString()) return 'Завтра'
+  
+  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+}
+
 function openScheduleForStep() {
-  editStepTab.value = 'params'
-  nextTick(() => {
-    // Фокус на поле даты
-  })
+  showDatePicker.value = true
 }
 
 function closeEditStepModal() {
@@ -896,6 +1336,7 @@ function saveEditStepModal() {
   step.priority = editStepForm.value.priority || ''
   step.timeEstimate = editStepForm.value.timeEstimate || ''
   step.scheduledDate = editStepForm.value.scheduledDate || ''
+  step.checklist = editStepForm.value.checklist.filter(item => item.text.trim())
   
   if (wasCompleted !== nowCompleted) {
     step.completed = nowCompleted
@@ -1147,7 +1588,8 @@ function mapPriorityFromBackend(priority) {
 async function loadStepsWithFilters() {
   // Use goalBackendId from URL directly
   const backendId = goalBackendId.value
-  if (!backendId) return
+  // Skip for local goals (dev mode)
+  if (!backendId || isLocalId.value) return
   
   const currentBackendId = backendId
   
@@ -1242,13 +1684,6 @@ function closeEditModal() {
   editModalTab.value = 'main'
 }
 
-function handleQuickComplete() {
-  if (editingGoal.value) {
-    editingGoal.value.workStatus = 'complete'
-    saveEditModal()
-  }
-}
-
 function deleteGoalFromModal() {
   if (editingGoal.value && confirm('Удалить эту цель?')) {
     store.deleteRawIdea(editingGoal.value.id)
@@ -1261,10 +1696,6 @@ function deleteGoalFromModal() {
 function getSphereNameOnly(sphereId) {
   const sphere = lifeSpheres.value.find(s => s.id === sphereId)
   return sphere ? sphere.name : ''
-}
-
-function goToPlanning() {
-  router.push('/app/planning')
 }
 
 async function saveEditModal() {
@@ -1401,9 +1832,12 @@ function getPriorityLabel(priority) {
     'critical': 'Критично',
     'desirable': 'Желательно',
     'attention': 'Внимание',
-    'optional': 'Опционально'
+    'optional': 'Опционально',
+    'low': 'Низкий',
+    'medium': 'Средний',
+    'high': 'Высокий'
   }
-  return labels[priority] || priority
+  return labels[priority] || priority || ''
 }
 
 function formatScheduledDate(dateStr) {
@@ -1499,8 +1933,9 @@ async function loadStepsFromBackend(page = 1, append = false) {
   // route.params.id IS the backendId now
   const backendId = goalBackendId.value
   
-  if (!backendId) {
-    console.log('[GoalEdit] No backendId in URL, skipping backend load')
+  // Skip backend load for local goals (dev mode)
+  if (!backendId || isLocalId.value) {
+    console.log('[GoalEdit] Skipping backend load for local goal')
     return
   }
   
@@ -1705,7 +2140,8 @@ function loadGoalData() {
       mvp: goal.value.mvp || '',
       // Only use store steps if we haven't loaded from backend yet
       steps: shouldLoadSteps ? (goal.value.steps ? goal.value.steps.map(s => ({ ...s })) : []) : goalForm.value.steps,
-      progress: goal.value.progress || 0
+      progress: goal.value.progress || 0,
+      journal: goal.value.journal ? JSON.parse(JSON.stringify(goal.value.journal)) : []
     }
     recalculateProgress()
     // Инициализировать hash для отслеживания изменений
@@ -1995,7 +2431,8 @@ async function doSave(showNotification = true) {
     // Optimistic UI: update local state first
     store.updateGoal(goal.value.id, {
       steps: stepsToSave,
-      progress: progress
+      progress: progress,
+      journal: goalForm.value.journal || []
     })
     
     // Убрать флаг isNew у сохранённых шагов
@@ -2086,7 +2523,11 @@ function getChangedSteps(currentSteps) {
 
 // Sync only changed steps to backend
 async function syncStepsToBackend(steps) {
-  if (!goalBackendId.value) return
+  // Don't sync to backend for local goals (dev mode)
+  if (!goalBackendId.value || isLocalId.value) {
+    console.log('[GoalEdit] Skipping backend sync for local goal')
+    return
+  }
   
   const changedSteps = getChangedSteps(steps)
   
@@ -2216,8 +2657,9 @@ function formatDate(dateString) {
 
 <style scoped>
 .goal-edit-container {
-  max-width: 1400px;
+  max-width: var(--content-width-narrow);
   margin: 0 auto;
+  padding: var(--container-padding);
   position: relative;
 }
 
@@ -2472,6 +2914,81 @@ function formatDate(dateString) {
 .empty-state p {
   color: var(--text-secondary);
   margin-bottom: 2rem;
+}
+
+.steps-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 1.5rem;
+  min-height: 300px;
+}
+
+.steps-empty-state .empty-icon-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--bg-tertiary, #f3f4f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary, #6b7280);
+  margin-bottom: 1rem;
+}
+
+.steps-empty-state h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  margin: 0 0 0.5rem 0;
+}
+
+.steps-empty-state p {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6b7280);
+  margin: 0 0 1.5rem 0;
+  line-height: 1.5;
+}
+
+.steps-empty-state .btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.empty-state-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ai-steps-generate-empty {
+  position: relative;
+}
+
+.ai-steps-tooltip-empty {
+  bottom: auto;
+  top: calc(100% + 8px);
+}
+
+.ai-steps-tooltip-empty::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-bottom-color: var(--border-color, #e5e7eb);
+}
+
+@media (min-width: 480px) {
+  .empty-state-actions {
+    flex-direction: row;
+    gap: 0.75rem;
+  }
 }
 
 .edit-layout {
@@ -2940,6 +3457,180 @@ function formatDate(dateString) {
   color: #059669;
 }
 
+/* Inline добавление шага (как в Remente) */
+.inline-add-step {
+  margin-top: 0.75rem;
+  padding: 0.25rem 0;
+}
+
+.inline-add-step-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary, #f9fafb);
+  border: 2px dashed var(--border-color, #e5e7eb);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.inline-add-step-input-wrapper:focus-within {
+  background: var(--bg-primary, #ffffff);
+  border-color: var(--primary, #6366f1);
+  border-style: solid;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.inline-add-icon {
+  color: var(--text-secondary, #6b7280);
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.inline-add-step-input-wrapper:focus-within .inline-add-icon {
+  color: var(--primary, #6366f1);
+}
+
+.inline-add-step-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.9375rem;
+  color: var(--text-primary, #111827);
+  outline: none;
+  padding: 0;
+  min-width: 0;
+}
+
+.inline-add-step-input::placeholder {
+  color: var(--text-secondary, #9ca3af);
+}
+
+.inline-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: var(--primary, #6366f1);
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.inline-add-btn:hover {
+  background: var(--primary-dark, #4f46e5);
+  transform: scale(1.05);
+}
+
+.inline-add-btn:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+  .inline-add-step-input-wrapper {
+    padding: 0.875rem 1rem;
+  }
+  
+  .inline-add-step-input {
+    font-size: 1rem;
+  }
+}
+
+/* AI генерация шагов */
+.ai-steps-generate {
+  position: relative;
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: center;
+}
+
+.btn-ai-steps {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.25);
+}
+
+.btn-ai-steps:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35);
+}
+
+.btn-ai-steps:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-ai-steps:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-ai-steps.generating {
+  background: linear-gradient(135deg, #a78bfa 0%, #818cf8 100%);
+}
+
+.btn-ai-steps .spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.ai-steps-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  width: 220px;
+  text-align: center;
+}
+
+.ai-steps-tooltip strong {
+  display: block;
+  color: var(--primary, #6366f1);
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.ai-steps-tooltip p {
+  color: var(--text-secondary, #6b7280);
+  font-size: 0.8rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.tooltip-fade-enter-active,
+.tooltip-fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.tooltip-fade-enter-from,
+.tooltip-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(4px);
+}
+
 /* FAB кнопка добавления шага */
 .fab-add-step {
   position: fixed;
@@ -2976,6 +3667,325 @@ function formatDate(dateString) {
     width: 52px;
     height: 52px;
   }
+}
+
+/* Мини-журнал */
+.mini-journal-section {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+  padding-top: 1rem;
+}
+
+.mini-journal-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary, #f9fafb);
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary, #111827);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mini-journal-toggle:hover {
+  background: var(--bg-hover, #f3f4f6);
+}
+
+.mini-journal-toggle .toggle-icon {
+  margin-left: auto;
+  transition: transform 0.2s;
+  color: var(--text-secondary, #9ca3af);
+}
+
+.mini-journal-toggle .toggle-icon.rotated {
+  transform: rotate(180deg);
+}
+
+.journal-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: var(--primary, #6366f1);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+.mini-journal-content {
+  padding: 1rem 0;
+}
+
+.journal-input-wrapper {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.journal-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  resize: none;
+  background: var(--bg-primary, #ffffff);
+  color: var(--text-primary, #111827);
+  transition: border-color 0.2s;
+}
+
+.journal-input:focus {
+  outline: none;
+  border-color: var(--primary, #6366f1);
+}
+
+.journal-input::placeholder {
+  color: var(--text-secondary, #9ca3af);
+}
+
+.journal-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: var(--primary, #6366f1);
+  color: white;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.journal-add-btn:hover:not(:disabled) {
+  background: var(--primary-dark, #4f46e5);
+}
+
+.journal-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.journal-entries {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.journal-entry {
+  padding: 0.875rem;
+  background: var(--bg-secondary, #f9fafb);
+  border-radius: 10px;
+  border-left: 3px solid var(--primary, #6366f1);
+}
+
+.entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.entry-date {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #9ca3af);
+  font-weight: 500;
+}
+
+.entry-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #9ca3af);
+  cursor: pointer;
+  border-radius: 4px;
+  opacity: 0;
+  transition: all 0.15s;
+}
+
+.journal-entry:hover .entry-delete {
+  opacity: 1;
+}
+
+.entry-delete:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.entry-text {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-primary, #111827);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.journal-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  color: var(--text-secondary, #9ca3af);
+  text-align: center;
+}
+
+.journal-empty p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Кнопка "Запланировать шаги" */
+.plan-steps-section {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+}
+
+.plan-steps-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.plan-steps-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.plan-steps-btn:active {
+  transform: translateY(0);
+}
+
+.unscheduled-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 11px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Блок рефлексии (свёрнут по умолчанию) */
+.goal-reflection-block {
+  margin: 0.75rem 1rem 0;
+  padding: 0;
+}
+
+.reflection-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--card-bg, #f9fafb);
+  border: 1px solid var(--border-light, #e5e7eb);
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary, #374151);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reflection-toggle-btn:hover {
+  background: var(--card-bg-hover, #f3f4f6);
+}
+
+.reflection-toggle-btn svg:first-child {
+  color: var(--primary, #6366f1);
+}
+
+.toggle-chevron {
+  margin-left: auto;
+  transition: transform 0.25s;
+  color: var(--text-secondary, #9ca3af);
+}
+
+.toggle-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.reflection-content {
+  padding: 1rem;
+  background: var(--card-bg, #f9fafb);
+  border: 1px solid var(--border-light, #e5e7eb);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  margin-top: -1px;
+}
+
+.reflection-item {
+  margin-bottom: 0.75rem;
+}
+
+.reflection-item:last-child {
+  margin-bottom: 0;
+}
+
+.reflection-item label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  margin-bottom: 0.25rem;
+}
+
+.reflection-item p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-primary, #374151);
+  line-height: 1.5;
+}
+
+/* Slide transition */
+.slide-enter-active,
+.slide-leave-active {
+  transition: all 0.25s ease;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+  opacity: 0;
+  max-height: 0;
+  transform: translateY(-10px);
+}
+
+.slide-enter-to,
+.slide-leave-from {
+  opacity: 1;
+  max-height: 500px;
 }
 
 /* Bottom Sheet стили */
@@ -3146,6 +4156,210 @@ function formatDate(dateString) {
 
 .bottom-sheet-footer .btn {
   flex: 1;
+}
+
+.step-bottom-sheet-simple {
+  max-height: 80vh;
+}
+
+/* Checklist стили */
+.checklist-section {
+  margin-top: 0.5rem;
+}
+
+.checklist-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.checklist-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #9ca3af);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.checklist-checkbox:hover {
+  background: var(--bg-secondary, #f3f4f6);
+  color: var(--primary, #6366f1);
+}
+
+.checklist-checkbox.checked {
+  color: #10b981;
+}
+
+.checklist-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.9rem;
+  color: var(--text-primary, #111827);
+  padding: 0.375rem 0;
+  outline: none;
+  min-width: 0;
+}
+
+.checklist-input::placeholder {
+  color: var(--text-secondary, #9ca3af);
+}
+
+.checklist-input.completed {
+  text-decoration: line-through;
+  color: var(--text-secondary, #9ca3af);
+}
+
+.checklist-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #9ca3af);
+  cursor: pointer;
+  border-radius: 4px;
+  opacity: 0;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.checklist-item:hover .checklist-remove {
+  opacity: 1;
+}
+
+.checklist-remove:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.add-checklist-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.375rem;
+  padding: 0.375rem 0;
+  font-size: 0.85rem;
+  color: var(--primary, #6366f1);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.add-checklist-btn:hover {
+  opacity: 0.8;
+}
+
+.step-params-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.param-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--bg-secondary, #f3f4f6);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.param-chip:hover {
+  background: var(--bg-hover, #e5e7eb);
+}
+
+.param-chip.priority-chip.low {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+}
+
+.param-chip.priority-chip.medium {
+  background: rgba(234, 179, 8, 0.15);
+  color: #ca8a04;
+}
+
+.param-chip.priority-chip.high {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+}
+
+.param-dropdown {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: var(--bg-secondary, #f9fafb);
+  border-radius: 8px;
+}
+
+.form-input-small {
+  max-width: 120px;
+}
+
+.step-footer-simple {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.step-footer-simple .btn {
+  flex: none;
+}
+
+.footer-spacer {
+  flex: 1;
+}
+
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: var(--bg-secondary, #f3f4f6);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-secondary, #6b7280);
+}
+
+.icon-btn:hover {
+  background: var(--bg-hover, #e5e7eb);
+}
+
+.icon-btn.active {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+}
+
+.icon-btn.danger {
+  color: #ef4444;
+}
+
+.icon-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.1);
 }
 
 /* Bottom Sheet transition */
@@ -3930,10 +5144,43 @@ function formatDate(dateString) {
 
 .modal-footer-redesigned {
   display: flex;
+  flex-direction: row;
   justify-content: flex-end;
   gap: 0.75rem;
   padding: 1rem 1.25rem;
   border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.modal-footer-with-delete {
+  justify-content: space-between;
+}
+
+.modal-footer-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btn-danger-ghost {
+  background: transparent;
+  color: #ef4444;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-danger-ghost:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.modal-footer-redesigned .btn {
+  flex: 1;
+  justify-content: center;
+}
+
+.modal-footer-actions .btn {
+  flex: none;
 }
 
 .form-input-large {
@@ -4435,6 +5682,12 @@ function formatDate(dateString) {
   .modal-footer {
     flex-direction: column-reverse;
     gap: 0.75rem;
+  }
+
+  .modal-footer.modal-footer-redesigned {
+    flex-direction: row !important;
+    gap: 0.75rem;
+    justify-content: flex-end;
   }
 
   .modal-footer-left,

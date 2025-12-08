@@ -721,6 +721,17 @@ export const useAppStore = defineStore('app', () => {
     completed: false,
     data: null
   })
+  
+  // История оценок SSP
+  const sspHistory = ref([])
+  
+  function addSSPHistoryEntry(entry) {
+    sspHistory.value.push(entry)
+    saveToLocalStorage()
+    if (DEBUG_MODE) {
+      console.log('[SSP] Added history entry:', entry)
+    }
+  }
 
   // Банк целей - полноценная система
   const goalsBank = ref({
@@ -1421,9 +1432,21 @@ export const useAppStore = defineStore('app', () => {
   }
 
   function updateGoal(goalId, updates) {
-    const goal = goals.value.find(g => g.id === goalId)
+    // First try in goals
+    let goal = goals.value.find(g => g.id === goalId)
     if (goal) {
       Object.assign(goal, updates)
+      saveToLocalStorage()
+      return
+    }
+    
+    // Then try in rawIdeas (for local goals in dev mode)
+    const rawIdea = goalsBank.value.rawIdeas.find(g => g.id === goalId)
+    if (rawIdea) {
+      Object.assign(rawIdea, updates)
+      if (DEBUG_MODE) {
+        console.log('[Store] Updated rawIdea with steps:', goalId, updates)
+      }
       saveToLocalStorage()
     }
   }
@@ -1524,6 +1547,7 @@ export const useAppStore = defineStore('app', () => {
       onboarding: onboarding.value,
       sspGoalsBank: sspGoalsBank.value,
       sspModuleCompleted: sspModuleCompleted.value,
+      sspHistory: sspHistory.value,
       goalsBank: goalsBank.value,
       decompositionModule: decompositionModule.value,
       planningModule: planningModule.value,
@@ -1561,6 +1585,7 @@ export const useAppStore = defineStore('app', () => {
         if (parsed.onboarding) onboarding.value = parsed.onboarding
         if (parsed.sspGoalsBank) sspGoalsBank.value = parsed.sspGoalsBank
         if (parsed.sspModuleCompleted) sspModuleCompleted.value = parsed.sspModuleCompleted
+        if (parsed.sspHistory) sspHistory.value = parsed.sspHistory
         if (parsed.goalsBank) goalsBank.value = { ...goalsBank.value, ...parsed.goalsBank }
         if (parsed.decompositionModule) decompositionModule.value = { ...decompositionModule.value, ...parsed.decompositionModule }
         if (parsed.planningModule) planningModule.value = { ...planningModule.value, ...parsed.planningModule }
@@ -2557,6 +2582,9 @@ export const useAppStore = defineStore('app', () => {
       decomposition: idea.decomposition || '',
       status: idea.status || 'raw',
       validated: idea.status === 'validated',
+      source: idea.source || 'manual',
+      generatedByAI: idea.generatedByAI || false,
+      steps: idea.steps || [],
       threeWhys: {
         why1: idea.whyImportant || idea.threeWhys?.why1 || '',
         why2: idea.threeWhys?.why2 || '',
@@ -2956,6 +2984,8 @@ export const useAppStore = defineStore('app', () => {
     lifeSpheres,
     sspGoalsBank,
     sspModuleCompleted,
+    sspHistory,
+    addSSPHistoryEntry,
     goals,
     weeklyPlan,
     dailyPlan,

@@ -224,8 +224,9 @@ function goBack() {
 
 <style scoped>
 .goal-new-container {
-  max-width: 1400px;
+  max-width: var(--content-width-narrow);
   margin: 0 auto;
+  padding: var(--container-padding);
 }
 
 .page-header {

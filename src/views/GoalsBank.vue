@@ -42,15 +42,30 @@
       <div class="goals-content" v-if="rawIdeas.length > 0 || hasActiveFilters">
         <!-- Combined Search + Filter Bar -->
         <div class="search-filter-bar">
-          <div class="search-input-wrapper">
-            <Search :size="16" :stroke-width="2" class="search-icon" />
-            <input 
-              v-model="searchQuery"
-              type="text"
-              class="search-input"
-              placeholder="Поиск..."
-              @input="onSearchInput"
-            />
+          <div class="search-expandable" :class="{ expanded: showSearchInput }">
+            <button 
+              v-if="!showSearchInput" 
+              class="search-toggle-btn"
+              @click="toggleSearch"
+              title="Поиск"
+            >
+              <Search :size="18" :stroke-width="2" />
+            </button>
+            <div v-else class="search-input-wrapper">
+              <Search :size="16" :stroke-width="2" class="search-icon" />
+              <input 
+                ref="searchInputRef"
+                v-model="searchQuery"
+                type="text"
+                class="search-input"
+                placeholder="Поиск..."
+                @input="onSearchInput"
+                @blur="onSearchBlur"
+              />
+              <button class="search-close-btn" @click="closeSearch">
+                <X :size="14" />
+              </button>
+            </div>
           </div>
           
           <div class="filter-chips-scroll">
@@ -68,13 +83,6 @@
                 @click="setFilterStatus('work')"
               >
                 В работе <span class="chip-count">{{ inWorkGoalsCount }}</span>
-              </button>
-              <button 
-                class="filter-chip" 
-                :class="{ active: filterStatus === 'unstatus' }" 
-                @click="setFilterStatus('unstatus')"
-              >
-                На оценке <span class="chip-count">{{ rawGoalsCount }}</span>
               </button>
               <button 
                 class="filter-chip" 
@@ -103,29 +111,45 @@
             v-for="goal in paginatedGoals" 
             :key="goal.id" 
             class="goal-card" 
-            @click="openEditModal(goal)"
+            :style="{ '--sphere-accent': getSphereColor(goal.sphereId) }"
+            @click="goToDecompose(goal.id)"
             @contextmenu.prevent="openBottomSheet(goal)"
             @touchstart="startLongPress(goal)"
             @touchend="cancelLongPress"
             @touchmove="cancelLongPress"
           >
-            <div class="goal-card-header">
-              <h3 class="goal-title">{{ goal.text }}</h3>
-              <button 
-                class="btn-arrow" 
-                @click.stop="goToDecompose(goal.id)" 
-                v-if="goal.status === 'validated'"
-              >
-                <ChevronRight :size="20" />
-              </button>
+            <div class="goal-card-visual">
+              <div class="goal-sphere-icon-wrapper" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
+                <component :is="getSphereIconComponent(goal.sphereId)" :size="24" />
+              </div>
+              <span v-if="goal.emoji" class="goal-emoji">{{ goal.emoji }}</span>
             </div>
-            <div class="goal-card-footer">
-              <span class="sphere-chip" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
-                {{ getSphereNameOnly(goal.sphereId) }}
-              </span>
-              <span class="status-chip" :class="getStatusClass(goal)">
-                {{ getStatusText(goal) }}
-              </span>
+            <div class="goal-card-content">
+              <div class="goal-card-header">
+                <h3 class="goal-title">{{ goal.text }}</h3>
+                <button 
+                  class="btn-settings-card" 
+                  @click.stop="openEditModal(goal)" 
+                  title="Настройки цели"
+                >
+                  <Settings :size="18" />
+                </button>
+              </div>
+              <div class="goal-card-footer">
+                <span class="sphere-chip" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
+                  {{ getSphereNameOnly(goal.sphereId) }}
+                </span>
+                <span v-if="goal.generatedByAI" class="ai-badge" title="Создано с помощью ИИ">
+                  <Bot :size="12" />
+                </span>
+                <span v-if="getStatusText(goal)" class="status-chip" :class="getStatusClass(goal)">
+                  {{ getStatusText(goal) }}
+                </span>
+                <span v-if="getStepsProgress(goal)" class="steps-progress">
+                  <ListChecks :size="14" />
+                  {{ getStepsProgress(goal).completed }}/{{ getStepsProgress(goal).total }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -169,19 +193,19 @@
               <span>Редактировать</span>
             </button>
             <button 
-              v-if="bottomSheetGoal?.status === 'validated'" 
+              v-if="isGoalTransferred(bottomSheetGoal?.id)" 
               class="bottom-sheet-action" 
               @click="handleBottomSheetDecompose"
             >
               <GitBranch :size="20" />
-              <span>Декомпозиция</span>
+              <span>Шаги</span>
             </button>
             <button 
-              v-if="bottomSheetGoal?.status === 'validated' && !isGoalTransferred(bottomSheetGoal?.id) && !isGoalCompleted(bottomSheetGoal?.id)"
+              v-if="!isGoalTransferred(bottomSheetGoal?.id) && !isGoalCompleted(bottomSheetGoal?.id)"
               class="bottom-sheet-action" 
               @click="handleBottomSheetTakeToWork"
             >
-              <Plus :size="20" />
+              <Play :size="20" />
               <span>Взять в работу</span>
             </button>
             <button 
@@ -197,8 +221,8 @@
               class="bottom-sheet-action action-danger" 
               @click="handleBottomSheetRemoveFromWork"
             >
-              <X :size="20" />
-              <span>Убрать из работы</span>
+              <RotateCcw :size="20" />
+              <span>Вернуть в банк</span>
             </button>
             <button class="bottom-sheet-action action-cancel" @click="closeBottomSheet">
               <span>Отмена</span>
@@ -259,25 +283,25 @@
           <!-- Quick Actions -->
           <div class="quick-actions" v-if="editingGoal">
             <button 
-              v-if="editingGoal.status === 'validated' && !isGoalTransferred(editingGoal.id)"
+              v-if="!isGoalTransferred(editingGoal.id) && !isGoalCompleted(editingGoal.id)"
               class="quick-action-btn action-work"
               title="Взять цель в работу"
               @click="handleQuickTakeToWork"
             >
               <Play :size="16" />
-              <span>В работу</span>
+              <span>Взять в работу</span>
+            </button>
+            <button 
+              v-if="isGoalTransferred(editingGoal.id) && !isGoalCompleted(editingGoal.id)"
+              class="quick-action-btn action-remove-work"
+              title="Вернуть цель в банк"
+              @click="handleQuickRemoveFromWork"
+            >
+              <RotateCcw :size="16" />
+              <span>Вернуть в банк</span>
             </button>
             <button 
               v-if="isGoalTransferred(editingGoal.id)"
-              class="quick-action-btn action-remove-work"
-              title="Убрать из работы"
-              @click="handleQuickRemoveFromWork"
-            >
-              <Pause :size="16" />
-              <span>Убрать</span>
-            </button>
-            <button 
-              v-if="editingGoal.status === 'validated'"
               class="quick-action-btn action-decompose"
               title="Перейти к декомпозиции на шаги"
               @click="goToDecompose(editingGoal.id)"
@@ -296,40 +320,9 @@
             </button>
           </div>
 
-          <!-- Tab Navigation -->
-          <div class="modal-tabs">
-            <button 
-              class="modal-tab" 
-              :class="{ active: editModalTab === 'main' }"
-              title="Основное"
-              @click="editModalTab = 'main'"
-            >
-              <FileText :size="16" />
-              <span>Основное</span>
-            </button>
-            <button 
-              class="modal-tab" 
-              :class="{ active: editModalTab === 'motivation' }"
-              title="Мотивация"
-              @click="editModalTab = 'motivation'"
-            >
-              <Heart :size="16" />
-              <span>Мотивация</span>
-            </button>
-            <button 
-              class="modal-tab" 
-              :class="{ active: editModalTab === 'status' }"
-              title="Статус"
-              @click="editModalTab = 'status'"
-            >
-              <Settings :size="16" />
-              <span>Статус</span>
-            </button>
-          </div>
-
           <div class="modal-body modal-body-tabs" v-if="editingGoal">
-            <!-- Tab: Main -->
-            <div v-show="editModalTab === 'main'" class="tab-content">
+            <!-- Goal editing content -->
+            <div class="tab-content">
               <div class="form-group">
                 <label class="form-label">Название цели</label>
                 <input 
@@ -356,115 +349,60 @@
                   </button>
                 </div>
               </div>
-            </div>
 
-            <!-- Tab: Motivation -->
-            <div v-show="editModalTab === 'motivation'" class="tab-content">
-              <div class="motivation-intro">
-                <Lightbulb :size="20" class="motivation-icon" />
-                <p>Ответьте на вопросы, чтобы понять истинную ценность цели</p>
+              <!-- Collapsible Reflection Section -->
+              <div class="reflection-toggle-section">
+                <button 
+                  type="button"
+                  class="reflection-toggle-btn"
+                  @click="showEditReflection = !showEditReflection"
+                >
+                  <MessageSquare :size="16" />
+                  <span>{{ showEditReflection ? 'Скрыть рефлексию' : 'Добавить рефлексию' }}</span>
+                  <span class="optional-badge" v-if="!showEditReflection">опционально</span>
+                  <ChevronDown :size="16" class="toggle-chevron" :class="{ rotated: showEditReflection }" />
+                </button>
               </div>
 
-              <div class="form-group">
-                <label class="form-label">1. Почему для меня это важно?</label>
-                <textarea 
-                  v-model="editingGoal.whyImportant"
-                  class="form-textarea form-textarea-visible"
-                  placeholder="Опишите, почему эта цель важна для вас..."
-                  rows="3"
-                ></textarea>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">2. Как это изменит мою жизнь?</label>
-                <textarea 
-                  v-model="editingGoal.why2"
-                  class="form-textarea form-textarea-visible"
-                  placeholder="Опишите, как достижение этой цели изменит вашу жизнь..."
-                  rows="3"
-                ></textarea>
-              </div>
-            </div>
-
-            <!-- Tab: Status -->
-            <div v-show="editModalTab === 'status'" class="tab-content">
-              <!-- Work Status Toggle -->
-              <div class="status-card" v-if="editingGoal.status === 'validated'">
-                <div class="status-card-header">
-                  <Target :size="20" />
-                  <span>Статус работы</span>
-                </div>
-                <div class="status-toggle-row">
-                  <span class="toggle-label">В работе</span>
-                  <button 
-                    class="toggle-switch"
-                    :class="{ active: isGoalTransferred(editingGoal.id) }"
-                    @click="toggleWorkStatus"
-                  >
-                    <span class="toggle-slider"></span>
-                  </button>
-                </div>
-                <p class="status-hint" v-if="isGoalTransferred(editingGoal.id)">
-                  Цель добавлена в активные. Вы можете декомпозировать её на шаги.
-                </p>
-                <p class="status-hint" v-else>
-                  Включите, чтобы начать работу над целью.
-                </p>
-              </div>
-
-              <!-- Validation Section -->
-              <div class="status-card">
-                <div class="status-card-header">
-                  <Shield :size="20" />
-                  <span>Оценка цели</span>
-                </div>
-                <p class="status-description">
-                  Подтверждённая цель отвечает на вопросы «почему важно?» и «как изменит жизнь?»
-                </p>
-                <div class="validation-buttons-new">
-                  <button 
-                    class="btn-validation-new btn-confirm"
-                    :class="{ active: editingGoal.status === 'validated' }"
-                    @click="selectValidationStatus(true)"
-                  >
-                    <CheckCircle :size="20" />
-                    <span>Подтвердить</span>
-                  </button>
-                  <button 
-                    class="btn-validation-new btn-reject"
-                    :class="{ active: editingGoal.status === 'rejected' }"
-                    @click="selectValidationStatus(false)"
-                  >
-                    <XCircle :size="20" />
-                    <span>Отклонить</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Progress (if in work) -->
-              <div class="status-card" v-if="isGoalTransferred(editingGoal.id)">
-                <div class="status-card-header">
-                  <BarChart2 :size="20" />
-                  <span>Прогресс</span>
-                </div>
-                <div class="progress-info">
-                  <div class="progress-bar-container">
-                    <div class="progress-bar-fill" :style="{ width: getGoalProgress(editingGoal.id) + '%' }"></div>
+              <transition name="slide-fade">
+                <div v-if="showEditReflection" class="reflection-fields">
+                  <div class="form-group">
+                    <label class="form-label">Почему это важно?</label>
+                    <textarea 
+                      v-model="editingGoal.whyImportant"
+                      class="form-textarea form-textarea-visible"
+                      placeholder="Опишите, почему эта цель важна для вас..."
+                      rows="2"
+                    ></textarea>
                   </div>
-                  <span class="progress-text">{{ getGoalProgressText(editingGoal.id) }}</span>
+
+                  <div class="form-group">
+                    <label class="form-label">Как это изменит жизнь?</label>
+                    <textarea 
+                      v-model="editingGoal.why2"
+                      class="form-textarea form-textarea-visible"
+                      placeholder="Опишите ожидаемые изменения..."
+                      rows="2"
+                    ></textarea>
+                  </div>
                 </div>
-              </div>
+              </transition>
             </div>
           </div>
 
-          <div class="modal-footer modal-footer-redesigned">
-            <button class="btn btn-secondary" @click="closeEditModal">
-              Отмена
+          <div class="modal-footer modal-footer-redesigned modal-footer-with-delete">
+            <button class="btn btn-danger-ghost" @click="deleteGoalFromModal">
+              <Trash2 :size="16" />
             </button>
-            <button class="btn btn-primary" @click="saveGoalEdit">
-              <Check :size="16" :stroke-width="2" />
-              Сохранить
-            </button>
+            <div class="modal-footer-actions">
+              <button class="btn btn-secondary" @click="closeEditModal">
+                Отмена
+              </button>
+              <button class="btn btn-primary" @click="saveGoalEdit">
+                <Check :size="16" :stroke-width="2" />
+                Сохранить
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -485,6 +423,43 @@
           </div>
 
           <div class="modal-body">
+            <!-- Секция шаблонов целей -->
+            <div class="templates-section">
+              <button class="templates-toggle" @click="toggleTemplates">
+                <Lightbulb :size="18" />
+                <span>Выбрать из шаблонов</span>
+                <ChevronDown :size="16" class="toggle-chevron" :class="{ rotated: showTemplates }" />
+              </button>
+              
+              <transition name="slide-fade">
+                <div v-if="showTemplates" class="templates-content">
+                  <div class="templates-sphere-tabs">
+                    <button
+                      v-for="sphere in lifeSpheres"
+                      :key="sphere.id"
+                      class="template-sphere-tab"
+                      :class="{ active: selectedTemplateSphere === sphere.id }"
+                      :style="{ '--sphere-color': getSphereColor(sphere.id) }"
+                      @click="selectedTemplateSphere = sphere.id"
+                    >
+                      <component :is="getSphereIcon(sphere.id)" :size="16" />
+                    </button>
+                  </div>
+                  
+                  <div class="templates-list">
+                    <button
+                      v-for="(template, idx) in filteredTemplates"
+                      :key="idx"
+                      class="template-item"
+                      @click="selectTemplate(template)"
+                    >
+                      {{ template }}
+                    </button>
+                  </div>
+                </div>
+              </transition>
+            </div>
+
             <div class="form-group">
               <label class="form-label">Название цели</label>
               <input 
@@ -512,76 +487,58 @@
               </div>
             </div>
 
-            <div class="why-section-divider">
-              <span>Проверка цели</span>
-            </div>
+            <!-- Опциональная секция рефлексии (скрыта по умолчанию) -->
+            <div class="reflection-toggle-section">
+              <button class="reflection-toggle-btn" @click="showReflectionSection = !showReflectionSection">
+                <MessageSquare :size="16" />
+                <span>Добавить рефлексию</span>
+                <span class="optional-badge">опционально</span>
+                <ChevronDown :size="16" class="toggle-chevron" :class="{ rotated: showReflectionSection }" />
+              </button>
+              
+              <transition name="slide-fade">
+                <div v-if="showReflectionSection" class="reflection-content">
+                  <div class="accordion-group">
+                    <div 
+                      class="accordion-header" 
+                      :class="{ open: whyAccordion.question1Open, filled: newGoal.whyImportant?.trim() }"
+                      @click="toggleWhyQuestion(1)"
+                    >
+                      <span class="accordion-title">1. Почему для меня это важно?</span>
+                      <span v-if="newGoal.whyImportant?.trim() && !whyAccordion.question1Open" class="accordion-preview">{{ newGoal.whyImportant.slice(0, 30) }}...</span>
+                      <ChevronDown :size="16" class="accordion-chevron" :class="{ open: whyAccordion.question1Open }" />
+                    </div>
+                    <div class="accordion-content" v-show="whyAccordion.question1Open">
+                      <textarea 
+                        v-model="newGoal.whyImportant"
+                        class="form-textarea"
+                        placeholder="Опишите, почему эта цель важна для вас"
+                        rows="3"
+                      ></textarea>
+                    </div>
+                  </div>
 
-            <div class="accordion-group">
-              <div 
-                class="accordion-header" 
-                :class="{ open: whyAccordion.question1Open, filled: newGoal.whyImportant?.trim() }"
-                @click="toggleWhyQuestion(1)"
-              >
-                <span class="accordion-title">1. Почему для меня это важно?</span>
-                <span v-if="newGoal.whyImportant?.trim() && !whyAccordion.question1Open" class="accordion-preview">{{ newGoal.whyImportant.slice(0, 30) }}...</span>
-                <ChevronDown :size="16" class="accordion-chevron" :class="{ open: whyAccordion.question1Open }" />
-              </div>
-              <div class="accordion-content" v-show="whyAccordion.question1Open">
-                <textarea 
-                  v-model="newGoal.whyImportant"
-                  class="form-textarea"
-                  placeholder="Опишите, почему эта цель важна для вас"
-                  rows="3"
-                ></textarea>
-              </div>
-            </div>
-
-            <div class="accordion-group">
-              <div 
-                class="accordion-header" 
-                :class="{ open: whyAccordion.question2Open, filled: newGoal.why2?.trim() }"
-                @click="toggleWhyQuestion(2)"
-              >
-                <span class="accordion-title">2. Как это изменит мою жизнь?</span>
-                <span v-if="newGoal.why2?.trim() && !whyAccordion.question2Open" class="accordion-preview">{{ newGoal.why2.slice(0, 30) }}...</span>
-                <ChevronDown :size="16" class="accordion-chevron" :class="{ open: whyAccordion.question2Open }" />
-              </div>
-              <div class="accordion-content" v-show="whyAccordion.question2Open">
-                <textarea 
-                  v-model="newGoal.why2"
-                  class="form-textarea"
-                  placeholder="Опишите, как достижение этой цели изменит вашу жизнь"
-                  rows="3"
-                ></textarea>
-              </div>
-            </div>
-
-            <div class="validation-section">
-              <div class="validation-label">
-                Оценка цели:
-                <span class="tooltip-wrapper">
-                  <HelpCircle :size="16" :stroke-width="2" class="help-icon" />
-                  <span class="tooltip-text">Истинная цель отвечает на вопросы «почему важно?» и «как изменит жизнь?». Ложная — навязана извне или не ведёт к переменам.</span>
-                </span>
-              </div>
-              <div class="validation-buttons">
-                <button 
-                  class="btn btn-validation btn-true-goal"
-                  :class="{ active: newGoal.status === 'validated' }"
-                  @click="selectNewGoalValidationStatus(true)"
-                >
-                  <CheckCircle :size="18" :stroke-width="2" />
-                  Истинная
-                </button>
-                <button 
-                  class="btn btn-validation btn-false-goal"
-                  :class="{ active: newGoal.status === 'rejected' }"
-                  @click="selectNewGoalValidationStatus(false)"
-                >
-                  <XCircle :size="18" :stroke-width="2" />
-                  Ложная
-                </button>
-              </div>
+                  <div class="accordion-group">
+                    <div 
+                      class="accordion-header" 
+                      :class="{ open: whyAccordion.question2Open, filled: newGoal.why2?.trim() }"
+                      @click="toggleWhyQuestion(2)"
+                    >
+                      <span class="accordion-title">2. Как это изменит мою жизнь?</span>
+                      <span v-if="newGoal.why2?.trim() && !whyAccordion.question2Open" class="accordion-preview">{{ newGoal.why2.slice(0, 30) }}...</span>
+                      <ChevronDown :size="16" class="accordion-chevron" :class="{ open: whyAccordion.question2Open }" />
+                    </div>
+                    <div class="accordion-content" v-show="whyAccordion.question2Open">
+                      <textarea 
+                        v-model="newGoal.why2"
+                        class="form-textarea"
+                        placeholder="Опишите, как достижение этой цели изменит вашу жизнь"
+                        rows="3"
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
+              </transition>
             </div>
           </div>
 
@@ -601,7 +558,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
@@ -648,8 +605,11 @@ import {
   Pause,
   FileText,
   Settings,
-  Shield,
-  BarChart2
+  MessageSquare,
+  Wand2,
+  Bot,
+  Loader2,
+  Info
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -671,6 +631,10 @@ const sphereColors = {
 }
 
 function getSphereIcon(sphereId) {
+  return sphereIcons[sphereId] || Lightbulb
+}
+
+function getSphereIconComponent(sphereId) {
   return sphereIcons[sphereId] || Lightbulb
 }
 
@@ -696,8 +660,6 @@ const apiPagination = computed(() => goalsApiData.value?.pagination || { page: 1
 
 // Stats from API (prefer API data, fallback to local)
 const totalGoalsCount = computed(() => apiTotalData.value?.total_goals ?? rawIdeas.value.length)
-const trueGoalsCount = computed(() => apiTotalData.value?.true_goals ?? validatedGoals.value.length)
-const falseGoalsCount = computed(() => apiTotalData.value?.false_goals ?? rejectedGoals.value.length)
 const inWorkGoalsCount = computed(() => apiTotalData.value?.in_work_goals ?? transferredGoals.value.length)
 
 // Pagination state
@@ -709,15 +671,37 @@ const addingNewGoal = ref(false)
 const filterSphere = ref('')
 const filterStatus = ref('')
 const searchQuery = ref('')
+const showSearchInput = ref(false)
+const searchInputRef = ref(null)
 const displayLimit = ref(6)
 
 // Debounce timer for search
 let searchDebounceTimer = null
+
+function toggleSearch() {
+  showSearchInput.value = true
+  nextTick(() => {
+    searchInputRef.value?.focus()
+  })
+}
+
+function closeSearch() {
+  searchQuery.value = ''
+  showSearchInput.value = false
+}
+
+function onSearchBlur() {
+  if (!searchQuery.value) {
+    setTimeout(() => {
+      showSearchInput.value = false
+    }, 150)
+  }
+}
 const selectedBankGoals = ref([])
 
 const showEditModal = ref(false)
 const editingGoal = ref(null)
-const editModalTab = ref('main')
+const showEditReflection = ref(false)
 
 const showBottomSheet = ref(false)
 const bottomSheetGoal = ref(null)
@@ -727,12 +711,15 @@ const infiniteScrollTrigger = ref(null)
 let infiniteScrollObserver = null
 
 const showAddModal = ref(false)
+const showReflectionSection = ref(false)
 const newGoal = ref({
   text: '',
   sphereId: '',
   whyImportant: '',
   why2: '',
-  status: null
+  status: null,
+  generatedByAI: false,
+  steps: []
 })
 
 // Accordion state for question fields
@@ -758,6 +745,73 @@ function resetAccordion(isEdit = false) {
   const accordion = isEdit ? editWhyAccordion : whyAccordion
   accordion.value.question1Open = false
   accordion.value.question2Open = false
+}
+
+// Шаблоны целей по сферам ССП
+const goalTemplates = {
+  wealth: [
+    'Создать финансовую подушку на 3 месяца',
+    'Увеличить доход на 20%',
+    'Закрыть все кредиты и долги',
+    'Начать инвестировать регулярно',
+    'Сократить ненужные расходы'
+  ],
+  hobbies: [
+    'Освоить новое творческое хобби',
+    'Создать портфолио своих работ',
+    'Участвовать в творческом конкурсе',
+    'Выделять время на отдых и хобби еженедельно',
+    'Пройти курс по дизайну/музыке/искусству'
+  ],
+  friendship: [
+    'Улучшить общение с друзьями',
+    'Завести новых друзей по интересам',
+    'Организовать регулярные встречи с друзьями',
+    'Научиться слушать и понимать других',
+    'Расширить круг общения'
+  ],
+  health: [
+    'Установить режим сна 7-8 часов',
+    'Заниматься спортом 3 раза в неделю',
+    'Пройти полное медицинское обследование',
+    'Наладить здоровое питание',
+    'Избавиться от вредной привычки'
+  ],
+  career: [
+    'Получить повышение или новую должность',
+    'Освоить новый профессиональный навык',
+    'Построить личный бренд в индустрии',
+    'Найти ментора в своей сфере',
+    'Пройти сертификацию или курс повышения квалификации'
+  ],
+  love: [
+    'Улучшить отношения с партнёром',
+    'Проводить качественное время с семьёй',
+    'Научиться выражать чувства и благодарность',
+    'Разрешить затянувшийся конфликт в отношениях',
+    'Укрепить эмоциональную связь с близкими'
+  ]
+}
+
+const showTemplates = ref(false)
+const selectedTemplateSphere = ref('')
+
+const filteredTemplates = computed(() => {
+  if (!selectedTemplateSphere.value) return []
+  return goalTemplates[selectedTemplateSphere.value] || []
+})
+
+function selectTemplate(template) {
+  newGoal.value.text = template
+  newGoal.value.sphereId = selectedTemplateSphere.value
+  showTemplates.value = false
+}
+
+function toggleTemplates() {
+  showTemplates.value = !showTemplates.value
+  if (showTemplates.value && !selectedTemplateSphere.value && lifeSpheres.value.length > 0) {
+    selectedTemplateSphere.value = lifeSpheres.value[0].id
+  }
 }
 
 // API loading state  
@@ -835,21 +889,29 @@ function addNewGoal() {
     sphereId: '',
     whyImportant: '',
     why2: '',
-    status: null
+    status: null,
+    generatedByAI: false,
+    steps: []
   }
   resetAccordion(false)
+  showReflectionSection.value = false
+  showTemplates.value = false
   showAddModal.value = true
 }
 
 function closeAddModal() {
   showAddModal.value = false
+  showReflectionSection.value = false
+  showTemplates.value = false
   resetAccordion(false)
   newGoal.value = {
     text: '',
     sphereId: '',
     whyImportant: '',
     why2: '',
-    status: null
+    status: null,
+    generatedByAI: false,
+    steps: []
   }
 }
 
@@ -866,7 +928,9 @@ async function saveNewGoal() {
     threeWhys: {
       why1: newGoal.value.whyImportant,
       why2: newGoal.value.why2
-    }
+    },
+    generatedByAI: newGoal.value.generatedByAI,
+    steps: newGoal.value.steps || []
   }
   
   // Optimistic UI: add to local state first
@@ -886,20 +950,6 @@ async function saveNewGoal() {
   })
 }
 
-function selectNewGoalValidationStatus(isValid) {
-  newGoal.value.status = isValid ? 'validated' : 'rejected'
-}
-
-const validatedGoals = computed(() => rawIdeas.value.filter(i => i.status === 'validated'))
-const validatedCount = computed(() => validatedGoals.value.length)
-const rejectedGoals = computed(() => rawIdeas.value.filter(i => i.status === 'rejected'))
-const rejectedCount = computed(() => rejectedGoals.value.length)
-const uncheckedCount = computed(() => rawIdeas.value.filter(i => !i.status || i.status === 'raw').length)
-const checkedCount = computed(() => validatedCount.value + rejectedCount.value)
-const validatedPercent = computed(() => rawIdeas.value.length > 0 ? (validatedCount.value / rawIdeas.value.length) * 100 : 0)
-const rejectedPercent = computed(() => rawIdeas.value.length > 0 ? (rejectedCount.value / rawIdeas.value.length) * 100 : 0)
-
-const rawGoalsCount = computed(() => apiTotalData.value?.unstatus_goals ?? uncheckedCount.value)
 const completedGoalsCount = computed(() => apiTotalData.value?.completed_goals ?? allGoals.value.filter(g => g.status === 'completed' && g.source === 'goals-bank').length)
 
 function setFilterStatus(status) {
@@ -910,17 +960,52 @@ function setFilterStatus(status) {
 function getStatusClass(goal) {
   if (isGoalCompleted(goal.id)) return 'completed'
   if (isGoalTransferred(goal.id)) return 'in-work'
-  if (goal.status === 'rejected') return 'rejected'
-  if (!goal.status || goal.status === 'raw') return 'raw'
   return 'available'
 }
 
 function getStatusText(goal) {
   if (isGoalCompleted(goal.id)) return 'Завершена'
   if (isGoalTransferred(goal.id)) return 'В работе'
-  if (goal.status === 'rejected') return 'Отклонена'
-  if (goal.status === 'validated') return 'Истинная'
-  return 'На оценке'
+  return ''
+}
+
+function getStepsProgress(goal) {
+  // 1. Check rawIdea's totalStepsData (from backend)
+  if (goal.totalStepsData?.total_steps > 0) {
+    return {
+      completed: goal.totalStepsData.completed_steps || 0,
+      total: goal.totalStepsData.total_steps
+    }
+  }
+  
+  // 2. Check rawIdea's steps directly (for local/demo mode)
+  if (goal.steps && goal.steps.length > 0) {
+    return {
+      completed: goal.steps.filter(s => s.completed).length,
+      total: goal.steps.length
+    }
+  }
+  
+  // 3. Find transferred goal in work (by sourceId or by id)
+  const transferredGoal = allGoals.value.find(g => 
+    (g.sourceId === goal.id && g.source === 'goals-bank') || g.id === goal.id
+  )
+  if (transferredGoal) {
+    if (transferredGoal.totalStepsData?.total_steps > 0) {
+      return {
+        completed: transferredGoal.totalStepsData.completed_steps || 0,
+        total: transferredGoal.totalStepsData.total_steps
+      }
+    }
+    if (transferredGoal.steps && transferredGoal.steps.length > 0) {
+      return {
+        completed: transferredGoal.steps.filter(s => s.completed).length,
+        total: transferredGoal.steps.length
+      }
+    }
+  }
+  
+  return null
 }
 
 const expandedGoalId = ref(null)
@@ -1236,7 +1321,7 @@ function clearBankSelection() {
 
 const canBulkTakeToWork = computed(() => {
   return selectedBankGoals.value.some(id => {
-    const goal = validatedGoals.value.find(g => g.id === id)
+    const goal = rawIdeas.value.find(g => g.id === id)
     return goal && !isGoalTransferred(id) && !isGoalCompleted(id)
   })
 })
@@ -1249,7 +1334,7 @@ const canBulkComplete = computed(() => {
 
 function bulkTakeToWork() {
   const goalsToTake = selectedBankGoals.value
-    .map(id => validatedGoals.value.find(g => g.id === id))
+    .map(id => rawIdeas.value.find(g => g.id === id))
     .filter(goal => goal && !isGoalTransferred(goal.id) && !isGoalCompleted(goal.id))
   
   if (goalsToTake.length === 0) return
@@ -1266,7 +1351,7 @@ function bulkCompleteGoals() {
   
   if (confirm(`Завершить ${goalsToComplete.length} ${goalsToComplete.length === 1 ? 'цель' : 'целей'}?`)) {
     goalsToComplete.forEach(sourceId => {
-      const goal = validatedGoals.value.find(g => g.id === sourceId)
+      const goal = rawIdeas.value.find(g => g.id === sourceId)
       if (goal) completeGoalFromBank(goal)
     })
     clearBankSelection()
@@ -1288,32 +1373,18 @@ const sphereDistribution = computed(() => {
       id: sphere.id,
       name: sphere.name,
       icon: sphere.icon,
-      total: 0,
-      validated: 0,
-      rejected: 0,
-      validatedPercent: 0,
-      rejectedPercent: 0
+      total: 0
     }
   })
   
   rawIdeas.value.forEach(idea => {
     if (idea.sphereId && distribution[idea.sphereId]) {
       distribution[idea.sphereId].total++
-      if (idea.status === 'validated') {
-        distribution[idea.sphereId].validated++
-      } else if (idea.status === 'rejected') {
-        distribution[idea.sphereId].rejected++
-      }
     }
   })
   
   return Object.values(distribution)
     .filter(s => s.total > 0)
-    .map(s => ({
-      ...s,
-      validatedPercent: s.total > 0 ? (s.validated / s.total) * 100 : 0,
-      rejectedPercent: s.total > 0 ? (s.rejected / s.total) * 100 : 0
-    }))
     .sort((a, b) => b.total - a.total)
 })
 
@@ -1389,7 +1460,7 @@ function addExampleGoal(sphereId, goalText) {
 }
 
 const weakSphereGoals = computed(() => {
-  return validatedGoals.value.filter(g => isWeakSphere(g.sphereId))
+  return rawIdeas.value.filter(g => isWeakSphere(g.sphereId))
 })
 
 const ideasBySphere = computed(() => {
@@ -1556,7 +1627,7 @@ async function completeGoalsBankHandler() {
     return
   }
   
-  const selectedGoals = validatedGoals.value.filter(g => selectedGoalIds.value.includes(g.id))
+  const selectedGoals = rawIdeas.value.filter(g => selectedGoalIds.value.includes(g.id))
   
   // First, sync ALL rawIdeas with backend (those without backendId)
   const goalsToCreate = rawIdeas.value.filter(g => !g.backendId)
@@ -1740,8 +1811,8 @@ function openEditModal(goal) {
     sphereId: goal.sphereId,
     status: goal.status || 'raw'
   }
-  editModalTab.value = 'main'
   resetAccordion(true)
+  showEditReflection.value = !!(editingGoal.value.whyImportant || editingGoal.value.why2)
   showEditModal.value = true
 }
 
@@ -1774,30 +1845,9 @@ function toggleWorkStatus() {
   }
 }
 
-function getGoalProgress(goalId) {
-  const transferredGoal = allGoals.value.find(g => g.sourceId === goalId && g.source === 'goals-bank')
-  if (!transferredGoal) return 0
-  
-  const stepsArray = store.steps || []
-  const steps = stepsArray.filter(s => s.goalId === transferredGoal.id || s.sourceGoalId === transferredGoal.id)
-  if (steps.length === 0) return 0
-  const completed = steps.filter(s => s.status === 'completed' || s.completed).length
-  return Math.round((completed / steps.length) * 100)
-}
-
-function getGoalProgressText(goalId) {
-  const transferredGoal = allGoals.value.find(g => g.sourceId === goalId && g.source === 'goals-bank')
-  if (!transferredGoal) return 'Не в работе'
-  
-  const stepsArray = store.steps || []
-  const steps = stepsArray.filter(s => s.goalId === transferredGoal.id || s.sourceGoalId === transferredGoal.id)
-  if (steps.length === 0) return 'Нет шагов'
-  const completed = steps.filter(s => s.status === 'completed' || s.completed).length
-  return `${completed} из ${steps.length} шагов`
-}
-
 function closeEditModal() {
   showEditModal.value = false
+  showEditReflection.value = false
   resetAccordion(true)
   editingGoal.value = null
 }
@@ -1828,11 +1878,6 @@ async function saveGoalEdit() {
   if (backendId) {
     store.updateGoalOnBackend(backendId, updates)
   }
-}
-
-function selectValidationStatus(isTrue) {
-  if (!editingGoal.value) return
-  editingGoal.value.status = isTrue ? 'validated' : 'rejected'
 }
 
 function removeGoalFromWork() {
@@ -1903,8 +1948,25 @@ async function deleteGoalFromModal() {
 
 function goToFullEdit(goalId) {
   const transferredGoal = store.goals.find(g => g.sourceId === goalId && g.source === 'goals-bank')
-  if (transferredGoal) {
-    router.push(`/app/goal/${transferredGoal.id}`)
+  if (!transferredGoal) {
+    console.warn('[GoalsBank] Cannot edit: transferred goal not found for', goalId)
+    return
+  }
+  
+  // Use backendId if available, otherwise use id directly (id may already be local-{id} format)
+  const navigateId = transferredGoal.backendId || transferredGoal.id
+  
+  // Dev mode: allow navigation without backendId
+  if (DEBUG_MODE && SKIP_AUTH_CHECK) {
+    router.push(`/app/goals/${navigateId}`)
+    return
+  }
+  
+  // Production: require backendId
+  if (transferredGoal.backendId) {
+    router.push(`/app/goals/${transferredGoal.backendId}`)
+  } else {
+    console.warn('[GoalsBank] Cannot edit: no backendId for transferred goal', goalId)
   }
 }
 
@@ -1985,8 +2047,9 @@ onUnmounted(() => {
 
 <style scoped>
 .goals-bank-container {
-  max-width: 1400px;
+  max-width: var(--content-width-wide);
   margin: 0 auto;
+  padding: var(--container-padding);
   padding-bottom: 2rem;
 }
 
@@ -2128,15 +2191,68 @@ onUnmounted(() => {
   margin-bottom: 1rem;
 }
 
-.search-filter-bar .search-input-wrapper {
+.search-expandable {
   flex-shrink: 0;
-  width: 160px;
-  min-width: 120px;
+  display: flex;
+  align-items: center;
 }
 
-.search-filter-bar .search-input {
-  padding: 0.5rem 0.75rem 0.5rem 2rem;
+.search-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.search-toggle-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.search-expandable.expanded .search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  animation: expandSearch 0.2s ease forwards;
+}
+
+@keyframes expandSearch {
+  from { width: 36px; opacity: 0; }
+  to { width: 160px; opacity: 1; }
+}
+
+.search-expandable .search-input {
+  padding: 0.5rem 2rem 0.5rem 2rem;
   font-size: 0.875rem;
+  width: 160px;
+}
+
+.search-close-btn {
+  position: absolute;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.search-close-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
 }
 
 .search-filter-bar .search-icon {
@@ -2213,11 +2329,50 @@ onUnmounted(() => {
   padding: 1rem;
   cursor: pointer;
   transition: all 0.15s ease;
+  display: flex;
+  gap: 0.875rem;
+  border-left: 3px solid var(--sphere-accent, var(--border-color));
 }
 
 .goal-card:hover {
   border-color: var(--primary-color);
+  border-left-color: var(--sphere-accent, var(--primary-color));
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.goal-card-visual {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.goal-sphere-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sphere-color) 12%, transparent);
+  color: var(--sphere-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.goal-card:hover .goal-sphere-icon-wrapper {
+  background: color-mix(in srgb, var(--sphere-color) 20%, transparent);
+  transform: scale(1.05);
+}
+
+.goal-emoji {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.goal-card-content {
+  flex: 1;
+  min-width: 0;
 }
 
 .goal-card-header {
@@ -2258,6 +2413,32 @@ onUnmounted(() => {
 .btn-arrow:hover {
   background: var(--primary-color);
   color: white;
+}
+
+.btn-settings-card {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: all 0.2s;
+}
+
+.btn-settings-card:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  opacity: 1;
+}
+
+.goal-card:hover .btn-settings-card {
+  opacity: 1;
 }
 
 .goal-card-footer {
@@ -2304,6 +2485,182 @@ onUnmounted(() => {
 .status-chip.available {
   background: #f3e8ff;
   color: #7c3aed;
+}
+
+.steps-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 1rem;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.ai-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  color: white;
+}
+
+/* Input with AI button */
+.input-with-ai {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.input-with-ai .form-input {
+  flex: 1;
+}
+
+.ai-generate-wrapper {
+  position: relative;
+}
+
+.btn-ai-generate {
+  width: 40px;
+  height: 40px;
+  border-radius: 0.5rem;
+  border: none;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-ai-generate:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.btn-ai-generate:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-ai-generate.generating {
+  background: linear-gradient(135deg, #a78bfa, #818cf8);
+}
+
+.btn-ai-generate .spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.ai-tooltip {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 220px;
+  padding: 0.75rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+}
+
+.ai-tooltip strong {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.ai-tooltip p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.tooltip-fade-enter-active,
+.tooltip-fade-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.tooltip-fade-enter-from,
+.tooltip-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+/* AI Preview Section */
+.ai-preview-section {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(99, 102, 241, 0.1));
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.ai-preview-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #7c3aed;
+  margin-bottom: 0.5rem;
+}
+
+.ai-steps-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.ai-step-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.5rem;
+  background: var(--bg-primary);
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.ai-step-item .step-number {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #7c3aed;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ai-step-item .step-title {
+  color: var(--text-primary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-steps-more {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  padding: 0.25rem;
 }
 
 /* FAB Button */
@@ -4052,14 +4409,24 @@ onUnmounted(() => {
     gap: 0.5rem;
   }
   
-  .search-filter-bar .search-input-wrapper {
-    width: 110px;
-    min-width: 100px;
+  .search-toggle-btn {
+    width: 32px;
+    height: 32px;
   }
   
-  .search-filter-bar .search-input {
-    padding: 0.375rem 0.5rem 0.375rem 1.75rem;
+  .search-expandable.expanded .search-input-wrapper {
+    animation: expandSearchMobile 0.2s ease forwards;
+  }
+  
+  @keyframes expandSearchMobile {
+    from { width: 32px; opacity: 0; }
+    to { width: 120px; opacity: 1; }
+  }
+  
+  .search-expandable .search-input {
+    padding: 0.375rem 1.75rem;
     font-size: 0.8125rem;
+    width: 120px;
   }
   
   .filter-chips-inner {
@@ -5910,6 +6277,29 @@ onUnmounted(() => {
   border-top: 1px solid var(--border-color, #e5e7eb);
 }
 
+.modal-footer-with-delete {
+  justify-content: space-between;
+}
+
+.modal-footer-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btn-danger-ghost {
+  background: transparent;
+  color: #ef4444;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-danger-ghost:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
 .btn-secondary {
   background: var(--bg, #f3f4f6);
   color: var(--text-primary, #1f2937);
@@ -6273,6 +6663,178 @@ onUnmounted(() => {
 .form-textarea:focus {
   outline: none;
   border-color: var(--primary-color);
+}
+
+/* Секция рефлексии (опциональная) */
+.reflection-toggle-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.reflection-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reflection-toggle-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.reflection-toggle-btn .toggle-chevron {
+  margin-left: auto;
+  transition: transform 0.2s;
+}
+
+.reflection-toggle-btn .toggle-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.optional-badge {
+  font-size: 0.7rem;
+  padding: 0.125rem 0.375rem;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border-radius: 4px;
+}
+
+.reflection-content {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.reflection-fields {
+  margin-top: 0.75rem;
+}
+
+/* Шаблоны целей */
+.templates-section {
+  margin-bottom: 1rem;
+}
+
+.templates-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
+  border: 1px dashed var(--primary-color);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--primary-color);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.templates-toggle:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.12));
+}
+
+.templates-toggle .toggle-chevron {
+  margin-left: auto;
+  transition: transform 0.2s;
+}
+
+.templates-toggle .toggle-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.templates-content {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.templates-sphere-tabs {
+  display: flex;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.template-sphere-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1.5px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.template-sphere-tab:hover {
+  border-color: var(--sphere-color);
+  color: var(--sphere-color);
+}
+
+.template-sphere-tab.active {
+  border-color: var(--sphere-color);
+  background: color-mix(in srgb, var(--sphere-color) 15%, var(--bg-primary));
+  color: var(--sphere-color);
+}
+
+.templates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.template-item {
+  padding: 0.75rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.template-item:hover {
+  border-color: var(--primary-color);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+/* Slide-fade transition */
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all 0.25s ease;
+}
+
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  opacity: 0;
+  max-height: 0;
+  transform: translateY(-8px);
+}
+
+.slide-fade-enter-to,
+.slide-fade-leave-from {
+  opacity: 1;
+  max-height: 400px;
 }
 
 .sphere-select-grid {

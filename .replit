@@ -12,6 +12,10 @@ build = ["npm", "run", "build"]
 run = ["npm", "run", "start"]
 
 [[ports]]
+localPort = 3001
+externalPort = 3001
+
+[[ports]]
 localPort = 5000
 externalPort = 80
 
@@ -94,6 +98,10 @@ author = "agent"
 task = "workflow.run"
 args = "Start application"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "AI Proxy Server"
+
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -103,5 +111,18 @@ task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
 
+[[workflows.workflow]]
+name = "AI Proxy Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node server/aiProxy.js"
+waitForPort = 3001
+
+[workflows.workflow.metadata]
+outputType = "console"
+
 [agent]
 expertMode = true
+integrations = ["javascript_openai_ai_integrations:1.0.0"]

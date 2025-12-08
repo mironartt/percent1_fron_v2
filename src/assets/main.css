@@ -27,6 +27,14 @@
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
+  
+  /* Content width */
+  --content-width-narrow: 900px;
+  --content-width-wide: 1200px;
+  
+  /* Container padding */
+  --container-padding: 1.5rem;
+  --container-padding-mobile: 1rem;
 }
 
 :root.dark {
@@ -303,4 +311,11 @@ p {
 
 .break-all {
   word-break: break-all;
+}
+
+/* Mobile responsive container padding */
+@media (max-width: 768px) {
+  :root {
+    --container-padding: var(--container-padding-mobile);
+  }
 }
