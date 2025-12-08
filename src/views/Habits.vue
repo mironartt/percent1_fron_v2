@@ -1894,6 +1894,10 @@ const xpByDay = computed(() => {
 })
 
 function isHabitCompletedToday(habit) {
+  if (weekOffset.value !== 0) {
+    return false
+  }
+  
   const today = new Date()
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
   
@@ -2594,6 +2598,9 @@ const bestMonthName = computed(() => {
 })
 
 function isScheduledForToday(habit) {
+  if (weekOffset.value !== 0) {
+    return true
+  }
   const today = new Date().getDay()
   return isScheduledForDay(habit, today)
 }
