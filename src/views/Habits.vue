@@ -6,10 +6,6 @@
           <h1 class="page-title">Мои привычки</h1>
           <p class="page-subtitle">Маленькие шаги к большим изменениям</p>
         </div>
-        <button class="btn btn-primary desktop-only" @click="openAddModal">
-          <Plus :size="18" :stroke-width="1.5" />
-          Добавить привычку
-        </button>
       </div>
     </header>
 
@@ -235,7 +231,7 @@
     <div class="habits-content" v-if="activeTab === 'tracker' || allHabits.length === 0">
       <div class="habits-list" v-if="allHabits.length > 0">
         <div 
-          v-for="habit in allHabits" 
+          v-for="habit in paginatedHabits" 
           :key="habit.id"
           class="habit-card"
           :class="{ 
@@ -292,6 +288,34 @@
             <span>Удалена {{ formatDeletedDate(habit.deletedAt) }}</span>
           </div>
         </div>
+        
+        <!-- Pagination -->
+        <div v-if="totalHabitsPages > 1" class="pagination-bar">
+          <button 
+            class="pagination-btn"
+            :disabled="currentPageHabits === 1"
+            @click="goToHabitsPage(currentPageHabits - 1)"
+          >
+            <ChevronLeft :size="18" />
+          </button>
+          <button 
+            v-for="page in visibleHabitsPages" 
+            :key="page.key"
+            class="pagination-btn"
+            :class="{ active: page.label === currentPageHabits, ellipsis: page.label === '...' }"
+            :disabled="page.label === '...'"
+            @click="page.label !== '...' && goToHabitsPage(page.label)"
+          >
+            {{ page.label }}
+          </button>
+          <button 
+            class="pagination-btn"
+            :disabled="currentPageHabits === totalHabitsPages"
+            @click="goToHabitsPage(currentPageHabits + 1)"
+          >
+            <ChevronRight :size="18" />
+          </button>
+        </div>
       </div>
 
       <div class="deleted-habits-section" v-if="deletedHabits.length > 0 && isCurrentWeek">
@@ -337,7 +361,7 @@
         </div>
       </div>
 
-      <div class="mobile-add-button" v-if="allHabits.length > 0 || deletedHabits.length > 0">
+      <div class="add-button-container" v-if="allHabits.length > 0 || deletedHabits.length > 0">
         <button class="btn btn-primary btn-add-habit" @click="openAddModal">
           <Plus :size="18" :stroke-width="1.5" />
           Добавить привычку
@@ -1749,6 +1773,51 @@ const deletedHabits = computed(() => {
       xp_penalty: habit.xp_penalty || habit.xpPenalty || 0
     }))
 })
+
+const HABITS_PER_PAGE = 10
+const currentPageHabits = ref(1)
+
+const totalHabitsPages = computed(() => {
+  return Math.ceil(allHabits.value.length / HABITS_PER_PAGE)
+})
+
+const paginatedHabits = computed(() => {
+  const start = (currentPageHabits.value - 1) * HABITS_PER_PAGE
+  return allHabits.value.slice(start, start + HABITS_PER_PAGE)
+})
+
+const visibleHabitsPages = computed(() => {
+  const total = totalHabitsPages.value
+  const current = currentPageHabits.value
+  const pages = []
+  
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push({ key: i, label: i })
+  } else {
+    pages.push({ key: 1, label: 1 })
+    if (current > 3) pages.push({ key: 'ellipsis-start', label: '...' })
+    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+      pages.push({ key: i, label: i })
+    }
+    if (current < total - 2) pages.push({ key: 'ellipsis-end', label: '...' })
+    pages.push({ key: total, label: total })
+  }
+  return pages
+})
+
+watch(totalHabitsPages, (newTotal) => {
+  if (currentPageHabits.value > newTotal && newTotal > 0) {
+    currentPageHabits.value = newTotal
+  } else if (newTotal === 0) {
+    currentPageHabits.value = 1
+  }
+})
+
+function goToHabitsPage(page) {
+  if (page >= 1 && page <= totalHabitsPages.value) {
+    currentPageHabits.value = page
+  }
+}
 
 const habitStreak = computed(() => {
   return habitsStore.statsPanel?.streak ?? appStore.habitStreak
@@ -7417,8 +7486,7 @@ onMounted(async () => {
   justify-content: space-between;
 }
 
-.mobile-add-button {
-  display: none;
+.add-button-container {
   padding: 1rem 0;
   margin-top: 0.5rem;
 }
@@ -7428,6 +7496,54 @@ onMounted(async () => {
   justify-content: center;
   padding: 0.875rem 1rem;
   border-radius: 12px;
+}
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.75rem 0;
+}
+
+.pagination-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 0.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--hover-bg, #f3f4f6);
+  border-color: var(--primary-color);
+}
+
+.pagination-btn.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-btn.ellipsis {
+  border: none;
+  background: transparent;
+  cursor: default;
 }
 
 @media (max-width: 768px) {
@@ -7592,9 +7708,6 @@ onMounted(async () => {
     display: none !important;
   }
   
-  .mobile-add-button {
-    display: block;
-  }
 }
 
 /* Card Expand Buttons */
