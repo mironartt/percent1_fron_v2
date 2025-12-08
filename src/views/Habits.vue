@@ -2180,9 +2180,38 @@ const weeklyAmnestyAvailable = computed(() => {
 function getCompletionForDate(dateStr) {
   const dayOfWeek = new Date(dateStr).getDay()
   const scheduledForDay = allHabits.value.filter(h => isScheduledForDay(h, dayOfWeek))
-  const completedIds = appStore.habitLog[dateStr] || []
-  const completed = scheduledForDay.filter(h => completedIds.includes(h.id)).length
-  return { completed, total: scheduledForDay.length }
+  const scheduledTotal = scheduledForDay.length
+  
+  const calendarData = habitsStore.analytics?.calendar_data
+  if (calendarData && calendarData[dateStr] !== undefined) {
+    const count = calendarData[dateStr]
+    return { 
+      completed: count, 
+      total: Math.max(scheduledTotal, count), 
+      useCountLevel: true 
+    }
+  }
+  
+  let completed = 0
+  scheduledForDay.forEach(habit => {
+    const habitBackendId = String(habit.habit_id || habit.backendId || habit.id)
+    const backendHabit = habitsStore.habits.find(h => 
+      String(h.habit_id) === habitBackendId || String(h.id) === habitBackendId
+    )
+    if (backendHabit?.completions) {
+      const hasCompletion = backendHabit.completions.some(c => c.date === dateStr && c.status === 'completed')
+      if (hasCompletion) {
+        completed++
+        return
+      }
+    }
+    
+    if (appStore.habitLog[dateStr]?.includes(habit.id)) {
+      completed++
+    }
+  })
+  
+  return { completed, total: scheduledTotal, useCountLevel: false }
 }
 
 const last14Days = computed(() => {
@@ -2384,8 +2413,8 @@ const calendarWeeks = computed(() => {
       const date = new Date(today)
       date.setDate(date.getDate() - (w * 7 + (6 - d)))
       const dateStr = date.toISOString().split('T')[0]
-      const { completed, total } = getCompletionForDate(dateStr)
-      weekDays.push({ date: dateStr, completed, total })
+      const { completed, total, useCountLevel } = getCompletionForDate(dateStr)
+      weekDays.push({ date: dateStr, completed, total, useCountLevel })
     }
     weeks.push({ weekNum: 3 - w, days: weekDays })
   }
@@ -2393,6 +2422,13 @@ const calendarWeeks = computed(() => {
 })
 
 function getHeatmapClass(day) {
+  if (day.useCountLevel) {
+    if (day.completed === 0) return 'level-0'
+    if (day.completed === 1) return 'level-1'
+    if (day.completed === 2) return 'level-2'
+    return 'level-3'
+  }
+  
   if (day.total === 0) return 'level-0'
   const rate = day.completed / day.total
   if (rate === 0) return 'level-0'

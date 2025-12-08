@@ -98,3 +98,11 @@ Fixed synchronization issues in the top stats panel blocks (streak, today, XP, a
 - `maxAmnesties` now checks API data first, then falls back to `gameSettings.weeklyAmnestyCount`
 - `saveGameSettings()` now syncs values from `habitsStore.settings` after successful save
 - Fixed card highlighting on past weeks by checking `weekOffset !== 0`
+
+### Mini Heatmap Calendar Data Fix (December 8, 2024)
+Fixed issue where mini heatmap "Календарь - последние 4 недели" showed empty cells despite data being visible in modal:
+- Updated `getCompletionForDate()` to check `habitsStore.analytics.calendar_data` from API
+- Added `useCountLevel` flag to distinguish between API-driven and local-calculated data
+- Updated `getHeatmapClass()` to use count-based levels (like modal) when API data available
+- Fixed `total` calculation to use `Math.max(scheduledTotal, count)` for correct percentages
+- Now mini heatmap and yearly modal use consistent data sources and level calculations
