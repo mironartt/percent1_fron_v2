@@ -95,3 +95,30 @@ habitsStore.loadHabits({
   include_deleted: true
 })
 ```
+
+### UI Sync Fixes (December 8, 2024)
+Fixed multiple UI synchronization issues in habits tracker:
+
+**Stats Panel Sync:**
+- Added `loadStatsPanel()` calls after `toggleHabitCompletion`, `setDayAsCompleted`, `setDayAsMissed`, `setDayAsExcused`
+- Counter (0/2) now updates immediately after marking habits
+
+**week_schedule Sync:**
+- `markCompleted`: Updates week_schedule entry to `status: 'completed'` for immediate UI feedback
+- `unmarkCompleted`: Prefers server's `updated_day` if returned, otherwise calculates status (pending/future/missed)
+- `markExcused`: Updates week_schedule entry to `status: 'excused'`
+- All operations use rollback on error to restore previous state
+
+**Note Auto-save:**
+- `saveNoteOnBlur(habit, dateStr)` with status validation
+- Only sends valid statuses (completed/missed/excused) to API
+- Button "Сохранить заметку" with loading indicator
+- `lastSavedNote` tracking prevents duplicate saves
+
+**Key implementation pattern:**
+```javascript
+// After successful API call, update week_schedule from server
+if (result.data.updated_day) {
+  habit.week_schedule[weekDayIndex] = { ...existing, ...result.data.updated_day }
+}
+```
