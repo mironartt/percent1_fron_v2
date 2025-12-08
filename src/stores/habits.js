@@ -223,19 +223,22 @@ export const useHabitsStore = defineStore('habits', () => {
   async function saveSettings(newSettings) {
     const previousSettings = { ...settings.value }
     Object.assign(settings.value, newSettings)
-    
+
     try {
       const result = await habitsApi.updateSettings(newSettings)
-      
+
       if (result.success) {
         if (result.data) {
           Object.assign(settings.value, result.data)
         }
-        
+
+        // Reload stats panel to reflect new settings (difficulty_mode, amnesty_remaining, etc.)
+        await loadStatsPanel()
+
         if (DEBUG_MODE) {
           console.log('[HabitsStore] Settings saved:', newSettings)
         }
-        
+
         return { success: true }
       } else {
         Object.assign(settings.value, previousSettings)

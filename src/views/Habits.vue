@@ -3299,17 +3299,26 @@ function setDifficulty(mode) {
 async function saveGameSettings() {
   try {
     localStorage.setItem('onepercent_game_settings', JSON.stringify(gameSettings.value))
-    
+
     const backendSettings = {
       difficulty_mode: gameSettings.value.difficultyMode,
       planning_penalty_enabled: gameSettings.value.planningPenalty ?? false,
       planning_penalty_amount: gameSettings.value.planningPenalty ? (gameSettings.value.planningPenaltyAmount ?? 10) : 0,
       journal_penalty_enabled: gameSettings.value.journalPenalty ?? false,
-      journal_penalty_amount: gameSettings.value.journalPenalty ? (gameSettings.value.journalPenaltyAmount ?? 10) : 0
+      journal_penalty_amount: gameSettings.value.journalPenalty ? (gameSettings.value.journalPenaltyAmount ?? 10) : 0,
+      weekly_amnesty_count: gameSettings.value.weeklyAmnestyCount ?? 1
     }
-    
+
     const result = await habitsStore.saveSettings(backendSettings)
-    
+
+    // Update amnestyData to reflect new weekly_amnesty_count
+    if (result.success && habitsStore.amnestyData.amnesty_available) {
+      const newTotal = gameSettings.value.weeklyAmnestyCount ?? 1
+      const used = habitsStore.amnestyData.amnesty_available.used || 0
+      habitsStore.amnestyData.amnesty_available.total = newTotal
+      habitsStore.amnestyData.amnesty_available.remaining = Math.max(0, newTotal - used)
+    }
+
     if (DEBUG_MODE) {
       console.log('[Habits] Game settings saved:', gameSettings.value, 'Backend result:', result.success)
     }
@@ -3348,7 +3357,7 @@ async function loadGameSettings() {
         gameSettings.value.journalPenaltyAmount = result.data.journal_penalty_amount ?? 10
       }
       if (result.data.amnesty_remaining !== undefined) {
-        const maxAmnesty = result.data.amnesty_per_week || 1
+        const maxAmnesty = result.data.weekly_amnesty_count ?? 1
         gameSettings.value.weeklyAmnestyCount = maxAmnesty
         gameSettings.value.amnestiesUsedThisWeek = maxAmnesty - result.data.amnesty_remaining
       }

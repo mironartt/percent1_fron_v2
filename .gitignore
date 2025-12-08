@@ -7,3 +7,5 @@ vite.config.ts.*
 
 # Local settings (environment-specific)
 src/config/local_settings.js
+
+CLAUDE.md
