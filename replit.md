@@ -42,6 +42,20 @@ The application uses a modular structure with dedicated components, services, vi
 
 ## Recent Changes (December 2024)
 
+### Analytics API Integration for Habits (December 8, 2024)
+Integrated new Analytics API v2 with 8+ computed properties:
+- Added MONTH_NAMES_RU constant and translateMonth() function for Russian localization
+- Updated weekCompletionRate/monthCompletionRate to use completion_rate_7/30 from API
+- Updated weeklyCompletionData to use weekly_trend array (8 elements) with labels
+- Added bestWeekRate, worstHabitName, worstHabitRate computed properties
+- Updated habitCompletionDistribution to use habits_data with habit_id, completion_rate_30, streak
+- Updated yearlyHeatmapData to use calendar_data (sparse object) with getHeatmapLevel()
+- Updated yearTotalCompletions/yearActiveDays/bestMonthName/bestMonthRate for API
+- Updated monthlyStats to use monthly_stats with localization
+- Modal "Выполнение" now shows worstHabitName/worstHabitRate instead of worstWeekRate
+- Modal "Годовой календарь" now shows bestMonthRate in percentage
+- All computed properties have fallback to local calculations when API data unavailable
+
 ### Habit Icon Field Name Fix (December 8, 2024)
 Fixed incorrect field name when creating/updating habits:
 - Changed `icon_name` to `icon` in `backendHabitData` object
