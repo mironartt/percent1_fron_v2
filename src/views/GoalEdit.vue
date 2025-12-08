@@ -33,7 +33,7 @@
           <button class="btn-back" @click="goBack" title="Назад">
             <ArrowLeft :size="20" />
           </button>
-          <div class="header-title-section" @click="openEditModal">
+          <div class="header-title-section">
             <h1 class="header-goal-title">{{ goalForm.title || 'Без названия' }}</h1>
             <span class="header-sphere-badge" :style="{ '--sphere-color': getSphereColor(goalForm.sphereId) }">
               {{ getSphereNameOnly(goalForm.sphereId) }}
