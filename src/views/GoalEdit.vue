@@ -776,7 +776,7 @@
                 @click="showTimeSelector = !showTimeSelector"
               >
                 <Clock :size="18" />
-                <span>{{ editStepForm.timeEstimate ? editStepForm.timeEstimate + 'ч' : 'Время' }}</span>
+                <span>{{ formatTimeEstimate(editStepForm.timeEstimate) || 'Время' }}</span>
               </div>
               <div 
                 class="param-chip" 
@@ -796,27 +796,25 @@
               </div>
             </div>
 
-            <div v-if="showTimeSelector || showDatePicker" class="param-inputs-row">
-              <div v-if="showTimeSelector" class="param-input-group">
-                <label>Время (часов)</label>
-                <input 
-                  v-model="editStepForm.timeEstimate"
-                  type="number"
-                  class="form-input form-input-small"
-                  placeholder="1.5"
-                  min="0.1"
-                  max="24"
-                  step="0.1"
-                />
-              </div>
-              <div v-if="showDatePicker" class="param-input-group">
-                <label>Дата</label>
-                <input 
-                  v-model="editStepForm.scheduledDate"
-                  type="date"
-                  class="form-input"
-                />
-              </div>
+            <div v-if="showTimeSelector" class="time-options-row">
+              <button 
+                v-for="time in timeOptions" 
+                :key="time.value"
+                class="time-chip"
+                :class="{ active: editStepForm.timeEstimate === time.value }"
+                @click="editStepForm.timeEstimate = time.value"
+              >
+                {{ time.label }}
+              </button>
+            </div>
+
+            <div v-if="showDatePicker" class="param-input-group date-picker-row">
+              <label>Дата</label>
+              <input 
+                v-model="editStepForm.scheduledDate"
+                type="date"
+                class="form-input"
+              />
             </div>
           </div>
           
@@ -1293,6 +1291,15 @@ async function saveStepFromModal() {
 const showEditStepModal = ref(false)
 const showTimeSelector = ref(false)
 const showDatePicker = ref(false)
+
+const timeOptions = [
+  { value: '30min', label: '30 минут' },
+  { value: '1h', label: '1 час' },
+  { value: '2h', label: '2 часа' },
+  { value: '3h', label: '3 часа' },
+  { value: '4h', label: '4 часа' },
+  { value: '', label: 'Без оценки' }
+]
 const editStepForm = ref({
   title: '',
   comment: '',
@@ -1353,7 +1360,7 @@ function toggleEditStepComplete() {
 }
 
 function cyclePriority() {
-  const priorities = ['', 'low', 'medium', 'high']
+  const priorities = ['', 'optional', 'attention', 'desirable', 'critical']
   const current = editStepForm.value.priority || ''
   const idx = priorities.indexOf(current)
   editStepForm.value.priority = priorities[(idx + 1) % priorities.length]
@@ -1926,14 +1933,11 @@ function getPriorityColor(priority) {
 function getPriorityLabel(priority) {
   const labels = {
     'critical': 'Критично',
-    'desirable': 'Желательно',
-    'attention': 'Внимание',
-    'optional': 'Опционально',
-    'low': 'Низкий',
-    'medium': 'Средний',
-    'high': 'Высокий'
+    'desirable': 'Важно',
+    'attention': 'В поле внимания',
+    'optional': 'По возможности'
   }
-  return labels[priority] || priority || ''
+  return labels[priority] || ''
 }
 
 function formatScheduledDate(dateStr) {
@@ -1952,14 +1956,13 @@ function formatScheduledDate(dateStr) {
 function formatTimeEstimate(timeEstimate) {
   if (!timeEstimate) return ''
   const timeLabels = {
-    '15': '15мин',
-    '30': '30мин',
-    '60': '1ч',
-    '120': '2ч',
-    '180': '3ч',
-    '240': '4ч'
+    '30min': '30м',
+    '1h': '1ч',
+    '2h': '2ч',
+    '3h': '3ч',
+    '4h': '4ч'
   }
-  return timeLabels[timeEstimate] || timeEstimate + 'ч'
+  return timeLabels[timeEstimate] || timeEstimate
 }
 
 async function toggleStepComplete(step, index) {
@@ -2154,11 +2157,11 @@ async function loadMoreStepsFromBackend() {
 // Map backend time duration to frontend
 function mapTimeFromBackend(timeDuration) {
   const map = {
-    'half': '30',
-    'one': '60',
-    'two': '120',
-    'three': '180',
-    'four': '240'
+    'half': '30min',
+    'one': '1h',
+    'two': '2h',
+    'three': '3h',
+    'four': '4h'
   }
   return map[timeDuration] || ''
 }
@@ -2166,12 +2169,11 @@ function mapTimeFromBackend(timeDuration) {
 // Map frontend time to backend
 function mapTimeToBackend(timeEstimate) {
   const map = {
-    '15': 'half',
-    '30': 'half',
-    '60': 'one',
-    '120': 'two',
-    '180': 'three',
-    '240': 'four'
+    '30min': 'half',
+    '1h': 'one',
+    '2h': 'two',
+    '3h': 'three',
+    '4h': 'four'
   }
   return map[timeEstimate] || null
 }
@@ -4661,6 +4663,44 @@ function formatDate(dateString) {
   gap: 1rem;
   margin-top: 0.75rem;
   padding: 1rem;
+  background: var(--bg-secondary, #f9fafb);
+  border-radius: var(--radius-md, 8px);
+}
+
+.time-options-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary, #f9fafb);
+  border-radius: var(--radius-md, 8px);
+}
+
+.time-chip {
+  padding: 0.5rem 1rem;
+  min-height: 44px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  background: var(--bg-primary, #fff);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.time-chip:hover {
+  border-color: var(--primary-color, #6366f1);
+}
+
+.time-chip.active {
+  background: var(--primary-color, #6366f1);
+  color: #fff;
+  border-color: var(--primary-color, #6366f1);
+}
+
+.date-picker-row {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
   background: var(--bg-secondary, #f9fafb);
   border-radius: var(--radius-md, 8px);
 }
