@@ -884,7 +884,14 @@
                   v-for="day in week.days" 
                   :key="day.date"
                   class="streak-day"
-                  :class="{ success: day.allCompleted, partial: day.partialCompleted, missed: day.missed, today: day.isToday, future: day.isFuture }"
+                  :class="{ 
+                    success: day.allCompleted, 
+                    partial: day.partialCompleted, 
+                    missed: day.missed, 
+                    today: day.isToday, 
+                    future: day.isFuture,
+                    'not-scheduled': day.notScheduled
+                  }"
                   :title="day.label"
                 >
                   <span class="day-letter">{{ day.letter }}</span>
@@ -1520,19 +1527,19 @@ const habitSuggestions = [
     name: 'Здоровье и спорт',
     icon: '💪',
     habits: [
-      { name: 'Утренняя зарядка', description: 'Разминка для бодрости на весь день', icon: 'gym', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 10 },
-      { name: 'Прогулка 30 минут', description: 'Свежий воздух и движение', icon: 'walking', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 8 },
+      { name: 'Утренняя зарядка', description: 'Разминка для бодрости на весь день', icon: 'dumbbell', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 10 },
+      { name: 'Прогулка 30 минут', description: 'Свежий воздух и движение', icon: 'run', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 8 },
       { name: 'Выпить 8 стаканов воды', description: 'Поддержание водного баланса', icon: 'water', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 5 },
-      { name: 'Тренировка в зале', description: 'Силовые или кардио упражнения', icon: 'gym', frequencyType: 'custom', scheduleDays: [1,3,5], scheduleLabel: 'Пн, Ср, Пт', xpReward: 15 },
+      { name: 'Тренировка в зале', description: 'Силовые или кардио упражнения', icon: 'dumbbell', frequencyType: 'custom', scheduleDays: [1,3,5], scheduleLabel: 'Пн, Ср, Пт', xpReward: 15 },
     ]
   },
   {
     name: 'Продуктивность',
     icon: '🎯',
     habits: [
-      { name: 'Планирование дня', description: 'Составить список задач на день', icon: 'writing', frequencyType: 'weekdays', scheduleDays: [1,2,3,4,5], scheduleLabel: 'Будни', xpReward: 8 },
+      { name: 'Планирование дня', description: 'Составить список задач на день', icon: 'calendar', frequencyType: 'weekdays', scheduleDays: [1,2,3,4,5], scheduleLabel: 'Будни', xpReward: 8 },
       { name: 'Фокус-сессия 25 мин', description: 'Работа без отвлечений по Помодоро', icon: 'target', frequencyType: 'weekdays', scheduleDays: [1,2,3,4,5], scheduleLabel: 'Будни', xpReward: 10 },
-      { name: 'Разбор почты', description: 'Обработка входящих сообщений', icon: 'work', frequencyType: 'weekdays', scheduleDays: [1,2,3,4,5], scheduleLabel: 'Будни', xpReward: 5 },
+      { name: 'Разбор почты', description: 'Обработка входящих сообщений', icon: 'laptop', frequencyType: 'weekdays', scheduleDays: [1,2,3,4,5], scheduleLabel: 'Будни', xpReward: 5 },
     ]
   },
   {
@@ -1541,7 +1548,7 @@ const habitSuggestions = [
     habits: [
       { name: 'Чтение 20 минут', description: 'Расширение кругозора и отдых', icon: 'book', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 10 },
       { name: 'Изучение языка', description: 'Практика иностранного языка', icon: 'brain', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 12 },
-      { name: 'Ведение дневника', description: 'Рефлексия и анализ дня', icon: 'writing', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 8 },
+      { name: 'Ведение дневника', description: 'Рефлексия и анализ дня', icon: 'book', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 8 },
     ]
   },
   {
@@ -1550,14 +1557,14 @@ const habitSuggestions = [
     habits: [
       { name: 'Медитация', description: 'Практика осознанности и покоя', icon: 'meditation', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 10 },
       { name: 'Благодарность', description: 'Записать 3 вещи за которые благодарен', icon: 'heart', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 5 },
-      { name: 'Цифровой детокс', description: 'Час без телефона перед сном', icon: 'phone', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 8 },
+      { name: 'Цифровой детокс', description: 'Час без телефона перед сном', icon: 'shield', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 8 },
     ]
   },
   {
     name: 'Режим и отдых',
     icon: '😴',
     habits: [
-      { name: 'Ранний подъём', description: 'Встать до 7:00 утра', icon: 'sunrise', frequencyType: 'weekdays', scheduleDays: [1,2,3,4,5], scheduleLabel: 'Будни', xpReward: 10 },
+      { name: 'Ранний подъём', description: 'Встать до 7:00 утра', icon: 'sun', frequencyType: 'weekdays', scheduleDays: [1,2,3,4,5], scheduleLabel: 'Будни', xpReward: 10 },
       { name: 'Сон до 23:00', description: 'Лечь спать вовремя', icon: 'sleep', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 8 },
       { name: 'Без экранов за час до сна', description: 'Подготовка к качественному сну', icon: 'moon', frequencyType: 'daily', scheduleDays: [1,2,3,4,5,6,0], scheduleLabel: 'Каждый день', xpReward: 6 },
     ]
@@ -1567,36 +1574,36 @@ const habitSuggestions = [
 const habitIconsData = [
   { emoji: '🔥', name: 'fire' },
   { emoji: '💪', name: 'strength' },
-  { emoji: '📖', name: 'book' },
-  { emoji: '🧘', name: 'meditation' },
-  { emoji: '💧', name: 'water' },
-  { emoji: '🏃', name: 'running' },
-  { emoji: '🍎', name: 'apple' },
-  { emoji: '😴', name: 'sleep' },
-  { emoji: '🎯', name: 'target' },
-  { emoji: '📝', name: 'writing' },
   { emoji: '🧠', name: 'brain' },
-  { emoji: '🎨', name: 'art' },
-  { emoji: '🎵', name: 'music' },
-  { emoji: '🌅', name: 'sunrise' },
-  { emoji: '🚶', name: 'walking' },
-  { emoji: '🧹', name: 'cleaning' },
-  { emoji: '💼', name: 'work' },
-  { emoji: '🏋️', name: 'gym' },
-  { emoji: '🥗', name: 'salad' },
+  { emoji: '❤️', name: 'heart' },
+  { emoji: '📚', name: 'book' },
+  { emoji: '🏃', name: 'run' },
+  { emoji: '💧', name: 'water' },
+  { emoji: '😴', name: 'sleep' },
+  { emoji: '🧘', name: 'meditation' },
+  { emoji: '🎯', name: 'target' },
+  { emoji: '💰', name: 'money' },
+  { emoji: '📈', name: 'graph' },
+  { emoji: '☀️', name: 'sun' },
+  { emoji: '🌙', name: 'moon' },
+  { emoji: '🛡️', name: 'shield' },
+  { emoji: '🎨', name: 'palette' },
+  { emoji: '😊', name: 'smile' },
+  { emoji: '🍎', name: 'apple' },
+  { emoji: '⚖️', name: 'weight' },
+  { emoji: '📅', name: 'calendar' },
+  { emoji: '🏆', name: 'trophy' },
+  { emoji: '⭐', name: 'star' },
+  { emoji: '🚀', name: 'rocket' },
+  { emoji: '🌿', name: 'leaf' },
   { emoji: '☕', name: 'coffee' },
-  { emoji: '🚿', name: 'shower' },
-  { emoji: '🌿', name: 'nature' },
-  { emoji: '📱', name: 'phone' },
-  { emoji: '💊', name: 'pills' },
+  { emoji: '🎵', name: 'music' },
+  { emoji: '📷', name: 'camera' },
+  { emoji: '💻', name: 'laptop' },
+  { emoji: '🏋️', name: 'dumbbell' },
   { emoji: '🧘‍♀️', name: 'yoga' },
-  { emoji: '🚴', name: 'cycling' },
-  { emoji: '🏊', name: 'swimming' },
-  { emoji: '⏰', name: 'alarm' },
-  { emoji: '📚', name: 'study' },
-  { emoji: '🎮', name: 'gaming' },
-  { emoji: '🐕', name: 'dog' },
-  { emoji: '🌙', name: 'moon' }
+  { emoji: '🚴', name: 'bicycle' },
+  { emoji: '🏊', name: 'swimmer' }
 ]
 
 const quickIcons = habitIconsData.slice(0, 8)
@@ -1840,6 +1847,10 @@ const weekXpFromHabits = computed(() => {
 })
 
 const monthXpFromHabits = computed(() => {
+  if (habitsStore.monthXp !== undefined && habitsStore.monthXp !== null) {
+    return habitsStore.monthXp
+  }
+  
   const monthAgo = new Date()
   monthAgo.setDate(monthAgo.getDate() - 30)
   return xpStore.xpHistory
@@ -1855,7 +1866,61 @@ const todayProgressPercent = computed(() => {
 const streakCalendar = computed(() => {
   const weeks = []
   const today = new Date()
+  const todayStr = today.toISOString().split('T')[0]
   const dayLetters = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
+  
+  if (habitsStore.streakDays && habitsStore.streakDays.length > 0) {
+    const streakMap = new Map()
+    habitsStore.streakDays.forEach(day => {
+      streakMap.set(day.date, day)
+    })
+    
+    for (let w = 2; w >= 0; w--) {
+      const weekStart = new Date(today)
+      weekStart.setDate(today.getDate() - today.getDay() - (w * 7) + 1)
+      
+      const days = []
+      for (let d = 0; d < 7; d++) {
+        const date = new Date(weekStart)
+        date.setDate(weekStart.getDate() + d)
+        const dateStr = date.toISOString().split('T')[0]
+        const isFuture = date > today
+        const isToday = dateStr === todayStr
+        
+        const apiDay = streakMap.get(dateStr)
+        
+        if (apiDay) {
+          days.push({
+            date: dateStr,
+            letter: dayLetters[date.getDay()],
+            isToday,
+            isFuture,
+            allCompleted: apiDay.is_in_streak && apiDay.is_scheduled,
+            partialCompleted: false,
+            missed: !apiDay.is_in_streak && apiDay.is_scheduled && !isFuture && !isToday,
+            notScheduled: !apiDay.is_scheduled,
+            streakCount: apiDay.streak_count,
+            label: `${date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}: ${apiDay.is_in_streak ? 'в серии' : apiDay.is_scheduled ? 'пропуск' : 'нет привычек'}`
+          })
+        } else {
+          days.push({
+            date: dateStr,
+            letter: dayLetters[date.getDay()],
+            isToday,
+            isFuture,
+            allCompleted: false,
+            partialCompleted: false,
+            missed: false,
+            notScheduled: true,
+            streakCount: 0,
+            label: `${date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`
+          })
+        }
+      }
+      weeks.push({ weekNum: w, days })
+    }
+    return weeks
+  }
   
   for (let w = 2; w >= 0; w--) {
     const weekStart = new Date(today)
@@ -1866,7 +1931,6 @@ const streakCalendar = computed(() => {
       const date = new Date(weekStart)
       date.setDate(weekStart.getDate() + d)
       const dateStr = date.toISOString().split('T')[0]
-      const todayStr = today.toISOString().split('T')[0]
       const isFuture = date > today
       const isToday = dateStr === todayStr
       
@@ -1892,15 +1956,30 @@ const streakCalendar = computed(() => {
 })
 
 const xpByDay = computed(() => {
-  const days = []
   const today = new Date()
+  const todayStr = today.toISOString().split('T')[0]
   const dayLabels = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
   
+  if (habitsStore.weekXpByDay && habitsStore.weekXpByDay.length > 0) {
+    const days = habitsStore.weekXpByDay.map(item => {
+      const date = new Date(item.date)
+      return {
+        date: item.date,
+        xp: item.xp,
+        label: dayLabels[date.getDay()],
+        isToday: item.date === todayStr
+      }
+    })
+    
+    const maxXp = Math.max(...days.map(d => d.xp), 1)
+    return days.map(d => ({ ...d, height: (d.xp / maxXp) * 100 }))
+  }
+  
+  const days = []
   for (let i = 6; i >= 0; i--) {
     const date = new Date(today)
     date.setDate(today.getDate() - i)
     const dateStr = date.toISOString().split('T')[0]
-    const todayStr = today.toISOString().split('T')[0]
     
     const xp = xpStore.xpHistory
       .filter(e => e.source === 'habit_completed' && e.timestamp.startsWith(dateStr))
@@ -7327,6 +7406,12 @@ onMounted(async () => {
 
 .streak-day.future {
   opacity: 0.4;
+}
+
+.streak-day.not-scheduled {
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  opacity: 0.6;
 }
 
 .streak-tip {
