@@ -1230,38 +1230,20 @@ function isGoalCompleted(goalId) {
 }
 
 // Backend already filters by: category_filter, status_filter, query_filter
-// No local filtering needed - just return rawIdeas
+// No local filtering needed - just return rawIdeas from current page
 const filteredGoals = computed(() => {
-  let goals = rawIdeas.value
-  
-  // Local filtering by sphere
-  if (filterSphere.value) {
-    goals = goals.filter(goal => goal.sphereId === filterSphere.value)
-  }
-  
-  // Local filtering by status (based on workStatus from backend)
-  if (filterStatus.value) {
-    if (filterStatus.value === 'work') {
-      goals = goals.filter(goal => goal.workStatus === 'work')
-    } else if (filterStatus.value === 'complete') {
-      goals = goals.filter(goal => goal.workStatus === 'complete')
-    }
-  }
-  
-  return goals
+  return rawIdeas.value
 })
 
 const GOALS_PER_PAGE = 10
 const currentPageLocal = ref(1)
 
 const totalPages = computed(() => {
-  return Math.ceil(filteredGoals.value.length / GOALS_PER_PAGE)
+  return apiPagination.value.totalPages || 1
 })
 
 const paginatedGoals = computed(() => {
-  const start = (currentPageLocal.value - 1) * GOALS_PER_PAGE
-  const end = start + GOALS_PER_PAGE
-  return filteredGoals.value.slice(start, end)
+  return filteredGoals.value
 })
 
 const visiblePages = computed(() => {
@@ -1285,10 +1267,12 @@ const visiblePages = computed(() => {
   return pages
 })
 
-function goToPage(page) {
-  if (page >= 1 && page <= totalPages.value) {
+async function goToPage(page) {
+  if (page >= 1 && page <= totalPages.value && page !== currentPageLocal.value) {
     currentPageLocal.value = page
+    currentPage.value = page
     window.scrollTo({ top: 0, behavior: 'smooth' })
+    await loadGoalsWithFilters(page, false)
   }
 }
 
@@ -1342,7 +1326,8 @@ function buildApiParams(page = 1) {
     with_steps_data: false,
     order_by: 'date_created',
     order_direction: 'desc',
-    page: page
+    page: page,
+    page_size: GOALS_PER_PAGE
   }
   
   // Add text search filter (min 3 characters)
@@ -1375,12 +1360,15 @@ async function loadGoalsWithFilters(page = 1, append = false) {
   
   try {
     const params = buildApiParams(page)
-    // Pass append flag to store - true for pagination (page > 1), false for fresh load
+    // Pass append flag to store - false for page navigation (replace data)
     const result = await store.loadGoalsFromBackend(params, append)
     
     if (result.success) {
       currentPage.value = page
-      console.log('[GoalsBank] Goals loaded, page:', page, 'append:', append, 'total loaded:', rawIdeas.value.length)
+      currentPageLocal.value = page
+      if (DEBUG_MODE) {
+        console.log('[GoalsBank] Goals loaded, page:', page, 'totalPages:', apiPagination.value.totalPages, 'count:', rawIdeas.value.length)
+      }
     }
   } catch (error) {
     console.error('[GoalsBank] Error loading goals with filters:', error)
