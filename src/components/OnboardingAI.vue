@@ -228,65 +228,111 @@
 
         <div v-if="currentStep === 5" class="step-content step-plan">
           <div class="plan-header">
-            <div class="plan-icon">
-              <Target :size="40" />
+            <div class="plan-icon-wrapper">
+              <Sparkles :size="24" class="plan-icon" />
             </div>
-            <h2 class="step-title">Ваши первые цели</h2>
-            <p class="step-subtitle">AI подготовил цели с шагами для улучшения слабых сфер</p>
+            <div class="plan-header-text">
+              <h2 class="step-title">Ваши цели на старт</h2>
+              <p class="step-subtitle">AI подготовил цели с шагами на основе анализа ССП. Утвердите или откажитесь от целей.</p>
+            </div>
           </div>
 
-          <div class="goals-preview">
+          <div class="goals-status-summary">
+            <div class="status-item accepted">
+              <Check :size="14" />
+              {{ acceptedGoalsCount }} принято
+            </div>
+            <div class="status-item pending">
+              <Clock :size="14" />
+              {{ pendingGoalsCount }} ожидает
+            </div>
+            <div class="status-item rejected">
+              <X :size="14" />
+              {{ rejectedGoalsCount }} пропущено
+            </div>
+          </div>
+
+          <div class="goals-review-list">
             <div 
               v-for="goal in aiGoals" 
               :key="goal.id"
-              class="goal-preview-card"
+              class="goal-review-card"
+              :class="{ 
+                accepted: goal.status === 'accepted',
+                rejected: goal.status === 'rejected',
+                expanded: goal.expanded
+              }"
               :style="{ '--goal-color': getSphereColor(goal.sphereId) }"
             >
-              <div class="goal-preview-header">
+              <div class="goal-review-header">
                 <div class="goal-sphere-icon" :style="{ background: getSphereColor(goal.sphereId) }">
                   <component :is="getSphereIcon(goal.sphereId)" :size="18" />
                 </div>
-                <div class="goal-preview-info">
-                  <span class="goal-sphere-name">{{ getSphereName(goal.sphereId) }}</span>
+                <div class="goal-review-info">
                   <h4>{{ goal.title }}</h4>
+                  <p class="goal-description">{{ goal.description }}</p>
+                  <div class="goal-meta">
+                    <span class="goal-sphere-tag">{{ getSphereName(goal.sphereId) }}</span>
+                    <span class="goal-steps-count">≡ {{ goal.steps.length }} шагов</span>
+                  </div>
                 </div>
               </div>
-              <div class="goal-steps-preview">
-                <div class="steps-label">
-                  <ListTodo :size="14" />
-                  {{ goal.steps.length }} шагов к цели:
-                </div>
-                <ul class="steps-list-mini">
-                  <li v-for="(step, index) in goal.steps.slice(0, 3)" :key="index">
-                    {{ step.title }}
-                  </li>
-                  <li v-if="goal.steps.length > 3" class="more-steps clickable" @click="completeOnboarding">
-                    +{{ goal.steps.length - 3 }} ещё...
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
 
-          <div class="plan-summary">
-            <div class="summary-item">
-              <Target :size="20" class="text-success" />
-              <span>{{ aiGoals.length }} цели для старта</span>
-            </div>
-            <div class="summary-item">
-              <TrendingUp :size="20" class="text-primary" />
-              <span>Фокус на {{ weakSpheresCount }} сферах роста</span>
+              <div class="goal-steps-toggle" @click="toggleGoalSteps(goal)">
+                <component :is="goal.expanded ? ChevronUp : ChevronDown" :size="16" />
+                {{ goal.expanded ? 'Скрыть шаги' : 'Показать шаги' }}
+              </div>
+
+              <div v-if="goal.expanded" class="goal-steps-list">
+                <div 
+                  v-for="(step, index) in goal.steps" 
+                  :key="step.id"
+                  class="goal-step-item"
+                >
+                  <span class="step-number">{{ index + 1 }}</span>
+                  <span class="step-title">{{ step.title }}</span>
+                </div>
+              </div>
+
+              <div class="goal-actions">
+                <button 
+                  class="goal-action-btn accept"
+                  :class="{ active: goal.status === 'accepted' }"
+                  @click="setGoalStatus(goal, 'accepted')"
+                  title="Принять цель"
+                >
+                  <Check :size="18" />
+                </button>
+                <button 
+                  class="goal-action-btn edit"
+                  @click="editGoal(goal)"
+                  title="Редактировать"
+                >
+                  <Pencil :size="18" />
+                </button>
+                <button 
+                  class="goal-action-btn reject"
+                  :class="{ active: goal.status === 'rejected' }"
+                  @click="setGoalStatus(goal, 'rejected')"
+                  title="Пропустить"
+                >
+                  <X :size="18" />
+                </button>
+              </div>
             </div>
           </div>
 
           <div class="step-actions final">
-            <button class="btn btn-secondary" @click="prevStep">
-              <ArrowLeft :size="18" />
-              Назад
+            <button class="btn btn-secondary" @click="skipAllGoals" :disabled="isSaving">
+              Пропустить всё
             </button>
-            <button class="btn btn-primary btn-lg" @click="completeOnboarding">
-              <Rocket :size="20" />
-              Сделать первый +1%
+            <button 
+              class="btn btn-primary btn-lg" 
+              @click="completeOnboarding"
+              :disabled="isSaving || acceptedGoalsCount === 0"
+            >
+              <Check :size="18" />
+              {{ isSaving ? 'Сохранение...' : `Добавить цели (${acceptedGoalsCount})` }}
             </button>
           </div>
         </div>
@@ -306,7 +352,8 @@ import {
   Sparkles, Target, Clock, ArrowRight, ArrowLeft,
   Bot, Calendar, Rocket, CheckCircle, TrendingUp,
   Briefcase, Heart, Dumbbell, Users, Palette, Wallet,
-  Lightbulb, AlertTriangle, Zap, ListTodo
+  Lightbulb, AlertTriangle, Zap, ListTodo,
+  Check, Pencil, X, ChevronDown, ChevronUp
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -427,6 +474,39 @@ const aiAnalysis = ref('')
 const insights = ref([])
 
 const aiGoals = ref([])
+
+const acceptedGoalsCount = computed(() => 
+  aiGoals.value.filter(g => g.status === 'accepted').length
+)
+
+const pendingGoalsCount = computed(() => 
+  aiGoals.value.filter(g => g.status === 'pending').length
+)
+
+const rejectedGoalsCount = computed(() => 
+  aiGoals.value.filter(g => g.status === 'rejected').length
+)
+
+function setGoalStatus(goal, status) {
+  goal.status = goal.status === status ? 'pending' : status
+}
+
+function toggleGoalSteps(goal) {
+  goal.expanded = !goal.expanded
+}
+
+function editGoal(goal) {
+  if (DEBUG_MODE) {
+    console.log('[OnboardingAI] Edit goal:', goal)
+  }
+}
+
+function skipAllGoals() {
+  aiGoals.value.forEach(goal => {
+    goal.status = 'rejected'
+  })
+  completeOnboarding()
+}
 
 function generateAIAnalysis() {
   isAnalyzing.value = true
@@ -558,6 +638,8 @@ function generateAIGoals() {
         title: template.title,
         description: template.description,
         whyImportant: template.whyImportant,
+        status: 'pending',
+        expanded: false,
         steps: template.steps.map((step, stepIndex) => ({
           id: `step-${Date.now()}-${index}-${stepIndex}`,
           title: step.title,
@@ -647,6 +729,8 @@ function prevStep() {
 }
 
 async function completeOnboarding() {
+  isSaving.value = true
+  
   if (DEBUG_MODE) {
     console.log('[OnboardingAI] Saving sphere ratings to store...')
   }
@@ -657,6 +741,24 @@ async function completeOnboarding() {
       console.log(`[OnboardingAI] Updated sphere ${sphere.id}: ${sphere.score}`)
     }
   })
+  
+  const acceptedGoals = aiGoals.value.filter(g => g.status === 'accepted')
+  
+  if (!SKIP_AUTH_CHECK && acceptedGoals.length > 0) {
+    try {
+      const createdGoalIds = await createGoalsOnBackend(acceptedGoals)
+      
+      if (createdGoalIds.length > 0) {
+        await createStepsOnBackend(acceptedGoals, createdGoalIds)
+      }
+      
+      if (DEBUG_MODE) {
+        console.log('[OnboardingAI] Goals and steps created on backend:', createdGoalIds)
+      }
+    } catch (error) {
+      console.error('[OnboardingAI] Failed to create goals on backend:', error)
+    }
+  }
   
   const onboardingData = {
     reason_joined: surveyData.value.reason,
@@ -689,20 +791,103 @@ async function completeOnboarding() {
   store.completeOnboarding({
     surveyData: surveyData.value,
     sphereRatings: localSpheres.value.map(s => ({ id: s.id, score: s.score })),
-    aiGoals: aiGoals.value,
+    aiGoals: acceptedGoals,
     completedAt: new Date().toISOString()
   })
   
-  store.initAIRecommendations(aiGoals.value)
+  store.initAIRecommendations(acceptedGoals)
   
   store.completeFirstStep('ssp')
   store.completeFirstStep('chat_mentor')
+  
+  isSaving.value = false
   
   if (DEBUG_MODE) {
     console.log('[OnboardingAI] Completed, navigating to dashboard with AI goals review')
   }
   
   router.push('/app')
+}
+
+async function createGoalsOnBackend(acceptedGoals) {
+  const goalsData = acceptedGoals.map(goal => ({
+    goal_id: null,
+    title: goal.title,
+    description: goal.description || '',
+    category: sphereIdToBackend[goal.sphereId],
+    status: 'work',
+    why_important: goal.whyImportant || ''
+  }))
+  
+  if (DEBUG_MODE) {
+    console.log('[OnboardingAI] Creating goals:', goalsData)
+  }
+  
+  const result = await api.updateGoals({ goals_data: goalsData })
+  
+  if (DEBUG_MODE) {
+    console.log('[OnboardingAI] Create goals response:', result)
+  }
+  
+  if (result.status === 'ok' && result.data?.created_goals_ids) {
+    const createdIds = result.data.created_goals_ids
+    if (DEBUG_MODE) {
+      console.log('[OnboardingAI] Created goal IDs:', createdIds)
+    }
+    return createdIds
+  }
+  
+  if (result.status === 'error') {
+    console.error('[OnboardingAI] Failed to create goals:', result.error_data)
+    throw new Error(result.error_data?.message || 'Failed to create goals')
+  }
+  
+  return []
+}
+
+async function createStepsOnBackend(acceptedGoals, goalIds) {
+  if (!goalIds || goalIds.length === 0) {
+    console.warn('[OnboardingAI] No goal IDs provided for creating steps')
+    return
+  }
+  
+  const stepsData = []
+  
+  acceptedGoals.forEach((goal, goalIndex) => {
+    const backendGoalId = goalIds[goalIndex]
+    if (!backendGoalId) {
+      console.warn(`[OnboardingAI] No backend ID for goal index ${goalIndex}`)
+      return
+    }
+    
+    goal.steps.forEach((step, stepIndex) => {
+      stepsData.push({
+        goal_id: backendGoalId,
+        step_id: null,
+        title: step.title,
+        order: stepIndex + 1
+      })
+    })
+  })
+  
+  if (stepsData.length === 0) {
+    console.warn('[OnboardingAI] No steps to create')
+    return
+  }
+  
+  if (DEBUG_MODE) {
+    console.log('[OnboardingAI] Creating steps:', stepsData)
+  }
+  
+  const result = await api.updateGoalSteps({ goals_steps_data: stepsData })
+  
+  if (DEBUG_MODE) {
+    console.log('[OnboardingAI] Create steps response:', result)
+  }
+  
+  if (result.status === 'error') {
+    console.error('[OnboardingAI] Failed to create steps:', result.error_data)
+  }
 }
 </script>
 
@@ -1507,6 +1692,235 @@ async function completeOnboarding() {
 .steps-list-mini li.more-steps.clickable:hover {
   color: var(--primary-color);
   text-decoration: underline;
+}
+
+.plan-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary-color), #a78bfa);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+
+.plan-header {
+  display: flex;
+  align-items: flex-start;
+  text-align: left;
+  margin-bottom: 1.5rem;
+}
+
+.plan-header-text .step-title {
+  text-align: left;
+  margin-bottom: 0.25rem;
+  font-size: 1.5rem;
+}
+
+.plan-header-text .step-subtitle {
+  text-align: left;
+  margin-bottom: 0;
+  font-size: 0.9rem;
+}
+
+.goals-status-summary {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.status-item.accepted {
+  color: var(--success-color, #10b981);
+}
+
+.status-item.rejected {
+  color: var(--text-muted, #9ca3af);
+}
+
+.goals-review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.goal-review-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--goal-color);
+  transition: all 0.2s ease;
+}
+
+.goal-review-card.accepted {
+  border-color: var(--success-color, #10b981);
+  background: color-mix(in srgb, var(--success-color, #10b981) 5%, var(--card-bg));
+}
+
+.goal-review-card.rejected {
+  opacity: 0.6;
+  border-left-color: var(--text-muted, #9ca3af);
+}
+
+.goal-review-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.goal-review-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.goal-review-info h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+  color: var(--text-primary);
+}
+
+.goal-description {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.5rem 0;
+  line-height: 1.4;
+}
+
+.goal-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.goal-sphere-tag {
+  font-size: 0.75rem;
+  color: var(--goal-color);
+  font-weight: 500;
+}
+
+.goal-steps-count {
+  font-size: 0.75rem;
+  color: var(--text-muted, #9ca3af);
+}
+
+.goal-steps-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding: 0.5rem 0;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.goal-steps-toggle:hover {
+  color: var(--primary-color);
+}
+
+.goal-steps-list {
+  background: var(--bg-color);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.goal-step-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.goal-step-item:not(:last-child) {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.goal-step-item .step-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.goal-step-item .step-title {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.goal-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.goal-action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.goal-action-btn:hover {
+  border-color: var(--text-muted);
+  background: var(--bg-color);
+}
+
+.goal-action-btn.accept:hover,
+.goal-action-btn.accept.active {
+  border-color: var(--success-color, #10b981);
+  background: var(--success-color, #10b981);
+  color: white;
+}
+
+.goal-action-btn.edit:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.goal-action-btn.reject:hover,
+.goal-action-btn.reject.active {
+  border-color: var(--text-muted, #9ca3af);
+  background: var(--text-muted, #9ca3af);
+  color: white;
+}
+
+.step-actions.final {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
 }
 
 @media (max-width: 768px) {

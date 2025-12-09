@@ -106,3 +106,18 @@ Improved Profile.vue (/app/achievements) UX based on user feedback:
 - Added explanatory text: "Зарабатывайте XP за привычки, задачи и дневник. Обменивайте на награды из списка желаний."
 - Compact reward progress inside progress card
 - All CSS uses Style Guide variables for dark/light theme support
+
+### Onboarding Backend Integration (December 9, 2024)
+Updated OnboardingAI.vue to integrate with new backend API:
+- **Step 1**: Added `how_many_time` field with values: `15_mins`, `30_mins`, `1_hour`, `something`
+- **Step 1→2 transition**: Saves `how_many_time` via `/api/rest/front/app/onboard/update/`
+- **Step 2→3 transition**: Saves SSP sphere ratings via `/api/rest/front/app/ssp/update/`
+- **Step 5 UI redesign**: 
+  - Goal cards with accept/edit/reject buttons
+  - Expandable steps list for each goal
+  - Status summary (принято/ожидает/пропущено)
+  - "Пропустить всё" and "Добавить цели (N)" buttons
+- **Goal creation**: Creates accepted goals via `/api/rest/front/app/goals/update/`
+- **Steps creation**: Creates steps for goals via `/api/rest/front/app/goals/steps/update/`
+- Sphere ID mapping: wealth→welfare, hobbies→hobby, friendship→environment, health→health_sport, career→work, love→family
+- Enhanced error handling with console logging
