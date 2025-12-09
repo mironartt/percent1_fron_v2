@@ -5,26 +5,6 @@
       <p class="page-subtitle">Ваш прогресс и награды</p>
     </header>
 
-    <!-- Секция: Серии -->
-    <div class="stats-section">
-      <div class="stats-section-header">
-        <span class="stats-section-title">Серии</span>
-        <span class="stats-section-hint">Непрерывные дни активности</span>
-      </div>
-      <div class="stats-panel">
-        <div class="stat-chip">
-          <Flame :size="16" :stroke-width="1.5" class="stat-icon-habits" />
-          <span class="stat-value">{{ habitStreak }}</span>
-          <span class="stat-label">дней привычек</span>
-        </div>
-        <div class="stat-chip">
-          <BookOpen :size="16" :stroke-width="1.5" class="stat-icon-journal" />
-          <span class="stat-value">{{ journalStreak }}</span>
-          <span class="stat-label">записей дневника</span>
-        </div>
-      </div>
-    </div>
-
     <!-- Секция: Мой прогресс -->
     <div class="progress-card section-card">
       <div class="progress-card-header">
