@@ -813,10 +813,12 @@ async function createGoalsOnBackend(acceptedGoals) {
   const goalsData = acceptedGoals.map(goal => ({
     goal_id: null,
     title: goal.title,
-    description: goal.description || '',
     category: sphereIdToBackend[goal.sphereId],
+    score: 'true',
     status: 'work',
-    why_important: goal.whyImportant || ''
+    why_important: goal.whyImportant || '',
+    why_give_me: '',
+    why_about_me: ''
   }))
   
   if (DEBUG_MODE) {
