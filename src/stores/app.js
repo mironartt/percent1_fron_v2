@@ -1895,7 +1895,12 @@ export const useAppStore = defineStore('app', () => {
     try {
       const goalsResult = await updateGoals({ goals_data: goalsData })
       
-      if (goalsResult.status !== 'ok') {
+      if (DEBUG_MODE) {
+        console.log('[Store] Goals API response:', goalsResult)
+        console.log('[Store] Response status:', goalsResult?.status, 'Type:', typeof goalsResult?.status)
+      }
+      
+      if (!goalsResult || goalsResult.status !== 'ok') {
         if (DEBUG_MODE) {
           console.warn('[Store] Failed to create AI goals on backend:', goalsResult)
         }
