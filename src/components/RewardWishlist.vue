@@ -10,11 +10,16 @@
       </button>
     </div>
 
-    <div v-if="wishlist.length === 0" class="empty-state">
+    <div v-if="rewardsLoading && rewards.length === 0" class="loading-state">
+      <Loader2 :size="24" :stroke-width="2" class="spinner" />
+      <span>Загрузка наград...</span>
+    </div>
+
+    <div v-else-if="rewards.length === 0" class="empty-state">
       <div class="empty-icon">🎁</div>
       <p>Добавьте награды, которые хотите получить за свои достижения</p>
-      <button class="btn btn-primary btn-sm" @click="addDemoRewards">
-        Добавить примеры
+      <button class="btn btn-primary btn-sm" @click="showAddModal = true">
+        Добавить награду
       </button>
     </div>
 
@@ -23,15 +28,15 @@
         <div class="compact-list">
           <div 
             v-for="reward in visibleRewards" 
-            :key="reward.id"
+            :key="reward.reward_id"
             class="compact-reward"
-            :class="{ available: reward.isAvailable }"
-            @click="reward.isAvailable ? claimReward(reward) : editReward(reward)"
+            :class="{ available: reward.can_afford }"
+            @click="reward.can_afford ? claimReward(reward) : editReward(reward)"
           >
             <span class="compact-icon">{{ reward.icon }}</span>
             <div class="compact-info">
               <span class="compact-name">{{ reward.name }}</span>
-              <div class="compact-progress" v-if="!reward.isAvailable">
+              <div class="compact-progress" v-if="!reward.can_afford">
                 <div class="progress-bar-mini">
                   <div 
                     class="progress-fill-mini"
@@ -42,7 +47,7 @@
               </div>
               <span v-else class="compact-ready">Доступна!</span>
             </div>
-            <Check v-if="reward.isAvailable" :size="16" :stroke-width="2" class="compact-check" />
+            <Check v-if="reward.can_afford" :size="16" :stroke-width="2" class="compact-check" />
           </div>
         </div>
         
@@ -68,7 +73,7 @@
           <h4 class="section-label available">Доступны сейчас</h4>
           <div 
             v-for="reward in availableRewards" 
-            :key="reward.id"
+            :key="reward.reward_id"
             class="reward-card available"
           >
             <span class="reward-icon">{{ reward.icon }}</span>
@@ -76,7 +81,7 @@
               <span class="reward-name">{{ reward.name }}</span>
               <span class="reward-cost">{{ reward.cost }} XP</span>
             </div>
-            <button class="btn btn-success btn-sm" @click="claimReward(reward)">
+            <button class="btn btn-success btn-sm" @click="claimReward(reward)" :disabled="rewardsLoading">
               Получить
             </button>
           </div>
@@ -86,7 +91,7 @@
           <h4 class="section-label upcoming">Впереди</h4>
           <div 
             v-for="reward in upcomingRewards" 
-            :key="reward.id"
+            :key="reward.reward_id"
             class="reward-card"
           >
             <span class="reward-icon">{{ reward.icon }}</span>
@@ -112,13 +117,13 @@
           <h4 class="section-label redeemed">Полученные</h4>
           <div 
             v-for="reward in redeemedRewards.slice(0, 3)" 
-            :key="reward.id"
+            :key="reward.reward_id"
             class="reward-card redeemed"
           >
             <span class="reward-icon">{{ reward.icon }}</span>
             <div class="reward-info">
               <span class="reward-name">{{ reward.name }}</span>
-              <span class="reward-date">{{ formatDate(reward.redeemedAt) }}</span>
+              <span class="reward-date">{{ formatDate(reward.date_redeemed) }}</span>
             </div>
             <Check :size="18" :stroke-width="2" class="check-icon" />
           </div>
@@ -180,7 +185,7 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button v-if="editingReward" class="btn btn-danger" @click="deleteReward">
+            <button v-if="editingReward" class="btn btn-danger" @click="deleteReward" :disabled="rewardsLoading">
               Удалить
             </button>
             <div class="spacer"></div>
@@ -188,7 +193,7 @@
             <button 
               class="btn btn-primary" 
               @click="saveReward"
-              :disabled="!formData.name || !formData.cost"
+              :disabled="!formData.name || !formData.cost || rewardsLoading"
             >
               {{ editingReward ? 'Сохранить' : 'Добавить' }}
             </button>
@@ -209,7 +214,9 @@
           </div>
           <div class="claim-actions">
             <button class="btn btn-secondary" @click="claimingReward = null">Отмена</button>
-            <button class="btn btn-success" @click="confirmClaim">Получить!</button>
+            <button class="btn btn-success" @click="confirmClaim" :disabled="rewardsLoading">
+              Получить!
+            </button>
           </div>
         </div>
       </div>
@@ -218,10 +225,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useXpStore } from '../stores/xp'
 import { useToastStore } from '../stores/toast'
-import { Gift, Plus, Pencil, Check, X, ChevronDown } from 'lucide-vue-next'
+import { Gift, Plus, Pencil, Check, X, ChevronDown, Loader2 } from 'lucide-vue-next'
 
 const xpStore = useXpStore()
 const toast = useToastStore()
@@ -244,7 +251,8 @@ const availableIcons = [
 ]
 
 const xpBalance = computed(() => xpStore.xpBalance)
-const wishlist = computed(() => xpStore.wishlist)
+const rewards = computed(() => xpStore.rewards)
+const rewardsLoading = computed(() => xpStore.rewardsLoading)
 const availableRewards = computed(() => xpStore.availableRewards)
 const upcomingRewards = computed(() => xpStore.upcomingRewards)
 const redeemedRewards = computed(() => xpStore.redeemedRewards)
@@ -266,6 +274,12 @@ const hiddenRewardsCount = computed(() => {
   return Math.max(0, allActiveRewards.value.length - 4)
 })
 
+onMounted(async () => {
+  if (rewards.value.length === 0) {
+    await xpStore.fetchRewards({ status_filter: null })
+  }
+})
+
 function toggleRewardsExpand() {
   rewardsExpanded.value = !rewardsExpanded.value
 }
@@ -275,12 +289,9 @@ function getProgress(reward) {
 }
 
 function formatDate(dateStr) {
+  if (!dateStr) return ''
   const date = new Date(dateStr)
   return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
-}
-
-function addDemoRewards() {
-  xpStore.addDemoRewards()
 }
 
 function editReward(reward) {
@@ -305,22 +316,35 @@ function closeModal() {
   }
 }
 
-function saveReward() {
+async function saveReward() {
   if (editingReward.value) {
-    xpStore.updateReward(editingReward.value.id, formData.value)
-    toast.showToast({ title: 'Награда обновлена', type: 'success' })
+    const result = await xpStore.updateReward(editingReward.value.reward_id, formData.value)
+    if (result.success) {
+      toast.showToast({ title: 'Награда обновлена', type: 'success' })
+      closeModal()
+    } else {
+      toast.showToast({ title: result.error || 'Ошибка обновления', type: 'error' })
+    }
   } else {
-    xpStore.addReward(formData.value)
-    toast.showToast({ title: 'Награда добавлена', type: 'success' })
+    const result = await xpStore.addReward(formData.value)
+    if (result.success) {
+      toast.showToast({ title: 'Награда добавлена', type: 'success' })
+      closeModal()
+    } else {
+      toast.showToast({ title: result.error || 'Ошибка добавления', type: 'error' })
+    }
   }
-  closeModal()
 }
 
-function deleteReward() {
+async function deleteReward() {
   if (editingReward.value) {
-    xpStore.removeReward(editingReward.value.id)
-    toast.showToast({ title: 'Награда удалена', type: 'info' })
-    closeModal()
+    const result = await xpStore.removeReward(editingReward.value.reward_id)
+    if (result.success) {
+      toast.showToast({ title: 'Награда удалена', type: 'info' })
+      closeModal()
+    } else {
+      toast.showToast({ title: result.error || 'Ошибка удаления', type: 'error' })
+    }
   }
 }
 
@@ -328,14 +352,14 @@ function claimReward(reward) {
   claimingReward.value = reward
 }
 
-function confirmClaim() {
+async function confirmClaim() {
   if (!claimingReward.value) return
   
-  const result = xpStore.spendXP(claimingReward.value.id)
+  const result = await xpStore.redeemReward(claimingReward.value.reward_id)
   if (result.success) {
     toast.showToast({ title: `Поздравляем! Вы получили: ${claimingReward.value.name}`, type: 'success' })
   } else {
-    toast.showToast({ title: result.error, type: 'error' })
+    toast.showToast({ title: result.error || 'Ошибка получения награды', type: 'error' })
   }
   claimingReward.value = null
 }
@@ -382,6 +406,24 @@ function confirmClaim() {
 .btn-icon:hover {
   background: var(--bg-secondary);
   color: var(--primary-color);
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  color: var(--text-secondary);
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .empty-state {

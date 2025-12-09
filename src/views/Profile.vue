@@ -5,7 +5,6 @@
       <p class="page-subtitle">Ваш прогресс и награды</p>
     </header>
 
-    <!-- Секция: Мой прогресс -->
     <div class="progress-card section-card">
       <div class="progress-card-header">
         <div class="progress-title">
@@ -55,7 +54,7 @@
       <RewardWishlist />
 
       <div class="xp-history" :class="{ collapsed: !historyExpanded }">
-        <button class="history-header" @click="historyExpanded = !historyExpanded">
+        <button class="history-header" @click="toggleHistory">
           <div class="history-title">
             <History :size="18" :stroke-width="1.5" />
             <span>История XP</span>
@@ -66,27 +65,60 @@
           <ChevronDown :size="18" :stroke-width="1.5" class="expand-icon" />
         </button>
         <div class="history-content" v-show="historyExpanded">
-          <div v-if="recentHistory.length === 0" class="empty-history">
+          <div v-if="historyLoading" class="loading-history">
+            <Loader2 :size="20" class="spinner" />
+            <span>Загрузка истории...</span>
+          </div>
+          <div v-else-if="xpHistoryGroups.length === 0" class="empty-history">
             <p>Начните выполнять задачи и привычки, чтобы получать XP</p>
           </div>
           <div v-else class="history-list">
             <div 
-              v-for="entry in recentHistory" 
-              :key="entry.id"
-              class="history-item"
+              v-for="dayGroup in xpHistoryGroups" 
+              :key="dayGroup.date"
+              class="history-day"
             >
-              <div class="history-icon" :class="getSourceClass(entry.source)">
-                <component :is="getSourceIcon(entry.source)" :size="14" :stroke-width="1.5" />
-              </div>
-              <div class="history-info">
-                <span class="history-source">{{ getSourceLabel(entry.source) }}</span>
-                <span class="history-meta" v-if="entry.metadata?.habitName">
-                  {{ entry.metadata.habitName }}
+              <div class="day-header">
+                <span class="day-date">{{ formatDayDate(dayGroup.date) }}</span>
+                <span class="day-summary">
+                  <span v-if="dayGroup.total_earned > 0" class="day-earned">+{{ dayGroup.total_earned }}</span>
+                  <span v-if="dayGroup.total_spent > 0" class="day-spent">-{{ dayGroup.total_spent }}</span>
                 </span>
               </div>
-              <span class="history-amount">+{{ entry.amount }} XP</span>
-              <span class="history-time">{{ formatTime(entry.timestamp) }}</span>
+              <div 
+                v-for="group in dayGroup.groups" 
+                :key="group.group_type"
+                class="history-group"
+              >
+                <div class="group-header">
+                  <div class="history-icon" :class="getGroupClass(group.group_type)">
+                    <component :is="getGroupIcon(group.group_type)" :size="14" :stroke-width="1.5" />
+                  </div>
+                  <span class="group-label">{{ group.group_type_display }}</span>
+                  <span class="group-amount" :class="{ negative: group.total_amount < 0 }">
+                    {{ group.total_amount > 0 ? '+' : '' }}{{ group.total_amount }} XP
+                  </span>
+                </div>
+                <div v-if="group.group_type === 'reward_redeemed'" class="group-items">
+                  <div 
+                    v-for="item in group.items" 
+                    :key="item.transaction_id"
+                    class="reward-item"
+                  >
+                    <span class="reward-item-name">{{ item.reward_name }}</span>
+                    <span class="reward-item-amount">{{ item.amount }} XP</span>
+                  </div>
+                </div>
+              </div>
             </div>
+            <button 
+              v-if="historyPage < historyTotalPages"
+              class="load-more-btn"
+              @click="loadMoreHistory"
+              :disabled="historyLoading"
+            >
+              Загрузить ещё
+            </button>
           </div>
         </div>
       </div>
@@ -95,7 +127,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAppStore } from '../stores/app'
 import { useXpStore } from '../stores/xp'
 import RewardWishlist from '../components/RewardWishlist.vue'
@@ -108,7 +140,10 @@ import {
   Zap,
   Star,
   ChevronDown,
-  CheckCircle
+  CheckCircle,
+  Gift,
+  AlertCircle,
+  Loader2
 } from 'lucide-vue-next'
 
 const historyExpanded = ref(false)
@@ -116,69 +151,80 @@ const historyExpanded = ref(false)
 const appStore = useAppStore()
 const xpStore = useXpStore()
 
-const userName = computed(() => appStore.displayName)
-const userEmail = computed(() => appStore.user.email || 'user@example.com')
 const xpBalance = computed(() => xpStore.xpBalance)
 const lifetimeEarned = computed(() => xpStore.lifetimeEarned)
-const habitStreak = computed(() => appStore.habitStreak)
-const journalStreak = computed(() => appStore.journalStreak)
 const todayXP = computed(() => xpStore.todayXP)
 const weekXP = computed(() => xpStore.weekXP)
 const nextReward = computed(() => xpStore.nextReward)
 const xpToNextReward = computed(() => xpStore.xpToNextReward)
+const xpHistoryGroups = computed(() => xpStore.xpHistoryGroups)
+const historyLoading = computed(() => xpStore.historyLoading)
+const historyPage = computed(() => xpStore.historyPage)
+const historyTotalPages = computed(() => xpStore.historyTotalPages)
 
 const nextRewardProgress = computed(() => {
   if (!nextReward.value) return 0
   return ((xpBalance.value / nextReward.value.cost) * 100).toFixed(0)
 })
 
-const recentHistory = computed(() => {
-  return xpStore.xpHistory.slice(0, 10)
+onMounted(async () => {
+  await xpStore.fetchXPStats()
 })
 
-function getSourceClass(source) {
-  switch (source) {
+async function toggleHistory() {
+  historyExpanded.value = !historyExpanded.value
+  if (historyExpanded.value && xpHistoryGroups.value.length === 0) {
+    await xpStore.fetchXPHistory({ page: 1, page_size: 10 })
+  }
+}
+
+async function loadMoreHistory() {
+  await xpStore.loadMoreHistory()
+}
+
+function formatDayDate(dateStr) {
+  const date = new Date(dateStr)
+  const today = new Date()
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  
+  if (date.toDateString() === today.toDateString()) {
+    return 'Сегодня'
+  }
+  if (date.toDateString() === yesterday.toDateString()) {
+    return 'Вчера'
+  }
+  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
+}
+
+function getGroupClass(groupType) {
+  switch (groupType) {
     case 'habit_completed': return 'habit'
-    case 'focus_task_completed': return 'task'
+    case 'habit_penalty': return 'penalty'
+    case 'journal_entry': return 'journal'
+    case 'journal_penalty': return 'penalty'
+    case 'planning_penalty': return 'penalty'
     case 'goal_step_completed': return 'step'
     case 'goal_completed': return 'goal'
-    case 'journal_entry': return 'journal'
+    case 'reward_redeemed': return 'reward'
+    case 'achievement_bonus': return 'achievement'
     default: return 'other'
   }
 }
 
-function getSourceIcon(source) {
-  switch (source) {
+function getGroupIcon(groupType) {
+  switch (groupType) {
     case 'habit_completed': return Flame
-    case 'focus_task_completed': return CheckCircle
+    case 'habit_penalty': return AlertCircle
+    case 'journal_entry': return BookOpen
+    case 'journal_penalty': return AlertCircle
+    case 'planning_penalty': return AlertCircle
     case 'goal_step_completed': return Zap
     case 'goal_completed': return Star
-    case 'journal_entry': return BookOpen
+    case 'reward_redeemed': return Gift
+    case 'achievement_bonus': return Trophy
     default: return Sparkles
   }
-}
-
-function getSourceLabel(source) {
-  switch (source) {
-    case 'habit_completed': return 'Привычка'
-    case 'focus_task_completed': return 'Задача'
-    case 'goal_step_completed': return 'Шаг цели'
-    case 'goal_completed': return 'Цель выполнена'
-    case 'journal_entry': return 'Дневник'
-    default: return 'Действие'
-  }
-}
-
-function formatTime(timestamp) {
-  const date = new Date(timestamp)
-  const now = new Date()
-  const diff = now - date
-
-  if (diff < 60000) return 'только что'
-  if (diff < 3600000) return `${Math.floor(diff / 60000)} мин назад`
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)} ч назад`
-  
-  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
 }
 </script>
 
@@ -211,80 +257,6 @@ function formatTime(timestamp) {
   text-align: center;
   display: block;
   width: 100%;
-}
-
-.stats-section {
-  margin-bottom: 1rem;
-}
-
-.stats-section-header {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.stats-section-title {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--text-primary);
-}
-
-.stats-section-hint {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.stats-panel {
-  display: flex;
-  gap: 0.5rem;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  padding-bottom: 0.25rem;
-}
-
-.stats-panel::-webkit-scrollbar {
-  display: none;
-}
-
-.stat-chip {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.75rem;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.stat-chip .stat-value {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--text-primary);
-}
-
-.stat-chip .stat-label {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
-.stat-icon-habits {
-  color: var(--status-warning-text);
-}
-
-.stat-icon-journal {
-  color: var(--status-info-text);
-}
-
-.stat-icon-tasks {
-  color: var(--status-success-text);
-}
-
-.stat-icon-week {
-  color: var(--status-purple-text);
 }
 
 .progress-card {
@@ -400,41 +372,6 @@ function formatTime(timestamp) {
   white-space: nowrap;
 }
 
-.user-card {
-  margin-bottom: 1rem;
-}
-
-.user-card-main {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  flex-shrink: 0;
-}
-
-.user-name {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
 .xp-display {
   display: flex;
   align-items: center;
@@ -454,128 +391,10 @@ function formatTime(timestamp) {
   color: var(--secondary-color);
 }
 
-.xp-lifetime {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-top: 0.125rem;
-}
-
-.user-card-reward {
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.reward-mini {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.reward-mini-icon {
-  font-size: 1.25rem;
-  flex-shrink: 0;
-}
-
-.reward-mini-progress {
-  flex: 1;
-  height: 6px;
-  background: var(--status-purple-bg);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.reward-mini-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--status-purple-text), var(--status-info-text));
-  border-radius: 3px;
-  transition: width 0.4s ease;
-}
-
-.reward-mini-text {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-.desktop-only {
-  display: block;
-}
-
-@media (max-width: 768px) {
-  .desktop-only {
-    display: none !important;
-  }
-}
-
 .profile-content {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-}
-
-.next-reward {
-  background: linear-gradient(135deg, var(--status-purple-bg), var(--status-info-bg));
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 1.25rem;
-}
-
-.next-reward-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
-  color: var(--primary-color);
-  margin-bottom: 1rem;
-}
-
-.next-reward-content {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.reward-icon {
-  font-size: 2.5rem;
-}
-
-.reward-details {
-  flex: 1;
-}
-
-.reward-name {
-  display: block;
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-.reward-progress {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.progress-bar {
-  flex: 1;
-  height: 8px;
-  background: var(--status-purple-bg);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--status-purple-text), var(--status-info-text));
-  border-radius: 4px;
-  transition: width 0.5s ease;
-}
-
-.progress-text {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  white-space: nowrap;
 }
 
 .xp-history {
@@ -639,6 +458,24 @@ function formatTime(timestamp) {
   padding: 0 1.25rem 1.25rem;
 }
 
+.loading-history {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  color: var(--text-secondary);
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .empty-history {
   text-align: center;
   padding: 1.5rem;
@@ -648,16 +485,52 @@ function formatTime(timestamp) {
 .history-list {
   display: flex;
   flex-direction: column;
+  gap: 1rem;
+}
+
+.history-day {
+  display: flex;
+  flex-direction: column;
   gap: 0.5rem;
 }
 
-.history-item {
+.day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.day-date {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.day-summary {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.day-earned {
+  color: var(--success-color);
+}
+
+.day-spent {
+  color: #ef4444;
+}
+
+.history-group {
+  padding: 0.5rem 0;
+}
+
+.group-header {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem;
-  background: var(--bg-secondary);
-  border-radius: 10px;
 }
 
 .history-icon {
@@ -674,9 +547,14 @@ function formatTime(timestamp) {
   color: var(--status-warning-text);
 }
 
-.history-icon.task {
-  background: var(--status-success-bg);
-  color: var(--status-success-text);
+.history-icon.penalty {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.history-icon.journal {
+  background: var(--status-info-bg);
+  color: var(--status-info-text);
 }
 
 .history-icon.step {
@@ -689,9 +567,14 @@ function formatTime(timestamp) {
   color: var(--status-purple-text);
 }
 
-.history-icon.journal {
-  background: var(--status-info-bg);
-  color: var(--status-info-text);
+.history-icon.reward {
+  background: rgba(168, 85, 247, 0.1);
+  color: #a855f7;
+}
+
+.history-icon.achievement {
+  background: var(--status-success-bg);
+  color: var(--status-success-text);
 }
 
 .history-icon.other {
@@ -699,37 +582,59 @@ function formatTime(timestamp) {
   color: var(--text-secondary);
 }
 
-.history-info {
+.group-label {
   flex: 1;
-  min-width: 0;
-}
-
-.history-source {
-  display: block;
   font-size: 0.9rem;
-  font-weight: 500;
+  color: var(--text-primary);
 }
 
-.history-meta {
-  display: block;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.history-amount {
+.group-amount {
   font-weight: 600;
-  color: var(--success-color);
   font-size: 0.9rem;
+  color: var(--success-color);
 }
 
-.history-time {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  white-space: nowrap;
+.group-amount.negative {
+  color: #ef4444;
 }
 
+.group-items {
+  margin-left: 2.5rem;
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
 
+.reward-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.reward-item-amount {
+  color: #ef4444;
+}
+
+.load-more-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.load-more-btn:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+}
+
+.load-more-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 </style>
