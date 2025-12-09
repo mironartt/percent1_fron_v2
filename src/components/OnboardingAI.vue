@@ -301,6 +301,7 @@ import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import WheelOfLife from './WheelOfLife.vue'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
+import * as api from '@/services/api.js'
 import {
   Sparkles, Target, Clock, ArrowRight, ArrowLeft,
   Bot, Calendar, Rocket, CheckCircle, TrendingUp,
@@ -322,10 +323,10 @@ const surveyData = ref({
 })
 
 const timeOptions = [
-  { id: '15min', label: '15 мин/день' },
-  { id: '30min', label: '30 мин/день' },
-  { id: '1hour', label: '1 час/день' },
-  { id: 'flexible', label: 'По возможности' }
+  { id: '15_mins', label: '15 мин/день' },
+  { id: '30_mins', label: '30 мин/день' },
+  { id: '1_hour', label: '1 час/день' },
+  { id: 'something', label: 'По возможности' }
 ]
 
 const localSpheres = ref([
@@ -363,6 +364,17 @@ const sphereHints = {
   career: 'Работа, профессия, развитие, достижения',
   love: 'Партнёр, дети, близкие родственники'
 }
+
+const sphereIdToBackend = {
+  wealth: 'welfare',
+  hobbies: 'hobby',
+  friendship: 'environment',
+  health: 'health_sport',
+  career: 'work',
+  love: 'family'
+}
+
+const isSaving = ref(false)
 
 function getSphereIcon(id) {
   return sphereIcons[id] || Target
@@ -558,8 +570,18 @@ function generateAIGoals() {
   aiGoals.value = generatedGoals
 }
 
-function nextStep() {
+async function nextStep() {
   if (currentStep.value < totalSteps) {
+    const fromStep = currentStep.value
+    
+    if (fromStep === 1 && !SKIP_AUTH_CHECK) {
+      await saveHowManyTime()
+    }
+    
+    if (fromStep === 2 && !SKIP_AUTH_CHECK) {
+      await saveSSPData()
+    }
+    
     currentStep.value++
     
     if (currentStep.value === 4) {
@@ -569,6 +591,52 @@ function nextStep() {
     if (currentStep.value === 5) {
       generateAIGoals()
     }
+  }
+}
+
+async function saveHowManyTime() {
+  if (!surveyData.value.timeCommitment) return
+  
+  isSaving.value = true
+  try {
+    const result = await api.updateOnboardingData({
+      how_many_time: surveyData.value.timeCommitment,
+      step_completed: 1
+    })
+    
+    if (DEBUG_MODE) {
+      console.log('[OnboardingAI] Saved how_many_time:', surveyData.value.timeCommitment, result)
+    }
+  } catch (error) {
+    console.error('[OnboardingAI] Failed to save how_many_time:', error)
+  } finally {
+    isSaving.value = false
+  }
+}
+
+async function saveSSPData() {
+  isSaving.value = true
+  try {
+    const categoriesData = localSpheres.value.map(sphere => ({
+      category: sphereIdToBackend[sphere.id],
+      rating: sphere.score
+    }))
+    
+    const result = await api.updateSSPData({
+      categories_reflection_data: categoriesData
+    })
+    
+    if (DEBUG_MODE) {
+      console.log('[OnboardingAI] Saved SSP data:', categoriesData, result)
+    }
+    
+    await api.updateOnboardingData({
+      step_completed: 2
+    })
+  } catch (error) {
+    console.error('[OnboardingAI] Failed to save SSP data:', error)
+  } finally {
+    isSaving.value = false
   }
 }
 
