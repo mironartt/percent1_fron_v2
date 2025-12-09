@@ -476,7 +476,7 @@
 import { ref, computed, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
-import { DEBUG_MODE } from '@/config/settings.js'
+import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
 import { apiFetch } from '@/services/api.js'
 import WheelOfLife from '../components/WheelOfLife.vue'
 import { 
@@ -876,7 +876,7 @@ function closeGoalModal() {
 async function createGoal() {
   if (!newGoal.title || !selectedSphereForGoal.value) return
   
-  const idea = {
+  const goalData = {
     text: newGoal.title,
     sphereId: selectedSphereForGoal.value.id,
     whyImportant: newGoal.motivation,
@@ -884,8 +884,28 @@ async function createGoal() {
     source: 'ssp'
   }
   
-  store.addRawIdea(idea, { insertAtTop: true })
+  const localGoal = store.addRawIdea(goalData, { insertAtTop: true })
   closeGoalModal()
+  
+  if (!SKIP_AUTH_CHECK) {
+    try {
+      const result = await store.createGoalOnBackend({
+        text: goalData.text,
+        sphereId: goalData.sphereId,
+        whyImportant: goalData.whyImportant,
+        status: goalData.status
+      })
+      
+      if (result.success && result.goalId) {
+        store.updateRawIdea(localGoal.id, { backendId: result.goalId })
+        if (DEBUG_MODE) {
+          console.log('[SSP] Goal created on backend:', result.goalId)
+        }
+      }
+    } catch (error) {
+      console.error('[SSP] Failed to create goal on backend:', error)
+    }
+  }
   
   router.push('/app/goals-bank')
 }
