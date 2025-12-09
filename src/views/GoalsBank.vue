@@ -139,6 +139,19 @@
               </button>
             </div>
           </div>
+
+          <!-- Reset Filters Button -->
+          <transition name="fade">
+            <button 
+              v-if="hasActiveFilters"
+              class="reset-filters-btn"
+              @click="clearFilters"
+              title="Сбросить все фильтры"
+            >
+              <RotateCcw :size="14" />
+              <span class="reset-text">Сбросить</span>
+            </button>
+          </transition>
         </div>
 
         <!-- Empty state when filters return no results -->
@@ -2625,6 +2638,44 @@ onUnmounted(() => {
   color: var(--text-secondary);
 }
 
+/* Reset Filters Button */
+.reset-filters-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.reset-filters-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--text-tertiary);
+}
+
+.reset-filters-btn:active {
+  transform: scale(0.97);
+}
+
+/* Fade transition */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
 .search-filter-bar .search-icon {
   left: 0.625rem;
 }
@@ -4810,6 +4861,15 @@ onUnmounted(() => {
   
   .chip-count {
     font-size: 0.6875rem;
+  }
+  
+  /* Reset button - hide text on mobile */
+  .reset-filters-btn {
+    padding: 0.5rem;
+  }
+  
+  .reset-filters-btn .reset-text {
+    display: none;
   }
   
   .summary-actions.desktop-only {
