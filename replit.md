@@ -121,3 +121,14 @@ Updated OnboardingAI.vue to integrate with new backend API:
 - **Steps creation**: Creates steps for goals via `/api/rest/front/app/goals/steps/update/`
 - Sphere ID mapping: wealth→welfare, hobbies→hobby, friendship→environment, health→health_sport, career→work, love→family
 - Enhanced error handling with console logging
+
+### Settings Page Redesign (December 9, 2024)
+Complete redesign of Settings.vue:
+- **Profile section**: Email field is read-only; for Telegram registrations with missing email shows "Указать email" button
+- **Email setup modal**: Opens for Telegram users without email, collects email + password, calls `/api/rest/front/registration/fill-data/`
+- **Telegram bot section**: Shows bot link from `getUserData().telegram_bot_link` with "Открыть бота" button
+- **"Мой старт" section**: Loads onboarding data from backend via `getOnboardingData()`, displays user's journey (whyHere, whatToChange, growthVsComfort, pointA/pointB, whyImportant)
+- **Field mapping**: reason_joined→whyHere, desired_changes→whatToChange, growth_comfort_zones→growthVsComfort, current_state→pointA, goal_state→pointB, why_important→whyImportant
+- **Removed blocks**: Email notifications toggle, Export/Import data, Delete account
+- **"Пройти заново" button**: Clears onboarding state and redirects to /onboarding
+- All styles support dark theme via CSS variables
