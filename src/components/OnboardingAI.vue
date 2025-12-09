@@ -795,7 +795,7 @@ async function completeOnboarding() {
     completedAt: new Date().toISOString()
   })
   
-  store.initAIRecommendations(acceptedGoals)
+  store.initAIRecommendations(acceptedGoals, { skipShowModal: true })
   
   store.completeFirstStep('ssp')
   store.completeFirstStep('chat_mentor')

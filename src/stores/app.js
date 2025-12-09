@@ -1805,7 +1805,9 @@ export const useAppStore = defineStore('app', () => {
   // AI RECOMMENDATIONS METHODS (GOALS)
   // ========================================
 
-  function initAIRecommendations(aiGoals) {
+  function initAIRecommendations(aiGoals, options = {}) {
+    const { skipShowModal = false } = options
+    
     aiRecommendedGoals.value = aiGoals.map(goal => ({
       ...goal,
       status: 'pending',
@@ -1816,11 +1818,14 @@ export const useAppStore = defineStore('app', () => {
         completed: false
       }))
     }))
-    showPlanReview.value = true
+    
+    if (!skipShowModal) {
+      showPlanReview.value = true
+    }
     saveToLocalStorage()
     
     if (DEBUG_MODE) {
-      console.log('[Store] AI Goal Recommendations initialized:', aiRecommendedGoals.value.length)
+      console.log('[Store] AI Goal Recommendations initialized:', aiRecommendedGoals.value.length, 'skipModal:', skipShowModal)
     }
   }
 
@@ -1895,12 +1900,14 @@ export const useAppStore = defineStore('app', () => {
     try {
       const goalsResult = await updateGoals({ goals_data: goalsData })
       
+      const responseStatus = (goalsResult?.status || '').toString().trim().toLowerCase()
+      
       if (DEBUG_MODE) {
         console.log('[Store] Goals API response:', goalsResult)
-        console.log('[Store] Response status:', goalsResult?.status, 'Type:', typeof goalsResult?.status)
+        console.log('[Store] Response status normalized:', responseStatus)
       }
       
-      if (!goalsResult || goalsResult.status !== 'ok') {
+      if (!goalsResult || responseStatus !== 'ok') {
         if (DEBUG_MODE) {
           console.warn('[Store] Failed to create AI goals on backend:', goalsResult)
         }
@@ -1910,8 +1917,10 @@ export const useAppStore = defineStore('app', () => {
       }
       
       let createdIds = goalsResult.data?.created_goals_ids
-      if (!createdIds && goalsResult.data?.goals_data) {
-        createdIds = goalsResult.data.goals_data.map(g => g.goal_id).filter(id => id != null)
+      if (!createdIds || createdIds.length === 0) {
+        if (goalsResult.data?.goals_data) {
+          createdIds = goalsResult.data.goals_data.map(g => g.goal_id).filter(id => id != null)
+        }
       }
       
       if (!createdIds || createdIds.length === 0) {
