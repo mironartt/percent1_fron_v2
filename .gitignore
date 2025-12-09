@@ -9,3 +9,4 @@ vite.config.ts.*
 src/config/local_settings.js
 
 CLAUDE.md
+PROMT_v3.md
