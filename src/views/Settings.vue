@@ -325,7 +325,7 @@ const router = useRouter()
 const store = useAppStore()
 const toastStore = useToastStore()
 
-const userName = ref(store.user.name)
+const userName = ref(store.user.first_name || '')
 const userEmail = ref('')
 const telegramBotLink = ref('')
 const isTelegramRegistration = ref(false)
@@ -453,7 +453,7 @@ function clearMentorHistory() {
 }
 
 function saveUserName() {
-  store.user.name = userName.value
+  store.user.first_name = userName.value
   store.saveToLocalStorage()
 }
 
