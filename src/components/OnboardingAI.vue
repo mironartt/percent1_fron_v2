@@ -268,12 +268,32 @@
                 <div class="goal-sphere-icon" :style="{ background: getSphereColor(goal.sphereId) }">
                   <component :is="getSphereIcon(goal.sphereId)" :size="18" />
                 </div>
-                <div class="goal-review-info">
+                <div class="goal-review-info" v-if="editingGoalId !== goal.id">
                   <h4>{{ goal.title }}</h4>
                   <p class="goal-description">{{ goal.description }}</p>
                   <div class="goal-meta">
                     <span class="goal-sphere-tag">{{ getSphereName(goal.sphereId) }}</span>
                     <span class="goal-steps-count">≡ {{ goal.steps.length }} шагов</span>
+                  </div>
+                </div>
+                <div class="goal-edit-form" v-else>
+                  <input 
+                    type="text"
+                    v-model="editingGoalData.title"
+                    class="goal-edit-input"
+                    placeholder="Название цели"
+                    @keyup.enter="saveGoalEdit(goal)"
+                    @keyup.escape="cancelEditGoal"
+                  />
+                  <textarea 
+                    v-model="editingGoalData.description"
+                    class="goal-edit-textarea"
+                    placeholder="Описание (необязательно)"
+                    rows="2"
+                  ></textarea>
+                  <div class="goal-edit-actions">
+                    <button class="btn btn-sm btn-secondary" @click="cancelEditGoal">Отмена</button>
+                    <button class="btn btn-sm btn-primary" @click="saveGoalEdit(goal)">Сохранить</button>
                   </div>
                 </div>
               </div>
@@ -495,10 +515,34 @@ function toggleGoalSteps(goal) {
   goal.expanded = !goal.expanded
 }
 
+const editingGoalId = ref(null)
+const editingGoalData = ref({ title: '', description: '' })
+
 function editGoal(goal) {
   if (DEBUG_MODE) {
     console.log('[OnboardingAI] Edit goal:', goal)
   }
+  editingGoalId.value = goal.id
+  editingGoalData.value = {
+    title: goal.title,
+    description: goal.description || ''
+  }
+}
+
+function cancelEditGoal() {
+  editingGoalId.value = null
+  editingGoalData.value = { title: '', description: '' }
+}
+
+function saveGoalEdit(goal) {
+  if (editingGoalData.value.title.trim()) {
+    goal.title = editingGoalData.value.title.trim()
+    goal.description = editingGoalData.value.description.trim()
+    if (DEBUG_MODE) {
+      console.log('[OnboardingAI] Goal updated:', goal)
+    }
+  }
+  cancelEditGoal()
 }
 
 function skipAllGoals() {
@@ -1806,6 +1850,59 @@ async function createStepsOnBackend(acceptedGoals, goalIds) {
   color: var(--text-secondary);
   margin: 0 0 0.5rem 0;
   line-height: 1.4;
+}
+
+.goal-edit-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.goal-edit-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  background: var(--bg-color);
+  color: var(--text-primary);
+}
+
+.goal-edit-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.15);
+}
+
+.goal-edit-textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  resize: vertical;
+  min-height: 50px;
+}
+
+.goal-edit-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.goal-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.goal-edit-actions .btn-sm {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
 }
 
 .goal-meta {
