@@ -132,3 +132,20 @@ Complete redesign of Settings.vue:
 - **Removed blocks**: Email notifications toggle, Export/Import data, Delete account
 - **"Пройти заново" button**: Clears onboarding state and redirects to /onboarding
 - All styles support dark theme via CSS variables
+
+### SSP History API v2 Integration (December 9, 2024)
+Integrated backend history tracking for SSP (Balanced Scorecard) module:
+- **API**: Added `getSSPHistory()` endpoint POST `/api/rest/front/app/ssp/history/get/`
+- **API**: Updated `updateSSPData()` to support optional `ssp_evaluation_id` for editing vs creating
+- **Store (`app.js`)**: 
+  - Added `sspHistoryData` ref with fields: loading, loaded, hasData, history, chartData, spheresTrends
+  - Added `sspEvaluationId` to `sspBackendData` for tracking current evaluation
+  - Added `createNewSSPEvaluation()` for new reassessments (no ssp_evaluation_id → new UUID on backend)
+  - Added `loadSSPHistoryFromBackend()` to fetch history with chart data and trends
+- **BalancedScorecard.vue**:
+  - Updated "История" tab to load data from backend API instead of localStorage
+  - Computed properties read directly from `store.sspHistoryData.*`
+  - Added loading state with spinner and empty state handling
+  - `saveReassessment()` calls `createNewSSPEvaluation()` then reloads history
+  - `getTrendClass()` and `getTrendText()` use backend `spheres_trends` data
+  - Watch on `activeTab` triggers history load on tab switch
