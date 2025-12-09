@@ -149,3 +149,11 @@ Integrated backend history tracking for SSP (Balanced Scorecard) module:
   - `saveReassessment()` calls `createNewSSPEvaluation()` then reloads history
   - `getTrendClass()` and `getTrendText()` use backend `spheres_trends` data
   - Watch on `activeTab` triggers history load on tab switch
+
+### Goal Notes API Integration Fix (December 9, 2024)
+Fixed notes data handling in GoalEdit.vue for the `with_notes_first_page` API flag:
+- **Issue**: Notes data was being read from wrong location in API response
+- **Fix**: Updated `loadStepsFromBackend()` to correctly read notes from `goal_data.notes_data`
+- **Pagination**: Now correctly reads from `goal_data.notes_pagination` object with fields: total_items, total_pages, page, page_size
+- **Code cleanup**: Removed duplicate `goalData` variable declaration to avoid scope conflicts
+- **Flag usage**: `with_notes_first_page: true` is sent when `page === 1` to fetch first page of notes with steps

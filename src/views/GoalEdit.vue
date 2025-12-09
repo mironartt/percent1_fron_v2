@@ -2524,27 +2524,28 @@ async function loadStepsFromBackend(page = 1, append = false) {
       }))
 
       // Обработать данные заметок, если они пришли с флагом with_notes_first_page
-      if (page === 1 && result.data.notes_data) {
-        notesData.value = result.data.notes_data || []
-        currentNotesPage.value = result.data.notes_page || 1
-        totalNotesPages.value = result.data.notes_total_pages || 1
-        totalNotesCount.value = result.data.notes_total_items || 0
-        totalFilteredNotesCount.value = result.data.notes_total_filtered_items || 0
+      // Данные заметок приходят внутри goal_data согласно API документации
+      const goalData = result.data.goal_data
+      if (page === 1 && goalData && goalData.notes_data) {
+        notesData.value = goalData.notes_data || []
+        const notesPagination = goalData.notes_pagination || {}
+        currentNotesPage.value = notesPagination.page || 1
+        totalNotesPages.value = notesPagination.total_pages || 1
+        totalNotesCount.value = notesPagination.total_items || 0
+        totalFilteredNotesCount.value = notesPagination.total_filtered_items || 0
         notesLoadedFromStepsApi.value = true
 
         if (DEBUG_MODE) {
           console.log('[GoalEdit] Notes loaded with steps:', {
-            page: result.data.notes_page,
-            totalPages: result.data.notes_total_pages,
+            page: notesPagination.page,
+            totalPages: notesPagination.total_pages,
             count: notesData.value.length
           })
         }
       }
 
       // Обработать данные цели, если они пришли в ответе (для случая прямого открытия страницы по URL)
-      if (page === 1 && result.data.goal_data) {
-        const goalData = result.data.goal_data
-
+      if (page === 1 && goalData) {
         // Создать объект цели из данных API
         goalDataFromApi.value = {
           id: goalData.goal_id,
