@@ -168,7 +168,12 @@
       </div>
 
       <div v-if="activeTab === 'history'" class="history-tab">
-        <div v-if="sspHistory.length === 0" class="empty-history">
+        <div v-if="historyLoading" class="history-loading">
+          <div class="loading-spinner"></div>
+          <p>Загрузка истории...</p>
+        </div>
+
+        <div v-else-if="!hasHistoryData" class="empty-history">
           <History :size="48" />
           <p>История оценок пока пуста</p>
           <span>После переоценки здесь появятся данные о динамике</span>
@@ -179,7 +184,7 @@
             <h3>Динамика среднего балла</h3>
             <div class="mini-chart">
               <div 
-                v-for="(entry, index) in sspHistory.slice(-10)" 
+                v-for="(entry, index) in sspChartData" 
                 :key="index"
                 class="chart-bar"
                 :style="{ height: `${entry.average * 10}%` }"
@@ -190,21 +195,45 @@
             </div>
           </div>
 
-          <div class="sphere-trends">
+          <div class="sphere-trends" v-if="sspTrends.length > 0">
             <h3>Изменения по сферам</h3>
             <div 
-              v-for="sphere in lifeSpheres" 
-              :key="sphere.id"
+              v-for="trend in sspTrends" 
+              :key="trend.id"
               class="trend-item"
             >
               <div class="trend-left">
-                <component :is="getSphereIcon(sphere.id)" :size="18" :style="{ color: getSphereColor(sphere.id) }" />
-                <span>{{ sphere.name }}</span>
+                <component :is="getSphereIcon(store.getCategoryFrontendId(trend.id))" :size="18" :style="{ color: getSphereColor(store.getCategoryFrontendId(trend.id)) }" />
+                <span>{{ trend.title }}</span>
               </div>
               <div class="trend-right">
-                <span class="current-score">{{ sphere.score }}</span>
-                <span class="trend-indicator" :class="getTrendClass(sphere.id)">
-                  {{ getTrendText(sphere.id) }}
+                <span class="current-score">{{ trend.current_score }}</span>
+                <span class="trend-indicator" :class="'trend-' + trend.trend">
+                  {{ trend.change > 0 ? '+' + trend.change : (trend.change < 0 ? trend.change : '=') }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="history-list" v-if="sspHistory.length > 0">
+            <h3>Все переоценки</h3>
+            <div 
+              v-for="(entry, index) in sspHistory.slice().reverse()" 
+              :key="entry.ssp_evaluation_id || index"
+              class="history-item"
+            >
+              <div class="history-item-header">
+                <span class="history-date">{{ formatDate(entry.date) }}</span>
+                <span class="history-average">{{ entry.average.toFixed(1) }}</span>
+              </div>
+              <div class="history-spheres">
+                <span 
+                  v-for="sphere in entry.spheres" 
+                  :key="sphere.id"
+                  class="sphere-badge"
+                  :style="{ backgroundColor: getSphereColor(store.getCategoryFrontendId(sphere.id)) + '20', color: getSphereColor(store.getCategoryFrontendId(sphere.id)) }"
+                >
+                  {{ sphere.score }}
                 </span>
               </div>
             </div>
@@ -444,7 +473,7 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, computed, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { DEBUG_MODE } from '@/config/settings.js'
@@ -525,7 +554,13 @@ function getSphereHint(sphereId) {
 }
 
 const lifeSpheres = computed(() => store.lifeSpheres)
-const sspHistory = computed(() => store.sspHistory || [])
+const sspHistory = computed(() => store.sspHistoryData?.history || [])
+const sspChartData = computed(() => store.sspHistoryData?.chartData || [])
+const sspTrends = computed(() => store.sspHistoryData?.spheresTrends || [])
+const hasHistoryData = computed(() => store.sspHistoryData?.hasData || false)
+const historyLoading = computed(() => store.sspHistoryData?.loading || false)
+const historyLoaded = computed(() => store.sspHistoryData?.loaded || false)
+
 const lastAssessmentDate = computed(() => {
   if (sspHistory.value.length > 0) {
     return sspHistory.value[sspHistory.value.length - 1].date
@@ -765,50 +800,54 @@ function skipCurrentSphere() {
 }
 
 async function saveReassessment() {
-  const previousScores = {}
-  lifeSpheres.value.forEach(s => {
-    previousScores[s.id] = s.score
-  })
-
   Object.keys(reassessScores).forEach(sphereId => {
     store.updateSphere(sphereId, { score: reassessScores[sphereId] })
-  })
-
-  store.addSSPHistoryEntry({
-    date: new Date().toISOString(),
-    scores: { ...reassessScores },
-    average: Object.values(reassessScores).reduce((a, b) => a + b, 0) / Object.keys(reassessScores).length,
-    previousScores
   })
 
   showReassessmentSheet.value = false
   
   if (DEBUG_MODE) {
-    console.log('[SSP] Saving reassessment to backend...')
+    console.log('[SSP] Creating new SSP evaluation on backend...')
   }
-  const result = await store.saveSSPRatingsToBackend()
-  if (!result.success && DEBUG_MODE) {
+  
+  const categoriesData = lifeSpheres.value.map(sphere => {
+    const backendCategory = store.getCategoryBackendId(sphere.id)
+    return {
+      category: backendCategory,
+      rating: reassessScores[sphere.id],
+      rating_reason: sphere.reflection?.why || '',
+      what_mean_max_rating: sphere.reflection?.ten || '',
+      max_rating_difficulties: sphere.reflection?.prevents || '',
+      what_want: sphere.reflection?.desired || ''
+    }
+  })
+  
+  const result = await store.createNewSSPEvaluation(categoriesData)
+  if (result.success) {
+    if (DEBUG_MODE) {
+      console.log('[SSP] New evaluation created, reloading history...')
+    }
+    await store.loadSSPHistoryFromBackend()
+  } else if (DEBUG_MODE) {
     console.warn('[SSP] Failed to save reassessment:', result.error)
   }
 }
 
 function getTrendClass(sphereId) {
-  if (sspHistory.value.length < 2) return ''
-  const last = sspHistory.value[sspHistory.value.length - 1]
-  const prev = sspHistory.value[sspHistory.value.length - 2]
-  const diff = (last.scores?.[sphereId] || 0) - (prev.scores?.[sphereId] || 0)
-  if (diff > 0) return 'trend-up'
-  if (diff < 0) return 'trend-down'
+  const backendSphereId = store.getCategoryBackendId(sphereId)
+  const trend = sspTrends.value.find(t => t.id === backendSphereId)
+  if (!trend) return ''
+  if (trend.trend === 'up') return 'trend-up'
+  if (trend.trend === 'down') return 'trend-down'
   return 'trend-same'
 }
 
 function getTrendText(sphereId) {
-  if (sspHistory.value.length < 2) return '—'
-  const last = sspHistory.value[sspHistory.value.length - 1]
-  const prev = sspHistory.value[sspHistory.value.length - 2]
-  const diff = (last.scores?.[sphereId] || 0) - (prev.scores?.[sphereId] || 0)
-  if (diff > 0) return `+${diff}`
-  if (diff < 0) return `${diff}`
+  const backendSphereId = store.getCategoryBackendId(sphereId)
+  const trend = sspTrends.value.find(t => t.id === backendSphereId)
+  if (!trend) return '—'
+  if (trend.change > 0) return `+${trend.change}`
+  if (trend.change < 0) return `${trend.change}`
   return '='
 }
 
@@ -856,6 +895,19 @@ onMounted(async () => {
     console.log('[SSP] Loading SSP data on mount...')
   }
   await store.loadSSPFromBackend()
+  
+  if (activeTab.value === 'history') {
+    await store.loadSSPHistoryFromBackend()
+  }
+})
+
+watch(activeTab, async (newTab) => {
+  if (newTab === 'history' && !historyLoaded.value) {
+    if (DEBUG_MODE) {
+      console.log('[SSP] Loading history on tab switch...')
+    }
+    await store.loadSSPHistoryFromBackend()
+  }
 })
 </script>
 
@@ -1312,9 +1364,78 @@ onMounted(async () => {
   background: color-mix(in srgb, #ef4444 10%, transparent);
 }
 
-.trend-same {
+.trend-same,
+.trend-stable {
   color: var(--text-muted);
   background: var(--bg-secondary);
+}
+
+.history-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  gap: 1rem;
+  color: var(--text-secondary);
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.history-list h3 {
+  font-size: 1rem;
+  margin: 0 0 1rem;
+  color: var(--text-primary);
+}
+
+.history-item {
+  padding: 1rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  margin-bottom: 0.75rem;
+}
+
+.history-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.history-date {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.history-average {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--primary-color);
+}
+
+.history-spheres {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.sphere-badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
 }
 
 .reassess-modal-overlay {

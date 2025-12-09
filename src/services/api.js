@@ -441,6 +441,7 @@ export async function getSSPData() {
 /**
  * Обновить данные блока ССП
  * @param {object} data - Данные для обновления
+ * @param {string} [data.ssp_evaluation_id] - ID переоценки (если передан - редактирование, если нет - новая переоценка)
  * @param {Array} data.categories_reflection_data - Массив данных по категориям
  * @param {string} data.categories_reflection_data[].category - ID категории (welfare, hobby, environment, health_sport, work, family)
  * @param {number} [data.categories_reflection_data[].rating] - Оценка (0-10)
@@ -448,10 +449,22 @@ export async function getSSPData() {
  * @param {string} [data.categories_reflection_data[].what_mean_max_rating] - Что для меня "10"?
  * @param {string} [data.categories_reflection_data[].max_rating_difficulties] - Что мешает дойти до "10"?
  * @param {string} [data.categories_reflection_data[].what_want] - Как я хочу, чтобы было?
- * @returns {Promise<object>} - Результат обновления
+ * @returns {Promise<object>} - Результат обновления с ssp_evaluation_id
  */
 export async function updateSSPData(data) {
   return request('POST', '/api/rest/front/app/ssp/update/', data)
+}
+
+/**
+ * Получить историю переоценок ССП
+ * @returns {Promise<object>} - История переоценок
+ * @property {boolean} data.has_data - Есть ли данные истории
+ * @property {Array} data.history - Массив переоценок с датами и оценками
+ * @property {Array} data.chart_data - Данные для графика (последние 10 оценок)
+ * @property {Array} data.spheres_trends - Тренды по сферам (up/down/stable)
+ */
+export async function getSSPHistory() {
+  return request('POST', '/api/rest/front/app/ssp/history/get/')
 }
 
 // ========================================

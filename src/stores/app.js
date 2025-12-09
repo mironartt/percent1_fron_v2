@@ -2295,11 +2295,24 @@ export const useAppStore = defineStore('app', () => {
   const sspBackendData = ref({
     loading: false,
     loaded: false,
+    sspEvaluationId: null,
     maxRating: 10,
     baseCategoriesInfo: [],
     circleData: [],
     categoriesReflectionData: [],
     totalData: null
+  })
+
+  /**
+   * История переоценок ССП с бэкенда
+   */
+  const sspHistoryData = ref({
+    loading: false,
+    loaded: false,
+    hasData: false,
+    history: [],
+    chartData: [],
+    spheresTrends: []
   })
 
   /**
@@ -2321,6 +2334,7 @@ export const useAppStore = defineStore('app', () => {
         sspBackendData.value = {
           loading: false,
           loaded: true,
+          sspEvaluationId: data.ssp_evaluation_id || null,
           maxRating: data.max_rating || 10,
           baseCategoriesInfo: data.base_categories_info || [],
           circleData: data.circle_data || [],
@@ -2418,16 +2432,26 @@ export const useAppStore = defineStore('app', () => {
   /**
    * Сохранить данные ССП на бэкенд
    * @param {Array} categoriesData - Массив данных категорий в формате бэкенда
+   * @param {object} options - Дополнительные опции
+   * @param {boolean} options.createNew - Создать новую переоценку (не передавать ssp_evaluation_id)
    */
-  async function saveSSPToBackend(categoriesData) {
+  async function saveSSPToBackend(categoriesData, options = {}) {
+    const { createNew = false } = options
+    
     if (DEBUG_MODE) {
-      console.log('[Store] Saving SSP data to backend:', categoriesData)
+      console.log('[Store] Saving SSP data to backend:', categoriesData, { createNew })
     }
     
     try {
-      const result = await updateSSPData({
+      const requestData = {
         categories_reflection_data: categoriesData
-      })
+      }
+      
+      if (!createNew && sspBackendData.value.sspEvaluationId) {
+        requestData.ssp_evaluation_id = sspBackendData.value.sspEvaluationId
+      }
+      
+      const result = await updateSSPData(requestData)
       
       if (result.status === 'ok') {
         const data = result.data
@@ -2436,11 +2460,11 @@ export const useAppStore = defineStore('app', () => {
           console.log('[Store] SSP data saved successfully, response:', data)
         }
         
-        // Обновляем sspBackendData из ответа (теперь update возвращает те же данные что и get)
         if (data) {
           sspBackendData.value = {
             loading: false,
             loaded: true,
+            sspEvaluationId: data.ssp_evaluation_id || null,
             maxRating: data.max_rating || 10,
             circleData: data.circle_data || [],
             categoriesReflectionData: data.categories_reflection_data || [],
@@ -2454,6 +2478,7 @@ export const useAppStore = defineStore('app', () => {
           
           if (DEBUG_MODE) {
             console.log('[Store] SSP backend data updated from save response:', {
+              sspEvaluationId: sspBackendData.value.sspEvaluationId,
               categoriesCount: sspBackendData.value.circleData.length,
               reflectionsCount: sspBackendData.value.categoriesReflectionData.length,
               totalData: sspBackendData.value.totalData
@@ -2473,6 +2498,66 @@ export const useAppStore = defineStore('app', () => {
         console.error('[Store] Error saving SSP data:', error)
       }
       return { success: false, error }
+    }
+  }
+
+  /**
+   * Создать новую переоценку ССП (кнопка "Переоценить")
+   * @param {Array} categoriesData - Массив данных категорий
+   */
+  async function createNewSSPEvaluation(categoriesData) {
+    return saveSSPToBackend(categoriesData, { createNew: true })
+  }
+
+  /**
+   * Загрузить историю переоценок ССП с бэкенда
+   */
+  async function loadSSPHistoryFromBackend() {
+    if (DEBUG_MODE) {
+      console.log('[Store] Loading SSP history from backend...')
+    }
+    
+    sspHistoryData.value.loading = true
+    
+    try {
+      const { getSSPHistory } = await import('@/services/api.js')
+      const result = await getSSPHistory()
+      
+      if (result.status === 'ok' && result.data) {
+        const data = result.data
+        
+        sspHistoryData.value = {
+          loading: false,
+          loaded: true,
+          hasData: data.has_data || false,
+          history: data.history || [],
+          chartData: data.chart_data || [],
+          spheresTrends: data.spheres_trends || []
+        }
+        
+        if (DEBUG_MODE) {
+          console.log('[Store] SSP history loaded:', {
+            hasData: sspHistoryData.value.hasData,
+            historyCount: sspHistoryData.value.history.length,
+            chartDataCount: sspHistoryData.value.chartData.length,
+            trendsCount: sspHistoryData.value.spheresTrends.length
+          })
+        }
+        
+        return sspHistoryData.value
+      } else {
+        if (DEBUG_MODE) {
+          console.warn('[Store] Failed to load SSP history:', result)
+        }
+        sspHistoryData.value.loading = false
+        return null
+      }
+    } catch (error) {
+      if (DEBUG_MODE) {
+        console.error('[Store] Error loading SSP history:', error)
+      }
+      sspHistoryData.value.loading = false
+      return null
     }
   }
 
@@ -3128,8 +3213,11 @@ export const useAppStore = defineStore('app', () => {
     
     // SSP backend methods
     sspBackendData,
+    sspHistoryData,
     loadSSPFromBackend,
+    loadSSPHistoryFromBackend,
     saveSSPToBackend,
+    createNewSSPEvaluation,
     saveSSPRatingsToBackend,
     saveSSPReflectionToBackend,
     saveAllSSPReflectionsToBackend,
