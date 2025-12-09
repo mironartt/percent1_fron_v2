@@ -13,6 +13,38 @@ export const XP_REWARDS = {
   JOURNAL_ENTRY: 10
 }
 
+const GROUP_TYPE_DISPLAY = {
+  'habits_completed': 'Привычки выполнены',
+  'habits_penalty': 'Штраф за привычки',
+  'habit_completed': 'Привычка выполнена',
+  'habit_penalty': 'Штраф за привычку',
+  'journal_entry': 'Запись в дневнике',
+  'journal_penalty': 'Штраф за дневник',
+  'planning_penalty': 'Штраф за планирование',
+  'goal_step_completed': 'Шаг цели выполнен',
+  'goal_completed': 'Цель достигнута',
+  'reward_redeemed': 'Награда получена',
+  'achievement_bonus': 'Бонус за достижение'
+}
+
+function transformHistoryGroups(historyGroups) {
+  return historyGroups.map(dayGroup => ({
+    date: dayGroup.date,
+    total_earned: dayGroup.total_earned || 0,
+    total_spent: Math.abs(dayGroup.total_spent || 0),
+    groups: (dayGroup.entries || []).map(entry => ({
+      group_type: entry.type,
+      group_type_display: GROUP_TYPE_DISPLAY[entry.type] || entry.type,
+      total_amount: entry.amount,
+      items: entry.details || [{ 
+        reward_name: entry.reward_name,
+        amount: entry.amount,
+        transaction_id: entry.reward_id || Math.random()
+      }]
+    }))
+  }))
+}
+
 export const useXpStore = defineStore('xp', () => {
   const xpBalance = ref(0)
   const lifetimeEarned = ref(0)
@@ -146,7 +178,7 @@ export const useXpStore = defineStore('xp', () => {
       const result = await api.getXPHistoryGrouped(requestParams)
       
       if (result.status === 'ok' && result.data) {
-        xpHistoryGroups.value = result.data.history_groups || []
+        xpHistoryGroups.value = transformHistoryGroups(result.data.history_groups || [])
         historyPage.value = result.data.page || 1
         historyTotalPages.value = result.data.total_pages || 1
         historyTotalItems.value = result.data.total_items || 0
@@ -180,7 +212,8 @@ export const useXpStore = defineStore('xp', () => {
       const result = await api.getXPHistoryGrouped(requestParams)
       
       if (result.status === 'ok' && result.data) {
-        xpHistoryGroups.value = [...xpHistoryGroups.value, ...(result.data.history_groups || [])]
+        const newGroups = transformHistoryGroups(result.data.history_groups || [])
+        xpHistoryGroups.value = [...xpHistoryGroups.value, ...newGroups]
         historyPage.value = result.data.page || historyPage.value + 1
         historyTotalPages.value = result.data.total_pages || 1
       }
