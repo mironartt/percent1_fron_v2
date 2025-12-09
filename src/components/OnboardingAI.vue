@@ -829,12 +829,17 @@ async function createGoalsOnBackend(acceptedGoals) {
     console.log('[OnboardingAI] Create goals response:', result)
   }
   
-  if (result.status === 'ok' && result.data?.created_goals_ids) {
-    const createdIds = result.data.created_goals_ids
-    if (DEBUG_MODE) {
-      console.log('[OnboardingAI] Created goal IDs:', createdIds)
+  if (result.status === 'ok') {
+    let createdIds = result.data?.created_goals_ids
+    if (!createdIds && result.data?.goals_data) {
+      createdIds = result.data.goals_data.map(g => g.goal_id).filter(id => id != null)
     }
-    return createdIds
+    if (createdIds && createdIds.length > 0) {
+      if (DEBUG_MODE) {
+        console.log('[OnboardingAI] Created goal IDs:', createdIds)
+      }
+      return createdIds
+    }
   }
   
   if (result.status === 'error') {

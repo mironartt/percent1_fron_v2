@@ -1895,7 +1895,7 @@ export const useAppStore = defineStore('app', () => {
     try {
       const goalsResult = await updateGoals({ goals_data: goalsData })
       
-      if (goalsResult.status !== 'ok' || !goalsResult.data?.created_goals_ids) {
+      if (goalsResult.status !== 'ok') {
         if (DEBUG_MODE) {
           console.warn('[Store] Failed to create AI goals on backend:', goalsResult)
         }
@@ -1904,7 +1904,10 @@ export const useAppStore = defineStore('app', () => {
         return { success: false, error: 'Backend error' }
       }
       
-      const createdIds = goalsResult.data.created_goals_ids
+      let createdIds = goalsResult.data?.created_goals_ids
+      if (!createdIds && goalsResult.data?.goals_data) {
+        createdIds = goalsResult.data.goals_data.map(g => g.goal_id).filter(id => id != null)
+      }
       
       if (!createdIds || createdIds.length === 0) {
         if (DEBUG_MODE) {
@@ -1919,9 +1922,6 @@ export const useAppStore = defineStore('app', () => {
         if (DEBUG_MODE) {
           console.warn('[Store] Mismatch: expected', acceptedGoals.length, 'IDs, got', createdIds.length)
         }
-        const toastStore = useToastStore()
-        toastStore.error('Не все цели были сохранены. Попробуйте ещё раз.')
-        return { success: false, error: 'ID count mismatch' }
       }
       
       if (DEBUG_MODE) {
