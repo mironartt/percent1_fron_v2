@@ -831,8 +831,112 @@ export async function getPlannedSteps(params) {
     date_from: params.date_from,
     date_to: params.date_to
   }
-  
+
   return request('POST', '/api/rest/front/app/goals/steps/planned/get/', requestData)
+}
+
+// ==================== GOAL NOTES API ====================
+
+/**
+ * Получить заметки по цели с пагинацией и поиском
+ * @param {object} params - Параметры запроса
+ * @param {number} params.goal_id - ID цели (обязательный)
+ * @param {number} [params.page] - Номер страницы
+ * @param {number} [params.page_size] - Размер страницы (по умолчанию 10)
+ * @param {string} [params.query_filter] - Текстовый поиск (мин 3 символа)
+ * @param {string} [params.order_by] - Поле сортировки (date_created)
+ * @param {string} [params.order_direction] - Направление (asc, desc)
+ * @returns {Promise<object>} - Список заметок с пагинацией
+ *
+ * Response format:
+ * {
+ *   status: 'ok',
+ *   data: {
+ *     notes_data: [
+ *       { note_id, text, date_created, date_updated }
+ *     ],
+ *     total_items: number,
+ *     total_filtered_items: number,
+ *     total_pages: number,
+ *     page: number,
+ *     page_size: number
+ *   }
+ * }
+ */
+export async function getGoalNotes(params) {
+  const requestData = {
+    goal_id: params.goal_id,
+    page: params.page || 1,
+    page_size: params.page_size || 10,
+    order_by: params.order_by || 'date_created',
+    order_direction: params.order_direction || 'desc'
+  }
+
+  if (params.query_filter && params.query_filter.length >= 3) {
+    requestData.query_filter = params.query_filter
+  }
+
+  return request('POST', '/api/rest/front/app/goals/notes/get/', requestData)
+}
+
+/**
+ * Создать или обновить заметки цели
+ * @param {object} data - Данные для обновления
+ * @param {number} data.goal_id - ID цели (обязательный)
+ * @param {Array} [data.notes_data] - Массив заметок для создания/обновления
+ * @param {number|null} data.notes_data[].note_id - ID заметки (null для создания)
+ * @param {string} data.notes_data[].text - Текст заметки
+ * @param {Array<number>} [data.deleted_notes_ids] - ID заметок для удаления
+ * @returns {Promise<object>} - Первая страница обновлённых заметок
+ */
+export async function updateGoalNotes(data) {
+  return request('POST', '/api/rest/front/app/goals/notes/update/', data)
+}
+
+/**
+ * Создать новую заметку
+ * @param {number} goalId - ID цели
+ * @param {string} text - Текст заметки
+ * @returns {Promise<object>} - Созданная заметка
+ */
+export async function createGoalNote(goalId, text) {
+  return updateGoalNotes({
+    goal_id: goalId,
+    notes_data: [{
+      note_id: null,
+      text: text
+    }]
+  })
+}
+
+/**
+ * Обновить существующую заметку
+ * @param {number} goalId - ID цели
+ * @param {number} noteId - ID заметки
+ * @param {string} text - Новый текст заметки
+ * @returns {Promise<object>} - Обновлённая заметка
+ */
+export async function updateGoalNote(goalId, noteId, text) {
+  return updateGoalNotes({
+    goal_id: goalId,
+    notes_data: [{
+      note_id: noteId,
+      text: text
+    }]
+  })
+}
+
+/**
+ * Удалить заметку
+ * @param {number} goalId - ID цели
+ * @param {number} noteId - ID заметки
+ * @returns {Promise<object>} - Результат удаления
+ */
+export async function deleteGoalNote(goalId, noteId) {
+  return updateGoalNotes({
+    goal_id: goalId,
+    deleted_notes_ids: [noteId]
+  })
 }
 
 // Экспорт API как объекта для удобства
@@ -876,7 +980,13 @@ export const api = {
   createDiaryEntry,
   deleteDiaryEntry,
   // Planning API
-  getPlannedSteps
+  getPlannedSteps,
+  // Goal Notes API
+  getGoalNotes,
+  updateGoalNotes,
+  createGoalNote,
+  updateGoalNote,
+  deleteGoalNote
 }
 
 export default api
