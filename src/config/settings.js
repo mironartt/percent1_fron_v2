@@ -31,6 +31,9 @@ export const FORCE_SHOW_MINITASK = localSettings.FORCE_SHOW_MINITASK ?? false
 // Демо-режим планировщика (для демонстрации UI)
 export const DEMO_PLANNING_MODE = localSettings.DEMO_PLANNING_MODE ?? false
 
+// Режим credentials для fetch запросов ('include' | 'same-origin' | undefined для авто)
+export const CREDENTIALS_MODE = localSettings.CREDENTIALS_MODE ?? undefined
+
 // Логируем загрузку настроек
 if (DEBUG_MODE) {
   console.log('[Settings] Configuration loaded:', {
@@ -41,7 +44,8 @@ if (DEBUG_MODE) {
     DEBUG_MODE,
     FORCE_SHOW_ONBOARDING,
     FORCE_SHOW_MINITASK,
-    DEMO_PLANNING_MODE
+    DEMO_PLANNING_MODE,
+    CREDENTIALS_MODE
   })
 }
 
@@ -54,7 +58,8 @@ export const settings = {
   DEBUG_MODE,
   FORCE_SHOW_ONBOARDING,
   FORCE_SHOW_MINITASK,
-  DEMO_PLANNING_MODE
+  DEMO_PLANNING_MODE,
+  CREDENTIALS_MODE
 }
 
 export default settings

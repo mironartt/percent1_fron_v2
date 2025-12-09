@@ -1,0 +1,119 @@
+Вижу что на бэк отправлен запрос: `/api/rest/front/app/goals/update/` с телом:
+```
+{
+  "goals_data": [
+    {
+      "goal_id": null,
+      "title": "Укрепить семейные отношения",
+      "category": "family",
+      "score": "true",
+      "status": "work",
+      "why_important": "Крепкая семья даёт поддержку и чувство принадлежности",
+      "why_give_me": "",
+      "why_about_me": ""
+    },
+    {
+      "goal_id": null,
+      "title": "Улучшить финансовое положение",
+      "category": "welfare",
+      "score": "true",
+      "status": "work",
+      "why_important": "Финансовая стабильность даёт свободу выбора и снижает стресс",
+      "why_give_me": "",
+      "why_about_me": ""
+    },
+    {
+      "goal_id": null,
+      "title": "Развить творческое хобби",
+      "category": "hobby",
+      "score": "true",
+      "status": "work",
+      "why_important": "Хобби наполняет энергией и помогает справляться со стрессом",
+      "why_give_me": "",
+      "why_about_me": ""
+    }
+  ]
+}
+```
+И ответ от бэка:
+```
+{
+    "status": "ok",
+    "data": {
+        "total_items": 7,
+        "total_filtered_items": 3,
+        "total_pages": 1,
+        "page": null,
+        "page_size": 6,
+        "total_data": {
+            "total_goals": 7,
+            "true_goals": 7,
+            "false_goals": 0,
+            "in_work_goals": 7
+        },
+        "goals_data": [
+            {
+                "goal_id": 123,
+                "title": "Укрепить семейные отношения",
+                "category": "family",
+                "status": "work",
+                "score": "true",
+                "why_important": "Крепкая семья даёт поддержку и чувство принадлежности",
+                "why_give_me": null,
+                "why_about_me": null,
+                "date_created": "2025-12-09 05:31:54",
+                "date_completed": null,
+                "total_steps_data": {
+                    "complete_days_in_row": null,
+                    "complete_percent": null,
+                    "complete_steps": null,
+                    "total_steps": null
+                },
+                "steps_data": []
+            },
+            {
+                "goal_id": 124,
+                "title": "Улучшить финансовое положение",
+                "category": "welfare",
+                "status": "work",
+                "score": "true",
+                "why_important": "Финансовая стабильность даёт свободу выбора и снижает стресс",
+                "why_give_me": null,
+                "why_about_me": null,
+                "date_created": "2025-12-09 05:31:54",
+                "date_completed": null,
+                "total_steps_data": {
+                    "complete_days_in_row": null,
+                    "complete_percent": null,
+                    "complete_steps": null,
+                    "total_steps": null
+                },
+                "steps_data": []
+            },
+            {
+                "goal_id": 125,
+                "title": "Развить творческое хобби",
+                "category": "hobby",
+                "status": "work",
+                "score": "true",
+                "why_important": "Хобби наполняет энергией и помогает справляться со стрессом",
+                "why_give_me": null,
+                "why_about_me": null,
+                "date_created": "2025-12-09 05:31:54",
+                "date_completed": null,
+                "total_steps_data": {
+                    "complete_days_in_row": null,
+                    "complete_percent": null,
+                    "complete_steps": null,
+                    "total_steps": null
+                },
+                "steps_data": []
+            }
+        ],
+        "total_data_steps_data": null
+    }
+}
+```
+
+Кажется что все прошло успешно, но фронт почему-то падает с алертом `Не удалось сохранить цели. Попробуйте ещё раз.`
+В чем проблема, найди и исправь.

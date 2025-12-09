@@ -21,6 +21,7 @@ const JournalHistory = () => import('@/views/JournalHistory.vue')
 const LearningCenter = () => import('@/views/LearningCenter.vue')
 const Profile = () => import('@/views/Profile.vue')
 const Habits = () => import('@/views/Habits.vue')
+const OnboardingAI = () => import('@/components/OnboardingAI.vue')
 
 const router = createRouter({
   history: createWebHistory(),
@@ -31,6 +32,14 @@ const router = createRouter({
       name: 'landing',
       component: Landing,
       meta: { title: 'OnePercent - Система управления жизнью', public: true }
+    },
+    
+    // Onboarding (требует авторизации)
+    {
+      path: '/onboarding',
+      name: 'onboarding',
+      component: OnboardingAI,
+      meta: { title: 'Онбординг', requiresAuth: true }
     },
     
     // Auth routes (публичные, но редиректят авторизованных на /app)

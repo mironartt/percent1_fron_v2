@@ -1,10 +1,9 @@
+import { apiFetch } from '@/services/api.js'
+
 export async function generateGoalWithAI(goalText, sphereId = null) {
   try {
-    const response = await fetch('/api/ai/generate-goal', {
+    const response = await apiFetch('/api/ai/generate-goal', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
       body: JSON.stringify({ goalText, sphereId })
     })
 
@@ -26,11 +25,8 @@ export async function generateGoalWithAI(goalText, sphereId = null) {
 
 export async function generateStepsWithAI(goalTitle, sphereId = null) {
   try {
-    const response = await fetch('/api/ai/generate-steps', {
+    const response = await apiFetch('/api/ai/generate-steps', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
       body: JSON.stringify({ goalTitle, sphereId })
     })
 

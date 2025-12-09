@@ -106,3 +106,46 @@ Improved Profile.vue (/app/achievements) UX based on user feedback:
 - Added explanatory text: "Зарабатывайте XP за привычки, задачи и дневник. Обменивайте на награды из списка желаний."
 - Compact reward progress inside progress card
 - All CSS uses Style Guide variables for dark/light theme support
+
+### Onboarding Backend Integration (December 9, 2024)
+Updated OnboardingAI.vue to integrate with new backend API:
+- **Step 1**: Added `how_many_time` field with values: `15_mins`, `30_mins`, `1_hour`, `something`
+- **Step 1→2 transition**: Saves `how_many_time` via `/api/rest/front/app/onboard/update/`
+- **Step 2→3 transition**: Saves SSP sphere ratings via `/api/rest/front/app/ssp/update/`
+- **Step 5 UI redesign**: 
+  - Goal cards with accept/edit/reject buttons
+  - Expandable steps list for each goal
+  - Status summary (принято/ожидает/пропущено)
+  - "Пропустить всё" and "Добавить цели (N)" buttons
+- **Goal creation**: Creates accepted goals via `/api/rest/front/app/goals/update/`
+- **Steps creation**: Creates steps for goals via `/api/rest/front/app/goals/steps/update/`
+- Sphere ID mapping: wealth→welfare, hobbies→hobby, friendship→environment, health→health_sport, career→work, love→family
+- Enhanced error handling with console logging
+
+### Settings Page Redesign (December 9, 2024)
+Complete redesign of Settings.vue:
+- **Profile section**: Email field is read-only; for Telegram registrations with missing email shows "Указать email" button
+- **Email setup modal**: Opens for Telegram users without email, collects email + password, calls `/api/rest/front/registration/fill-data/`
+- **Telegram bot section**: Shows bot link from `getUserData().telegram_bot_link` with "Открыть бота" button
+- **"Мой старт" section**: Loads onboarding data from backend via `getOnboardingData()`, displays user's journey (whyHere, whatToChange, growthVsComfort, pointA/pointB, whyImportant)
+- **Field mapping**: reason_joined→whyHere, desired_changes→whatToChange, growth_comfort_zones→growthVsComfort, current_state→pointA, goal_state→pointB, why_important→whyImportant
+- **Removed blocks**: Email notifications toggle, Export/Import data, Delete account
+- **"Пройти заново" button**: Clears onboarding state and redirects to /onboarding
+- All styles support dark theme via CSS variables
+
+### SSP History API v2 Integration (December 9, 2024)
+Integrated backend history tracking for SSP (Balanced Scorecard) module:
+- **API**: Added `getSSPHistory()` endpoint POST `/api/rest/front/app/ssp/history/get/`
+- **API**: Updated `updateSSPData()` to support optional `ssp_evaluation_id` for editing vs creating
+- **Store (`app.js`)**: 
+  - Added `sspHistoryData` ref with fields: loading, loaded, hasData, history, chartData, spheresTrends
+  - Added `sspEvaluationId` to `sspBackendData` for tracking current evaluation
+  - Added `createNewSSPEvaluation()` for new reassessments (no ssp_evaluation_id → new UUID on backend)
+  - Added `loadSSPHistoryFromBackend()` to fetch history with chart data and trends
+- **BalancedScorecard.vue**:
+  - Updated "История" tab to load data from backend API instead of localStorage
+  - Computed properties read directly from `store.sspHistoryData.*`
+  - Added loading state with spinner and empty state handling
+  - `saveReassessment()` calls `createNewSSPEvaluation()` then reloads history
+  - `getTrendClass()` and `getTrendText()` use backend `spheres_trends` data
+  - Watch on `activeTab` triggers history load on tab switch

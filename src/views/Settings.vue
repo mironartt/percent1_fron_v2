@@ -29,12 +29,25 @@
 
           <div class="form-group">
             <label class="form-label">Email</label>
-            <input 
-              type="email"
-              class="form-input"
-              placeholder="your@email.com"
-            />
-            <span class="form-hint">Для уведомлений и восстановления доступа</span>
+            <div v-if="needsEmailSetup" class="email-setup-block">
+              <div class="email-setup-message">
+                <Mail :size="16" />
+                <span>Email не указан</span>
+              </div>
+              <button class="btn btn-primary btn-sm" @click="openEmailSetupModal">
+                Указать email
+              </button>
+            </div>
+            <template v-else>
+              <input 
+                type="email"
+                class="form-input"
+                :value="userEmail"
+                disabled
+                readonly
+              />
+              <span class="form-hint">Email нельзя изменить после указания</span>
+            </template>
           </div>
         </div>
       </div>
@@ -93,23 +106,26 @@
             </label>
           </div>
 
-          <div class="setting-item">
-            <div>
-              <div class="setting-title">Email уведомления</div>
-              <div class="setting-desc">Еженедельные отчеты о прогрессе</div>
+          <div class="setting-item telegram-bot-item">
+            <div class="telegram-bot-info">
+              <div class="setting-title">
+                <Send :size="16" class="telegram-icon" />
+                Telegram бот
+              </div>
+              <div class="setting-desc">
+                Получайте напоминания, отмечайте привычки и общайтесь с AI-ментором прямо в Telegram
+              </div>
             </div>
-            <label class="toggle">
-              <input type="checkbox">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="setting-item">
-            <div>
-              <div class="setting-title">Telegram бот</div>
-              <div class="setting-desc">Интеграция с мессенджером</div>
-            </div>
-            <button class="btn btn-secondary btn-sm" @click="goToTelegramSettings">Настроить</button>
+            <a 
+              v-if="telegramBotLink"
+              :href="telegramBotLink"
+              target="_blank"
+              class="btn btn-primary btn-sm telegram-btn"
+            >
+              <Send :size="14" />
+              Открыть бота
+            </a>
+            <span v-else class="loading-text">Загрузка...</span>
           </div>
         </div>
       </div>
@@ -173,51 +189,54 @@
           </h3>
         </div>
         <div class="card-body">
-          <div v-if="onboardingData" class="onboarding-data">
-            <div class="onboarding-section">
+          <div v-if="hasOnboardingData" class="onboarding-data">
+            <div class="onboarding-section" v-if="onboardingData.whyHere">
               <h4>Почему я пришёл в Систему 1%</h4>
               <p>{{ onboardingData.whyHere }}</p>
             </div>
 
-            <div class="onboarding-section">
+            <div class="onboarding-section" v-if="onboardingData.whatToChange">
               <h4>Что хочу изменить</h4>
               <p>{{ onboardingData.whatToChange }}</p>
             </div>
 
-            <div class="onboarding-section">
+            <div class="onboarding-section" v-if="onboardingData.growthVsComfort">
               <h4>Зона роста vs Зона комфорта</h4>
               <p>{{ onboardingData.growthVsComfort }}</p>
             </div>
 
-            <div class="onboarding-journey">
-              <div class="journey-point">
-                <strong>📍 Точка А (где был):</strong>
+            <div class="onboarding-journey" v-if="onboardingData.pointA || onboardingData.pointB">
+              <div class="journey-point" v-if="onboardingData.pointA">
+                <strong>Точка А (где был):</strong>
                 <p>{{ onboardingData.pointA }}</p>
               </div>
-              <div class="journey-arrow">→</div>
-              <div class="journey-point">
-                <strong>🎯 Точка Б (куда иду):</strong>
+              <div class="journey-arrow" v-if="onboardingData.pointA && onboardingData.pointB">→</div>
+              <div class="journey-point" v-if="onboardingData.pointB">
+                <strong>Точка Б (куда иду):</strong>
                 <p>{{ onboardingData.pointB }}</p>
               </div>
             </div>
 
-            <div class="onboarding-section">
-              <h4>💎 Почему это важно</h4>
+            <div class="onboarding-section" v-if="onboardingData.whyImportant">
+              <h4>Почему это важно</h4>
               <p>{{ onboardingData.whyImportant }}</p>
             </div>
 
-            <div class="onboarding-meta">
+            <div class="onboarding-meta" v-if="onboardingData.completedAt">
               <small>Пройден: {{ formatDate(onboardingData.completedAt) }}</small>
             </div>
 
             <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
               <button class="btn btn-secondary" @click="resetOnboarding">
-                🔄 Пройти онбординг заново
+                Пройти заново
               </button>
             </div>
           </div>
           <div v-else class="empty-onboarding">
-            <p>Вы еще не прошли онбординг</p>
+            <p>Данные онбординга не найдены</p>
+            <button class="btn btn-primary btn-sm" @click="resetOnboarding" style="margin-top: 0.5rem;">
+              Пройти онбординг
+            </button>
           </div>
         </div>
       </div>
@@ -232,22 +251,6 @@
         <div class="card-body">
           <div class="setting-item">
             <div>
-              <div class="setting-title">Экспорт данных</div>
-              <div class="setting-desc">Скачать все ваши данные</div>
-            </div>
-            <button class="btn btn-secondary btn-sm">Экспорт</button>
-          </div>
-
-          <div class="setting-item">
-            <div>
-              <div class="setting-title">Импорт данных</div>
-              <div class="setting-desc">Загрузить данные из файла</div>
-            </div>
-            <button class="btn btn-secondary btn-sm">Импорт</button>
-          </div>
-
-          <div class="setting-item">
-            <div>
               <div class="setting-title">Выход из аккаунта</div>
               <div class="setting-desc">Выйти из текущей сессии</div>
             </div>
@@ -256,14 +259,54 @@
               Выйти
             </button>
           </div>
+        </div>
+      </div>
+    </div>
 
-          <div class="setting-item danger">
-            <div>
-              <div class="setting-title">Удалить аккаунт</div>
-              <div class="setting-desc">Безвозвратное удаление данных</div>
-            </div>
-            <button class="btn btn-danger btn-sm">Удалить</button>
+    <div v-if="showEmailSetupModal" class="modal-overlay" @click.self="closeEmailSetupModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Укажите email и пароль</h3>
+          <button class="btn-close" @click="closeEmailSetupModal">
+            <X :size="20" />
+          </button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-description">
+            Укажите email для восстановления доступа и получения уведомлений
+          </p>
+          
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input 
+              type="email"
+              v-model="setupEmail"
+              class="form-input"
+              placeholder="your@email.com"
+            />
           </div>
+          
+          <div class="form-group">
+            <label class="form-label">Пароль</label>
+            <input 
+              type="password"
+              v-model="setupPassword"
+              class="form-input"
+              placeholder="Минимум 6 символов"
+            />
+          </div>
+          
+          <div v-if="setupError" class="error-message">{{ setupError }}</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="closeEmailSetupModal">Отмена</button>
+          <button 
+            class="btn btn-primary" 
+            @click="submitEmailSetup"
+            :disabled="isSubmittingEmail"
+          >
+            {{ isSubmittingEmail ? 'Сохранение...' : 'Сохранить' }}
+          </button>
         </div>
       </div>
     </div>
@@ -271,19 +314,133 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
-import { Bot, Sparkles, MessageCircle, VolumeX, User, CreditCard, Bell, FileText, Settings, LogOut } from 'lucide-vue-next'
+import { useToastStore } from '../stores/toast'
+import * as api from '@/services/api.js'
+import { Bot, Sparkles, MessageCircle, VolumeX, User, CreditCard, Bell, FileText, Settings, LogOut, Send, Mail, X } from 'lucide-vue-next'
 
 const router = useRouter()
 const store = useAppStore()
+const toastStore = useToastStore()
 
-const userName = ref(store.user.name)
-const onboardingData = computed(() => store.onboarding.data)
+const userName = ref(store.user.first_name || '')
+const userEmail = ref('')
+const telegramBotLink = ref('')
+const isTelegramRegistration = ref(false)
+const needsEmailSetup = computed(() => isTelegramRegistration.value && userEmail.value.startsWith('@'))
+
+const showEmailSetupModal = ref(false)
+const setupEmail = ref('')
+const setupPassword = ref('')
+const setupError = ref('')
+const isSubmittingEmail = ref(false)
+
+const backendOnboardingData = ref(null)
+const onboardingData = computed(() => {
+  if (backendOnboardingData.value) {
+    return {
+      whyHere: backendOnboardingData.value.reason_joined || '',
+      whatToChange: backendOnboardingData.value.desired_changes || '',
+      growthVsComfort: backendOnboardingData.value.growth_comfort_zones || '',
+      pointA: backendOnboardingData.value.current_state || '',
+      pointB: backendOnboardingData.value.goal_state || '',
+      whyImportant: backendOnboardingData.value.why_important || '',
+      completedAt: backendOnboardingData.value.date_created || null
+    }
+  }
+  return null
+})
+
+const hasOnboardingData = computed(() => {
+  if (!onboardingData.value) return false
+  return onboardingData.value.whyHere || onboardingData.value.whatToChange || 
+         onboardingData.value.pointA || onboardingData.value.pointB
+})
 
 const mentorMode = ref(store.mentor.mode || 'on_request')
 const mentorMessagesCount = computed(() => store.mentor.messages?.length || 0)
+
+onMounted(async () => {
+  await loadUserData()
+  await loadOnboardingData()
+})
+
+async function loadUserData() {
+  try {
+    const result = await api.getUserData()
+    if (result.status === 'ok' && result.data) {
+      userEmail.value = result.data.email || ''
+      telegramBotLink.value = result.data.telegram_bot_link || ''
+      isTelegramRegistration.value = result.data.is_telegram_registration || false
+      if (result.data.name) {
+        userName.value = result.data.name
+      }
+    }
+  } catch (error) {
+    console.error('[Settings] Failed to load user data:', error)
+  }
+}
+
+async function loadOnboardingData() {
+  try {
+    const result = await api.getOnboardingData()
+    if (result.status === 'ok' && result.data) {
+      backendOnboardingData.value = result.data
+    }
+  } catch (error) {
+    console.error('[Settings] Failed to load onboarding data:', error)
+  }
+}
+
+function openEmailSetupModal() {
+  setupEmail.value = ''
+  setupPassword.value = ''
+  setupError.value = ''
+  showEmailSetupModal.value = true
+}
+
+function closeEmailSetupModal() {
+  showEmailSetupModal.value = false
+}
+
+async function submitEmailSetup() {
+  setupError.value = ''
+  
+  if (!setupEmail.value || !setupEmail.value.includes('@')) {
+    setupError.value = 'Введите корректный email'
+    return
+  }
+  
+  if (!setupPassword.value || setupPassword.value.length < 6) {
+    setupError.value = 'Пароль должен быть не менее 6 символов'
+    return
+  }
+  
+  isSubmittingEmail.value = true
+  
+  try {
+    const result = await api.completeTelegramRegistration(
+      setupEmail.value,
+      setupPassword.value,
+      setupPassword.value
+    )
+    
+    if (result.status === 'ok') {
+      userEmail.value = setupEmail.value
+      isTelegramRegistration.value = false
+      closeEmailSetupModal()
+      toastStore.success('Email успешно сохранён')
+    } else {
+      setupError.value = result.error_data?.message || 'Ошибка сохранения'
+    }
+  } catch (error) {
+    setupError.value = 'Ошибка сети. Попробуйте позже.'
+  } finally {
+    isSubmittingEmail.value = false
+  }
+}
 
 function updateMentorMode() {
   store.setMentorMode(mentorMode.value)
@@ -296,7 +453,7 @@ function clearMentorHistory() {
 }
 
 function saveUserName() {
-  store.user.name = userName.value
+  store.user.first_name = userName.value
   store.saveToLocalStorage()
 }
 
@@ -312,19 +469,22 @@ function formatDate(dateString) {
   })
 }
 
-function resetOnboarding() {
-  if (confirm('Вы уверены? Все данные онбординга будут сброшены и вы вернётесь к началу.')) {
-    store.resetOnboarding()
-    window.location.href = '/'
+async function resetOnboarding() {
+  if (confirm('Вы уверены? Все данные онбординга будут сброшены и вы начнёте заново.')) {
+    try {
+      await api.updateOnboardingData({ is_complete: false, step_completed: 0 })
+      store.resetOnboarding()
+      router.push('/onboarding')
+    } catch (error) {
+      console.error('[Settings] Failed to reset onboarding:', error)
+      store.resetOnboarding()
+      router.push('/onboarding')
+    }
   }
 }
 
 function handleLogout() {
   router.push('/auth/logout')
-}
-
-function goToTelegramSettings() {
-  router.push('/app/planning')
 }
 </script>
 
@@ -689,5 +849,143 @@ function goToTelegramSettings() {
 
 :root.dark .btn-logout:hover {
   background: rgba(248, 113, 113, 0.25);
+}
+
+.telegram-bot-item {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.telegram-bot-info {
+  flex: 1;
+}
+
+.telegram-bot-info .setting-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.telegram-icon {
+  color: #0088cc;
+}
+
+.telegram-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.loading-text {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.email-setup-block {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-color);
+}
+
+.email-setup-message {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.email-setup-message svg {
+  color: var(--text-muted);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+}
+
+.btn-close:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-description {
+  margin: 0 0 1.25rem 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.error-message {
+  color: var(--danger-color);
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: var(--status-danger-bg);
+  border-radius: var(--radius-sm);
+}
+
+:root.dark .modal-content {
+  background: var(--card-bg);
+}
+
+:root.dark .email-setup-block {
+  background: var(--bg-tertiary);
 }
 </style>
