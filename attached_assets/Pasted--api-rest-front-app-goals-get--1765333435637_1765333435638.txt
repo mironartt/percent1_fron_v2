@@ -1,0 +1,242 @@
+Я перешел на страницу планирования, и вижу что идет запрос на `/api/rest/front/app/goals/get/`, с телом:
+```
+{"score_filter":"true","status_filter":"work"}
+```
+И ответом от бэка:
+```
+{
+  "status": "ok",
+  "data": {
+    "total_items": 43,
+    "total_filtered_items": 24,
+    "total_pages": 3,
+    "page": null,
+    "page_size": 10,
+    "total_data": {
+      "total_goals": 43,
+      "true_goals": 18,
+      "false_goals": 9,
+      "in_work_goals": 24
+    },
+    "goals_data": [
+      {
+        "goal_id": 37,
+        "title": "Каждый день пить 1.5 литра воды",
+        "category": "health_sport",
+        "status": "work",
+        "score": "true",
+        "why_important": null,
+        "why_give_me": "Для здоровья",
+        "why_about_me": null,
+        "date_created": "2025-12-02 15:29:10",
+        "date_completed": null,
+        "total_steps_data": {
+          "complete_days_in_row": null,
+          "complete_percent": null,
+          "complete_steps": null,
+          "total_steps": null
+        },
+        "steps_data": [],
+        "notes_data": [],
+        "notes_pagination": null
+      },
+      {
+        "goal_id": 28,
+        "title": "Вырастить растение",
+        "category": "environment",
+        "status": "work",
+        "score": "true",
+        "why_important": "Хочу заботиться",
+        "why_give_me": null,
+        "why_about_me": "Мне нравится природа",
+        "date_created": "2025-12-02 15:29:10",
+        "date_completed": null,
+        "total_steps_data": {
+          "complete_days_in_row": null,
+          "complete_percent": null,
+          "complete_steps": null,
+          "total_steps": null
+        },
+        "steps_data": [],
+        "notes_data": [],
+        "notes_pagination": null
+      },
+      {
+        "goal_id": 23,
+        "title": "Улучшить финансовую дисциплину 1",
+        "category": "welfare",
+        "status": "work",
+        "score": "true",
+        "why_important": "3122232",
+        "why_give_me": "Больше контроля2221",
+        "why_about_me": "",
+        "date_created": "2025-12-02 15:29:10",
+        "date_completed": null,
+        "total_steps_data": {
+          "complete_days_in_row": null,
+          "complete_percent": null,
+          "complete_steps": null,
+          "total_steps": null
+        },
+        "steps_data": [],
+        "notes_data": [],
+        "notes_pagination": null
+      },
+      {
+        "goal_id": 17,
+        "title": "Научиться готовить 5 новых блюд",
+        "category": "hobby",
+        "status": "work",
+        "score": "true",
+        "why_important": null,
+        "why_give_me": null,
+        "why_about_me": "Люблю готовить",
+        "date_created": "2025-12-02 15:29:10",
+        "date_completed": null,
+        "total_steps_data": {
+          "complete_days_in_row": null,
+          "complete_percent": null,
+          "complete_steps": null,
+          "total_steps": null
+        },
+        "steps_data": [],
+        "notes_data": [],
+        "notes_pagination": null
+      },
+      {
+        "goal_id": 8,
+        "title": "Каждый день гулять по 30 минут",
+        "category": "health_sport",
+        "status": "work",
+        "score": "true",
+        "why_important": null,
+        "why_give_me": "Для здоровья",
+        "why_about_me": null,
+        "date_created": "2025-12-02 15:29:10",
+        "date_completed": null,
+        "total_steps_data": {
+          "complete_days_in_row": null,
+          "complete_percent": null,
+          "complete_steps": null,
+          "total_steps": null
+        },
+        "steps_data": [],
+        "notes_data": [],
+        "notes_pagination": null
+      },
+      {
+        "goal_id": 4,
+        "title": "Освоить медитацию",
+        "category": "environment",
+        "status": "work",
+        "score": "true",
+        "why_important": "Стать спокойнее",
+        "why_give_me": null,
+        "why_about_me": "Мне важно внутреннее равновесие",
+        "date_created": "2025-12-02 15:29:10",
+        "date_completed": null,
+        "total_steps_data": {
+          "complete_days_in_row": null,
+          "complete_percent": null,
+          "complete_steps": null,
+          "total_steps": null
+        },
+        "steps_data": [],
+        "notes_data": [],
+        "notes_pagination": null
+      },
+      {
+        "goal_id": 41,
+        "title": "еуые11",
+        "category": "work",
+        "status": "work",
+        "score": "true",
+        "why_important": null,
+        "why_give_me": null,
+        "why_about_me": null,
+        "date_created": "2025-12-02 12:14:46",
+        "date_completed": null,
+        "total_steps_data": {
+          "complete_days_in_row": null,
+          "complete_percent": null,
+          "complete_steps": null,
+          "total_steps": null
+        },
+        "steps_data": [],
+        "notes_data": [],
+        "notes_pagination": null
+      },
+      {
+        "goal_id": 39,
+        "title": "Пойти на курсы рисования",
+        "category": "hobby",
+        "status": "work",
+        "score": "true",
+        "why_important": null,
+        "why_give_me": null,
+        "why_about_me": "Хочу развить творчество",
+        "date_created": "2025-12-01 09:39:12",
+        "date_completed": null,
+        "total_steps_data": {
+          "complete_days_in_row": null,
+          "complete_percent": null,
+          "complete_steps": null,
+          "total_steps": null
+        },
+        "steps_data": [],
+        "notes_data": [],
+        "notes_pagination": null
+      },
+      {
+        "goal_id": 35,
+        "title": "Сократить использование соцсетей",
+        "category": "environment",
+        "status": "work",
+        "score": "false",
+        "why_important": null,
+        "why_give_me": "Больше времени",
+        "why_about_me": null,
+        "date_created": "2025-12-01 09:39:12",
+        "date_completed": "2025-12-02 10:51:29",
+        "total_steps_data": {
+          "complete_days_in_row": null,
+          "complete_percent": null,
+          "complete_steps": null,
+          "total_steps": null
+        },
+        "steps_data": [],
+        "notes_data": [],
+        "notes_pagination": null
+      },
+      {
+        "goal_id": 33,
+        "title": "Поставить долгосрочные карьерные цели",
+        "category": "work",
+        "status": "work",
+        "score": "true",
+        "why_important": "Развитие",
+        "why_give_me": null,
+        "why_about_me": "Я амбициозный человек",
+        "date_created": "2025-12-01 09:39:12",
+        "date_completed": null,
+        "total_steps_data": {
+          "complete_days_in_row": null,
+          "complete_percent": null,
+          "complete_steps": null,
+          "total_steps": null
+        },
+        "steps_data": [],
+        "notes_data": [],
+        "notes_pagination": null
+      }
+    ],
+    "total_data_steps_data": null
+  }
+}
+```
+
+Как видно, бэк вернул что всего 24 доступных цели и три страницы для пагинации.
+
+Но фронт почему-то отрисовал что-то другое - приложил скрин.
+
+Разберись в проблеме, и исправь ее. В конце дай отчет.

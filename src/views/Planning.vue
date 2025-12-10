@@ -877,27 +877,20 @@ function formatTimeShort(time) {
   return labels[time] || time
 }
 
-const rawIdeas = computed(() => store.goalsBank?.rawIdeas || [])
 const workingGoals = computed(() => store.goals || [])
 const lifeSpheres = computed(() => store.lifeSpheres)
 
-function isGoalTransferred(goalId) {
-  return workingGoals.value.some(g => g.sourceId === goalId && g.source === 'goals-bank' && g.status !== 'completed')
-}
-
 const goalsWithSteps = computed(() => {
-  return rawIdeas.value.filter(g => 
-    g.status === 'validated' && 
-    isGoalTransferred(g.id) &&
+  return workingGoals.value.filter(g => 
+    g.status !== 'completed' &&
     g.steps && 
     g.steps.length > 0
   )
 })
 
 const goalsWithoutSteps = computed(() => {
-  return rawIdeas.value.filter(g => 
-    g.status === 'validated' && 
-    isGoalTransferred(g.id) &&
+  return workingGoals.value.filter(g => 
+    g.status !== 'completed' &&
     (!g.steps || g.steps.length === 0)
   )
 })
@@ -1008,8 +1001,7 @@ function isStepScheduled(goalId, stepId) {
     return true
   }
   
-  // Check in both rawIdeas and workingGoals
-  const goal = rawIdeas.value.find(g => g.id === goalId) || workingGoals.value.find(g => g.id === goalId)
+  const goal = workingGoals.value.find(g => g.id === goalId || g.backendId === goalId)
   const step = goal?.steps?.find(s => s.id === stepId)
   return !!step?.date
 }
@@ -1024,7 +1016,7 @@ function getScheduledDate(goalId, stepId) {
   const task = plan?.scheduledTasks?.find(t => t.goalId === goalId && t.stepId === stepId)
   if (task) return task.scheduledDate
   
-  const goal = rawIdeas.value.find(g => g.id === goalId) || workingGoals.value.find(g => g.id === goalId)
+  const goal = workingGoals.value.find(g => g.id === goalId || g.backendId === goalId)
   const step = goal?.steps?.find(s => s.id === stepId)
   return step?.date || ''
 }
@@ -1060,7 +1052,7 @@ function getScheduledTimeEstimate(goalId, stepId) {
   const task = plan?.scheduledTasks?.find(t => t.goalId === goalId && t.stepId === stepId)
   if (task) return task.timeEstimate || task.step_time_duration || ''
   
-  const goal = rawIdeas.value.find(g => g.id === goalId) || workingGoals.value.find(g => g.id === goalId)
+  const goal = workingGoals.value.find(g => g.id === goalId || g.backendId === goalId)
   const localStep = goal?.steps?.find(s => s.id === stepId)
   return localStep?.timeEstimate || localStep?.time_estimate || ''
 }
@@ -1641,18 +1633,10 @@ function saveStepToLocalPlan(goal, step, date) {
 }
 
 function updateStepDateInCollections(goalId, stepId, date) {
-  // Обновить в rawIdeas
-  const rawGoal = rawIdeas.value.find(g => g.id === goalId || g.backendId === goalId)
-  if (rawGoal) {
-    const rawStep = rawGoal.steps?.find(s => s.id === stepId || s.backendId === stepId)
-    if (rawStep) rawStep.date = date
-  }
-  
-  // Обновить в workingGoals
-  const workGoal = workingGoals.value.find(g => g.id === goalId || g.backendId === goalId)
-  if (workGoal) {
-    const workStep = workGoal.steps?.find(s => s.id === stepId || s.backendId === stepId)
-    if (workStep) workStep.date = date
+  const goal = workingGoals.value.find(g => g.id === goalId || g.backendId === goalId)
+  if (goal) {
+    const step = goal.steps?.find(s => s.id === stepId || s.backendId === stepId)
+    if (step) step.date = date
   }
 }
 
