@@ -3087,6 +3087,12 @@ onUnmounted(() => {
   
 }
 
+@media (max-width: 768px) {
+  .planning-header {
+    padding-left: 3.5rem;
+  }
+}
+
 @media (min-width: 768px) {
   .planning-container {
     padding: 1.5rem;

@@ -5998,6 +5998,10 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
+  .section-header {
+    padding-left: 3.5rem;
+  }
+
   .goals-bank-container {
     padding: 1rem;
   }

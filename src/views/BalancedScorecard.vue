@@ -2076,6 +2076,10 @@ watch(activeTab, async (newTab) => {
 }
 
 @media (max-width: 768px) {
+  .ssp-header {
+    padding-left: 3.5rem;
+  }
+
   .ssp-container {
     padding: 1rem;
   }

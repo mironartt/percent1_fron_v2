@@ -999,6 +999,12 @@ function pluralize(n, one, few, many) {
   margin: 0;
 }
 
+@media (max-width: 768px) {
+  .day-header {
+    padding-left: 3.5rem;
+  }
+}
+
 @media (max-width: 600px) {
   .day-header {
     flex-direction: column;
