@@ -716,6 +716,7 @@ function initSelectedDay() {
 
 const weeklyStepsData = ref([])
 const weeklyStepsLoading = ref(false)
+const localUpdateTrigger = ref(0)
 
 async function loadWeeklySteps() {
   if (weeklyStepsLoading.value) return
@@ -754,22 +755,43 @@ const priorityFrontendToBackend = { 'critical': 'critical', 'desirable': 'import
 const priorityOrder = { critical: 0, important: 0, desirable: 1, attention: 2, optional: 3, '': 4 }
 
 function getTasksForDay(dateStr) {
+  // Триггер для реактивности при локальных изменениях
+  void localUpdateTrigger.value
+  
+  const weekStart = weekDays.value[0]?.date
+  const plan = store.weeklyPlans.find(p => p.weekStart === weekStart)
+  const localTasks = plan?.scheduledTasks || []
+  
   const dayData = weeklyStepsData.value.find(d => d.date === dateStr)
   if (dayData && dayData.steps_data && dayData.steps_data.length > 0) {
     return dayData.steps_data
-      .map(step => ({
-        id: `backend-${step.step_id}`,
-        goalId: step.goal_id,
-        stepId: step.step_id,
-        stepTitle: step.step_title,
-        goalTitle: step.goal_title,
-        goalCategory: step.goal_category,
-        scheduledDate: step.step_dt,
-        timeEstimate: timeDurationMap[step.step_time_duration] || '',
-        priority: priorityBackendToFrontend[step.step_priority] || step.step_priority || '',
-        completed: step.step_is_complete || false,
-        order: step.step_order
-      }))
+      .map(step => {
+        // Ищем локальные override-ы для этого шага
+        const localOverride = localTasks.find(t => 
+          (t.goalId === step.goal_id || t.goalId === String(step.goal_id)) &&
+          (t.stepId === step.step_id || t.stepId === String(step.step_id))
+        )
+        
+        // Бэкенд значения
+        const backendTime = timeDurationMap[step.step_time_duration] || ''
+        const backendPriority = priorityBackendToFrontend[step.step_priority] || step.step_priority || ''
+        const backendCompleted = step.step_is_complete || false
+        
+        return {
+          id: `backend-${step.step_id}`,
+          goalId: step.goal_id,
+          stepId: step.step_id,
+          stepTitle: step.step_title,
+          goalTitle: step.goal_title,
+          goalCategory: step.goal_category,
+          scheduledDate: step.step_dt,
+          // Локальные override-ы имеют приоритет над бэкендом
+          timeEstimate: localOverride?.timeEstimate ?? backendTime,
+          priority: localOverride?.priority ?? backendPriority,
+          completed: localOverride?.completed ?? backendCompleted,
+          order: step.step_order
+        }
+      })
       .sort((a, b) => {
         const priorityA = priorityOrder[a.priority] ?? 4
         const priorityB = priorityOrder[b.priority] ?? 4
@@ -777,10 +799,8 @@ function getTasksForDay(dateStr) {
       })
   }
   
-  const plan = store.weeklyPlans.find(p => p.weekStart === weekDays.value[0]?.date)
-  if (!plan) return []
-  
-  return (plan.scheduledTasks || [])
+  // Если бэкенд данных нет, используем только локальные
+  return localTasks
     .filter(t => t.scheduledDate === dateStr)
     .sort((a, b) => {
       const priorityA = priorityOrder[a.priority] ?? 4
@@ -1023,6 +1043,9 @@ function getScheduledDate(goalId, stepId) {
 }
 
 function getScheduledPriority(goalId, stepId) {
+  // Триггер для реактивности
+  void localUpdateTrigger.value
+  
   // Сначала проверяем локальные данные (обновляются сразу при выборе)
   const plan = store.weeklyPlans.find(p => p.weekStart === weekDays.value[0]?.date)
   const localTask = plan?.scheduledTasks?.find(t => 
@@ -1044,6 +1067,9 @@ function getScheduledPriority(goalId, stepId) {
 }
 
 function getScheduledTimeEstimate(goalId, stepId) {
+  // Триггер для реактивности
+  void localUpdateTrigger.value
+  
   // Сначала проверяем локальные данные (обновляются сразу при выборе)
   const plan = store.weeklyPlans.find(p => p.weekStart === weekDays.value[0]?.date)
   const localTask = plan?.scheduledTasks?.find(t => 
@@ -1428,6 +1454,9 @@ function updateStepInLocalPlan(goal, step, updates) {
   if (updates.priority !== undefined) task.priority = updates.priority
   if (updates.timeEstimate !== undefined) task.timeEstimate = updates.timeEstimate
   if (updates.completed !== undefined) task.completed = updates.completed
+  
+  // Триггерим реактивность для перерендера UI
+  localUpdateTrigger.value++
   
   store.saveToLocalStorage()
 }
