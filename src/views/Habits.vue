@@ -6426,64 +6426,56 @@ onMounted(async () => {
 
 .ai-intro-section {
   text-align: center;
-  padding: 0.5rem 0;
+  padding: 1rem 0;
 }
 
 .ai-intro-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
-  margin: 0 auto 0.75rem;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
   background: linear-gradient(135deg, #10b981, #22c55e);
   border-radius: 50%;
   color: #fff;
 }
 
-.ai-intro-icon svg {
-  width: 28px;
-  height: 28px;
-}
-
 .ai-intro-section h4 {
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   font-weight: 600;
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.75rem;
   color: var(--text-primary, #1f2937);
 }
 
 .ai-intro-description {
   color: var(--text-secondary, #6b7280);
-  line-height: 1.5;
-  font-size: 0.875rem;
-  margin-bottom: 1rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
 }
 
 .ai-intro-features {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
   text-align: left;
 }
 
 .ai-feature-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
   background: var(--bg-secondary, #f3f4f6);
-  border-radius: 8px;
+  border-radius: 10px;
   color: var(--text-primary, #1f2937);
-  font-size: 0.8rem;
+  font-size: 0.9rem;
 }
 
 .ai-feature-item svg {
   color: #10b981;
   flex-shrink: 0;
-  width: 16px;
-  height: 16px;
 }
 
 .btn-ai-action {
@@ -6492,8 +6484,8 @@ onMounted(async () => {
   justify-content: center;
   gap: 0.5rem;
   width: 100%;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.95rem;
+  padding: 1rem 2rem;
+  font-size: 1rem;
   background: #10b981;
   color: #fff;
   border: none;
@@ -6512,9 +6504,9 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  margin-top: 0.75rem;
+  margin-top: 1rem;
   color: var(--text-secondary, #6b7280);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   cursor: pointer;
 }
 
