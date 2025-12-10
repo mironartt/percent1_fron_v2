@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { DEBUG_MODE, FORCE_SHOW_ONBOARDING, FORCE_SHOW_MINITASK } from '@/config/settings.js'
+import { getLocalDateString, getTodayDateString } from '@/utils/dateUtils.js'
 import { 
   getOnboardingData, 
   updateOnboardingData, 
@@ -870,11 +871,6 @@ export const useAppStore = defineStore('app', () => {
     loading: false
   })
 
-  // Получить сегодняшнюю дату в формате YYYY-MM-DD
-  function getTodayDateString() {
-    return new Date().toISOString().split('T')[0]
-  }
-
   // Проверить, есть ли запись на сегодня
   const hasTodayEntry = computed(() => {
     const today = getTodayDateString()
@@ -991,7 +987,7 @@ export const useAppStore = defineStore('app', () => {
     for (let i = 0; i < 365; i++) {
       const checkDate = new Date(today)
       checkDate.setDate(today.getDate() - i)
-      const dateStr = checkDate.toISOString().split('T')[0]
+      const dateStr = getLocalDateString(checkDate)
       
       const hasEntry = journal.value.entries.some(e => e.date === dateStr)
       if (hasEntry) {
@@ -1192,7 +1188,7 @@ export const useAppStore = defineStore('app', () => {
   })
 
   const dailyPlan = ref({
-    date: new Date().toISOString().split('T')[0],
+    date: getTodayDateString(),
     topPriorities: [],
     tasks: [],
     energyLevel: null,
@@ -1213,7 +1209,7 @@ export const useAppStore = defineStore('app', () => {
   ]
 
   const todayHabits = computed(() => {
-    const today = new Date().toISOString().split('T')[0]
+    const today = getTodayDateString()
     const allHabits = [...defaultHabits, ...habits.value.filter(h => !h.archived)]
     
     return allHabits.map(habit => ({
@@ -1266,7 +1262,7 @@ export const useAppStore = defineStore('app', () => {
     for (let i = 0; i < 365; i++) {
       const date = new Date(today)
       date.setDate(date.getDate() - i)
-      const dateStr = date.toISOString().split('T')[0]
+      const dateStr = getLocalDateString(date)
       
       const dayLog = habitLog.value[dateStr]
       if (!dayLog || dayLog.length === 0) {
@@ -1320,7 +1316,7 @@ export const useAppStore = defineStore('app', () => {
   function removeHabit(habitId) {
     const habit = habits.value.find(h => h.id === habitId)
     if (habit) {
-      habit.deletedAt = new Date().toISOString().split('T')[0]
+      habit.deletedAt = getTodayDateString()
       saveToLocalStorage()
       
       if (DEBUG_MODE) {
@@ -1354,7 +1350,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   function toggleHabit(habitId, date = null) {
-    const targetDate = date || new Date().toISOString().split('T')[0]
+    const targetDate = date || getTodayDateString()
     
     if (!habitLog.value[targetDate]) {
       habitLog.value[targetDate] = []
@@ -1386,7 +1382,7 @@ export const useAppStore = defineStore('app', () => {
     for (let i = 0; i < days; i++) {
       const date = new Date(today)
       date.setDate(date.getDate() - i)
-      const dateStr = date.toISOString().split('T')[0]
+      const dateStr = getLocalDateString(date)
       
       history.push({
         date: dateStr,
@@ -1407,7 +1403,7 @@ export const useAppStore = defineStore('app', () => {
   const todayScheduledTasks = computed(() => {
     const now = new Date()
     now.setHours(0, 0, 0, 0)
-    const today = now.toISOString().split('T')[0]
+    const today = getLocalDateString(now)
     const currentPlan = getCurrentWeekPlan()
     
     console.log('[Store] todayScheduledTasks - today:', today)
@@ -3083,7 +3079,7 @@ export const useAppStore = defineStore('app', () => {
     const monday = new Date(today)
     monday.setDate(today.getDate() + mondayOffset)
     monday.setHours(0, 0, 0, 0)
-    const mondayStr = monday.toISOString().split('T')[0]
+    const mondayStr = getLocalDateString(monday)
     
     return weeklyPlans.value.find(p => p.weekStart === mondayStr)
   }

@@ -53,6 +53,7 @@ import { useAppStore } from '../stores/app'
 import { useHabitsStore } from '../stores/habits'
 import { useXpStore } from '../stores/xp'
 import { Flame, Check, Zap, ChevronRight, Plus } from 'lucide-vue-next'
+import { getTodayDateString } from '../utils/dateUtils'
 
 const appStore = useAppStore()
 const habitsStore = useHabitsStore()
@@ -62,7 +63,7 @@ const showXP = ref(null)
 const isToggling = ref(false)
 
 const todayDayOfWeek = new Date().getDay()
-const todayDateStr = new Date().toISOString().split('T')[0]
+const todayDateStr = getTodayDateString()
 
 onMounted(async () => {
   if (!habitsStore.initialized) {

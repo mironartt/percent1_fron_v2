@@ -1609,6 +1609,7 @@ import { useXpStore } from '../stores/xp'
 import { useToastStore } from '../stores/toast'
 import { useHabitsStore } from '../stores/habits'
 import { DEBUG_MODE } from '@/config/settings.js'
+import { getLocalDateString, getTodayDateString } from '@/utils/dateUtils'
 import { 
   Flame, Plus, Minus, Zap, CheckCircle, Sparkles, Shield, Bot,
   Check, Pencil, X, Trash2, Settings, Gift, Archive, Info, TrendingUp, Calendar, Award,
@@ -2049,7 +2050,7 @@ const todayProgressPercent = computed(() => {
 const streakCalendar = computed(() => {
   const weeks = []
   const today = new Date()
-  const todayStr = today.toISOString().split('T')[0]
+  const todayStr = getLocalDateString(today)
   const dayLetters = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
   
   if (habitsStore.streakDays && habitsStore.streakDays.length > 0) {
@@ -2066,7 +2067,7 @@ const streakCalendar = computed(() => {
       for (let d = 0; d < 7; d++) {
         const date = new Date(weekStart)
         date.setDate(weekStart.getDate() + d)
-        const dateStr = date.toISOString().split('T')[0]
+        const dateStr = getLocalDateString(date)
         const isFuture = date > today
         const isToday = dateStr === todayStr
         
@@ -2113,7 +2114,7 @@ const streakCalendar = computed(() => {
     for (let d = 0; d < 7; d++) {
       const date = new Date(weekStart)
       date.setDate(weekStart.getDate() + d)
-      const dateStr = date.toISOString().split('T')[0]
+      const dateStr = getLocalDateString(date)
       const isFuture = date > today
       const isToday = dateStr === todayStr
       
@@ -2140,7 +2141,7 @@ const streakCalendar = computed(() => {
 
 const xpByDay = computed(() => {
   const today = new Date()
-  const todayStr = today.toISOString().split('T')[0]
+  const todayStr = getLocalDateString(today)
   const dayLabels = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
   
   if (habitsStore.weekXpByDay && habitsStore.weekXpByDay.length > 0) {
@@ -2162,7 +2163,7 @@ const xpByDay = computed(() => {
   for (let i = 6; i >= 0; i--) {
     const date = new Date(today)
     date.setDate(today.getDate() - i)
-    const dateStr = date.toISOString().split('T')[0]
+    const dateStr = getLocalDateString(date)
     
     const xp = xpStore.xpHistory
       .filter(e => e.source === 'habit_completed' && e.timestamp.startsWith(dateStr))
@@ -2301,7 +2302,7 @@ const missedDaysForAmnesty = computed(() => {
   for (let i = 1; i <= 7; i++) {
     const date = new Date(today)
     date.setDate(date.getDate() - i)
-    const dateStr = date.toISOString().split('T')[0]
+    const dateStr = getLocalDateString(date)
     const dayOfWeek = date.getDay()
     
     const scheduledForDay = allHabits.value.filter(h => isScheduledForDay(h, dayOfWeek))
@@ -2358,7 +2359,7 @@ const amnestiedDaysInWeek = computed(() => {
   for (let i = 1; i <= 7; i++) {
     const date = new Date(today)
     date.setDate(date.getDate() - i)
-    const dateStr = date.toISOString().split('T')[0]
+    const dateStr = getLocalDateString(date)
     const dayOfWeek = date.getDay()
     
     if (amnestiedDates.includes(dateStr)) {
@@ -2478,7 +2479,7 @@ const last14Days = computed(() => {
   for (let i = 13; i >= 0; i--) {
     const date = new Date(today)
     date.setDate(date.getDate() - i)
-    const dateStr = date.toISOString().split('T')[0]
+    const dateStr = getLocalDateString(date)
     const { completed, total } = getCompletionForDate(dateStr)
     days.push({ date: dateStr, completed, total })
   }
@@ -2491,7 +2492,7 @@ const last30Days = computed(() => {
   for (let i = 29; i >= 0; i--) {
     const date = new Date(today)
     date.setDate(date.getDate() - i)
-    const dateStr = date.toISOString().split('T')[0]
+    const dateStr = getLocalDateString(date)
     const { completed, total } = getCompletionForDate(dateStr)
     days.push({ date: dateStr, completed, total })
   }
@@ -2508,7 +2509,7 @@ const weekCompletionRate = computed(() => {
   for (let i = 0; i < 7; i++) {
     const date = new Date(today)
     date.setDate(date.getDate() - i)
-    const dateStr = date.toISOString().split('T')[0]
+    const dateStr = getLocalDateString(date)
     const { completed, total } = getCompletionForDate(dateStr)
     totalCompleted += completed
     totalScheduled += total
@@ -2526,7 +2527,7 @@ const monthCompletionRate = computed(() => {
   for (let i = 0; i < 30; i++) {
     const date = new Date(today)
     date.setDate(date.getDate() - i)
-    const dateStr = date.toISOString().split('T')[0]
+    const dateStr = getLocalDateString(date)
     const { completed, total } = getCompletionForDate(dateStr)
     totalCompleted += completed
     totalScheduled += total
@@ -2552,7 +2553,7 @@ function getHabitStreak(habit) {
   for (let i = 0; i < 365; i++) {
     const date = new Date(today)
     date.setDate(date.getDate() - i)
-    const dateStr = date.toISOString().split('T')[0]
+    const dateStr = getLocalDateString(date)
     const dayOfWeek = date.getDay()
     
     if (!isScheduledForDay(habit, dayOfWeek)) continue
@@ -2593,7 +2594,7 @@ function getHabitCompletionRate(habit, days) {
   for (let i = 0; i < days; i++) {
     const date = new Date(today)
     date.setDate(date.getDate() - i)
-    const dateStr = date.toISOString().split('T')[0]
+    const dateStr = getLocalDateString(date)
     const dayOfWeek = date.getDay()
     
     if (isScheduledForDay(habit, dayOfWeek)) {
@@ -2624,7 +2625,7 @@ const aiInsights = computed(() => {
       date.setDate(date.getDate() - i)
       if (date.getDay() !== dayIndex) continue
       
-      const dateStr = date.toISOString().split('T')[0]
+      const dateStr = getLocalDateString(date)
       allHabits.value.forEach(habit => {
         if (isScheduledForDay(habit, dayIndex)) {
           scheduled++
@@ -2683,7 +2684,7 @@ const calendarWeeks = computed(() => {
     for (let d = 0; d < 7; d++) {
       const date = new Date(today)
       date.setDate(date.getDate() - (w * 7 + (6 - d)))
-      const dateStr = date.toISOString().split('T')[0]
+      const dateStr = getLocalDateString(date)
       const { completed, total, useCountLevel } = getCompletionForDate(dateStr)
       weekDays.push({ date: dateStr, completed, total, useCountLevel })
     }
@@ -2795,7 +2796,7 @@ const weeklyCompletionData = computed(() => {
     for (let d = 0; d < 7; d++) {
       const date = new Date(weekStart)
       date.setDate(weekStart.getDate() + d)
-      const dateStr = date.toISOString().split('T')[0]
+      const dateStr = getLocalDateString(date)
       
       if (date > today) continue
       
@@ -2869,7 +2870,7 @@ const habitCompletionDistribution = computed(() => {
     for (let d = 0; d < 30; d++) {
       const date = new Date(today)
       date.setDate(today.getDate() - d)
-      const dateStr = date.toISOString().split('T')[0]
+      const dateStr = getLocalDateString(date)
       
       if (isScheduledForDay(habit, date.getDay())) {
         total++
@@ -2920,7 +2921,7 @@ const yearlyHeatmapData = computed(() => {
         continue
       }
       
-      const dateStr = date.toISOString().split('T')[0]
+      const dateStr = getLocalDateString(date)
       
       if (calendarData && calendarData[dateStr] !== undefined) {
         const count = calendarData[dateStr]
@@ -3032,7 +3033,7 @@ const monthlyStats = computed(() => {
       const date = new Date(year, month, d)
       if (date > today) continue
       
-      const dateStr = date.toISOString().split('T')[0]
+      const dateStr = getLocalDateString(date)
       
       allHabits.value.forEach(habit => {
         if (isScheduledForDay(habit, date.getDay())) {
@@ -3250,14 +3251,14 @@ function getDayStatusLabel(status) {
 const isFutureDay = computed(() => {
   if (!selectedDayForEdit.value) return false
   const selectedDateStr = selectedDayForEdit.value.date
-  const todayStr = new Date().toISOString().split('T')[0]
+  const todayStr = getTodayDateString()
   return selectedDateStr > todayStr
 })
 
 const isSelectedDayToday = computed(() => {
   if (!selectedDayForEdit.value) return false
   const selectedDateStr = selectedDayForEdit.value.date
-  const todayStr = new Date().toISOString().split('T')[0]
+  const todayStr = getTodayDateString()
   return selectedDateStr === todayStr
 })
 
@@ -3557,7 +3558,7 @@ async function toggleHabitCompletion(habit) {
     return
   }
   
-  const todayStr = new Date().toISOString().split('T')[0]
+  const todayStr = getTodayDateString()
   const habitId = habit.habit_id || habit.backendId || habit.id
   const isCurrentlyCompleted = isHabitCompletedToday(habit)
   
