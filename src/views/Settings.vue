@@ -798,6 +798,11 @@ function handleLogout() {
 }
 
 @media (max-width: 768px) {
+  .page-header {
+    padding-left: 3.5rem;
+    padding-right: 3.5rem;
+  }
+
   .price-options {
     grid-template-columns: 1fr;
   }

@@ -248,6 +248,391 @@ app.post('/api/ai/reassess-sphere', async (req, res) => {
   }
 })
 
+app.post('/api/ai/mentor-suggestions', async (req, res) => {
+  try {
+    const { sspData } = req.body
+    
+    const systemPrompt = `Ты - персональный AI-ментор по личному развитию. На основе данных пользователя о его жизненном балансе (Колесо жизни), 
+предложи 3 персонализированные цели, которые помогут ему развиваться в приоритетных направлениях.
+
+Данные пользователя включают:
+- Оценки сфер жизни (от 0 до 10)
+- Зоны роста (сферы с низкими оценками)
+- Рефлексии: что мешает, чего хочет достичь
+
+Верни JSON:
+{
+  "suggestions": [
+    {
+      "title": "Название цели (конкретное, до 80 символов)",
+      "sphereId": "id сферы (wealth/hobbies/friendship/health/career/love)",
+      "whyUseful": "Почему эта цель полезна именно этому пользователю (2-3 предложения, персонализированно)"
+    }
+  ]
+}
+
+Правила:
+- Предложи РОВНО 3 цели
+- Фокусируйся на зонах роста пользователя (низкие оценки)
+- Учитывай желания и препятствия из рефлексий
+- Цели должны быть конкретными, достижимыми за 1-3 месяца
+- whyUseful должен быть персонализированным, ссылаясь на конкретные данные пользователя
+- Отвечай на русском языке
+- Отвечай ТОЛЬКО валидным JSON`
+
+    let userMessage = 'Данные пользователя:\n\n'
+    
+    if (sspData?.spheres) {
+      userMessage += 'Оценки сфер жизни:\n'
+      sspData.spheres.forEach(s => {
+        userMessage += `- ${s.name}: ${s.score}/10\n`
+      })
+      userMessage += '\n'
+    }
+    
+    if (sspData?.growthZones && sspData.growthZones.length > 0) {
+      userMessage += 'Зоны роста (приоритетные направления):\n'
+      sspData.growthZones.forEach(z => {
+        userMessage += `- ${z.name} (${z.score}/10)\n`
+        if (z.desired) userMessage += `  Желаемое: ${z.desired}\n`
+        if (z.prevents) userMessage += `  Препятствия: ${z.prevents}\n`
+      })
+    }
+
+    const response = await openai.chat.completions.create({
+      model: MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
+      ],
+      response_format: { type: 'json_object' },
+      max_completion_tokens: 2048
+    })
+
+    const content = response.choices?.[0]?.message?.content
+    if (!content) {
+      throw new Error('Empty response from AI')
+    }
+
+    const parsed = JSON.parse(content)
+    
+    if (!Array.isArray(parsed.suggestions) || parsed.suggestions.length === 0) {
+      throw new Error('Invalid response format from AI')
+    }
+
+    res.json({
+      success: true,
+      suggestions: parsed.suggestions.slice(0, 3)
+    })
+  } catch (error) {
+    console.error('[AI Proxy] Mentor suggestions error:', error)
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error generating suggestions'
+    })
+  }
+})
+
+app.post('/api/ai/plan-week', async (req, res) => {
+  try {
+    const { tasks, weekDays, includeOverdue, userContext } = req.body
+    
+    if (!tasks || !weekDays) {
+      return res.status(400).json({ success: false, error: 'Tasks and weekDays are required' })
+    }
+
+    const systemPrompt = `Ты - AI-планировщик недели. Анализируй задачи пользователя и распределяй их по дням недели оптимально.
+
+Учитывай:
+- Приоритет задач (critical, desirable, attention, optional)
+- Оценку времени (30min, 1h, 2h, 3h, 4h)
+- Сферу жизни для баланса
+- Загрузку каждого дня (не более 4-6 часов задач в день)
+- Выходные дни менее загружены
+- Высокоприоритетные задачи ставь в начало недели
+
+Верни JSON:
+{
+  "plan": [
+    {
+      "date": "2025-12-10",
+      "dayName": "Среда",
+      "tasks": [
+        { "taskId": "task-1", "order": 1 }
+      ]
+    }
+  ],
+  "reasoning": "Краткое объяснение логики распределения (1-2 предложения)"
+}
+
+Отвечай ТОЛЬКО валидным JSON.`
+
+    const userPrompt = `Задачи для распределения:
+${JSON.stringify(tasks, null, 2)}
+
+Дни недели:
+${JSON.stringify(weekDays, null, 2)}
+
+${includeOverdue ? 'Включить просроченные задачи в план.' : 'Не включать просроченные задачи.'}
+
+${userContext ? `Контекст пользователя: ${userContext}` : ''}`
+
+    const response = await openai.chat.completions.create({
+      model: MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      response_format: { type: 'json_object' },
+      max_completion_tokens: 4096
+    })
+
+    const content = response.choices?.[0]?.message?.content
+    if (!content) {
+      throw new Error('Empty response from AI')
+    }
+
+    const parsed = JSON.parse(content)
+    
+    res.json({
+      success: true,
+      data: parsed
+    })
+  } catch (error) {
+    console.error('[AI Proxy] Plan week error:', error)
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error planning week'
+    })
+  }
+})
+
+app.post('/api/ai/suggest-habits', async (req, res) => {
+  try {
+    const { spheres, growthZones, goals, existingHabits } = req.body
+
+    const systemPrompt = `Ты - персональный AI-ментор по формированию привычек. На основе данных пользователя о его жизненном балансе, целях и паттернах поведения, предложи 3 персонализированные привычки.
+
+Данные пользователя включают:
+- Оценки сфер жизни (от 0 до 10)
+- Зоны роста (сферы с низкими оценками)
+- Рефлексии: что мешает, чего хочет достичь
+- Текущие цели пользователя
+- Уже имеющиеся привычки (чтобы не дублировать)
+
+Верни JSON:
+{
+  "suggestions": [
+    {
+      "name": "Название привычки (короткое, до 40 символов)",
+      "icon": "🔥",
+      "whyUseful": "Почему эта привычка полезна именно этому пользователю (2-3 предложения, персонализированно, ссылайся на данные пользователя)",
+      "frequencyType": "daily",
+      "scheduleDays": [0, 1, 2, 3, 4, 5, 6],
+      "scheduleLabel": "Каждый день",
+      "xpReward": 10
+    }
+  ]
+}
+
+Правила:
+- Предложи РОВНО 3 привычки
+- Фокусируйся на зонах роста пользователя и его целях
+- Учитывай препятствия из рефлексий
+- Привычки должны быть простыми и выполнимыми ежедневно или несколько раз в неделю
+- whyUseful должен быть персонализированным
+- Не предлагай привычки, которые уже есть у пользователя
+- Используй подходящие эмодзи для иконок
+- frequencyType: "daily" (каждый день), "weekdays" (будни), "weekends" (выходные), "custom" (свой график)
+- scheduleDays: [0-6] где 0=Воскресенье, 1=Понедельник и т.д.
+- scheduleLabel: читаемое описание ("Каждый день", "Будни", "Пн, Ср, Пт" и т.д.)
+- xpReward: от 5 до 20 в зависимости от сложности
+- Отвечай на русском языке
+- Отвечай ТОЛЬКО валидным JSON`
+
+    let userMessage = 'Данные пользователя:\n\n'
+    
+    if (spheres?.length > 0) {
+      userMessage += 'Оценки сфер жизни:\n'
+      spheres.forEach(s => {
+        userMessage += `- ${s.name}: ${s.score}/10\n`
+      })
+      userMessage += '\n'
+    }
+    
+    if (growthZones?.length > 0) {
+      userMessage += 'Зоны роста (приоритетные направления):\n'
+      growthZones.forEach(z => {
+        userMessage += `- ${z.name} (${z.score}/10)\n`
+        if (z.desired) userMessage += `  Желаемое: ${z.desired}\n`
+        if (z.prevents) userMessage += `  Препятствия: ${z.prevents}\n`
+      })
+      userMessage += '\n'
+    }
+    
+    if (goals?.length > 0) {
+      userMessage += 'Текущие цели:\n'
+      goals.forEach(g => {
+        userMessage += `- ${g.text}\n`
+      })
+      userMessage += '\n'
+    }
+    
+    if (existingHabits?.length > 0) {
+      userMessage += 'Уже имеющиеся привычки (не дублируй их):\n'
+      existingHabits.forEach(h => {
+        userMessage += `- ${h}\n`
+      })
+    }
+
+    const response = await openai.chat.completions.create({
+      model: MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
+      ],
+      response_format: { type: 'json_object' },
+      max_completion_tokens: 2048
+    })
+
+    const content = response.choices?.[0]?.message?.content
+    if (!content) {
+      throw new Error('Empty response from AI')
+    }
+
+    const parsed = JSON.parse(content)
+    
+    if (!Array.isArray(parsed.suggestions) || parsed.suggestions.length === 0) {
+      throw new Error('Invalid response format from AI')
+    }
+
+    res.json({
+      success: true,
+      suggestions: parsed.suggestions.slice(0, 3)
+    })
+  } catch (error) {
+    console.error('[AI Proxy] Suggest habits error:', error)
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error generating habit suggestions'
+    })
+  }
+})
+
+app.post('/api/ai/suggest-rewards', async (req, res) => {
+  try {
+    const { spheres, growthZones, goals, existingRewards, xpBalance } = req.body
+
+    const systemPrompt = `Ты - персональный AI-ментор по мотивации и наградам. На основе данных пользователя о его жизненном балансе, целях, интересах и зонах роста, предложи 3 персонализированные награды, которые будут его мотивировать.
+
+Данные пользователя включают:
+- Оценки сфер жизни (от 0 до 10)
+- Зоны роста (сферы с низкими оценками)  
+- Рефлексии: что мешает, чего хочет достичь
+- Текущие цели пользователя
+- Уже имеющиеся награды (чтобы не дублировать)
+- Текущий баланс XP
+
+Верни JSON:
+{
+  "suggestions": [
+    {
+      "name": "Название награды (короткое, до 40 символов)",
+      "icon": "🎁",
+      "whyMotivating": "Почему эта награда мотивирует именно этого пользователя (2-3 предложения, персонализированно, ссылайся на его цели и интересы)",
+      "cost": 500,
+      "description": "Краткое описание награды (1 предложение)"
+    }
+  ]
+}
+
+Правила:
+- Предложи РОВНО 3 награды
+- Награды должны быть связаны с интересами и зонами роста пользователя
+- Если пользователь работает над здоровьем → предложи награды связанные со здоровьем (массаж, фитнес-аксессуары, здоровая еда)
+- Если над карьерой → курсы, книги, инструменты
+- Если над отношениями → совместные активности, подарки близким
+- whyMotivating должен быть персонализированным и объяснять связь награды с целями
+- Не предлагай награды, которые уже есть у пользователя
+- Используй подходящие эмодзи для иконок (🎁☕🎬📚🍽️🏖️🎮🛍️💆🎧🍰🌴🎪🎨🎵✈️💪🧘📱🎯)
+- cost: от 100 до 2000 XP в зависимости от ценности награды
+- Награды должны быть реалистичными и достижимыми
+- Отвечай на русском языке
+- Отвечай ТОЛЬКО валидным JSON`
+
+    let userMessage = 'Данные пользователя:\n\n'
+    
+    if (xpBalance !== undefined) {
+      userMessage += `Текущий баланс: ${xpBalance} XP\n\n`
+    }
+    
+    if (spheres?.length > 0) {
+      userMessage += 'Оценки сфер жизни:\n'
+      spheres.forEach(s => {
+        userMessage += `- ${s.name}: ${s.score}/10\n`
+      })
+      userMessage += '\n'
+    }
+    
+    if (growthZones?.length > 0) {
+      userMessage += 'Зоны роста (приоритетные направления для развития):\n'
+      growthZones.forEach(z => {
+        userMessage += `- ${z.name} (${z.score}/10)\n`
+        if (z.desired) userMessage += `  Желаемое состояние: ${z.desired}\n`
+        if (z.prevents) userMessage += `  Что мешает: ${z.prevents}\n`
+      })
+      userMessage += '\n'
+    }
+    
+    if (goals?.length > 0) {
+      userMessage += 'Текущие цели пользователя:\n'
+      goals.forEach(g => {
+        userMessage += `- ${g.text}\n`
+      })
+      userMessage += '\n'
+    }
+    
+    if (existingRewards?.length > 0) {
+      userMessage += 'Уже имеющиеся награды (не дублируй их):\n'
+      existingRewards.forEach(r => {
+        userMessage += `- ${r}\n`
+      })
+    }
+
+    const response = await openai.chat.completions.create({
+      model: MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
+      ],
+      response_format: { type: 'json_object' },
+      max_completion_tokens: 2048
+    })
+
+    const content = response.choices?.[0]?.message?.content
+    if (!content) {
+      throw new Error('Empty response from AI')
+    }
+
+    const parsed = JSON.parse(content)
+    
+    if (!Array.isArray(parsed.suggestions) || parsed.suggestions.length === 0) {
+      throw new Error('Invalid response format from AI')
+    }
+
+    res.json({
+      success: true,
+      suggestions: parsed.suggestions.slice(0, 3)
+    })
+  } catch (error) {
+    console.error('[AI Proxy] Suggest rewards error:', error)
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error generating reward suggestions'
+    })
+  }
+})
+
 app.get('/api/ai/health', (req, res) => {
   res.json({ status: 'ok' })
 })

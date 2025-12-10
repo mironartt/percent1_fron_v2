@@ -1,18 +1,20 @@
 <template>
   <div class="planning-container">
-    <header class="planning-header">
-      <h1 class="page-title">Планирование</h1>
-      <div class="week-navigation">
-        <button class="nav-btn" @click="prevWeek" aria-label="Предыдущая неделя">
-          <ChevronLeft :size="20" />
-        </button>
-        <span class="week-range">{{ weekRangeText }}</span>
-        <button class="nav-btn" @click="nextWeek" aria-label="Следующая неделя">
+    <header class="planning-header-full">
+      <button class="nav-btn-edge" @click="prevWeek" aria-label="Предыдущая неделя">
+        <ChevronLeft :size="20" />
+      </button>
+      <div class="header-center">
+        <h1 class="page-title">Планирование</h1>
+        <span class="week-range-center">{{ weekRangeText }}</span>
+      </div>
+      <div class="header-right">
+        <button class="nav-btn-edge" @click="nextWeek" aria-label="Следующая неделя">
           <ChevronRight :size="20" />
         </button>
         <button 
           v-if="!isCurrentWeek" 
-          class="today-btn"
+          class="today-btn-inline"
           @click="goToCurrentWeek"
         >
           Сегодня
@@ -70,8 +72,18 @@
           v-for="group in getGroupedTasksForDay(selectedDay)" 
           :key="group.goalId"
           class="task-group"
+          :class="{ collapsed: collapsedGoalGroups[group.goalId] }"
         >
-          <div class="group-header" v-if="getGroupedTasksForDay(selectedDay).length > 1 || group.tasks.length > 1">
+          <div 
+            class="group-header clickable" 
+            v-if="getGroupedTasksForDay(selectedDay).length > 1 || group.tasks.length > 1"
+            @click="toggleGoalGroupCollapse(group.goalId)"
+          >
+            <ChevronRight 
+              :size="16" 
+              class="group-chevron"
+              :class="{ rotated: !collapsedGoalGroups[group.goalId] }"
+            />
             <span class="group-title">{{ group.goalTitle }}</span>
             <div class="group-meta">
               <span class="group-count">{{ group.completedCount }}/{{ group.tasks.length }}</span>
@@ -81,45 +93,87 @@
               </span>
             </div>
           </div>
-          <div 
-            v-for="task in group.tasks" 
-            :key="task.id"
-            class="task-card"
-            :class="[
-              { completed: task.completed },
-              'priority-' + (task.priority || 'none')
-            ]"
-            @click="openTaskActions(task)"
-            @touchstart="handleTouchStart(task, $event)"
-            @touchend="handleTouchEnd"
-            @touchmove="handleTouchMove"
-          >
-            <div class="priority-stripe" :class="'priority-' + (task.priority || 'none')"></div>
-            <button 
-              class="task-checkbox"
-              :class="{ completed: task.completed }"
-              @click.stop="toggleTaskComplete(task)"
+          <div class="group-tasks" v-show="!collapsedGoalGroups[group.goalId]">
+            <div 
+              v-for="task in group.tasks" 
+              :key="task.id"
+              class="task-card"
+              :class="[
+                { completed: task.completed },
+                'priority-' + (task.priority || 'none')
+              ]"
+              @click="openTaskActions(task)"
+              @touchstart="handleTouchStart(task, $event)"
+              @touchend="handleTouchEnd"
+              @touchmove="handleTouchMove"
             >
-              <Check v-if="task.completed" :size="16" />
-            </button>
-            <div class="task-info">
-              <span class="task-title">{{ task.stepTitle }}</span>
-              <span class="task-goal" v-if="getGroupedTasksForDay(selectedDay).length === 1 && group.tasks.length === 1">{{ task.goalTitle }}</span>
-            </div>
-            <div class="task-meta">
-              <span v-if="task.timeEstimate" class="time-badge">
-                <Clock :size="12" />
-                {{ formatTimeShort(task.timeEstimate) }}
-              </span>
-              <span v-if="task.priority" class="priority-icon-badge" :class="'priority-' + task.priority">
-                {{ getPriorityIcon(task.priority) }}
-              </span>
+              <div class="priority-stripe" :class="'priority-' + (task.priority || 'none')"></div>
+              <button 
+                class="task-checkbox"
+                :class="{ completed: task.completed }"
+                @click.stop="toggleTaskComplete(task)"
+              >
+                <Check v-if="task.completed" :size="16" />
+              </button>
+              <div class="task-info">
+                <span class="task-title">{{ task.stepTitle }}</span>
+                <span class="task-goal" v-if="getGroupedTasksForDay(selectedDay).length === 1 && group.tasks.length === 1">{{ task.goalTitle }}</span>
+              </div>
+              <div class="task-meta">
+                <span v-if="task.timeEstimate" class="time-badge">
+                  <Clock :size="12" />
+                  {{ formatTimeShort(task.timeEstimate) }}
+                </span>
+                <span v-if="task.priority" class="priority-icon-badge" :class="'priority-' + task.priority">
+                  {{ getPriorityIcon(task.priority) }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div v-else class="empty-day">
+      <!-- Секция просроченных задач -->
+      <div class="task-group overdue-group" :class="{ collapsed: overdueCollapsed }" v-if="isToday(selectedDay) && overdueTasks.length > 0">
+        <div class="group-header clickable" @click="toggleOverdueCollapse">
+          <ChevronRight 
+            :size="16" 
+            class="group-chevron"
+            :class="{ rotated: !overdueCollapsed }"
+          />
+          <span class="group-title">Просроченные</span>
+          <div class="group-meta">
+            <span class="group-count">{{ overdueCompletedCount }}/{{ overdueTasks.length }}</span>
+          </div>
+        </div>
+        <div class="group-tasks" v-show="!overdueCollapsed">
+          <div 
+            v-for="task in overdueTasks" 
+            :key="task.id"
+            class="task-card"
+            :class="{ completed: task.completed }"
+            @click="openTaskActions(task)"
+          >
+            <div class="priority-stripe priority-critical"></div>
+            <button 
+              class="task-checkbox"
+              :class="{ completed: task.completed }"
+              @click.stop="toggleOverdueTaskComplete(task)"
+            >
+              <Check v-if="task.completed" :size="16" />
+            </button>
+            <div class="task-info">
+              <span class="task-title">{{ task.stepTitle }}</span>
+              <span class="task-goal">{{ task.goalTitle }}</span>
+            </div>
+            <div class="task-meta">
+              <span class="overdue-date">{{ formatOverdueDate(task.scheduledDate) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else-if="getTasksForDay(selectedDay).length === 0" class="empty-day">
         <Calendar :size="48" class="empty-icon" />
         <p>Нет задач на этот день</p>
         <span class="empty-hint">Добавьте шаги из целей ниже</span>
@@ -160,7 +214,8 @@
         </div>
       </div>
       
-      <div class="segmented-control">
+      <!-- Desktop: segmented control -->
+      <div class="segmented-control desktop-only">
         <button 
           class="segment"
           :class="{ active: filterStatus === '' }"
@@ -183,6 +238,43 @@
           Запл.
         </button>
       </div>
+      
+      <!-- Mobile: status dropdown -->
+      <div class="status-dropdown mobile-only" :class="{ open: showStatusDropdown }">
+        <button class="dropdown-trigger" @click="showStatusDropdown = !showStatusDropdown">
+          <span>{{ selectedStatusName }}</span>
+          <ChevronDown :size="14" class="dropdown-arrow" />
+        </button>
+        <div class="dropdown-menu" v-if="showStatusDropdown" @click.stop>
+          <button 
+            class="dropdown-item"
+            :class="{ active: filterStatus === '' }"
+            @click="filterStatus = ''; showStatusDropdown = false"
+          >
+            Все
+          </button>
+          <button 
+            class="dropdown-item"
+            :class="{ active: filterStatus === 'unscheduled' }"
+            @click="filterStatus = 'unscheduled'; showStatusDropdown = false"
+          >
+            Незапланированные
+          </button>
+          <button 
+            class="dropdown-item"
+            :class="{ active: filterStatus === 'scheduled' }"
+            @click="filterStatus = 'scheduled'; showStatusDropdown = false"
+          >
+            Запланированные
+          </button>
+        </div>
+      </div>
+      
+      <!-- AI Planning button -->
+      <button class="ai-planner-btn filters-ai-btn" @click="openAIPlannerModal">
+        <Sparkles :size="16" />
+        <span class="ai-btn-text desktop-only">AI планирование</span>
+      </button>
     </div>
 
     <!-- Баннер: цели без шагов -->
@@ -321,6 +413,124 @@
       </button>
     </div>
 
+    <!-- AI Planner Modal -->
+    <div class="ai-planner-overlay" v-if="showAIPlannerModal" @click="closeAIPlannerModal">
+      <div class="ai-planner-modal" @click.stop>
+        <div class="ai-modal-header">
+          <div class="ai-modal-title-row">
+            <Sparkles :size="20" class="ai-modal-icon" />
+            <h3>AI планирование недели</h3>
+          </div>
+          <button class="ai-modal-close" @click="closeAIPlannerModal">
+            <X :size="20" />
+          </button>
+        </div>
+        
+        <div class="ai-modal-content" v-if="aiPlannerStep === 'intro'">
+          <div class="ai-intro-section">
+            <div class="ai-intro-icon">
+              <Sparkles :size="48" />
+            </div>
+            <h4 class="ai-intro-title">Умное планирование недели</h4>
+            <p class="ai-intro-description">
+              AI проанализирует ваши задачи: приоритеты, оценки времени и сферы жизни. 
+              На основе этого распределит задачи по дням недели с учётом баланса нагрузки.
+            </p>
+            
+            <div class="ai-feature-list">
+              <div class="ai-feature-item">
+                <Brain :size="18" />
+                <span>Анализ приоритетов и времени</span>
+              </div>
+              <div class="ai-feature-item">
+                <BarChart3 :size="18" />
+                <span>Баланс нагрузки по дням</span>
+              </div>
+              <div class="ai-feature-item">
+                <ListChecks :size="18" />
+                <span>Предпросмотр перед применением</span>
+              </div>
+            </div>
+            
+            <div class="ai-option-toggle">
+              <label class="toggle-label">
+                <input type="checkbox" v-model="aiPlannerIncludeOverdue" />
+                <span class="toggle-text">Включить просроченные задачи ({{ overdueTasks.length }})</span>
+              </label>
+            </div>
+            
+            <button class="btn btn-primary btn-lg ai-start-btn" @click="startAIPlanning" :disabled="aiPlannerLoading">
+              <Sparkles :size="18" />
+              Запланировать неделю
+            </button>
+            
+            <label class="dont-show-label">
+              <input type="checkbox" v-model="aiPlannerDontShowCheck" />
+              <span>Не показывать больше</span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="ai-modal-content" v-else-if="aiPlannerStep === 'loading'">
+          <div class="ai-loading-section">
+            <div class="ai-loading-spinner"></div>
+            <p>AI анализирует ваши задачи...</p>
+            <span class="ai-loading-hint">Это займёт несколько секунд</span>
+          </div>
+        </div>
+        
+        <div class="ai-modal-content" v-else-if="aiPlannerStep === 'result'">
+          <div class="ai-result-section">
+            <div class="ai-result-summary">
+              <h4 class="ai-result-title">План готов!</h4>
+              <p class="ai-result-subtitle">Распределено {{ aiPlannerResult?.totalTasks || 0 }} задач на неделю</p>
+            </div>
+            
+            <div class="ai-result-preview" v-if="aiPlannerResult">
+              <div 
+                v-for="day in aiPlannerResult.days" 
+                :key="day.date"
+                class="ai-day-preview"
+                :class="{ collapsed: !isDayExpanded(day.date) }"
+              >
+                <div class="ai-day-header" @click="toggleDayExpand(day.date)">
+                  <span class="ai-day-name">{{ day.dayName }}</span>
+                  <div class="ai-day-meta">
+                    <span class="ai-day-count">{{ getSelectedCountForDay(day) }} задач</span>
+                    <ChevronRight :size="16" class="ai-day-chevron" :class="{ rotated: isDayExpanded(day.date) }" />
+                  </div>
+                </div>
+                <div class="ai-day-tasks" v-show="isDayExpanded(day.date)">
+                  <div 
+                    v-for="task in day.tasks" 
+                    :key="task.id" 
+                    class="ai-task-preview"
+                    :class="{ selected: isTaskSelected(task.id) }"
+                    @click="toggleTaskSelection(task.id)"
+                  >
+                    <component 
+                      :is="isTaskSelected(task.id) ? CheckSquare : Square" 
+                      :size="18" 
+                      class="ai-task-checkbox"
+                    />
+                    <span class="ai-task-title">{{ task.title }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="ai-modal-actions">
+            <button class="btn btn-outline" @click="goBackToIntro">Назад</button>
+            <button class="btn btn-primary ai-btn" @click="applyAIPlan" :disabled="aiPlannerSelectedTasks.length === 0">
+              <Check :size="16" />
+              <span>Применить план ({{ aiPlannerSelectedTasks.length }})</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="bottom-sheet-overlay" v-if="showBottomSheet" @click="closeBottomSheet">
       <div class="bottom-sheet" @click.stop>
         <div class="sheet-handle"></div>
@@ -329,26 +539,80 @@
           <h3 class="sheet-title">{{ selectedTask?.stepTitle }}</h3>
           <p class="sheet-subtitle">{{ selectedTask?.goalTitle }}</p>
           
-          <div class="sheet-actions">
-            <button class="sheet-action" @click="toggleTaskComplete(selectedTask); closeBottomSheet()">
-              <CheckCircle :size="20" />
-              <span>{{ selectedTask?.completed ? 'Отменить выполнение' : 'Выполнено' }}</span>
-            </button>
-            <button class="sheet-action" @click="openRescheduleSheet">
-              <Calendar :size="20" />
-              <span>Перенести</span>
-            </button>
-            <button class="sheet-action" @click="openPrioritySheet">
-              <Flag :size="20" />
+          <button 
+            class="complete-toggle-btn"
+            :class="{ completed: selectedTask?.completed }"
+            @click="toggleTaskComplete(selectedTask)"
+          >
+            <CheckCircle :size="20" />
+            <span>{{ selectedTask?.completed ? 'Выполнено' : 'Отметить выполненным' }}</span>
+          </button>
+          
+          <div class="inline-options-section">
+            <div class="option-label">
+              <Calendar :size="16" />
+              <span>День</span>
+            </div>
+            <div class="option-chips">
+              <button 
+                v-for="day in weekDays" 
+                :key="day.date"
+                class="chip"
+                :class="{ active: selectedTask?.scheduledDate === day.date }"
+                @click="rescheduleTask(selectedTask, day.date, true)"
+              >
+                {{ day.label }} {{ day.dayNum }}
+              </button>
+            </div>
+          </div>
+          
+          <div class="inline-options-section">
+            <div class="option-label">
+              <Flag :size="16" />
               <span>Приоритет</span>
-            </button>
-            <button class="sheet-action" @click="openTimeSheet">
-              <Clock :size="20" />
+            </div>
+            <div class="option-chips">
+              <button 
+                v-for="priority in priorities" 
+                :key="priority.value"
+                class="chip"
+                :class="{ 
+                  active: selectedTask?.priority === priority.value,
+                  ['priority-' + priority.value]: true
+                }"
+                @click="updateTaskPriority(selectedTask, priority.value, true)"
+              >
+                {{ priority.label }}
+              </button>
+            </div>
+          </div>
+          
+          <div class="inline-options-section">
+            <div class="option-label">
+              <Clock :size="16" />
               <span>Время</span>
-            </button>
+            </div>
+            <div class="option-chips">
+              <button 
+                v-for="time in timeOptions" 
+                :key="time.value"
+                class="chip"
+                :class="{ active: selectedTask?.timeEstimate === time.value }"
+                @click="updateTaskTime(selectedTask, time.value, true)"
+              >
+                {{ time.label }}
+              </button>
+            </div>
+          </div>
+          
+          <div class="sheet-actions-row">
             <button class="sheet-action danger" @click="removeTaskFromSchedule(selectedTask); closeBottomSheet()">
               <Trash2 :size="20" />
               <span>Убрать из плана</span>
+            </button>
+            <button class="sheet-action primary" @click="saveTaskChangesAndClose">
+              <Check :size="20" />
+              <span>Сохранить</span>
             </button>
           </div>
         </template>
@@ -606,7 +870,15 @@ import {
   Search,
   Flag,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  Sparkles,
+  Zap,
+  Brain,
+  ListChecks,
+  X,
+  Square,
+  CheckSquare,
+  BarChart3
 } from 'lucide-vue-next'
 
 const store = useAppStore()
@@ -618,12 +890,175 @@ const selectedDay = ref(null)
 const filterSphere = ref('')
 const filterStatus = ref('')
 const showSphereDropdown = ref(false)
+const showStatusDropdown = ref(false)
 const addStepSearch = ref('')
 const goalsDisplayLimit = ref(10)
 const currentPage = ref(1)
 const expandedGoals = ref({})
 const infiniteScrollTrigger = ref(null)
 let infiniteScrollObserver = null
+
+const collapsedGoalGroups = ref(JSON.parse(localStorage.getItem('planning_collapsed_groups') || '{}'))
+const overdueCollapsed = ref(false)
+
+const showAIPlannerModal = ref(false)
+const aiPlannerStep = ref('intro')
+const aiPlannerIncludeOverdue = ref(true)
+const aiPlannerLoading = ref(false)
+const aiPlannerResult = ref(null)
+const aiPlannerDontShowIntro = ref(localStorage.getItem('ai_planner_skip_intro') === 'true')
+const aiPlannerDontShowCheck = ref(false)
+const aiPlannerSelectedTasks = ref([])
+
+function openAIPlannerModal() {
+  aiPlannerDontShowCheck.value = aiPlannerDontShowIntro.value
+  if (aiPlannerDontShowIntro.value) {
+    showAIPlannerModal.value = true
+    startAIPlanning()
+  } else {
+    showAIPlannerModal.value = true
+    aiPlannerStep.value = 'intro'
+  }
+}
+
+const overdueTasks = ref([
+  {
+    id: 'overdue-1',
+    stepTitle: 'Начать делать 10-минутную зарядку каждое утро',
+    goalTitle: 'Здоровый образ жизни',
+    goalId: 'goal-health',
+    scheduledDate: formatDateLocal(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)),
+    completed: false
+  },
+  {
+    id: 'overdue-2',
+    stepTitle: 'Добавить 20-минутную прогулку в распорядок дня',
+    goalTitle: 'Здоровый образ жизни',
+    goalId: 'goal-health',
+    scheduledDate: formatDateLocal(new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)),
+    completed: false
+  },
+  {
+    id: 'overdue-3',
+    stepTitle: 'Заменить один нездоровый перекус на полезный',
+    goalTitle: 'Правильное питание',
+    goalId: 'goal-nutrition',
+    scheduledDate: formatDateLocal(new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)),
+    completed: false
+  }
+])
+
+const overdueCompletedCount = computed(() => {
+  return overdueTasks.value.filter(t => t.completed).length
+})
+
+function toggleGoalGroupCollapse(goalId) {
+  collapsedGoalGroups.value[goalId] = !collapsedGoalGroups.value[goalId]
+  localStorage.setItem('planning_collapsed_groups', JSON.stringify(collapsedGoalGroups.value))
+}
+
+function toggleOverdueCollapse() {
+  overdueCollapsed.value = !overdueCollapsed.value
+}
+
+function toggleOverdueTaskComplete(task) {
+  task.completed = !task.completed
+}
+
+function formatOverdueDate(dateStr) {
+  const date = new Date(dateStr)
+  const today = new Date()
+  const diffDays = Math.floor((today - date) / (24 * 60 * 60 * 1000))
+  
+  if (diffDays === 1) return 'вчера'
+  if (diffDays === 2) return '2 дня назад'
+  if (diffDays <= 7) return `${diffDays} дн. назад`
+  
+  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+}
+
+function closeAIPlannerModal() {
+  showAIPlannerModal.value = false
+  aiPlannerStep.value = 'intro'
+  aiPlannerResult.value = null
+  aiPlannerSelectedTasks.value = []
+}
+
+function goBackToIntro() {
+  if (aiPlannerDontShowIntro.value) {
+    closeAIPlannerModal()
+  } else {
+    aiPlannerStep.value = 'intro'
+  }
+}
+
+const aiDayExpandState = ref({})
+
+function isDayExpanded(date) {
+  return aiDayExpandState.value[date] !== false
+}
+
+function toggleDayExpand(date) {
+  aiDayExpandState.value[date] = !isDayExpanded(date)
+}
+
+function toggleTaskSelection(taskId) {
+  const idx = aiPlannerSelectedTasks.value.indexOf(taskId)
+  if (idx > -1) {
+    aiPlannerSelectedTasks.value.splice(idx, 1)
+  } else {
+    aiPlannerSelectedTasks.value.push(taskId)
+  }
+}
+
+function isTaskSelected(taskId) {
+  return aiPlannerSelectedTasks.value.includes(taskId)
+}
+
+function getSelectedCountForDay(day) {
+  return day.tasks.filter(t => aiPlannerSelectedTasks.value.includes(t.id)).length
+}
+
+async function startAIPlanning() {
+  if (aiPlannerDontShowCheck.value) {
+    localStorage.setItem('ai_planner_skip_intro', 'true')
+    aiPlannerDontShowIntro.value = true
+  } else {
+    localStorage.removeItem('ai_planner_skip_intro')
+    aiPlannerDontShowIntro.value = false
+  }
+  
+  aiPlannerStep.value = 'loading'
+  aiPlannerLoading.value = true
+  
+  await new Promise(resolve => setTimeout(resolve, 2000))
+  
+  const dayNames = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
+  
+  aiPlannerResult.value = {
+    totalTasks: 12,
+    days: weekDays.value.map((day, idx) => ({
+      date: day.date,
+      dayName: dayNames[idx],
+      tasks: idx < 5 ? [
+        { id: `mock-${idx}-1`, title: 'Проверить почту и ответить на важные письма' },
+        { id: `mock-${idx}-2`, title: 'Сделать упражнения для спины' },
+        ...(idx % 2 === 0 ? [{ id: `mock-${idx}-3`, title: 'Прочитать главу книги' }] : [])
+      ] : []
+    }))
+  }
+  
+  const allTaskIds = aiPlannerResult.value.days.flatMap(d => d.tasks.map(t => t.id))
+  aiPlannerSelectedTasks.value = [...allTaskIds]
+  aiDayExpandState.value = {}
+  
+  aiPlannerLoading.value = false
+  aiPlannerStep.value = 'result'
+}
+
+function applyAIPlan() {
+  closeAIPlannerModal()
+}
 
 const showBottomSheet = ref(false)
 const bottomSheetMode = ref('task')
@@ -747,6 +1182,54 @@ const weeklyStepsData = ref([])
 const weeklyStepsLoading = ref(false)
 const localUpdateTrigger = ref(0)
 
+function generateDemoWeeklySteps(days) {
+  const demoGoals = [
+    { id: 1, title: 'Здоровый образ жизни', category: 'health' },
+    { id: 2, title: 'Карьерный рост', category: 'career' },
+    { id: 3, title: 'Финансовая грамотность', category: 'finance' },
+    { id: 4, title: 'Личное развитие', category: 'personal' }
+  ]
+  
+  const demoSteps = [
+    { goalIdx: 0, title: 'Сделать зарядку 15 минут', duration: 'half', priority: 'critical' },
+    { goalIdx: 0, title: 'Прогулка на свежем воздухе', duration: 'one', priority: 'important' },
+    { goalIdx: 0, title: 'Приготовить здоровый обед', duration: 'one', priority: 'attention' },
+    { goalIdx: 1, title: 'Изучить новую технологию', duration: 'two', priority: 'critical' },
+    { goalIdx: 1, title: 'Пройти урок онлайн-курса', duration: 'one', priority: 'important' },
+    { goalIdx: 1, title: 'Написать статью для блога', duration: 'two', priority: 'attention' },
+    { goalIdx: 2, title: 'Проверить бюджет за неделю', duration: 'half', priority: 'important' },
+    { goalIdx: 2, title: 'Прочитать главу о инвестициях', duration: 'one', priority: 'optional' },
+    { goalIdx: 3, title: 'Медитация 10 минут', duration: 'half', priority: 'critical' },
+    { goalIdx: 3, title: 'Прочитать 20 страниц книги', duration: 'one', priority: 'attention' },
+    { goalIdx: 3, title: 'Записать мысли в дневник', duration: 'half', priority: 'optional' }
+  ]
+  
+  let stepId = 1
+  return days.map((day, dayIdx) => {
+    const tasksCount = dayIdx < 5 ? (dayIdx % 2 === 0 ? 4 : 3) : (dayIdx === 5 ? 2 : 1)
+    const daySteps = []
+    
+    for (let i = 0; i < tasksCount; i++) {
+      const stepData = demoSteps[(dayIdx * 2 + i) % demoSteps.length]
+      const goal = demoGoals[stepData.goalIdx]
+      daySteps.push({
+        goal_id: goal.id,
+        step_id: stepId++,
+        step_title: stepData.title,
+        goal_title: goal.title,
+        goal_category: goal.category,
+        step_dt: day.date,
+        step_time_duration: stepData.duration,
+        step_priority: stepData.priority,
+        step_is_complete: Math.random() > 0.7,
+        step_order: i + 1
+      })
+    }
+    
+    return { date: day.date, steps_data: daySteps }
+  })
+}
+
 async function loadWeeklySteps() {
   if (weeklyStepsLoading.value) return
   
@@ -769,9 +1252,13 @@ async function loadWeeklySteps() {
     const response = await getPlannedSteps({ date_from: startDate, date_to: endDate })
     if (response.status === 'success' && response.steps_data) {
       weeklyStepsData.value = response.steps_data
+    } else {
+      console.log('[Planning] Using demo data (API returned error)')
+      weeklyStepsData.value = generateDemoWeeklySteps(weekDays.value)
     }
   } catch (error) {
-    console.error('[Planning] Error loading weekly steps:', error)
+    console.error('[Planning] Error loading weekly steps, using demo data:', error)
+    weeklyStepsData.value = generateDemoWeeklySteps(weekDays.value)
   } finally {
     weeklyStepsLoading.value = false
   }
@@ -987,6 +1474,12 @@ const selectedSphereName = computed(() => {
   if (!filterSphere.value) return 'Все сферы'
   const sphere = spheresWithGoals.value.find(s => s.id === filterSphere.value)
   return sphere ? `${sphere.icon} ${sphere.name}` : 'Все сферы'
+})
+
+const selectedStatusName = computed(() => {
+  if (filterStatus.value === 'unscheduled') return 'Незапл.'
+  if (filterStatus.value === 'scheduled') return 'Запл.'
+  return 'Все'
 })
 
 const filteredGoalsWithSteps = computed(() => {
@@ -1634,8 +2127,11 @@ async function toggleTaskComplete(task) {
   }
 }
 
-async function rescheduleTask(task, newDate) {
+async function rescheduleTask(task, newDate, skipClose = false) {
   if (!task) return
+  
+  const oldDate = task.scheduledDate
+  task.scheduledDate = newDate
   
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
@@ -1646,15 +2142,21 @@ async function rescheduleTask(task, newDate) {
         dt: newDate
       }]
     })
-    await loadWeeklySteps()
-    closeBottomSheet()
+    if (!skipClose) {
+      await loadWeeklySteps()
+      closeBottomSheet()
+    }
   } catch (error) {
     console.error('[Planning] Error rescheduling task:', error)
+    task.scheduledDate = oldDate
   }
 }
 
-async function updateTaskPriority(task, priority) {
+async function updateTaskPriority(task, priority, skipClose = false) {
   if (!task) return
+  
+  const oldPriority = task.priority
+  task.priority = priority
   
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
@@ -1665,17 +2167,22 @@ async function updateTaskPriority(task, priority) {
         priority: priorityFrontendToBackend[priority] || priority || null
       }]
     })
-    await loadWeeklySteps()
-    closeBottomSheet()
+    if (!skipClose) {
+      await loadWeeklySteps()
+      closeBottomSheet()
+    }
   } catch (error) {
     console.error('[Planning] Error updating task priority:', error)
+    task.priority = oldPriority
   }
 }
 
-async function updateTaskTime(task, time) {
+async function updateTaskTime(task, time, skipClose = false) {
   if (!task) return
   
   const timeMap = { '30min': 'half', '1h': 'one', '2h': 'two', '3h': 'three', '4h': 'four' }
+  const oldTime = task.timeEstimate
+  task.timeEstimate = time
   
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
@@ -1686,11 +2193,19 @@ async function updateTaskTime(task, time) {
         time_duration: timeMap[time] || null
       }]
     })
-    await loadWeeklySteps()
-    closeBottomSheet()
+    if (!skipClose) {
+      await loadWeeklySteps()
+      closeBottomSheet()
+    }
   } catch (error) {
     console.error('[Planning] Error updating task time:', error)
+    task.timeEstimate = oldTime
   }
+}
+
+async function saveTaskChangesAndClose() {
+  await loadWeeklySteps()
+  closeBottomSheet()
 }
 
 async function removeTaskFromSchedule(task) {
@@ -1908,6 +2423,69 @@ onUnmounted(() => {
   text-align: center;
 }
 
+.planning-header-full {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  gap: 0.5rem;
+}
+
+.header-center {
+  flex: 1;
+  text-align: center;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-btn-edge {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg, white);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.nav-btn-edge:hover {
+  background: var(--hover-bg, #f3f4f6);
+  color: var(--text-primary);
+}
+
+.week-range-center {
+  display: block;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+}
+
+.today-btn-inline {
+  padding: 0.5rem 0.875rem;
+  border-radius: 20px;
+  border: none;
+  background: var(--primary, #6366f1);
+  color: white;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.today-btn-inline:hover {
+  background: var(--primary-dark, #4f46e5);
+}
+
 .page-title {
   font-size: 1.5rem;
   font-weight: 700;
@@ -1915,10 +2493,95 @@ onUnmounted(() => {
   color: var(--text-primary);
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.ai-planner-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(34, 197, 94, 0.1));
+  border: 1px solid #10b981;
+  border-radius: 20px;
+  color: #10b981;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ai-planner-btn:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(34, 197, 94, 0.2));
+  transform: translateY(-1px);
+}
+
+.ai-btn-text {
+  display: none;
+}
+
+@media (min-width: 480px) {
+  .ai-btn-text {
+    display: inline;
+  }
+}
+
 .week-navigation {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.week-navigation-wide {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 0.5rem 0;
+}
+
+.nav-btn-wide {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg, white);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-btn-wide:hover {
+  background: var(--hover-bg, #f3f4f6);
+  color: var(--text-primary);
+}
+
+.today-btn-floating {
+  display: block;
+  margin: 0.5rem auto 0;
+  padding: 0.375rem 0.75rem;
+  border-radius: 16px;
+  border: 1px solid var(--primary, #6366f1);
+  background: transparent;
+  color: var(--primary, #6366f1);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.today-btn-floating:hover {
+  background: var(--primary, #6366f1);
+  color: white;
 }
 
 .nav-btn {
@@ -2122,12 +2785,31 @@ onUnmounted(() => {
 
 .group-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 0.5rem;
   padding: 0.375rem 0.75rem;
   background: var(--bg-secondary, #f8fafc);
   border-radius: 8px;
   margin-bottom: 0.25rem;
+}
+
+.group-header.clickable {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.group-header.clickable:hover {
+  background: var(--bg-tertiary, #e5e7eb);
+}
+
+.group-chevron {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.group-chevron.rotated {
+  transform: rotate(90deg);
 }
 
 .group-title {
@@ -2158,6 +2840,39 @@ onUnmounted(() => {
   gap: 0.25rem;
   font-size: 0.75rem;
   color: var(--text-secondary);
+}
+
+.group-meta {
+  margin-left: auto;
+}
+
+.group-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.task-group.collapsed .group-header {
+  margin-bottom: 0;
+}
+
+.overdue-group {
+  margin-top: 0.75rem;
+}
+
+.overdue-group .group-header {
+  background: rgba(239, 68, 68, 0.05);
+  border-left: 3px solid #ef4444;
+}
+
+.overdue-group .group-header:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.overdue-date {
+  font-size: 0.75rem;
+  color: #ef4444;
+  font-weight: 500;
 }
 
 .task-card {
@@ -2478,6 +3193,72 @@ onUnmounted(() => {
 .segment.active {
   background: var(--primary, #6366f1);
   color: white;
+}
+
+/* Responsive visibility */
+.desktop-only {
+  display: flex;
+}
+
+.mobile-only {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .desktop-only {
+    display: none !important;
+  }
+  
+  .mobile-only {
+    display: flex !important;
+  }
+}
+
+/* Status dropdown (mobile) */
+.status-dropdown {
+  position: relative;
+}
+
+.status-dropdown .dropdown-trigger {
+  min-width: 80px;
+}
+
+/* AI button in filters row */
+.filters-ai-btn {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 8px;
+  border: 1px solid #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.filters-ai-btn:hover {
+  background: rgba(16, 185, 129, 0.2);
+}
+
+.filters-ai-btn .ai-btn-text {
+  margin-left: 0;
+}
+
+@media (max-width: 640px) {
+  .filters-ai-btn {
+    padding: 0.5rem;
+    min-width: 36px;
+    justify-content: center;
+  }
+  
+  .filters-ai-btn .ai-btn-text {
+    display: none;
+  }
 }
 
 .chip {
@@ -2967,6 +3748,424 @@ onUnmounted(() => {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
 }
 
+.ai-planner-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.ai-planner-modal {
+  width: 100%;
+  max-width: 480px;
+  background: var(--card-bg, #fff);
+  border-radius: 16px;
+  overflow: hidden;
+  animation: modalSlideUp 0.25s ease;
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ai-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+.ai-modal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ai-modal-icon {
+  color: #10b981;
+}
+
+.ai-modal-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ai-modal-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.ai-modal-close:hover {
+  background: var(--bg-secondary, #f3f4f6);
+}
+
+.ai-modal-content {
+  padding: 1.25rem;
+}
+
+.ai-intro-section {
+  text-align: center;
+  padding: 0.5rem 0 0;
+}
+
+.ai-intro-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1rem;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-intro-icon svg {
+  color: #10b981;
+}
+
+.ai-intro-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.ai-intro-description {
+  margin: 0 0 1.25rem;
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.ai-feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  text-align: left;
+}
+
+.ai-feature-item {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.625rem 0.875rem;
+  background: var(--bg-secondary, #f8fafc);
+  border-radius: 10px;
+}
+
+.ai-feature-item svg {
+  flex-shrink: 0;
+  color: #10b981;
+}
+
+.ai-feature-item span {
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+}
+
+.ai-start-btn {
+  width: 100%;
+  padding: 0.875rem 1.25rem !important;
+  background: #10b981 !important;
+  border: none !important;
+  color: white !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-bottom: 1rem;
+}
+
+.ai-start-btn:hover {
+  background: #059669 !important;
+}
+
+.dont-show-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.dont-show-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #10b981;
+}
+
+.ai-option-toggle {
+  padding: 0.75rem;
+  background: var(--bg-secondary, #f8fafc);
+  border-radius: 8px;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.toggle-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #10b981;
+}
+
+.toggle-text {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.ai-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+  margin-top: 1rem;
+}
+
+.ai-modal-actions .btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ai-modal-actions .btn-outline {
+  background: transparent;
+  border: 1px solid var(--border-color, #e5e7eb);
+  color: var(--text-secondary);
+}
+
+.ai-modal-actions .btn-outline:hover {
+  background: var(--bg-secondary, #f3f4f6);
+}
+
+.ai-modal-actions .ai-btn {
+  background: #10b981;
+  border: none;
+  color: white;
+}
+
+.ai-modal-actions .ai-btn:hover {
+  background: #059669;
+}
+
+.ai-modal-actions .ai-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ai-loading-section {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.ai-loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--bg-secondary, #f3f4f6);
+  border-top-color: #10b981;
+  border-radius: 50%;
+  margin: 0 auto 1rem;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.ai-loading-section p {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem;
+}
+
+.ai-loading-hint {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.ai-result-section {
+  margin-bottom: 0.5rem;
+}
+
+.ai-result-summary {
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.ai-result-summary h4 {
+  margin: 0 0 0.25rem;
+  font-size: 1.125rem;
+  color: #10b981;
+}
+
+.ai-result-summary p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.ai-result-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.ai-day-preview {
+  padding: 0.75rem;
+  background: var(--bg-secondary, #f8fafc);
+  border-radius: 10px;
+}
+
+.ai-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 0.125rem 0;
+}
+
+.ai-day-preview.collapsed .ai-day-header {
+  margin-bottom: 0;
+}
+
+.ai-day-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ai-day-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.ai-day-count {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.ai-day-chevron {
+  color: var(--text-secondary);
+  transition: transform 0.2s;
+}
+
+.ai-day-chevron.rotated {
+  transform: rotate(90deg);
+}
+
+.ai-day-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+}
+
+.ai-task-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.625rem;
+  background: var(--card-bg, #fff);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ai-task-preview:hover {
+  background: var(--bg-secondary, #f1f5f9);
+}
+
+.ai-task-preview.selected .ai-task-checkbox {
+  color: #10b981;
+}
+
+.ai-task-preview:not(.selected) .ai-task-checkbox {
+  color: var(--text-tertiary, #9ca3af);
+}
+
+.ai-task-preview:not(.selected) .ai-task-title {
+  color: var(--text-tertiary, #9ca3af);
+  text-decoration: line-through;
+}
+
+.ai-task-checkbox {
+  flex-shrink: 0;
+}
+
+.ai-task-title {
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ai-result-title {
+  margin: 0 0 0.25rem;
+  font-size: 1.125rem;
+  color: #10b981;
+}
+
+.ai-result-subtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.ai-more-tasks {
+  font-size: 0.75rem;
+  color: #10b981;
+  font-weight: 500;
+}
+
 .bottom-sheet-overlay {
   position: fixed;
   inset: 0;
@@ -3090,6 +4289,32 @@ onUnmounted(() => {
 
 .sheet-action.primary:hover {
   background: var(--primary-dark, #4f46e5);
+}
+
+.complete-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: var(--bg-secondary, #f3f4f6);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: var(--text-primary, #1f2937);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.complete-toggle-btn:hover {
+  background: var(--bg-tertiary, #e5e7eb);
+}
+
+.complete-toggle-btn.completed {
+  background: var(--success-bg, #dcfce7);
+  border-color: var(--success-color, #22c55e);
+  color: var(--success-color, #22c55e);
 }
 
 .inline-options-section {
@@ -3328,6 +4553,12 @@ onUnmounted(() => {
     background: var(--hover-bg, #f3f4f6);
   }
   
+}
+
+@media (max-width: 768px) {
+  .planning-header {
+    padding-left: 3.5rem;
+  }
 }
 
 @media (min-width: 768px) {

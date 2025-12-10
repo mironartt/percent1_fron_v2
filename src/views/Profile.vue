@@ -644,6 +644,66 @@ function getGroupIcon(groupType) {
   color: var(--secondary-color);
 }
 
+
+.xp-lifetime {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.125rem;
+}
+
+.user-card-reward {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.reward-mini {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.reward-mini-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.reward-mini-progress {
+  flex: 1;
+  height: 6px;
+  background: var(--status-purple-bg);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.reward-mini-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--status-purple-text), var(--status-info-text));
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.reward-mini-text {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.desktop-only {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    padding-left: 3.5rem;
+    padding-right: 3.5rem;
+  }
+
+  .desktop-only {
+    display: none !important;
+  }
+}
+  
 .profile-content {
   display: flex;
   flex-direction: column;

@@ -5,9 +5,14 @@
         <Gift :size="18" :stroke-width="1.5" />
         Мои награды
       </h3>
-      <button class="btn-icon desktop-only" @click="showAddModal = true">
-        <Plus :size="18" :stroke-width="1.5" />
-      </button>
+      <div class="header-actions">
+        <button class="btn-icon" @click="showAddModal = true">
+          <Plus :size="18" :stroke-width="1.5" />
+        </button>
+        <button class="btn-icon btn-icon-ai" @click="openAiSuggestionsModal" title="Подбор от ментора">
+          <Sparkles :size="18" :stroke-width="1.5" />
+        </button>
+      </div>
     </div>
 
     <div v-if="rewardsLoading && rewards.length === 0" class="loading-state">
@@ -64,6 +69,10 @@
           <button class="btn-add-compact" @click="showAddModal = true">
             <Plus :size="16" :stroke-width="2" />
             <span>Добавить</span>
+          </button>
+          <button class="btn-ai-compact" @click="openAiSuggestionsModal">
+            <Sparkles :size="16" :stroke-width="2" />
+            <span>Ментор</span>
           </button>
         </div>
       </div>
@@ -221,6 +230,144 @@
         </div>
       </div>
     </Teleport>
+
+    <Teleport to="body">
+      <div v-if="showAiSuggestionsModal" class="modal-overlay" @click.self="closeAiSuggestionsModal">
+        <div class="modal-container modal-md ai-suggestions-modal">
+          <div class="modal-header ai-header">
+            <div class="ai-header-title">
+              <Sparkles :size="20" :stroke-width="1.5" class="ai-header-icon" />
+              <h3>Умный подбор наград</h3>
+            </div>
+            <button class="btn-close" @click="closeAiSuggestionsModal">
+              <X :size="20" :stroke-width="1.5" />
+            </button>
+          </div>
+          <div class="modal-content ai-content">
+            <template v-if="aiSuggestionsStep === 'intro'">
+              <div class="ai-intro-section">
+                <div class="ai-intro-icon">
+                  <Sparkles :size="48" :stroke-width="1.5" />
+                </div>
+                <h4>AI-ментор подберёт награды специально для вас</h4>
+                <p class="ai-intro-text">
+                  На основе ваших целей, интересов и зон роста я предложу награды, 
+                  которые будут мотивировать именно вас.
+                </p>
+                <div class="ai-features">
+                  <div class="ai-feature">
+                    <Target :size="16" :stroke-width="1.5" />
+                    <span>Анализ целей и ССП</span>
+                  </div>
+                  <div class="ai-feature">
+                    <TrendingUp :size="16" :stroke-width="1.5" />
+                    <span>Учёт зон роста</span>
+                  </div>
+                  <div class="ai-feature">
+                    <Gift :size="16" :stroke-width="1.5" />
+                    <span>Персонализированные награды</span>
+                  </div>
+                  <div class="ai-feature">
+                    <Coins :size="16" :stroke-width="1.5" />
+                    <span>Подходящая стоимость в XP</span>
+                  </div>
+                </div>
+                <button class="btn btn-ai-primary" @click="startAiSuggestions">
+                  <Sparkles :size="16" :stroke-width="1.5" />
+                  Подобрать награды
+                </button>
+                <label class="skip-checkbox">
+                  <input type="checkbox" v-model="skipRewardSuggestionsIntro" @change="saveSkipIntroPreference" />
+                  <span>Не показывать это окно снова</span>
+                </label>
+              </div>
+            </template>
+
+            <template v-else-if="aiSuggestionsStep === 'loading'">
+              <div class="ai-loading-section">
+                <Loader2 :size="48" :stroke-width="2" class="spinner ai-spinner" />
+                <h4>AI анализирует ваш профиль...</h4>
+                <p class="ai-loading-text">Подбираем награды на основе ваших целей и интересов</p>
+              </div>
+            </template>
+
+            <template v-else-if="aiSuggestionsStep === 'selection'">
+              <div class="ai-selection-section">
+                <p class="ai-selection-hint">Выберите награды, которые хотите добавить</p>
+                <div class="ai-rewards-list">
+                  <div 
+                    v-for="(reward, idx) in aiSuggestedRewards" 
+                    :key="idx"
+                    class="ai-reward-card"
+                    :class="{ selected: selectedAiRewards.includes(idx) }"
+                    @click="toggleAiRewardSelection(idx)"
+                  >
+                    <div class="ai-reward-header">
+                      <span class="ai-reward-icon">{{ reward.icon }}</span>
+                      <div class="ai-reward-info">
+                        <span class="ai-reward-name">{{ reward.name }}</span>
+                        <span class="ai-reward-cost">{{ reward.cost }} XP</span>
+                      </div>
+                      <div class="ai-reward-checkbox">
+                        <Check v-if="selectedAiRewards.includes(idx)" :size="16" :stroke-width="2" />
+                      </div>
+                    </div>
+                    <p class="ai-reward-why">{{ reward.whyMotivating }}</p>
+                  </div>
+                </div>
+                <button 
+                  class="btn btn-ai-primary"
+                  :disabled="selectedAiRewards.length === 0"
+                  @click="confirmAiRewardSelection"
+                >
+                  Добавить {{ selectedAiRewards.length }} {{ getRewardsWord(selectedAiRewards.length) }}
+                </button>
+              </div>
+            </template>
+
+            <template v-else-if="aiSuggestionsStep === 'confirmation'">
+              <div class="ai-confirmation-section">
+                <div class="ai-success-icon">
+                  <CheckCircle :size="48" :stroke-width="1.5" />
+                </div>
+                <h4>Награды успешно добавлены!</h4>
+                <p class="ai-confirmation-text">
+                  Добавлено {{ createdAiRewards.length }} {{ getRewardsWord(createdAiRewards.length) }}
+                </p>
+                <div class="ai-created-list">
+                  <div v-for="reward in createdAiRewards" :key="reward.reward_id" class="ai-created-item">
+                    <span class="ai-created-icon">{{ reward.icon }}</span>
+                    <span>{{ reward.name }}</span>
+                    <span class="ai-created-cost">{{ reward.cost }} XP</span>
+                  </div>
+                </div>
+                <button class="btn btn-primary" @click="closeAiSuggestionsModal">
+                  Отлично!
+                </button>
+              </div>
+            </template>
+
+            <template v-else-if="aiSuggestionsStep === 'error'">
+              <div class="ai-error-section">
+                <div class="ai-error-icon">
+                  <AlertTriangle :size="48" :stroke-width="1.5" />
+                </div>
+                <h4>Не удалось подобрать награды</h4>
+                <p class="ai-error-text">{{ aiSuggestionsErrorMessage }}</p>
+                <div class="ai-error-actions">
+                  <button class="btn btn-secondary" @click="openManualAddModal">
+                    Добавить вручную
+                  </button>
+                  <button class="btn btn-primary" @click="aiSuggestionsStep = 'intro'">
+                    Попробовать снова
+                  </button>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -228,15 +375,26 @@
 import { ref, computed, onMounted } from 'vue'
 import { useXpStore } from '../stores/xp'
 import { useToastStore } from '../stores/toast'
-import { Gift, Plus, Pencil, Check, X, ChevronDown, Loader2 } from 'lucide-vue-next'
+import { useAppStore } from '../stores/app'
+import { apiFetch } from '../services/api'
+import { Gift, Plus, Pencil, Check, X, ChevronDown, Loader2, Sparkles, Target, TrendingUp, Coins, CheckCircle, AlertTriangle } from 'lucide-vue-next'
 
 const xpStore = useXpStore()
 const toast = useToastStore()
+const appStore = useAppStore()
 
 const showAddModal = ref(false)
 const rewardsExpanded = ref(false)
 const editingReward = ref(null)
 const claimingReward = ref(null)
+
+const showAiSuggestionsModal = ref(false)
+const aiSuggestionsStep = ref('intro')
+const aiSuggestedRewards = ref([])
+const selectedAiRewards = ref([])
+const createdAiRewards = ref([])
+const aiSuggestionsErrorMessage = ref('')
+const skipRewardSuggestionsIntro = ref(false)
 
 const formData = ref({
   name: '',
@@ -362,6 +520,133 @@ async function confirmClaim() {
     toast.showToast({ title: result.error || 'Ошибка получения награды', type: 'error' })
   }
   claimingReward.value = null
+}
+
+function openAiSuggestionsModal() {
+  showAiSuggestionsModal.value = true
+  const skipIntro = localStorage.getItem('skipRewardSuggestionsIntro') === 'true'
+  if (skipIntro) {
+    startAiSuggestions()
+  } else {
+    aiSuggestionsStep.value = 'intro'
+  }
+}
+
+function closeAiSuggestionsModal() {
+  showAiSuggestionsModal.value = false
+  aiSuggestionsStep.value = 'intro'
+  aiSuggestedRewards.value = []
+  selectedAiRewards.value = []
+  createdAiRewards.value = []
+  aiSuggestionsErrorMessage.value = ''
+}
+
+function openManualAddModal() {
+  closeAiSuggestionsModal()
+  showAddModal.value = true
+}
+
+function saveSkipIntroPreference() {
+  localStorage.setItem('skipRewardSuggestionsIntro', skipRewardSuggestionsIntro.value.toString())
+}
+
+function toggleAiRewardSelection(idx) {
+  const index = selectedAiRewards.value.indexOf(idx)
+  if (index === -1) {
+    selectedAiRewards.value.push(idx)
+  } else {
+    selectedAiRewards.value.splice(index, 1)
+  }
+}
+
+function getRewardsWord(count) {
+  if (count === 1) return 'награду'
+  if (count >= 2 && count <= 4) return 'награды'
+  return 'наград'
+}
+
+async function startAiSuggestions() {
+  aiSuggestionsStep.value = 'loading'
+  selectedAiRewards.value = []
+  
+  try {
+    const userData = prepareUserDataForRewards()
+    const response = await apiFetch('/api/ai/suggest-rewards', {
+      method: 'POST',
+      body: JSON.stringify(userData)
+    })
+    
+    const result = await response.json()
+    
+    if (result.success && result.suggestions?.length > 0) {
+      aiSuggestedRewards.value = result.suggestions
+      aiSuggestionsStep.value = 'selection'
+    } else {
+      aiSuggestionsErrorMessage.value = result.error || 'Не удалось получить рекомендации'
+      aiSuggestionsStep.value = 'error'
+    }
+  } catch (error) {
+    console.error('[RewardWishlist] AI suggestion error:', error)
+    aiSuggestionsErrorMessage.value = 'Произошла ошибка при генерации наград'
+    aiSuggestionsStep.value = 'error'
+  }
+}
+
+function prepareUserDataForRewards() {
+  const lifeSpheres = appStore.lifeSpheres || []
+  const goals = appStore.ideas || []
+  const existingRewards = rewards.value || []
+  
+  return {
+    spheres: lifeSpheres.map(s => ({
+      id: s.id,
+      name: s.name,
+      score: s.score || 0,
+      reflection: s.reflection || {}
+    })),
+    growthZones: lifeSpheres
+      .filter(s => s.score > 0 && s.score <= 5)
+      .map(s => ({
+        id: s.id,
+        name: s.name,
+        score: s.score,
+        desired: s.reflection?.desired || '',
+        prevents: s.reflection?.prevents || ''
+      })),
+    goals: goals.slice(0, 5).map(g => ({
+      text: g.text,
+      sphereId: g.sphereId
+    })),
+    existingRewards: existingRewards.map(r => r.name),
+    xpBalance: xpBalance.value
+  }
+}
+
+async function confirmAiRewardSelection() {
+  createdAiRewards.value = []
+  
+  const selected = selectedAiRewards.value.map(idx => aiSuggestedRewards.value[idx])
+  
+  for (const reward of selected) {
+    const rewardData = {
+      name: reward.name,
+      icon: reward.icon || '🎁',
+      cost: reward.cost || 500,
+      description: reward.whyMotivating || ''
+    }
+    
+    const result = await xpStore.addReward(rewardData)
+    if (result.success && result.reward) {
+      createdAiRewards.value.push(result.reward)
+    }
+  }
+  
+  if (createdAiRewards.value.length > 0) {
+    aiSuggestionsStep.value = 'confirmation'
+  } else {
+    toast.showToast({ title: 'Не удалось добавить награды', type: 'error' })
+    closeAiSuggestionsModal()
+  }
 }
 </script>
 
@@ -890,5 +1175,354 @@ async function confirmClaim() {
 
 .btn-add-compact:hover {
   opacity: 0.9;
+}
+
+.btn-ai-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-ai-compact:hover {
+  opacity: 0.9;
+}
+
+.empty-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.btn-ai {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  color: white;
+}
+
+.btn-ai:hover {
+  opacity: 0.9;
+}
+
+.ai-suggestions-modal {
+  max-width: 500px;
+}
+
+.ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ai-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ai-header-icon {
+  color: #10b981;
+}
+
+.ai-header-title h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.ai-content {
+  padding: 1.5rem;
+}
+
+.ai-intro-section {
+  text-align: center;
+}
+
+.ai-intro-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.ai-intro-icon svg {
+  color: #10b981;
+}
+
+.ai-intro-section h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.1rem;
+}
+
+.ai-intro-text {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.ai-features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.ai-feature {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(16, 185, 129, 0.08);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.ai-feature svg {
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+.btn-ai-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-ai-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-ai-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.skip-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.skip-checkbox input {
+  cursor: pointer;
+}
+
+.ai-loading-section {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.ai-spinner {
+  color: #10b981;
+  margin-bottom: 1rem;
+}
+
+.ai-loading-section h4 {
+  margin: 0 0 0.5rem 0;
+}
+
+.ai-loading-text {
+  color: var(--text-secondary);
+}
+
+.ai-selection-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ai-selection-hint {
+  color: var(--text-secondary);
+  margin: 0;
+  text-align: center;
+}
+
+.ai-rewards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ai-reward-card {
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ai-reward-card:hover {
+  border-color: #10b981;
+}
+
+.ai-reward-card.selected {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.ai-reward-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.ai-reward-icon {
+  font-size: 1.5rem;
+}
+
+.ai-reward-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-reward-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.ai-reward-cost {
+  font-size: 0.85rem;
+  color: #10b981;
+  font-weight: 500;
+}
+
+.ai-reward-checkbox {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border-color);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.ai-reward-card.selected .ai-reward-checkbox {
+  background: #10b981;
+  border-color: #10b981;
+  color: white;
+}
+
+.ai-reward-why {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.ai-confirmation-section {
+  text-align: center;
+}
+
+.ai-success-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.ai-success-icon svg {
+  color: #10b981;
+}
+
+.ai-confirmation-section h4 {
+  margin: 0 0 0.5rem 0;
+}
+
+.ai-confirmation-text {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.ai-created-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.ai-created-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(16, 185, 129, 0.08);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.ai-created-icon {
+  font-size: 1.1rem;
+}
+
+.ai-created-cost {
+  margin-left: auto;
+  color: #10b981;
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.ai-error-section {
+  text-align: center;
+}
+
+.ai-error-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.ai-error-icon svg {
+  color: #f59e0b;
+}
+
+.ai-error-section h4 {
+  margin: 0 0 0.5rem 0;
+}
+
+.ai-error-text {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.ai-error-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.ai-error-actions .btn {
+  flex: 1;
 }
 </style>

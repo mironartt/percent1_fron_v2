@@ -913,6 +913,17 @@ const menuItems = [
   
   .mobile-close-btn {
     display: flex;
+    position: static;
+    order: 2;
+  }
+  
+  .theme-toggle-icon {
+    display: flex !important;
+    order: 1;
+  }
+  
+  .header-top {
+    flex-wrap: nowrap;
   }
   
   .sidebar {

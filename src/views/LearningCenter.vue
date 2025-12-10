@@ -1531,6 +1531,12 @@ function markLessonComplete() {
   color: #fbbf24;
 }
 
+@media (max-width: 768px) {
+  .page-header {
+    padding-left: 3.5rem;
+  }
+}
+
 @media (max-width: 640px) {
   .page-header {
     flex-direction: column;

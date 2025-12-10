@@ -441,14 +441,22 @@
               />
             </div>
             
-            <button 
-              v-if="!editingHabit"
-              class="btn-suggest-habit"
-              @click="showSuggestionsModal = true"
-            >
-              <Sparkles :size="14" :stroke-width="1.5" />
-              Подобрать привычку
-            </button>
+            <div v-if="!editingHabit" class="habit-suggest-buttons">
+              <button 
+                class="btn-suggest-habit"
+                @click="openTemplatesModal"
+              >
+                <Sparkles :size="14" :stroke-width="1.5" />
+                Подобрать из шаблона
+              </button>
+              <button 
+                class="btn-suggest-ai"
+                @click="openAiSuggestionsModal"
+              >
+                <Sparkles :size="14" :stroke-width="1.5" />
+                Подбор от ментора
+              </button>
+            </div>
             
             <div class="xp-slider-row">
               <label class="slider-label">Награда за выполнение</label>
@@ -558,51 +566,199 @@
     </Teleport>
 
     <Teleport to="body">
-      <div v-if="showSuggestionsModal" class="modal-overlay" @click.self="showSuggestionsModal = false">
-        <div class="modal-container modal-suggestions">
-          <div class="modal-header">
+      <div v-if="showSuggestionsModal" class="modal-overlay" @click.self="closeSuggestionsModal">
+        <div class="modal-container modal-suggestions ai-mentor-modal">
+          <div class="modal-header ai-header">
             <h3>
-              <Sparkles :size="20" :stroke-width="1.5" />
-              Подобрать привычку
+              <Sparkles :size="20" :stroke-width="1.5" class="ai-icon" />
+              Умный подбор привычек
             </h3>
-            <button class="btn-close" @click="showSuggestionsModal = false">
+            <button class="btn-close" @click="closeSuggestionsModal">
               <X :size="20" :stroke-width="1.5" />
             </button>
           </div>
           
           <div class="modal-content">
-            <p class="suggestions-intro">
-              <Bot :size="16" :stroke-width="1.5" />
-              Рекомендации от AI-ментора для формирования полезных привычек
-            </p>
-            
-            <div class="suggestions-categories">
-              <div 
-                v-for="category in habitSuggestions" 
-                :key="category.name"
-                class="suggestion-category"
-              >
-                <div class="category-header">
-                  <span class="category-icon">{{ category.icon }}</span>
-                  <span class="category-name">{{ category.name }}</span>
+            <template v-if="suggestionsStep === 'intro'">
+              <div class="ai-intro-section">
+                <div class="ai-intro-icon">
+                  <Sparkles :size="48" />
                 </div>
-                <div class="category-habits">
-                  <button 
-                    v-for="habit in category.habits" 
-                    :key="habit.name"
-                    class="suggestion-habit"
-                    @click="selectSuggestedHabit(habit)"
+                <h4>Умный подбор привычек</h4>
+                <p class="ai-intro-description">
+                  AI проанализирует ваши цели, паттерны поведения и рефлексии. 
+                  На основе этого предложит привычки для достижения результатов.
+                </p>
+                <div class="ai-intro-features">
+                  <div class="ai-feature-item">
+                    <Target :size="18" />
+                    <span>Анализ целей и ССП</span>
+                  </div>
+                  <div class="ai-feature-item">
+                    <RefreshCw :size="18" />
+                    <span>Паттерны поведения и рефлексии</span>
+                  </div>
+                  <div class="ai-feature-item">
+                    <BarChart3 :size="18" />
+                    <span>Персонализированные рекомендации</span>
+                  </div>
+                  <div class="ai-feature-item">
+                    <Clock :size="18" />
+                    <span>Готовое расписание</span>
+                  </div>
+                </div>
+                <button class="btn btn-primary btn-ai-action" @click="startHabitSuggestions">
+                  <Sparkles :size="18" />
+                  Подобрать привычки
+                </button>
+                <label class="ai-skip-intro-label">
+                  <input type="checkbox" v-model="skipHabitSuggestionsIntro" @change="saveSkipIntroPreference" />
+                  <span>Не показывать больше</span>
+                </label>
+              </div>
+            </template>
+            
+            <template v-else-if="suggestionsStep === 'loading'">
+              <div class="ai-loading-section">
+                <div class="ai-loading-spinner"></div>
+                <h4>AI анализирует ваш профиль...</h4>
+                <p class="ai-loading-hint">Это займет несколько секунд</p>
+              </div>
+            </template>
+            
+            <template v-else-if="suggestionsStep === 'selection'">
+              <div class="ai-selection-section">
+                <h4>Рекомендованные привычки</h4>
+                <p class="ai-selection-hint">Выберите привычки, которые хотите добавить</p>
+                
+                <div class="ai-suggestions-list">
+                  <div 
+                    v-for="(habit, idx) in aiSuggestedHabits" 
+                    :key="idx"
+                    class="ai-suggestion-card"
+                    :class="{ selected: selectedAiHabits.includes(idx) }"
+                    @click="toggleAiHabitSelection(idx)"
                   >
-                    <span class="habit-emoji">{{ getIconEmoji(habit.icon) }}</span>
-                    <div class="habit-details">
-                      <span class="habit-title">{{ habit.name }}</span>
-                      <span class="habit-desc">{{ habit.description }}</span>
+                    <div class="ai-suggestion-checkbox">
+                      <CheckSquare v-if="selectedAiHabits.includes(idx)" :size="20" />
+                      <Square v-else :size="20" />
                     </div>
-                    <div class="habit-schedule-badge">{{ habit.scheduleLabel }}</div>
+                    <div class="ai-suggestion-content">
+                      <div class="ai-suggestion-header">
+                        <span class="ai-habit-emoji">{{ habit.icon }}</span>
+                        <h5 class="ai-suggestion-title">{{ habit.name }}</h5>
+                      </div>
+                      <p class="ai-suggestion-reason">
+                        <Bot :size="14" />
+                        {{ habit.whyUseful }}
+                      </p>
+                      <div class="ai-habit-meta">
+                        <span class="ai-habit-schedule">{{ habit.scheduleLabel }}</span>
+                        <span class="ai-habit-xp">+{{ habit.xpReward }} XP</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="ai-schedule-option" v-if="selectedAiHabits.length > 0">
+                  <label class="ai-schedule-toggle">
+                    <input type="checkbox" v-model="scheduleHabitsImmediately" />
+                    <span>Запланировать сразу</span>
+                  </label>
+                </div>
+
+                <div class="ai-selection-actions">
+                  <button class="btn btn-secondary" @click="suggestionsStep = 'intro'">
+                    <ArrowLeft :size="16" />
+                    Назад
+                  </button>
+                  <button 
+                    class="btn btn-primary" 
+                    :disabled="selectedAiHabits.length === 0"
+                    @click="confirmAiHabitSelection"
+                  >
+                    Добавить ({{ selectedAiHabits.length }})
                   </button>
                 </div>
               </div>
-            </div>
+            </template>
+            
+            <template v-else-if="suggestionsStep === 'confirmation'">
+              <div class="ai-confirmation-section">
+                <div class="ai-success-icon">
+                  <CheckCircle :size="48" />
+                </div>
+                <h4>Привычки успешно добавлены!</h4>
+                <p class="ai-confirmation-text">
+                  Добавлено {{ createdAiHabits.length }} {{ getHabitsWord(createdAiHabits.length) }}
+                </p>
+                
+                <div class="ai-created-list">
+                  <div v-for="habit in createdAiHabits" :key="habit.id" class="ai-created-item">
+                    <CheckCircle :size="16" class="ai-created-icon" />
+                    <span>{{ habit.name }}</span>
+                  </div>
+                </div>
+
+                <button class="btn btn-primary" @click="closeSuggestionsModal">
+                  Отлично!
+                </button>
+              </div>
+            </template>
+            
+            <template v-else-if="suggestionsStep === 'error'">
+              <div class="ai-error-section">
+                <div class="ai-error-icon">
+                  <AlertTriangle :size="48" />
+                </div>
+                <h4>Не удалось подобрать привычки</h4>
+                <p class="ai-error-text">{{ suggestionsErrorMessage }}</p>
+                
+                <div class="ai-error-actions">
+                  <button class="btn btn-secondary" @click="showTemplateHabits">
+                    Выбрать из шаблонов
+                  </button>
+                  <button class="btn btn-primary" @click="suggestionsStep = 'intro'">
+                    Попробовать снова
+                  </button>
+                </div>
+              </div>
+            </template>
+            
+            <template v-else-if="suggestionsStep === 'templates'">
+              <div class="ai-templates-section">
+                <h4>Шаблоны привычек</h4>
+                <p class="ai-templates-hint">Выберите готовые привычки из категорий</p>
+                
+                <div class="suggestions-categories">
+                  <div 
+                    v-for="category in habitSuggestions" 
+                    :key="category.name"
+                    class="suggestion-category"
+                  >
+                    <div class="category-header">
+                      <span class="category-icon">{{ category.icon }}</span>
+                      <span class="category-name">{{ category.name }}</span>
+                    </div>
+                    <div class="category-habits">
+                      <button 
+                        v-for="habit in category.habits" 
+                        :key="habit.name"
+                        class="suggestion-habit"
+                        @click="selectSuggestedHabit(habit)"
+                      >
+                        <span class="habit-emoji">{{ getIconEmoji(habit.icon) }}</span>
+                        <div class="habit-details">
+                          <span class="habit-title">{{ habit.name }}</span>
+                          <span class="habit-desc">{{ habit.description }}</span>
+                        </div>
+                        <div class="habit-schedule-badge">{{ habit.scheduleLabel }}</div>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -1457,8 +1613,10 @@ import {
   Flame, Plus, Minus, Zap, CheckCircle, Sparkles, Shield, Bot,
   Check, Pencil, X, Trash2, Settings, Gift, Archive, Info, TrendingUp, Calendar, Award,
   Ellipsis, CircleAlert, Lightbulb, Heart, ChevronLeft, ChevronRight, RotateCcw, Lock,
-  ChartBar, CalendarDays, Target, Save, Loader2
+  ChartBar, CalendarDays, Target, Save, Loader2,
+  RefreshCw, BarChart3, Clock, ArrowLeft, Square, CheckSquare, AlertTriangle
 } from 'lucide-vue-next'
+import { apiFetch } from '@/services/api.js'
 
 const appStore = useAppStore()
 const xpStore = useXpStore()
@@ -1480,6 +1638,13 @@ const showDescriptionField = ref(false)
 const showXpSlider = ref(false)
 const showPenaltyField = ref(false)
 const showSuggestionsModal = ref(false)
+const suggestionsStep = ref('intro')
+const aiSuggestedHabits = ref([])
+const selectedAiHabits = ref([])
+const createdAiHabits = ref([])
+const suggestionsErrorMessage = ref('')
+const scheduleHabitsImmediately = ref(true)
+const skipHabitSuggestionsIntro = ref(localStorage.getItem('skipHabitSuggestionsIntro') === 'true')
 const showAmnestyModal = ref(false)
 const showAllBadgesModal = ref(false)
 const showCompletionDetailModal = ref(false)
@@ -3522,7 +3687,162 @@ function selectSuggestedHabit(habit) {
     scheduleDays: habit.scheduleDays || [1, 2, 3, 4, 5, 6, 0],
     reminderTime: ''
   }
+  closeSuggestionsModal()
+}
+
+function closeSuggestionsModal() {
   showSuggestionsModal.value = false
+  suggestionsStep.value = skipHabitSuggestionsIntro.value ? 'templates' : 'intro'
+  aiSuggestedHabits.value = []
+  selectedAiHabits.value = []
+  createdAiHabits.value = []
+  suggestionsErrorMessage.value = ''
+}
+
+function saveSkipIntroPreference() {
+  localStorage.setItem('skipHabitSuggestionsIntro', skipHabitSuggestionsIntro.value.toString())
+}
+
+function showTemplateHabits() {
+  suggestionsStep.value = 'templates'
+}
+
+function openTemplatesModal() {
+  showSuggestionsModal.value = true
+  suggestionsStep.value = 'templates'
+}
+
+function openAiSuggestionsModal() {
+  showSuggestionsModal.value = true
+  const skipIntro = localStorage.getItem('skipHabitSuggestionsIntro') === 'true'
+  if (skipIntro) {
+    startHabitSuggestions()
+  } else {
+    suggestionsStep.value = 'intro'
+  }
+}
+
+function toggleAiHabitSelection(idx) {
+  const index = selectedAiHabits.value.indexOf(idx)
+  if (index === -1) {
+    selectedAiHabits.value.push(idx)
+  } else {
+    selectedAiHabits.value.splice(index, 1)
+  }
+}
+
+function getHabitsWord(count) {
+  if (count === 1) return 'привычка'
+  if (count >= 2 && count <= 4) return 'привычки'
+  return 'привычек'
+}
+
+async function startHabitSuggestions() {
+  suggestionsStep.value = 'loading'
+  selectedAiHabits.value = []
+  
+  try {
+    const userData = prepareUserDataForHabits()
+    const response = await apiFetch('/api/ai/suggest-habits', {
+      method: 'POST',
+      body: JSON.stringify(userData)
+    })
+    
+    const result = await response.json()
+    
+    if (result.success && result.suggestions?.length > 0) {
+      aiSuggestedHabits.value = result.suggestions
+      suggestionsStep.value = 'selection'
+    } else {
+      suggestionsErrorMessage.value = result.error || 'Не удалось получить рекомендации'
+      suggestionsStep.value = 'error'
+    }
+  } catch (error) {
+    console.error('[Habits] AI suggestion error:', error)
+    suggestionsErrorMessage.value = 'Произошла ошибка при генерации привычек'
+    suggestionsStep.value = 'error'
+  }
+}
+
+function prepareUserDataForHabits() {
+  const lifeSpheres = appStore.lifeSpheres || []
+  const goals = appStore.ideas || []
+  const existingHabits = allHabits.value || []
+  
+  return {
+    spheres: lifeSpheres.map(s => ({
+      id: s.id,
+      name: s.name,
+      score: s.score || 0,
+      reflection: s.reflection || {}
+    })),
+    growthZones: lifeSpheres
+      .filter(s => s.score > 0 && s.score <= 5)
+      .map(s => ({
+        id: s.id,
+        name: s.name,
+        score: s.score,
+        desired: s.reflection?.desired || '',
+        prevents: s.reflection?.prevents || ''
+      })),
+    goals: goals.slice(0, 5).map(g => ({
+      text: g.text,
+      sphereId: g.sphereId
+    })),
+    existingHabits: existingHabits.map(h => h.name)
+  }
+}
+
+async function confirmAiHabitSelection() {
+  createdAiHabits.value = []
+  
+  const selected = selectedAiHabits.value.map(idx => aiSuggestedHabits.value[idx])
+  
+  for (const habit of selected) {
+    const scheduleDays = habit.scheduleDays || [0, 1, 2, 3, 4, 5, 6]
+    
+    const habitData = {
+      name: habit.name,
+      icon: habit.icon || 'fire',
+      description: habit.whyUseful || '',
+      xpReward: habit.xpReward || 10,
+      xpPenalty: 0,
+      frequencyType: habit.frequencyType || 'daily',
+      scheduleDays: scheduleDays,
+      reminderTime: ''
+    }
+    
+    const localHabit = appStore.addHabit(habitData)
+    
+    createdAiHabits.value.push({
+      id: localHabit.id,
+      name: habit.name
+    })
+    
+    const backendHabitData = {
+      name: habitData.name,
+      description: habitData.description,
+      icon: habitData.icon,
+      xp_reward: habitData.xpReward,
+      xp_penalty: 0,
+      schedule_days: scheduleDays
+    }
+    
+    try {
+      const backendResult = await habitsStore.createHabit(backendHabitData)
+      if (backendResult.success && backendResult.habitId) {
+        appStore.updateHabit(localHabit.id, { backendId: backendResult.habitId })
+      }
+    } catch (error) {
+      console.error('[Habits] Backend sync error for habit:', habit.name, error)
+    }
+  }
+  
+  suggestionsStep.value = 'confirmation'
+  toast.showToast({ 
+    title: `Добавлено ${createdAiHabits.value.length} ${getHabitsWord(createdAiHabits.value.length)}`, 
+    type: 'success' 
+  })
 }
 
 function toggleDay(dayKey) {
@@ -5304,6 +5624,11 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
+  .page-header {
+    padding-left: 3.5rem;
+    padding-right: 3.5rem;
+  }
+
   .btn-edit-habit {
     opacity: 1;
     width: 32px;
@@ -6095,12 +6420,375 @@ onMounted(async () => {
   max-height: calc(85vh - 80px);
 }
 
-.btn-suggest-habit {
+.ai-mentor-modal .modal-header.ai-header h3 .ai-icon {
+  color: #10b981;
+}
+
+.ai-intro-section {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.ai-intro-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+  background: linear-gradient(135deg, #10b981, #22c55e);
+  border-radius: 50%;
+  color: #fff;
+}
+
+.ai-intro-section h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  color: var(--text-primary, #1f2937);
+}
+
+.ai-intro-description {
+  color: var(--text-secondary, #6b7280);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.ai-intro-features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.ai-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary, #f3f4f6);
+  border-radius: 10px;
+  color: var(--text-primary, #1f2937);
+  font-size: 0.9rem;
+}
+
+.ai-feature-item svg {
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+.btn-ai-action {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   width: 100%;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  background: #10b981;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-ai-action:hover {
+  background: #059669;
+}
+
+.ai-skip-intro-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  color: var(--text-secondary, #6b7280);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.ai-skip-intro-label input {
+  width: 16px;
+  height: 16px;
+  accent-color: #10b981;
+}
+
+.ai-loading-section {
+  text-align: center;
+  padding: 3rem 0;
+}
+
+.ai-loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--bg-secondary, #f3f4f6);
+  border-top-color: #10b981;
+  border-radius: 50%;
+  margin: 0 auto 1.5rem;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.ai-loading-section h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: var(--text-primary, #1f2937);
+}
+
+.ai-loading-hint {
+  color: var(--text-secondary, #6b7280);
+  font-size: 0.9rem;
+}
+
+.ai-selection-section h4,
+.ai-templates-section h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: var(--text-primary, #1f2937);
+}
+
+.ai-selection-hint,
+.ai-templates-hint {
+  color: var(--text-secondary, #6b7280);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.ai-suggestions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.ai-suggestion-card {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--bg-secondary, #f3f4f6);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ai-suggestion-card:hover {
+  background: var(--bg-tertiary, #e5e7eb);
+}
+
+.ai-suggestion-card.selected {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.ai-suggestion-checkbox {
+  color: var(--text-secondary, #6b7280);
+  flex-shrink: 0;
+}
+
+.ai-suggestion-card.selected .ai-suggestion-checkbox {
+  color: #10b981;
+}
+
+.ai-suggestion-content {
+  flex: 1;
+}
+
+.ai-suggestion-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.ai-habit-emoji {
+  font-size: 1.25rem;
+}
+
+.ai-suggestion-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary, #1f2937);
+}
+
+.ai-suggestion-reason {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #6b7280);
+  line-height: 1.5;
+  margin: 0 0 0.75rem;
+}
+
+.ai-suggestion-reason svg {
+  color: #10b981;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.ai-habit-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ai-habit-schedule {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--bg-tertiary, #e5e7eb);
+  border-radius: 4px;
+  color: var(--text-secondary, #6b7280);
+}
+
+.ai-habit-xp {
+  font-size: 0.75rem;
+  color: #10b981;
+  font-weight: 600;
+}
+
+.ai-schedule-option {
+  padding: 1rem;
+  background: var(--bg-secondary, #f3f4f6);
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+.ai-schedule-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-primary, #1f2937);
+}
+
+.ai-schedule-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: #10b981;
+}
+
+.ai-selection-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.ai-selection-actions .btn {
+  flex: 1;
+}
+
+.ai-confirmation-section {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.ai-success-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+  background: linear-gradient(135deg, #10b981, #22c55e);
+  border-radius: 50%;
+  color: #fff;
+}
+
+.ai-confirmation-section h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: var(--text-primary, #1f2937);
+}
+
+.ai-confirmation-text {
+  color: var(--text-secondary, #6b7280);
+  margin-bottom: 1.5rem;
+}
+
+.ai-created-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.ai-created-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary, #f3f4f6);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--text-primary, #1f2937);
+}
+
+.ai-created-icon {
+  color: #10b981;
+}
+
+.ai-error-section {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.ai-error-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+  background: linear-gradient(135deg, #f59e0b, #eab308);
+  border-radius: 50%;
+  color: #fff;
+}
+
+.ai-error-section h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: var(--text-primary, #1f2937);
+}
+
+.ai-error-text {
+  color: var(--text-secondary, #6b7280);
+  margin-bottom: 1.5rem;
+}
+
+.ai-error-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.ai-error-actions .btn {
+  flex: 1;
+}
+
+.habit-suggest-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.btn-suggest-habit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex: 1;
   padding: 0.6rem 1rem;
   background: linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(139, 92, 246, 0.12));
   border: 1px dashed var(--primary-color);
@@ -6110,11 +6798,32 @@ onMounted(async () => {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-bottom: 0.75rem;
 }
 
 .btn-suggest-habit:hover {
   background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(139, 92, 246, 0.2));
+  border-style: solid;
+}
+
+.btn-suggest-ai {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex: 1;
+  padding: 0.6rem 1rem;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(5, 150, 105, 0.12));
+  border: 1px dashed #10b981;
+  border-radius: 8px;
+  color: #10b981;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-suggest-ai:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.2));
   border-style: solid;
 }
 
@@ -7652,8 +8361,68 @@ onMounted(async () => {
   }
   
   .habit-card {
-    padding: 0.875rem 1rem;
-    gap: 0.75rem;
+    padding: 0.75rem 0.75rem;
+    gap: 0.5rem;
+  }
+  
+  .habit-row-single {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+  }
+  
+  .habit-row-single .habit-check {
+    order: 1;
+    flex-shrink: 0;
+  }
+  
+  .habit-row-single .habit-icon {
+    order: 2;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  
+  .habit-row-single .habit-name {
+    order: 3;
+    flex: 1;
+    min-width: 0;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .habit-row-single .xp-badge {
+    order: 4;
+    font-size: 0.6rem;
+    padding: 0.125rem 0.35rem;
+    flex-shrink: 0;
+  }
+  
+  .habit-row-single .btn-edit-habit {
+    order: 5;
+    flex-shrink: 0;
+    opacity: 1;
+  }
+  
+  .habit-row-single .habit-schedule-inline {
+    order: 6;
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 0.25rem;
+    justify-content: flex-start;
+    gap: 4px;
+  }
+  
+  .schedule-day {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+  }
+  
+  .schedule-day .day-letter {
+    font-size: 0.65rem;
   }
   
   .habit-row-bottom {
