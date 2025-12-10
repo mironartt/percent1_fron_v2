@@ -1218,11 +1218,17 @@ const getScheduledStepDate = computed(() => {
 })
 
 const getScheduledStepPriority = computed(() => {
+  // Подписываемся на триггер для реактивности
+  void localUpdateTrigger.value
+  
   if (!selectedGoal.value || !selectedStep.value) return null
   return getScheduledPriority(selectedGoal.value.id, selectedStep.value.id) || null
 })
 
 const getScheduledStepTime = computed(() => {
+  // Подписываемся на триггер для реактивности
+  void localUpdateTrigger.value
+  
   if (!selectedGoal.value || !selectedStep.value) return null
   return getScheduledTimeEstimate(selectedGoal.value.id, selectedStep.value.id) || null
 })

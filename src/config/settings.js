@@ -34,6 +34,9 @@ export const DEMO_PLANNING_MODE = localSettings.DEMO_PLANNING_MODE ?? false
 // Режим credentials для fetch запросов ('include' | 'same-origin' | undefined для авто)
 export const CREDENTIALS_MODE = localSettings.CREDENTIALS_MODE ?? undefined
 
+// ID счётчика Яндекс.Метрики
+export const YANDEX_METRIKA_ID = localSettings.YANDEX_METRIKA_ID ?? 105671462
+
 // Логируем загрузку настроек
 if (DEBUG_MODE) {
   console.log('[Settings] Configuration loaded:', {
@@ -45,7 +48,8 @@ if (DEBUG_MODE) {
     FORCE_SHOW_ONBOARDING,
     FORCE_SHOW_MINITASK,
     DEMO_PLANNING_MODE,
-    CREDENTIALS_MODE
+    CREDENTIALS_MODE,
+    YANDEX_METRIKA_ID
   })
 }
 
@@ -59,7 +63,8 @@ export const settings = {
   FORCE_SHOW_ONBOARDING,
   FORCE_SHOW_MINITASK,
   DEMO_PLANNING_MODE,
-  CREDENTIALS_MODE
+  CREDENTIALS_MODE,
+  YANDEX_METRIKA_ID
 }
 
 export default settings
