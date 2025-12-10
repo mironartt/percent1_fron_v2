@@ -7656,8 +7656,68 @@ onMounted(async () => {
   }
   
   .habit-card {
-    padding: 0.875rem 1rem;
-    gap: 0.75rem;
+    padding: 0.75rem 0.75rem;
+    gap: 0.5rem;
+  }
+  
+  .habit-row-single {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+  }
+  
+  .habit-row-single .habit-check {
+    order: 1;
+    flex-shrink: 0;
+  }
+  
+  .habit-row-single .habit-icon {
+    order: 2;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  
+  .habit-row-single .habit-name {
+    order: 3;
+    flex: 1;
+    min-width: 0;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .habit-row-single .xp-badge {
+    order: 4;
+    font-size: 0.6rem;
+    padding: 0.125rem 0.35rem;
+    flex-shrink: 0;
+  }
+  
+  .habit-row-single .btn-edit-habit {
+    order: 5;
+    flex-shrink: 0;
+    opacity: 1;
+  }
+  
+  .habit-row-single .habit-schedule-inline {
+    order: 6;
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 0.25rem;
+    justify-content: flex-start;
+    gap: 4px;
+  }
+  
+  .schedule-day {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+  }
+  
+  .schedule-day .day-letter {
+    font-size: 0.65rem;
   }
   
   .habit-row-bottom {
