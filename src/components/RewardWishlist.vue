@@ -1271,9 +1271,9 @@ async function confirmAiRewardSelection() {
 }
 
 .ai-features {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   margin-bottom: 1.5rem;
   text-align: left;
 }
