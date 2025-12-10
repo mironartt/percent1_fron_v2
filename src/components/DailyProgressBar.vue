@@ -45,6 +45,15 @@ import { TrendingUp, Target, Flame, BookOpen } from 'lucide-vue-next'
 const appStore = useAppStore()
 
 const focusTasks = computed(() => {
+  // Приоритет: данные из API get-user-data
+  const apiTasks = appStore.userDashboardData?.today_tasks
+  if (apiTasks?.total_count !== undefined) {
+    return {
+      total: apiTasks.total_count || 0,
+      completed: apiTasks.completed_count || 0
+    }
+  }
+  // Fallback: локальные данные
   const tasks = appStore.dailyPlan.tasks || []
   const focusOnly = tasks.slice(0, 3)
   return {

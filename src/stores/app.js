@@ -1223,12 +1223,41 @@ export const useAppStore = defineStore('app', () => {
   })
 
   const todayHabitsCompleted = computed(() => {
+    // Приоритет: данные из API get-user-data
+    if (userDashboardData.value?.today_habits?.completed_count !== undefined) {
+      return userDashboardData.value.today_habits.completed_count
+    }
     return todayHabits.value.filter(h => h.completed).length
   })
 
   const todayHabitsTotal = computed(() => {
+    // Приоритет: данные из API get-user-data
+    if (userDashboardData.value?.today_habits?.total_count !== undefined) {
+      return userDashboardData.value.today_habits.total_count
+    }
     return todayHabits.value.length
   })
+  
+  // Функция для обновления статуса привычки в userDashboardData
+  function updateHabitCompletionInDashboard(habitId, isCompleted) {
+    if (!userDashboardData.value?.today_habits?.habits) return
+    
+    const habits = userDashboardData.value.today_habits.habits
+    const habit = habits.find(h => h.habit_id === habitId)
+    if (habit) {
+      const wasCompleted = habit.is_completed
+      habit.is_completed = isCompleted
+      
+      // Обновить счётчики
+      if (isCompleted && !wasCompleted) {
+        userDashboardData.value.today_habits.completed_count = 
+          (userDashboardData.value.today_habits.completed_count || 0) + 1
+      } else if (!isCompleted && wasCompleted) {
+        userDashboardData.value.today_habits.completed_count = 
+          Math.max(0, (userDashboardData.value.today_habits.completed_count || 1) - 1)
+      }
+    }
+  }
 
   const habitStreak = computed(() => {
     let streak = 0
@@ -3346,6 +3375,7 @@ export const useAppStore = defineStore('app', () => {
     todayHabits,
     todayHabitsCompleted,
     todayHabitsTotal,
+    updateHabitCompletionInDashboard,
     habitStreak,
     addHabit,
     updateHabit,
