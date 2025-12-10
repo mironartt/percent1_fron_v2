@@ -1,23 +1,25 @@
 <template>
   <div class="planning-container">
-    <header class="planning-header">
-      <h1 class="page-title">Планирование</h1>
-      <div class="week-navigation-wide">
-        <button class="nav-btn-wide" @click="prevWeek" aria-label="Предыдущая неделя">
-          <ChevronLeft :size="20" />
-        </button>
-        <span class="week-range">{{ weekRangeText }}</span>
-        <button class="nav-btn-wide" @click="nextWeek" aria-label="Следующая неделя">
+    <header class="planning-header-full">
+      <button class="nav-btn-edge" @click="prevWeek" aria-label="Предыдущая неделя">
+        <ChevronLeft :size="20" />
+      </button>
+      <div class="header-center">
+        <h1 class="page-title">Планирование</h1>
+        <span class="week-range-center">{{ weekRangeText }}</span>
+      </div>
+      <div class="header-right">
+        <button class="nav-btn-edge" @click="nextWeek" aria-label="Следующая неделя">
           <ChevronRight :size="20" />
         </button>
+        <button 
+          v-if="!isCurrentWeek" 
+          class="today-btn-inline"
+          @click="goToCurrentWeek"
+        >
+          Сегодня
+        </button>
       </div>
-      <button 
-        v-if="!isCurrentWeek" 
-        class="today-btn-floating"
-        @click="goToCurrentWeek"
-      >
-        Сегодня
-      </button>
     </header>
 
     <div class="week-stats">
@@ -2419,6 +2421,69 @@ onUnmounted(() => {
 .planning-header {
   margin-bottom: 1rem;
   text-align: center;
+}
+
+.planning-header-full {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  gap: 0.5rem;
+}
+
+.header-center {
+  flex: 1;
+  text-align: center;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-btn-edge {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg, white);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.nav-btn-edge:hover {
+  background: var(--hover-bg, #f3f4f6);
+  color: var(--text-primary);
+}
+
+.week-range-center {
+  display: block;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+}
+
+.today-btn-inline {
+  padding: 0.5rem 0.875rem;
+  border-radius: 20px;
+  border: none;
+  background: var(--primary, #6366f1);
+  color: white;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.today-btn-inline:hover {
+  background: var(--primary-dark, #4f46e5);
 }
 
 .page-title {
