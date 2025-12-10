@@ -153,7 +153,8 @@ export const useAppStore = defineStore('app', () => {
     loading: false,
     loaded: false,
     totalData: null,
-    pagination: { page: 1, pageSize: 6, totalPages: 1, totalItems: 0 }
+    pagination: { page: 1, pageSize: 10, totalPages: 1, totalItems: 0, totalFilteredItems: 0 },
+    goalsWithoutSteps: { total: 0, goals: [] }
   })
   
   /**
@@ -176,10 +177,18 @@ export const useAppStore = defineStore('app', () => {
         goalsApiData.value.totalData = data.total_data || null
         goalsApiData.value.pagination = {
           page: data.page || 1,
-          pageSize: data.page_size || 6,
+          pageSize: data.page_size || 10,
           totalPages: data.total_pages || 1,
           totalItems: data.total_items || 0,
           totalFilteredItems: data.total_filtered_items || 0
+        }
+        
+        // Сохраняем цели без шагов (требующие декомпозиции)
+        if (data.goals_without_steps) {
+          goalsApiData.value.goalsWithoutSteps = {
+            total: data.goals_without_steps.total || 0,
+            goals: data.goals_without_steps.goals || []
+          }
         }
         
         // Синхронизируем цели с локальным состоянием goalsBank.rawIdeas

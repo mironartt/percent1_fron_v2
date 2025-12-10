@@ -186,10 +186,10 @@
     </div>
 
     <!-- Баннер: цели без шагов -->
-    <div class="needs-decomposition-banner" v-if="goalsWithoutSteps.length > 0">
+    <div class="needs-decomposition-banner" v-if="goalsWithoutStepsTotal > 0">
       <div class="banner-header">
         <AlertCircle :size="20" class="banner-icon" />
-        <span class="banner-title">{{ goalsWithoutSteps.length }} {{ goalsWithoutSteps.length === 1 ? 'цель требует' : 'целей требуют' }} декомпозиции</span>
+        <span class="banner-title">{{ goalsWithoutStepsTotal }} {{ goalsWithoutStepsTotal === 1 ? 'цель требует' : 'целей требуют' }} декомпозиции</span>
       </div>
       <p class="banner-text">Чтобы планировать, разбейте цели на конкретные шаги</p>
       <div class="banner-goals">
@@ -199,17 +199,17 @@
           class="banner-goal-item"
           @click="goToDecomposition(goal)"
         >
-          <span class="goal-sphere-mini">{{ getSphereIcon(goal.sphereId) }}</span>
+          <span class="goal-sphere-mini">{{ getSphereIcon(goal.sphereId || goal.category) }}</span>
           <span class="goal-title-mini">{{ goal.text || goal.title }}</span>
           <ChevronRight :size="16" class="go-icon" />
         </div>
       </div>
       <button 
-        v-if="goalsWithoutSteps.length > 3" 
+        v-if="goalsWithoutStepsTotal > 3" 
         class="btn btn-outline btn-small"
         @click="goToGoalsBank"
       >
-        Показать все ({{ goalsWithoutSteps.length }})
+        Показать все ({{ goalsWithoutStepsTotal }})
       </button>
     </div>
 
@@ -271,8 +271,36 @@
         </div>
       </div>
 
-      <div v-if="hasMoreGoals" class="infinite-scroll-trigger" ref="infiniteScrollTrigger">
-        <div class="loading-spinner-small"></div>
+      <!-- Пагинация -->
+      <div v-if="totalPages > 1" class="pagination-container">
+        <button 
+          class="pagination-btn"
+          :disabled="currentPage <= 1"
+          @click="goToPage(currentPage - 1)"
+        >
+          <ChevronLeft :size="18" />
+        </button>
+        
+        <div class="pagination-pages">
+          <button 
+            v-for="page in paginationPages" 
+            :key="page"
+            class="pagination-page"
+            :class="{ active: page === currentPage, dots: page === '...' }"
+            :disabled="page === '...'"
+            @click="page !== '...' && goToPage(page)"
+          >
+            {{ page }}
+          </button>
+        </div>
+        
+        <button 
+          class="pagination-btn"
+          :disabled="currentPage >= totalPages"
+          @click="goToPage(currentPage + 1)"
+        >
+          <ChevronRight :size="18" />
+        </button>
       </div>
     </div>
 
@@ -592,6 +620,7 @@ const filterStatus = ref('')
 const showSphereDropdown = ref(false)
 const addStepSearch = ref('')
 const goalsDisplayLimit = ref(10)
+const currentPage = ref(1)
 const expandedGoals = ref({})
 const infiniteScrollTrigger = ref(null)
 let infiniteScrollObserver = null
@@ -909,11 +938,31 @@ const goalsWithSteps = computed(() => {
   )
 })
 
+const goalsWithoutStepsFromApi = computed(() => store.goalsApiData?.goalsWithoutSteps || { total: 0, goals: [] })
+
 const goalsWithoutSteps = computed(() => {
+  // Используем данные из API если они есть
+  const apiData = goalsWithoutStepsFromApi.value
+  if (apiData.goals && apiData.goals.length > 0) {
+    return apiData.goals.map(g => ({
+      id: g.goal_id,
+      backendId: g.goal_id,
+      text: g.title,
+      title: g.title,
+      sphereId: g.category,
+      category: g.category
+    }))
+  }
+  
+  // Fallback: фильтруем локально
   return workingGoals.value.filter(g => 
     g.status !== 'completed' &&
     (!g.steps || g.steps.length === 0)
   )
+})
+
+const goalsWithoutStepsTotal = computed(() => {
+  return goalsWithoutStepsFromApi.value.total || goalsWithoutSteps.value.length
 })
 
 const spheresWithGoals = computed(() => {
@@ -957,11 +1006,89 @@ const filteredGoalsWithSteps = computed(() => {
 })
 
 const paginatedGoals = computed(() => {
-  return filteredGoalsWithSteps.value.slice(0, goalsDisplayLimit.value)
+  // Используем все загруженные цели с текущей страницы (уже отфильтрованы бэкендом)
+  // Для локальной фильтрации по статусу (scheduled/unscheduled) применяем дополнительный фильтр
+  let goals = goalsWithSteps.value
+  
+  if (filterStatus.value === 'unscheduled') {
+    goals = goals.filter(g => getUnscheduledStepsCount(g) > 0)
+  } else if (filterStatus.value === 'scheduled') {
+    goals = goals.filter(g => getScheduledStepsCount(g) > 0)
+  }
+  
+  return goals
 })
 
 const hasMoreGoals = computed(() => {
-  return goalsDisplayLimit.value < filteredGoalsWithSteps.value.length
+  // Больше страниц для загрузки с бэкенда
+  return currentPage.value < totalPages.value
+})
+
+// Пагинация из API
+const goalsPagination = computed(() => store.goalsApiData?.pagination || { page: 1, totalPages: 1, totalItems: 0 })
+const totalPages = computed(() => goalsPagination.value.totalPages || 1)
+const totalGoalsItems = computed(() => goalsPagination.value.totalItems || 0)
+
+// Функции пагинации
+async function goToPage(page) {
+  if (page < 1 || page > totalPages.value) return
+  currentPage.value = page
+  await loadGoalsWithFilters()
+}
+
+async function loadGoalsWithFilters() {
+  const params = {
+    score_filter: 'true',
+    status_filter: 'work',
+    with_steps_data: true,
+    page: currentPage.value
+  }
+  
+  // Добавляем фильтр по сфере если выбран
+  if (filterSphere.value) {
+    // Конвертируем из frontend формата в backend
+    const categoryMap = {
+      'welfare': 'welfare',
+      'hobby': 'hobby', 
+      'environment': 'environment',
+      'health': 'health_sport',
+      'work': 'work',
+      'family': 'family'
+    }
+    params.category_filter = categoryMap[filterSphere.value] || filterSphere.value
+  }
+  
+  await store.loadGoalsFromBackend(params)
+}
+
+// Watch для фильтров - при изменении делаем запрос к бэку
+watch([filterSphere], async () => {
+  currentPage.value = 1
+  await loadGoalsWithFilters()
+})
+
+// Computed для номеров страниц пагинации
+const paginationPages = computed(() => {
+  const total = totalPages.value
+  const current = currentPage.value
+  const pages = []
+  
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i)
+  } else {
+    pages.push(1)
+    if (current > 3) pages.push('...')
+    
+    const start = Math.max(2, current - 1)
+    const end = Math.min(total - 1, current + 1)
+    
+    for (let i = start; i <= end; i++) pages.push(i)
+    
+    if (current < total - 2) pages.push('...')
+    pages.push(total)
+  }
+  
+  return pages
 })
 
 const goalsWithUnscheduledSteps = computed(() => {
@@ -1705,9 +1832,10 @@ function quickScheduleStep(goal, step) {
   showBottomSheet.value = true
 }
 
-function loadMoreGoals() {
+async function loadMoreGoals() {
   if (hasMoreGoals.value) {
-    goalsDisplayLimit.value += 10
+    currentPage.value++
+    await loadGoalsWithFilters()
   }
 }
 
@@ -2622,6 +2750,76 @@ onUnmounted(() => {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Пагинация */
+.pagination-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem 0;
+  margin-top: 1rem;
+}
+
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  background: var(--bg-primary, #fff);
+  color: var(--text-primary, #1f2937);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--bg-secondary, #f9fafb);
+  border-color: var(--primary, #6366f1);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-pages {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.pagination-page {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 0.5rem;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  background: var(--bg-primary, #fff);
+  color: var(--text-primary, #1f2937);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pagination-page:hover:not(:disabled):not(.active) {
+  background: var(--bg-secondary, #f9fafb);
+  border-color: var(--primary, #6366f1);
+}
+
+.pagination-page.active {
+  background: var(--primary, #6366f1);
+  border-color: var(--primary, #6366f1);
+  color: #fff;
+}
+
+.pagination-page.dots {
+  border: none;
+  background: transparent;
+  cursor: default;
 }
 
 .needs-decomposition-banner {
