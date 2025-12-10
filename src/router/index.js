@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { SKIP_AUTH_CHECK, DEBUG_MODE } from '@/config/settings.js'
+import { SKIP_AUTH_CHECK, DEBUG_MODE, YANDEX_METRIKA_ID } from '@/config/settings.js'
 import api, { refreshCsrf } from '@/services/api.js'
 
 // Lazy loading компонентов
@@ -317,6 +317,29 @@ router.beforeEach(async (to, from, next) => {
     console.log('[Router] Navigation allowed')
   }
   return next()
+})
+
+// Отслеживание переходов в Яндекс.Метрике (для SPA)
+router.afterEach((to) => {
+  if (typeof window !== 'undefined' && window.ym && YANDEX_METRIKA_ID) {
+    try {
+      window.ym(YANDEX_METRIKA_ID, 'hit', to.fullPath, {
+        title: to.meta.title || document.title
+      })
+
+      if (DEBUG_MODE) {
+        console.log('[YandexMetrika] Page view tracked:', {
+          id: YANDEX_METRIKA_ID,
+          path: to.fullPath,
+          title: to.meta.title || document.title
+        })
+      }
+    } catch (error) {
+      if (DEBUG_MODE) {
+        console.error('[YandexMetrika] Error tracking page view:', error)
+      }
+    }
+  }
 })
 
 // Экспорт функции для сброса кэша авторизации
