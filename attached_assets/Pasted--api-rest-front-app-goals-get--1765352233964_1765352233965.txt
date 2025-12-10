@@ -1,0 +1,378 @@
+На бэке были доработки по эндпоинту `/api/rest/front/app/goals/get/`.
+Теперь он возвращает базовые данные по целям без шагов в поле `goals_without_steps`.
+Эти данные нужно использовать на странице планирования в блоке `{int} целей требуют декомпозиции` (пример на приложенном скрине).
+Бэк возвращает до 10 целей, с базовой информацией по ним, и также общее кол-во целей без шагов (требующих декомпозиции), поэтому фронт может отрисовать базовые данные, а по клику на "еще" отправить в банк целей.
+
+Формат ответа:
+Теперь эндпоинт возвращает дополнительное поле goals_without_steps:
+```
+  {
+    "status": "ok",
+    "data": {
+      "goals_data": [...],
+      "total_data": {...},
+      "goals_without_steps": {
+        "total": 5,
+        "goals": [
+          {
+            "goal_id": 123,
+            "title": "Выучить английский язык",
+            "category": "hobby"
+          },
+          ...
+        ]
+      },
+      ...
+    }
+  }
+```
+
+Таже: использование любых фильтров на странице, должно вызывать запрос к бэку, и отрисовывать ответ от него.
+
+Также вижу проблему, пример ответ по `/api/rest/front/app/goals/get/`:
+```
+{
+  "status": "ok",
+  "data": {
+    "total_items": 43,
+    "total_filtered_items": 24,
+    "total_pages": 3,
+    "page": null,
+    "page_size": 10,
+    "total_data": {
+      "total_goals": 43,
+      "true_goals": 18,
+      "false_goals": 9,
+      "in_work_goals": 24
+    },
+    "goals_data": [
+      {
+        "goal_id": 37,
+        "title": "Каждый день пить 1.5 литра воды",
+        "category": "health_sport",
+        "status": "work",
+        "score": "true",
+        "why_important": null,
+        "why_give_me": "Для здоровья",
+        "why_about_me": null,
+        "date_created": "2025-12-02 15:29:10",
+        "date_completed": null,
+        "total_steps_data": {
+          "total_steps": 16,
+          "complete_steps": 0,
+          "complete_percent": 0,
+          "complete_days_in_row": 0
+        },
+        "steps_data": [
+          {
+            "step_id": 26,
+            "title": "Определить список инструментов",
+            "description": "Оценить, какие инструменты нужны",
+            "status": "planned",
+            "priority": null,
+            "time_duration": "one",
+            "dt": "2025-12-11",
+            "order": 0,
+            "is_complete": false,
+            "date_completed": null,
+            "date_created": "2025-12-01 16:12:22",
+            "goal_id": 37
+          },
+        ],
+        "notes_data": [],
+        "notes_pagination": null
+      },
+      {
+        "goal_id": 28,
+        "title": "Вырастить растение",
+        "category": "environment",
+        "status": "work",
+        "score": "true",
+        "why_important": "Хочу заботиться",
+        "why_give_me": null,
+        "why_about_me": "Мне нравится природа",
+        "date_created": "2025-12-02 15:29:10",
+        "date_completed": null,
+        "total_steps_data": {
+          "total_steps": 20,
+          "complete_steps": 1,
+          "complete_percent": 5,
+          "complete_days_in_row": 0
+        },
+        "steps_data": [
+          {
+            "step_id": 21,
+            "title": "Начать сбор данных",
+            "description": "Первый этап",
+            "status": "planned",
+            "priority": "critical",
+            "time_duration": "two",
+            "dt": "2025-12-11",
+            "order": 0,
+            "is_complete": false,
+            "date_completed": null,
+            "date_created": "2025-12-01 16:12:22",
+            "goal_id": 28
+          },
+        ],
+        "notes_data": [],
+        "notes_pagination": null
+      },
+      {
+        "goal_id": 23,
+        "title": "Улучшить финансовую дисциплину 1",
+        "category": "welfare",
+        "status": "work",
+        "score": "true",
+        "why_important": "3122232",
+        "why_give_me": "Больше контроля2221",
+        "why_about_me": "",
+        "date_created": "2025-12-02 15:29:10",
+        "date_completed": null,
+        "total_steps_data": {
+          "total_steps": 24,
+          "complete_steps": 7,
+          "complete_percent": 29,
+          "complete_days_in_row": 0
+        },
+        "steps_data": [
+          {
+            "step_id": 129,
+            "title": "her - Ожидание результатов - her",
+            "description": "Ожидание ответа",
+            "status": "planned",
+            "priority": "attention",
+            "time_duration": "half",
+            "dt": "2025-12-03",
+            "order": 0,
+            "is_complete": false,
+            "date_completed": null,
+            "date_created": "2025-12-02 08:51:02",
+            "goal_id": 23
+          },
+        ],
+        "notes_data": [],
+        "notes_pagination": null
+      },
+      {
+        "goal_id": 17,
+        "title": "Научиться готовить 5 новых блюд",
+        "category": "hobby",
+        "status": "work",
+        "score": "true",
+        "why_important": null,
+        "why_give_me": null,
+        "why_about_me": "Люблю готовить",
+        "date_created": "2025-12-02 15:29:10",
+        "date_completed": null,
+        "total_steps_data": {
+          "total_steps": 25,
+          "complete_steps": 2,
+          "complete_percent": 8,
+          "complete_days_in_row": 0
+        },
+        "steps_data": [
+          {
+            "step_id": 12,
+            "title": "Составить техническое задание",
+            "description": "Описание задачи:\n1. Определить требования\n2. Согласовать структуру\n3. Добавить примеры\n4. Подготовить шаблоны\n5. Проверить данные",
+            "status": "planned",
+            "priority": "critical",
+            "time_duration": "three",
+            "dt": "2024-12-01",
+            "order": 0,
+            "is_complete": false,
+            "date_completed": null,
+            "date_created": "2025-12-01 16:12:22",
+            "goal_id": 17
+          },
+        ],
+        "notes_data": [],
+        "notes_pagination": null
+      },
+      {
+        "goal_id": 8,
+        "title": "Каждый день гулять по 30 минут",
+        "category": "health_sport",
+        "status": "work",
+        "score": "true",
+        "why_important": null,
+        "why_give_me": "Для здоровья",
+        "why_about_me": null,
+        "date_created": "2025-12-02 15:29:10",
+        "date_completed": null,
+        "total_steps_data": {
+          "total_steps": 12,
+          "complete_steps": 0,
+          "complete_percent": 0,
+          "complete_days_in_row": 0
+        },
+        "steps_data": [
+          {
+            "step_id": 9,
+            "title": "Собрать информацию",
+            "description": "Первичное исследование темы",
+            "status": "planned",
+            "priority": "critical",
+            "time_duration": "two",
+            "dt": "2025-03-10",
+            "order": 0,
+            "is_complete": false,
+            "date_completed": null,
+            "date_created": "2025-12-01 16:12:22",
+            "goal_id": 8
+          },
+        ],
+        "notes_data": [],
+        "notes_pagination": null
+      },
+      {
+        "goal_id": 4,
+        "title": "Освоить медитацию",
+        "category": "environment",
+        "status": "work",
+        "score": "true",
+        "why_important": "Стать спокойнее",
+        "why_give_me": null,
+        "why_about_me": "Мне важно внутреннее равновесие",
+        "date_created": "2025-12-02 15:29:10",
+        "date_completed": null,
+        "total_steps_data": {
+          "total_steps": 16,
+          "complete_steps": 0,
+          "complete_percent": 0,
+          "complete_days_in_row": 0
+        },
+        "steps_data": [
+          {
+            "step_id": 5,
+            "title": "Подготовить план изучения",
+            "description": "Набросать общий план\nОпределить основные модули\nВыделить ключевые темы\nУточнить сроки по неделям",
+            "status": "planned",
+            "priority": "important",
+            "time_duration": "one",
+            "dt": "2025-12-01",
+            "order": 0,
+            "is_complete": false,
+            "date_completed": null,
+            "date_created": "2025-12-01 16:12:22",
+            "goal_id": 4
+          },
+        ],
+        "notes_data": [],
+        "notes_pagination": null
+      },
+      {
+        "goal_id": 41,
+        "title": "еуые11",
+        "category": "work",
+        "status": "work",
+        "score": "true",
+        "why_important": null,
+        "why_give_me": null,
+        "why_about_me": null,
+        "date_created": "2025-12-02 12:14:46",
+        "date_completed": null,
+        "total_steps_data": {
+          "total_steps": 0,
+          "complete_steps": 0,
+          "complete_percent": 0,
+          "complete_days_in_row": 0
+        },
+        "steps_data": [],
+        "notes_data": [],
+        "notes_pagination": null
+      },
+      {
+        "goal_id": 39,
+        "title": "Пойти на курсы рисования",
+        "category": "hobby",
+        "status": "work",
+        "score": "true",
+        "why_important": null,
+        "why_give_me": null,
+        "why_about_me": "Хочу развить творчество",
+        "date_created": "2025-12-01 09:39:12",
+        "date_completed": null,
+        "total_steps_data": {
+          "total_steps": 0,
+          "complete_steps": 0,
+          "complete_percent": 0,
+          "complete_days_in_row": 0
+        },
+        "steps_data": [],
+        "notes_data": [],
+        "notes_pagination": null
+      },
+      {
+        "goal_id": 35,
+        "title": "Сократить использование соцсетей",
+        "category": "environment",
+        "status": "work",
+        "score": "false",
+        "why_important": null,
+        "why_give_me": "Больше времени",
+        "why_about_me": null,
+        "date_created": "2025-12-01 09:39:12",
+        "date_completed": "2025-12-02 10:51:29",
+        "total_steps_data": {
+          "total_steps": 0,
+          "complete_steps": 0,
+          "complete_percent": 0,
+          "complete_days_in_row": 0
+        },
+        "steps_data": [],
+        "notes_data": [],
+        "notes_pagination": null
+      },
+      {
+        "goal_id": 33,
+        "title": "Поставить долгосрочные карьерные цели",
+        "category": "work",
+        "status": "work",
+        "score": "true",
+        "why_important": "Развитие",
+        "why_give_me": null,
+        "why_about_me": "Я амбициозный человек",
+        "date_created": "2025-12-01 09:39:12",
+        "date_completed": null,
+        "total_steps_data": {
+          "total_steps": 0,
+          "complete_steps": 0,
+          "complete_percent": 0,
+          "complete_days_in_row": 0
+        },
+        "steps_data": [],
+        "notes_data": [],
+        "notes_pagination": null
+      }
+    ],
+    "total_data_steps_data": {
+      "total_steps": 113,
+      "complete_steps": 10,
+      "complete_percent": 9,
+      "complete_days_in_row": 0
+    }
+  }
+}
+```
+
+Видно что бэк возвращает:
+```
+    "total_items": 43,
+    "total_filtered_items": 24,
+    "total_pages": 3,
+    "page": null,
+    "page_size": 10,
+    "total_data": {
+      "total_goals": 43,
+      "true_goals": 18,
+      "false_goals": 9,
+      "in_work_goals": 24
+    },
+```
+
+Но на фронте не видно пагинации и отрисовки всех целей (также видно что в одной странице возвращается 10 целей).
+Разберись и поправь это.
+
+В конце дай отчет о проделанной работе.
