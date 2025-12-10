@@ -138,25 +138,27 @@
       </div>
 
       <!-- Секция просроченных задач -->
-      <div class="overdue-section" v-if="isToday(selectedDay) && overdueTasks.length > 0">
-        <div class="overdue-header" @click="toggleOverdueCollapse">
+      <div class="task-group overdue-group" :class="{ collapsed: overdueCollapsed }" v-if="isToday(selectedDay) && overdueTasks.length > 0">
+        <div class="group-header clickable" @click="toggleOverdueCollapse">
           <ChevronRight 
             :size="16" 
-            class="overdue-chevron"
+            class="group-chevron"
             :class="{ rotated: !overdueCollapsed }"
           />
-          <span class="overdue-title">Просроченные</span>
-          <span class="overdue-count">{{ overdueCompletedCount }}/{{ overdueTasks.length }}</span>
+          <span class="group-title">Просроченные</span>
+          <div class="group-meta">
+            <span class="group-count">{{ overdueCompletedCount }}/{{ overdueTasks.length }}</span>
+          </div>
         </div>
-        <div class="overdue-tasks" v-show="!overdueCollapsed">
+        <div class="group-tasks" v-show="!overdueCollapsed">
           <div 
             v-for="task in overdueTasks" 
             :key="task.id"
-            class="task-card overdue"
+            class="task-card"
             :class="{ completed: task.completed }"
             @click="openTaskActions(task)"
           >
-            <div class="priority-stripe priority-overdue"></div>
+            <div class="priority-stripe priority-critical"></div>
             <button 
               class="task-checkbox"
               :class="{ completed: task.completed }"
@@ -2703,61 +2705,17 @@ onUnmounted(() => {
   margin-bottom: 0;
 }
 
-.overdue-section {
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px dashed var(--border-color, #e5e7eb);
+.overdue-group {
+  margin-top: 0.75rem;
 }
 
-.overdue-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: background 0.2s;
-}
-
-.overdue-header:hover {
+.overdue-group .group-header {
   background: rgba(239, 68, 68, 0.05);
-}
-
-.overdue-chevron {
-  color: #ef4444;
-  flex-shrink: 0;
-  transition: transform 0.2s;
-}
-
-.overdue-chevron.rotated {
-  transform: rotate(90deg);
-}
-
-.overdue-title {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: #ef4444;
-}
-
-.overdue-count {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
-  margin-left: auto;
-}
-
-.overdue-tasks {
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-  margin-top: 0.5rem;
-}
-
-.task-card.overdue {
   border-left: 3px solid #ef4444;
 }
 
-.priority-stripe.priority-overdue {
-  background: #ef4444;
+.overdue-group .group-header:hover {
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .overdue-date {
