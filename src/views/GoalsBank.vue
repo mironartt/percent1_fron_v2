@@ -7221,13 +7221,13 @@ onUnmounted(() => {
 }
 
 .mentor-toggle {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(236, 72, 153, 0.08));
-  border-color: #8b5cf6;
-  color: #8b5cf6;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(34, 197, 94, 0.08));
+  border-color: #10b981;
+  color: #10b981;
 }
 
 .mentor-toggle:hover {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.15));
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(34, 197, 94, 0.15));
 }
 
 @media (max-width: 480px) {

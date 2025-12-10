@@ -214,7 +214,7 @@ const sphereNames = {
 }
 
 function getSphereColor(sphereId) {
-  return sphereColors[sphereId] || '#6366f1'
+  return sphereColors[sphereId] || '#10b981'
 }
 
 function getSphereName(sphereId) {
@@ -387,7 +387,7 @@ function closeModal() {
 }
 
 .modal-header-icon {
-  color: var(--primary-color, #6366f1);
+  color: #10b981;
 }
 
 .modal-close {
@@ -424,7 +424,7 @@ function closeModal() {
   width: 80px;
   height: 80px;
   margin: 0 auto 1.5rem;
-  background: linear-gradient(135deg, var(--primary-color, #6366f1), #8b5cf6);
+  background: linear-gradient(135deg, #10b981, #22c55e);
   border-radius: 50%;
   color: #fff;
 }
@@ -462,7 +462,7 @@ function closeModal() {
 }
 
 .feature-item svg {
-  color: var(--primary-color, #6366f1);
+  color: #10b981;
   flex-shrink: 0;
 }
 
@@ -481,12 +481,12 @@ function closeModal() {
 }
 
 .btn-primary {
-  background: var(--primary-color, #6366f1);
+  background: #10b981;
   color: #fff;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--primary-dark, #4f46e5);
+  background: #059669;
 }
 
 .btn-primary:disabled {
@@ -519,7 +519,7 @@ function closeModal() {
   width: 48px;
   height: 48px;
   border: 3px solid var(--bg-secondary, #f3f4f6);
-  border-top-color: var(--primary-color, #6366f1);
+  border-top-color: #10b981;
   border-radius: 50%;
   margin: 0 auto 1.5rem;
   animation: spin 0.8s linear infinite;
@@ -579,8 +579,8 @@ function closeModal() {
 }
 
 .suggestion-card.selected {
-  border-color: var(--primary-color, #6366f1);
-  background: rgba(99, 102, 241, 0.05);
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.05);
 }
 
 .suggestion-checkbox {
@@ -589,7 +589,7 @@ function closeModal() {
 }
 
 .suggestion-card.selected .suggestion-checkbox {
-  color: var(--primary-color, #6366f1);
+  color: #10b981;
 }
 
 .suggestion-content {
@@ -630,7 +630,7 @@ function closeModal() {
 .suggestion-reason svg {
   flex-shrink: 0;
   margin-top: 2px;
-  color: var(--primary-color, #6366f1);
+  color: #10b981;
 }
 
 .selection-actions {
