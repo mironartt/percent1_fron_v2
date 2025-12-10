@@ -1598,7 +1598,7 @@ watch(activeTab, async (newTab) => {
 }
 
 .mode-btn.ai svg {
-  color: var(--primary-color);
+  color: #10b981;
 }
 
 .mode-info {
@@ -1743,14 +1743,14 @@ watch(activeTab, async (newTab) => {
   flex-direction: column;
   flex: 1;
   overflow: hidden;
-  padding: 1rem 1.5rem;
+  padding: 0.75rem 1rem;
 }
 
 .ai-progress {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
 .progress-bar {
@@ -1763,7 +1763,7 @@ watch(activeTab, async (newTab) => {
 
 .progress-fill {
   height: 100%;
-  background: var(--primary-color);
+  background: #10b981;
   transition: width 0.3s ease;
 }
 
@@ -1776,31 +1776,31 @@ watch(activeTab, async (newTab) => {
 .ai-sphere-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
   background: var(--bg-secondary);
-  border-radius: var(--radius-lg);
-  margin-bottom: 1rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 0.75rem;
 }
 
 .sphere-icon-lg {
-  width: 56px;
-  height: 56px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--bg-primary);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
 }
 
 .sphere-title h4 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1.1rem;
+  margin: 0 0 0.125rem 0;
+  font-size: 0.95rem;
 }
 
 .sphere-title p {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
 }
 
@@ -1814,8 +1814,8 @@ watch(activeTab, async (newTab) => {
 .ai-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 0.5rem 0;
-  max-height: 30vh;
+  padding: 0.25rem 0;
+  max-height: 45vh;
 }
 
 .ai-message {
@@ -1834,7 +1834,7 @@ watch(activeTab, async (newTab) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--primary-color);
+  background: #10b981;
   color: white;
   border-radius: 50%;
   flex-shrink: 0;
@@ -1854,7 +1854,7 @@ watch(activeTab, async (newTab) => {
 }
 
 .ai-message.user .message-content {
-  background: var(--primary-color);
+  background: #10b981;
   color: white;
 }
 
@@ -1906,7 +1906,7 @@ watch(activeTab, async (newTab) => {
 .score-display {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--primary-color);
+  color: #10b981;
   margin: 0.5rem 0 1rem 0;
 }
 
@@ -1947,7 +1947,7 @@ watch(activeTab, async (newTab) => {
 
 .ai-input-area textarea:focus {
   outline: none;
-  border-color: var(--primary-color);
+  border-color: #10b981;
 }
 
 .btn-icon {
@@ -1958,6 +1958,22 @@ watch(activeTab, async (newTab) => {
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-lg);
+}
+
+.ai-input-area .btn-primary,
+.ai-nav-actions .btn-primary,
+.score-actions .btn-primary,
+.ai-results .btn-primary,
+.ai-reassess-content .btn-primary {
+  background: #10b981;
+}
+
+.ai-input-area .btn-primary:hover,
+.ai-nav-actions .btn-primary:hover,
+.score-actions .btn-primary:hover,
+.ai-results .btn-primary:hover,
+.ai-reassess-content .btn-primary:hover {
+  background: #059669;
 }
 
 .ai-results {
@@ -1992,7 +2008,7 @@ watch(activeTab, async (newTab) => {
 
 .result-score {
   font-weight: 700;
-  color: var(--primary-color);
+  color: #10b981;
 }
 
 
