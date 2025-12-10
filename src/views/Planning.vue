@@ -271,10 +271,6 @@
         </div>
       </div>
 
-      <div v-if="hasMoreGoals" class="infinite-scroll-trigger" ref="infiniteScrollTrigger">
-        <div class="loading-spinner-small"></div>
-      </div>
-      
       <!-- Пагинация -->
       <div v-if="totalPages > 1" class="pagination-container">
         <button 
@@ -1010,11 +1006,22 @@ const filteredGoalsWithSteps = computed(() => {
 })
 
 const paginatedGoals = computed(() => {
-  return filteredGoalsWithSteps.value.slice(0, goalsDisplayLimit.value)
+  // Используем все загруженные цели с текущей страницы (уже отфильтрованы бэкендом)
+  // Для локальной фильтрации по статусу (scheduled/unscheduled) применяем дополнительный фильтр
+  let goals = goalsWithSteps.value
+  
+  if (filterStatus.value === 'unscheduled') {
+    goals = goals.filter(g => getUnscheduledStepsCount(g) > 0)
+  } else if (filterStatus.value === 'scheduled') {
+    goals = goals.filter(g => getScheduledStepsCount(g) > 0)
+  }
+  
+  return goals
 })
 
 const hasMoreGoals = computed(() => {
-  return goalsDisplayLimit.value < filteredGoalsWithSteps.value.length
+  // Больше страниц для загрузки с бэкенда
+  return currentPage.value < totalPages.value
 })
 
 // Пагинация из API
@@ -1825,9 +1832,10 @@ function quickScheduleStep(goal, step) {
   showBottomSheet.value = true
 }
 
-function loadMoreGoals() {
+async function loadMoreGoals() {
   if (hasMoreGoals.value) {
-    goalsDisplayLimit.value += 10
+    currentPage.value++
+    await loadGoalsWithFilters()
   }
 }
 
