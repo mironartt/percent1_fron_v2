@@ -51,7 +51,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAppStore } from '../stores/app'
 import { useHabitsStore } from '../stores/habits'
-import { useXpStore, XP_REWARDS } from '../stores/xp'
+import { useXpStore } from '../stores/xp'
 import { Flame, Check, Zap, ChevronRight, Plus } from 'lucide-vue-next'
 
 const appStore = useAppStore()
@@ -160,28 +160,11 @@ async function handleToggle(habit) {
     isToggling.value = true
     try {
       if (wasCompleted) {
-        const result = await habitsStore.unmarkCompleted(habit.habit_id, todayDateStr)
-        
-        if (result?.success) {
-          const lastEvent = xpStore.xpHistory.find(
-            e => e.source === 'habit_completed' && 
-                 e.metadata?.habitId === habit.habit_id &&
-                 new Date(e.timestamp).toDateString() === new Date().toDateString()
-          )
-          if (lastEvent) {
-            xpStore.revokeXP(lastEvent.id)
-          }
-        }
+        await habitsStore.unmarkCompleted(habit.habit_id, todayDateStr)
       } else {
         const result = await habitsStore.markCompleted(habit.habit_id, todayDateStr)
         
         if (result?.success) {
-          const xpAmount = habit.xpReward || XP_REWARDS.HABIT_COMPLETED
-          xpStore.awardXP(xpAmount, 'habit_completed', { 
-            habitId: habit.habit_id, 
-            habitName: habit.name 
-          })
-          
           showXP.value = habitId
           setTimeout(() => {
             showXP.value = null
@@ -195,25 +178,10 @@ async function handleToggle(habit) {
     const result = appStore.toggleHabit(habit.id)
     
     if (result.completed) {
-      const xpAmount = habit.xpReward || XP_REWARDS.HABIT_COMPLETED
-      xpStore.awardXP(xpAmount, 'habit_completed', { 
-        habitId: habit.id, 
-        habitName: habit.name 
-      })
-      
       showXP.value = habit.id
       setTimeout(() => {
         showXP.value = null
       }, 1200)
-    } else {
-      const lastEvent = xpStore.xpHistory.find(
-        e => e.source === 'habit_completed' && 
-             e.metadata?.habitId === habit.id &&
-             new Date(e.timestamp).toDateString() === new Date().toDateString()
-      )
-      if (lastEvent) {
-        xpStore.revokeXP(lastEvent.id)
-      }
     }
   }
 }
