@@ -748,6 +748,7 @@ async function loadWeeklySteps() {
 }
 
 const timeDurationMap = { 'half': '30min', 'one': '1h', 'two': '2h', 'three': '3h', 'four': '4h' }
+const timeDurationFrontendToBackend = { '30min': 'half', '1h': 'one', '2h': 'two', '3h': 'three', '4h': 'four' }
 const priorityBackendToFrontend = { 'critical': 'critical', 'important': 'desirable', 'attention': 'attention', 'optional': 'optional' }
 const priorityFrontendToBackend = { 'critical': 'critical', 'desirable': 'important', 'attention': 'attention', 'optional': 'optional' }
 const priorityOrder = { critical: 0, important: 0, desirable: 1, attention: 2, optional: 3, '': 4 }
@@ -1043,14 +1044,22 @@ function getScheduledPriority(goalId, stepId) {
 }
 
 function getScheduledTimeEstimate(goalId, stepId) {
-  for (const day of weeklyStepsData.value) {
-    const step = day.steps_data?.find(s => s.goal_id === goalId && s.step_id === stepId)
-    if (step) return step.step_time_duration || step.time_estimate || ''
-  }
-  
+  // Сначала проверяем локальные данные (обновляются сразу при выборе)
   const plan = store.weeklyPlans.find(p => p.weekStart === weekDays.value[0]?.date)
-  const task = plan?.scheduledTasks?.find(t => t.goalId === goalId && t.stepId === stepId)
-  if (task) return task.timeEstimate || task.step_time_duration || ''
+  const localTask = plan?.scheduledTasks?.find(t => 
+    (t.goalId === goalId || t.goalId === String(goalId)) && 
+    (t.stepId === stepId || t.stepId === String(stepId))
+  )
+  if (localTask?.timeEstimate) return localTask.timeEstimate
+  
+  // Затем проверяем данные с бэкенда
+  for (const day of weeklyStepsData.value) {
+    const step = day.steps_data?.find(s => 
+      (s.goal_id === goalId || s.goal_id === String(goalId)) && 
+      (s.step_id === stepId || s.step_id === String(stepId))
+    )
+    if (step) return timeDurationMap[step.step_time_duration] || step.step_time_duration || ''
+  }
   
   const goal = workingGoals.value.find(g => g.id === goalId || g.backendId === goalId)
   const localStep = goal?.steps?.find(s => s.id === stepId)
@@ -1332,7 +1341,7 @@ async function updateStepTime(time) {
       goals_steps_data: [{
         goal_id: selectedGoal.value.backendId || selectedGoal.value.id,
         step_id: selectedStep.value.backendId || selectedStep.value.id,
-        time_estimate: time || null
+        time_duration: timeDurationFrontendToBackend[time] || time || null
       }]
     })
     await loadWeeklySteps()
@@ -1395,16 +1404,30 @@ function updateStepInLocalPlan(goal, step, updates) {
     store.weeklyPlans.push(plan)
   }
   
-  const task = plan.scheduledTasks.find(
-    t => (t.goalId === goalId || t.goalId === goal.id) && 
-         (t.stepId === stepId || t.stepId === step.id)
+  let task = plan.scheduledTasks.find(
+    t => (t.goalId === goalId || t.goalId === goal.id || t.goalId === String(goalId)) && 
+         (t.stepId === stepId || t.stepId === step.id || t.stepId === String(stepId))
   )
   
-  if (task) {
-    if (updates.priority !== undefined) task.priority = updates.priority
-    if (updates.timeEstimate !== undefined) task.timeEstimate = updates.timeEstimate
-    if (updates.completed !== undefined) task.completed = updates.completed
+  if (!task) {
+    // Создаём локальную запись если шаг пришёл с бэкенда
+    task = {
+      id: `local-${goalId}-${stepId}`,
+      goalId: goalId,
+      stepId: stepId,
+      stepTitle: step.title,
+      goalTitle: goal.text || goal.title,
+      scheduledDate: step.date || getScheduledDate(goal.id, step.id),
+      timeEstimate: step.timeEstimate || '',
+      priority: step.priority || '',
+      completed: step.completed || false
+    }
+    plan.scheduledTasks.push(task)
   }
+  
+  if (updates.priority !== undefined) task.priority = updates.priority
+  if (updates.timeEstimate !== undefined) task.timeEstimate = updates.timeEstimate
+  if (updates.completed !== undefined) task.completed = updates.completed
   
   store.saveToLocalStorage()
 }
