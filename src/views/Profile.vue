@@ -65,60 +65,200 @@
           <ChevronDown :size="18" :stroke-width="1.5" class="expand-icon" />
         </button>
         <div class="history-content" v-show="historyExpanded">
-          <div v-if="historyLoading" class="loading-history">
+          <div class="history-filters">
+            <div class="filter-row">
+              <div class="filter-chips">
+                <button 
+                  class="chip-filter"
+                  :class="{ active: !historyFilters.transaction_status_filter }"
+                  @click="setStatusFilter(null)"
+                >
+                  Все
+                </button>
+                <button 
+                  class="chip-filter"
+                  :class="{ active: historyFilters.transaction_status_filter === 'earned' }"
+                  @click="setStatusFilter('earned')"
+                >
+                  Начисления
+                </button>
+                <button 
+                  class="chip-filter"
+                  :class="{ active: historyFilters.transaction_status_filter === 'spent' }"
+                  @click="setStatusFilter('spent')"
+                >
+                  Списания
+                </button>
+              </div>
+            </div>
+            <div class="filter-row">
+              <div class="filter-chips category-chips">
+                <button 
+                  class="chip-filter"
+                  :class="{ active: !historyFilters.transaction_category_filter }"
+                  @click="setCategoryFilter(null)"
+                >
+                  Все
+                </button>
+                <button 
+                  class="chip-filter"
+                  :class="{ active: historyFilters.transaction_category_filter === 'habits' }"
+                  @click="setCategoryFilter('habits')"
+                >
+                  <Flame :size="12" /> Привычки
+                </button>
+                <button 
+                  class="chip-filter"
+                  :class="{ active: historyFilters.transaction_category_filter === 'diary' }"
+                  @click="setCategoryFilter('diary')"
+                >
+                  <BookOpen :size="12" /> Дневник
+                </button>
+                <button 
+                  class="chip-filter"
+                  :class="{ active: historyFilters.transaction_category_filter === 'goals' }"
+                  @click="setCategoryFilter('goals')"
+                >
+                  <Star :size="12" /> Цели
+                </button>
+                <button 
+                  class="chip-filter"
+                  :class="{ active: historyFilters.transaction_category_filter === 'rewards' }"
+                  @click="setCategoryFilter('rewards')"
+                >
+                  <Gift :size="12" /> Награды
+                </button>
+              </div>
+            </div>
+            <div class="filter-row search-row">
+              <div class="search-input-wrapper">
+                <Search :size="16" class="search-icon" />
+                <input 
+                  type="text"
+                  v-model="searchQuery"
+                  placeholder="Поиск по названию..."
+                  class="search-input"
+                  @input="onSearchInput"
+                />
+                <button 
+                  v-if="searchQuery" 
+                  class="clear-search" 
+                  @click="clearSearch"
+                >
+                  <X :size="14" />
+                </button>
+              </div>
+              <button 
+                v-if="hasActiveFilters"
+                class="reset-filters-btn"
+                @click="resetFilters"
+              >
+                <RotateCcw :size="14" />
+                Сбросить
+              </button>
+            </div>
+          </div>
+
+          <div v-if="historyLoading && xpHistoryGroups.length === 0" class="loading-history">
             <Loader2 :size="20" class="spinner" />
             <span>Загрузка истории...</span>
           </div>
           <div v-else-if="xpHistoryGroups.length === 0" class="empty-history">
-            <p>Начните выполнять задачи и привычки, чтобы получать XP</p>
+            <p v-if="hasActiveFilters">Ничего не найдено по вашему запросу</p>
+            <p v-else>Начните выполнять задачи и привычки, чтобы получать XP</p>
           </div>
           <div v-else class="history-list">
             <div 
               v-for="dayGroup in xpHistoryGroups" 
               :key="dayGroup.date"
               class="history-day"
+              :class="{ expanded: expandedDays[dayGroup.date] }"
             >
-              <div class="day-header">
+              <button class="day-header" @click="toggleDay(dayGroup.date)">
+                <ChevronRight :size="16" class="day-expand-icon" />
                 <span class="day-date">{{ formatDayDate(dayGroup.date) }}</span>
                 <span class="day-summary">
                   <span v-if="dayGroup.total_earned > 0" class="day-earned">+{{ dayGroup.total_earned }}</span>
                   <span v-if="dayGroup.total_spent > 0" class="day-spent">-{{ dayGroup.total_spent }}</span>
                 </span>
-              </div>
-              <div 
-                v-for="group in dayGroup.groups" 
-                :key="group.group_type"
-                class="history-group"
-              >
-                <div class="group-header">
-                  <div class="history-icon" :class="getGroupClass(group.group_type)">
-                    <component :is="getGroupIcon(group.group_type)" :size="14" :stroke-width="1.5" />
-                  </div>
-                  <span class="group-label">{{ group.group_type_display }}</span>
-                  <span class="group-amount" :class="{ negative: group.total_amount < 0 }">
-                    {{ group.total_amount > 0 ? '+' : '' }}{{ group.total_amount }} XP
-                  </span>
-                </div>
-                <div v-if="group.group_type === 'reward_redeemed'" class="group-items">
-                  <div 
-                    v-for="item in group.items" 
-                    :key="item.transaction_id"
-                    class="reward-item"
+              </button>
+              <div class="day-content" v-show="expandedDays[dayGroup.date]">
+                <div 
+                  v-for="(group, groupIndex) in dayGroup.groups" 
+                  :key="group.group_type + '-' + groupIndex"
+                  class="history-group"
+                  :class="{ expanded: expandedGroups[dayGroup.date + '-' + groupIndex] }"
+                >
+                  <button 
+                    class="group-header"
+                    @click="toggleGroup(dayGroup.date, groupIndex, group)"
+                    :class="{ clickable: hasGroupDetails(group) }"
                   >
-                    <span class="reward-item-name">{{ item.reward_name }}</span>
-                    <span class="reward-item-amount">{{ item.amount }} XP</span>
+                    <ChevronRight 
+                      v-if="hasGroupDetails(group)" 
+                      :size="14" 
+                      class="group-expand-icon" 
+                    />
+                    <div class="history-icon" :class="getGroupClass(group.group_type)">
+                      <component :is="getGroupIcon(group.group_type)" :size="14" :stroke-width="1.5" />
+                    </div>
+                    <span class="group-label">{{ group.group_type_display }}</span>
+                    <span class="group-amount" :class="{ negative: group.total_amount < 0 }">
+                      {{ group.total_amount > 0 ? '+' : '' }}{{ group.total_amount }} XP
+                    </span>
+                  </button>
+                  <div 
+                    v-if="hasGroupDetails(group)" 
+                    class="group-items" 
+                    v-show="expandedGroups[dayGroup.date + '-' + groupIndex]"
+                  >
+                    <div 
+                      v-for="(item, itemIndex) in group.items" 
+                      :key="itemIndex"
+                      class="detail-item"
+                    >
+                      <span class="detail-name">{{ getItemName(item) }}</span>
+                      <span class="detail-amount" :class="{ negative: item.amount < 0 }">
+                        {{ item.amount > 0 ? '+' : '' }}{{ item.amount }} XP
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-            <button 
-              v-if="historyPage < historyTotalPages"
-              class="load-more-btn"
-              @click="loadMoreHistory"
-              :disabled="historyLoading"
-            >
-              Загрузить ещё
-            </button>
+
+            <div v-if="historyTotalPages > 1" class="pagination">
+              <button 
+                class="pagination-btn"
+                :disabled="historyPage <= 1 || historyLoading"
+                @click="goToPage(historyPage - 1)"
+              >
+                <ChevronLeft :size="16" />
+              </button>
+              <div class="pagination-pages">
+                <button
+                  v-for="pageNum in visiblePages"
+                  :key="pageNum"
+                  class="pagination-page"
+                  :class="{ active: pageNum === historyPage, dots: pageNum === '...' }"
+                  :disabled="pageNum === '...' || historyLoading"
+                  @click="pageNum !== '...' && goToPage(pageNum)"
+                >
+                  {{ pageNum }}
+                </button>
+              </div>
+              <button 
+                class="pagination-btn"
+                :disabled="historyPage >= historyTotalPages || historyLoading"
+                @click="goToPage(historyPage + 1)"
+              >
+                <ChevronRight :size="16" />
+              </button>
+            </div>
+
+            <div v-if="historyLoading" class="loading-overlay">
+              <Loader2 :size="20" class="spinner" />
+            </div>
           </div>
         </div>
       </div>
@@ -127,7 +267,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useAppStore } from '../stores/app'
 import { useXpStore } from '../stores/xp'
 import RewardWishlist from '../components/RewardWishlist.vue'
@@ -140,13 +280,22 @@ import {
   Zap,
   Star,
   ChevronDown,
+  ChevronRight,
+  ChevronLeft,
   CheckCircle,
   Gift,
   AlertCircle,
-  Loader2
+  Loader2,
+  Search,
+  X,
+  RotateCcw
 } from 'lucide-vue-next'
 
 const historyExpanded = ref(false)
+const expandedDays = reactive({})
+const expandedGroups = reactive({})
+const searchQuery = ref('')
+let searchTimeout = null
 
 const appStore = useAppStore()
 const xpStore = useXpStore()
@@ -161,10 +310,40 @@ const xpHistoryGroups = computed(() => xpStore.xpHistoryGroups)
 const historyLoading = computed(() => xpStore.historyLoading)
 const historyPage = computed(() => xpStore.historyPage)
 const historyTotalPages = computed(() => xpStore.historyTotalPages)
+const historyFilters = computed(() => xpStore.historyFilters)
+const hasActiveFilters = computed(() => xpStore.hasActiveFilters)
+
+function resetExpandedState() {
+  Object.keys(expandedDays).forEach(key => delete expandedDays[key])
+  Object.keys(expandedGroups).forEach(key => delete expandedGroups[key])
+}
 
 const nextRewardProgress = computed(() => {
   if (!nextReward.value) return 0
   return ((xpBalance.value / nextReward.value.cost) * 100).toFixed(0)
+})
+
+const visiblePages = computed(() => {
+  const total = historyTotalPages.value
+  const current = historyPage.value
+  const pages = []
+  
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i)
+  } else {
+    pages.push(1)
+    if (current > 3) pages.push('...')
+    
+    const start = Math.max(2, current - 1)
+    const end = Math.min(total - 1, current + 1)
+    
+    for (let i = start; i <= end; i++) pages.push(i)
+    
+    if (current < total - 2) pages.push('...')
+    pages.push(total)
+  }
+  
+  return pages
 })
 
 onMounted(async () => {
@@ -178,8 +357,63 @@ async function toggleHistory() {
   }
 }
 
-async function loadMoreHistory() {
-  await xpStore.loadMoreHistory()
+function toggleDay(date) {
+  expandedDays[date] = !expandedDays[date]
+}
+
+function toggleGroup(date, groupIndex, group) {
+  if (!hasGroupDetails(group)) return
+  const key = date + '-' + groupIndex
+  expandedGroups[key] = !expandedGroups[key]
+}
+
+function hasGroupDetails(group) {
+  return group.items && group.items.length > 0 && 
+    (group.items.length > 1 || group.items[0].habit_name || group.items[0].reward_name)
+}
+
+function getItemName(item) {
+  return item.habit_name || item.reward_name || item.goal_name || item.description || 'Операция'
+}
+
+async function setStatusFilter(value) {
+  xpStore.setHistoryFilter('transaction_status_filter', value)
+  resetExpandedState()
+  await xpStore.applyHistoryFilters()
+}
+
+async function setCategoryFilter(value) {
+  xpStore.setHistoryFilter('transaction_category_filter', value)
+  resetExpandedState()
+  await xpStore.applyHistoryFilters()
+}
+
+function onSearchInput() {
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(async () => {
+    xpStore.setHistoryFilter('query_filter', searchQuery.value)
+    resetExpandedState()
+    await xpStore.applyHistoryFilters()
+  }, 500)
+}
+
+async function clearSearch() {
+  searchQuery.value = ''
+  xpStore.setHistoryFilter('query_filter', '')
+  resetExpandedState()
+  await xpStore.applyHistoryFilters()
+}
+
+async function resetFilters() {
+  searchQuery.value = ''
+  xpStore.resetHistoryFilters()
+  resetExpandedState()
+  await xpStore.applyHistoryFilters()
+}
+
+async function goToPage(page) {
+  resetExpandedState()
+  await xpStore.goToHistoryPage(page)
 }
 
 function formatDayDate(dateStr) {
@@ -199,13 +433,23 @@ function formatDayDate(dateStr) {
 
 function getGroupClass(groupType) {
   switch (groupType) {
-    case 'habit_completed': return 'habit'
-    case 'habit_penalty': return 'penalty'
-    case 'journal_entry': return 'journal'
-    case 'journal_penalty': return 'penalty'
-    case 'planning_penalty': return 'penalty'
+    case 'habit_completed': 
+    case 'habits_completed': 
+      return 'habit'
+    case 'habit_penalty': 
+    case 'habits_penalty': 
+      return 'penalty'
+    case 'journal_entry': 
+    case 'diary_completed':
+      return 'journal'
+    case 'journal_penalty': 
+    case 'diary_penalty':
+    case 'planning_penalty': 
+      return 'penalty'
     case 'goal_step_completed': return 'step'
-    case 'goal_completed': return 'goal'
+    case 'goal_completed': 
+    case 'goals_completed':
+      return 'goal'
     case 'reward_redeemed': return 'reward'
     case 'achievement_bonus': return 'achievement'
     default: return 'other'
@@ -214,13 +458,22 @@ function getGroupClass(groupType) {
 
 function getGroupIcon(groupType) {
   switch (groupType) {
-    case 'habit_completed': return Flame
-    case 'habit_penalty': return AlertCircle
-    case 'journal_entry': return BookOpen
-    case 'journal_penalty': return AlertCircle
-    case 'planning_penalty': return AlertCircle
+    case 'habit_completed': 
+    case 'habits_completed': 
+      return Flame
+    case 'habit_penalty': 
+    case 'habits_penalty': 
+    case 'journal_penalty': 
+    case 'diary_penalty':
+    case 'planning_penalty': 
+      return AlertCircle
+    case 'journal_entry': 
+    case 'diary_completed':
+      return BookOpen
     case 'goal_step_completed': return Zap
-    case 'goal_completed': return Star
+    case 'goal_completed': 
+    case 'goals_completed':
+      return Star
     case 'reward_redeemed': return Gift
     case 'achievement_bonus': return Trophy
     default: return Sparkles
@@ -494,18 +747,159 @@ function getGroupIcon(groupType) {
   gap: 0.5rem;
 }
 
+.history-filters {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 1rem;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.filter-row:last-child {
+  margin-bottom: 0;
+}
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.category-chips {
+  gap: 0.25rem;
+}
+
+.filter-chips .chip-filter {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8rem;
+  border-radius: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.filter-chips .chip-filter:hover {
+  background: var(--bg-tertiary);
+}
+
+.filter-chips .chip-filter.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.search-row {
+  gap: 0.75rem;
+}
+
+.search-input-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.5rem 2rem 0.5rem 2.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.clear-search {
+  position: absolute;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+}
+
+.clear-search:hover {
+  color: var(--text-primary);
+}
+
+.reset-filters-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.reset-filters-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
 .day-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding-bottom: 0.5rem;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  background: none;
+  border: none;
   border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: background 0.2s ease;
+}
+
+.day-header:hover {
+  background: var(--bg-hover, var(--bg-secondary));
+}
+
+.day-expand-icon {
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.history-day.expanded .day-expand-icon {
+  transform: rotate(90deg);
 }
 
 .day-date {
   font-weight: 600;
   font-size: 0.9rem;
   color: var(--text-primary);
+  flex: 1;
 }
 
 .day-summary {
@@ -523,14 +917,47 @@ function getGroupIcon(groupType) {
   color: #ef4444;
 }
 
+.day-content {
+  padding-left: 0.5rem;
+  border-left: 2px solid var(--border-color);
+  margin-left: 0.5rem;
+  margin-top: 0.5rem;
+}
+
 .history-group {
-  padding: 0.5rem 0;
+  padding: 0.25rem 0;
 }
 
 .group-header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  padding: 0.25rem 0;
+  color: inherit;
+  font: inherit;
+}
+
+.group-header.clickable {
+  cursor: pointer;
+}
+
+.group-header.clickable:hover {
+  background: var(--bg-hover, var(--bg-secondary));
+  border-radius: 6px;
+}
+
+.group-expand-icon {
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.history-group.expanded .group-expand-icon {
+  transform: rotate(90deg);
 }
 
 .history-icon {
@@ -599,42 +1026,132 @@ function getGroupIcon(groupType) {
 }
 
 .group-items {
-  margin-left: 2.5rem;
-  margin-top: 0.5rem;
+  margin-left: 2rem;
+  margin-top: 0.25rem;
+  padding: 0.5rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
 
-.reward-item {
+.detail-item {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
   font-size: 0.85rem;
-  color: var(--text-secondary);
 }
 
-.reward-item-amount {
+.detail-name {
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.detail-amount {
+  font-weight: 500;
+  color: var(--success-color);
+}
+
+.detail-amount.negative {
   color: #ef4444;
 }
 
-.load-more-btn {
-  width: 100%;
-  padding: 0.75rem;
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  font-size: 0.9rem;
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.load-more-btn:hover:not(:disabled) {
+.pagination-btn:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-pages {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.pagination-page {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 0.5rem;
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-page:hover:not(:disabled):not(.active) {
   background: var(--bg-tertiary);
 }
 
-.load-more-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.pagination-page.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.pagination-page.dots {
+  background: transparent;
+  border: none;
+  cursor: default;
+}
+
+.loading-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.history-list {
+  position: relative;
+}
+
+@media (max-width: 480px) {
+  .filter-chips {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 0.25rem;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .filter-chips .chip-filter {
+    flex-shrink: 0;
+  }
+  
+  .pagination-pages {
+    max-width: 200px;
+    overflow-x: auto;
+  }
 }
 </style>

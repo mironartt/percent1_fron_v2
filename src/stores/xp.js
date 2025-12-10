@@ -64,6 +64,19 @@ export const useXpStore = defineStore('xp', () => {
   const historyPage = ref(1)
   const historyTotalPages = ref(1)
   const historyTotalItems = ref(0)
+  const historyFilteredItems = ref(0)
+  
+  const historyFilters = ref({
+    transaction_status_filter: null,
+    transaction_category_filter: null,
+    query_filter: ''
+  })
+  
+  const hasActiveFilters = computed(() => {
+    return historyFilters.value.transaction_status_filter !== null ||
+           historyFilters.value.transaction_category_filter !== null ||
+           (historyFilters.value.query_filter && historyFilters.value.query_filter.length >= 2)
+  })
 
   const availableRewards = computed(() => {
     return rewards.value
@@ -163,19 +176,20 @@ export const useXpStore = defineStore('xp', () => {
       historyLoading.value = true
       error.value = null
       
+      const filters = historyFilters.value
       const requestParams = {
         page: params.page || 1,
         page_size: params.page_size || 10
       }
       
-      if (params.transaction_status_filter) {
-        requestParams.transaction_status_filter = params.transaction_status_filter
+      if (filters.transaction_status_filter) {
+        requestParams.transaction_status_filter = filters.transaction_status_filter
       }
-      if (params.transaction_category_filter) {
-        requestParams.transaction_category_filter = params.transaction_category_filter
+      if (filters.transaction_category_filter) {
+        requestParams.transaction_category_filter = filters.transaction_category_filter
       }
-      if (params.query_filter && params.query_filter.length >= 2) {
-        requestParams.query_filter = params.query_filter
+      if (filters.query_filter && filters.query_filter.length >= 2) {
+        requestParams.query_filter = filters.query_filter
       }
       
       const result = await api.getXPHistoryGrouped(requestParams)
@@ -185,9 +199,10 @@ export const useXpStore = defineStore('xp', () => {
         historyPage.value = result.data.page || 1
         historyTotalPages.value = result.data.total_pages || 1
         historyTotalItems.value = result.data.total_items || 0
+        historyFilteredItems.value = result.data.total_filtered_items || result.data.total_items || 0
         
         if (DEBUG_MODE) {
-          console.log('[XP] History loaded:', xpHistoryGroups.value.length, 'days')
+          console.log('[XP] History loaded:', xpHistoryGroups.value.length, 'days, page', historyPage.value, '/', historyTotalPages.value)
         }
       } else {
         error.value = result.error_data?.message || 'Ошибка загрузки истории XP'
@@ -200,31 +215,25 @@ export const useXpStore = defineStore('xp', () => {
     }
   }
 
-  async function loadMoreHistory(params = {}) {
-    if (historyPage.value >= historyTotalPages.value) return
-    
-    try {
-      historyLoading.value = true
-      
-      const requestParams = {
-        page: historyPage.value + 1,
-        page_size: params.page_size || 10,
-        ...params
-      }
-      
-      const result = await api.getXPHistoryGrouped(requestParams)
-      
-      if (result.status === 'ok' && result.data) {
-        const newGroups = transformHistoryGroups(result.data.history_groups || [])
-        xpHistoryGroups.value = [...xpHistoryGroups.value, ...newGroups]
-        historyPage.value = result.data.page || historyPage.value + 1
-        historyTotalPages.value = result.data.total_pages || 1
-      }
-    } catch (e) {
-      console.error('[XP] loadMoreHistory error:', e)
-    } finally {
-      historyLoading.value = false
+  async function goToHistoryPage(page) {
+    if (page < 1 || page > historyTotalPages.value) return
+    await fetchXPHistory({ page, page_size: 10 })
+  }
+
+  function setHistoryFilter(filterName, value) {
+    historyFilters.value[filterName] = value
+  }
+
+  function resetHistoryFilters() {
+    historyFilters.value = {
+      transaction_status_filter: null,
+      transaction_category_filter: null,
+      query_filter: ''
     }
+  }
+
+  async function applyHistoryFilters() {
+    await fetchXPHistory({ page: 1, page_size: 10 })
   }
 
   async function addReward(rewardData) {
@@ -371,6 +380,12 @@ export const useXpStore = defineStore('xp', () => {
     historyPage.value = 1
     historyTotalPages.value = 1
     historyTotalItems.value = 0
+    historyFilteredItems.value = 0
+    historyFilters.value = {
+      transaction_status_filter: null,
+      transaction_category_filter: null,
+      query_filter: ''
+    }
     error.value = null
   }
 
@@ -390,6 +405,9 @@ export const useXpStore = defineStore('xp', () => {
     historyPage,
     historyTotalPages,
     historyTotalItems,
+    historyFilteredItems,
+    historyFilters,
+    hasActiveFilters,
     
     availableRewards,
     upcomingRewards,
@@ -400,7 +418,10 @@ export const useXpStore = defineStore('xp', () => {
     fetchXPStats,
     fetchRewards,
     fetchXPHistory,
-    loadMoreHistory,
+    goToHistoryPage,
+    setHistoryFilter,
+    resetHistoryFilters,
+    applyHistoryFilters,
     addReward,
     updateReward,
     removeReward,
