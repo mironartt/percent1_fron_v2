@@ -2,24 +2,22 @@
   <div class="planning-container">
     <header class="planning-header">
       <h1 class="page-title">Планирование</h1>
-      <div class="header-actions">
-        <div class="week-navigation">
-          <button class="nav-btn" @click="prevWeek" aria-label="Предыдущая неделя">
-            <ChevronLeft :size="20" />
-          </button>
-          <span class="week-range">{{ weekRangeText }}</span>
-          <button class="nav-btn" @click="nextWeek" aria-label="Следующая неделя">
-            <ChevronRight :size="20" />
-          </button>
-          <button 
-            v-if="!isCurrentWeek" 
-            class="today-btn"
-            @click="goToCurrentWeek"
-          >
-            Сегодня
-          </button>
-        </div>
+      <div class="week-navigation-wide">
+        <button class="nav-btn-wide" @click="prevWeek" aria-label="Предыдущая неделя">
+          <ChevronLeft :size="20" />
+        </button>
+        <span class="week-range">{{ weekRangeText }}</span>
+        <button class="nav-btn-wide" @click="nextWeek" aria-label="Следующая неделя">
+          <ChevronRight :size="20" />
+        </button>
       </div>
+      <button 
+        v-if="!isCurrentWeek" 
+        class="today-btn-floating"
+        @click="goToCurrentWeek"
+      >
+        Сегодня
+      </button>
     </header>
 
     <div class="week-stats">
@@ -2472,6 +2470,53 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.week-navigation-wide {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 0.5rem 0;
+}
+
+.nav-btn-wide {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg, white);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-btn-wide:hover {
+  background: var(--hover-bg, #f3f4f6);
+  color: var(--text-primary);
+}
+
+.today-btn-floating {
+  display: block;
+  margin: 0.5rem auto 0;
+  padding: 0.375rem 0.75rem;
+  border-radius: 16px;
+  border: 1px solid var(--primary, #6366f1);
+  background: transparent;
+  color: var(--primary, #6366f1);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.today-btn-floating:hover {
+  background: var(--primary, #6366f1);
+  color: white;
 }
 
 .nav-btn {
