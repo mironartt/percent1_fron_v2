@@ -1688,7 +1688,7 @@ onMounted(async () => {
   initSelectedDay()
   await Promise.all([
     loadWeeklySteps(),
-    store.loadGoalsFromBackend({ score_filter: 'true', status_filter: 'work' })
+    store.loadGoalsFromBackend({ score_filter: 'true', status_filter: 'work', with_steps_data: true })
   ])
   setupInfiniteScroll()
   document.addEventListener('click', closeSphereDropdown)
