@@ -5,9 +5,14 @@
         <Gift :size="18" :stroke-width="1.5" />
         Мои награды
       </h3>
-      <button class="btn-icon desktop-only" @click="showAddModal = true">
-        <Plus :size="18" :stroke-width="1.5" />
-      </button>
+      <div class="header-actions">
+        <button class="btn-icon" @click="showAddModal = true">
+          <Plus :size="18" :stroke-width="1.5" />
+        </button>
+        <button class="btn-icon btn-icon-ai" @click="openAiSuggestionsModal" title="Подбор от ментора">
+          <Sparkles :size="18" :stroke-width="1.5" />
+        </button>
+      </div>
     </div>
 
     <div v-if="rewardsLoading && rewards.length === 0" class="loading-state">
@@ -18,15 +23,9 @@
     <div v-else-if="rewards.length === 0" class="empty-state">
       <div class="empty-icon">🎁</div>
       <p>Добавьте награды, которые хотите получить за свои достижения</p>
-      <div class="empty-actions">
-        <button class="btn btn-primary btn-sm" @click="showAddModal = true">
-          Добавить награду
-        </button>
-        <button class="btn btn-ai btn-sm" @click="openAiSuggestionsModal">
-          <Sparkles :size="14" :stroke-width="1.5" />
-          Подбор от ментора
-        </button>
-      </div>
+      <button class="btn btn-primary btn-sm" @click="showAddModal = true">
+        Добавить награду
+      </button>
     </div>
 
     <div v-else>
