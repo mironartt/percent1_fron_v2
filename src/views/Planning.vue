@@ -1534,7 +1534,8 @@ async function loadGoalsWithFilters() {
     score_filter: 'true',
     status_filter: 'work',
     with_steps_data: true,
-    page: currentPage.value
+    page: currentPage.value,
+    page_size: 10
   }
   
   // Добавляем фильтр по сфере если выбран
@@ -2389,7 +2390,7 @@ onMounted(async () => {
   initSelectedDay()
   await Promise.all([
     loadWeeklySteps(),
-    store.loadGoalsFromBackend({ score_filter: 'true', status_filter: 'work', with_steps_data: true })
+    store.loadGoalsFromBackend({ score_filter: 'true', status_filter: 'work', with_steps_data: true, page_size: 10 })
   ])
   setupInfiniteScroll()
   document.addEventListener('click', closeSphereDropdown)
