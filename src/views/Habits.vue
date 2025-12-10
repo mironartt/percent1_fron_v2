@@ -454,7 +454,7 @@
                 @click="openAiSuggestionsModal"
               >
                 <Sparkles :size="14" :stroke-width="1.5" />
-                AI подберёт
+                Подбор от ментора
               </button>
             </div>
             
