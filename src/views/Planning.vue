@@ -3,10 +3,6 @@
     <header class="planning-header">
       <h1 class="page-title">Планирование</h1>
       <div class="header-actions">
-        <button class="ai-planner-btn" @click="openAIPlannerModal">
-          <Sparkles :size="18" />
-          <span class="ai-btn-text">AI планирование</span>
-        </button>
         <div class="week-navigation">
           <button class="nav-btn" @click="prevWeek" aria-label="Предыдущая неделя">
             <ChevronLeft :size="20" />
@@ -218,7 +214,8 @@
         </div>
       </div>
       
-      <div class="segmented-control">
+      <!-- Desktop: segmented control -->
+      <div class="segmented-control desktop-only">
         <button 
           class="segment"
           :class="{ active: filterStatus === '' }"
@@ -241,6 +238,43 @@
           Запл.
         </button>
       </div>
+      
+      <!-- Mobile: status dropdown -->
+      <div class="status-dropdown mobile-only" :class="{ open: showStatusDropdown }">
+        <button class="dropdown-trigger" @click="showStatusDropdown = !showStatusDropdown">
+          <span>{{ selectedStatusName }}</span>
+          <ChevronDown :size="14" class="dropdown-arrow" />
+        </button>
+        <div class="dropdown-menu" v-if="showStatusDropdown" @click.stop>
+          <button 
+            class="dropdown-item"
+            :class="{ active: filterStatus === '' }"
+            @click="filterStatus = ''; showStatusDropdown = false"
+          >
+            Все
+          </button>
+          <button 
+            class="dropdown-item"
+            :class="{ active: filterStatus === 'unscheduled' }"
+            @click="filterStatus = 'unscheduled'; showStatusDropdown = false"
+          >
+            Незапланированные
+          </button>
+          <button 
+            class="dropdown-item"
+            :class="{ active: filterStatus === 'scheduled' }"
+            @click="filterStatus = 'scheduled'; showStatusDropdown = false"
+          >
+            Запланированные
+          </button>
+        </div>
+      </div>
+      
+      <!-- AI Planning button -->
+      <button class="ai-planner-btn filters-ai-btn" @click="openAIPlannerModal">
+        <Sparkles :size="16" />
+        <span class="ai-btn-text desktop-only">AI планирование</span>
+      </button>
     </div>
 
     <!-- Баннер: цели без шагов -->
@@ -856,6 +890,7 @@ const selectedDay = ref(null)
 const filterSphere = ref('')
 const filterStatus = ref('')
 const showSphereDropdown = ref(false)
+const showStatusDropdown = ref(false)
 const addStepSearch = ref('')
 const goalsDisplayLimit = ref(10)
 const currentPage = ref(1)
@@ -1439,6 +1474,12 @@ const selectedSphereName = computed(() => {
   if (!filterSphere.value) return 'Все сферы'
   const sphere = spheresWithGoals.value.find(s => s.id === filterSphere.value)
   return sphere ? `${sphere.icon} ${sphere.name}` : 'Все сферы'
+})
+
+const selectedStatusName = computed(() => {
+  if (filterStatus.value === 'unscheduled') return 'Незапл.'
+  if (filterStatus.value === 'scheduled') return 'Запл.'
+  return 'Все'
 })
 
 const filteredGoalsWithSteps = computed(() => {
@@ -3042,6 +3083,72 @@ onUnmounted(() => {
 .segment.active {
   background: var(--primary, #6366f1);
   color: white;
+}
+
+/* Responsive visibility */
+.desktop-only {
+  display: flex;
+}
+
+.mobile-only {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .desktop-only {
+    display: none !important;
+  }
+  
+  .mobile-only {
+    display: flex !important;
+  }
+}
+
+/* Status dropdown (mobile) */
+.status-dropdown {
+  position: relative;
+}
+
+.status-dropdown .dropdown-trigger {
+  min-width: 80px;
+}
+
+/* AI button in filters row */
+.filters-ai-btn {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 8px;
+  border: 1px solid #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.filters-ai-btn:hover {
+  background: rgba(16, 185, 129, 0.2);
+}
+
+.filters-ai-btn .ai-btn-text {
+  margin-left: 0;
+}
+
+@media (max-width: 640px) {
+  .filters-ai-btn {
+    padding: 0.5rem;
+    min-width: 36px;
+    justify-content: center;
+  }
+  
+  .filters-ai-btn .ai-btn-text {
+    display: none;
+  }
 }
 
 .chip {
