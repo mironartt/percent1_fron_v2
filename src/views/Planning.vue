@@ -716,6 +716,7 @@ function initSelectedDay() {
 
 const weeklyStepsData = ref([])
 const weeklyStepsLoading = ref(false)
+const localUpdateTrigger = ref(0)
 
 async function loadWeeklySteps() {
   if (weeklyStepsLoading.value) return
@@ -748,27 +749,49 @@ async function loadWeeklySteps() {
 }
 
 const timeDurationMap = { 'half': '30min', 'one': '1h', 'two': '2h', 'three': '3h', 'four': '4h' }
+const timeDurationFrontendToBackend = { '30min': 'half', '1h': 'one', '2h': 'two', '3h': 'three', '4h': 'four' }
 const priorityBackendToFrontend = { 'critical': 'critical', 'important': 'desirable', 'attention': 'attention', 'optional': 'optional' }
 const priorityFrontendToBackend = { 'critical': 'critical', 'desirable': 'important', 'attention': 'attention', 'optional': 'optional' }
 const priorityOrder = { critical: 0, important: 0, desirable: 1, attention: 2, optional: 3, '': 4 }
 
 function getTasksForDay(dateStr) {
+  // Триггер для реактивности при локальных изменениях
+  void localUpdateTrigger.value
+  
+  const weekStart = weekDays.value[0]?.date
+  const plan = store.weeklyPlans.find(p => p.weekStart === weekStart)
+  const localTasks = plan?.scheduledTasks || []
+  
   const dayData = weeklyStepsData.value.find(d => d.date === dateStr)
   if (dayData && dayData.steps_data && dayData.steps_data.length > 0) {
     return dayData.steps_data
-      .map(step => ({
-        id: `backend-${step.step_id}`,
-        goalId: step.goal_id,
-        stepId: step.step_id,
-        stepTitle: step.step_title,
-        goalTitle: step.goal_title,
-        goalCategory: step.goal_category,
-        scheduledDate: step.step_dt,
-        timeEstimate: timeDurationMap[step.step_time_duration] || '',
-        priority: priorityBackendToFrontend[step.step_priority] || step.step_priority || '',
-        completed: step.step_is_complete || false,
-        order: step.step_order
-      }))
+      .map(step => {
+        // Ищем локальные override-ы для этого шага
+        const localOverride = localTasks.find(t => 
+          (t.goalId === step.goal_id || t.goalId === String(step.goal_id)) &&
+          (t.stepId === step.step_id || t.stepId === String(step.step_id))
+        )
+        
+        // Бэкенд значения
+        const backendTime = timeDurationMap[step.step_time_duration] || ''
+        const backendPriority = priorityBackendToFrontend[step.step_priority] || step.step_priority || ''
+        const backendCompleted = step.step_is_complete || false
+        
+        return {
+          id: `backend-${step.step_id}`,
+          goalId: step.goal_id,
+          stepId: step.step_id,
+          stepTitle: step.step_title,
+          goalTitle: step.goal_title,
+          goalCategory: step.goal_category,
+          scheduledDate: step.step_dt,
+          // Локальные override-ы имеют приоритет над бэкендом
+          timeEstimate: localOverride?.timeEstimate ?? backendTime,
+          priority: localOverride?.priority ?? backendPriority,
+          completed: localOverride?.completed ?? backendCompleted,
+          order: step.step_order
+        }
+      })
       .sort((a, b) => {
         const priorityA = priorityOrder[a.priority] ?? 4
         const priorityB = priorityOrder[b.priority] ?? 4
@@ -776,10 +799,8 @@ function getTasksForDay(dateStr) {
       })
   }
   
-  const plan = store.weeklyPlans.find(p => p.weekStart === weekDays.value[0]?.date)
-  if (!plan) return []
-  
-  return (plan.scheduledTasks || [])
+  // Если бэкенд данных нет, используем только локальные
+  return localTasks
     .filter(t => t.scheduledDate === dateStr)
     .sort((a, b) => {
       const priorityA = priorityOrder[a.priority] ?? 4
@@ -877,27 +898,20 @@ function formatTimeShort(time) {
   return labels[time] || time
 }
 
-const rawIdeas = computed(() => store.goalsBank?.rawIdeas || [])
 const workingGoals = computed(() => store.goals || [])
 const lifeSpheres = computed(() => store.lifeSpheres)
 
-function isGoalTransferred(goalId) {
-  return workingGoals.value.some(g => g.sourceId === goalId && g.source === 'goals-bank' && g.status !== 'completed')
-}
-
 const goalsWithSteps = computed(() => {
-  return rawIdeas.value.filter(g => 
-    g.status === 'validated' && 
-    isGoalTransferred(g.id) &&
+  return workingGoals.value.filter(g => 
+    g.status !== 'completed' &&
     g.steps && 
     g.steps.length > 0
   )
 })
 
 const goalsWithoutSteps = computed(() => {
-  return rawIdeas.value.filter(g => 
-    g.status === 'validated' && 
-    isGoalTransferred(g.id) &&
+  return workingGoals.value.filter(g => 
+    g.status !== 'completed' &&
     (!g.steps || g.steps.length === 0)
   )
 })
@@ -1008,8 +1022,7 @@ function isStepScheduled(goalId, stepId) {
     return true
   }
   
-  // Check in both rawIdeas and workingGoals
-  const goal = rawIdeas.value.find(g => g.id === goalId) || workingGoals.value.find(g => g.id === goalId)
+  const goal = workingGoals.value.find(g => g.id === goalId || g.backendId === goalId)
   const step = goal?.steps?.find(s => s.id === stepId)
   return !!step?.date
 }
@@ -1024,12 +1037,15 @@ function getScheduledDate(goalId, stepId) {
   const task = plan?.scheduledTasks?.find(t => t.goalId === goalId && t.stepId === stepId)
   if (task) return task.scheduledDate
   
-  const goal = rawIdeas.value.find(g => g.id === goalId) || workingGoals.value.find(g => g.id === goalId)
+  const goal = workingGoals.value.find(g => g.id === goalId || g.backendId === goalId)
   const step = goal?.steps?.find(s => s.id === stepId)
   return step?.date || ''
 }
 
 function getScheduledPriority(goalId, stepId) {
+  // Триггер для реактивности
+  void localUpdateTrigger.value
+  
   // Сначала проверяем локальные данные (обновляются сразу при выборе)
   const plan = store.weeklyPlans.find(p => p.weekStart === weekDays.value[0]?.date)
   const localTask = plan?.scheduledTasks?.find(t => 
@@ -1051,16 +1067,27 @@ function getScheduledPriority(goalId, stepId) {
 }
 
 function getScheduledTimeEstimate(goalId, stepId) {
+  // Триггер для реактивности
+  void localUpdateTrigger.value
+  
+  // Сначала проверяем локальные данные (обновляются сразу при выборе)
+  const plan = store.weeklyPlans.find(p => p.weekStart === weekDays.value[0]?.date)
+  const localTask = plan?.scheduledTasks?.find(t => 
+    (t.goalId === goalId || t.goalId === String(goalId)) && 
+    (t.stepId === stepId || t.stepId === String(stepId))
+  )
+  if (localTask?.timeEstimate) return localTask.timeEstimate
+  
+  // Затем проверяем данные с бэкенда
   for (const day of weeklyStepsData.value) {
-    const step = day.steps_data?.find(s => s.goal_id === goalId && s.step_id === stepId)
-    if (step) return step.step_time_duration || step.time_estimate || ''
+    const step = day.steps_data?.find(s => 
+      (s.goal_id === goalId || s.goal_id === String(goalId)) && 
+      (s.step_id === stepId || s.step_id === String(stepId))
+    )
+    if (step) return timeDurationMap[step.step_time_duration] || step.step_time_duration || ''
   }
   
-  const plan = store.weeklyPlans.find(p => p.weekStart === weekDays.value[0]?.date)
-  const task = plan?.scheduledTasks?.find(t => t.goalId === goalId && t.stepId === stepId)
-  if (task) return task.timeEstimate || task.step_time_duration || ''
-  
-  const goal = rawIdeas.value.find(g => g.id === goalId) || workingGoals.value.find(g => g.id === goalId)
+  const goal = workingGoals.value.find(g => g.id === goalId || g.backendId === goalId)
   const localStep = goal?.steps?.find(s => s.id === stepId)
   return localStep?.timeEstimate || localStep?.time_estimate || ''
 }
@@ -1340,7 +1367,7 @@ async function updateStepTime(time) {
       goals_steps_data: [{
         goal_id: selectedGoal.value.backendId || selectedGoal.value.id,
         step_id: selectedStep.value.backendId || selectedStep.value.id,
-        time_estimate: time || null
+        time_duration: timeDurationFrontendToBackend[time] || time || null
       }]
     })
     await loadWeeklySteps()
@@ -1403,16 +1430,33 @@ function updateStepInLocalPlan(goal, step, updates) {
     store.weeklyPlans.push(plan)
   }
   
-  const task = plan.scheduledTasks.find(
-    t => (t.goalId === goalId || t.goalId === goal.id) && 
-         (t.stepId === stepId || t.stepId === step.id)
+  let task = plan.scheduledTasks.find(
+    t => (t.goalId === goalId || t.goalId === goal.id || t.goalId === String(goalId)) && 
+         (t.stepId === stepId || t.stepId === step.id || t.stepId === String(stepId))
   )
   
-  if (task) {
-    if (updates.priority !== undefined) task.priority = updates.priority
-    if (updates.timeEstimate !== undefined) task.timeEstimate = updates.timeEstimate
-    if (updates.completed !== undefined) task.completed = updates.completed
+  if (!task) {
+    // Создаём локальную запись если шаг пришёл с бэкенда
+    task = {
+      id: `local-${goalId}-${stepId}`,
+      goalId: goalId,
+      stepId: stepId,
+      stepTitle: step.title,
+      goalTitle: goal.text || goal.title,
+      scheduledDate: step.date || getScheduledDate(goal.id, step.id),
+      timeEstimate: step.timeEstimate || '',
+      priority: step.priority || '',
+      completed: step.completed || false
+    }
+    plan.scheduledTasks.push(task)
   }
+  
+  if (updates.priority !== undefined) task.priority = updates.priority
+  if (updates.timeEstimate !== undefined) task.timeEstimate = updates.timeEstimate
+  if (updates.completed !== undefined) task.completed = updates.completed
+  
+  // Триггерим реактивность для перерендера UI
+  localUpdateTrigger.value++
   
   store.saveToLocalStorage()
 }
@@ -1641,18 +1685,10 @@ function saveStepToLocalPlan(goal, step, date) {
 }
 
 function updateStepDateInCollections(goalId, stepId, date) {
-  // Обновить в rawIdeas
-  const rawGoal = rawIdeas.value.find(g => g.id === goalId || g.backendId === goalId)
-  if (rawGoal) {
-    const rawStep = rawGoal.steps?.find(s => s.id === stepId || s.backendId === stepId)
-    if (rawStep) rawStep.date = date
-  }
-  
-  // Обновить в workingGoals
-  const workGoal = workingGoals.value.find(g => g.id === goalId || g.backendId === goalId)
-  if (workGoal) {
-    const workStep = workGoal.steps?.find(s => s.id === stepId || s.backendId === stepId)
-    if (workStep) workStep.date = date
+  const goal = workingGoals.value.find(g => g.id === goalId || g.backendId === goalId)
+  if (goal) {
+    const step = goal.steps?.find(s => s.id === stepId || s.backendId === stepId)
+    if (step) step.date = date
   }
 }
 
@@ -1702,7 +1738,10 @@ function closeSphereDropdown(e) {
 
 onMounted(async () => {
   initSelectedDay()
-  await loadWeeklySteps()
+  await Promise.all([
+    loadWeeklySteps(),
+    store.loadGoalsFromBackend({ score_filter: 'true', status_filter: 'work', with_steps_data: true })
+  ])
   setupInfiniteScroll()
   document.addEventListener('click', closeSphereDropdown)
   

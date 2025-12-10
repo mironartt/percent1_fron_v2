@@ -939,6 +939,117 @@ export async function deleteGoalNote(goalId, noteId) {
   })
 }
 
+// ========================================
+// XP & REWARDS API
+// ========================================
+
+/**
+ * Получить статистику XP пользователя
+ * @returns {Promise<object>} - Статистика XP
+ * @property {number} data.xp_balance - Текущий баланс XP
+ * @property {number} data.lifetime_xp - Всего заработано XP
+ * @property {number} data.today_xp - Заработано сегодня
+ * @property {number} data.week_xp - Заработано за неделю
+ */
+export async function getXPStats() {
+  return request('POST', '/api/rest/front/app/habits/xp/stats/')
+}
+
+/**
+ * Получить список наград с фильтрацией и сортировкой
+ * @param {object} params - Параметры запроса
+ * @param {string} [params.status_filter] - Фильтр по статусу: 'available' | 'redeemed' | null
+ * @param {boolean} [params.include_deleted] - Включить удалённые награды
+ * @param {string} [params.query_filter] - Поиск по названию/описанию (мин 2 символа)
+ * @param {string} [params.order_by] - Сортировка: 'cost' | 'distance_to_afford' | 'date_created'
+ * @param {string} [params.order_direction] - Направление: 'asc' | 'desc'
+ * @returns {Promise<object>} - Список наград
+ * @property {Array} data.rewards - Массив наград
+ * @property {number} data.total_items - Всего наград
+ * @property {number} data.total_filtered_items - С учётом фильтров
+ * @property {number} data.current_balance - Текущий баланс XP
+ */
+export async function getRewards(params = {}) {
+  return request('POST', '/api/rest/front/app/habits/rewards/get/', params)
+}
+
+/**
+ * Создать новую награду
+ * @param {object} data - Данные награды
+ * @param {string} data.name - Название награды (обязательно)
+ * @param {number} data.cost - Стоимость в XP (обязательно)
+ * @param {string} [data.icon] - Иконка (emoji), по умолчанию '🎁'
+ * @param {string} [data.description] - Описание
+ * @returns {Promise<object>} - { reward_id }
+ */
+export async function createReward(data) {
+  return request('POST', '/api/rest/front/app/habits/rewards/create/', data)
+}
+
+/**
+ * Обновить награду
+ * @param {number} rewardId - ID награды
+ * @param {object} data - Данные для обновления
+ * @param {string} [data.name] - Название
+ * @param {number} [data.cost] - Стоимость
+ * @param {string} [data.icon] - Иконка
+ * @param {string} [data.description] - Описание
+ * @returns {Promise<object>} - Результат
+ */
+export async function updateReward(rewardId, data) {
+  return request('POST', '/api/rest/front/app/habits/rewards/update/', {
+    reward_id: rewardId,
+    ...data
+  })
+}
+
+/**
+ * Удалить награду
+ * @param {number} rewardId - ID награды
+ * @param {boolean} [permanent=false] - Безвозвратное удаление (true) или soft-delete (false)
+ * @returns {Promise<object>} - Результат
+ */
+export async function deleteReward(rewardId, permanent = false) {
+  return request('POST', '/api/rest/front/app/habits/rewards/delete/', {
+    reward_id: rewardId,
+    permanent
+  })
+}
+
+/**
+ * Получить награду (покупка за XP)
+ * @param {number} rewardId - ID награды
+ * @returns {Promise<object>} - Результат
+ * @property {boolean} data.success - Успешно ли
+ * @property {number} [data.new_balance] - Новый баланс XP (при успехе)
+ * @property {string} [data.error] - Код ошибки: 'insufficient_xp' | 'reward_not_found' | 'already_redeemed'
+ */
+export async function redeemReward(rewardId) {
+  return request('POST', '/api/rest/front/app/habits/rewards/redeem/', {
+    reward_id: rewardId
+  })
+}
+
+/**
+ * Получить группированную историю XP транзакций
+ * @param {object} params - Параметры запроса
+ * @param {string} [params.transaction_status_filter] - Фильтр: 'earned' | 'spent' | null
+ * @param {string} [params.transaction_category_filter] - Категория: 'habits' | 'diary' | 'planning' | 'rewards' | 'goals' | 'other'
+ * @param {string} [params.query_filter] - Поиск по названиям (мин 2 символа)
+ * @param {number} [params.page] - Номер страницы (по дням)
+ * @param {number} [params.page_size] - Размер страницы (5-50, по умолчанию 10)
+ * @returns {Promise<object>} - Сгруппированная история
+ * @property {Array} data.history_groups - Группы по дням
+ * @property {number} data.total_items - Всего дней
+ * @property {number} data.total_filtered_items - С учётом фильтров
+ * @property {number} data.total_pages - Всего страниц
+ * @property {number} data.page - Текущая страница
+ * @property {number} data.page_size - Размер страницы
+ */
+export async function getXPHistoryGrouped(params = {}) {
+  return request('POST', '/api/rest/front/app/habits/xp/history-grouped/', params)
+}
+
 // Экспорт API как объекта для удобства
 export const api = {
   request,
@@ -986,7 +1097,15 @@ export const api = {
   updateGoalNotes,
   createGoalNote,
   updateGoalNote,
-  deleteGoalNote
+  deleteGoalNote,
+  // XP & Rewards API
+  getXPStats,
+  getRewards,
+  createReward,
+  updateReward,
+  deleteReward,
+  redeemReward,
+  getXPHistoryGrouped
 }
 
 export default api

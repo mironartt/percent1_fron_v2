@@ -211,7 +211,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useAppStore } from '../stores/app'
-import { useXpStore, XP_REWARDS } from '../stores/xp'
+import { useXpStore } from '../stores/xp'
 import OnboardingAI from '../components/OnboardingAI.vue'
 import MiniTaskWelcome from '../components/MiniTaskWelcome.vue'
 import MiniTask from '../components/MiniTask.vue'
@@ -364,24 +364,7 @@ function onMiniTaskSkip() {
 }
 
 function toggleFocusTask(task) {
-  const result = store.toggleTodayTask(task.id)
-  if (!result) return
-  
-  if (result.isNowCompleted) {
-    xpStore.awardXP(XP_REWARDS.FOCUS_TASK_COMPLETED, 'focus_task_completed', { 
-      taskId: result.taskId, 
-      taskTitle: result.taskTitle 
-    })
-  } else {
-    const lastEvent = xpStore.xpHistory.find(
-      e => e.source === 'focus_task_completed' && 
-           e.metadata?.taskId === result.taskId &&
-           new Date(e.timestamp).toDateString() === new Date().toDateString()
-    )
-    if (lastEvent) {
-      xpStore.revokeXP(lastEvent.id)
-    }
-  }
+  store.toggleTodayTask(task.id)
 }
 
 function openMentorPanel() {

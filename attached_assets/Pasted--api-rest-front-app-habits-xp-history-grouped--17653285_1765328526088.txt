@@ -1,0 +1,95 @@
+Были внесены правки в эндпоинте `/api/rest/front/app/habits/xp/history-grouped/`.
+
+Резюмирую что было сделано:
+
+  Резюме выполненной работы
+
+  1. Анализ проблемы
+
+  Изучил ответ API /api/rest/front/app/habits/xp/history-grouped/ и выявил проблемы:
+  - В habits_penalty сумма показывает 6, но одна из деталей содержит -6 вместо 6
+  - Отсутствует поле title для человекочитаемого описания типов записей
+
+  2. Внесённые изменения в get_xp_history_grouped() (core/models/globals.py, строки 1969-2051)
+
+  a) Добавлено поле title для всех типов записей:
+
+  - ✅ 'habits_completed' → 'Награда за выполнение привычек'
+  - ✅ 'habits_penalty' → 'Штраф за невыполнение привычек'
+  - ✅ 'diary_completed' → 'Награда за заполнение дневника'
+  - ✅ 'diary_penalty' → 'Штраф за незаполнение дневника'
+  - ✅ 'planning_penalty' → 'Штраф за невыполнение планов'
+  - ✅ 'reward_redeemed' → 'Достижение: {название награды}'
+  - ✅ 'goals_completed' → 'Награда за выполнение целей'
+  - ✅ Для прочих → 'Прочее'
+  
+  TODO: теперь фронту нужно отображать поле title, а не писать самому
+
+  b) Улучшена логика обработки дневника:
+
+  - Теперь дневник разделяется на два отдельных типа записей:
+    - diary_completed (награды, amount > 0)
+    - diary_penalty (штрафы, amount < 0)
+
+  Вместо старого:
+  if diary_entries:
+      total_amount = sum(d['amount'] for d in diary_entries)
+      day_entries.append({
+          'type': 'diary',
+          'amount': total_amount,
+          'details': diary_entries
+      })
+
+  Стало:
+  if diary_entries:
+      earned_entries = [d for d in diary_entries if d['amount'] > 0]
+      penalty_entries = [d for d in diary_entries if d['amount'] < 0]
+
+      if earned_entries:
+          total_amount = sum(d['amount'] for d in earned_entries)
+          day_entries.append({
+              'type': 'diary_completed',
+              'title': 'Награда за заполнение дневника',
+              'amount': total_amount,
+              'details': earned_entries
+          })
+
+      if penalty_entries:
+          total_amount = sum(d['amount'] for d in penalty_entries)
+          day_entries.append({
+              'type': 'diary_penalty',
+              'title': 'Штраф за незаполнение дневника',
+              'amount': total_amount,
+              'details': penalty_entries
+          })
+
+  c) Переименованы типы для большей ясности:
+
+  - 'diary' → разделён на 'diary_completed' и 'diary_penalty'
+  - 'goals' → переименован в 'goals_completed'
+
+  3. Проверка management commands
+
+  Убедился, что все management commands (generate_habits_history.py, process_daily_habits.py) корректно работают с новой структурой:
+  - Используют типы транзакций: habit_completed, habit_penalty, journal_penalty, planning_penalty
+  - Все эти типы корректно обрабатываются в обновлённом методе
+
+  4. Результат
+
+  Теперь ответ API будет корректным и более информативным:
+  {
+    "entries": [
+      {
+        "type": "habits_penalty",
+        "title": "Штраф за невыполнение привычек",
+        "amount": -18,  // Сумма всех штрафов (отрицательная)
+        "details": [...]
+      }
+    ]
+  }
+
+  Все изменения применены, код готов к использованию! ✅
+
+----
+
+Изучи проделанные правки, и внеси доработки на фронте, чтобы корректно работать с ними.
