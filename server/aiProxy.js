@@ -407,6 +407,118 @@ ${userContext ? `Контекст пользователя: ${userContext}` : ''
   }
 })
 
+app.post('/api/ai/suggest-habits', async (req, res) => {
+  try {
+    const { spheres, growthZones, goals, existingHabits } = req.body
+
+    const systemPrompt = `Ты - персональный AI-ментор по формированию привычек. На основе данных пользователя о его жизненном балансе, целях и паттернах поведения, предложи 3 персонализированные привычки.
+
+Данные пользователя включают:
+- Оценки сфер жизни (от 0 до 10)
+- Зоны роста (сферы с низкими оценками)
+- Рефлексии: что мешает, чего хочет достичь
+- Текущие цели пользователя
+- Уже имеющиеся привычки (чтобы не дублировать)
+
+Верни JSON:
+{
+  "suggestions": [
+    {
+      "name": "Название привычки (короткое, до 40 символов)",
+      "icon": "🔥",
+      "whyUseful": "Почему эта привычка полезна именно этому пользователю (2-3 предложения, персонализированно, ссылайся на данные пользователя)",
+      "frequencyType": "daily",
+      "scheduleDays": [0, 1, 2, 3, 4, 5, 6],
+      "scheduleLabel": "Каждый день",
+      "xpReward": 10
+    }
+  ]
+}
+
+Правила:
+- Предложи РОВНО 3 привычки
+- Фокусируйся на зонах роста пользователя и его целях
+- Учитывай препятствия из рефлексий
+- Привычки должны быть простыми и выполнимыми ежедневно или несколько раз в неделю
+- whyUseful должен быть персонализированным
+- Не предлагай привычки, которые уже есть у пользователя
+- Используй подходящие эмодзи для иконок
+- frequencyType: "daily" (каждый день), "weekdays" (будни), "weekends" (выходные), "custom" (свой график)
+- scheduleDays: [0-6] где 0=Воскресенье, 1=Понедельник и т.д.
+- scheduleLabel: читаемое описание ("Каждый день", "Будни", "Пн, Ср, Пт" и т.д.)
+- xpReward: от 5 до 20 в зависимости от сложности
+- Отвечай на русском языке
+- Отвечай ТОЛЬКО валидным JSON`
+
+    let userMessage = 'Данные пользователя:\n\n'
+    
+    if (spheres?.length > 0) {
+      userMessage += 'Оценки сфер жизни:\n'
+      spheres.forEach(s => {
+        userMessage += `- ${s.name}: ${s.score}/10\n`
+      })
+      userMessage += '\n'
+    }
+    
+    if (growthZones?.length > 0) {
+      userMessage += 'Зоны роста (приоритетные направления):\n'
+      growthZones.forEach(z => {
+        userMessage += `- ${z.name} (${z.score}/10)\n`
+        if (z.desired) userMessage += `  Желаемое: ${z.desired}\n`
+        if (z.prevents) userMessage += `  Препятствия: ${z.prevents}\n`
+      })
+      userMessage += '\n'
+    }
+    
+    if (goals?.length > 0) {
+      userMessage += 'Текущие цели:\n'
+      goals.forEach(g => {
+        userMessage += `- ${g.text}\n`
+      })
+      userMessage += '\n'
+    }
+    
+    if (existingHabits?.length > 0) {
+      userMessage += 'Уже имеющиеся привычки (не дублируй их):\n'
+      existingHabits.forEach(h => {
+        userMessage += `- ${h}\n`
+      })
+    }
+
+    const response = await openai.chat.completions.create({
+      model: MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
+      ],
+      response_format: { type: 'json_object' },
+      max_completion_tokens: 2048
+    })
+
+    const content = response.choices?.[0]?.message?.content
+    if (!content) {
+      throw new Error('Empty response from AI')
+    }
+
+    const parsed = JSON.parse(content)
+    
+    if (!Array.isArray(parsed.suggestions) || parsed.suggestions.length === 0) {
+      throw new Error('Invalid response format from AI')
+    }
+
+    res.json({
+      success: true,
+      suggestions: parsed.suggestions.slice(0, 3)
+    })
+  } catch (error) {
+    console.error('[AI Proxy] Suggest habits error:', error)
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error generating habit suggestions'
+    })
+  }
+})
+
 app.get('/api/ai/health', (req, res) => {
   res.json({ status: 'ok' })
 })
