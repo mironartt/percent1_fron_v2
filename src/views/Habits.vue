@@ -1449,7 +1449,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useAppStore } from '../stores/app'
-import { useXpStore, XP_REWARDS } from '../stores/xp'
+import { useXpStore } from '../stores/xp'
 import { useToastStore } from '../stores/toast'
 import { useHabitsStore } from '../stores/habits'
 import { DEBUG_MODE } from '@/config/settings.js'
@@ -3392,42 +3392,38 @@ async function toggleHabitCompletion(habit) {
     return
   }
   
-  const result = appStore.toggleHabit(habit.id)
   const todayStr = new Date().toISOString().split('T')[0]
+  const habitId = habit.habit_id || habit.backendId || habit.id
+  const isCurrentlyCompleted = isHabitCompletedToday(habit)
   
-  if (result.completed) {
-    const xpAmount = habit.xpReward || XP_REWARDS.HABIT_COMPLETED
-    xpStore.awardXP(xpAmount, 'habit_completed', { 
-      habitId: habit.id, 
-      habitName: habit.name 
-    })
-    
-    showXpPopup.value = habit.id
+  if (DEBUG_MODE) {
+    console.log('[Habits] Toggle habit:', habit.name, 'habitId:', habitId, 'completed:', isCurrentlyCompleted)
+  }
+  
+  if (!isCurrentlyCompleted) {
+    showXpPopup.value = habit.id || habit.habit_id
     setTimeout(() => {
       showXpPopup.value = null
     }, 1200)
     
-    const backendResult = await habitsStore.markCompleted(habit.backendId || habit.id, todayStr)
+    const backendResult = await habitsStore.markCompleted(habitId, todayStr)
     if (backendResult.success) {
       await habitsStore.loadStatsPanel()
+      if (DEBUG_MODE) {
+        console.log('[Habits] Habit marked completed successfully')
+      }
     } else if (DEBUG_MODE) {
-      console.log('[Habits] Backend completion sync failed, will retry later')
+      console.log('[Habits] Backend completion sync failed:', backendResult.error)
     }
   } else {
-    const lastEvent = xpStore.xpHistory.find(
-      e => e.source === 'habit_completed' && 
-           e.metadata?.habitId === habit.id &&
-           new Date(e.timestamp).toDateString() === new Date().toDateString()
-    )
-    if (lastEvent) {
-      xpStore.revokeXP(lastEvent.id)
-    }
-    
-    const backendResult = await habitsStore.unmarkCompleted(habit.backendId || habit.id, todayStr)
+    const backendResult = await habitsStore.unmarkCompleted(habitId, todayStr)
     if (backendResult.success) {
       await habitsStore.loadStatsPanel()
+      if (DEBUG_MODE) {
+        console.log('[Habits] Habit unmarked successfully')
+      }
     } else if (DEBUG_MODE) {
-      console.log('[Habits] Backend undo sync failed, will retry later')
+      console.log('[Habits] Backend undo sync failed:', backendResult.error)
     }
   }
 }

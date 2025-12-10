@@ -366,19 +366,50 @@
         </div>
       </div>
       
-      <!-- Мини-журнал цели -->
+      <!-- Блок заметок -->
       <div class="mini-journal-section">
         <button class="mini-journal-toggle" @click="toggleMiniJournal">
           <BookOpen :size="18" />
           <span>Заметки</span>
-          <span v-if="miniJournalEntries.length" class="journal-count">{{ miniJournalEntries.length }}</span>
+          <span v-if="notesCountBadge" class="journal-count">{{ notesCountBadge }}</span>
           <ChevronDown :size="16" class="toggle-icon" :class="{ rotated: showMiniJournal }" />
         </button>
-        
+
         <transition name="slide">
           <div v-if="showMiniJournal" class="mini-journal-content">
+
+            <!-- Поиск -->
+            <div v-if="totalNotesCount > 5" class="notes-search-bar">
+              <div class="notes-search-expandable" :class="{ expanded: showNotesSearch }">
+                <button
+                  v-if="!showNotesSearch"
+                  class="notes-search-toggle-btn"
+                  @click="toggleNotesSearch"
+                  title="Поиск по заметкам"
+                >
+                  <Search :size="16" />
+                </button>
+                <div v-else class="notes-search-input-wrapper">
+                  <Search :size="14" class="search-icon" />
+                  <input
+                    ref="notesSearchInputRef"
+                    v-model="notesSearchQuery"
+                    type="text"
+                    class="notes-search-input"
+                    placeholder="Поиск..."
+                    @input="onNotesSearchInput"
+                    @blur="onNotesSearchBlur"
+                  />
+                  <button class="notes-search-close-btn" @click="closeNotesSearch">
+                    <X :size="12" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Поле ввода новой заметки -->
             <div class="journal-input-wrapper">
-              <textarea 
+              <textarea
                 v-model="miniJournalEntry"
                 class="journal-input"
                 placeholder="Запишите мысли, прогресс или идеи..."
@@ -386,7 +417,7 @@
                 @keydown.ctrl.enter="addMiniJournalEntry"
                 @keydown.meta.enter="addMiniJournalEntry"
               ></textarea>
-              <button 
+              <button
                 class="journal-add-btn"
                 @click="addMiniJournalEntry"
                 :disabled="!miniJournalEntry.trim()"
@@ -394,27 +425,121 @@
                 <Send :size="16" />
               </button>
             </div>
-            
-            <div v-if="miniJournalEntries.length" class="journal-entries">
-              <div 
-                v-for="entry in miniJournalEntries" 
-                :key="entry.id" 
+
+            <!-- Loader -->
+            <div v-if="isLoadingNotes" class="notes-loading">
+              <div class="loading-spinner-small"></div>
+              <span>Загрузка заметок...</span>
+            </div>
+
+            <!-- Список заметок -->
+            <div v-else-if="miniJournalEntries.length" class="journal-entries">
+              <div
+                v-for="entry in miniJournalEntries"
+                :key="entry.note_id"
                 class="journal-entry"
+                :class="{ editing: editingNoteId === entry.note_id }"
               >
                 <div class="entry-header">
-                  <span class="entry-date">{{ formatJournalDate(entry.createdAt) }}</span>
-                  <button class="entry-delete" @click="removeMiniJournalEntry(entry.id)">
-                    <X :size="14" />
-                  </button>
+                  <span class="entry-date">{{ formatJournalDate(entry.date_created) }}</span>
+                  <div class="entry-actions">
+                    <!-- Кнопка редактирования -->
+                    <button
+                      v-if="editingNoteId !== entry.note_id"
+                      class="entry-edit"
+                      @click="startEditingNote(entry)"
+                      title="Редактировать"
+                    >
+                      <Edit2 :size="14" />
+                    </button>
+                    <!-- Кнопка удаления -->
+                    <button
+                      v-if="editingNoteId !== entry.note_id"
+                      class="entry-delete"
+                      @click="removeMiniJournalEntry(entry.note_id)"
+                      title="Удалить"
+                    >
+                      <X :size="14" />
+                    </button>
+                  </div>
                 </div>
-                <p class="entry-text">{{ entry.text }}</p>
+
+                <!-- Режим просмотра -->
+                <p v-if="editingNoteId !== entry.note_id" class="entry-text">{{ entry.text }}</p>
+
+                <!-- Режим редактирования -->
+                <div v-else class="entry-edit-mode">
+                  <textarea
+                    v-model="editingNoteText"
+                    class="entry-edit-input"
+                    rows="3"
+                    @keydown.ctrl.enter="saveEditedNote(entry.note_id)"
+                    @keydown.meta.enter="saveEditedNote(entry.note_id)"
+                    @keydown.esc="cancelEditingNote"
+                  ></textarea>
+                  <div class="entry-edit-actions">
+                    <button
+                      class="btn-cancel-edit"
+                      @click="cancelEditingNote"
+                      :disabled="isSavingNote"
+                    >
+                      Отмена
+                    </button>
+                    <button
+                      class="btn-save-edit"
+                      @click="saveEditedNote(entry.note_id)"
+                      :disabled="!editingNoteText.trim() || isSavingNote"
+                    >
+                      <Save :size="14" />
+                      {{ isSavingNote ? 'Сохранение...' : 'Сохранить' }}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-            
+
+            <!-- Пустое состояние -->
+            <div v-else-if="!isLoadingNotes && hasActiveNotesFilters" class="journal-empty">
+              <Search :size="24" />
+              <p>Ничего не найдено</p>
+              <button class="btn-clear-search" @click="closeNotesSearch">
+                Очистить поиск
+              </button>
+            </div>
+
             <div v-else class="journal-empty">
               <Lightbulb :size="24" />
               <p>Записывайте идеи и прогресс по этой цели</p>
             </div>
+
+            <!-- Пагинация -->
+            <div v-if="totalNotesPages > 1" class="notes-pagination-bar">
+              <button
+                class="pagination-btn"
+                :disabled="currentNotesPage === 1"
+                @click="goToNotesPage(currentNotesPage - 1)"
+              >
+                <ChevronLeft :size="16" />
+              </button>
+              <button
+                v-for="page in visibleNotesPages"
+                :key="page"
+                class="pagination-btn"
+                :class="{ active: page === currentNotesPage, ellipsis: page === '...' }"
+                :disabled="page === '...'"
+                @click="page !== '...' && goToNotesPage(page)"
+              >
+                {{ page }}
+              </button>
+              <button
+                class="pagination-btn"
+                :disabled="currentNotesPage === totalNotesPages"
+                @click="goToNotesPage(currentNotesPage + 1)"
+              >
+                <ChevronRight :size="16" />
+              </button>
+            </div>
+
           </div>
         </transition>
       </div>
@@ -833,17 +958,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
-import { 
+import {
   Trash2, Save, Plus, ArrowLeft, GripVertical, X, Edit2,
   Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target,
   Square, CheckSquare, Search, CheckCircle2, AlertCircle,
   CheckCircle, XCircle, Check, Filter, Settings, Clock, Calendar, Circle,
   FileText, Lightbulb, Shield, BarChart2, Play, Pause, GitBranch,
-  BookOpen, ChevronDown, ChevronRight, Send, MessageSquare, Wand2, Loader2, Sparkles
+  BookOpen, ChevronDown, ChevronRight, ChevronLeft, Send, MessageSquare, Wand2, Loader2, Sparkles
 } from 'lucide-vue-next'
 import { generateStepsWithAI } from '@/services/aiGoalService.js'
 
@@ -860,6 +985,9 @@ const goalBackendId = computed(() => route.params.id)
 // Check if this is a local id (dev mode)
 const isLocalId = computed(() => goalBackendId.value?.startsWith('local-'))
 const localGoalId = computed(() => isLocalId.value ? goalBackendId.value.replace('local-', '') : null)
+
+// Local ref to store goal data loaded from API (when opening directly via URL)
+const goalDataFromApi = ref(null)
 
 // Find goal by backendId in store.goals or rawIdeas
 const goal = computed(() => {
@@ -903,7 +1031,7 @@ const goal = computed(() => {
   if (found) return found
   
   // Then try in rawIdeas
-  const rawGoal = store.goalsBank.rawIdeas.find(g => 
+  const rawGoal = store.goalsBank.rawIdeas.find(g =>
     g.backendId === goalBackendId.value || String(g.backendId) === goalBackendId.value
   )
   if (rawGoal) {
@@ -920,7 +1048,14 @@ const goal = computed(() => {
       sourceId: rawGoal.id
     }
   }
-  
+
+  // Finally, check if we loaded goal data from API (when opening directly via URL)
+  if (goalDataFromApi.value &&
+      (goalDataFromApi.value.backendId === goalBackendId.value ||
+       String(goalDataFromApi.value.backendId) === goalBackendId.value)) {
+    return goalDataFromApi.value
+  }
+
   return null
 })
 
@@ -1139,11 +1274,73 @@ const hasReflection = computed(() => {
   return Boolean(goalForm.value?.whyImportant || goalForm.value?.description || goalForm.value?.why2)
 })
 
-// Мини-журнал цели
+// ========================================
+// ЗАМЕТКИ (Notes) — Backend Integration
+// ========================================
+
+// UI состояние
 const showMiniJournal = ref(false)
 const miniJournalEntry = ref('')
+
+// Пагинация
+const NOTES_PER_PAGE = 10
+const currentNotesPage = ref(1)
+const totalNotesPages = ref(1)
+const totalNotesCount = ref(0)
+const totalFilteredNotesCount = ref(0)
+
+// Данные заметок
+const notesData = ref([])
+const isLoadingNotes = ref(false)
+const notesLoadedFromStepsApi = ref(false)  // Флаг: заметки загружены через with_notes_first_page
+
+// Поиск
+const notesSearchQuery = ref('')
+const showNotesSearch = ref(false)
+const notesSearchInputRef = ref(null)
+
+// Редактирование
+const editingNoteId = ref(null)
+const editingNoteText = ref('')
+const isSavingNote = ref(false)
+
+// Computed: список заметок для отображения
 const miniJournalEntries = computed(() => {
-  return goalForm.value?.journal || []
+  return notesData.value || []
+})
+
+// Computed: видимые страницы пагинации
+const visibleNotesPages = computed(() => {
+  const total = totalNotesPages.value
+  const current = currentNotesPage.value
+  const pages = []
+
+  if (total <= 5) {
+    // Показываем все страницы
+    for (let i = 1; i <= total; i++) {
+      pages.push(i)
+    }
+  } else {
+    // Показываем первую, последнюю, текущую ±1
+    pages.push(1)
+    if (current > 3) pages.push('...')
+    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+      pages.push(i)
+    }
+    if (current < total - 2) pages.push('...')
+    pages.push(total)
+  }
+  return pages
+})
+
+// Computed: есть ли активные фильтры
+const hasActiveNotesFilters = computed(() => {
+  return notesSearchQuery.value.length >= 3
+})
+
+// Computed: счётчик заметок для бейджа
+const notesCountBadge = computed(() => {
+  return totalFilteredNotesCount.value || totalNotesCount.value || 0
 })
 
 const unscheduledStepsCount = computed(() => {
@@ -1159,58 +1356,318 @@ function goToPlanning() {
   router.push('/app/planning')
 }
 
+// ========================================
+// ЗАМЕТКИ — Методы
+// ========================================
+
+/**
+ * Переключить раскрытие блока заметок
+ */
 function toggleMiniJournal() {
   showMiniJournal.value = !showMiniJournal.value
+
+  // При первом открытии загрузить заметки, если они ещё не были загружены через with_notes_first_page
+  if (showMiniJournal.value && notesData.value.length === 0 && !isLoadingNotes.value && !notesLoadedFromStepsApi.value) {
+    loadNotesFromBackend()
+  }
 }
 
-function addMiniJournalEntry() {
+/**
+ * Загрузить заметки с бэкенда
+ * @param {number} page - Номер страницы
+ * @param {boolean} resetSearch - Сбросить поиск при загрузке
+ */
+async function loadNotesFromBackend(page = 1, resetSearch = false) {
+  if (!goal.value || !goal.value.id) return
+
+  isLoadingNotes.value = true
+
+  try {
+    const { getGoalNotes } = await import('@/services/api.js')
+
+    const params = {
+      goal_id: goal.value.id,
+      page: page,
+      page_size: NOTES_PER_PAGE,
+      order_by: 'date_created',
+      order_direction: 'desc'
+    }
+
+    // Добавляем поиск только если запрос >= 3 символов
+    if (!resetSearch && notesSearchQuery.value.length >= 3) {
+      params.query_filter = notesSearchQuery.value
+    }
+
+    const result = await getGoalNotes(params)
+
+    if (result.status === 'ok' && result.data) {
+      const data = result.data
+
+      notesData.value = data.notes_data || []
+      currentNotesPage.value = data.page || 1
+      totalNotesPages.value = data.total_pages || 1
+      totalNotesCount.value = data.total_items || 0
+      totalFilteredNotesCount.value = data.total_filtered_items || 0
+
+      if (DEBUG_MODE) {
+        console.log('[GoalEdit] Notes loaded:', {
+          page: data.page,
+          totalPages: data.total_pages,
+          count: notesData.value.length
+        })
+      }
+    } else {
+      showToast('Ошибка загрузки заметок', 'error')
+    }
+  } catch (error) {
+    if (DEBUG_MODE) {
+      console.error('[GoalEdit] Failed to load notes:', error)
+    }
+    showToast('Ошибка загрузки заметок', 'error')
+  } finally {
+    isLoadingNotes.value = false
+  }
+}
+
+/**
+ * Переход на страницу пагинации
+ * @param {number} page - Номер страницы
+ */
+function goToNotesPage(page) {
+  if (page >= 1 && page <= totalNotesPages.value && page !== currentNotesPage.value) {
+    loadNotesFromBackend(page)
+  }
+}
+
+/**
+ * Добавить новую заметку
+ */
+async function addMiniJournalEntry() {
   if (!miniJournalEntry.value.trim()) return
-  
-  const entry = {
-    id: `${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-    text: miniJournalEntry.value.trim(),
-    createdAt: new Date().toISOString()
+  if (!goal.value || !goal.value.id) return
+
+  const text = miniJournalEntry.value.trim()
+
+  // Оптимистичное обновление UI
+  const tempNote = {
+    note_id: `temp_${Date.now()}`,
+    text: text,
+    date_created: new Date().toISOString(),
+    date_updated: new Date().toISOString(),
+    _isTemp: true
   }
-  
-  if (!goalForm.value.journal) {
-    goalForm.value.journal = []
-  }
-  goalForm.value.journal.unshift(entry)
+
+  notesData.value.unshift(tempNote)
   miniJournalEntry.value = ''
-  saveJournal()
-}
 
-function removeMiniJournalEntry(entryId) {
-  if (!goalForm.value.journal) return
-  const index = goalForm.value.journal.findIndex(e => e.id === entryId)
-  if (index !== -1) {
-    goalForm.value.journal.splice(index, 1)
-    saveJournal()
+  try {
+    const { createGoalNote } = await import('@/services/api.js')
+    const result = await createGoalNote(goal.value.id, text)
+
+    if (result.status === 'ok' && result.data) {
+      // Обновляем данные с сервера
+      await loadNotesFromBackend(1)
+      showToast('Заметка добавлена', 'success')
+    } else {
+      // Откат при ошибке
+      notesData.value = notesData.value.filter(n => n.note_id !== tempNote.note_id)
+      showToast('Ошибка при добавлении заметки', 'error')
+    }
+  } catch (error) {
+    // Откат при ошибке
+    notesData.value = notesData.value.filter(n => n.note_id !== tempNote.note_id)
+    showToast('Ошибка при добавлении заметки', 'error')
+    if (DEBUG_MODE) {
+      console.error('[GoalEdit] Failed to create note:', error)
+    }
   }
 }
 
-function saveJournal() {
-  if (!goal.value) return
-  store.updateGoal(goal.value.id, {
-    journal: goalForm.value.journal || []
-  })
+/**
+ * Удалить заметку
+ * @param {number} noteId - ID заметки
+ */
+async function removeMiniJournalEntry(noteId) {
+  if (!goal.value || !goal.value.id) return
+
+  // Оптимистичное удаление из UI
+  const noteIndex = notesData.value.findIndex(n => n.note_id === noteId)
+  if (noteIndex === -1) return
+
+  const removedNote = notesData.value[noteIndex]
+  notesData.value.splice(noteIndex, 1)
+
+  try {
+    const { deleteGoalNote } = await import('@/services/api.js')
+    const result = await deleteGoalNote(goal.value.id, noteId)
+
+    if (result.status === 'ok') {
+      showToast('Заметка удалена', 'success')
+      // Перезагрузить текущую страницу (счётчики могли измениться)
+      await loadNotesFromBackend(currentNotesPage.value)
+    } else {
+      // Откат при ошибке
+      notesData.value.splice(noteIndex, 0, removedNote)
+      showToast('Ошибка при удалении заметки', 'error')
+    }
+  } catch (error) {
+    // Откат при ошибке
+    notesData.value.splice(noteIndex, 0, removedNote)
+    showToast('Ошибка при удалении заметки', 'error')
+    if (DEBUG_MODE) {
+      console.error('[GoalEdit] Failed to delete note:', error)
+    }
+  }
 }
 
-function formatJournalDate(dateStr) {
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diff = now - date
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-  
-  if (days === 0) {
-    return 'Сегодня'
-  } else if (days === 1) {
-    return 'Вчера'
-  } else if (days < 7) {
-    return `${days} дн. назад`
+/**
+ * Начать редактирование заметки
+ * @param {object} note - Заметка для редактирования
+ */
+function startEditingNote(note) {
+  editingNoteId.value = note.note_id
+  editingNoteText.value = note.text
+}
+
+/**
+ * Отменить редактирование заметки
+ */
+function cancelEditingNote() {
+  editingNoteId.value = null
+  editingNoteText.value = ''
+}
+
+/**
+ * Сохранить отредактированную заметку
+ * @param {number} noteId - ID заметки
+ */
+async function saveEditedNote(noteId) {
+  if (!editingNoteText.value.trim()) {
+    showToast('Текст заметки не может быть пустым', 'error')
+    return
+  }
+
+  if (!goal.value || !goal.value.id) return
+
+  isSavingNote.value = true
+  const newText = editingNoteText.value.trim()
+
+  // Оптимистичное обновление
+  const noteIndex = notesData.value.findIndex(n => n.note_id === noteId)
+  if (noteIndex !== -1) {
+    const oldText = notesData.value[noteIndex].text
+    notesData.value[noteIndex].text = newText
+
+    try {
+      const { updateGoalNote } = await import('@/services/api.js')
+      const result = await updateGoalNote(goal.value.id, noteId, newText)
+
+      if (result.status === 'ok') {
+        showToast('Заметка обновлена', 'success')
+        cancelEditingNote()
+        // Обновить с сервера (чтобы получить date_updated)
+        await loadNotesFromBackend(currentNotesPage.value)
+      } else {
+        // Откат
+        notesData.value[noteIndex].text = oldText
+        showToast('Ошибка при обновлении заметки', 'error')
+      }
+    } catch (error) {
+      // Откат
+      notesData.value[noteIndex].text = oldText
+      showToast('Ошибка при обновлении заметки', 'error')
+      if (DEBUG_MODE) {
+        console.error('[GoalEdit] Failed to update note:', error)
+      }
+    } finally {
+      isSavingNote.value = false
+    }
+  }
+}
+
+/**
+ * Переключить поле поиска заметок
+ */
+function toggleNotesSearch() {
+  showNotesSearch.value = !showNotesSearch.value
+
+  if (showNotesSearch.value) {
+    nextTick(() => {
+      notesSearchInputRef.value?.focus()
+    })
   } else {
-    return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+    closeNotesSearch()
   }
+}
+
+/**
+ * Закрыть поиск заметок
+ */
+function closeNotesSearch() {
+  showNotesSearch.value = false
+  if (notesSearchQuery.value) {
+    notesSearchQuery.value = ''
+    // Перезагрузить без фильтра
+    loadNotesFromBackend(1, true)
+  }
+}
+
+/**
+ * Обработчик потери фокуса поля поиска
+ */
+function onNotesSearchBlur() {
+  // Закрываем поиск только если запрос пустой
+  if (!notesSearchQuery.value) {
+    setTimeout(() => {
+      showNotesSearch.value = false
+    }, 150)
+  }
+}
+
+/**
+ * Debounced поиск заметок
+ */
+let notesSearchTimeout = null
+function onNotesSearchInput() {
+  clearTimeout(notesSearchTimeout)
+
+  notesSearchTimeout = setTimeout(() => {
+    if (notesSearchQuery.value.length >= 3) {
+      // Поиск с минимум 3 символами
+      loadNotesFromBackend(1)
+    } else if (notesSearchQuery.value.length === 0) {
+      // Сброс поиска
+      loadNotesFromBackend(1, true)
+    }
+  }, 500) // 500ms debounce
+}
+
+/**
+ * Форматирование даты заметки для отображения
+ * @param {string} dateStr - Дата в ISO формате
+ * @returns {string} - Относительная дата (например, "2 часа назад")
+ */
+function formatJournalDate(dateStr) {
+  if (!dateStr) return ''
+
+  const now = new Date()
+  const date = new Date(dateStr)
+  const diffMs = now - date
+  const diffMinutes = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMinutes / 60)
+  const diffDays = Math.floor(diffHours / 24)
+
+  if (diffMinutes < 1) return 'только что'
+  if (diffMinutes < 60) return `${diffMinutes} мин. назад`
+  if (diffHours < 24) return `${diffHours} ч. назад`
+  if (diffDays < 7) return `${diffDays} дн. назад`
+
+  // Для старых заметок — точная дата
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = date.getFullYear()
+
+  return `${day}.${month}.${year}`
 }
 
 // Модалка добавления шага (мобильная версия)
@@ -2020,12 +2477,20 @@ async function loadStepsFromBackend(page = 1, append = false) {
   
   try {
     const { getGoalSteps } = await import('@/services/api.js')
-    const result = await getGoalSteps({
+
+    const params = {
       goal_id: backendId,
       order_by: 'order',
       order_direction: 'asc',
       page: page
-    })
+    }
+
+    // Запросить первую страницу заметок вместе с шагами (только при первой загрузке)
+    if (page === 1) {
+      params.with_notes_first_page = true
+    }
+
+    const result = await getGoalSteps(params)
     
     // Check if user navigated away - don't update if goal changed
     if (goalBackendId.value !== currentBackendId) {
@@ -2057,7 +2522,57 @@ async function loadStepsFromBackend(page = 1, append = false) {
         status: s.is_complete ? 'completed' : 'pending',
         order: s.order || 0
       }))
-      
+
+      // Обработать данные заметок, если они пришли с флагом with_notes_first_page
+      // Данные заметок приходят внутри goal_data согласно API документации
+      const goalData = result.data.goal_data
+      if (page === 1 && goalData && goalData.notes_data) {
+        notesData.value = goalData.notes_data || []
+        const notesPagination = goalData.notes_pagination || {}
+        currentNotesPage.value = notesPagination.page || 1
+        totalNotesPages.value = notesPagination.total_pages || 1
+        totalNotesCount.value = notesPagination.total_items || 0
+        totalFilteredNotesCount.value = notesPagination.total_filtered_items || 0
+        notesLoadedFromStepsApi.value = true
+
+        if (DEBUG_MODE) {
+          console.log('[GoalEdit] Notes loaded with steps:', {
+            page: notesPagination.page,
+            totalPages: notesPagination.total_pages,
+            count: notesData.value.length
+          })
+        }
+      }
+
+      // Обработать данные цели, если они пришли в ответе (для случая прямого открытия страницы по URL)
+      if (page === 1 && goalData) {
+        // Создать объект цели из данных API
+        goalDataFromApi.value = {
+          id: goalData.goal_id,
+          backendId: goalData.goal_id,
+          title: goalData.title || '',
+          description: goalData.description || goalData.why_important || '',
+          whyImportant: goalData.why_important || '',
+          why2: goalData.why_give_me || '',
+          sphereId: goalData.category || '',
+          category: goalData.category || '',
+          status: goalData.status || 'work',
+          score: goalData.score || null,
+          progress: 0,
+          steps: [],
+          source: 'api',
+          sourceId: goalData.goal_id
+        }
+
+        if (DEBUG_MODE) {
+          console.log('[GoalEdit] Goal data loaded from API:', {
+            goalId: goalData.goal_id,
+            title: goalData.title,
+            category: goalData.category
+          })
+        }
+      }
+
       // Final check before mutating any state
       if (goalBackendId.value !== currentBackendId) {
         console.log('[GoalEdit] Goal changed before applying steps, discarding')
@@ -2162,18 +2677,28 @@ onBeforeRouteLeave(() => {
 
 onMounted(async () => {
   loadGoalData()
-  
+
   // Reset flags on mount
   stepsLoadedFromBackend.value = false
   initialStepsContainerHeight.value = null
-  
+
   // Always try to load steps from backend (will check for backendId internally)
   loadStepsFromBackend()
+})
+
+onBeforeUnmount(() => {
+  // Очистить timeout поиска при размонтировании компонента
+  if (notesSearchTimeout) {
+    clearTimeout(notesSearchTimeout)
+  }
 })
 
 watch(goalBackendId, () => {
   // Reset flag on route change
   stepsLoadedFromBackend.value = false
+  notesLoadedFromStepsApi.value = false
+  notesData.value = []
+  goalDataFromApi.value = null  // Clear goal data from previous goal
   loadGoalData()
   loadStepsFromBackend()
 })
@@ -2213,8 +2738,7 @@ function loadGoalData() {
       mvp: goal.value.mvp || '',
       // Only use store steps if we haven't loaded from backend yet
       steps: shouldLoadSteps ? (goal.value.steps ? goal.value.steps.map(s => ({ ...s })) : []) : goalForm.value.steps,
-      progress: goal.value.progress || 0,
-      journal: goal.value.journal ? JSON.parse(JSON.stringify(goal.value.journal)) : []
+      progress: goal.value.progress || 0
     }
     recalculateProgress()
     // Инициализировать hash для отслеживания изменений
@@ -2504,8 +3028,7 @@ async function doSave(showNotification = true) {
     // Optimistic UI: update local state first
     store.updateGoal(goal.value.id, {
       steps: stepsToSave,
-      progress: progress,
-      journal: goalForm.value.journal || []
+      progress: progress
     })
     
     // Убрать флаг isNew у сохранённых шагов
@@ -6298,6 +6821,460 @@ function formatDate(dateString) {
 
   .new-step-card .step-param-select {
     width: 100%;
+  }
+}
+
+/* ========================================
+   ЗАМЕТКИ (Notes) — Новые стили для интеграции с бэкендом
+   ======================================== */
+
+/* === Search Bar === */
+.notes-search-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.75rem;
+  gap: 0.5rem;
+}
+
+.notes-search-expandable {
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.notes-search-expandable.expanded {
+  flex: 1;
+  max-width: 100%;
+}
+
+.notes-search-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #6b7280;
+}
+
+.notes-search-toggle-btn:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.notes-search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  gap: 0.5rem;
+  transition: border-color 0.2s;
+}
+
+.notes-search-input-wrapper:focus-within {
+  border-color: #4f46e5;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.notes-search-input-wrapper .search-icon {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.notes-search-input-wrapper input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 0.875rem;
+  background: transparent;
+  color: #1f2937;
+}
+
+.notes-search-input-wrapper input::placeholder {
+  color: #9ca3af;
+}
+
+.notes-search-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  border-radius: 4px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.notes-search-close-btn:hover {
+  background: #f3f4f6;
+  color: #ef4444;
+}
+
+/* === Loading State === */
+.notes-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  gap: 0.75rem;
+  color: #6b7280;
+}
+
+.notes-loading span {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.loading-spinner-small {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #4f46e5;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* === Journal Entry — Edit Mode === */
+.journal-entry {
+  position: relative;
+  padding: 0.875rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.journal-entry:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.journal-entry.editing {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.entry-date {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.entry-actions {
+  display: flex;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.journal-entry:hover .entry-actions {
+  opacity: 1;
+}
+
+.entry-edit,
+.entry-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #6b7280;
+}
+
+.entry-edit:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #3b82f6;
+}
+
+.entry-delete:hover {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #ef4444;
+}
+
+.entry-text {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #1f2937;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* === Edit Mode === */
+.entry-edit-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.entry-edit-input {
+  width: 100%;
+  min-height: 80px;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  transition: all 0.2s;
+  background: #f9fafb;
+}
+
+.entry-edit-input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.entry-edit-mode textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  transition: all 0.2s;
+  background: #f9fafb;
+}
+
+.entry-edit-mode textarea:focus {
+  outline: none;
+  border-color: #4f46e5;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.entry-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.btn-cancel-edit {
+  padding: 0.5rem 1rem;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel-edit:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
+  color: #374151;
+}
+
+.btn-cancel-edit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-save-edit {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #4f46e5;
+  border: 1px solid #4f46e5;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-save-edit:hover:not(:disabled) {
+  background: #4338ca;
+  border-color: #4338ca;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+}
+
+.btn-save-edit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* === Pagination === */
+.notes-pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  margin-top: 1rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid #e5e7eb;
+}
+
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 0.5rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pagination-btn:hover:not(:disabled):not(.ellipsis) {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #1f2937;
+}
+
+.pagination-btn.active {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.pagination-btn.active:hover {
+  background: #4338ca;
+  border-color: #4338ca;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  color: #9ca3af;
+}
+
+.pagination-btn.ellipsis {
+  border: none;
+  background: transparent;
+  cursor: default;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.pagination-btn.ellipsis:hover {
+  background: transparent;
+  border: none;
+}
+
+/* === Mini Journal Section — Enhanced === */
+.mini-journal-toggle .journal-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 0.375rem;
+  background: #4f46e5;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 10px;
+  margin-left: auto;
+}
+
+/* === Empty State — Clear Search Button === */
+.btn-clear-search {
+  margin-top: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-clear-search:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+  color: #1f2937;
+}
+
+/* === Responsive Adjustments for Notes === */
+@media (max-width: 768px) {
+  .notes-search-bar {
+    flex-direction: column;
+  }
+
+  .notes-search-expandable {
+    width: 100%;
+  }
+
+  .notes-search-expandable.expanded {
+    max-width: 100%;
+  }
+
+  .entry-actions {
+    opacity: 1;
+  }
+
+  .notes-pagination-bar {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .pagination-btn {
+    min-width: 28px;
+    height: 28px;
+    font-size: 0.8125rem;
+  }
+
+  .entry-edit-actions {
+    flex-direction: column;
+  }
+
+  .btn-cancel-edit,
+  .btn-save-edit {
+    width: 100%;
+    justify-content: center;
   }
 }
 </style>

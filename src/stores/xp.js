@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { DEBUG_MODE } from '@/config/settings.js'
+import * as api from '@/services/api.js'
 
 export const XP_REWARDS = {
   HABIT_COMPLETED: 5,
@@ -12,25 +13,87 @@ export const XP_REWARDS = {
   JOURNAL_ENTRY: 10
 }
 
-const STORAGE_KEY = 'onepercent_xp_store'
+const GROUP_TYPE_DISPLAY = {
+  'habits_completed': 'Награда за выполнение привычек',
+  'habits_penalty': 'Штраф за невыполнение привычек',
+  'habit_completed': 'Привычка выполнена',
+  'habit_penalty': 'Штраф за привычку',
+  'diary_completed': 'Награда за заполнение дневника',
+  'diary_penalty': 'Штраф за незаполнение дневника',
+  'journal_entry': 'Запись в дневнике',
+  'journal_penalty': 'Штраф за дневник',
+  'planning_penalty': 'Штраф за невыполнение планов',
+  'goal_step_completed': 'Шаг цели выполнен',
+  'goal_completed': 'Цель достигнута',
+  'goals_completed': 'Награда за выполнение целей',
+  'reward_redeemed': 'Награда получена',
+  'achievement_bonus': 'Бонус за достижение'
+}
+
+function transformHistoryGroups(historyGroups) {
+  return historyGroups.map(dayGroup => ({
+    date: dayGroup.date,
+    total_earned: dayGroup.total_earned || 0,
+    total_spent: Math.abs(dayGroup.total_spent || 0),
+    groups: (dayGroup.entries || []).map(entry => ({
+      group_type: entry.type,
+      group_type_display: entry.title || GROUP_TYPE_DISPLAY[entry.type] || entry.type,
+      total_amount: entry.amount,
+      items: entry.details || [{ 
+        reward_name: entry.reward_name,
+        amount: entry.amount,
+        transaction_id: entry.reward_id || Math.random()
+      }]
+    }))
+  }))
+}
 
 export const useXpStore = defineStore('xp', () => {
   const xpBalance = ref(0)
   const lifetimeEarned = ref(0)
-  const xpHistory = ref([])
-  const wishlist = ref([])
-  const redeemedRewards = ref([])
+  const todayXP = ref(0)
+  const weekXP = ref(0)
+  const rewards = ref([])
+  const xpHistoryGroups = ref([])
+  
+  const loading = ref(false)
+  const rewardsLoading = ref(false)
+  const historyLoading = ref(false)
+  const error = ref(null)
+  
+  const historyPage = ref(1)
+  const historyTotalPages = ref(1)
+  const historyTotalItems = ref(0)
+  const historyFilteredItems = ref(0)
+  
+  const historyFilters = ref({
+    transaction_status_filter: null,
+    transaction_category_filter: null,
+    query_filter: ''
+  })
+  
+  const hasActiveFilters = computed(() => {
+    return historyFilters.value.transaction_status_filter !== null ||
+           historyFilters.value.transaction_category_filter !== null ||
+           (historyFilters.value.query_filter && historyFilters.value.query_filter.length >= 2)
+  })
 
   const availableRewards = computed(() => {
-    return wishlist.value
-      .filter(r => !r.redeemed && r.cost <= xpBalance.value)
+    return rewards.value
+      .filter(r => r.status === 'available' && r.can_afford)
       .sort((a, b) => a.cost - b.cost)
   })
 
   const upcomingRewards = computed(() => {
-    return wishlist.value
-      .filter(r => !r.redeemed && r.cost > xpBalance.value)
-      .sort((a, b) => a.cost - b.cost)
+    return rewards.value
+      .filter(r => r.status === 'available' && !r.can_afford)
+      .sort((a, b) => a.xp_remaining - b.xp_remaining)
+  })
+
+  const redeemedRewards = computed(() => {
+    return rewards.value
+      .filter(r => r.status === 'redeemed')
+      .sort((a, b) => new Date(b.date_redeemed) - new Date(a.date_redeemed))
   })
 
   const nextReward = computed(() => {
@@ -40,238 +103,331 @@ export const useXpStore = defineStore('xp', () => {
 
   const xpToNextReward = computed(() => {
     if (!nextReward.value) return 0
-    return nextReward.value.cost - xpBalance.value
+    return nextReward.value.xp_remaining
   })
 
-  const todayXP = computed(() => {
-    const today = new Date().toDateString()
-    return xpHistory.value
-      .filter(entry => new Date(entry.timestamp).toDateString() === today)
-      .reduce((sum, entry) => sum + entry.amount, 0)
-  })
-
-  const weekXP = computed(() => {
-    const weekAgo = new Date()
-    weekAgo.setDate(weekAgo.getDate() - 7)
-    return xpHistory.value
-      .filter(entry => new Date(entry.timestamp) >= weekAgo)
-      .reduce((sum, entry) => sum + entry.amount, 0)
-  })
-
-  function generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2, 5)
-  }
-
-  function awardXP(amount, source, metadata = {}) {
-    const eventId = generateId()
-    const entry = {
-      id: eventId,
-      amount,
-      source,
-      metadata,
-      timestamp: new Date().toISOString()
-    }
-
-    xpBalance.value += amount
-    lifetimeEarned.value += amount
-    xpHistory.value.unshift(entry)
-
-    if (xpHistory.value.length > 500) {
-      xpHistory.value = xpHistory.value.slice(0, 500)
-    }
-
-    if (DEBUG_MODE) {
-      console.log(`[XP] +${amount} XP for ${source}`, metadata)
-    }
-
-    saveToStorage()
-    return eventId
-  }
-
-  function revokeXP(eventId) {
-    const index = xpHistory.value.findIndex(e => e.id === eventId)
-    if (index === -1) return false
-
-    const entry = xpHistory.value[index]
-    xpBalance.value = Math.max(0, xpBalance.value - entry.amount)
-    lifetimeEarned.value = Math.max(0, lifetimeEarned.value - entry.amount)
-    xpHistory.value.splice(index, 1)
-
-    if (DEBUG_MODE) {
-      console.log(`[XP] Revoked ${entry.amount} XP (${entry.source}), lifetime: ${lifetimeEarned.value}`)
-    }
-
-    saveToStorage()
-    return true
-  }
-
-  function spendXP(rewardId) {
-    const reward = wishlist.value.find(r => r.id === rewardId)
-    if (!reward) return { success: false, error: 'Награда не найдена' }
-    if (reward.redeemed) return { success: false, error: 'Награда уже получена' }
-    if (xpBalance.value < reward.cost) return { success: false, error: 'Недостаточно XP' }
-
-    xpBalance.value -= reward.cost
-    reward.redeemed = true
-    reward.redeemedAt = new Date().toISOString()
-
-    redeemedRewards.value.unshift({
-      ...reward,
-      redeemedAt: reward.redeemedAt
-    })
-
-    if (DEBUG_MODE) {
-      console.log(`[XP] Redeemed reward: ${reward.name} for ${reward.cost} XP`)
-    }
-
-    saveToStorage()
-    return { success: true, reward }
-  }
-
-  function addReward(reward) {
-    const newReward = {
-      id: generateId(),
-      name: reward.name,
-      cost: reward.cost,
-      description: reward.description || '',
-      icon: reward.icon || '🎁',
-      redeemed: false,
-      createdAt: new Date().toISOString()
-    }
-
-    wishlist.value.push(newReward)
-
-    if (DEBUG_MODE) {
-      console.log(`[XP] Added reward: ${newReward.name} (${newReward.cost} XP)`)
-    }
-
-    saveToStorage()
-    return newReward
-  }
-
-  function updateReward(rewardId, updates) {
-    const reward = wishlist.value.find(r => r.id === rewardId)
-    if (!reward) return false
-
-    Object.assign(reward, {
-      name: updates.name ?? reward.name,
-      cost: updates.cost ?? reward.cost,
-      description: updates.description ?? reward.description,
-      icon: updates.icon ?? reward.icon
-    })
-
-    if (DEBUG_MODE) {
-      console.log(`[XP] Updated reward: ${reward.name}`)
-    }
-
-    saveToStorage()
-    return true
-  }
-
-  function removeReward(rewardId) {
-    const index = wishlist.value.findIndex(r => r.id === rewardId)
-    if (index === -1) return false
-
-    const removed = wishlist.value.splice(index, 1)[0]
-
-    if (DEBUG_MODE) {
-      console.log(`[XP] Removed reward: ${removed.name}`)
-    }
-
-    saveToStorage()
-    return true
-  }
-
-  function saveToStorage() {
+  async function fetchXPStats() {
     try {
-      const data = {
-        xpBalance: xpBalance.value,
-        lifetimeEarned: lifetimeEarned.value,
-        xpHistory: xpHistory.value,
-        wishlist: wishlist.value,
-        redeemedRewards: redeemedRewards.value,
-        version: 1
-      }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-    } catch (e) {
-      console.error('[XP] Failed to save to storage:', e)
-    }
-  }
-
-  function loadFromStorage() {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (!stored) return
-
-      const data = JSON.parse(stored)
+      loading.value = true
+      error.value = null
       
-      xpBalance.value = data.xpBalance ?? 0
-      lifetimeEarned.value = data.lifetimeEarned ?? 0
-      xpHistory.value = data.xpHistory ?? []
-      wishlist.value = data.wishlist ?? []
-      redeemedRewards.value = data.redeemedRewards ?? []
-
-      if (DEBUG_MODE) {
-        console.log(`[XP] Loaded from storage: ${xpBalance.value} XP, ${wishlist.value.length} rewards`)
+      const result = await api.getXPStats()
+      
+      if (result.status === 'ok' && result.data) {
+        xpBalance.value = result.data.xp_balance ?? 0
+        lifetimeEarned.value = result.data.lifetime_xp ?? 0
+        todayXP.value = result.data.today_xp ?? 0
+        weekXP.value = result.data.week_xp ?? 0
+        
+        if (DEBUG_MODE) {
+          console.log('[XP] Stats loaded:', result.data)
+        }
+      } else {
+        error.value = result.error_data?.message || 'Ошибка загрузки XP статистики'
       }
     } catch (e) {
-      console.error('[XP] Failed to load from storage:', e)
+      error.value = 'Ошибка сети при загрузке XP'
+      console.error('[XP] fetchXPStats error:', e)
+    } finally {
+      loading.value = false
     }
+  }
+
+  async function fetchRewards(params = {}) {
+    try {
+      rewardsLoading.value = true
+      error.value = null
+      
+      const defaultParams = {
+        status_filter: params.status_filter || null,
+        order_by: params.order_by || 'distance_to_afford',
+        order_direction: params.order_direction || 'asc'
+      }
+      
+      if (params.query_filter && params.query_filter.length >= 2) {
+        defaultParams.query_filter = params.query_filter
+      }
+      
+      const result = await api.getRewards(defaultParams)
+      
+      if (result.status === 'ok' && result.data) {
+        rewards.value = result.data.rewards || []
+        
+        if (result.data.current_balance !== undefined) {
+          xpBalance.value = result.data.current_balance
+        }
+        
+        if (DEBUG_MODE) {
+          console.log('[XP] Rewards loaded:', rewards.value.length)
+        }
+      } else {
+        error.value = result.error_data?.message || 'Ошибка загрузки наград'
+      }
+    } catch (e) {
+      error.value = 'Ошибка сети при загрузке наград'
+      console.error('[XP] fetchRewards error:', e)
+    } finally {
+      rewardsLoading.value = false
+    }
+  }
+
+  async function fetchXPHistory(params = {}) {
+    try {
+      historyLoading.value = true
+      error.value = null
+      
+      const filters = historyFilters.value
+      const requestParams = {
+        page: params.page || 1,
+        page_size: params.page_size || 10
+      }
+      
+      if (filters.transaction_status_filter) {
+        requestParams.transaction_status_filter = filters.transaction_status_filter
+      }
+      if (filters.transaction_category_filter) {
+        requestParams.transaction_category_filter = filters.transaction_category_filter
+      }
+      if (filters.query_filter && filters.query_filter.length >= 2) {
+        requestParams.query_filter = filters.query_filter
+      }
+      
+      const result = await api.getXPHistoryGrouped(requestParams)
+      
+      if (result.status === 'ok' && result.data) {
+        xpHistoryGroups.value = transformHistoryGroups(result.data.history_groups || [])
+        historyPage.value = result.data.page || 1
+        historyTotalPages.value = result.data.total_pages || 1
+        historyTotalItems.value = result.data.total_items || 0
+        historyFilteredItems.value = result.data.total_filtered_items || result.data.total_items || 0
+        
+        if (DEBUG_MODE) {
+          console.log('[XP] History loaded:', xpHistoryGroups.value.length, 'days, page', historyPage.value, '/', historyTotalPages.value)
+        }
+      } else {
+        error.value = result.error_data?.message || 'Ошибка загрузки истории XP'
+      }
+    } catch (e) {
+      error.value = 'Ошибка сети при загрузке истории'
+      console.error('[XP] fetchXPHistory error:', e)
+    } finally {
+      historyLoading.value = false
+    }
+  }
+
+  async function goToHistoryPage(page) {
+    if (page < 1 || page > historyTotalPages.value) return
+    await fetchXPHistory({ page, page_size: 10 })
+  }
+
+  function setHistoryFilter(filterName, value) {
+    historyFilters.value[filterName] = value
+  }
+
+  function resetHistoryFilters() {
+    historyFilters.value = {
+      transaction_status_filter: null,
+      transaction_category_filter: null,
+      query_filter: ''
+    }
+  }
+
+  async function applyHistoryFilters() {
+    await fetchXPHistory({ page: 1, page_size: 10 })
+  }
+
+  async function addReward(rewardData) {
+    try {
+      rewardsLoading.value = true
+      error.value = null
+      
+      const result = await api.createReward({
+        name: rewardData.name,
+        cost: rewardData.cost,
+        icon: rewardData.icon || '🎁',
+        description: rewardData.description || ''
+      })
+      
+      if (result.status === 'ok' && result.data) {
+        if (DEBUG_MODE) {
+          console.log('[XP] Reward created:', result.data.reward_id)
+        }
+        
+        await fetchRewards()
+        return { success: true, reward_id: result.data.reward_id }
+      } else {
+        error.value = result.error_data?.message || 'Ошибка создания награды'
+        return { success: false, error: error.value }
+      }
+    } catch (e) {
+      error.value = 'Ошибка сети при создании награды'
+      console.error('[XP] addReward error:', e)
+      return { success: false, error: error.value }
+    } finally {
+      rewardsLoading.value = false
+    }
+  }
+
+  async function updateReward(rewardId, updates) {
+    try {
+      rewardsLoading.value = true
+      error.value = null
+      
+      const result = await api.updateReward(rewardId, updates)
+      
+      if (result.status === 'ok') {
+        if (DEBUG_MODE) {
+          console.log('[XP] Reward updated:', rewardId)
+        }
+        
+        await fetchRewards()
+        return { success: true }
+      } else {
+        error.value = result.error_data?.message || 'Ошибка обновления награды'
+        return { success: false, error: error.value }
+      }
+    } catch (e) {
+      error.value = 'Ошибка сети при обновлении награды'
+      console.error('[XP] updateReward error:', e)
+      return { success: false, error: error.value }
+    } finally {
+      rewardsLoading.value = false
+    }
+  }
+
+  async function removeReward(rewardId, permanent = false) {
+    try {
+      rewardsLoading.value = true
+      error.value = null
+      
+      const result = await api.deleteReward(rewardId, permanent)
+      
+      if (result.status === 'ok') {
+        if (DEBUG_MODE) {
+          console.log('[XP] Reward deleted:', rewardId)
+        }
+        
+        rewards.value = rewards.value.filter(r => r.reward_id !== rewardId)
+        return { success: true }
+      } else {
+        error.value = result.error_data?.message || 'Ошибка удаления награды'
+        return { success: false, error: error.value }
+      }
+    } catch (e) {
+      error.value = 'Ошибка сети при удалении награды'
+      console.error('[XP] removeReward error:', e)
+      return { success: false, error: error.value }
+    } finally {
+      rewardsLoading.value = false
+    }
+  }
+
+  async function redeemReward(rewardId) {
+    try {
+      rewardsLoading.value = true
+      error.value = null
+      
+      const result = await api.redeemReward(rewardId)
+      
+      if (result.status === 'ok' && result.data) {
+        if (result.data.success) {
+          if (result.data.new_balance !== undefined) {
+            xpBalance.value = result.data.new_balance
+          }
+          
+          if (DEBUG_MODE) {
+            console.log('[XP] Reward redeemed:', rewardId, 'New balance:', result.data.new_balance)
+          }
+          
+          await fetchRewards()
+          return { success: true, new_balance: result.data.new_balance }
+        } else {
+          const errorMessages = {
+            'insufficient_xp': 'Недостаточно XP',
+            'reward_not_found': 'Награда не найдена',
+            'already_redeemed': 'Награда уже получена'
+          }
+          error.value = errorMessages[result.data.error] || result.data.error
+          return { success: false, error: error.value }
+        }
+      } else {
+        error.value = result.error_data?.message || 'Ошибка получения награды'
+        return { success: false, error: error.value }
+      }
+    } catch (e) {
+      error.value = 'Ошибка сети при получении награды'
+      console.error('[XP] redeemReward error:', e)
+      return { success: false, error: error.value }
+    } finally {
+      rewardsLoading.value = false
+    }
+  }
+
+  async function init() {
+    await Promise.all([
+      fetchXPStats(),
+      fetchRewards({ status_filter: 'available' })
+    ])
   }
 
   function resetStore() {
     xpBalance.value = 0
     lifetimeEarned.value = 0
-    xpHistory.value = []
-    wishlist.value = []
-    redeemedRewards.value = []
-    saveToStorage()
-  }
-
-  function addDemoRewards() {
-    if (wishlist.value.length > 0) return
-
-    const demoRewards = [
-      { name: 'Кофе в любимой кофейне', cost: 50, icon: '☕', description: 'Побалуй себя вкусным напитком' },
-      { name: 'Вечер кино', cost: 100, icon: '🎬', description: 'Посмотреть фильм без угрызений совести' },
-      { name: 'Новая книга', cost: 150, icon: '📚', description: 'Купить книгу из списка желаемого' },
-      { name: 'Поход в ресторан', cost: 300, icon: '🍽️', description: 'Ужин в любимом месте' },
-      { name: 'День без работы', cost: 500, icon: '🏖️', description: 'Полноценный выходной' }
-    ]
-
-    demoRewards.forEach(r => addReward(r))
-
-    if (DEBUG_MODE) {
-      console.log('[XP] Added demo rewards')
+    todayXP.value = 0
+    weekXP.value = 0
+    rewards.value = []
+    xpHistoryGroups.value = []
+    historyPage.value = 1
+    historyTotalPages.value = 1
+    historyTotalItems.value = 0
+    historyFilteredItems.value = 0
+    historyFilters.value = {
+      transaction_status_filter: null,
+      transaction_category_filter: null,
+      query_filter: ''
     }
+    error.value = null
   }
-
-  loadFromStorage()
 
   return {
     xpBalance,
     lifetimeEarned,
-    xpHistory,
-    wishlist,
-    redeemedRewards,
+    todayXP,
+    weekXP,
+    rewards,
+    xpHistoryGroups,
+    
+    loading,
+    rewardsLoading,
+    historyLoading,
+    error,
+    
+    historyPage,
+    historyTotalPages,
+    historyTotalItems,
+    historyFilteredItems,
+    historyFilters,
+    hasActiveFilters,
     
     availableRewards,
     upcomingRewards,
+    redeemedRewards,
     nextReward,
     xpToNextReward,
-    todayXP,
-    weekXP,
     
-    awardXP,
-    revokeXP,
-    spendXP,
+    fetchXPStats,
+    fetchRewards,
+    fetchXPHistory,
+    goToHistoryPage,
+    setHistoryFilter,
+    resetHistoryFilters,
+    applyHistoryFilters,
     addReward,
     updateReward,
     removeReward,
-    addDemoRewards,
+    redeemReward,
+    init,
     resetStore,
-    loadFromStorage,
-    saveToStorage,
     
     XP_REWARDS
   }
