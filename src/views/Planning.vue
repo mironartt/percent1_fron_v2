@@ -329,26 +329,80 @@
           <h3 class="sheet-title">{{ selectedTask?.stepTitle }}</h3>
           <p class="sheet-subtitle">{{ selectedTask?.goalTitle }}</p>
           
-          <div class="sheet-actions">
-            <button class="sheet-action" @click="toggleTaskComplete(selectedTask); closeBottomSheet()">
-              <CheckCircle :size="20" />
-              <span>{{ selectedTask?.completed ? 'Отменить выполнение' : 'Выполнено' }}</span>
-            </button>
-            <button class="sheet-action" @click="openRescheduleSheet">
-              <Calendar :size="20" />
-              <span>Перенести</span>
-            </button>
-            <button class="sheet-action" @click="openPrioritySheet">
-              <Flag :size="20" />
+          <button 
+            class="complete-toggle-btn"
+            :class="{ completed: selectedTask?.completed }"
+            @click="toggleTaskComplete(selectedTask)"
+          >
+            <CheckCircle :size="20" />
+            <span>{{ selectedTask?.completed ? 'Выполнено' : 'Отметить выполненным' }}</span>
+          </button>
+          
+          <div class="inline-options-section">
+            <div class="option-label">
+              <Calendar :size="16" />
+              <span>День</span>
+            </div>
+            <div class="option-chips">
+              <button 
+                v-for="day in weekDays" 
+                :key="day.date"
+                class="chip"
+                :class="{ active: selectedTask?.scheduledDate === day.date }"
+                @click="rescheduleTask(selectedTask, day.date, true)"
+              >
+                {{ day.label }} {{ day.dayNum }}
+              </button>
+            </div>
+          </div>
+          
+          <div class="inline-options-section">
+            <div class="option-label">
+              <Flag :size="16" />
               <span>Приоритет</span>
-            </button>
-            <button class="sheet-action" @click="openTimeSheet">
-              <Clock :size="20" />
+            </div>
+            <div class="option-chips">
+              <button 
+                v-for="priority in priorities" 
+                :key="priority.value"
+                class="chip"
+                :class="{ 
+                  active: selectedTask?.priority === priority.value,
+                  ['priority-' + priority.value]: true
+                }"
+                @click="updateTaskPriority(selectedTask, priority.value, true)"
+              >
+                {{ priority.label }}
+              </button>
+            </div>
+          </div>
+          
+          <div class="inline-options-section">
+            <div class="option-label">
+              <Clock :size="16" />
               <span>Время</span>
-            </button>
+            </div>
+            <div class="option-chips">
+              <button 
+                v-for="time in timeOptions" 
+                :key="time.value"
+                class="chip"
+                :class="{ active: selectedTask?.timeEstimate === time.value }"
+                @click="updateTaskTime(selectedTask, time.value, true)"
+              >
+                {{ time.label }}
+              </button>
+            </div>
+          </div>
+          
+          <div class="sheet-actions-row">
             <button class="sheet-action danger" @click="removeTaskFromSchedule(selectedTask); closeBottomSheet()">
               <Trash2 :size="20" />
               <span>Убрать из плана</span>
+            </button>
+            <button class="sheet-action primary" @click="saveTaskChangesAndClose">
+              <Check :size="20" />
+              <span>Сохранить</span>
             </button>
           </div>
         </template>
@@ -1634,8 +1688,11 @@ async function toggleTaskComplete(task) {
   }
 }
 
-async function rescheduleTask(task, newDate) {
+async function rescheduleTask(task, newDate, skipClose = false) {
   if (!task) return
+  
+  const oldDate = task.scheduledDate
+  task.scheduledDate = newDate
   
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
@@ -1646,15 +1703,21 @@ async function rescheduleTask(task, newDate) {
         dt: newDate
       }]
     })
-    await loadWeeklySteps()
-    closeBottomSheet()
+    if (!skipClose) {
+      await loadWeeklySteps()
+      closeBottomSheet()
+    }
   } catch (error) {
     console.error('[Planning] Error rescheduling task:', error)
+    task.scheduledDate = oldDate
   }
 }
 
-async function updateTaskPriority(task, priority) {
+async function updateTaskPriority(task, priority, skipClose = false) {
   if (!task) return
+  
+  const oldPriority = task.priority
+  task.priority = priority
   
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
@@ -1665,17 +1728,22 @@ async function updateTaskPriority(task, priority) {
         priority: priorityFrontendToBackend[priority] || priority || null
       }]
     })
-    await loadWeeklySteps()
-    closeBottomSheet()
+    if (!skipClose) {
+      await loadWeeklySteps()
+      closeBottomSheet()
+    }
   } catch (error) {
     console.error('[Planning] Error updating task priority:', error)
+    task.priority = oldPriority
   }
 }
 
-async function updateTaskTime(task, time) {
+async function updateTaskTime(task, time, skipClose = false) {
   if (!task) return
   
   const timeMap = { '30min': 'half', '1h': 'one', '2h': 'two', '3h': 'three', '4h': 'four' }
+  const oldTime = task.timeEstimate
+  task.timeEstimate = time
   
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
@@ -1686,11 +1754,19 @@ async function updateTaskTime(task, time) {
         time_duration: timeMap[time] || null
       }]
     })
-    await loadWeeklySteps()
-    closeBottomSheet()
+    if (!skipClose) {
+      await loadWeeklySteps()
+      closeBottomSheet()
+    }
   } catch (error) {
     console.error('[Planning] Error updating task time:', error)
+    task.timeEstimate = oldTime
   }
+}
+
+async function saveTaskChangesAndClose() {
+  await loadWeeklySteps()
+  closeBottomSheet()
 }
 
 async function removeTaskFromSchedule(task) {
@@ -3090,6 +3166,32 @@ onUnmounted(() => {
 
 .sheet-action.primary:hover {
   background: var(--primary-dark, #4f46e5);
+}
+
+.complete-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: var(--bg-secondary, #f3f4f6);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: var(--text-primary, #1f2937);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.complete-toggle-btn:hover {
+  background: var(--bg-tertiary, #e5e7eb);
+}
+
+.complete-toggle-btn.completed {
+  background: var(--success-bg, #dcfce7);
+  border-color: var(--success-color, #22c55e);
+  color: var(--success-color, #22c55e);
 }
 
 .inline-options-section {
