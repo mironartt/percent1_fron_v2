@@ -333,6 +333,80 @@ app.post('/api/ai/mentor-suggestions', async (req, res) => {
   }
 })
 
+app.post('/api/ai/plan-week', async (req, res) => {
+  try {
+    const { tasks, weekDays, includeOverdue, userContext } = req.body
+    
+    if (!tasks || !weekDays) {
+      return res.status(400).json({ success: false, error: 'Tasks and weekDays are required' })
+    }
+
+    const systemPrompt = `Ты - AI-планировщик недели. Анализируй задачи пользователя и распределяй их по дням недели оптимально.
+
+Учитывай:
+- Приоритет задач (critical, desirable, attention, optional)
+- Оценку времени (30min, 1h, 2h, 3h, 4h)
+- Сферу жизни для баланса
+- Загрузку каждого дня (не более 4-6 часов задач в день)
+- Выходные дни менее загружены
+- Высокоприоритетные задачи ставь в начало недели
+
+Верни JSON:
+{
+  "plan": [
+    {
+      "date": "2025-12-10",
+      "dayName": "Среда",
+      "tasks": [
+        { "taskId": "task-1", "order": 1 }
+      ]
+    }
+  ],
+  "reasoning": "Краткое объяснение логики распределения (1-2 предложения)"
+}
+
+Отвечай ТОЛЬКО валидным JSON.`
+
+    const userPrompt = `Задачи для распределения:
+${JSON.stringify(tasks, null, 2)}
+
+Дни недели:
+${JSON.stringify(weekDays, null, 2)}
+
+${includeOverdue ? 'Включить просроченные задачи в план.' : 'Не включать просроченные задачи.'}
+
+${userContext ? `Контекст пользователя: ${userContext}` : ''}`
+
+    const response = await openai.chat.completions.create({
+      model: MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      response_format: { type: 'json_object' },
+      max_completion_tokens: 4096
+    })
+
+    const content = response.choices?.[0]?.message?.content
+    if (!content) {
+      throw new Error('Empty response from AI')
+    }
+
+    const parsed = JSON.parse(content)
+    
+    res.json({
+      success: true,
+      data: parsed
+    })
+  } catch (error) {
+    console.error('[AI Proxy] Plan week error:', error)
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error planning week'
+    })
+  }
+})
+
 app.get('/api/ai/health', (req, res) => {
   res.json({ status: 'ok' })
 })
