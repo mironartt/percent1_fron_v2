@@ -326,39 +326,53 @@
         </div>
         
         <div class="steps-grid" v-show="expandedGoals[goal.id]">
-          <div 
-            v-for="step in getFilteredSteps(goal)" 
-            :key="step.id"
-            class="step-card"
-            :class="{ 
-              scheduled: isStepScheduled(goal.id, step.id),
-              completed: step.completed,
-              ['priority-' + getScheduledPriority(goal.id, step.id)]: isStepScheduled(goal.id, step.id)
-            }"
-            @click="openStepActions(goal, step)"
-          >
-            <button 
-              class="step-checkbox"
-              :class="{ completed: step.completed }"
-              @click.stop="quickToggleStepComplete(goal, step)"
-              :title="step.completed ? 'Отменить выполнение' : 'Выполнить'"
+          <!-- Если есть шаги -->
+          <template v-if="goal.steps && goal.steps.length > 0">
+            <div 
+              v-for="step in getFilteredSteps(goal)" 
+              :key="step.id"
+              class="step-card"
+              :class="{ 
+                scheduled: isStepScheduled(goal.id, step.id),
+                completed: step.completed,
+                ['priority-' + getScheduledPriority(goal.id, step.id)]: isStepScheduled(goal.id, step.id)
+              }"
+              @click="openStepActions(goal, step)"
             >
-              <Check v-if="step.completed" :size="14" />
-            </button>
-            <div class="step-content">
-              <span class="step-title" :class="{ completed: step.completed }">{{ step.title }}</span>
-              <div class="step-badges" v-if="isStepScheduled(goal.id, step.id)">
-                <span class="date-badge">
-                  <Calendar :size="11" />
-                  {{ formatStepDate(goal.id, step.id) }}
-                </span>
-                <span class="time-badge" :class="{ empty: !getScheduledTime(goal.id, step.id) }">
-                  <Clock :size="11" />
-                  {{ getScheduledTime(goal.id, step.id) ? formatTimeShort(getScheduledTime(goal.id, step.id)) : '—' }}
-                </span>
+              <button 
+                class="step-checkbox"
+                :class="{ completed: step.completed }"
+                @click.stop="quickToggleStepComplete(goal, step)"
+                :title="step.completed ? 'Отменить выполнение' : 'Выполнить'"
+              >
+                <Check v-if="step.completed" :size="14" />
+              </button>
+              <div class="step-content">
+                <span class="step-title" :class="{ completed: step.completed }">{{ step.title }}</span>
+                <div class="step-badges" v-if="isStepScheduled(goal.id, step.id)">
+                  <span class="date-badge">
+                    <Calendar :size="11" />
+                    {{ formatStepDate(goal.id, step.id) }}
+                  </span>
+                  <span class="time-badge" :class="{ empty: !getScheduledTime(goal.id, step.id) }">
+                    <Clock :size="11" />
+                    {{ getScheduledTime(goal.id, step.id) ? formatTimeShort(getScheduledTime(goal.id, step.id)) : '—' }}
+                  </span>
+                </div>
               </div>
+              <div class="priority-stripe" :class="'priority-' + (getScheduledPriority(goal.id, step.id) || 'none')"></div>
             </div>
-            <div class="priority-stripe" :class="'priority-' + (getScheduledPriority(goal.id, step.id) || 'none')"></div>
+          </template>
+          
+          <!-- Если нет шагов -->
+          <div v-else class="no-steps-state">
+            <ListTodo :size="32" class="no-steps-icon" />
+            <p class="no-steps-text">У этой цели пока нет шагов</p>
+            <p class="no-steps-hint">Разбейте цель на конкретные шаги для планирования</p>
+            <button class="btn btn-primary" @click="goToGoalDetails(goal)">
+              <Plus :size="16" />
+              Добавить шаги
+            </button>
           </div>
         </div>
       </div>
@@ -875,6 +889,7 @@ import {
   Zap,
   Brain,
   ListChecks,
+  ListTodo,
   X,
   Square,
   CheckSquare,
@@ -1771,6 +1786,11 @@ function goToGoalsBank() {
 
 function goToDecomposition(goal) {
   // In dev mode use local-{id}, in prod use backendId
+  const goalId = goal.backendId || `local-${goal.id}`
+  router.push(`/app/goals/${goalId}`)
+}
+
+function goToGoalDetails(goal) {
   const goalId = goal.backendId || `local-${goal.id}`
   router.push(`/app/goals/${goalId}`)
 }
@@ -3386,6 +3406,43 @@ onUnmounted(() => {
   .steps-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+.no-steps-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  text-align: center;
+  background: var(--bg);
+  border-radius: 12px;
+  border: 2px dashed var(--border-color, #e5e7eb);
+}
+
+.no-steps-icon {
+  color: var(--text-muted, #9ca3af);
+  margin-bottom: 0.75rem;
+}
+
+.no-steps-text {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0 0 0.25rem;
+}
+
+.no-steps-hint {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #6b7280);
+  margin: 0 0 1rem;
+}
+
+.no-steps-state .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .step-card {
