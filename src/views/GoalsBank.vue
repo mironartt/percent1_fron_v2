@@ -501,42 +501,47 @@
           </div>
 
           <div class="modal-body">
-            <!-- Секция шаблонов целей -->
-            <div class="templates-section">
-              <button class="templates-toggle" @click="toggleTemplates">
+            <!-- Секция помощников: шаблоны и ментор -->
+            <div class="helpers-section">
+              <button class="helper-toggle" @click="toggleTemplates">
                 <Lightbulb :size="18" />
                 <span>Выбрать из шаблонов</span>
                 <ChevronDown :size="16" class="toggle-chevron" :class="{ rotated: showTemplates }" />
               </button>
-              
-              <transition name="slide-fade">
-                <div v-if="showTemplates" class="templates-content">
-                  <div class="templates-sphere-tabs">
-                    <button
-                      v-for="sphere in lifeSpheres"
-                      :key="sphere.id"
-                      class="template-sphere-tab"
-                      :class="{ active: selectedTemplateSphere === sphere.id }"
-                      :style="{ '--sphere-color': getSphereColor(sphere.id) }"
-                      @click="selectedTemplateSphere = sphere.id"
-                    >
-                      <component :is="getSphereIcon(sphere.id)" :size="16" />
-                    </button>
-                  </div>
-                  
-                  <div class="templates-list">
-                    <button
-                      v-for="(template, idx) in filteredTemplates"
-                      :key="idx"
-                      class="template-item"
-                      @click="selectTemplate(template)"
-                    >
-                      {{ template }}
-                    </button>
-                  </div>
-                </div>
-              </transition>
+              <button class="helper-toggle mentor-toggle" @click="openMentorModal">
+                <Bot :size="18" />
+                <span>Помощь от ментора</span>
+              </button>
             </div>
+            
+            <!-- Секция шаблонов целей -->
+            <transition name="slide-fade">
+              <div v-if="showTemplates" class="templates-section">
+                <div class="templates-sphere-tabs">
+                  <button
+                    v-for="sphere in lifeSpheres"
+                    :key="sphere.id"
+                    class="template-sphere-tab"
+                    :class="{ active: selectedTemplateSphere === sphere.id }"
+                    :style="{ '--sphere-color': getSphereColor(sphere.id) }"
+                    @click="selectedTemplateSphere = sphere.id"
+                  >
+                    <component :is="getSphereIcon(sphere.id)" :size="16" />
+                  </button>
+                </div>
+                
+                <div class="templates-list">
+                  <button
+                    v-for="(template, idx) in filteredTemplates"
+                    :key="idx"
+                    class="template-item"
+                    @click="selectTemplate(template)"
+                  >
+                    {{ template }}
+                  </button>
+                </div>
+              </div>
+            </transition>
 
             <div class="form-group">
               <label class="form-label">Название цели</label>
@@ -632,6 +637,13 @@
         </div>
       </div>
     </Transition>
+
+    <!-- Mentor Goal Suggestions Modal -->
+    <MentorGoalSuggestionsModal
+      :show="showMentorModal"
+      @close="showMentorModal = false"
+      @goals-created="onMentorGoalsCreated"
+    />
   </div>
 </template>
 
@@ -640,6 +652,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
+import MentorGoalSuggestionsModal from '@/components/MentorGoalSuggestionsModal.vue'
 import { 
   Lightbulb, 
   CheckCircle, 
@@ -790,6 +803,7 @@ const infiniteScrollTrigger = ref(null)
 let infiniteScrollObserver = null
 
 const showAddModal = ref(false)
+const showMentorModal = ref(false)
 const showReflectionSection = ref(false)
 const newGoal = ref({
   text: '',
@@ -976,6 +990,18 @@ function addNewGoal() {
   showReflectionSection.value = false
   showTemplates.value = false
   showAddModal.value = true
+}
+
+function openMentorModal() {
+  showAddModal.value = false
+  showMentorModal.value = true
+}
+
+function onMentorGoalsCreated(goals) {
+  if (DEBUG_MODE) {
+    console.log('[GoalsBank] Mentor created goals:', goals)
+  }
+  showMentorModal.value = false
 }
 
 function closeAddModal() {
@@ -7157,6 +7183,61 @@ onUnmounted(() => {
 /* Шаблоны целей */
 .templates-section {
   margin-bottom: 1rem;
+}
+
+.helpers-section {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.helper-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  padding: 0.75rem 0.75rem;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
+  border: 1px dashed var(--primary-color);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--primary-color);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.helper-toggle:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.12));
+}
+
+.helper-toggle .toggle-chevron {
+  margin-left: auto;
+  transition: transform 0.2s;
+}
+
+.helper-toggle .toggle-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.mentor-toggle {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(236, 72, 153, 0.08));
+  border-color: #8b5cf6;
+  color: #8b5cf6;
+}
+
+.mentor-toggle:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.15));
+}
+
+@media (max-width: 480px) {
+  .helpers-section {
+    flex-direction: column;
+  }
+  
+  .helper-toggle span {
+    font-size: 0.8rem;
+  }
 }
 
 .templates-toggle {

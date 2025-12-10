@@ -248,6 +248,91 @@ app.post('/api/ai/reassess-sphere', async (req, res) => {
   }
 })
 
+app.post('/api/ai/mentor-suggestions', async (req, res) => {
+  try {
+    const { sspData } = req.body
+    
+    const systemPrompt = `Ты - персональный AI-ментор по личному развитию. На основе данных пользователя о его жизненном балансе (Колесо жизни), 
+предложи 3 персонализированные цели, которые помогут ему развиваться в приоритетных направлениях.
+
+Данные пользователя включают:
+- Оценки сфер жизни (от 0 до 10)
+- Зоны роста (сферы с низкими оценками)
+- Рефлексии: что мешает, чего хочет достичь
+
+Верни JSON:
+{
+  "suggestions": [
+    {
+      "title": "Название цели (конкретное, до 80 символов)",
+      "sphereId": "id сферы (wealth/hobbies/friendship/health/career/love)",
+      "whyUseful": "Почему эта цель полезна именно этому пользователю (2-3 предложения, персонализированно)"
+    }
+  ]
+}
+
+Правила:
+- Предложи РОВНО 3 цели
+- Фокусируйся на зонах роста пользователя (низкие оценки)
+- Учитывай желания и препятствия из рефлексий
+- Цели должны быть конкретными, достижимыми за 1-3 месяца
+- whyUseful должен быть персонализированным, ссылаясь на конкретные данные пользователя
+- Отвечай на русском языке
+- Отвечай ТОЛЬКО валидным JSON`
+
+    let userMessage = 'Данные пользователя:\n\n'
+    
+    if (sspData?.spheres) {
+      userMessage += 'Оценки сфер жизни:\n'
+      sspData.spheres.forEach(s => {
+        userMessage += `- ${s.name}: ${s.score}/10\n`
+      })
+      userMessage += '\n'
+    }
+    
+    if (sspData?.growthZones && sspData.growthZones.length > 0) {
+      userMessage += 'Зоны роста (приоритетные направления):\n'
+      sspData.growthZones.forEach(z => {
+        userMessage += `- ${z.name} (${z.score}/10)\n`
+        if (z.desired) userMessage += `  Желаемое: ${z.desired}\n`
+        if (z.prevents) userMessage += `  Препятствия: ${z.prevents}\n`
+      })
+    }
+
+    const response = await openai.chat.completions.create({
+      model: MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
+      ],
+      response_format: { type: 'json_object' },
+      max_completion_tokens: 2048
+    })
+
+    const content = response.choices?.[0]?.message?.content
+    if (!content) {
+      throw new Error('Empty response from AI')
+    }
+
+    const parsed = JSON.parse(content)
+    
+    if (!Array.isArray(parsed.suggestions) || parsed.suggestions.length === 0) {
+      throw new Error('Invalid response format from AI')
+    }
+
+    res.json({
+      success: true,
+      suggestions: parsed.suggestions.slice(0, 3)
+    })
+  } catch (error) {
+    console.error('[AI Proxy] Mentor suggestions error:', error)
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error generating suggestions'
+    })
+  }
+})
+
 app.get('/api/ai/health', (req, res) => {
   res.json({ status: 'ok' })
 })
