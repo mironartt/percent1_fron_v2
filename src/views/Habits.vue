@@ -441,14 +441,22 @@
               />
             </div>
             
-            <button 
-              v-if="!editingHabit"
-              class="btn-suggest-habit"
-              @click="showSuggestionsModal = true"
-            >
-              <Sparkles :size="14" :stroke-width="1.5" />
-              Подобрать из шаблона
-            </button>
+            <div v-if="!editingHabit" class="habit-suggest-buttons">
+              <button 
+                class="btn-suggest-habit"
+                @click="openTemplatesModal"
+              >
+                <Sparkles :size="14" :stroke-width="1.5" />
+                Подобрать из шаблона
+              </button>
+              <button 
+                class="btn-suggest-ai"
+                @click="openAiSuggestionsModal"
+              >
+                <Sparkles :size="14" :stroke-width="1.5" />
+                AI подберёт
+              </button>
+            </div>
             
             <div class="xp-slider-row">
               <label class="slider-label">Награда за выполнение</label>
@@ -3699,6 +3707,21 @@ function showTemplateHabits() {
   suggestionsStep.value = 'templates'
 }
 
+function openTemplatesModal() {
+  showSuggestionsModal.value = true
+  suggestionsStep.value = 'templates'
+}
+
+function openAiSuggestionsModal() {
+  showSuggestionsModal.value = true
+  const skipIntro = localStorage.getItem('skipHabitSuggestionsIntro') === 'true'
+  if (skipIntro) {
+    startHabitSuggestions()
+  } else {
+    suggestionsStep.value = 'intro'
+  }
+}
+
 function toggleAiHabitSelection(idx) {
   const index = selectedAiHabits.value.indexOf(idx)
   if (index === -1) {
@@ -6754,12 +6777,18 @@ onMounted(async () => {
   flex: 1;
 }
 
+.habit-suggest-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
 .btn-suggest-habit {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  width: 100%;
+  flex: 1;
   padding: 0.6rem 1rem;
   background: linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(139, 92, 246, 0.12));
   border: 1px dashed var(--primary-color);
@@ -6769,11 +6798,32 @@ onMounted(async () => {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-bottom: 0.75rem;
 }
 
 .btn-suggest-habit:hover {
   background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(139, 92, 246, 0.2));
+  border-style: solid;
+}
+
+.btn-suggest-ai {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex: 1;
+  padding: 0.6rem 1rem;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(5, 150, 105, 0.12));
+  border: 1px dashed #10b981;
+  border-radius: 8px;
+  color: #10b981;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-suggest-ai:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.2));
   border-style: solid;
 }
 
