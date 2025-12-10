@@ -1418,10 +1418,10 @@ const workingGoals = computed(() => store.goals || [])
 const lifeSpheres = computed(() => store.lifeSpheres)
 
 const goalsWithSteps = computed(() => {
+  // Показываем все цели из пагинации (бэкенд уже отфильтровал)
+  // Фильтруем только завершённые цели
   return workingGoals.value.filter(g => 
-    g.status !== 'completed' &&
-    g.steps && 
-    g.steps.length > 0
+    g.status !== 'completed'
   )
 })
 

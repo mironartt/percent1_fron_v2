@@ -285,6 +285,13 @@ export const useAppStore = defineStore('app', () => {
     // Также обновляем goals (цели в работе)
     const goalsInWork = syncedGoals.filter(g => g.workStatus === 'work' || g.workStatus === 'complete')
     
+    // При замене (не append) - удаляем старые цели которых нет в новых данных
+    if (!append) {
+      const newBackendIds = new Set(goalsInWork.map(g => g.backendId))
+      // Заменяем goals только теми что пришли с бэкенда
+      goals.value = goals.value.filter(g => !g.backendId || newBackendIds.has(g.backendId))
+    }
+    
     goalsInWork.forEach(backendGoal => {
       // Transform steps from backend format to frontend format
       const transformedSteps = (backendGoal.stepsData || []).map(s => ({
