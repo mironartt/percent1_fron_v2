@@ -1702,7 +1702,10 @@ function closeSphereDropdown(e) {
 
 onMounted(async () => {
   initSelectedDay()
-  await loadWeeklySteps()
+  await Promise.all([
+    loadWeeklySteps(),
+    store.loadGoalsFromBackend({ score_filter: 'true', status_filter: 'work' })
+  ])
   setupInfiniteScroll()
   document.addEventListener('click', closeSphereDropdown)
   
