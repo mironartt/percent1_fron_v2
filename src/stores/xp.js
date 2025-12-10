@@ -14,15 +14,18 @@ export const XP_REWARDS = {
 }
 
 const GROUP_TYPE_DISPLAY = {
-  'habits_completed': 'Привычки выполнены',
-  'habits_penalty': 'Штраф за привычки',
+  'habits_completed': 'Награда за выполнение привычек',
+  'habits_penalty': 'Штраф за невыполнение привычек',
   'habit_completed': 'Привычка выполнена',
   'habit_penalty': 'Штраф за привычку',
+  'diary_completed': 'Награда за заполнение дневника',
+  'diary_penalty': 'Штраф за незаполнение дневника',
   'journal_entry': 'Запись в дневнике',
   'journal_penalty': 'Штраф за дневник',
-  'planning_penalty': 'Штраф за планирование',
+  'planning_penalty': 'Штраф за невыполнение планов',
   'goal_step_completed': 'Шаг цели выполнен',
   'goal_completed': 'Цель достигнута',
+  'goals_completed': 'Награда за выполнение целей',
   'reward_redeemed': 'Награда получена',
   'achievement_bonus': 'Бонус за достижение'
 }
@@ -34,7 +37,7 @@ function transformHistoryGroups(historyGroups) {
     total_spent: Math.abs(dayGroup.total_spent || 0),
     groups: (dayGroup.entries || []).map(entry => ({
       group_type: entry.type,
-      group_type_display: GROUP_TYPE_DISPLAY[entry.type] || entry.type,
+      group_type_display: entry.title || GROUP_TYPE_DISPLAY[entry.type] || entry.type,
       total_amount: entry.amount,
       items: entry.details || [{ 
         reward_name: entry.reward_name,
