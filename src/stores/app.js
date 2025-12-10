@@ -521,10 +521,20 @@ export const useAppStore = defineStore('app', () => {
     is_authenticated: false,
     finish_onboarding: false,
     finish_minitask: false,
-    telegram_bot_link: ''
+    telegram_bot_link: '',
+    has_diary_entry_today: false,
+    xp_balance: 0,
+    lifetime_xp: 0
   })
   
   const userLoading = ref(false)
+  
+  // Данные из get-user-data API (обновляются при каждом запросе)
+  const userDashboardData = ref({
+    today_tasks: { total_count: 0, completed_count: 0, tasks: [] },
+    today_habits: { total_count: 0, completed_count: 0, habits: [] },
+    top_goals: { total_incomplete_goals: 0, goals: [] }
+  })
   
   function setUser(userData) {
     if (userData) {
@@ -536,8 +546,25 @@ export const useAppStore = defineStore('app', () => {
         is_authenticated: true,
         finish_onboarding: userData.finish_onboarding ?? false,
         finish_minitask: userData.finish_minitask ?? false,
-        telegram_bot_link: userData.telegram_bot_link || ''
+        telegram_bot_link: userData.telegram_bot_link || '',
+        has_diary_entry_today: userData.has_diary_entry_today ?? false,
+        xp_balance: userData.xp_balance ?? 0,
+        lifetime_xp: userData.lifetime_xp ?? 0
       }
+      
+      // Обновить dashboard данные если они присутствуют
+      if (userData.today_tasks) {
+        userDashboardData.value.today_tasks = userData.today_tasks
+      }
+      if (userData.today_habits) {
+        userDashboardData.value.today_habits = userData.today_habits
+      }
+      if (userData.top_goals) {
+        userDashboardData.value.top_goals = userData.top_goals
+      }
+      
+      // Сохранить в localStorage
+      saveUserDataToLocalStorage(userData)
       
       if (userData.finish_onboarding) {
         onboarding.value.completed = true
@@ -554,10 +581,55 @@ export const useAppStore = defineStore('app', () => {
           isAuthenticated: user.value.is_authenticated,
           finishOnboarding: user.value.finish_onboarding,
           finishMinitask: user.value.finish_minitask,
-          telegramBotLink: user.value.telegram_bot_link ? 'present' : 'none'
+          telegramBotLink: user.value.telegram_bot_link ? 'present' : 'none',
+          xpBalance: user.value.xp_balance,
+          todayTasks: userDashboardData.value.today_tasks.total_count,
+          todayHabits: userDashboardData.value.today_habits.total_count,
+          topGoals: userDashboardData.value.top_goals.goals.length
         })
       }
     }
+  }
+  
+  function saveUserDataToLocalStorage(userData) {
+    try {
+      const dataToSave = {
+        today_tasks: userData.today_tasks || userDashboardData.value.today_tasks,
+        today_habits: userData.today_habits || userDashboardData.value.today_habits,
+        top_goals: userData.top_goals || userDashboardData.value.top_goals,
+        xp_balance: userData.xp_balance ?? user.value.xp_balance,
+        lifetime_xp: userData.lifetime_xp ?? user.value.lifetime_xp,
+        has_diary_entry_today: userData.has_diary_entry_today ?? user.value.has_diary_entry_today,
+        updated_at: new Date().toISOString()
+      }
+      localStorage.setItem('onepercent_user_dashboard', JSON.stringify(dataToSave))
+      if (DEBUG_MODE) {
+        console.log('[Store] User dashboard data saved to localStorage')
+      }
+    } catch (e) {
+      console.warn('[Store] Failed to save user data to localStorage:', e)
+    }
+  }
+  
+  function loadUserDataFromLocalStorage() {
+    try {
+      const saved = localStorage.getItem('onepercent_user_dashboard')
+      if (saved) {
+        const data = JSON.parse(saved)
+        if (data.today_tasks) userDashboardData.value.today_tasks = data.today_tasks
+        if (data.today_habits) userDashboardData.value.today_habits = data.today_habits
+        if (data.top_goals) userDashboardData.value.top_goals = data.top_goals
+        if (data.xp_balance !== undefined) user.value.xp_balance = data.xp_balance
+        if (data.lifetime_xp !== undefined) user.value.lifetime_xp = data.lifetime_xp
+        if (DEBUG_MODE) {
+          console.log('[Store] User dashboard data loaded from localStorage')
+        }
+        return true
+      }
+    } catch (e) {
+      console.warn('[Store] Failed to load user data from localStorage:', e)
+    }
+    return false
   }
   
   function clearUser() {
@@ -573,7 +645,23 @@ export const useAppStore = defineStore('app', () => {
       is_authenticated: false,
       finish_onboarding: false,
       finish_minitask: false,
-      telegram_bot_link: ''
+      telegram_bot_link: '',
+      has_diary_entry_today: false,
+      xp_balance: 0,
+      lifetime_xp: 0
+    }
+    
+    userDashboardData.value = {
+      today_tasks: { total_count: 0, completed_count: 0, tasks: [] },
+      today_habits: { total_count: 0, completed_count: 0, habits: [] },
+      top_goals: { total_incomplete_goals: 0, goals: [] }
+    }
+    
+    // Очистить localStorage
+    try {
+      localStorage.removeItem('onepercent_user_dashboard')
+    } catch (e) {
+      console.warn('[Store] Failed to clear user data from localStorage:', e)
     }
   }
   
@@ -3074,14 +3162,17 @@ export const useAppStore = defineStore('app', () => {
 
   // Load data on init
   loadFromLocalStorage()
+  loadUserDataFromLocalStorage()
 
   return {
     // User & Auth
     user,
     userLoading,
+    userDashboardData,
     setUser,
     clearUser,
     setUserFinishOnboarding,
+    loadUserDataFromLocalStorage,
     isAuthenticated,
     displayName,
     

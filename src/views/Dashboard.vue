@@ -46,7 +46,7 @@
                 Фокус дня
               </h3>
               <div class="header-actions">
-                <span class="focus-count">{{ completedFocusTasks }}/{{ focusTasks.length }}</span>
+                <span class="focus-count">{{ completedFocusTasks }}/{{ totalFocusTasks }}</span>
                 <button 
                   class="settings-btn" 
                   @click="$router.push('/app/planning')"
@@ -87,11 +87,11 @@
                   </div>
                 </div>
                 <router-link 
-                  v-if="dailyTasks.length > 3"
+                  v-if="totalFocusTasks > 3"
                   to="/app/planning" 
                   class="more-tasks-link"
                 >
-                  +{{ dailyTasks.length - 3 }} {{ pluralize(dailyTasks.length - 3, 'задача', 'задачи', 'задач') }}
+                  +{{ totalFocusTasks - 3 }} {{ pluralize(totalFocusTasks - 3, 'задача', 'задачи', 'задач') }}
                 </router-link>
               </div>
             </div>
@@ -103,7 +103,7 @@
                 <Flag :size="18" :stroke-width="1.5" />
                 Мои цели
               </h3>
-              <span class="goals-count">{{ topGoals.length }}</span>
+              <span class="goals-count">{{ totalIncompleteGoals }}</span>
             </div>
             <div class="card-body">
               <div v-if="topGoals.length === 0" class="empty-goals">
@@ -135,11 +135,11 @@
                   </div>
                 </div>
                 <router-link 
-                  v-if="allActiveGoals.length > 3"
+                  v-if="totalIncompleteGoals > 3"
                   to="/app/goals-bank" 
                   class="more-goals-link"
                 >
-                  +{{ allActiveGoals.length - 3 }} {{ pluralize(allActiveGoals.length - 3, 'цель', 'цели', 'целей') }}
+                  +{{ totalIncompleteGoals - 3 }} {{ pluralize(totalIncompleteGoals - 3, 'цель', 'цели', 'целей') }}
                 </router-link>
               </div>
             </div>
@@ -248,10 +248,27 @@ const showHabitManager = ref(false)
 
 const userName = computed(() => store.displayName)
 const averageScore = computed(() => store.averageScore)
-const dailyTasks = computed(() => store.todayScheduledTasks || [])
 const journalStreak = computed(() => store.journalStreak)
 const hasTodayEntry = computed(() => store.hasTodayEntry)
 const showPlanReview = computed(() => store.showPlanReview)
+
+// Данные из API get-user-data (с защитными проверками)
+const defaultTodayTasks = { total_count: 0, completed_count: 0, tasks: [] }
+const defaultTopGoals = { total_incomplete_goals: 0, goals: [] }
+const apiTodayTasks = computed(() => {
+  try {
+    return store.userDashboardData?.today_tasks || defaultTodayTasks
+  } catch {
+    return defaultTodayTasks
+  }
+})
+const apiTopGoals = computed(() => {
+  try {
+    return store.userDashboardData?.top_goals || defaultTopGoals
+  } catch {
+    return defaultTopGoals
+  }
+})
 
 const currentHour = computed(() => new Date().getHours())
 
@@ -294,12 +311,25 @@ const dayMessage = computed(() => {
 
 const isEvening = computed(() => currentHour.value >= 18)
 
+// Фокус дня - используем данные из API today_tasks
 const focusTasks = computed(() => {
-  return dailyTasks.value.slice(0, 3)
+  const tasks = apiTodayTasks.value.tasks || []
+  return tasks.slice(0, 3).map(task => ({
+    id: task.step_id,
+    title: task.step_title,
+    completed: task.is_complete,
+    sphere: task.goal_title,
+    priority: task.priority,
+    goalId: task.goal_id
+  }))
 })
 
 const completedFocusTasks = computed(() => {
-  return focusTasks.value.filter(t => t.completed).length
+  return apiTodayTasks.value.completed_count || 0
+})
+
+const totalFocusTasks = computed(() => {
+  return apiTodayTasks.value.total_count || 0
 })
 
 const mentorHint = computed(() => {
@@ -308,28 +338,34 @@ const mentorHint = computed(() => {
   return 'Готов помочь с текущими задачами'
 })
 
-const sphereIcons = {
-  family: '👨‍👩‍👧',
-  wealth: '💰',
-  hobbies: '🎯',
-  friendship: '👥',
-  health: '❤️',
-  career: '💼',
-  love: '💕'
+// Маппинг категорий на иконки
+const categoryIcons = {
+  welfare: '💰',
+  hobby: '🎯',
+  environment: '👥',
+  health_sport: '❤️',
+  work: '💼',
+  family: '👨‍👩‍👧'
 }
 
-const allActiveGoals = computed(() => {
-  return (store.goals || [])
-    .filter(g => g.status === 'active')
-    .map(g => ({
-      ...g,
-      sphereIcon: sphereIcons[g.sphereId] || '🎯',
-      progress: g.progress || 0
-    }))
+// Мои цели - используем данные из API top_goals
+const totalIncompleteGoals = computed(() => {
+  return apiTopGoals.value.total_incomplete_goals || 0
 })
 
 const topGoals = computed(() => {
-  return allActiveGoals.value.slice(0, 3)
+  const goals = apiTopGoals.value.goals || []
+  return goals.map(goal => ({
+    id: goal.goal_id,
+    backendId: goal.goal_id,
+    title: goal.title,
+    sphereIcon: categoryIcons[goal.category] || '🎯',
+    progress: goal.progress_percent || 0,
+    totalSteps: goal.total_steps,
+    completedSteps: goal.completed_steps,
+    status: goal.status,
+    category: goal.category
+  }))
 })
 
 function goToGoal(goal) {

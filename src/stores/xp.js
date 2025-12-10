@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { DEBUG_MODE } from '@/config/settings.js'
 import * as api from '@/services/api.js'
 
@@ -388,6 +388,19 @@ export const useXpStore = defineStore('xp', () => {
     }
     error.value = null
   }
+  
+  // Синхронизация XP balance из user data (get-user-data API)
+  function syncFromUserData(userData) {
+    if (userData && userData.xp_balance !== undefined) {
+      xpBalance.value = userData.xp_balance
+      if (DEBUG_MODE) {
+        console.log('[XP] Synced xpBalance from user data:', userData.xp_balance)
+      }
+    }
+    if (userData && userData.lifetime_xp !== undefined) {
+      lifetimeEarned.value = userData.lifetime_xp
+    }
+  }
 
   return {
     xpBalance,
@@ -428,6 +441,7 @@ export const useXpStore = defineStore('xp', () => {
     redeemReward,
     init,
     resetStore,
+    syncFromUserData,
     
     XP_REWARDS
   }

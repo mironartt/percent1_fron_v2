@@ -106,11 +106,36 @@ function getHabitIcon(habit) {
   return habit.icon || '📌'
 }
 
+// Используем today_habits из API get-user-data (приоритет), затем habitsStore, затем appStore
+const defaultTodayHabits = { total_count: 0, completed_count: 0, habits: [] }
+const apiTodayHabits = computed(() => {
+  try {
+    return appStore.userDashboardData?.today_habits || defaultTodayHabits
+  } catch {
+    return defaultTodayHabits
+  }
+})
+
 const allHabits = computed(() => {
+  // Приоритет 1: данные из API get-user-data
+  const apiHabits = apiTodayHabits.value?.habits
+  if (apiHabits && apiHabits.length > 0) {
+    return apiHabits.map(h => ({
+      habit_id: h.habit_id,
+      id: h.habit_id,
+      name: h.name,
+      icon: h.icon,
+      is_completed: h.is_completed,
+      completed: h.is_completed
+    }))
+  }
+  
+  // Приоритет 2: данные из habitsStore (полная загрузка)
   if (habitsStore.habits && habitsStore.habits.length > 0) {
     return habitsStore.habits.filter(h => !h.date_deleted)
   }
   
+  // Приоритет 3: локальные данные
   return appStore.todayHabits
 })
 
@@ -133,14 +158,31 @@ function getHabitCompleted(habit) {
 }
 
 const scheduledHabits = computed(() => {
+  // Если данные из API - они уже отфильтрованы по расписанию
+  const apiHabits = apiTodayHabits.value?.habits
+  if (apiHabits && apiHabits.length > 0) {
+    return allHabits.value
+  }
   return allHabits.value.filter(h => isScheduledForToday(h))
 })
 
 const completedCount = computed(() => {
+  // Используем данные из API если они есть
+  const count = apiTodayHabits.value?.completed_count
+  if (count !== undefined && count !== null) {
+    return count
+  }
   return scheduledHabits.value.filter(h => getHabitCompleted(h)).length
 })
 
-const scheduledCount = computed(() => scheduledHabits.value.length)
+const scheduledCount = computed(() => {
+  // Используем данные из API если они есть
+  const count = apiTodayHabits.value?.total_count
+  if (count !== undefined && count !== null) {
+    return count
+  }
+  return scheduledHabits.value.length
+})
 
 const habitStreak = computed(() => {
   if (habitsStore.statsPanel?.streak !== undefined) {
