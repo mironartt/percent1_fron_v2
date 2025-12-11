@@ -185,10 +185,46 @@
     </div>
 
     <div class="filters-row compact">
+      <!-- Поиск по названию -->
+      <div class="search-filter">
+        <Search :size="14" class="search-icon" />
+        <input 
+          type="text" 
+          v-model="queryFilter" 
+          placeholder="Поиск целей..." 
+          class="search-input"
+        />
+        <button v-if="queryFilter" class="clear-search" @click="queryFilter = ''">
+          <X :size="14" />
+        </button>
+      </div>
+      
+      <!-- Статус цели (API фильтр) -->
+      <div class="goal-status-dropdown" :class="{ open: showGoalStatusDropdown }">
+        <button class="dropdown-trigger" @click="showGoalStatusDropdown = !showGoalStatusDropdown">
+          <Target :size="14" />
+          <span>{{ selectedGoalStatusName }}</span>
+          <ChevronDown :size="14" class="dropdown-arrow" />
+        </button>
+        <div class="dropdown-menu" v-if="showGoalStatusDropdown" @click.stop>
+          <button 
+            v-for="option in goalStatusOptions" 
+            :key="option.value"
+            class="dropdown-item"
+            :class="{ active: goalStatusFilter === option.value }"
+            @click="goalStatusFilter = option.value; showGoalStatusDropdown = false"
+          >
+            {{ option.label }}
+          </button>
+        </div>
+      </div>
+      
+      <!-- Категория/сфера -->
       <div class="sphere-dropdown" :class="{ open: showSphereDropdown }">
         <button class="dropdown-trigger" @click="showSphereDropdown = !showSphereDropdown">
           <Filter :size="14" />
-          <span>{{ selectedSphereName }}</span>
+          <span class="desktop-only">{{ selectedSphereName }}</span>
+          <span class="mobile-only">Сфера</span>
           <span class="dropdown-count" v-if="filterSphere">1</span>
           <ChevronDown :size="14" class="dropdown-arrow" />
         </button>
@@ -199,7 +235,6 @@
             @click="filterSphere = ''; showSphereDropdown = false"
           >
             Все сферы
-            <span class="item-count">{{ goalsWithSteps.length }}</span>
           </button>
           <button 
             v-for="sphere in spheresWithGoals" 
@@ -209,19 +244,72 @@
             @click="filterSphere = sphere.id; showSphereDropdown = false"
           >
             {{ sphere.icon }} {{ sphere.name }}
-            <span class="item-count">{{ sphere.goalCount }}</span>
           </button>
         </div>
       </div>
       
-      <!-- Desktop: segmented control -->
-      <div class="segmented-control desktop-only">
+      <!-- Сортировка -->
+      <div class="sort-dropdown desktop-only" :class="{ open: showSortDropdown }">
+        <button class="dropdown-trigger" @click="showSortDropdown = !showSortDropdown">
+          <BarChart3 :size="14" />
+          <span>{{ selectedSortName }}</span>
+          <ChevronDown :size="14" class="dropdown-arrow" />
+        </button>
+        <div class="dropdown-menu" v-if="showSortDropdown" @click.stop>
+          <button 
+            v-for="option in sortOptions" 
+            :key="option.value"
+            class="dropdown-item"
+            :class="{ active: orderBy === option.value }"
+            @click="orderBy = option.value; showSortDropdown = false"
+          >
+            {{ option.label }}
+          </button>
+          <div class="dropdown-divider"></div>
+          <button 
+            class="dropdown-item"
+            :class="{ active: orderDirection === 'desc' }"
+            @click="orderDirection = 'desc'; showSortDropdown = false"
+          >
+            По убыванию ↓
+          </button>
+          <button 
+            class="dropdown-item"
+            :class="{ active: orderDirection === 'asc' }"
+            @click="orderDirection = 'asc'; showSortDropdown = false"
+          >
+            По возрастанию ↑
+          </button>
+        </div>
+      </div>
+      
+      <!-- Кнопка сброса фильтров -->
+      <button 
+        v-if="hasActiveFilters" 
+        class="reset-filters-btn" 
+        @click="resetAllFilters"
+        title="Сбросить все фильтры"
+      >
+        <X :size="14" />
+        <span class="desktop-only">Сбросить</span>
+      </button>
+      
+      <!-- AI Planning button -->
+      <button class="ai-planner-btn filters-ai-btn" @click="openAIPlannerModal">
+        <Sparkles :size="16" />
+        <span class="ai-btn-text desktop-only">AI планирование</span>
+      </button>
+    </div>
+    
+    <!-- Вторая строка: локальный фильтр шагов -->
+    <div class="filters-row secondary">
+      <div class="segmented-control">
         <button 
           class="segment"
           :class="{ active: filterStatus === '' }"
           @click="filterStatus = ''"
         >
-          Все
+          Все шаги
         </button>
         <button 
           class="segment"
@@ -239,42 +327,9 @@
         </button>
       </div>
       
-      <!-- Mobile: status dropdown -->
-      <div class="status-dropdown mobile-only" :class="{ open: showStatusDropdown }">
-        <button class="dropdown-trigger" @click="showStatusDropdown = !showStatusDropdown">
-          <span>{{ selectedStatusName }}</span>
-          <ChevronDown :size="14" class="dropdown-arrow" />
-        </button>
-        <div class="dropdown-menu" v-if="showStatusDropdown" @click.stop>
-          <button 
-            class="dropdown-item"
-            :class="{ active: filterStatus === '' }"
-            @click="filterStatus = ''; showStatusDropdown = false"
-          >
-            Все
-          </button>
-          <button 
-            class="dropdown-item"
-            :class="{ active: filterStatus === 'unscheduled' }"
-            @click="filterStatus = 'unscheduled'; showStatusDropdown = false"
-          >
-            Незапланированные
-          </button>
-          <button 
-            class="dropdown-item"
-            :class="{ active: filterStatus === 'scheduled' }"
-            @click="filterStatus = 'scheduled'; showStatusDropdown = false"
-          >
-            Запланированные
-          </button>
-        </div>
-      </div>
-      
-      <!-- AI Planning button -->
-      <button class="ai-planner-btn filters-ai-btn" @click="openAIPlannerModal">
-        <Sparkles :size="16" />
-        <span class="ai-btn-text desktop-only">AI планирование</span>
-      </button>
+      <span class="results-count" v-if="totalGoalsItems > 0">
+        Найдено: {{ totalGoalsItems }} {{ totalGoalsItems === 1 ? 'цель' : 'целей' }}
+      </span>
     </div>
 
     <!-- Баннер: цели без шагов -->
@@ -939,8 +994,14 @@ const weekOffset = ref(0)
 const selectedDay = ref(null)
 const filterSphere = ref('')
 const filterStatus = ref('')
+const goalStatusFilter = ref('work')
+const queryFilter = ref('')
+const orderBy = ref('date_created')
+const orderDirection = ref('desc')
 const showSphereDropdown = ref(false)
 const showStatusDropdown = ref(false)
+const showGoalStatusDropdown = ref(false)
+const showSortDropdown = ref(false)
 const addStepSearch = ref('')
 const goalsDisplayLimit = ref(10)
 const currentPage = ref(1)
@@ -1636,37 +1697,117 @@ async function goToPage(page) {
   await loadGoalsWithFilters()
 }
 
+// Маппинг категорий frontend → backend
+const categoryFrontendToBackend = {
+  'wealth': 'welfare',
+  'hobbies': 'hobby',
+  'friendship': 'environment',
+  'health': 'health_sport',
+  'career': 'work',
+  'love': 'family'
+}
+
+// Варианты статуса цели
+const goalStatusOptions = [
+  { value: 'work', label: 'В работе' },
+  { value: 'complete', label: 'Завершённые' },
+  { value: 'unstatus', label: 'Без статуса' },
+  { value: '', label: 'Все цели' }
+]
+
+// Варианты сортировки
+const sortOptions = [
+  { value: 'date_created', label: 'По дате создания' },
+  { value: 'title', label: 'По названию' },
+  { value: 'category', label: 'По категории' },
+  { value: 'status', label: 'По статусу' }
+]
+
 async function loadGoalsWithFilters() {
   const params = {
-    score_filter: 'true',
-    status_filter: 'work',
     with_steps_data: true,
-    has_steps: true,
     page: currentPage.value,
-    page_size: 10
+    order_by: orderBy.value,
+    order_direction: orderDirection.value
+  }
+  
+  // Добавляем фильтр по статусу цели
+  if (goalStatusFilter.value) {
+    params.status_filter = goalStatusFilter.value
   }
   
   // Добавляем фильтр по сфере если выбран
   if (filterSphere.value) {
-    // Конвертируем из frontend формата в backend
-    const categoryMap = {
-      'welfare': 'welfare',
-      'hobby': 'hobby', 
-      'environment': 'environment',
-      'health': 'health_sport',
-      'work': 'work',
-      'family': 'family'
-    }
-    params.category_filter = categoryMap[filterSphere.value] || filterSphere.value
+    params.category_filter = categoryFrontendToBackend[filterSphere.value] || filterSphere.value
+  }
+  
+  // Добавляем текстовый поиск (минимум 3 символа)
+  if (queryFilter.value && queryFilter.value.length >= 3) {
+    params.query_filter = queryFilter.value
   }
   
   await store.loadGoalsFromBackend(params)
 }
 
 // Watch для фильтров - при изменении делаем запрос к бэку
-watch([filterSphere], async () => {
+watch([filterSphere, goalStatusFilter, orderBy, orderDirection], async () => {
   currentPage.value = 1
   await loadGoalsWithFilters()
+})
+
+// Debounce для текстового поиска
+let queryDebounceTimer = null
+watch(queryFilter, async (newVal) => {
+  clearTimeout(queryDebounceTimer)
+  if (newVal.length === 0 || newVal.length >= 3) {
+    queryDebounceTimer = setTimeout(async () => {
+      currentPage.value = 1
+      await loadGoalsWithFilters()
+    }, 300)
+  }
+})
+
+// Проверка активности фильтров
+const hasActiveFilters = computed(() => {
+  return filterSphere.value !== '' || 
+         goalStatusFilter.value !== 'work' || 
+         queryFilter.value !== '' ||
+         orderBy.value !== 'date_created' ||
+         orderDirection.value !== 'desc'
+})
+
+// Количество активных фильтров
+const activeFiltersCount = computed(() => {
+  let count = 0
+  if (filterSphere.value) count++
+  if (goalStatusFilter.value && goalStatusFilter.value !== 'work') count++
+  if (queryFilter.value.length >= 3) count++
+  if (orderBy.value !== 'date_created' || orderDirection.value !== 'desc') count++
+  return count
+})
+
+// Сброс всех фильтров
+async function resetAllFilters() {
+  filterSphere.value = ''
+  goalStatusFilter.value = 'work'
+  queryFilter.value = ''
+  orderBy.value = 'date_created'
+  orderDirection.value = 'desc'
+  filterStatus.value = ''
+  currentPage.value = 1
+  await loadGoalsWithFilters()
+}
+
+// Названия для выбранных фильтров
+const selectedGoalStatusName = computed(() => {
+  const option = goalStatusOptions.find(o => o.value === goalStatusFilter.value)
+  return option?.label || 'В работе'
+})
+
+const selectedSortName = computed(() => {
+  const option = sortOptions.find(o => o.value === orderBy.value)
+  const dir = orderDirection.value === 'asc' ? '↑' : '↓'
+  return option ? `${option.label} ${dir}` : 'По дате ↓'
 })
 
 // Computed для номеров страниц пагинации
@@ -2015,6 +2156,10 @@ function getStepsPaginationPages(goal) {
 function clearFilters() {
   filterSphere.value = ''
   filterStatus.value = ''
+  goalStatusFilter.value = 'work'
+  queryFilter.value = ''
+  orderBy.value = 'date_created'
+  orderDirection.value = 'desc'
 }
 
 function goToGoalsBank() {
@@ -3822,6 +3967,118 @@ onUnmounted(() => {
 .segment.active {
   background: var(--primary, #6366f1);
   color: white;
+}
+
+/* Search filter */
+.search-filter {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  max-width: 200px;
+}
+
+.search-filter .search-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.search-filter .search-input {
+  width: 100%;
+  padding: 0.5rem 2rem 0.5rem 2rem;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  background: var(--bg);
+  color: var(--text-primary);
+  transition: border-color 0.2s;
+}
+
+.search-filter .search-input:focus {
+  outline: none;
+  border-color: var(--primary, #6366f1);
+}
+
+.search-filter .search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-filter .clear-search {
+  position: absolute;
+  right: 0.5rem;
+  padding: 0.25rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-filter .clear-search:hover {
+  color: var(--text-primary);
+  background: var(--hover-bg, #f3f4f6);
+}
+
+/* Goal status dropdown */
+.goal-status-dropdown,
+.sort-dropdown {
+  position: relative;
+}
+
+.goal-status-dropdown.open .dropdown-trigger,
+.sort-dropdown.open .dropdown-trigger {
+  border-color: var(--primary, #6366f1);
+  background: var(--primary-light, rgba(99, 102, 241, 0.1));
+}
+
+.goal-status-dropdown.open .dropdown-arrow,
+.sort-dropdown.open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+/* Dropdown divider */
+.dropdown-divider {
+  height: 1px;
+  background: var(--border-color, #e5e7eb);
+  margin: 0.25rem 0;
+}
+
+/* Reset filters button */
+.reset-filters-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--danger-color, #ef4444);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--danger-color, #ef4444);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.reset-filters-btn:hover {
+  background: var(--danger-color, #ef4444);
+  color: white;
+}
+
+/* Secondary filters row */
+.filters-row.secondary {
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  padding: 0;
+}
+
+.results-count {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
 }
 
 /* Responsive visibility */
