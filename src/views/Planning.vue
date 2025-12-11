@@ -2943,6 +2943,15 @@ async function scheduleStepToDay(goal, step, date) {
   saveStepToLocalPlan(goal, step, date)
   closeBottomSheet()
   
+  // Track activation task
+  try {
+    const { useActivationStore } = await import('@/stores/activation.js')
+    const activationStore = useActivationStore()
+    activationStore.completeTask('select_focus')
+  } catch (e) {
+    console.error('[Planning] Activation tracking error:', e)
+  }
+  
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
     const result = await updateGoalSteps({

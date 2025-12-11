@@ -206,8 +206,8 @@ async function checkUserAuth() {
         id: 'dev-user', 
         email: 'dev@example.com', 
         first_name: 'Dev User',
-        finish_onboarding: false,
-        finish_minitask: false
+        finish_onboarding: true,
+        finish_minitask: true
       },
       skipped: true
     }
@@ -269,7 +269,7 @@ router.beforeEach(async (to, from, next) => {
   const authResult = await checkUserAuth()
   const { isAuthenticated, userData, skipped } = authResult
   
-  if (userData && !skipped) {
+  if (userData) {
     store.setUser(userData)
     
     // Синхронизируем XP balance с данными пользователя
@@ -328,7 +328,7 @@ router.beforeEach(async (to, from, next) => {
 })
 
 // Отслеживание переходов в Яндекс.Метрике (для SPA)
-router.afterEach((to) => {
+router.afterEach(async (to) => {
   if (typeof window !== 'undefined' && window.ym && YANDEX_METRIKA_ID) {
     try {
       window.ym(YANDEX_METRIKA_ID, 'hit', to.fullPath, {
@@ -345,6 +345,32 @@ router.afterEach((to) => {
     } catch (error) {
       if (DEBUG_MODE) {
         console.error('[YandexMetrika] Error tracking page view:', error)
+      }
+    }
+  }
+  
+  // Activation tracking for First Week Mission
+  if (to.meta.requiresAuth) {
+    try {
+      const { useActivationStore } = await import('@/stores/activation.js')
+      const activationStore = useActivationStore()
+      
+      // Track page visits for activation tasks
+      const routeToTask = {
+        '/app/goals': 'view_goals',
+        '/app/goals-bank': 'view_goals'
+      }
+      
+      // Check path patterns
+      for (const [path, taskId] of Object.entries(routeToTask)) {
+        if (to.path.startsWith(path)) {
+          activationStore.completeTask(taskId)
+          break
+        }
+      }
+    } catch (error) {
+      if (DEBUG_MODE) {
+        console.error('[Router] Error tracking activation:', error)
       }
     }
   }

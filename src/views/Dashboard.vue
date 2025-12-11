@@ -206,10 +206,17 @@
     v-if="showHabitManager" 
     @close="showHabitManager = false" 
   />
+
+  <FirstWeekMission 
+    v-if="showMissionModal && shouldShowFirstWeekMission"
+    :is-first-visit="isFirstMissionVisit"
+    @close="closeMissionModal"
+    @complete="onMissionComplete"
+  />
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useAppStore } from '../stores/app'
 import OnboardingAI from '../components/OnboardingAI.vue'
 import MiniTaskWelcome from '../components/MiniTaskWelcome.vue'
@@ -220,6 +227,8 @@ import HabitTracker from '../components/HabitTracker.vue'
 import HabitManagerModal from '../components/HabitManagerModal.vue'
 import DailyProgressBar from '../components/DailyProgressBar.vue'
 import XpBadge from '../components/XpBadge.vue'
+import FirstWeekMission from '../components/FirstWeekMission.vue'
+import { useActivationStore } from '@/stores/activation'
 import { DEBUG_MODE } from '@/config/settings.js'
 import { 
   Sun,
@@ -239,10 +248,64 @@ import {
 import { useRouter } from 'vue-router'
 
 const store = useAppStore()
+const activationStore = useActivationStore()
 const router = useRouter()
 const showJournalModal = ref(false)
 const showMiniTask = ref(false)
 const showHabitManager = ref(false)
+const showMissionModal = ref(false)
+
+activationStore.init()
+
+const shouldShowFirstWeekMission = computed(() => {
+  if (shouldShowOnboarding.value) return false
+  if (!store.user.finish_onboarding) return false
+  if (activationStore.isAllCompleted) return false
+  return activationStore.shouldShowMission
+})
+
+const isFirstMissionVisit = computed(() => !activationStore.missionStarted)
+
+watch(() => store.user.finish_onboarding, (finished, oldVal) => {
+  if (DEBUG_MODE) {
+    console.log('[Dashboard] FirstWeekMission watch:', {
+      finish_onboarding: finished,
+      oldVal,
+      missionStarted: activationStore.missionStarted,
+      isAllCompleted: activationStore.isAllCompleted
+    })
+  }
+  if (finished && !activationStore.missionStarted && !activationStore.isAllCompleted) {
+    showMissionModal.value = true
+    if (DEBUG_MODE) {
+      console.log('[Dashboard] Showing FirstWeekMission modal')
+    }
+  }
+})
+
+onMounted(() => {
+  if (DEBUG_MODE) {
+    console.log('[Dashboard] onMounted FirstWeekMission check:', {
+      finish_onboarding: store.user.finish_onboarding,
+      missionStarted: activationStore.missionStarted,
+      isAllCompleted: activationStore.isAllCompleted
+    })
+  }
+  if (store.user.finish_onboarding && !activationStore.missionStarted && !activationStore.isAllCompleted) {
+    showMissionModal.value = true
+    if (DEBUG_MODE) {
+      console.log('[Dashboard] Showing FirstWeekMission modal on mount')
+    }
+  }
+})
+
+function closeMissionModal() {
+  showMissionModal.value = false
+}
+
+function onMissionComplete() {
+  showMissionModal.value = false
+}
 
 const userName = computed(() => store.displayName)
 const averageScore = computed(() => store.averageScore)

@@ -271,6 +271,15 @@ async function saveEntry() {
     isEditing.value = false
     emit('saved', localEntry)
     
+    // Track activation task
+    try {
+      const { useActivationStore } = await import('@/stores/activation.js')
+      const activationStore = useActivationStore()
+      activationStore.completeTask('write_reflection')
+    } catch (e) {
+      console.error('[JournalEntry] Activation tracking error:', e)
+    }
+    
     // Sync with backend
     try {
       const result = await updateDiaryEntry(backendData)

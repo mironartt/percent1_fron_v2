@@ -267,6 +267,15 @@ export const useHabitsStore = defineStore('habits', () => {
         await loadHabits(lastFetchParams.value || {}, true)
         await loadStatsPanel()
         
+        // Track activation task
+        try {
+          const { useActivationStore } = await import('@/stores/activation.js')
+          const activationStore = useActivationStore()
+          activationStore.completeTask('create_habit')
+        } catch (e) {
+          if (DEBUG_MODE) console.error('[HabitsStore] Activation tracking error:', e)
+        }
+        
         if (DEBUG_MODE) {
           console.log('[HabitsStore] Habit created:', newId)
         }
