@@ -34,6 +34,10 @@ args = "Start application"
 task = "workflow.run"
 args = "AI Proxy Server"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Telegram Bot"
+
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -51,6 +55,17 @@ author = "agent"
 task = "shell.exec"
 args = "node server/aiProxy.js"
 waitForPort = 3001
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "Telegram Bot"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node server/telegramBot.js"
 
 [workflows.workflow.metadata]
 outputType = "console"
