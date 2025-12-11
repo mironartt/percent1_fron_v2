@@ -2077,15 +2077,34 @@ function quickToggleStepComplete(goal, step) {
   step.completed = newCompleted
   console.log('[Planning] Updated step.completed =', newCompleted)
   
-  // Обновляем в weeklyStepsData для синхронизации с таймлайном
-  let originalStep = null
-  for (const day of weeklyStepsData.value) {
-    const found = day.steps_data?.find(s => s.goal_id === goalId && s.step_id === stepId)
-    if (found) {
-      found.step_is_complete = newCompleted
-      originalStep = found
-      console.log('[Planning] Updated weeklyStepsData.step_is_complete =', newCompleted)
+  // Обновляем в weeklyStepsData с принудительной реактивностью
+  let dayIndex = -1
+  let stepIndex = -1
+  for (let i = 0; i < weeklyStepsData.value.length; i++) {
+    const day = weeklyStepsData.value[i]
+    if (day.steps_data) {
+      const idx = day.steps_data.findIndex(s => s.step_id === stepId && s.goal_id === goalId)
+      if (idx !== -1) {
+        dayIndex = i
+        stepIndex = idx
+        break
+      }
     }
+  }
+  
+  if (dayIndex !== -1 && stepIndex !== -1) {
+    const updatedDay = { ...weeklyStepsData.value[dayIndex] }
+    updatedDay.steps_data = [...updatedDay.steps_data]
+    updatedDay.steps_data[stepIndex] = { 
+      ...updatedDay.steps_data[stepIndex], 
+      step_is_complete: newCompleted 
+    }
+    weeklyStepsData.value = [
+      ...weeklyStepsData.value.slice(0, dayIndex),
+      updatedDay,
+      ...weeklyStepsData.value.slice(dayIndex + 1)
+    ]
+    console.log('[Planning] Updated weeklyStepsData with new array')
   }
   
   // Триггер реактивности
@@ -2097,6 +2116,7 @@ function quickToggleStepComplete(goal, step) {
   }
   
   // Отправляем запрос на бэкенд
+  const originalStep = dayIndex !== -1 ? weeklyStepsData.value[dayIndex].steps_data[stepIndex] : null
   sendStepUpdateToBackend(goalId, stepId, newCompleted, originalStep, step)
 }
 
@@ -2352,13 +2372,18 @@ function toggleTaskComplete(task) {
   const goalId = task.goalId
   const stepId = task.stepId
   
-  // Находим оригинальный шаг в weeklyStepsData
-  let originalStep = null
-  for (const day of weeklyStepsData.value) {
-    const found = day.steps_data?.find(s => s.step_id === stepId && s.goal_id === goalId)
-    if (found) {
-      originalStep = found
-      break
+  // Находим день и индекс шага в weeklyStepsData
+  let dayIndex = -1
+  let stepIndex = -1
+  for (let i = 0; i < weeklyStepsData.value.length; i++) {
+    const day = weeklyStepsData.value[i]
+    if (day.steps_data) {
+      const idx = day.steps_data.findIndex(s => s.step_id === stepId && s.goal_id === goalId)
+      if (idx !== -1) {
+        dayIndex = i
+        stepIndex = idx
+        break
+      }
     }
   }
   
@@ -2366,19 +2391,31 @@ function toggleTaskComplete(task) {
   const goal = workingGoals.value.find(g => g.id === goalId || g.backendId === goalId)
   const storeStep = goal?.steps?.find(s => s.id === stepId || s.backendId === stepId)
   
-  // Определяем текущее состояние из оригинального источника
-  const currentCompleted = originalStep?.step_is_complete || storeStep?.completed || false
+  // Определяем текущее состояние
+  const currentCompleted = dayIndex !== -1 
+    ? weeklyStepsData.value[dayIndex].steps_data[stepIndex].step_is_complete 
+    : (storeStep?.completed || false)
   const newCompleted = !currentCompleted
   
   console.log('[Planning] toggleTaskComplete:', { goalId, stepId, currentCompleted, newCompleted })
   
-  // Обновляем в weeklyStepsData (источник для таймлайна)
-  if (originalStep) {
-    originalStep.step_is_complete = newCompleted
-    console.log('[Planning] Updated weeklyStepsData.step_is_complete =', newCompleted)
+  // Обновляем в weeklyStepsData с принудительной реактивностью
+  if (dayIndex !== -1 && stepIndex !== -1) {
+    const updatedDay = { ...weeklyStepsData.value[dayIndex] }
+    updatedDay.steps_data = [...updatedDay.steps_data]
+    updatedDay.steps_data[stepIndex] = { 
+      ...updatedDay.steps_data[stepIndex], 
+      step_is_complete: newCompleted 
+    }
+    weeklyStepsData.value = [
+      ...weeklyStepsData.value.slice(0, dayIndex),
+      updatedDay,
+      ...weeklyStepsData.value.slice(dayIndex + 1)
+    ]
+    console.log('[Planning] Updated weeklyStepsData with new array')
   }
   
-  // Обновляем в store.goals (источник для блока "Цели и шаги")
+  // Обновляем в store.goals
   if (storeStep) {
     storeStep.completed = newCompleted
     console.log('[Planning] Updated storeStep.completed =', newCompleted)
@@ -2393,6 +2430,7 @@ function toggleTaskComplete(task) {
   }
   
   // Отправляем запрос на бэкенд
+  const originalStep = dayIndex !== -1 ? weeklyStepsData.value[dayIndex].steps_data[stepIndex] : null
   sendStepUpdateToBackend(goalId, stepId, newCompleted, originalStep, storeStep)
 }
 
