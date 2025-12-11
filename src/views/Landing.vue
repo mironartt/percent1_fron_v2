@@ -6,7 +6,7 @@
           <div class="logo">
             <span class="logo-icon">1%</span>
             <div class="logo-text">
-              <h1>OnePercent</h1>
+              <b class="logo-title">OnePercent</b>
               <span class="tagline">+1% каждый день</span>
             </div>
           </div>
@@ -537,7 +537,7 @@
           </div>
         </div>
         <div class="footer-bottom">
-          <p>&copy; 2024 OnePercent. Все права защищены.</p>
+          <p>&copy; 2026 OnePercent. Все права защищены.</p>
         </div>
       </div>
     </footer>
@@ -727,11 +727,13 @@ onUnmounted(() => {
   font-size: 0.75rem;
 }
 
-.logo h1 {
+.logo h1,
+.logo-title {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
   color: #1a1a2e;
+  display: block;
 }
 
 .tagline {

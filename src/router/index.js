@@ -22,6 +22,7 @@ const LearningCenter = () => import('@/views/LearningCenter.vue')
 const Profile = () => import('@/views/Profile.vue')
 const Habits = () => import('@/views/Habits.vue')
 const OnboardingAI = () => import('@/components/OnboardingAI.vue')
+const NotFound = () => import('@/views/NotFound.vue')
 
 const router = createRouter({
   history: createWebHistory(),
@@ -181,10 +182,12 @@ const router = createRouter({
     { path: '/settings', redirect: '/app/settings' },
     { path: '/club', redirect: '/app/club' },
     
-    // 404 - редирект на лендинг
+    // 404 - страница не найдена
     {
       path: '/:pathMatch(.*)*',
-      redirect: '/'
+      name: 'not-found',
+      component: NotFound,
+      meta: { title: 'Страница не найдена', public: true }
     }
   ]
 })
