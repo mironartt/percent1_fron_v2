@@ -1017,6 +1017,16 @@ async function toggleOverdueTaskComplete(task) {
     originalStep.step_is_complete = newCompleted
   }
   
+  // Обновляем счётчик complete_steps в totalStepsData цели
+  const storeGoal = store.goals.find(g => g.backendId === task.goalId || g.id === task.goalId)
+  if (storeGoal?.totalStepsData) {
+    const delta = newCompleted ? 1 : -1
+    storeGoal.totalStepsData = {
+      ...storeGoal.totalStepsData,
+      complete_steps: Math.max(0, (storeGoal.totalStepsData.complete_steps || 0) + delta)
+    }
+  }
+  
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
     await updateGoalSteps({
@@ -2180,6 +2190,15 @@ async function toggleStepComplete() {
   const newCompleted = !selectedStep.value.completed
   selectedStep.value.completed = newCompleted
   
+  // Обновляем счётчик complete_steps в totalStepsData цели
+  if (actualGoal?.totalStepsData) {
+    const delta = newCompleted ? 1 : -1
+    actualGoal.totalStepsData = {
+      ...actualGoal.totalStepsData,
+      complete_steps: Math.max(0, (actualGoal.totalStepsData.complete_steps || 0) + delta)
+    }
+  }
+  
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
     const result = await updateGoalSteps({
@@ -2219,6 +2238,17 @@ function quickToggleStepComplete(goal, step) {
   // Обновляем шаг в store.goals (напрямую - step это ссылка)
   step.completed = newCompleted
   console.log('[Planning] Updated step.completed =', newCompleted)
+  
+  // Обновляем счётчик complete_steps в totalStepsData цели
+  const storeGoal = store.goals.find(g => g.backendId === goalId || g.id === goalId)
+  if (storeGoal?.totalStepsData) {
+    const delta = newCompleted ? 1 : -1
+    storeGoal.totalStepsData = {
+      ...storeGoal.totalStepsData,
+      complete_steps: Math.max(0, (storeGoal.totalStepsData.complete_steps || 0) + delta)
+    }
+    console.log('[Planning] Updated totalStepsData.complete_steps:', storeGoal.totalStepsData.complete_steps)
+  }
   
   // Обновляем в weeklyStepsData с принудительной реактивностью
   let dayIndex = -1
@@ -2557,6 +2587,16 @@ function toggleTaskComplete(task) {
   if (storeStep) {
     storeStep.completed = newCompleted
     console.log('[Planning] Updated storeStep.completed =', newCompleted)
+  }
+  
+  // Обновляем счётчик complete_steps в totalStepsData цели
+  if (goal?.totalStepsData) {
+    const delta = newCompleted ? 1 : -1
+    goal.totalStepsData = {
+      ...goal.totalStepsData,
+      complete_steps: Math.max(0, (goal.totalStepsData.complete_steps || 0) + delta)
+    }
+    console.log('[Planning] Updated totalStepsData.complete_steps:', goal.totalStepsData.complete_steps)
   }
   
   // Триггер реактивности
