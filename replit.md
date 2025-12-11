@@ -34,8 +34,54 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite (with pro
 ### System Design Choices
 The application uses a modular structure with dedicated components, services, views, router, and Pinia stores. It emphasizes user guidance, visual feedback, and a clean interface. The AI Mentor is a core value proposition. Backend synchronization includes immediate UI feedback, goal routing with `backendId`, race condition prevention, optimized step synchronization, and API pagination.
 
+## Telegram Bot Integration (NEW - December 2025)
+
+### Overview
+A standalone Telegram bot that mirrors core OnePercent functionality for improved user engagement and retention metrics.
+
+### Technical Stack
+- **Framework**: Telegraf (Node.js Telegram Bot API wrapper)
+- **Scheduling**: node-cron for timed reminders
+- **AI**: OpenAI integration (optional, with fallback responses)
+- **File**: `server/telegramBot.js`
+
+### Features Implemented
+1. **Authentication**: Deep link `/start?auth=TOKEN` for account linking
+2. **Main Menu**: Keyboard with Tasks, Habits, Journal, Mentor, Progress, Settings
+3. **Task Management**: View and toggle tasks with inline buttons
+4. **Habit Tracking**: View and mark habits complete
+5. **Journal**: 4-question conversation flow for evening reflection
+6. **AI Mentor Chat**: GPT-powered coaching (fallback to preset responses if OpenAI unavailable)
+7. **Progress Summary**: Weekly stats display
+8. **Settings**: Reminder toggles, timezone selection
+9. **Scheduled Reminders**:
+   - Morning (8:00 MSK): Daily tasks and habits
+   - Evening (21:00 MSK): Journal reminder
+   - Streak warnings (22:00 MSK)
+   - Weekly report (Sunday 20:00 MSK)
+
+### Environment Variables
+- `TELEGRAM_BOT_TOKEN` (required): Bot token from @BotFather
+- `WEBAPP_URL` (optional): Web app URL for deep links
+- `AI_INTEGRATIONS_OPENAI_API_KEY` (optional): For AI mentor functionality
+
+### Exported Functions (for backend integration)
+- `sendMorningReminder(userId, userName)`
+- `sendEveningReminder(userId, userName)`
+- `sendStreakWarning(userId, userName, streakDays)`
+- `sendXPNotification(userId, amount, reason)`
+- `sendAchievementUnlocked(userId, achievementName, achievementIcon)`
+
+### Pending Features
+- Telegram Payments integration
+- Real backend API data (currently uses demo data)
+- Token validation for secure account linking
+- User preference persistence
+
 ## External Dependencies
 -   **Django REST API Backend**: Provides user authentication, SSP data, goals bank, planning, onboarding, journal, habits, and XP history services.
 -   **Lucide Vue Next**: Used for minimalist line icons.
 -   **Vite**: Frontend build tool providing fast development and a proxy to the Django backend.
 -   **Telegram OAuth**: Integrated for user registration and login.
+-   **Telegraf**: Telegram Bot API framework for Node.js.
+-   **node-cron**: Task scheduling for timed bot reminders.

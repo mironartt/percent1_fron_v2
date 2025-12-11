@@ -13,10 +13,16 @@ if (!BOT_TOKEN) {
 
 const bot = new Telegraf(BOT_TOKEN)
 
-const openai = new OpenAI({
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY
-})
+let openai = null
+if (process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
+  openai = new OpenAI({
+    baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY
+  })
+  console.log('[TelegramBot] OpenAI initialized')
+} else {
+  console.log('[TelegramBot] OpenAI not configured, mentor chat will use fallback responses')
+}
 
 const userSessions = new Map()
 const journalSessions = new Map()
@@ -295,6 +301,18 @@ async function handleMentorMessage(ctx, userMessage) {
   
   await ctx.sendChatAction('typing')
   
+  if (!openai) {
+    const fallbackResponses = [
+      'Отличный вопрос! Начни с малого — выбери одну цель и сделай первый шаг сегодня. Каждый день по 1% — и через год ты будешь на 37 раз лучше!',
+      'Помни: маленькие шаги каждый день приводят к большим результатам. Что ты можешь сделать прямо сейчас?',
+      'Твой прогресс — это результат ежедневных усилий. Продолжай двигаться вперёд!',
+      'Мотивация приходит через действие. Сделай что-то маленькое сейчас, и вдохновение придёт.'
+    ]
+    const randomResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)]
+    await ctx.reply(randomResponse)
+    return
+  }
+  
   try {
     session.mentorHistory.push({ role: 'user', content: userMessage })
     
@@ -403,6 +421,96 @@ bot.action('settings_timezone', async (ctx) => {
         [Markup.button.callback('🇷🇺 Владивосток (UTC+10)', 'tz_vlad')]
       ])
     }
+  )
+})
+
+bot.action('show_tasks', async (ctx) => {
+  await ctx.answerCbQuery()
+  const demoTasks = [
+    { id: 1, title: 'Изучить новую главу курса', completed: false },
+    { id: 2, title: 'Позвонить родителям', completed: false },
+    { id: 3, title: '30 минут кардио', completed: true }
+  ]
+  const taskButtons = demoTasks.map(task => [
+    Markup.button.callback(
+      `${task.completed ? '✅' : '⬜'} ${task.title}`,
+      `toggle_task_${task.id}`
+    )
+  ])
+  await ctx.reply(
+    `📋 *Твои задачи на сегодня:*`,
+    {
+      parse_mode: 'Markdown',
+      ...Markup.inlineKeyboard(taskButtons)
+    }
+  )
+})
+
+bot.action('show_habits', async (ctx) => {
+  await ctx.answerCbQuery()
+  const demoHabits = [
+    { id: 1, name: '🏃 Зарядка', completed: false },
+    { id: 2, name: '📖 Чтение 30 мин', completed: true },
+    { id: 3, name: '🧘 Медитация', completed: false }
+  ]
+  const habitButtons = demoHabits.map(habit => [
+    Markup.button.callback(
+      `${habit.completed ? '✅' : '⬜'} ${habit.name}`,
+      `toggle_habit_${habit.id}`
+    )
+  ])
+  await ctx.reply(
+    `✅ *Твои привычки:*`,
+    {
+      parse_mode: 'Markdown',
+      ...Markup.inlineKeyboard(habitButtons)
+    }
+  )
+})
+
+bot.action('skip_journal', async (ctx) => {
+  await ctx.answerCbQuery('Пропущено')
+  await ctx.reply('Хорошо! Но не забудь заполнить дневник завтра.')
+})
+
+bot.action('toggle_morning', async (ctx) => {
+  await ctx.answerCbQuery('Настройка сохранена!')
+  await ctx.editMessageText(
+    `🔔 *Настройки напоминаний*\n\n` +
+    `• Утреннее (8:00): ❌ Выключено\n` +
+    `• Вечернее (21:00): ✅ Включено\n` +
+    `• Streak-алерты: ✅ Включено`,
+    {
+      parse_mode: 'Markdown',
+      ...Markup.inlineKeyboard([
+        [Markup.button.callback('🌅 Утреннее: ВЫКЛ', 'toggle_morning')],
+        [Markup.button.callback('🌆 Вечернее: ВКЛ', 'toggle_evening')],
+        [Markup.button.callback('🔥 Streak: ВКЛ', 'toggle_streak')]
+      ])
+    }
+  )
+})
+
+bot.action('toggle_evening', async (ctx) => {
+  await ctx.answerCbQuery('Настройка сохранена!')
+})
+
+bot.action('toggle_streak', async (ctx) => {
+  await ctx.answerCbQuery('Настройка сохранена!')
+})
+
+bot.action(/tz_(.+)/, async (ctx) => {
+  const tz = ctx.match[1]
+  const tzNames = {
+    moscow: 'Москва (UTC+3)',
+    ekb: 'Екатеринбург (UTC+5)',
+    nsk: 'Новосибирск (UTC+7)',
+    vlad: 'Владивосток (UTC+10)'
+  }
+  await ctx.answerCbQuery(`Часовой пояс: ${tzNames[tz] || tz}`)
+  await ctx.editMessageText(
+    `🕐 *Часовой пояс*\n\nУстановлен: ${tzNames[tz] || tz}`,
+    { parse_mode: 'Markdown' }
   )
 })
 
