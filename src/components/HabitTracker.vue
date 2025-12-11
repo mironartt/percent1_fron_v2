@@ -191,12 +191,27 @@ const habitStreak = computed(() => {
 })
 
 async function handleToggle(habit) {
-  if (isToggling.value) return
+  console.log('[HabitTracker] handleToggle called:', { 
+    habit, 
+    isToggling: isToggling.value 
+  })
+  
+  if (isToggling.value) {
+    console.log('[HabitTracker] Skipping - already toggling')
+    return
+  }
   
   const habitId = getDisplayId(habit)
   const isFromBackend = habit.habit_id !== undefined
   const wasCompleted = getHabitCompleted(habit)
   const newCompletedState = !wasCompleted
+  
+  console.log('[HabitTracker] Toggle details:', { 
+    habitId, 
+    isFromBackend, 
+    wasCompleted, 
+    newCompletedState 
+  })
   
   // Мгновенно обновляем UI (optimistic update)
   appStore.updateHabitCompletionInDashboard(habit.habit_id || habitId, newCompletedState)

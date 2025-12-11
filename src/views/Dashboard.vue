@@ -431,6 +431,28 @@ async function toggleFocusTask(task) {
     console.log('[Dashboard] Synced step.completed in store.goals')
   }
   
+  // Синхронизация с блоком "Мои цели" (top_goals)
+  const topGoalsArray = store.userDashboardData?.top_goals?.goals
+  const topGoal = topGoalsArray?.find(g => g.goal_id === task.goalId)
+  if (topGoal) {
+    // Обновляем счётчик выполненных шагов
+    if (newCompleted) {
+      topGoal.completed_steps = (topGoal.completed_steps || 0) + 1
+    } else {
+      topGoal.completed_steps = Math.max(0, (topGoal.completed_steps || 1) - 1)
+    }
+    // Пересчитываем прогресс
+    if (topGoal.total_steps > 0) {
+      topGoal.progress_percent = Math.round((topGoal.completed_steps / topGoal.total_steps) * 100)
+    }
+    console.log('[Dashboard] Synced progress in top_goals:', {
+      goalId: task.goalId,
+      completedSteps: topGoal.completed_steps,
+      totalSteps: topGoal.total_steps,
+      progress: topGoal.progress_percent
+    })
+  }
+  
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
     console.log('[Dashboard] Sending updateGoalSteps:', { goal_id: task.goalId, step_id: task.id, is_complete: newCompleted })
@@ -451,6 +473,17 @@ async function toggleFocusTask(task) {
         store.userDashboardData.today_tasks.completed_count--
       } else {
         store.userDashboardData.today_tasks.completed_count++
+      }
+    }
+    // Откат top_goals
+    if (topGoal) {
+      if (newCompleted) {
+        topGoal.completed_steps = Math.max(0, (topGoal.completed_steps || 1) - 1)
+      } else {
+        topGoal.completed_steps = (topGoal.completed_steps || 0) + 1
+      }
+      if (topGoal.total_steps > 0) {
+        topGoal.progress_percent = Math.round((topGoal.completed_steps / topGoal.total_steps) * 100)
       }
     }
   }
