@@ -2588,18 +2588,28 @@ function toggleTaskComplete(task) {
 }
 
 async function sendStepUpdateToBackend(goalId, stepId, newCompleted, originalStep, storeStep) {
+  // Всегда пытаемся отправить запрос на бэкенд
+  console.log('[Planning] sendStepUpdateToBackend called:', { goalId, stepId, is_complete: newCompleted })
+  
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
-    console.log('[Planning] Sending updateGoalSteps:', { goalId, stepId, is_complete: newCompleted })
+    console.log('[Planning] Sending updateGoalSteps to API...')
     
-    await updateGoalSteps({
+    const result = await updateGoalSteps({
       goals_steps_data: [{
         goal_id: goalId,
         step_id: stepId,
         is_complete: newCompleted
       }]
     })
-    console.log('[Planning] updateGoalSteps SUCCESS')
+    
+    console.log('[Planning] updateGoalSteps result:', result)
+    
+    if (result?.status === 'ok') {
+      console.log('[Planning] updateGoalSteps SUCCESS')
+    } else {
+      console.warn('[Planning] updateGoalSteps returned non-ok status:', result)
+    }
   } catch (error) {
     console.error('[Planning] updateGoalSteps ERROR:', error)
     // Откатываем изменения
