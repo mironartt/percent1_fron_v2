@@ -229,6 +229,12 @@ async function handleToggle(habit) {
         if (!result?.success) {
           // Откатить изменения при ошибке
           appStore.updateHabitCompletionInDashboard(habit.habit_id, true)
+        } else if (result?.xpChanges) {
+          // Обновить XP при отмене выполнения
+          const xpDelta = result.xpChanges.reduce((sum, c) => sum + (c.amount || 0), 0)
+          if (xpDelta !== 0) {
+            xpStore.addToBalance(xpDelta)
+          }
         }
       } else {
         const result = await habitsStore.markCompleted(habit.habit_id, todayDateStr)
@@ -238,6 +244,14 @@ async function handleToggle(habit) {
           setTimeout(() => {
             showXP.value = null
           }, 1200)
+          
+          // Обновить XP при выполнении привычки
+          if (result?.xpChanges) {
+            const xpGain = result.xpChanges.reduce((sum, c) => sum + (c.amount || 0), 0)
+            if (xpGain > 0) {
+              xpStore.addToBalance(xpGain)
+            }
+          }
         } else {
           // Откатить изменения при ошибке
           appStore.updateHabitCompletionInDashboard(habit.habit_id, false)

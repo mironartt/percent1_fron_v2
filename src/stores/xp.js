@@ -401,6 +401,16 @@ export const useXpStore = defineStore('xp', () => {
       lifetimeEarned.value = userData.lifetime_xp
     }
   }
+  
+  // Добавить XP к текущему балансу (для optimistic updates)
+  function addToBalance(amount) {
+    if (typeof amount === 'number') {
+      xpBalance.value += amount
+      if (DEBUG_MODE) {
+        console.log('[XP] Added to balance:', amount, '→', xpBalance.value)
+      }
+    }
+  }
 
   return {
     xpBalance,
@@ -442,6 +452,7 @@ export const useXpStore = defineStore('xp', () => {
     init,
     resetStore,
     syncFromUserData,
+    addToBalance,
     
     XP_REWARDS
   }

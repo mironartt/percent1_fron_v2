@@ -844,6 +844,19 @@ async function completeOnboarding() {
   store.completeFirstStep('ssp')
   store.completeFirstStep('chat_mentor')
   
+  // Загрузить свежие данные для Dashboard после онбординга
+  try {
+    const userDataResult = await api.getUserData()
+    if (userDataResult.status === 'ok' && userDataResult.data) {
+      store.setUser(userDataResult.data)
+      if (DEBUG_MODE) {
+        console.log('[OnboardingAI] Dashboard data refreshed after onboarding')
+      }
+    }
+  } catch (error) {
+    console.error('[OnboardingAI] Failed to refresh dashboard data:', error)
+  }
+  
   isSaving.value = false
   
   if (DEBUG_MODE) {
