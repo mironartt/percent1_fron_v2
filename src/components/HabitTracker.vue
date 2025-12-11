@@ -48,7 +48,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useAppStore } from '../stores/app'
 import { useHabitsStore } from '../stores/habits'
 import { useXpStore } from '../stores/xp'
@@ -65,11 +65,9 @@ const isToggling = ref(false)
 const todayDayOfWeek = new Date().getDay()
 const todayDateStr = getTodayDateString()
 
-onMounted(async () => {
-  if (!habitsStore.initialized) {
-    await habitsStore.loadHabits()
-  }
-})
+// Данные привычек на сегодня уже загружаются через get-user-data API
+// и сохраняются в appStore.userDashboardData.today_habits
+// Отдельный запрос loadHabits() не нужен для виджета Dashboard
 
 function isScheduledForToday(habit) {
   if (habit.schedule_days && Array.isArray(habit.schedule_days)) {

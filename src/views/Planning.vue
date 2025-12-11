@@ -185,10 +185,46 @@
     </div>
 
     <div class="filters-row compact">
+      <!-- Поиск по названию -->
+      <div class="search-filter">
+        <Search :size="14" class="search-icon" />
+        <input 
+          type="text" 
+          v-model="queryFilter" 
+          placeholder="Поиск целей..." 
+          class="search-input"
+        />
+        <button v-if="queryFilter" class="clear-search" @click="queryFilter = ''">
+          <X :size="14" />
+        </button>
+      </div>
+      
+      <!-- Статус цели (API фильтр) -->
+      <div class="goal-status-dropdown" :class="{ open: showGoalStatusDropdown }">
+        <button class="dropdown-trigger" @click="showGoalStatusDropdown = !showGoalStatusDropdown">
+          <Target :size="14" />
+          <span>{{ selectedGoalStatusName }}</span>
+          <ChevronDown :size="14" class="dropdown-arrow" />
+        </button>
+        <div class="dropdown-menu" v-if="showGoalStatusDropdown" @click.stop>
+          <button 
+            v-for="option in goalStatusOptions" 
+            :key="option.value"
+            class="dropdown-item"
+            :class="{ active: goalStatusFilter === option.value }"
+            @click="goalStatusFilter = option.value; showGoalStatusDropdown = false"
+          >
+            {{ option.label }}
+          </button>
+        </div>
+      </div>
+      
+      <!-- Категория/сфера -->
       <div class="sphere-dropdown" :class="{ open: showSphereDropdown }">
         <button class="dropdown-trigger" @click="showSphereDropdown = !showSphereDropdown">
           <Filter :size="14" />
-          <span>{{ selectedSphereName }}</span>
+          <span class="desktop-only">{{ selectedSphereName }}</span>
+          <span class="mobile-only">Сфера</span>
           <span class="dropdown-count" v-if="filterSphere">1</span>
           <ChevronDown :size="14" class="dropdown-arrow" />
         </button>
@@ -199,7 +235,6 @@
             @click="filterSphere = ''; showSphereDropdown = false"
           >
             Все сферы
-            <span class="item-count">{{ goalsWithSteps.length }}</span>
           </button>
           <button 
             v-for="sphere in spheresWithGoals" 
@@ -209,19 +244,72 @@
             @click="filterSphere = sphere.id; showSphereDropdown = false"
           >
             {{ sphere.icon }} {{ sphere.name }}
-            <span class="item-count">{{ sphere.goalCount }}</span>
           </button>
         </div>
       </div>
       
-      <!-- Desktop: segmented control -->
-      <div class="segmented-control desktop-only">
+      <!-- Сортировка -->
+      <div class="sort-dropdown desktop-only" :class="{ open: showSortDropdown }">
+        <button class="dropdown-trigger" @click="showSortDropdown = !showSortDropdown">
+          <BarChart3 :size="14" />
+          <span>{{ selectedSortName }}</span>
+          <ChevronDown :size="14" class="dropdown-arrow" />
+        </button>
+        <div class="dropdown-menu" v-if="showSortDropdown" @click.stop>
+          <button 
+            v-for="option in sortOptions" 
+            :key="option.value"
+            class="dropdown-item"
+            :class="{ active: orderBy === option.value }"
+            @click="orderBy = option.value; showSortDropdown = false"
+          >
+            {{ option.label }}
+          </button>
+          <div class="dropdown-divider"></div>
+          <button 
+            class="dropdown-item"
+            :class="{ active: orderDirection === 'desc' }"
+            @click="orderDirection = 'desc'; showSortDropdown = false"
+          >
+            По убыванию ↓
+          </button>
+          <button 
+            class="dropdown-item"
+            :class="{ active: orderDirection === 'asc' }"
+            @click="orderDirection = 'asc'; showSortDropdown = false"
+          >
+            По возрастанию ↑
+          </button>
+        </div>
+      </div>
+      
+      <!-- Кнопка сброса фильтров -->
+      <button 
+        v-if="hasActiveFilters" 
+        class="reset-filters-btn" 
+        @click="resetAllFilters"
+        title="Сбросить все фильтры"
+      >
+        <X :size="14" />
+        <span class="desktop-only">Сбросить</span>
+      </button>
+      
+      <!-- AI Planning button -->
+      <button class="ai-planner-btn filters-ai-btn" @click="openAIPlannerModal">
+        <Sparkles :size="16" />
+        <span class="ai-btn-text desktop-only">AI планирование</span>
+      </button>
+    </div>
+    
+    <!-- Вторая строка: локальный фильтр шагов -->
+    <div class="filters-row secondary">
+      <div class="segmented-control">
         <button 
           class="segment"
           :class="{ active: filterStatus === '' }"
           @click="filterStatus = ''"
         >
-          Все
+          Все шаги
         </button>
         <button 
           class="segment"
@@ -239,42 +327,9 @@
         </button>
       </div>
       
-      <!-- Mobile: status dropdown -->
-      <div class="status-dropdown mobile-only" :class="{ open: showStatusDropdown }">
-        <button class="dropdown-trigger" @click="showStatusDropdown = !showStatusDropdown">
-          <span>{{ selectedStatusName }}</span>
-          <ChevronDown :size="14" class="dropdown-arrow" />
-        </button>
-        <div class="dropdown-menu" v-if="showStatusDropdown" @click.stop>
-          <button 
-            class="dropdown-item"
-            :class="{ active: filterStatus === '' }"
-            @click="filterStatus = ''; showStatusDropdown = false"
-          >
-            Все
-          </button>
-          <button 
-            class="dropdown-item"
-            :class="{ active: filterStatus === 'unscheduled' }"
-            @click="filterStatus = 'unscheduled'; showStatusDropdown = false"
-          >
-            Незапланированные
-          </button>
-          <button 
-            class="dropdown-item"
-            :class="{ active: filterStatus === 'scheduled' }"
-            @click="filterStatus = 'scheduled'; showStatusDropdown = false"
-          >
-            Запланированные
-          </button>
-        </div>
-      </div>
-      
-      <!-- AI Planning button -->
-      <button class="ai-planner-btn filters-ai-btn" @click="openAIPlannerModal">
-        <Sparkles :size="16" />
-        <span class="ai-btn-text desktop-only">AI планирование</span>
-      </button>
+      <span class="results-count" v-if="totalGoalsItems > 0">
+        Найдено: {{ totalGoalsItems }} {{ totalGoalsItems === 1 ? 'цель' : 'целей' }}
+      </span>
     </div>
 
     <!-- Баннер: цели без шагов -->
@@ -319,7 +374,7 @@
           </div>
           <div class="goal-meta">
             <span class="steps-badge">
-              {{ getUnscheduledStepsCount(goal) }}/{{ getUncompletedSteps(goal).length }}
+              {{ goal.totalStepsData?.complete_steps || 0 }}/{{ goal.totalStepsData?.total_steps || goal.steps?.length || 0 }}
             </span>
             <ChevronDown :size="20" class="expand-icon" :class="{ expanded: expandedGoals[goal.id] }" />
           </div>
@@ -373,6 +428,43 @@
               <Plus :size="16" />
               Добавить шаги
             </button>
+          </div>
+          
+          <!-- Пагинация шагов -->
+          <div v-if="goal.steps?.length > 0 && getStepsTotalPages(goal) > 1" class="steps-pagination">
+            <div v-if="stepsLoading[goal.backendId || goal.id]" class="steps-loading">
+              Загрузка...
+            </div>
+            <template v-else>
+              <button 
+                class="steps-page-btn"
+                :disabled="getStepsCurrentPage(goal) <= 1"
+                @click.stop="goToStepsPage(goal, getStepsCurrentPage(goal) - 1)"
+              >
+                <ChevronLeft :size="16" />
+              </button>
+              
+              <div class="steps-pages">
+                <button 
+                  v-for="page in getStepsPaginationPages(goal)" 
+                  :key="page"
+                  class="steps-page-num"
+                  :class="{ active: page === getStepsCurrentPage(goal), dots: page === '...' }"
+                  :disabled="page === '...'"
+                  @click.stop="page !== '...' && goToStepsPage(goal, page)"
+                >
+                  {{ page }}
+                </button>
+              </div>
+              
+              <button 
+                class="steps-page-btn"
+                :disabled="getStepsCurrentPage(goal) >= getStepsTotalPages(goal)"
+                @click.stop="goToStepsPage(goal, getStepsCurrentPage(goal) + 1)"
+              >
+                <ChevronRight :size="16" />
+              </button>
+            </template>
           </div>
         </div>
       </div>
@@ -869,7 +961,6 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
-import { useXpStore } from '../stores/xp'
 import { 
   Calendar, 
   ChevronLeft,
@@ -897,19 +988,26 @@ import {
 } from 'lucide-vue-next'
 
 const store = useAppStore()
-const xpStore = useXpStore()
 const router = useRouter()
 
 const weekOffset = ref(0)
 const selectedDay = ref(null)
 const filterSphere = ref('')
 const filterStatus = ref('')
+const goalStatusFilter = ref('work')
+const queryFilter = ref('')
+const orderBy = ref('date_created')
+const orderDirection = ref('desc')
 const showSphereDropdown = ref(false)
 const showStatusDropdown = ref(false)
+const showGoalStatusDropdown = ref(false)
+const showSortDropdown = ref(false)
 const addStepSearch = ref('')
 const goalsDisplayLimit = ref(10)
 const currentPage = ref(1)
 const expandedGoals = ref({})
+const stepsPages = ref({}) // {goalId: currentPage}
+const stepsLoading = ref({}) // {goalId: boolean}
 const infiniteScrollTrigger = ref(null)
 let infiniteScrollObserver = null
 
@@ -980,8 +1078,14 @@ async function toggleOverdueTaskComplete(task) {
     originalStep.step_is_complete = newCompleted
   }
   
-  if (newCompleted) {
-    xpStore.addXP(10, 'step', `Выполнен шаг: ${task.stepTitle}`)
+  // Обновляем счётчик complete_steps в totalStepsData цели
+  const storeGoal = store.goals.find(g => g.backendId === task.goalId || g.id === task.goalId)
+  if (storeGoal?.totalStepsData) {
+    const delta = newCompleted ? 1 : -1
+    storeGoal.totalStepsData = {
+      ...storeGoal.totalStepsData,
+      complete_steps: Math.max(0, (storeGoal.totalStepsData.complete_steps || 0) + delta)
+    }
   }
   
   try {
@@ -1593,37 +1697,117 @@ async function goToPage(page) {
   await loadGoalsWithFilters()
 }
 
+// Маппинг категорий frontend → backend
+const categoryFrontendToBackend = {
+  'wealth': 'welfare',
+  'hobbies': 'hobby',
+  'friendship': 'environment',
+  'health': 'health_sport',
+  'career': 'work',
+  'love': 'family'
+}
+
+// Варианты статуса цели
+const goalStatusOptions = [
+  { value: 'work', label: 'В работе' },
+  { value: 'complete', label: 'Завершённые' },
+  { value: 'unstatus', label: 'Без статуса' },
+  { value: '', label: 'Все цели' }
+]
+
+// Варианты сортировки
+const sortOptions = [
+  { value: 'date_created', label: 'По дате создания' },
+  { value: 'title', label: 'По названию' },
+  { value: 'category', label: 'По категории' },
+  { value: 'status', label: 'По статусу' }
+]
+
 async function loadGoalsWithFilters() {
   const params = {
-    score_filter: 'true',
-    status_filter: 'work',
     with_steps_data: true,
-    has_steps: true,
     page: currentPage.value,
-    page_size: 10
+    order_by: orderBy.value,
+    order_direction: orderDirection.value
+  }
+  
+  // Добавляем фильтр по статусу цели
+  if (goalStatusFilter.value) {
+    params.status_filter = goalStatusFilter.value
   }
   
   // Добавляем фильтр по сфере если выбран
   if (filterSphere.value) {
-    // Конвертируем из frontend формата в backend
-    const categoryMap = {
-      'welfare': 'welfare',
-      'hobby': 'hobby', 
-      'environment': 'environment',
-      'health': 'health_sport',
-      'work': 'work',
-      'family': 'family'
-    }
-    params.category_filter = categoryMap[filterSphere.value] || filterSphere.value
+    params.category_filter = categoryFrontendToBackend[filterSphere.value] || filterSphere.value
+  }
+  
+  // Добавляем текстовый поиск (минимум 3 символа)
+  if (queryFilter.value && queryFilter.value.length >= 3) {
+    params.query_filter = queryFilter.value
   }
   
   await store.loadGoalsFromBackend(params)
 }
 
 // Watch для фильтров - при изменении делаем запрос к бэку
-watch([filterSphere], async () => {
+watch([filterSphere, goalStatusFilter, orderBy, orderDirection], async () => {
   currentPage.value = 1
   await loadGoalsWithFilters()
+})
+
+// Debounce для текстового поиска
+let queryDebounceTimer = null
+watch(queryFilter, async (newVal) => {
+  clearTimeout(queryDebounceTimer)
+  if (newVal.length === 0 || newVal.length >= 3) {
+    queryDebounceTimer = setTimeout(async () => {
+      currentPage.value = 1
+      await loadGoalsWithFilters()
+    }, 300)
+  }
+})
+
+// Проверка активности фильтров
+const hasActiveFilters = computed(() => {
+  return filterSphere.value !== '' || 
+         goalStatusFilter.value !== 'work' || 
+         queryFilter.value !== '' ||
+         orderBy.value !== 'date_created' ||
+         orderDirection.value !== 'desc'
+})
+
+// Количество активных фильтров
+const activeFiltersCount = computed(() => {
+  let count = 0
+  if (filterSphere.value) count++
+  if (goalStatusFilter.value && goalStatusFilter.value !== 'work') count++
+  if (queryFilter.value.length >= 3) count++
+  if (orderBy.value !== 'date_created' || orderDirection.value !== 'desc') count++
+  return count
+})
+
+// Сброс всех фильтров
+async function resetAllFilters() {
+  filterSphere.value = ''
+  goalStatusFilter.value = 'work'
+  queryFilter.value = ''
+  orderBy.value = 'date_created'
+  orderDirection.value = 'desc'
+  filterStatus.value = ''
+  currentPage.value = 1
+  await loadGoalsWithFilters()
+}
+
+// Названия для выбранных фильтров
+const selectedGoalStatusName = computed(() => {
+  const option = goalStatusOptions.find(o => o.value === goalStatusFilter.value)
+  return option?.label || 'В работе'
+})
+
+const selectedSortName = computed(() => {
+  const option = sortOptions.find(o => o.value === orderBy.value)
+  const dir = orderDirection.value === 'asc' ? '↑' : '↓'
+  return option ? `${option.label} ${dir}` : 'По дате ↓'
 })
 
 // Computed для номеров страниц пагинации
@@ -1660,8 +1844,13 @@ function getUncompletedSteps(goal) {
   return (goal.steps || []).filter(s => !s.completed)
 }
 
+function getAllSteps(goal) {
+  return goal.steps || []
+}
+
 function getFilteredSteps(goal) {
-  let steps = getUncompletedSteps(goal)
+  // Показываем ВСЕ шаги, включая выполненные (они будут с визуальным отличием)
+  let steps = getAllSteps(goal)
   
   if (filterStatus.value === 'unscheduled') {
     steps = steps.filter(s => !isStepScheduled(goal.id, s.id))
@@ -1848,11 +2037,129 @@ function getScheduledTime(goalId, stepId, step = null) {
 
 function toggleGoal(goalId) {
   expandedGoals.value[goalId] = !expandedGoals.value[goalId]
+  // Инициализируем страницу шагов при первом раскрытии
+  if (expandedGoals.value[goalId] && !stepsPages.value[goalId]) {
+    stepsPages.value[goalId] = 1
+  }
+}
+
+function getStepsCurrentPage(goal) {
+  const goalId = goal.backendId || goal.id
+  return stepsPages.value[goalId] || 1
+}
+
+function getStepsTotalPages(goal) {
+  // Сначала проверяем данные от бэкенда
+  if (goal.totalStepsData?.total_pages) {
+    return goal.totalStepsData.total_pages
+  }
+  // Иначе вычисляем на основе total_steps
+  const total = goal.totalStepsData?.total_steps || goal.steps?.length || 0
+  const pageSize = 10 // Стандартный размер страницы для шагов
+  return Math.ceil(total / pageSize) || 1
+}
+
+function getStepsTotalCount(goal) {
+  return goal.totalStepsData?.total_steps || goal.steps?.length || 0
+}
+
+async function goToStepsPage(goal, page) {
+  const goalId = goal.backendId || goal.id
+  const totalPages = getStepsTotalPages(goal)
+  if (page < 1 || page > totalPages) return
+  
+  stepsPages.value[goalId] = page
+  stepsLoading.value[goalId] = true
+  
+  // Маппинг для time_duration
+  const timeMap = { 'half': '30min', 'one': '1h', 'two': '2h', 'three': '3h', 'four': '4h' }
+  
+  try {
+    const { getGoalSteps } = await import('@/services/api.js')
+    const result = await getGoalSteps({
+      goal_id: goalId,
+      page: page,
+      page_size: 10
+    })
+    
+    // API может вернуть steps_data напрямую или в goal_data
+    const stepsData = result.data?.steps_data || result.data?.goal_data?.steps_data || []
+    const totalItems = result.data?.total_items || result.data?.goal_data?.total_data?.total_steps || goal.totalStepsData?.total_steps || 0
+    const backendTotalPages = result.data?.total_pages || Math.ceil(totalItems / 10) || 1
+    
+    if (result.status === 'ok' && stepsData.length > 0) {
+      // Обновляем шаги в цели
+      const transformedSteps = stepsData.map(s => ({
+        id: s.step_id,
+        backendId: s.step_id,
+        title: s.title,
+        description: s.description || '',
+        priority: s.priority || null,
+        timeEstimate: timeMap[s.time_duration] || s.time_duration || null,
+        date: s.dt || null,
+        order: s.order,
+        completed: s.is_complete || false,
+        dateCompleted: s.date_completed || null,
+        dateCreated: s.date_created || null,
+        status: s.status || 'unplanned',
+        goalId: s.goal_id
+      }))
+      
+      // Находим индекс цели в store и обновляем через spread для реактивности
+      const storeGoalIndex = store.goals.findIndex(g => g.backendId === goalId || g.id === goalId)
+      if (storeGoalIndex !== -1) {
+        const updatedGoal = {
+          ...store.goals[storeGoalIndex],
+          steps: transformedSteps,
+          stepsPage: page,
+          totalStepsData: {
+            ...store.goals[storeGoalIndex].totalStepsData,
+            total_steps: totalItems,
+            total_pages: backendTotalPages
+          }
+        }
+        store.goals = [
+          ...store.goals.slice(0, storeGoalIndex),
+          updatedGoal,
+          ...store.goals.slice(storeGoalIndex + 1)
+        ]
+      }
+      
+      console.log('[Planning] Loaded steps page', page, 'for goal', goalId, ':', transformedSteps.length, 'steps')
+    }
+  } catch (error) {
+    console.error('[Planning] Error loading steps page:', error)
+  } finally {
+    stepsLoading.value[goalId] = false
+  }
+}
+
+function getStepsPaginationPages(goal) {
+  const totalPages = getStepsTotalPages(goal)
+  const currentPage = getStepsCurrentPage(goal)
+  
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1)
+  }
+  
+  const pages = []
+  if (currentPage <= 3) {
+    pages.push(1, 2, 3, 4, '...', totalPages)
+  } else if (currentPage >= totalPages - 2) {
+    pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages)
+  } else {
+    pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages)
+  }
+  return pages
 }
 
 function clearFilters() {
   filterSphere.value = ''
   filterStatus.value = ''
+  goalStatusFilter.value = 'work'
+  queryFilter.value = ''
+  orderBy.value = 'date_created'
+  orderDirection.value = 'desc'
 }
 
 function goToGoalsBank() {
@@ -2028,8 +2335,13 @@ async function toggleStepComplete() {
   const newCompleted = !selectedStep.value.completed
   selectedStep.value.completed = newCompleted
   
-  if (newCompleted) {
-    xpStore.addXP(10, 'step', `Выполнен шаг: ${selectedStep.value.title}`)
+  // Обновляем счётчик complete_steps в totalStepsData цели
+  if (actualGoal?.totalStepsData) {
+    const delta = newCompleted ? 1 : -1
+    actualGoal.totalStepsData = {
+      ...actualGoal.totalStepsData,
+      complete_steps: Math.max(0, (actualGoal.totalStepsData.complete_steps || 0) + delta)
+    }
   }
   
   try {
@@ -2058,52 +2370,67 @@ async function toggleStepComplete() {
   }
 }
 
-async function quickToggleStepComplete(goal, step) {
+function quickToggleStepComplete(goal, step) {
   const goalId = goal.backendId || goal.id
   const stepId = step.backendId || step.id
   
-  // Валидация
-  const actualGoal = store.goals.find(g => g.backendId === goalId || g.id === goalId)
-  if (actualGoal) {
-    const stepExists = actualGoal.steps?.some(s => s.backendId === stepId || s.id === stepId)
-    if (!stepExists) {
-      console.warn('[Planning] Step not found, refreshing data:', { goalId, stepId })
-      await store.loadGoalsFromBackend({ page: 1 }, false)
-      await loadWeeklySteps()
-      return
-    }
-  }
+  // Определяем текущее состояние
+  const currentCompleted = step.completed || false
+  const newCompleted = !currentCompleted
   
-  const newCompleted = !step.completed
+  console.log('[Planning] quickToggleStepComplete:', { goalId, stepId, currentCompleted, newCompleted })
+  
+  // Обновляем шаг в store.goals (напрямую - step это ссылка)
   step.completed = newCompleted
+  console.log('[Planning] Updated step.completed =', newCompleted)
   
-  if (newCompleted) {
-    xpStore.addXP(10, 'step', `Выполнен шаг: ${step.title}`)
+  // Обновляем счётчик complete_steps в totalStepsData цели
+  const storeGoal = store.goals.find(g => g.backendId === goalId || g.id === goalId)
+  if (storeGoal?.totalStepsData) {
+    const delta = newCompleted ? 1 : -1
+    storeGoal.totalStepsData = {
+      ...storeGoal.totalStepsData,
+      complete_steps: Math.max(0, (storeGoal.totalStepsData.complete_steps || 0) + delta)
+    }
+    console.log('[Planning] Updated totalStepsData.complete_steps:', storeGoal.totalStepsData.complete_steps)
   }
   
-  try {
-    const { updateGoalSteps } = await import('@/services/api.js')
-    const result = await updateGoalSteps({
-      goals_steps_data: [{
-        goal_id: goalId,
-        step_id: stepId,
-        is_complete: newCompleted
-      }]
-    })
-    
-    if (result?.error_code === 'GOALS_STEPS_UPDATE__STEP_NOT_ACCESS') {
-      await store.loadGoalsFromBackend({ page: 1 }, false)
-    }
-    
-    await loadWeeklySteps()
-  } catch (error) {
-    console.error('[Planning] Error toggling step complete:', error)
-    step.completed = !newCompleted
-    if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
-      await store.loadGoalsFromBackend({ page: 1 }, false)
-      await loadWeeklySteps()
+  // Обновляем в weeklyStepsData с принудительной реактивностью
+  let dayIndex = -1
+  let stepIndex = -1
+  for (let i = 0; i < weeklyStepsData.value.length; i++) {
+    const day = weeklyStepsData.value[i]
+    if (day.steps_data) {
+      const idx = day.steps_data.findIndex(s => s.step_id === stepId && s.goal_id === goalId)
+      if (idx !== -1) {
+        dayIndex = i
+        stepIndex = idx
+        break
+      }
     }
   }
+  
+  if (dayIndex !== -1 && stepIndex !== -1) {
+    const updatedDay = { ...weeklyStepsData.value[dayIndex] }
+    updatedDay.steps_data = [...updatedDay.steps_data]
+    updatedDay.steps_data[stepIndex] = { 
+      ...updatedDay.steps_data[stepIndex], 
+      step_is_complete: newCompleted 
+    }
+    weeklyStepsData.value = [
+      ...weeklyStepsData.value.slice(0, dayIndex),
+      updatedDay,
+      ...weeklyStepsData.value.slice(dayIndex + 1)
+    ]
+    console.log('[Planning] Updated weeklyStepsData with new array')
+  }
+  
+  // Триггер реактивности
+  localUpdateTrigger.value++
+  
+  // Отправляем запрос на бэкенд
+  const originalStep = dayIndex !== -1 ? weeklyStepsData.value[dayIndex].steps_data[stepIndex] : null
+  sendStepUpdateToBackend(goalId, stepId, newCompleted, originalStep, step)
 }
 
 function rescheduleStep(newDate) {
@@ -2352,35 +2679,112 @@ function closeBottomSheet() {
   selectedStep.value = null
 }
 
-async function toggleTaskComplete(task) {
+function toggleTaskComplete(task) {
   if (!task) return
   
-  const newCompleted = !task.completed
+  const goalId = task.goalId
+  const stepId = task.stepId
   
-  task.completed = newCompleted
-  
-  if (newCompleted) {
-    xpStore.addXP(10, 'step', `Выполнен шаг: ${task.stepTitle}`)
+  // Находим день и индекс шага в weeklyStepsData
+  let dayIndex = -1
+  let stepIndex = -1
+  for (let i = 0; i < weeklyStepsData.value.length; i++) {
+    const day = weeklyStepsData.value[i]
+    if (day.steps_data) {
+      const idx = day.steps_data.findIndex(s => s.step_id === stepId && s.goal_id === goalId)
+      if (idx !== -1) {
+        dayIndex = i
+        stepIndex = idx
+        break
+      }
+    }
   }
+  
+  // Находим шаг в store.goals
+  const goal = workingGoals.value.find(g => g.id === goalId || g.backendId === goalId)
+  const storeStep = goal?.steps?.find(s => s.id === stepId || s.backendId === stepId)
+  
+  // Определяем текущее состояние
+  const currentCompleted = dayIndex !== -1 
+    ? weeklyStepsData.value[dayIndex].steps_data[stepIndex].step_is_complete 
+    : (storeStep?.completed || false)
+  const newCompleted = !currentCompleted
+  
+  console.log('[Planning] toggleTaskComplete:', { goalId, stepId, currentCompleted, newCompleted })
+  
+  // Обновляем в weeklyStepsData с принудительной реактивностью
+  if (dayIndex !== -1 && stepIndex !== -1) {
+    const updatedDay = { ...weeklyStepsData.value[dayIndex] }
+    updatedDay.steps_data = [...updatedDay.steps_data]
+    updatedDay.steps_data[stepIndex] = { 
+      ...updatedDay.steps_data[stepIndex], 
+      step_is_complete: newCompleted 
+    }
+    weeklyStepsData.value = [
+      ...weeklyStepsData.value.slice(0, dayIndex),
+      updatedDay,
+      ...weeklyStepsData.value.slice(dayIndex + 1)
+    ]
+    console.log('[Planning] Updated weeklyStepsData with new array')
+  }
+  
+  // Обновляем в store.goals
+  if (storeStep) {
+    storeStep.completed = newCompleted
+    console.log('[Planning] Updated storeStep.completed =', newCompleted)
+  }
+  
+  // Обновляем счётчик complete_steps в totalStepsData цели
+  if (goal?.totalStepsData) {
+    const delta = newCompleted ? 1 : -1
+    goal.totalStepsData = {
+      ...goal.totalStepsData,
+      complete_steps: Math.max(0, (goal.totalStepsData.complete_steps || 0) + delta)
+    }
+    console.log('[Planning] Updated totalStepsData.complete_steps:', goal.totalStepsData.complete_steps)
+  }
+  
+  // Триггер реактивности
+  localUpdateTrigger.value++
+  
+  // Отправляем запрос на бэкенд
+  const originalStep = dayIndex !== -1 ? weeklyStepsData.value[dayIndex].steps_data[stepIndex] : null
+  sendStepUpdateToBackend(goalId, stepId, newCompleted, originalStep, storeStep)
+}
+
+async function sendStepUpdateToBackend(goalId, stepId, newCompleted, originalStep, storeStep) {
+  // Всегда пытаемся отправить запрос на бэкенд
+  console.log('[Planning] sendStepUpdateToBackend called:', { goalId, stepId, is_complete: newCompleted })
   
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
-    await updateGoalSteps({
+    console.log('[Planning] Sending updateGoalSteps to API...')
+    
+    const result = await updateGoalSteps({
       goals_steps_data: [{
-        goal_id: task.goalId,
-        step_id: task.stepId,
+        goal_id: goalId,
+        step_id: stepId,
         is_complete: newCompleted
       }]
     })
     
-    // Синхронизируем данные в обоих блоках
-    await Promise.all([
-      loadWeeklySteps(),                              // Таймлайн
-      store.loadGoalsFromBackend({ page: 1 }, false)  // Цели и шаги
-    ])
+    console.log('[Planning] updateGoalSteps result:', result)
+    
+    if (result?.status === 'ok') {
+      console.log('[Planning] updateGoalSteps SUCCESS')
+    } else {
+      console.warn('[Planning] updateGoalSteps returned non-ok status:', result)
+    }
   } catch (error) {
-    console.error('[Planning] Error toggling task complete:', error)
-    task.completed = !newCompleted
+    console.error('[Planning] updateGoalSteps ERROR:', error)
+    // Откатываем изменения
+    if (originalStep) {
+      originalStep.step_is_complete = !newCompleted
+    }
+    if (storeStep) {
+      storeStep.completed = !newCompleted
+    }
+    localUpdateTrigger.value++
   }
 }
 
@@ -3275,7 +3679,13 @@ onUnmounted(() => {
 }
 
 .task-card.completed {
-  opacity: 0.6;
+  opacity: 0.7;
+  background: var(--bg-secondary, #f8fafc);
+}
+
+.task-card.completed .task-title {
+  text-decoration: line-through;
+  color: var(--text-tertiary, #94a3b8);
 }
 
 .task-checkbox {
@@ -3297,8 +3707,8 @@ onUnmounted(() => {
 }
 
 .task-checkbox.completed {
-  background: var(--success);
-  border-color: var(--success);
+  background: var(--success-color, #10b981);
+  border-color: var(--success-color, #10b981);
   color: white;
 }
 
@@ -3316,9 +3726,6 @@ onUnmounted(() => {
   text-overflow: ellipsis;
 }
 
-.task-card.completed .task-title {
-  text-decoration: line-through;
-}
 
 .task-goal {
   display: block;
@@ -3562,6 +3969,118 @@ onUnmounted(() => {
   color: white;
 }
 
+/* Search filter */
+.search-filter {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  max-width: 200px;
+}
+
+.search-filter .search-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.search-filter .search-input {
+  width: 100%;
+  padding: 0.5rem 2rem 0.5rem 2rem;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  background: var(--bg);
+  color: var(--text-primary);
+  transition: border-color 0.2s;
+}
+
+.search-filter .search-input:focus {
+  outline: none;
+  border-color: var(--primary, #6366f1);
+}
+
+.search-filter .search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-filter .clear-search {
+  position: absolute;
+  right: 0.5rem;
+  padding: 0.25rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-filter .clear-search:hover {
+  color: var(--text-primary);
+  background: var(--hover-bg, #f3f4f6);
+}
+
+/* Goal status dropdown */
+.goal-status-dropdown,
+.sort-dropdown {
+  position: relative;
+}
+
+.goal-status-dropdown.open .dropdown-trigger,
+.sort-dropdown.open .dropdown-trigger {
+  border-color: var(--primary, #6366f1);
+  background: var(--primary-light, rgba(99, 102, 241, 0.1));
+}
+
+.goal-status-dropdown.open .dropdown-arrow,
+.sort-dropdown.open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+/* Dropdown divider */
+.dropdown-divider {
+  height: 1px;
+  background: var(--border-color, #e5e7eb);
+  margin: 0.25rem 0;
+}
+
+/* Reset filters button */
+.reset-filters-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--danger-color, #ef4444);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--danger-color, #ef4444);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.reset-filters-btn:hover {
+  background: var(--danger-color, #ef4444);
+  color: white;
+}
+
+/* Secondary filters row */
+.filters-row.secondary {
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  padding: 0;
+}
+
+.results-count {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
 /* Responsive visibility */
 .desktop-only {
   display: flex;
@@ -3790,6 +4309,78 @@ onUnmounted(() => {
   gap: 0.5rem;
 }
 
+/* Пагинация шагов внутри цели */
+.steps-pagination {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 0;
+  margin-top: 0.5rem;
+}
+
+.steps-loading {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.steps-page-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.steps-page-btn:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.steps-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.steps-pages {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.steps-page-num {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 0.5rem;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.steps-page-num:hover:not(:disabled):not(.active) {
+  background: var(--bg-tertiary);
+}
+
+.steps-page-num.active {
+  background: var(--primary-color, #6366f1);
+  color: white;
+}
+
+.steps-page-num.dots {
+  cursor: default;
+}
+
 .step-card {
   display: flex;
   align-items: center;
@@ -3826,8 +4417,8 @@ onUnmounted(() => {
 }
 
 .step-checkbox.completed {
-  background: var(--success, #10b981);
-  border-color: var(--success, #10b981);
+  background: var(--success-color, #10b981);
+  border-color: var(--success-color, #10b981);
 }
 
 .step-title.completed {
@@ -3865,7 +4456,13 @@ onUnmounted(() => {
 }
 
 .step-card.completed {
-  opacity: 0.5;
+  opacity: 0.7;
+  background: var(--bg-tertiary, #f1f5f9);
+}
+
+.step-card.completed .step-title {
+  text-decoration: line-through;
+  color: var(--text-tertiary, #94a3b8);
 }
 
 .step-content {

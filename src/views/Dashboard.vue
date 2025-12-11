@@ -79,7 +79,7 @@
                     :class="{ checked: task.completed }"
                     @click="toggleFocusTask(task)"
                   >
-                    <Check v-if="task.completed" :size="16" :stroke-width="2" />
+                    <Check v-if="task.completed" :size="14" :stroke-width="2.5" />
                   </button>
                   <div class="focus-content">
                     <span class="focus-title">{{ task.title }}</span>
@@ -211,7 +211,6 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useAppStore } from '../stores/app'
-import { useXpStore } from '../stores/xp'
 import OnboardingAI from '../components/OnboardingAI.vue'
 import MiniTaskWelcome from '../components/MiniTaskWelcome.vue'
 import MiniTask from '../components/MiniTask.vue'
@@ -240,7 +239,6 @@ import {
 import { useRouter } from 'vue-router'
 
 const store = useAppStore()
-const xpStore = useXpStore()
 const router = useRouter()
 const showJournalModal = ref(false)
 const showMiniTask = ref(false)
@@ -399,8 +397,63 @@ function onMiniTaskSkip() {
   store.skipMiniTask()
 }
 
-function toggleFocusTask(task) {
-  store.toggleTodayTask(task.id)
+async function toggleFocusTask(task) {
+  const tasksArray = store.userDashboardData?.today_tasks?.tasks
+  const apiTask = tasksArray?.find(t => t.step_id === task.id)
+  
+  // Читаем текущее состояние напрямую из API данных
+  const currentCompleted = apiTask?.is_complete || false
+  const newCompleted = !currentCompleted
+  
+  console.log('[Dashboard] toggleFocusTask:', { 
+    taskId: task.id, 
+    goalId: task.goalId,
+    currentCompleted, 
+    newCompleted 
+  })
+  
+  // Optimistic update - мгновенно обновляем UI
+  if (apiTask) {
+    apiTask.is_complete = newCompleted
+    // Обновляем счётчики
+    if (newCompleted) {
+      store.userDashboardData.today_tasks.completed_count++
+    } else {
+      store.userDashboardData.today_tasks.completed_count--
+    }
+  }
+  
+  // Синхронизация с store.goals для Planning страницы
+  const storeGoal = store.goals.find(g => g.backendId === task.goalId || g.id === task.goalId)
+  const storeStep = storeGoal?.steps?.find(s => s.backendId === task.id || s.id === task.id)
+  if (storeStep) {
+    storeStep.completed = newCompleted
+    console.log('[Dashboard] Synced step.completed in store.goals')
+  }
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    console.log('[Dashboard] Sending updateGoalSteps:', { goal_id: task.goalId, step_id: task.id, is_complete: newCompleted })
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: task.goalId,
+        step_id: task.id,
+        is_complete: newCompleted
+      }]
+    })
+    console.log('[Dashboard] updateGoalSteps success')
+  } catch (error) {
+    console.error('[Dashboard] Error toggling focus task:', error)
+    // Откатываем изменения при ошибке
+    if (apiTask) {
+      apiTask.is_complete = currentCompleted
+      if (newCompleted) {
+        store.userDashboardData.today_tasks.completed_count--
+      } else {
+        store.userDashboardData.today_tasks.completed_count++
+      }
+    }
+  }
 }
 
 function openMentorPanel() {
@@ -658,10 +711,10 @@ function pluralize(n, one, few, many) {
 }
 
 .focus-check {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-full);
-  border: 2px solid var(--border-color);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color, #d1d5db);
   background: transparent;
   cursor: pointer;
   display: flex;
@@ -669,16 +722,17 @@ function pluralize(n, one, few, many) {
   justify-content: center;
   transition: all 0.2s ease;
   flex-shrink: 0;
+  color: white;
 }
 
 .focus-check:hover {
-  border-color: var(--primary-color);
+  border-color: var(--primary, #6366f1);
+  background: var(--primary-light, rgba(99, 102, 241, 0.1));
 }
 
 .focus-check.checked {
-  background: var(--success-color);
-  border-color: var(--success-color);
-  color: white;
+  background: var(--success-color, #10b981);
+  border-color: var(--success-color, #10b981);
 }
 
 .focus-content {
