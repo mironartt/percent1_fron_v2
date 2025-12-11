@@ -1772,7 +1772,11 @@ function getScheduledTime(goalId, stepId) {
       (s.goal_id === goalId || s.goal_id === String(goalId)) && 
       (s.step_id === stepId || s.step_id === String(stepId))
     )
-    if (step) return step.step_time_duration || step.time_estimate || ''
+    if (step) {
+      // Конвертируем бэкенд формат ('half', 'one', 'four') в фронтенд ('30min', '1h', '4h')
+      const backendTime = step.step_time_duration || step.time_estimate || ''
+      return timeDurationMap[backendTime] || backendTime
+    }
   }
   
   return ''
