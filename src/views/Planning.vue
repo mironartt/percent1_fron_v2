@@ -906,7 +906,6 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
-import { useXpStore } from '../stores/xp'
 import { 
   Calendar, 
   ChevronLeft,
@@ -934,7 +933,6 @@ import {
 } from 'lucide-vue-next'
 
 const store = useAppStore()
-const xpStore = useXpStore()
 const router = useRouter()
 
 const weekOffset = ref(0)
@@ -1017,10 +1015,6 @@ async function toggleOverdueTaskComplete(task) {
   const originalStep = overdueStepsData.value.find(s => s.step_id === task.stepId)
   if (originalStep) {
     originalStep.step_is_complete = newCompleted
-  }
-  
-  if (newCompleted) {
-    xpStore.addXP(10, 'step', `Выполнен шаг: ${task.stepTitle}`)
   }
   
   try {
@@ -2186,10 +2180,6 @@ async function toggleStepComplete() {
   const newCompleted = !selectedStep.value.completed
   selectedStep.value.completed = newCompleted
   
-  if (newCompleted) {
-    xpStore.addXP(10, 'step', `Выполнен шаг: ${selectedStep.value.title}`)
-  }
-  
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
     const result = await updateGoalSteps({
@@ -2262,11 +2252,6 @@ function quickToggleStepComplete(goal, step) {
   
   // Триггер реактивности
   localUpdateTrigger.value++
-  
-  // XP за выполнение
-  if (newCompleted) {
-    xpStore.addXP(10, 'step', `Выполнен шаг: ${step.title}`)
-  }
   
   // Отправляем запрос на бэкенд
   const originalStep = dayIndex !== -1 ? weeklyStepsData.value[dayIndex].steps_data[stepIndex] : null
@@ -2576,11 +2561,6 @@ function toggleTaskComplete(task) {
   
   // Триггер реактивности
   localUpdateTrigger.value++
-  
-  // XP за выполнение
-  if (newCompleted) {
-    xpStore.addXP(10, 'step', `Выполнен шаг: ${task.stepTitle}`)
-  }
   
   // Отправляем запрос на бэкенд
   const originalStep = dayIndex !== -1 ? weeklyStepsData.value[dayIndex].steps_data[stepIndex] : null

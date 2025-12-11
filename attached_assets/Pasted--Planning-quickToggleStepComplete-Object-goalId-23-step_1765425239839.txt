@@ -1,0 +1,110 @@
+[Planning] quickToggleStepComplete: 
+Object { goalId: 23, stepId: 129, currentCompleted: false, newCompleted: true }
+Planning.vue:2227:11
+[Planning] Updated step.completed = true Planning.vue:2231:11
+[Vue warn]: Unhandled error during execution of native event handler 
+  at <Planning onVnodeUnmounted=fn<onVnodeUnmounted> ref=Ref< 
+Proxy { <target>: Proxy, <handler>: {…} }
+ > key="/app/planning" > 
+  at <RouterView> 
+  at <App> runtime-core.esm-bundler.js:51:13
+Uncaught TypeError: xpStore.addXP is not a function
+    quickToggleStepComplete Planning.vue:2268
+    onClick Planning.vue:345
+    cacheKey runtime-dom.esm-bundler.js:1764
+    callWithErrorHandling runtime-core.esm-bundler.js:199
+    callWithAsyncErrorHandling runtime-core.esm-bundler.js:206
+    invoker runtime-dom.esm-bundler.js:730
+    addEventListener runtime-dom.esm-bundler.js:681
+    patchEvent runtime-dom.esm-bundler.js:699
+    patchProp runtime-dom.esm-bundler.js:776
+    mountElement runtime-core.esm-bundler.js:5586
+    processElement runtime-core.esm-bundler.js:5523
+    patch runtime-core.esm-bundler.js:5389
+    mountChildren runtime-core.esm-bundler.js:5645
+    mountElement runtime-core.esm-bundler.js:5568
+    processElement runtime-core.esm-bundler.js:5523
+    patch runtime-core.esm-bundler.js:5389
+    mountChildren runtime-core.esm-bundler.js:5645
+    processFragment runtime-core.esm-bundler.js:5825
+    patch runtime-core.esm-bundler.js:5375
+    mountChildren runtime-core.esm-bundler.js:5645
+    mountElement runtime-core.esm-bundler.js:5568
+    processElement runtime-core.esm-bundler.js:5523
+    patch runtime-core.esm-bundler.js:5389
+    mountChildren runtime-core.esm-bundler.js:5645
+    mountElement runtime-core.esm-bundler.js:5568
+    processElement runtime-core.esm-bundler.js:5523
+    patch runtime-core.esm-bundler.js:5389
+    mountChildren runtime-core.esm-bundler.js:5645
+    processFragment runtime-core.esm-bundler.js:5825
+    patch runtime-core.esm-bundler.js:5375
+    mountChildren runtime-core.esm-bundler.js:5645
+    mountElement runtime-core.esm-bundler.js:5568
+    processElement runtime-core.esm-bundler.js:5523
+    patch runtime-core.esm-bundler.js:5389
+    mountChildren runtime-core.esm-bundler.js:5645
+    mountElement runtime-core.esm-bundler.js:5568
+    processElement runtime-core.esm-bundler.js:5523
+    patch runtime-core.esm-bundler.js:5389
+    componentUpdateFn runtime-core.esm-bundler.js:6041
+    run reactivity.esm-bundler.js:237
+    setupRenderEffect runtime-core.esm-bundler.js:6169
+    mountComponent runtime-core.esm-bundler.js:5943
+    processComponent runtime-core.esm-bundler.js:5895
+    patch runtime-core.esm-bundler.js:5401
+    patchKeyedChildren runtime-core.esm-bundler.js:6448
+    patchChildren runtime-core.esm-bundler.js:6226
+    patchElement runtime-core.esm-bundler.js:5698
+    processElement runtime-core.esm-bundler.js:5539
+    patch runtime-core.esm-bundler.js:5389
+    patchSuspense runtime-core.esm-bundler.js:7060
+    process runtime-core.esm-bundler.js:6878
+    patch runtime-core.esm-bundler.js:5426
+    componentUpdateFn runtime-core.esm-bundler.js:6121
+    run reactivity.esm-bundler.js:237
+    runIfDirty reactivity.esm-bundler.js:275
+    callWithErrorHandling runtime-core.esm-bundler.js:199
+    flushJobs runtime-core.esm-bundler.js:408
+    promise callback*queueFlush runtime-core.esm-bundler.js:322
+    queuePostFlushCb runtime-core.esm-bundler.js:336
+    queueEffectWithSuspense runtime-core.esm-bundler.js:7428
+    scheduler runtime-core.esm-bundler.js:4189
+    scheduler reactivity.esm-bundler.js:1900
+    trigger reactivity.esm-bundler.js:265
+    endBatch reactivity.esm-bundler.js:323
+    notify reactivity.esm-bundler.js:614
+    trigger reactivity.esm-bundler.js:588
+    set value reactivity.esm-bundler.js:1500
+    finalizeNavigation vue-router.mjs:1388
+    pushWithRedirect vue-router.mjs:1316
+    promise callback*pushWithRedirect vue-router.mjs:1304
+    push vue-router.mjs:1257
+    navigate vue-router.mjs:932
+    callWithErrorHandling runtime-core.esm-bundler.js:199
+    callWithAsyncErrorHandling runtime-core.esm-bundler.js:206
+    invoker runtime-dom.esm-bundler.js:730
+    addEventListener runtime-dom.esm-bundler.js:681
+    patchEvent runtime-dom.esm-bundler.js:699
+    patchProp runtime-dom.esm-bundler.js:776
+    mountElement runtime-core.esm-bundler.js:5586
+    processElement runtime-core.esm-bundler.js:5523
+    patch runtime-core.esm-bundler.js:5389
+    componentUpdateFn runtime-core.esm-bundler.js:6041
+    run reactivity.esm-bundler.js:237
+    setupRenderEffect runtime-core.esm-bundler.js:6169
+    mountComponent runtime-core.esm-bundler.js:5943
+    processComponent runtime-core.esm-bundler.js:5895
+    patch runtime-core.esm-bundler.js:5401
+    mountChildren runtime-core.esm-bundler.js:5645
+    mountElement runtime-core.esm-bundler.js:5568
+    processElement runtime-core.esm-bundler.js:5523
+    patch runtime-core.esm-bundler.js:5389
+    mountChildren runtime-core.esm-bundler.js:5645
+    processFragment runtime-core.esm-bundler.js:5825
+    patch runtime-core.esm-bundler.js:5375
+    mountChildren runtime-core.esm-bundler.js:5645
+    mountElement runtime-core.esm-bundler.js:5568
+    processElement runtime-core.esm-bundler.js:5523
+    patch runtime-core.esm-bundler.js:5389
+    mountChildren runtime-core.esm-bundler.js:5645
