@@ -1127,6 +1127,7 @@ export const useAppStore = defineStore('app', () => {
   const mentorMobileOpen = ref(false)
   const mentorIsMobile = ref(false)
   const unreadMentorCount = ref(0)
+  const mentorSpotlightMode = ref(false)
 
   function toggleMentorPanel(forceState) {
     if (typeof forceState === 'boolean') {
@@ -1163,6 +1164,24 @@ export const useAppStore = defineStore('app', () => {
 
   function clearUnreadMentor() {
     unreadMentorCount.value = 0
+  }
+
+  function enableMentorSpotlight() {
+    mentorSpotlightMode.value = true
+    mentorPanelCollapsed.value = false
+    if (mentorIsMobile.value) {
+      mentorMobileOpen.value = true
+    }
+    if (DEBUG_MODE) {
+      console.log('[Store] Mentor spotlight mode enabled')
+    }
+  }
+
+  function disableMentorSpotlight() {
+    mentorSpotlightMode.value = false
+    if (DEBUG_MODE) {
+      console.log('[Store] Mentor spotlight mode disabled')
+    }
   }
 
   function openMentorChat() {
@@ -3310,6 +3329,7 @@ export const useAppStore = defineStore('app', () => {
     mentorMobileOpen,
     unreadMentorCount,
     mentorIsMobile,
+    mentorSpotlightMode,
     toggleMentorPanel,
     openMentorMobile,
     closeMentorMobile,
@@ -3322,6 +3342,8 @@ export const useAppStore = defineStore('app', () => {
     setMentorMode,
     incrementUnreadMentor,
     clearUnreadMentor,
+    enableMentorSpotlight,
+    disableMentorSpotlight,
     
     // Actions
     updateSphere,

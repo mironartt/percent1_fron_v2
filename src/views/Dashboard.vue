@@ -206,13 +206,6 @@
     v-if="showHabitManager" 
     @close="showHabitManager = false" 
   />
-
-  <FirstWeekMission 
-    v-if="showMissionModal && shouldShowFirstWeekMission"
-    :is-first-visit="isFirstMissionVisit"
-    @close="closeMissionModal"
-    @complete="onMissionComplete"
-  />
 </template>
 
 <script setup>
@@ -227,7 +220,6 @@ import HabitTracker from '../components/HabitTracker.vue'
 import HabitManagerModal from '../components/HabitManagerModal.vue'
 import DailyProgressBar from '../components/DailyProgressBar.vue'
 import XpBadge from '../components/XpBadge.vue'
-import FirstWeekMission from '../components/FirstWeekMission.vue'
 import { useActivationStore } from '@/stores/activation'
 import { DEBUG_MODE } from '@/config/settings.js'
 import { 
@@ -253,59 +245,66 @@ const router = useRouter()
 const showJournalModal = ref(false)
 const showMiniTask = ref(false)
 const showHabitManager = ref(false)
-const showMissionModal = ref(false)
 
 activationStore.init()
 
-const shouldShowFirstWeekMission = computed(() => {
-  if (shouldShowOnboarding.value) return false
-  if (!store.user.finish_onboarding) return false
-  if (activationStore.isAllCompleted) return false
-  return activationStore.shouldShowMission
-})
+function triggerMentorSpotlight() {
+  if (DEBUG_MODE) {
+    console.log('[Dashboard] Triggering mentor spotlight mode')
+  }
+  
+  store.enableMentorSpotlight()
+  
+  setTimeout(() => {
+    if (store.mentor.messages.length === 0) {
+      const welcomeMessage = `Привет! 👋
 
-const isFirstMissionVisit = computed(() => !activationStore.missionStarted)
+Я проанализировал твои ответы из диагностики и создал для тебя персональные цели.
+
+Давай я помогу тебе начать. Вот что рекомендую сделать первым делом:
+
+→ **Выбери 1-3 важных дела на сегодня** в разделе «Планирование»
+
+Это поможет сфокусироваться на главном и сразу начать двигаться к целям.
+
+Готов начать?`
+      
+      store.sendMentorMessage(welcomeMessage, 'assistant')
+      if (DEBUG_MODE) {
+        console.log('[Dashboard] Sent mentor welcome message')
+      }
+    }
+    activationStore.completeMentorIntro()
+    activationStore.setGuidanceStep('select_focus')
+  }, 500)
+}
 
 watch(() => store.user.finish_onboarding, (finished, oldVal) => {
   if (DEBUG_MODE) {
-    console.log('[Dashboard] FirstWeekMission watch:', {
+    console.log('[Dashboard] Mentor intro watch:', {
       finish_onboarding: finished,
       oldVal,
-      missionStarted: activationStore.missionStarted,
+      mentorIntroCompleted: activationStore.mentorIntroCompleted,
       isAllCompleted: activationStore.isAllCompleted
     })
   }
-  if (finished && !activationStore.missionStarted && !activationStore.isAllCompleted) {
-    showMissionModal.value = true
-    if (DEBUG_MODE) {
-      console.log('[Dashboard] Showing FirstWeekMission modal')
-    }
+  if (finished && !activationStore.mentorIntroCompleted && !activationStore.isAllCompleted) {
+    triggerMentorSpotlight()
   }
 })
 
 onMounted(() => {
   if (DEBUG_MODE) {
-    console.log('[Dashboard] onMounted FirstWeekMission check:', {
+    console.log('[Dashboard] onMounted mentor intro check:', {
       finish_onboarding: store.user.finish_onboarding,
-      missionStarted: activationStore.missionStarted,
+      mentorIntroCompleted: activationStore.mentorIntroCompleted,
       isAllCompleted: activationStore.isAllCompleted
     })
   }
-  if (store.user.finish_onboarding && !activationStore.missionStarted && !activationStore.isAllCompleted) {
-    showMissionModal.value = true
-    if (DEBUG_MODE) {
-      console.log('[Dashboard] Showing FirstWeekMission modal on mount')
-    }
+  if (store.user.finish_onboarding && !activationStore.mentorIntroCompleted && !activationStore.isAllCompleted) {
+    triggerMentorSpotlight()
   }
 })
-
-function closeMissionModal() {
-  showMissionModal.value = false
-}
-
-function onMissionComplete() {
-  showMissionModal.value = false
-}
 
 const userName = computed(() => store.displayName)
 const averageScore = computed(() => store.averageScore)

@@ -1,7 +1,17 @@
 <template>
   <div class="mentor-panel-wrapper">
     <div 
-      v-if="isMobileOpen" 
+      v-if="spotlightMode" 
+      class="spotlight-overlay"
+      @click="exitSpotlight"
+    >
+      <div class="spotlight-hint">
+        Нажмите, чтобы продолжить
+      </div>
+    </div>
+    
+    <div 
+      v-if="isMobileOpen && !spotlightMode" 
       class="mentor-overlay"
       @click="closeMobile"
     ></div>
@@ -15,7 +25,7 @@
       <span v-if="unreadCount > 0" class="unread-badge">{{ unreadCount }}</span>
     </button>
     
-    <div :class="['mentor-panel', { collapsed: isCollapsed && !isMobile, 'mobile-open': isMobileOpen }]">
+    <div :class="['mentor-panel', { collapsed: isCollapsed && !isMobile, 'mobile-open': isMobileOpen, 'spotlight-active': spotlightMode }]">
       <div v-if="isCollapsed && !isMobile" class="collapsed-content" @click="togglePanel">
         <div class="collapsed-avatar">
           <Bot :size="20" :stroke-width="1.5" />
@@ -159,6 +169,7 @@ const messages = computed(() => store.mentor.messages)
 const isCollapsed = computed(() => store.mentorPanelCollapsed)
 const isMobileOpen = computed(() => store.mentorMobileOpen)
 const unreadCount = computed(() => store.unreadMentorCount)
+const spotlightMode = computed(() => store.mentorSpotlightMode)
 
 function checkMobile() {
   isMobile.value = window.innerWidth < 1024
@@ -182,6 +193,10 @@ function toggleMobile() {
 function closeMobile() {
   store.closeMentorMobile()
   document.body.style.overflow = ''
+}
+
+function exitSpotlight() {
+  store.disableMentorSpotlight()
 }
 
 const quickPrompts = computed(() => {
@@ -388,6 +403,45 @@ onUnmounted(() => {
   z-index: 100;
 }
 
+.spotlight-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 460px;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 100px;
+}
+
+.spotlight-hint {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 24px;
+  font-size: 0.875rem;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: pulse-hint 2s ease-in-out infinite;
+}
+
+@keyframes pulse-hint {
+  0%, 100% { opacity: 0.8; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-4px); }
+}
+
+@media (max-width: 1023px) {
+  .spotlight-overlay {
+    right: 0;
+    display: none;
+  }
+}
+
 .mentor-overlay {
   position: fixed;
   top: 0;
@@ -495,6 +549,11 @@ onUnmounted(() => {
   transition: width 0.3s ease, transform 0.3s ease;
   z-index: 999;
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.08);
+}
+
+.mentor-panel.spotlight-active {
+  z-index: 1001;
+  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.3);
 }
 
 .mentor-panel.collapsed {

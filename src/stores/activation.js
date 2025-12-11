@@ -43,6 +43,9 @@ export const useActivationStore = defineStore('activation', () => {
   const completedTasks = ref({})
   const modalDismissed = ref(false)
   const missionStarted = ref(false)
+  const mentorIntroCompleted = ref(false)
+  const mentorChatHistory = ref([])
+  const currentGuidanceStep = ref(null)
   
   const tasks = computed(() => {
     return MISSION_TASKS.map(task => ({
@@ -67,7 +70,13 @@ export const useActivationStore = defineStore('activation', () => {
   
   const shouldShowMission = computed(() => {
     if (isAllCompleted.value) return false
-    if (modalDismissed.value && missionStarted.value) return false
+    if (missionStarted.value) return false
+    return true
+  })
+  
+  const shouldShowMentorSpotlight = computed(() => {
+    if (isAllCompleted.value) return false
+    if (mentorIntroCompleted.value) return false
     return true
   })
   
@@ -111,6 +120,9 @@ export const useActivationStore = defineStore('activation', () => {
     completedTasks.value = {}
     modalDismissed.value = false
     missionStarted.value = false
+    mentorIntroCompleted.value = false
+    mentorChatHistory.value = []
+    currentGuidanceStep.value = null
     saveToStorage()
     
     if (DEBUG_MODE) {
@@ -118,12 +130,52 @@ export const useActivationStore = defineStore('activation', () => {
     }
   }
   
+  function completeMentorIntro() {
+    mentorIntroCompleted.value = true
+    missionStarted.value = true
+    saveToStorage()
+    
+    if (DEBUG_MODE) {
+      console.log('[Activation] Mentor intro completed')
+    }
+  }
+  
+  function addMentorChatMessage(message) {
+    mentorChatHistory.value.push({
+      ...message,
+      timestamp: new Date().toISOString()
+    })
+    saveToStorage()
+  }
+  
+  function setGuidanceStep(stepId) {
+    currentGuidanceStep.value = stepId
+    saveToStorage()
+    
+    if (DEBUG_MODE) {
+      console.log('[Activation] Guidance step set:', stepId)
+    }
+  }
+  
+  function getNextGuidanceStep() {
+    const taskOrder = ['select_focus', 'create_habit', 'view_goals', 'write_reflection']
+    for (const taskId of taskOrder) {
+      if (!completedTasks.value[taskId]) {
+        return taskId
+      }
+    }
+    return null
+  }
+  
   function saveToStorage() {
     try {
       const data = {
         completedTasks: completedTasks.value,
         modalDismissed: modalDismissed.value,
-        missionStarted: missionStarted.value
+        missionStarted: missionStarted.value,
+        mentorIntroCompleted: mentorIntroCompleted.value,
+        mentorChatHistory: mentorChatHistory.value,
+        currentGuidanceStep: currentGuidanceStep.value
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
     } catch (e) {
@@ -141,6 +193,9 @@ export const useActivationStore = defineStore('activation', () => {
         completedTasks.value = data.completedTasks || {}
         modalDismissed.value = data.modalDismissed || false
         missionStarted.value = data.missionStarted || false
+        mentorIntroCompleted.value = data.mentorIntroCompleted || false
+        mentorChatHistory.value = data.mentorChatHistory || []
+        currentGuidanceStep.value = data.currentGuidanceStep || null
         
         if (DEBUG_MODE) {
           console.log('[Activation] Loaded from storage:', data)
@@ -165,14 +220,22 @@ export const useActivationStore = defineStore('activation', () => {
     progress,
     isAllCompleted,
     shouldShowMission,
+    shouldShowMentorSpotlight,
     nextTask,
     modalDismissed,
     missionStarted,
+    mentorIntroCompleted,
+    mentorChatHistory,
+    currentGuidanceStep,
     
     completeTask,
     dismissModal,
     showModal,
     resetMission,
+    completeMentorIntro,
+    addMentorChatMessage,
+    setGuidanceStep,
+    getNextGuidanceStep,
     init
   }
 })
