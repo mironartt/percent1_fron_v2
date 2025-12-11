@@ -699,7 +699,7 @@
                 <Trash2 :size="20" />
                 <span>Убрать из плана</span>
               </button>
-              <button class="sheet-action primary" @click="closeBottomSheet">
+              <button class="sheet-action primary" @click="saveStepChangesAndClose">
                 <Check :size="20" />
                 <span>Сохранить</span>
               </button>
@@ -1084,6 +1084,10 @@ const selectedStep = ref(null)
 // Буфер для отложенных изменений (сохраняем только по кнопке "Сохранить")
 const pendingTaskChanges = ref({})
 const originalTaskState = ref(null)
+
+// Буфер для изменений шага из блока "Цели и шаги"
+const pendingStepChanges = ref({})
+const originalStepState = ref(null)
 
 let touchTimer = null
 const longPressDelay = 500
@@ -1852,6 +1856,20 @@ function openStepActions(goal, step) {
   newStepDay.value = null
   newStepPriority.value = ''
   newStepTime.value = ''
+  
+  // Сохраняем оригинальное состояние для возможности отмены (для запланированных шагов)
+  if (isStepScheduled(goal.id, step.id)) {
+    originalStepState.value = {
+      scheduledDate: getScheduledDate(goal.id, step.id),
+      priority: getScheduledPriority(goal.id, step.id),
+      timeEstimate: getScheduledTime(goal.id, step.id)
+    }
+  } else {
+    originalStepState.value = null
+  }
+  // Сбрасываем буфер изменений
+  pendingStepChanges.value = {}
+  
   bottomSheetMode.value = 'step'
   showBottomSheet.value = true
 }
@@ -2030,139 +2048,107 @@ async function quickToggleStepComplete(goal, step) {
   }
 }
 
-async function rescheduleStep(newDate) {
+function rescheduleStep(newDate) {
   if (!selectedGoal.value || !selectedStep.value) return
   
-  const goalId = selectedGoal.value.backendId || selectedGoal.value.id
-  const stepId = selectedStep.value.backendId || selectedStep.value.id
-  
-  // Валидация
-  const actualGoal = store.goals.find(g => g.backendId === goalId || g.id === goalId)
-  if (actualGoal) {
-    const stepExists = actualGoal.steps?.some(s => s.backendId === stepId || s.id === stepId)
-    if (!stepExists) {
-      console.warn('[Planning] Step not found, refreshing data:', { goalId, stepId })
-      await store.loadGoalsFromBackend({ page: 1 }, false)
-      await loadWeeklySteps()
-      return
-    }
-  }
-  
-  // Сначала обновляем локально
+  // Обновляем локально для UI
   saveStepToLocalPlan(selectedGoal.value, selectedStep.value, newDate)
   
-  try {
-    const { updateGoalSteps } = await import('@/services/api.js')
-    const result = await updateGoalSteps({
-      goals_steps_data: [{
-        goal_id: goalId,
-        step_id: stepId,
-        dt: newDate
-      }]
-    })
-    
-    if (result?.error_code === 'GOALS_STEPS_UPDATE__STEP_NOT_ACCESS') {
-      await store.loadGoalsFromBackend({ page: 1 }, false)
-    }
-    
-    await loadWeeklySteps()
-  } catch (error) {
-    console.error('[Planning] Error rescheduling step:', error)
-    if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
-      await store.loadGoalsFromBackend({ page: 1 }, false)
-      await loadWeeklySteps()
-    }
-  }
+  // Записываем изменение в буфер (отправим по кнопке "Сохранить")
+  pendingStepChanges.value.dt = newDate
 }
 
-async function updateStepPriority(priority) {
+function updateStepPriority(priority) {
   if (!selectedGoal.value || !selectedStep.value) return
   
-  const goalId = selectedGoal.value.backendId || selectedGoal.value.id
-  const stepId = selectedStep.value.backendId || selectedStep.value.id
-  
-  // Валидация
-  const actualGoal = store.goals.find(g => g.backendId === goalId || g.id === goalId)
-  if (actualGoal) {
-    const stepExists = actualGoal.steps?.some(s => s.backendId === stepId || s.id === stepId)
-    if (!stepExists) {
-      console.warn('[Planning] Step not found, refreshing data:', { goalId, stepId })
-      await store.loadGoalsFromBackend({ page: 1 }, false)
-      await loadWeeklySteps()
-      return
-    }
-  }
-  
-  // Сначала обновляем локально
+  // Обновляем локально для UI
   updateStepInLocalPlan(selectedGoal.value, selectedStep.value, { priority })
   
-  try {
-    const { updateGoalSteps } = await import('@/services/api.js')
-    const result = await updateGoalSteps({
-      goals_steps_data: [{
-        goal_id: goalId,
-        step_id: stepId,
-        priority: priorityFrontendToBackend[priority] || priority || null
-      }]
-    })
-    
-    if (result?.error_code === 'GOALS_STEPS_UPDATE__STEP_NOT_ACCESS') {
-      await store.loadGoalsFromBackend({ page: 1 }, false)
-    }
-    
-    await loadWeeklySteps()
-  } catch (error) {
-    console.error('[Planning] Error updating step priority:', error)
-    if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
-      await store.loadGoalsFromBackend({ page: 1 }, false)
-      await loadWeeklySteps()
-    }
-  }
+  // Записываем изменение в буфер (отправим по кнопке "Сохранить")
+  pendingStepChanges.value.priority = priorityFrontendToBackend[priority] || priority || null
 }
 
-async function updateStepTime(time) {
+function updateStepTime(time) {
   if (!selectedGoal.value || !selectedStep.value) return
+  
+  // Обновляем локально для UI
+  updateStepInLocalPlan(selectedGoal.value, selectedStep.value, { timeEstimate: time })
+  
+  // Записываем изменение в буфер (отправим по кнопке "Сохранить")
+  pendingStepChanges.value.time_duration = timeDurationFrontendToBackend[time] || time || null
+}
+
+async function saveStepChangesAndClose() {
+  if (!selectedGoal.value || !selectedStep.value) {
+    closeBottomSheet()
+    return
+  }
   
   const goalId = selectedGoal.value.backendId || selectedGoal.value.id
   const stepId = selectedStep.value.backendId || selectedStep.value.id
   
-  // Валидация
-  const actualGoal = store.goals.find(g => g.backendId === goalId || g.id === goalId)
-  if (actualGoal) {
-    const stepExists = actualGoal.steps?.some(s => s.backendId === stepId || s.id === stepId)
-    if (!stepExists) {
-      console.warn('[Planning] Step not found, refreshing data:', { goalId, stepId })
-      await store.loadGoalsFromBackend({ page: 1 }, false)
-      await loadWeeklySteps()
-      return
+  // Проверяем есть ли изменения для отправки
+  const hasChanges = Object.keys(pendingStepChanges.value).length > 0
+  
+  if (hasChanges) {
+    // Валидация: проверяем что шаг существует
+    const actualGoal = store.goals.find(g => g.backendId === goalId || g.id === goalId)
+    if (actualGoal) {
+      const stepExists = actualGoal.steps?.some(s => s.backendId === stepId || s.id === stepId)
+      if (!stepExists) {
+        console.warn('[Planning] Step not found, refreshing data:', { goalId, stepId })
+        await store.loadGoalsFromBackend({ page: 1 }, false)
+        await loadWeeklySteps()
+        pendingStepChanges.value = {}
+        originalStepState.value = null
+        closeBottomSheet()
+        return
+      }
     }
-  }
-  
-  // Сначала обновляем локально
-  updateStepInLocalPlan(selectedGoal.value, selectedStep.value, { timeEstimate: time })
-  
-  try {
-    const { updateGoalSteps } = await import('@/services/api.js')
-    const result = await updateGoalSteps({
-      goals_steps_data: [{
+    
+    try {
+      const { updateGoalSteps } = await import('@/services/api.js')
+      
+      // Формируем данные для API
+      const stepData = {
         goal_id: goalId,
         step_id: stepId,
-        time_duration: timeDurationFrontendToBackend[time] || time || null
-      }]
-    })
-    
-    if (result?.error_code === 'GOALS_STEPS_UPDATE__STEP_NOT_ACCESS') {
-      await store.loadGoalsFromBackend({ page: 1 }, false)
-    }
-    
-    await loadWeeklySteps()
-  } catch (error) {
-    console.error('[Planning] Error updating step time:', error)
-    if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
-      await store.loadGoalsFromBackend({ page: 1 }, false)
-      await loadWeeklySteps()
+        ...pendingStepChanges.value
+      }
+      
+      console.log('[Planning] Saving step changes:', stepData)
+      
+      const result = await updateGoalSteps({
+        goals_steps_data: [stepData]
+      })
+      
+      if (result?.error_code === 'GOALS_STEPS_UPDATE__STEP_NOT_ACCESS') {
+        await store.loadGoalsFromBackend({ page: 1 }, false)
+      }
+      
+      // Синхронизируем данные в обоих блоках
+      await Promise.all([
+        loadWeeklySteps(),                              // Таймлайн
+        store.loadGoalsFromBackend({ page: 1 }, false)  // Цели и шаги
+      ])
+      
+    } catch (error) {
+      console.error('[Planning] Error saving step changes:', error)
+      
+      // При ошибке можно восстановить оригинальное состояние (опционально)
+      if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
+        await Promise.all([
+          loadWeeklySteps(),
+          store.loadGoalsFromBackend({ page: 1 }, false)
+        ])
+      }
     }
   }
+  
+  // Сбрасываем буфер и закрываем
+  pendingStepChanges.value = {}
+  originalStepState.value = null
+  closeBottomSheet()
 }
 
 async function removeStepFromSchedule() {
@@ -2282,16 +2268,25 @@ function openAddStepModal() {
 }
 
 function closeBottomSheet() {
-  // При закрытии без сохранения - восстанавливаем оригинальное состояние
+  // При закрытии без сохранения - восстанавливаем оригинальное состояние для задач (таймлайн)
   if (selectedTask.value && originalTaskState.value && Object.keys(pendingTaskChanges.value).length > 0) {
     selectedTask.value.scheduledDate = originalTaskState.value.scheduledDate
     selectedTask.value.priority = originalTaskState.value.priority
     selectedTask.value.timeEstimate = originalTaskState.value.timeEstimate
   }
   
-  // Сбрасываем буфер
+  // При закрытии без сохранения шагов - восстанавливаем их состояние
+  // (локальные изменения уже применены, но мы должны перезагрузить данные)
+  if (selectedStep.value && originalStepState.value && Object.keys(pendingStepChanges.value).length > 0) {
+    // Нужно перезагрузить данные чтобы отменить локальные изменения
+    loadWeeklySteps()
+  }
+  
+  // Сбрасываем буферы
   pendingTaskChanges.value = {}
   originalTaskState.value = null
+  pendingStepChanges.value = {}
+  originalStepState.value = null
   
   showBottomSheet.value = false
   selectedTask.value = null

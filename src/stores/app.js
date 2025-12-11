@@ -332,7 +332,7 @@ export const useAppStore = defineStore('app', () => {
         })
       } else {
         // Обновляем существующую цель
-        Object.assign(existingGoal, {
+        const updates = {
           title: backendGoal.text,
           description: backendGoal.whyImportant,
           sphereId: backendGoal.sphereId,
@@ -340,9 +340,21 @@ export const useAppStore = defineStore('app', () => {
           status: backendGoal.workStatus === 'complete' ? 'completed' : 'active',
           progress: backendGoal.totalStepsData?.complete_percent || 0,
           totalStepsData: backendGoal.totalStepsData || null,
-          steps: transformedSteps,
           completedAt: backendGoal.dateCompleted
-        })
+        }
+        
+        // Обновляем шаги только если они пришли с бэкенда (не пустые)
+        // Иначе сохраняем существующие шаги
+        if (transformedSteps.length > 0) {
+          updates.steps = transformedSteps
+        } else if (existingGoal.steps && existingGoal.steps.length > 0) {
+          // Шаги не пришли - сохраняем существующие
+          if (DEBUG_MODE) {
+            console.log('[Store] Keeping existing steps for goal:', existingGoal.backendId)
+          }
+        }
+        
+        Object.assign(existingGoal, updates)
       }
     })
     
