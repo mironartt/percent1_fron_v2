@@ -268,6 +268,11 @@ router.beforeEach(async (to, from, next) => {
   
   if (userData && !skipped) {
     store.setUser(userData)
+    
+    // Синхронизируем XP balance с данными пользователя
+    const { useXpStore } = await import('@/stores/xp.js')
+    const xpStore = useXpStore()
+    xpStore.syncFromUserData(userData)
   }
   
   if (DEBUG_MODE) {

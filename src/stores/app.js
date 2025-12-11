@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { DEBUG_MODE, FORCE_SHOW_ONBOARDING, FORCE_SHOW_MINITASK } from '@/config/settings.js'
+import { getLocalDateString, getTodayDateString } from '@/utils/dateUtils.js'
 import { 
   getOnboardingData, 
   updateOnboardingData, 
@@ -284,6 +285,13 @@ export const useAppStore = defineStore('app', () => {
     // Также обновляем goals (цели в работе)
     const goalsInWork = syncedGoals.filter(g => g.workStatus === 'work' || g.workStatus === 'complete')
     
+    // При замене (не append) - удаляем старые цели которых нет в новых данных
+    if (!append) {
+      const newBackendIds = new Set(goalsInWork.map(g => g.backendId))
+      // Заменяем goals только теми что пришли с бэкенда
+      goals.value = goals.value.filter(g => !g.backendId || newBackendIds.has(g.backendId))
+    }
+    
     goalsInWork.forEach(backendGoal => {
       // Transform steps from backend format to frontend format
       const transformedSteps = (backendGoal.stepsData || []).map(s => ({
@@ -324,7 +332,7 @@ export const useAppStore = defineStore('app', () => {
         })
       } else {
         // Обновляем существующую цель
-        Object.assign(existingGoal, {
+        const updates = {
           title: backendGoal.text,
           description: backendGoal.whyImportant,
           sphereId: backendGoal.sphereId,
@@ -332,17 +340,66 @@ export const useAppStore = defineStore('app', () => {
           status: backendGoal.workStatus === 'complete' ? 'completed' : 'active',
           progress: backendGoal.totalStepsData?.complete_percent || 0,
           totalStepsData: backendGoal.totalStepsData || null,
-          steps: transformedSteps,
           completedAt: backendGoal.dateCompleted
-        })
+        }
+        
+        // Обновляем шаги только если они пришли с бэкенда (не пустые)
+        // Иначе сохраняем существующие шаги
+        if (transformedSteps.length > 0) {
+          updates.steps = transformedSteps
+        } else if (existingGoal.steps && existingGoal.steps.length > 0) {
+          // Шаги не пришли - сохраняем существующие
+          if (DEBUG_MODE) {
+            console.log('[Store] Keeping existing steps for goal:', existingGoal.backendId)
+          }
+        }
+        
+        Object.assign(existingGoal, updates)
       }
     })
+    
+    // Очистка устаревших scheduledTasks из weeklyPlans
+    cleanupStaleScheduledTasks()
     
     if (DEBUG_MODE) {
       console.log('[Store] Goals synced from backend:', {
         rawIdeas: goalsBank.value.rawIdeas.length,
         goalsInWork: goalsInWork.length
       })
+    }
+  }
+  
+  /**
+   * Очистить scheduledTasks которые ссылаются на несуществующие шаги
+   */
+  function cleanupStaleScheduledTasks() {
+    // Собираем все валидные пары goal_id + step_id
+    const validStepIds = new Set()
+    for (const goal of goals.value) {
+      if (goal.steps) {
+        for (const step of goal.steps) {
+          const goalId = goal.backendId || goal.id
+          const stepId = step.backendId || step.id
+          validStepIds.add(`${goalId}-${stepId}`)
+        }
+      }
+    }
+    
+    // Фильтруем scheduledTasks во всех планах
+    let cleanedCount = 0
+    for (const plan of weeklyPlans.value) {
+      if (!plan.scheduledTasks) continue
+      
+      const before = plan.scheduledTasks.length
+      plan.scheduledTasks = plan.scheduledTasks.filter(task => {
+        const key = `${task.goalId}-${task.stepId}`
+        return validStepIds.has(key)
+      })
+      cleanedCount += before - plan.scheduledTasks.length
+    }
+    
+    if (cleanedCount > 0 && DEBUG_MODE) {
+      console.log('[Store] Cleaned stale scheduledTasks:', cleanedCount)
     }
   }
   
@@ -521,10 +578,20 @@ export const useAppStore = defineStore('app', () => {
     is_authenticated: false,
     finish_onboarding: false,
     finish_minitask: false,
-    telegram_bot_link: ''
+    telegram_bot_link: '',
+    has_diary_entry_today: false,
+    xp_balance: 0,
+    lifetime_xp: 0
   })
   
   const userLoading = ref(false)
+  
+  // Данные из get-user-data API (обновляются при каждом запросе)
+  const userDashboardData = ref({
+    today_tasks: { total_count: 0, completed_count: 0, tasks: [] },
+    today_habits: { total_count: 0, completed_count: 0, habits: [] },
+    top_goals: { total_incomplete_goals: 0, goals: [] }
+  })
   
   function setUser(userData) {
     if (userData) {
@@ -536,8 +603,25 @@ export const useAppStore = defineStore('app', () => {
         is_authenticated: true,
         finish_onboarding: userData.finish_onboarding ?? false,
         finish_minitask: userData.finish_minitask ?? false,
-        telegram_bot_link: userData.telegram_bot_link || ''
+        telegram_bot_link: userData.telegram_bot_link || '',
+        has_diary_entry_today: userData.has_diary_entry_today ?? false,
+        xp_balance: userData.xp_balance ?? 0,
+        lifetime_xp: userData.lifetime_xp ?? 0
       }
+      
+      // Обновить dashboard данные если они присутствуют
+      if (userData.today_tasks) {
+        userDashboardData.value.today_tasks = userData.today_tasks
+      }
+      if (userData.today_habits) {
+        userDashboardData.value.today_habits = userData.today_habits
+      }
+      if (userData.top_goals) {
+        userDashboardData.value.top_goals = userData.top_goals
+      }
+      
+      // Сохранить в localStorage
+      saveUserDataToLocalStorage(userData)
       
       if (userData.finish_onboarding) {
         onboarding.value.completed = true
@@ -554,10 +638,55 @@ export const useAppStore = defineStore('app', () => {
           isAuthenticated: user.value.is_authenticated,
           finishOnboarding: user.value.finish_onboarding,
           finishMinitask: user.value.finish_minitask,
-          telegramBotLink: user.value.telegram_bot_link ? 'present' : 'none'
+          telegramBotLink: user.value.telegram_bot_link ? 'present' : 'none',
+          xpBalance: user.value.xp_balance,
+          todayTasks: userDashboardData.value.today_tasks.total_count,
+          todayHabits: userDashboardData.value.today_habits.total_count,
+          topGoals: userDashboardData.value.top_goals.goals.length
         })
       }
     }
+  }
+  
+  function saveUserDataToLocalStorage(userData) {
+    try {
+      const dataToSave = {
+        today_tasks: userData.today_tasks || userDashboardData.value.today_tasks,
+        today_habits: userData.today_habits || userDashboardData.value.today_habits,
+        top_goals: userData.top_goals || userDashboardData.value.top_goals,
+        xp_balance: userData.xp_balance ?? user.value.xp_balance,
+        lifetime_xp: userData.lifetime_xp ?? user.value.lifetime_xp,
+        has_diary_entry_today: userData.has_diary_entry_today ?? user.value.has_diary_entry_today,
+        updated_at: new Date().toISOString()
+      }
+      localStorage.setItem('onepercent_user_dashboard', JSON.stringify(dataToSave))
+      if (DEBUG_MODE) {
+        console.log('[Store] User dashboard data saved to localStorage')
+      }
+    } catch (e) {
+      console.warn('[Store] Failed to save user data to localStorage:', e)
+    }
+  }
+  
+  function loadUserDataFromLocalStorage() {
+    try {
+      const saved = localStorage.getItem('onepercent_user_dashboard')
+      if (saved) {
+        const data = JSON.parse(saved)
+        if (data.today_tasks) userDashboardData.value.today_tasks = data.today_tasks
+        if (data.today_habits) userDashboardData.value.today_habits = data.today_habits
+        if (data.top_goals) userDashboardData.value.top_goals = data.top_goals
+        if (data.xp_balance !== undefined) user.value.xp_balance = data.xp_balance
+        if (data.lifetime_xp !== undefined) user.value.lifetime_xp = data.lifetime_xp
+        if (DEBUG_MODE) {
+          console.log('[Store] User dashboard data loaded from localStorage')
+        }
+        return true
+      }
+    } catch (e) {
+      console.warn('[Store] Failed to load user data from localStorage:', e)
+    }
+    return false
   }
   
   function clearUser() {
@@ -573,7 +702,23 @@ export const useAppStore = defineStore('app', () => {
       is_authenticated: false,
       finish_onboarding: false,
       finish_minitask: false,
-      telegram_bot_link: ''
+      telegram_bot_link: '',
+      has_diary_entry_today: false,
+      xp_balance: 0,
+      lifetime_xp: 0
+    }
+    
+    userDashboardData.value = {
+      today_tasks: { total_count: 0, completed_count: 0, tasks: [] },
+      today_habits: { total_count: 0, completed_count: 0, habits: [] },
+      top_goals: { total_incomplete_goals: 0, goals: [] }
+    }
+    
+    // Очистить localStorage
+    try {
+      localStorage.removeItem('onepercent_user_dashboard')
+    } catch (e) {
+      console.warn('[Store] Failed to clear user data from localStorage:', e)
     }
   }
   
@@ -782,11 +927,6 @@ export const useAppStore = defineStore('app', () => {
     loading: false
   })
 
-  // Получить сегодняшнюю дату в формате YYYY-MM-DD
-  function getTodayDateString() {
-    return new Date().toISOString().split('T')[0]
-  }
-
   // Проверить, есть ли запись на сегодня
   const hasTodayEntry = computed(() => {
     const today = getTodayDateString()
@@ -903,7 +1043,7 @@ export const useAppStore = defineStore('app', () => {
     for (let i = 0; i < 365; i++) {
       const checkDate = new Date(today)
       checkDate.setDate(today.getDate() - i)
-      const dateStr = checkDate.toISOString().split('T')[0]
+      const dateStr = getLocalDateString(checkDate)
       
       const hasEntry = journal.value.entries.some(e => e.date === dateStr)
       if (hasEntry) {
@@ -1104,7 +1244,7 @@ export const useAppStore = defineStore('app', () => {
   })
 
   const dailyPlan = ref({
-    date: new Date().toISOString().split('T')[0],
+    date: getTodayDateString(),
     topPriorities: [],
     tasks: [],
     energyLevel: null,
@@ -1125,7 +1265,7 @@ export const useAppStore = defineStore('app', () => {
   ]
 
   const todayHabits = computed(() => {
-    const today = new Date().toISOString().split('T')[0]
+    const today = getTodayDateString()
     const allHabits = [...defaultHabits, ...habits.value.filter(h => !h.archived)]
     
     return allHabits.map(habit => ({
@@ -1135,12 +1275,41 @@ export const useAppStore = defineStore('app', () => {
   })
 
   const todayHabitsCompleted = computed(() => {
+    // Приоритет: данные из API get-user-data
+    if (userDashboardData.value?.today_habits?.completed_count !== undefined) {
+      return userDashboardData.value.today_habits.completed_count
+    }
     return todayHabits.value.filter(h => h.completed).length
   })
 
   const todayHabitsTotal = computed(() => {
+    // Приоритет: данные из API get-user-data
+    if (userDashboardData.value?.today_habits?.total_count !== undefined) {
+      return userDashboardData.value.today_habits.total_count
+    }
     return todayHabits.value.length
   })
+  
+  // Функция для обновления статуса привычки в userDashboardData
+  function updateHabitCompletionInDashboard(habitId, isCompleted) {
+    if (!userDashboardData.value?.today_habits?.habits) return
+    
+    const habits = userDashboardData.value.today_habits.habits
+    const habit = habits.find(h => h.habit_id === habitId)
+    if (habit) {
+      const wasCompleted = habit.is_completed
+      habit.is_completed = isCompleted
+      
+      // Обновить счётчики
+      if (isCompleted && !wasCompleted) {
+        userDashboardData.value.today_habits.completed_count = 
+          (userDashboardData.value.today_habits.completed_count || 0) + 1
+      } else if (!isCompleted && wasCompleted) {
+        userDashboardData.value.today_habits.completed_count = 
+          Math.max(0, (userDashboardData.value.today_habits.completed_count || 1) - 1)
+      }
+    }
+  }
 
   const habitStreak = computed(() => {
     let streak = 0
@@ -1149,7 +1318,7 @@ export const useAppStore = defineStore('app', () => {
     for (let i = 0; i < 365; i++) {
       const date = new Date(today)
       date.setDate(date.getDate() - i)
-      const dateStr = date.toISOString().split('T')[0]
+      const dateStr = getLocalDateString(date)
       
       const dayLog = habitLog.value[dateStr]
       if (!dayLog || dayLog.length === 0) {
@@ -1203,7 +1372,7 @@ export const useAppStore = defineStore('app', () => {
   function removeHabit(habitId) {
     const habit = habits.value.find(h => h.id === habitId)
     if (habit) {
-      habit.deletedAt = new Date().toISOString().split('T')[0]
+      habit.deletedAt = getTodayDateString()
       saveToLocalStorage()
       
       if (DEBUG_MODE) {
@@ -1237,7 +1406,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   function toggleHabit(habitId, date = null) {
-    const targetDate = date || new Date().toISOString().split('T')[0]
+    const targetDate = date || getTodayDateString()
     
     if (!habitLog.value[targetDate]) {
       habitLog.value[targetDate] = []
@@ -1269,7 +1438,7 @@ export const useAppStore = defineStore('app', () => {
     for (let i = 0; i < days; i++) {
       const date = new Date(today)
       date.setDate(date.getDate() - i)
-      const dateStr = date.toISOString().split('T')[0]
+      const dateStr = getLocalDateString(date)
       
       history.push({
         date: dateStr,
@@ -1290,7 +1459,7 @@ export const useAppStore = defineStore('app', () => {
   const todayScheduledTasks = computed(() => {
     const now = new Date()
     now.setHours(0, 0, 0, 0)
-    const today = now.toISOString().split('T')[0]
+    const today = getLocalDateString(now)
     const currentPlan = getCurrentWeekPlan()
     
     console.log('[Store] todayScheduledTasks - today:', today)
@@ -2966,7 +3135,7 @@ export const useAppStore = defineStore('app', () => {
     const monday = new Date(today)
     monday.setDate(today.getDate() + mondayOffset)
     monday.setHours(0, 0, 0, 0)
-    const mondayStr = monday.toISOString().split('T')[0]
+    const mondayStr = getLocalDateString(monday)
     
     return weeklyPlans.value.find(p => p.weekStart === mondayStr)
   }
@@ -3074,14 +3243,17 @@ export const useAppStore = defineStore('app', () => {
 
   // Load data on init
   loadFromLocalStorage()
+  loadUserDataFromLocalStorage()
 
   return {
     // User & Auth
     user,
     userLoading,
+    userDashboardData,
     setUser,
     clearUser,
     setUserFinishOnboarding,
+    loadUserDataFromLocalStorage,
     isAuthenticated,
     displayName,
     
@@ -3255,6 +3427,7 @@ export const useAppStore = defineStore('app', () => {
     todayHabits,
     todayHabitsCompleted,
     todayHabitsTotal,
+    updateHabitCompletionInDashboard,
     habitStreak,
     addHabit,
     updateHabit,

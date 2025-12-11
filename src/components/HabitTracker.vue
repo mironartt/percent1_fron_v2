@@ -53,6 +53,7 @@ import { useAppStore } from '../stores/app'
 import { useHabitsStore } from '../stores/habits'
 import { useXpStore } from '../stores/xp'
 import { Flame, Check, Zap, ChevronRight, Plus } from 'lucide-vue-next'
+import { getTodayDateString } from '../utils/dateUtils'
 
 const appStore = useAppStore()
 const habitsStore = useHabitsStore()
@@ -62,7 +63,7 @@ const showXP = ref(null)
 const isToggling = ref(false)
 
 const todayDayOfWeek = new Date().getDay()
-const todayDateStr = new Date().toISOString().split('T')[0]
+const todayDateStr = getTodayDateString()
 
 onMounted(async () => {
   if (!habitsStore.initialized) {
@@ -106,11 +107,29 @@ function getHabitIcon(habit) {
   return habit.icon || '📌'
 }
 
+// Используем today_habits из API get-user-data (приоритет), затем habitsStore, затем appStore
+const defaultTodayHabits = { total_count: 0, completed_count: 0, habits: [] }
+const apiTodayHabits = computed(() => {
+  try {
+    return appStore.userDashboardData?.today_habits || defaultTodayHabits
+  } catch {
+    return defaultTodayHabits
+  }
+})
+
 const allHabits = computed(() => {
+  // Приоритет 1: данные из API get-user-data (возвращаем оригинальные объекты для реактивности)
+  const apiHabits = apiTodayHabits.value?.habits
+  if (apiHabits && apiHabits.length > 0) {
+    return apiHabits
+  }
+  
+  // Приоритет 2: данные из habitsStore (полная загрузка)
   if (habitsStore.habits && habitsStore.habits.length > 0) {
     return habitsStore.habits.filter(h => !h.date_deleted)
   }
   
+  // Приоритет 3: локальные данные
   return appStore.todayHabits
 })
 
@@ -123,24 +142,48 @@ function getDisplayIcon(habit) {
 }
 
 function getHabitCompleted(habit) {
+  // Приоритет 1: is_completed из API get-user-data (обновляется optimistic update)
+  if (habit.is_completed !== undefined) {
+    return habit.is_completed
+  }
+  // Приоритет 2: completions массив из habitsStore
   if (habit.completions && Array.isArray(habit.completions)) {
     return habit.completions.some(c => c.date === todayDateStr && c.status === 'completed')
   }
+  // Приоритет 3: completed флаг
   if (habit.completed !== undefined) {
     return habit.completed
   }
+  // Fallback: локальный habitLog
   return appStore.habitLog[todayDateStr]?.includes(habit.id) || false
 }
 
 const scheduledHabits = computed(() => {
+  // Если данные из API - они уже отфильтрованы по расписанию
+  const apiHabits = apiTodayHabits.value?.habits
+  if (apiHabits && apiHabits.length > 0) {
+    return allHabits.value
+  }
   return allHabits.value.filter(h => isScheduledForToday(h))
 })
 
 const completedCount = computed(() => {
+  // Используем данные из API если они есть
+  const count = apiTodayHabits.value?.completed_count
+  if (count !== undefined && count !== null) {
+    return count
+  }
   return scheduledHabits.value.filter(h => getHabitCompleted(h)).length
 })
 
-const scheduledCount = computed(() => scheduledHabits.value.length)
+const scheduledCount = computed(() => {
+  // Используем данные из API если они есть
+  const count = apiTodayHabits.value?.total_count
+  if (count !== undefined && count !== null) {
+    return count
+  }
+  return scheduledHabits.value.length
+})
 
 const habitStreak = computed(() => {
   if (habitsStore.statsPanel?.streak !== undefined) {
@@ -155,12 +198,20 @@ async function handleToggle(habit) {
   const habitId = getDisplayId(habit)
   const isFromBackend = habit.habit_id !== undefined
   const wasCompleted = getHabitCompleted(habit)
+  const newCompletedState = !wasCompleted
+  
+  // Мгновенно обновляем UI (optimistic update)
+  appStore.updateHabitCompletionInDashboard(habit.habit_id || habitId, newCompletedState)
   
   if (isFromBackend) {
     isToggling.value = true
     try {
       if (wasCompleted) {
-        await habitsStore.unmarkCompleted(habit.habit_id, todayDateStr)
+        const result = await habitsStore.unmarkCompleted(habit.habit_id, todayDateStr)
+        if (!result?.success) {
+          // Откатить изменения при ошибке
+          appStore.updateHabitCompletionInDashboard(habit.habit_id, true)
+        }
       } else {
         const result = await habitsStore.markCompleted(habit.habit_id, todayDateStr)
         
@@ -169,8 +220,14 @@ async function handleToggle(habit) {
           setTimeout(() => {
             showXP.value = null
           }, 1200)
+        } else {
+          // Откатить изменения при ошибке
+          appStore.updateHabitCompletionInDashboard(habit.habit_id, false)
         }
       }
+    } catch (error) {
+      // Откатить изменения при ошибке
+      appStore.updateHabitCompletionInDashboard(habit.habit_id, wasCompleted)
     } finally {
       isToggling.value = false
     }

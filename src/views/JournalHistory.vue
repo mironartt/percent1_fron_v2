@@ -166,6 +166,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'
+import { getTodayDateString } from '@/utils/dateUtils'
 import JournalEntry from '@/components/JournalEntry.vue'
 import { 
   BookOpen, 
@@ -202,7 +203,7 @@ const totalEntries = computed(() => totalItems.value || journalEntries.value.len
 
 // Track if today's entry exists from backend (independent of filters)
 const hasTodayEntryFromBackend = ref(false)
-const todayDateStr = computed(() => new Date().toISOString().split('T')[0])
+const todayDateStr = computed(() => getTodayDateString())
 
 // Combined check: either from backend tracking or from local store
 const hasTodayEntry = computed(() => {
@@ -321,7 +322,7 @@ function formatDate(dateStr) {
 }
 
 function isToday(dateStr) {
-  const today = new Date().toISOString().split('T')[0]
+  const today = getTodayDateString()
   return dateStr === today
 }
 
@@ -350,7 +351,7 @@ function toggleExpand(entryId) {
 
 function openTodayEntry() {
   // Check if there's already an entry for today
-  const today = new Date().toISOString().split('T')[0]
+  const today = getTodayDateString()
   const todayEntry = journalEntries.value.find(e => e.date === today)
   
   if (todayEntry) {
