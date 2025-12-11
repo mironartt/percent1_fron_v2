@@ -522,6 +522,7 @@ export const useHabitsStore = defineStore('habits', () => {
         return { 
           success: true, 
           xpChanges: result.data.xp_changes,
+          xpBalance: result.data.xp_balance,
           newAchievements: result.data.new_achievements
         }
       } else {
@@ -613,7 +614,7 @@ export const useHabitsStore = defineStore('habits', () => {
           console.log('[HabitsStore] Habit unmarked:', habitId, date)
         }
         
-        return { success: true, xpChanges: result.data.xp_changes }
+        return { success: true, xpChanges: result.data.xp_changes, xpBalance: result.data.xp_balance }
       } else {
         if (habit && previousCompletions) {
           habit.completions = previousCompletions

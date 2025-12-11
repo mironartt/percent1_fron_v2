@@ -412,6 +412,16 @@ export const useXpStore = defineStore('xp', () => {
     }
   }
 
+  function setBalance(newBalance) {
+    if (typeof newBalance === 'number' && newBalance >= 0) {
+      const oldBalance = xpBalance.value
+      xpBalance.value = newBalance
+      if (DEBUG_MODE) {
+        console.log('[XP] Set balance:', oldBalance, '→', newBalance)
+      }
+    }
+  }
+
   return {
     xpBalance,
     lifetimeEarned,
@@ -453,6 +463,7 @@ export const useXpStore = defineStore('xp', () => {
     resetStore,
     syncFromUserData,
     addToBalance,
+    setBalance,
     
     XP_REWARDS
   }

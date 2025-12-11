@@ -227,13 +227,16 @@ async function handleToggle(habit) {
       if (wasCompleted) {
         const result = await habitsStore.unmarkCompleted(habit.habit_id, todayDateStr)
         if (!result?.success) {
-          // Откатить изменения при ошибке
           appStore.updateHabitCompletionInDashboard(habit.habit_id, true)
-        } else if (result?.xpChanges) {
-          // Обновить XP при отмене выполнения
-          const xpDelta = result.xpChanges.reduce((sum, c) => sum + (c.amount || 0), 0)
-          if (xpDelta !== 0) {
-            xpStore.addToBalance(xpDelta)
+        } else {
+          // Обновить XP из ответа бэкенда
+          if (result.xpBalance !== undefined) {
+            xpStore.setBalance(result.xpBalance)
+          } else if (result.xpChanges) {
+            const xpDelta = result.xpChanges.reduce((sum, c) => sum + (c.amount || 0), 0)
+            if (xpDelta !== 0) {
+              xpStore.addToBalance(xpDelta)
+            }
           }
         }
       } else {
@@ -245,15 +248,16 @@ async function handleToggle(habit) {
             showXP.value = null
           }, 1200)
           
-          // Обновить XP при выполнении привычки
-          if (result?.xpChanges) {
+          // Обновить XP из ответа бэкенда
+          if (result.xpBalance !== undefined) {
+            xpStore.setBalance(result.xpBalance)
+          } else if (result.xpChanges) {
             const xpGain = result.xpChanges.reduce((sum, c) => sum + (c.amount || 0), 0)
             if (xpGain > 0) {
               xpStore.addToBalance(xpGain)
             }
           }
         } else {
-          // Откатить изменения при ошибке
           appStore.updateHabitCompletionInDashboard(habit.habit_id, false)
         }
       }

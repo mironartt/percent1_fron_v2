@@ -184,7 +184,7 @@
       <span>Цели и шаги</span>
     </div>
 
-    <div class="filters-row compact">
+    <div class="filters-row compact unified">
       <!-- Поиск по названию -->
       <div class="search-filter">
         <Search :size="14" class="search-icon" />
@@ -199,26 +199,7 @@
         </button>
       </div>
       
-      <!-- Кнопка сброса фильтров -->
-      <button 
-        v-if="hasActiveFilters" 
-        class="reset-filters-btn" 
-        @click="resetAllFilters"
-        title="Сбросить все фильтры"
-      >
-        <X :size="14" />
-        <span class="desktop-only">Сбросить</span>
-      </button>
-      
-      <!-- AI Planning button -->
-      <button class="ai-planner-btn filters-ai-btn" @click="openAIPlannerModal">
-        <Sparkles :size="16" />
-        <span class="ai-btn-text desktop-only">AI планирование</span>
-      </button>
-    </div>
-    
-    <!-- Вторая строка: локальный фильтр шагов -->
-    <div class="filters-row secondary">
+      <!-- Фильтр по запланированности шагов -->
       <div class="segmented-control">
         <button 
           class="segment"
@@ -242,6 +223,23 @@
           Запл.
         </button>
       </div>
+      
+      <!-- Кнопка сброса фильтров -->
+      <button 
+        v-if="hasActiveFilters" 
+        class="reset-filters-btn" 
+        @click="resetAllFilters"
+        title="Сбросить все фильтры"
+      >
+        <X :size="14" />
+        <span class="desktop-only">Сбросить</span>
+      </button>
+      
+      <!-- AI Planning button -->
+      <button class="ai-planner-btn filters-ai-btn" @click="openAIPlannerModal">
+        <Sparkles :size="16" />
+        <span class="ai-btn-text desktop-only">AI планирование</span>
+      </button>
       
       <span class="results-count" v-if="totalGoalsItems > 0">
         Найдено: {{ totalGoalsItems }} {{ totalGoalsItems === 1 ? 'цель' : 'целей' }}
@@ -3788,6 +3786,65 @@ onUnmounted(() => {
 .filters-row.compact {
   flex-wrap: nowrap;
   gap: 0.75rem;
+}
+
+.filters-row.unified {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.filters-row.unified .search-filter {
+  flex: 1;
+  min-width: 120px;
+  max-width: 200px;
+}
+
+.filters-row.unified .segmented-control {
+  flex-shrink: 0;
+}
+
+.filters-row.unified .results-count {
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  .filters-row.unified {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .filters-row.unified .search-filter {
+    flex: 1 1 100%;
+    max-width: none;
+    order: 1;
+  }
+  
+  .filters-row.unified .segmented-control {
+    flex: 1;
+    order: 2;
+  }
+  
+  .filters-row.unified .segmented-control .segment {
+    flex: 1;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.75rem;
+  }
+  
+  .filters-row.unified .reset-filters-btn {
+    order: 3;
+  }
+  
+  .filters-row.unified .filters-ai-btn {
+    order: 4;
+  }
+  
+  .filters-row.unified .results-count {
+    flex: 1 1 100%;
+    order: 5;
+    margin-left: 0;
+    text-align: center;
+    padding-top: 0.25rem;
+  }
 }
 
 .sphere-dropdown {
