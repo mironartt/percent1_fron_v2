@@ -1081,6 +1081,10 @@ const selectedTask = ref(null)
 const selectedGoal = ref(null)
 const selectedStep = ref(null)
 
+// Буфер для отложенных изменений (сохраняем только по кнопке "Сохранить")
+const pendingTaskChanges = ref({})
+const originalTaskState = ref(null)
+
 let touchTimer = null
 const longPressDelay = 500
 
@@ -1824,6 +1828,15 @@ function handleTouchMove() {
 }
 
 function openTaskActions(task) {
+  // Сохраняем оригинальное состояние для возможности отмены
+  originalTaskState.value = {
+    scheduledDate: task.scheduledDate,
+    priority: task.priority,
+    timeEstimate: task.timeEstimate
+  }
+  // Сбрасываем буфер изменений
+  pendingTaskChanges.value = {}
+  
   selectedTask.value = task
   bottomSheetMode.value = 'task'
   showBottomSheet.value = true
@@ -2265,6 +2278,17 @@ function openAddStepModal() {
 }
 
 function closeBottomSheet() {
+  // При закрытии без сохранения - восстанавливаем оригинальное состояние
+  if (selectedTask.value && originalTaskState.value && Object.keys(pendingTaskChanges.value).length > 0) {
+    selectedTask.value.scheduledDate = originalTaskState.value.scheduledDate
+    selectedTask.value.priority = originalTaskState.value.priority
+    selectedTask.value.timeEstimate = originalTaskState.value.timeEstimate
+  }
+  
+  // Сбрасываем буфер
+  pendingTaskChanges.value = {}
+  originalTaskState.value = null
+  
   showBottomSheet.value = false
   selectedTask.value = null
   selectedGoal.value = null
@@ -2291,91 +2315,98 @@ async function toggleTaskComplete(task) {
         is_complete: newCompleted
       }]
     })
-    await loadWeeklySteps()
+    
+    // Синхронизируем данные в обоих блоках
+    await Promise.all([
+      loadWeeklySteps(),                              // Таймлайн
+      store.loadGoalsFromBackend({ page: 1 }, false)  // Цели и шаги
+    ])
   } catch (error) {
     console.error('[Planning] Error toggling task complete:', error)
     task.completed = !newCompleted
   }
 }
 
-async function rescheduleTask(task, newDate, skipClose = false) {
+function rescheduleTask(task, newDate, skipClose = false) {
   if (!task) return
   
-  const oldDate = task.scheduledDate
+  // Обновляем локальное состояние для UI
   task.scheduledDate = newDate
   
-  try {
-    const { updateGoalSteps } = await import('@/services/api.js')
-    await updateGoalSteps({
-      goals_steps_data: [{
-        goal_id: task.goalId,
-        step_id: task.stepId,
-        dt: newDate
-      }]
-    })
-    if (!skipClose) {
-      await loadWeeklySteps()
-      closeBottomSheet()
-    }
-  } catch (error) {
-    console.error('[Planning] Error rescheduling task:', error)
-    task.scheduledDate = oldDate
-  }
+  // Записываем изменение в буфер (отправим по кнопке "Сохранить")
+  pendingTaskChanges.value.dt = newDate
 }
 
-async function updateTaskPriority(task, priority, skipClose = false) {
+function updateTaskPriority(task, priority, skipClose = false) {
   if (!task) return
   
-  const oldPriority = task.priority
+  // Обновляем локальное состояние для UI
   task.priority = priority
   
-  try {
-    const { updateGoalSteps } = await import('@/services/api.js')
-    await updateGoalSteps({
-      goals_steps_data: [{
-        goal_id: task.goalId,
-        step_id: task.stepId,
-        priority: priorityFrontendToBackend[priority] || priority || null
-      }]
-    })
-    if (!skipClose) {
-      await loadWeeklySteps()
-      closeBottomSheet()
-    }
-  } catch (error) {
-    console.error('[Planning] Error updating task priority:', error)
-    task.priority = oldPriority
-  }
+  // Записываем изменение в буфер (отправим по кнопке "Сохранить")
+  pendingTaskChanges.value.priority = priorityFrontendToBackend[priority] || priority || null
 }
 
-async function updateTaskTime(task, time, skipClose = false) {
+function updateTaskTime(task, time, skipClose = false) {
   if (!task) return
   
   const timeMap = { '30min': 'half', '1h': 'one', '2h': 'two', '3h': 'three', '4h': 'four' }
-  const oldTime = task.timeEstimate
+  
+  // Обновляем локальное состояние для UI
   task.timeEstimate = time
   
-  try {
-    const { updateGoalSteps } = await import('@/services/api.js')
-    await updateGoalSteps({
-      goals_steps_data: [{
-        goal_id: task.goalId,
-        step_id: task.stepId,
-        time_duration: timeMap[time] || null
-      }]
-    })
-    if (!skipClose) {
-      await loadWeeklySteps()
-      closeBottomSheet()
-    }
-  } catch (error) {
-    console.error('[Planning] Error updating task time:', error)
-    task.timeEstimate = oldTime
-  }
+  // Записываем изменение в буфер (отправим по кнопке "Сохранить")
+  pendingTaskChanges.value.time_duration = timeMap[time] || null
 }
 
 async function saveTaskChangesAndClose() {
-  await loadWeeklySteps()
+  const task = selectedTask.value
+  if (!task) {
+    closeBottomSheet()
+    return
+  }
+  
+  // Проверяем есть ли изменения для отправки
+  const hasChanges = Object.keys(pendingTaskChanges.value).length > 0
+  
+  if (hasChanges) {
+    try {
+      const { updateGoalSteps } = await import('@/services/api.js')
+      
+      // Формируем данные для API
+      const stepData = {
+        goal_id: task.goalId,
+        step_id: task.stepId,
+        ...pendingTaskChanges.value
+      }
+      
+      console.log('[Planning] Saving task changes:', stepData)
+      
+      await updateGoalSteps({
+        goals_steps_data: [stepData]
+      })
+      
+      // Синхронизируем данные в обоих блоках
+      await Promise.all([
+        loadWeeklySteps(),                              // Таймлайн
+        store.loadGoalsFromBackend({ page: 1 }, false)  // Цели и шаги
+      ])
+      
+    } catch (error) {
+      console.error('[Planning] Error saving task changes:', error)
+      
+      // При ошибке восстанавливаем оригинальное состояние
+      if (originalTaskState.value && task) {
+        task.scheduledDate = originalTaskState.value.scheduledDate
+        task.priority = originalTaskState.value.priority
+        task.timeEstimate = originalTaskState.value.timeEstimate
+      }
+    }
+  }
+  
+  // Сбрасываем буфер и закрываем
+  pendingTaskChanges.value = {}
+  originalTaskState.value = null
   closeBottomSheet()
 }
 
@@ -2411,12 +2442,18 @@ async function removeTaskFromSchedule(task) {
       await store.loadGoalsFromBackend({ page: 1 }, false)
     }
     
-    await loadWeeklySteps()
+    // Синхронизируем данные в обоих блоках
+    await Promise.all([
+      loadWeeklySteps(),                              // Таймлайн
+      store.loadGoalsFromBackend({ page: 1 }, false)  // Цели и шаги
+    ])
   } catch (error) {
     console.error('[Planning] Error removing task from schedule:', error)
     if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
-      await store.loadGoalsFromBackend({ page: 1 }, false)
-      await loadWeeklySteps()
+      await Promise.all([
+        loadWeeklySteps(),
+        store.loadGoalsFromBackend({ page: 1 }, false)
+      ])
     }
   }
 }
@@ -2461,13 +2498,19 @@ async function scheduleStepToDay(goal, step, date) {
       await store.loadGoalsFromBackend({ page: 1 }, false)
     }
     
-    await loadWeeklySteps()
+    // Синхронизируем данные в обоих блоках
+    await Promise.all([
+      loadWeeklySteps(),                              // Таймлайн
+      store.loadGoalsFromBackend({ page: 1 }, false)  // Цели и шаги
+    ])
   } catch (error) {
     console.error('[Planning] Error scheduling step:', error)
     // При ошибке доступа к шагу - обновляем данные
     if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
-      await store.loadGoalsFromBackend({ page: 1 }, false)
-      await loadWeeklySteps()
+      await Promise.all([
+        loadWeeklySteps(),
+        store.loadGoalsFromBackend({ page: 1 }, false)
+      ])
     }
     // В DEV_MODE данные уже сохранены локально, всё ок
     if (DEBUG_MODE) {
@@ -2529,12 +2572,18 @@ async function scheduleNewStep() {
       await store.loadGoalsFromBackend({ page: 1 }, false)
     }
     
-    await loadWeeklySteps()
+    // Синхронизируем данные в обоих блоках
+    await Promise.all([
+      loadWeeklySteps(),                              // Таймлайн
+      store.loadGoalsFromBackend({ page: 1 }, false)  // Цели и шаги
+    ])
   } catch (error) {
     console.error('[Planning] Error scheduling new step:', error)
     if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
-      await store.loadGoalsFromBackend({ page: 1 }, false)
-      await loadWeeklySteps()
+      await Promise.all([
+        loadWeeklySteps(),
+        store.loadGoalsFromBackend({ page: 1 }, false)
+      ])
     }
   }
 }
