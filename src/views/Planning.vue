@@ -1488,10 +1488,10 @@ function getTasksForDay(dateStr) {
           goalTitle: step.goal_title,
           goalCategory: step.goal_category,
           scheduledDate: step.step_dt,
-          // Локальные override-ы имеют приоритет над бэкендом
+          // Локальные override-ы имеют приоритет над бэкендом (кроме completed - берём из weeklyStepsData)
           timeEstimate: localOverride?.timeEstimate ?? backendTime,
           priority: localOverride?.priority ?? backendPriority,
-          completed: localOverride?.completed ?? backendCompleted,
+          completed: backendCompleted,
           order: step.step_order
         }
       })
