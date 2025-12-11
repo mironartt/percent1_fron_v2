@@ -936,32 +936,25 @@ function openAIPlannerModal() {
   }
 }
 
-const overdueTasks = ref([
-  {
-    id: 'overdue-1',
-    stepTitle: 'Начать делать 10-минутную зарядку каждое утро',
-    goalTitle: 'Здоровый образ жизни',
-    goalId: 'goal-health',
-    scheduledDate: formatDateLocal(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)),
-    completed: false
-  },
-  {
-    id: 'overdue-2',
-    stepTitle: 'Добавить 20-минутную прогулку в распорядок дня',
-    goalTitle: 'Здоровый образ жизни',
-    goalId: 'goal-health',
-    scheduledDate: formatDateLocal(new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)),
-    completed: false
-  },
-  {
-    id: 'overdue-3',
-    stepTitle: 'Заменить один нездоровый перекус на полезный',
-    goalTitle: 'Правильное питание',
-    goalId: 'goal-nutrition',
-    scheduledDate: formatDateLocal(new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)),
-    completed: false
-  }
-])
+// Просроченные шаги (загружаются с бэкенда)
+const overdueStepsData = ref([])
+const totalOverdueSteps = ref(0)
+
+// Преобразованные просроченные задачи для отображения
+const overdueTasks = computed(() => {
+  return overdueStepsData.value.map(step => ({
+    id: `overdue-${step.step_id}`,
+    goalId: step.goal_id,
+    stepId: step.step_id,
+    stepTitle: step.step_title,
+    goalTitle: step.goal_title,
+    goalCategory: step.goal_category,
+    scheduledDate: step.step_dt,
+    priority: priorityBackendToFrontend[step.step_priority] || step.step_priority || '',
+    timeEstimate: timeDurationMap[step.step_time_duration] || step.step_time_duration || '',
+    completed: step.step_is_complete || false
+  }))
+})
 
 const overdueCompletedCount = computed(() => {
   return overdueTasks.value.filter(t => t.completed).length
@@ -976,8 +969,43 @@ function toggleOverdueCollapse() {
   overdueCollapsed.value = !overdueCollapsed.value
 }
 
-function toggleOverdueTaskComplete(task) {
-  task.completed = !task.completed
+async function toggleOverdueTaskComplete(task) {
+  if (!task) return
+  
+  const newCompleted = !task.completed
+  
+  // Находим оригинальные данные в overdueStepsData и обновляем
+  const originalStep = overdueStepsData.value.find(s => s.step_id === task.stepId)
+  if (originalStep) {
+    originalStep.step_is_complete = newCompleted
+  }
+  
+  if (newCompleted) {
+    xpStore.addXP(10, 'step', `Выполнен шаг: ${task.stepTitle}`)
+  }
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: task.goalId,
+        step_id: task.stepId,
+        is_complete: newCompleted
+      }]
+    })
+    
+    // Синхронизируем данные в обоих блоках
+    await Promise.all([
+      loadWeeklySteps(),
+      store.loadGoalsFromBackend({ page: 1 }, false)
+    ])
+  } catch (error) {
+    console.error('[Planning] Error toggling overdue task complete:', error)
+    // Откатываем изменение
+    if (originalStep) {
+      originalStep.step_is_complete = !newCompleted
+    }
+  }
 }
 
 function formatOverdueDate(dateStr) {
@@ -1277,14 +1305,24 @@ async function loadWeeklySteps() {
     // API возвращает status: 'ok' и данные в data.result_week_data
     if (response.status === 'ok' && response.data?.result_week_data) {
       weeklyStepsData.value = response.data.result_week_data
+      
+      // Сохраняем просроченные шаги
+      overdueStepsData.value = response.data.overdue_steps_data || []
+      totalOverdueSteps.value = response.data.total_overdue_steps || 0
+      
       console.log('[Planning] Loaded weekly steps from API:', response.data.result_week_data.length, 'days')
+      console.log('[Planning] Overdue steps:', overdueStepsData.value.length)
     } else {
       console.log('[Planning] Using demo data (API returned error or no data)', response)
       weeklyStepsData.value = generateDemoWeeklySteps(weekDays.value)
+      overdueStepsData.value = []
+      totalOverdueSteps.value = 0
     }
   } catch (error) {
     console.error('[Planning] Error loading weekly steps, using demo data:', error)
     weeklyStepsData.value = generateDemoWeeklySteps(weekDays.value)
+    overdueStepsData.value = []
+    totalOverdueSteps.value = 0
   } finally {
     weeklyStepsLoading.value = false
   }
