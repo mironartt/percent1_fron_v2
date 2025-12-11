@@ -2268,10 +2268,16 @@ function isScheduledForDay(habit, dayKey) {
   const freqType = habit.frequencyType || habit.frequency_type
   const schedDays = habit.scheduleDays || habit.schedule_days
   
+  // Если есть конкретные дни в расписании - использовать их
+  if (schedDays && Array.isArray(schedDays) && schedDays.length > 0 && schedDays.length < 7) {
+    return schedDays.includes(dayKey)
+  }
+  
+  // Иначе проверяем по типу частоты
   if (freqType === 'daily') return true
   if (freqType === 'weekdays') return dayKey >= 1 && dayKey <= 5
   if (freqType === 'weekends') return dayKey === 0 || dayKey === 6
-  return schedDays?.includes(dayKey)
+  return schedDays?.includes(dayKey) ?? true
 }
 
 const missedDaysForAmnesty = computed(() => {

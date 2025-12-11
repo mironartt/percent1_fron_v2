@@ -70,14 +70,19 @@ const todayDateStr = getTodayDateString()
 // Отдельный запрос loadHabits() не нужен для виджета Dashboard
 
 function isScheduledForToday(habit) {
-  if (habit.schedule_days && Array.isArray(habit.schedule_days)) {
-    return habit.schedule_days.includes(todayDayOfWeek)
+  const schedDays = habit.schedule_days || habit.scheduleDays
+  const freqType = habit.frequencyType || habit.frequency_type
+  
+  // Если есть конкретные дни в расписании (не все 7 дней) - использовать их
+  if (schedDays && Array.isArray(schedDays) && schedDays.length > 0 && schedDays.length < 7) {
+    return schedDays.includes(todayDayOfWeek)
   }
   
-  if (!habit.frequencyType || habit.frequencyType === 'daily') return true
-  if (habit.frequencyType === 'weekdays') return todayDayOfWeek >= 1 && todayDayOfWeek <= 5
-  if (habit.frequencyType === 'weekends') return todayDayOfWeek === 0 || todayDayOfWeek === 6
-  return habit.scheduleDays?.includes(todayDayOfWeek) ?? true
+  // Иначе проверяем по типу частоты
+  if (!freqType || freqType === 'daily') return true
+  if (freqType === 'weekdays') return todayDayOfWeek >= 1 && todayDayOfWeek <= 5
+  if (freqType === 'weekends') return todayDayOfWeek === 0 || todayDayOfWeek === 6
+  return schedDays?.includes(todayDayOfWeek) ?? true
 }
 
 function isCompletedToday(habit) {
