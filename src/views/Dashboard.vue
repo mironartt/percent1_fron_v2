@@ -425,6 +425,14 @@ async function toggleFocusTask(task) {
     }
   }
   
+  // Синхронизация с store.goals для Planning страницы
+  const storeGoal = store.goals.find(g => g.backendId === task.goalId || g.id === task.goalId)
+  const storeStep = storeGoal?.steps?.find(s => s.backendId === task.id || s.id === task.id)
+  if (storeStep) {
+    storeStep.completed = newCompleted
+    console.log('[Dashboard] Synced step.completed in store.goals')
+  }
+  
   // Начисляем XP за выполнение
   if (newCompleted) {
     xpStore.addXP(10, 'step', `Выполнен шаг: ${task.title}`)
@@ -730,8 +738,8 @@ function pluralize(n, one, few, many) {
 }
 
 .focus-check.checked {
-  background: var(--success, #10b981);
-  border-color: var(--success, #10b981);
+  background: var(--success-color, #10b981);
+  border-color: var(--success-color, #10b981);
 }
 
 .focus-content {

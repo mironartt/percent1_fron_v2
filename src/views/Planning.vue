@@ -374,6 +374,43 @@
               Добавить шаги
             </button>
           </div>
+          
+          <!-- Пагинация шагов -->
+          <div v-if="goal.steps?.length > 0 && getStepsTotalPages(goal) > 1" class="steps-pagination">
+            <div v-if="stepsLoading[goal.backendId || goal.id]" class="steps-loading">
+              Загрузка...
+            </div>
+            <template v-else>
+              <button 
+                class="steps-page-btn"
+                :disabled="getStepsCurrentPage(goal) <= 1"
+                @click.stop="goToStepsPage(goal, getStepsCurrentPage(goal) - 1)"
+              >
+                <ChevronLeft :size="16" />
+              </button>
+              
+              <div class="steps-pages">
+                <button 
+                  v-for="page in getStepsPaginationPages(goal)" 
+                  :key="page"
+                  class="steps-page-num"
+                  :class="{ active: page === getStepsCurrentPage(goal), dots: page === '...' }"
+                  :disabled="page === '...'"
+                  @click.stop="page !== '...' && goToStepsPage(goal, page)"
+                >
+                  {{ page }}
+                </button>
+              </div>
+              
+              <button 
+                class="steps-page-btn"
+                :disabled="getStepsCurrentPage(goal) >= getStepsTotalPages(goal)"
+                @click.stop="goToStepsPage(goal, getStepsCurrentPage(goal) + 1)"
+              >
+                <ChevronRight :size="16" />
+              </button>
+            </template>
+          </div>
         </div>
       </div>
 
@@ -910,6 +947,8 @@ const addStepSearch = ref('')
 const goalsDisplayLimit = ref(10)
 const currentPage = ref(1)
 const expandedGoals = ref({})
+const stepsPages = ref({}) // {goalId: currentPage}
+const stepsLoading = ref({}) // {goalId: boolean}
 const infiniteScrollTrigger = ref(null)
 let infiniteScrollObserver = null
 
@@ -1853,6 +1892,120 @@ function getScheduledTime(goalId, stepId, step = null) {
 
 function toggleGoal(goalId) {
   expandedGoals.value[goalId] = !expandedGoals.value[goalId]
+  // Инициализируем страницу шагов при первом раскрытии
+  if (expandedGoals.value[goalId] && !stepsPages.value[goalId]) {
+    stepsPages.value[goalId] = 1
+  }
+}
+
+function getStepsCurrentPage(goal) {
+  const goalId = goal.backendId || goal.id
+  return stepsPages.value[goalId] || 1
+}
+
+function getStepsTotalPages(goal) {
+  // Сначала проверяем данные от бэкенда
+  if (goal.totalStepsData?.total_pages) {
+    return goal.totalStepsData.total_pages
+  }
+  // Иначе вычисляем на основе total_steps
+  const total = goal.totalStepsData?.total_steps || goal.steps?.length || 0
+  const pageSize = 10 // Стандартный размер страницы для шагов
+  return Math.ceil(total / pageSize) || 1
+}
+
+function getStepsTotalCount(goal) {
+  return goal.totalStepsData?.total_steps || goal.steps?.length || 0
+}
+
+async function goToStepsPage(goal, page) {
+  const goalId = goal.backendId || goal.id
+  const totalPages = getStepsTotalPages(goal)
+  if (page < 1 || page > totalPages) return
+  
+  stepsPages.value[goalId] = page
+  stepsLoading.value[goalId] = true
+  
+  // Маппинг для time_duration
+  const timeMap = { 'half': '30min', 'one': '1h', 'two': '2h', 'three': '3h', 'four': '4h' }
+  
+  try {
+    const { getGoalSteps } = await import('@/services/api.js')
+    const result = await getGoalSteps({
+      goal_id: goalId,
+      page: page,
+      page_size: 10
+    })
+    
+    // API может вернуть steps_data напрямую или в goal_data
+    const stepsData = result.data?.steps_data || result.data?.goal_data?.steps_data || []
+    const totalItems = result.data?.total_items || result.data?.goal_data?.total_data?.total_steps || goal.totalStepsData?.total_steps || 0
+    const backendTotalPages = result.data?.total_pages || Math.ceil(totalItems / 10) || 1
+    
+    if (result.status === 'ok' && stepsData.length > 0) {
+      // Обновляем шаги в цели
+      const transformedSteps = stepsData.map(s => ({
+        id: s.step_id,
+        backendId: s.step_id,
+        title: s.title,
+        description: s.description || '',
+        priority: s.priority || null,
+        timeEstimate: timeMap[s.time_duration] || s.time_duration || null,
+        date: s.dt || null,
+        order: s.order,
+        completed: s.is_complete || false,
+        dateCompleted: s.date_completed || null,
+        dateCreated: s.date_created || null,
+        status: s.status || 'unplanned',
+        goalId: s.goal_id
+      }))
+      
+      // Находим индекс цели в store и обновляем через spread для реактивности
+      const storeGoalIndex = store.goals.findIndex(g => g.backendId === goalId || g.id === goalId)
+      if (storeGoalIndex !== -1) {
+        const updatedGoal = {
+          ...store.goals[storeGoalIndex],
+          steps: transformedSteps,
+          stepsPage: page,
+          totalStepsData: {
+            ...store.goals[storeGoalIndex].totalStepsData,
+            total_steps: totalItems,
+            total_pages: backendTotalPages
+          }
+        }
+        store.goals = [
+          ...store.goals.slice(0, storeGoalIndex),
+          updatedGoal,
+          ...store.goals.slice(storeGoalIndex + 1)
+        ]
+      }
+      
+      console.log('[Planning] Loaded steps page', page, 'for goal', goalId, ':', transformedSteps.length, 'steps')
+    }
+  } catch (error) {
+    console.error('[Planning] Error loading steps page:', error)
+  } finally {
+    stepsLoading.value[goalId] = false
+  }
+}
+
+function getStepsPaginationPages(goal) {
+  const totalPages = getStepsTotalPages(goal)
+  const currentPage = getStepsCurrentPage(goal)
+  
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1)
+  }
+  
+  const pages = []
+  if (currentPage <= 3) {
+    pages.push(1, 2, 3, 4, '...', totalPages)
+  } else if (currentPage >= totalPages - 2) {
+    pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages)
+  } else {
+    pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages)
+  }
+  return pages
 }
 
 function clearFilters() {
@@ -3379,8 +3532,8 @@ onUnmounted(() => {
 }
 
 .task-checkbox.completed {
-  background: var(--success);
-  border-color: var(--success);
+  background: var(--success-color, #10b981);
+  border-color: var(--success-color, #10b981);
   color: white;
 }
 
@@ -3869,6 +4022,78 @@ onUnmounted(() => {
   gap: 0.5rem;
 }
 
+/* Пагинация шагов внутри цели */
+.steps-pagination {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 0;
+  margin-top: 0.5rem;
+}
+
+.steps-loading {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.steps-page-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.steps-page-btn:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.steps-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.steps-pages {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.steps-page-num {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 0.5rem;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.steps-page-num:hover:not(:disabled):not(.active) {
+  background: var(--bg-tertiary);
+}
+
+.steps-page-num.active {
+  background: var(--primary-color, #6366f1);
+  color: white;
+}
+
+.steps-page-num.dots {
+  cursor: default;
+}
+
 .step-card {
   display: flex;
   align-items: center;
@@ -3905,8 +4130,8 @@ onUnmounted(() => {
 }
 
 .step-checkbox.completed {
-  background: var(--success, #10b981);
-  border-color: var(--success, #10b981);
+  background: var(--success-color, #10b981);
+  border-color: var(--success-color, #10b981);
 }
 
 .step-title.completed {
