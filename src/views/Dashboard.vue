@@ -400,20 +400,28 @@ function onMiniTaskSkip() {
 }
 
 async function toggleFocusTask(task) {
-  const newCompleted = !task.completed
+  const tasksArray = store.userDashboardData?.today_tasks?.tasks
+  const apiTask = tasksArray?.find(t => t.step_id === task.id)
+  
+  // Читаем текущее состояние напрямую из API данных
+  const currentCompleted = apiTask?.is_complete || false
+  const newCompleted = !currentCompleted
+  
+  console.log('[Dashboard] toggleFocusTask:', { 
+    taskId: task.id, 
+    goalId: task.goalId,
+    currentCompleted, 
+    newCompleted 
+  })
   
   // Optimistic update - мгновенно обновляем UI
-  const tasksArray = store.userDashboardData?.today_tasks?.tasks
-  if (tasksArray) {
-    const apiTask = tasksArray.find(t => t.step_id === task.id)
-    if (apiTask) {
-      apiTask.is_complete = newCompleted
-      // Обновляем счётчики
-      if (newCompleted) {
-        store.userDashboardData.today_tasks.completed_count++
-      } else {
-        store.userDashboardData.today_tasks.completed_count--
-      }
+  if (apiTask) {
+    apiTask.is_complete = newCompleted
+    // Обновляем счётчики
+    if (newCompleted) {
+      store.userDashboardData.today_tasks.completed_count++
+    } else {
+      store.userDashboardData.today_tasks.completed_count--
     }
   }
   
@@ -424,6 +432,7 @@ async function toggleFocusTask(task) {
   
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
+    console.log('[Dashboard] Sending updateGoalSteps:', { goal_id: task.goalId, step_id: task.id, is_complete: newCompleted })
     await updateGoalSteps({
       goals_steps_data: [{
         goal_id: task.goalId,
@@ -431,18 +440,16 @@ async function toggleFocusTask(task) {
         is_complete: newCompleted
       }]
     })
+    console.log('[Dashboard] updateGoalSteps success')
   } catch (error) {
     console.error('[Dashboard] Error toggling focus task:', error)
     // Откатываем изменения при ошибке
-    if (tasksArray) {
-      const apiTask = tasksArray.find(t => t.step_id === task.id)
-      if (apiTask) {
-        apiTask.is_complete = !newCompleted
-        if (newCompleted) {
-          store.userDashboardData.today_tasks.completed_count--
-        } else {
-          store.userDashboardData.today_tasks.completed_count++
-        }
+    if (apiTask) {
+      apiTask.is_complete = currentCompleted
+      if (newCompleted) {
+        store.userDashboardData.today_tasks.completed_count--
+      } else {
+        store.userDashboardData.today_tasks.completed_count++
       }
     }
   }
