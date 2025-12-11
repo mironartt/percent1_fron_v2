@@ -3553,7 +3553,20 @@ async function toggleHabitCompletion(habit) {
     toast.showToast({ title: 'Нельзя изменять статусы в прошлых неделях', type: 'info' })
     return
   }
-  if (!isScheduledForToday(habit)) {
+  
+  const scheduledToday = isScheduledForToday(habit)
+  if (DEBUG_MODE) {
+    const today = new Date().getDay()
+    console.log('[Habits] Schedule check:', {
+      habitName: habit.name,
+      todayDayOfWeek: today,
+      frequencyType: habit.frequencyType || habit.frequency_type,
+      scheduleDays: habit.scheduleDays || habit.schedule_days,
+      isScheduledToday: scheduledToday
+    })
+  }
+  
+  if (!scheduledToday) {
     toast.showToast({ title: 'Эта привычка не запланирована на сегодня', type: 'info' })
     return
   }
