@@ -3045,8 +3045,8 @@ async function scheduleNewStep() {
         goal_id: goalId,
         step_id: stepId,
         dt: date,
-        priority: newStepPriority.value || undefined,
-        time_estimate: newStepTime.value || undefined
+        priority: priorityFrontendToBackend[newStepPriority.value] || newStepPriority.value || undefined,
+        time_duration: timeDurationFrontendToBackend[newStepTime.value] || newStepTime.value || undefined
       }]
     })
     
