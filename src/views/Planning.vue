@@ -319,7 +319,7 @@
           </div>
           <div class="goal-meta">
             <span class="steps-badge">
-              {{ getUnscheduledStepsCount(goal) }}/{{ getUncompletedSteps(goal).length }}
+              {{ goal.totalStepsData?.complete_steps || 0 }}/{{ goal.totalStepsData?.total_steps || goal.steps?.length || 0 }}
             </span>
             <ChevronDown :size="20" class="expand-icon" :class="{ expanded: expandedGoals[goal.id] }" />
           </div>
