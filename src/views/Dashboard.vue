@@ -79,7 +79,7 @@
                     :class="{ checked: task.completed }"
                     @click="toggleFocusTask(task)"
                   >
-                    <Check v-if="task.completed" :size="16" :stroke-width="2" />
+                    <Check v-if="task.completed" :size="14" :stroke-width="2.5" />
                   </button>
                   <div class="focus-content">
                     <span class="focus-title">{{ task.title }}</span>
@@ -399,8 +399,53 @@ function onMiniTaskSkip() {
   store.skipMiniTask()
 }
 
-function toggleFocusTask(task) {
-  store.toggleTodayTask(task.id)
+async function toggleFocusTask(task) {
+  const newCompleted = !task.completed
+  
+  // Optimistic update - мгновенно обновляем UI
+  const tasksArray = store.userDashboardData?.today_tasks?.tasks
+  if (tasksArray) {
+    const apiTask = tasksArray.find(t => t.step_id === task.id)
+    if (apiTask) {
+      apiTask.is_complete = newCompleted
+      // Обновляем счётчики
+      if (newCompleted) {
+        store.userDashboardData.today_tasks.completed_count++
+      } else {
+        store.userDashboardData.today_tasks.completed_count--
+      }
+    }
+  }
+  
+  // Начисляем XP за выполнение
+  if (newCompleted) {
+    xpStore.addXP(10, 'step', `Выполнен шаг: ${task.title}`)
+  }
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: task.goalId,
+        step_id: task.id,
+        is_complete: newCompleted
+      }]
+    })
+  } catch (error) {
+    console.error('[Dashboard] Error toggling focus task:', error)
+    // Откатываем изменения при ошибке
+    if (tasksArray) {
+      const apiTask = tasksArray.find(t => t.step_id === task.id)
+      if (apiTask) {
+        apiTask.is_complete = !newCompleted
+        if (newCompleted) {
+          store.userDashboardData.today_tasks.completed_count--
+        } else {
+          store.userDashboardData.today_tasks.completed_count++
+        }
+      }
+    }
+  }
 }
 
 function openMentorPanel() {
@@ -658,10 +703,10 @@ function pluralize(n, one, few, many) {
 }
 
 .focus-check {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-full);
-  border: 2px solid var(--border-color);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color, #d1d5db);
   background: transparent;
   cursor: pointer;
   display: flex;
@@ -669,16 +714,17 @@ function pluralize(n, one, few, many) {
   justify-content: center;
   transition: all 0.2s ease;
   flex-shrink: 0;
+  color: white;
 }
 
 .focus-check:hover {
-  border-color: var(--primary-color);
+  border-color: var(--primary, #6366f1);
+  background: var(--primary-light, rgba(99, 102, 241, 0.1));
 }
 
 .focus-check.checked {
-  background: var(--success-color);
-  border-color: var(--success-color);
-  color: white;
+  background: var(--success, #10b981);
+  border-color: var(--success, #10b981);
 }
 
 .focus-content {
