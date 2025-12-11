@@ -492,10 +492,20 @@ export const useHabitsStore = defineStore('habits', () => {
       const result = await habitsApi.markHabitCompleted(habitId, date, note)
       
       if (result.success) {
-        if (result.data.xp_changes) {
+        // Используем xp_balance из ответа бэкенда как источник истины
+        if (result.data.xp_balance !== undefined) {
+          xpStats.value.xp_balance = result.data.xp_balance
+        } else if (result.data.xp_changes) {
+          // Fallback: инкрементальное обновление
           const xpGain = result.data.xp_changes.reduce((sum, c) => sum + (c.amount || 0), 0)
           if (xpGain > 0) {
             xpStats.value.xp_balance += xpGain
+          }
+        }
+        
+        if (result.data.xp_changes) {
+          const xpGain = result.data.xp_changes.reduce((sum, c) => sum + (c.amount || 0), 0)
+          if (xpGain > 0) {
             xpStats.value.today_xp += xpGain
             xpStats.value.week_xp += xpGain
           }
@@ -563,10 +573,20 @@ export const useHabitsStore = defineStore('habits', () => {
       const result = await habitsApi.unmarkHabitCompleted(habitId, date)
       
       if (result.success) {
-        if (result.data.xp_changes) {
+        // Используем xp_balance из ответа бэкенда как источник истины
+        if (result.data.xp_balance !== undefined) {
+          xpStats.value.xp_balance = result.data.xp_balance
+        } else if (result.data.xp_changes) {
+          // Fallback: инкрементальное обновление
           const xpLoss = result.data.xp_changes.reduce((sum, c) => sum + Math.abs(c.amount || 0), 0)
           if (xpLoss > 0) {
             xpStats.value.xp_balance = Math.max(0, xpStats.value.xp_balance - xpLoss)
+          }
+        }
+        
+        if (result.data.xp_changes) {
+          const xpLoss = result.data.xp_changes.reduce((sum, c) => sum + Math.abs(c.amount || 0), 0)
+          if (xpLoss > 0) {
             xpStats.value.today_xp = Math.max(0, xpStats.value.today_xp - xpLoss)
             xpStats.value.week_xp = Math.max(0, xpStats.value.week_xp - xpLoss)
           }

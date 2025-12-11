@@ -199,90 +199,6 @@
         </button>
       </div>
       
-      <!-- Статус цели (API фильтр) -->
-      <div class="goal-status-dropdown" :class="{ open: showGoalStatusDropdown }">
-        <button class="dropdown-trigger" @click="showGoalStatusDropdown = !showGoalStatusDropdown">
-          <Target :size="14" />
-          <span>{{ selectedGoalStatusName }}</span>
-          <ChevronDown :size="14" class="dropdown-arrow" />
-        </button>
-        <div class="dropdown-menu" v-if="showGoalStatusDropdown" @click.stop>
-          <button 
-            v-for="option in goalStatusOptions" 
-            :key="option.value"
-            class="dropdown-item"
-            :class="{ active: goalStatusFilter === option.value }"
-            @click="goalStatusFilter = option.value; showGoalStatusDropdown = false"
-          >
-            {{ option.label }}
-          </button>
-        </div>
-      </div>
-      
-      <!-- Категория/сфера -->
-      <div class="sphere-dropdown" :class="{ open: showSphereDropdown }">
-        <button class="dropdown-trigger" @click="showSphereDropdown = !showSphereDropdown">
-          <Filter :size="14" />
-          <span class="desktop-only">{{ selectedSphereName }}</span>
-          <span class="mobile-only">Сфера</span>
-          <span class="dropdown-count" v-if="filterSphere">1</span>
-          <ChevronDown :size="14" class="dropdown-arrow" />
-        </button>
-        <div class="dropdown-menu" v-if="showSphereDropdown" @click.stop>
-          <button 
-            class="dropdown-item"
-            :class="{ active: filterSphere === '' }"
-            @click="filterSphere = ''; showSphereDropdown = false"
-          >
-            Все сферы
-          </button>
-          <button 
-            v-for="sphere in spheresWithGoals" 
-            :key="sphere.id"
-            class="dropdown-item"
-            :class="{ active: filterSphere === sphere.id }"
-            @click="filterSphere = sphere.id; showSphereDropdown = false"
-          >
-            {{ sphere.icon }} {{ sphere.name }}
-          </button>
-        </div>
-      </div>
-      
-      <!-- Сортировка -->
-      <div class="sort-dropdown desktop-only" :class="{ open: showSortDropdown }">
-        <button class="dropdown-trigger" @click="showSortDropdown = !showSortDropdown">
-          <BarChart3 :size="14" />
-          <span>{{ selectedSortName }}</span>
-          <ChevronDown :size="14" class="dropdown-arrow" />
-        </button>
-        <div class="dropdown-menu" v-if="showSortDropdown" @click.stop>
-          <button 
-            v-for="option in sortOptions" 
-            :key="option.value"
-            class="dropdown-item"
-            :class="{ active: orderBy === option.value }"
-            @click="orderBy = option.value; showSortDropdown = false"
-          >
-            {{ option.label }}
-          </button>
-          <div class="dropdown-divider"></div>
-          <button 
-            class="dropdown-item"
-            :class="{ active: orderDirection === 'desc' }"
-            @click="orderDirection = 'desc'; showSortDropdown = false"
-          >
-            По убыванию ↓
-          </button>
-          <button 
-            class="dropdown-item"
-            :class="{ active: orderDirection === 'asc' }"
-            @click="orderDirection = 'asc'; showSortDropdown = false"
-          >
-            По возрастанию ↑
-          </button>
-        </div>
-      </div>
-      
       <!-- Кнопка сброса фильтров -->
       <button 
         v-if="hasActiveFilters" 
@@ -1746,18 +1662,7 @@ async function loadGoalsWithFilters() {
   const params = {
     with_steps_data: true,
     page: currentPage.value,
-    order_by: orderBy.value,
-    order_direction: orderDirection.value
-  }
-  
-  // Добавляем фильтр по статусу цели
-  if (goalStatusFilter.value) {
-    params.status_filter = goalStatusFilter.value
-  }
-  
-  // Добавляем фильтр по сфере если выбран
-  if (filterSphere.value) {
-    params.category_filter = categoryFrontendToBackend[filterSphere.value] || filterSphere.value
+    status_filter: 'work'
   }
   
   // Добавляем текстовый поиск (минимум 3 символа)
@@ -1765,11 +1670,18 @@ async function loadGoalsWithFilters() {
     params.query_filter = queryFilter.value
   }
   
+  // Добавляем фильтр по запланированности шагов
+  if (filterStatus.value === 'unscheduled') {
+    params.steps_planning_filter = 'has_unplanned'
+  } else if (filterStatus.value === 'scheduled') {
+    params.steps_planning_filter = 'all_planned'
+  }
+  
   await store.loadGoalsFromBackend(params)
 }
 
-// Watch для фильтров - при изменении делаем запрос к бэку
-watch([filterSphere, goalStatusFilter, orderBy, orderDirection], async () => {
+// Watch для фильтра запланированности - при изменении делаем запрос к бэку
+watch(filterStatus, async () => {
   currentPage.value = 1
   await loadGoalsWithFilters()
 })
@@ -1788,30 +1700,20 @@ watch(queryFilter, async (newVal) => {
 
 // Проверка активности фильтров
 const hasActiveFilters = computed(() => {
-  return filterSphere.value !== '' || 
-         goalStatusFilter.value !== 'work' || 
-         queryFilter.value !== '' ||
-         orderBy.value !== 'date_created' ||
-         orderDirection.value !== 'desc'
+  return queryFilter.value !== '' || filterStatus.value !== ''
 })
 
 // Количество активных фильтров
 const activeFiltersCount = computed(() => {
   let count = 0
-  if (filterSphere.value) count++
-  if (goalStatusFilter.value && goalStatusFilter.value !== 'work') count++
   if (queryFilter.value.length >= 3) count++
-  if (orderBy.value !== 'date_created' || orderDirection.value !== 'desc') count++
+  if (filterStatus.value !== '') count++
   return count
 })
 
 // Сброс всех фильтров
 async function resetAllFilters() {
-  filterSphere.value = ''
-  goalStatusFilter.value = 'work'
   queryFilter.value = ''
-  orderBy.value = 'date_created'
-  orderDirection.value = 'desc'
   filterStatus.value = ''
   currentPage.value = 1
   await loadGoalsWithFilters()
