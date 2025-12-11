@@ -2712,6 +2712,20 @@ function toggleTaskComplete(task) {
   
   console.log('[Planning] toggleTaskComplete:', { goalId, stepId, currentCompleted, newCompleted })
   
+  // Track activation task - user marked a task as complete (select_focus)
+  if (newCompleted) {
+    import('@/stores/activation.js').then(({ useActivationStore }) => {
+      const activationStore = useActivationStore()
+      const result = activationStore.completeTask('select_focus')
+      if (result.completed && result.message) {
+        import('@/stores/app.js').then(({ useAppStore }) => {
+          const appStore = useAppStore()
+          appStore.sendMentorMessage(result.message, 'assistant')
+        })
+      }
+    }).catch(e => console.error('[Planning] Activation tracking error:', e))
+  }
+  
   // Обновляем в weeklyStepsData с принудительной реактивностью
   if (dayIndex !== -1 && stepIndex !== -1) {
     const updatedDay = { ...weeklyStepsData.value[dayIndex] }

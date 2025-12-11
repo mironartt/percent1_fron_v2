@@ -474,6 +474,18 @@ async function toggleFocusTask(task) {
     newCompleted 
   })
   
+  // Track activation task - user marked a focus task as complete (select_focus)
+  if (newCompleted) {
+    try {
+      const result = activationStore.completeTask('select_focus')
+      if (result.completed && result.message) {
+        store.sendMentorMessage(result.message, 'assistant')
+      }
+    } catch (e) {
+      console.error('[Dashboard] Activation tracking error:', e)
+    }
+  }
+  
   // Optimistic update - мгновенно обновляем UI
   if (apiTask) {
     apiTask.is_complete = newCompleted

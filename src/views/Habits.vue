@@ -3938,6 +3938,20 @@ async function saveHabit() {
       coachHint.value = 'Отлично! Первый шаг сделан. Старайтесь выполнять привычку каждый день — так она закрепится быстрее.'
     }
     
+    // Track activation task - first habit created
+    try {
+      const { useActivationStore } = await import('@/stores/activation.js')
+      const { useAppStore } = await import('@/stores/app.js')
+      const activationStore = useActivationStore()
+      const result = activationStore.completeTask('create_habit')
+      if (result.completed && result.message) {
+        const appStore = useAppStore()
+        appStore.sendMentorMessage(result.message, 'assistant')
+      }
+    } catch (e) {
+      console.error('[Habits] Activation tracking error:', e)
+    }
+    
     console.log('[Habits] Creating habit on backend:', backendHabitData)
     const backendResult = await habitsStore.createHabit(backendHabitData)
     console.log('[Habits] Backend create result:', backendResult)

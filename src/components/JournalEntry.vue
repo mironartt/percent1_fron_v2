@@ -274,8 +274,13 @@ async function saveEntry() {
     // Track activation task
     try {
       const { useActivationStore } = await import('@/stores/activation.js')
+      const { useAppStore } = await import('@/stores/app.js')
       const activationStore = useActivationStore()
-      activationStore.completeTask('write_reflection')
+      const result = activationStore.completeTask('write_reflection')
+      if (result.completed && result.message) {
+        const appStore = useAppStore()
+        appStore.sendMentorMessage(result.message, 'assistant')
+      }
     } catch (e) {
       console.error('[JournalEntry] Activation tracking error:', e)
     }

@@ -4,6 +4,53 @@ import { DEBUG_MODE } from '@/config/settings.js'
 
 const STORAGE_KEY = 'onepercent_activation'
 
+const GUIDANCE_MESSAGES = {
+  select_focus: {
+    onComplete: `Отлично! Ты выбрал фокус на сегодня 🎯
+
+Это первый шаг к продуктивному дню. Теперь у тебя есть ясность, на чём сосредоточиться.
+
+→ **Следующий шаг:** Создай первую привычку в разделе «Привычки»
+
+Маленькие ежедневные действия приводят к большим результатам.`,
+    nextStep: 'create_habit'
+  },
+  create_habit: {
+    onComplete: `Привычка создана! 🔥
+
+Привычки — это фундамент изменений. Маленькие действия каждый день создают большие результаты.
+
+→ **Следующий шаг:** Изучи свои цели в разделе «Банк целей»
+
+Посмотри, какие цели AI создал для тебя на основе диагностики.`,
+    nextStep: 'view_goals'
+  },
+  view_goals: {
+    onComplete: `Молодец, ты изучил свои цели! 📚
+
+Понимание своих целей — это половина успеха.
+
+→ **Следующий шаг:** Заполни вечернюю рефлексию в разделе «Дневник»
+
+Рефлексия помогает закрепить прогресс и извлечь уроки из дня.`,
+    nextStep: 'write_reflection'
+  },
+  write_reflection: {
+    onComplete: `Поздравляю! Ты выполнил все стартовые задания! 🎉
+
+Ты отлично начал свой путь к лучшей версии себя:
+✓ Выбрал фокус на день
+✓ Создал привычку
+✓ Изучил свои цели
+✓ Написал рефлексию
+
+Теперь продолжай использовать приложение каждый день. Я буду помогать тебе на каждом шаге.
+
+Помни: всего 1% улучшения каждый день = x37 за год! 📈`,
+    nextStep: null
+  }
+}
+
 const MISSION_TASKS = [
   {
     id: 'select_focus',
@@ -93,9 +140,23 @@ export const useActivationStore = defineStore('activation', () => {
         console.log('[Activation] Task completed:', taskId, 'Progress:', progress.value + '%')
       }
       
-      return true
+      const guidance = GUIDANCE_MESSAGES[taskId]
+      if (guidance) {
+        currentGuidanceStep.value = guidance.nextStep
+        saveToStorage()
+      }
+      
+      return { completed: true, message: guidance?.onComplete || null }
     }
-    return false
+    return { completed: false, message: null }
+  }
+  
+  function getGuidanceMessage(taskId) {
+    return GUIDANCE_MESSAGES[taskId]?.onComplete || null
+  }
+  
+  function isTaskCompleted(taskId) {
+    return !!completedTasks.value[taskId]
   }
   
   function dismissModal() {
@@ -229,6 +290,8 @@ export const useActivationStore = defineStore('activation', () => {
     currentGuidanceStep,
     
     completeTask,
+    getGuidanceMessage,
+    isTaskCompleted,
     dismissModal,
     showModal,
     resetMission,

@@ -2209,6 +2209,20 @@ onMounted(async () => {
   
   // Add click outside listener for dropdowns
   document.addEventListener('click', handleClickOutside)
+  
+  // Track activation task - user viewed goals
+  try {
+    const { useActivationStore } = await import('@/stores/activation.js')
+    const { useAppStore } = await import('@/stores/app.js')
+    const activationStore = useActivationStore()
+    const result = activationStore.completeTask('view_goals')
+    if (result.completed && result.message) {
+      const appStore = useAppStore()
+      appStore.sendMentorMessage(result.message, 'assistant')
+    }
+  } catch (e) {
+    console.error('[GoalsBank] Activation tracking error:', e)
+  }
 })
 
 function setupInfiniteScroll() {

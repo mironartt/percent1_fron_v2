@@ -21,7 +21,7 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite (with pro
 -   **Planning Module**: Mobile-first, single-page planner with a Week Bar, chip filters, card-based step grid, and inline step completion.
 -   **Authentication**: Integrates with Django backend for user login, registration, and Telegram authentication.
 -   **Onboarding (AI-Powered)**: A 5-step process including SSP diagnosis, AI analysis, auto-generated goals, and a post-onboarding Goals Review System.
--   **AI Mentor**: Provides contextual help and analysis via a Dashboard Widget and a Floating Button.
+-   **AI Mentor**: Provides contextual help and analysis via a Dashboard Widget and a Floating Button. Features conversational post-onboarding activation with spotlight mode (dimmed overlay highlighting mentor chat), personalized welcome messages, and step-by-step guidance through first-week tasks (select focus, create habit, view goals, write reflection). State persisted in localStorage via activation.js store.
 -   **Dashboard ("День пользователя")**: Redesigned for daily retention, featuring a context-aware header, "Focus of the Day," habit tracker, and evening reflection.
 -   **Journal/Diary Module**: Daily reflection with 4 questions, AI coach responses, streak tracking, and calendar history.
 -   **XP/Gamification System**: Extrinsic motivation system with XP for habits, focus tasks, and goals, including a reward wishlist.
