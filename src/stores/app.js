@@ -346,11 +346,48 @@ export const useAppStore = defineStore('app', () => {
       }
     })
     
+    // Очистка устаревших scheduledTasks из weeklyPlans
+    cleanupStaleScheduledTasks()
+    
     if (DEBUG_MODE) {
       console.log('[Store] Goals synced from backend:', {
         rawIdeas: goalsBank.value.rawIdeas.length,
         goalsInWork: goalsInWork.length
       })
+    }
+  }
+  
+  /**
+   * Очистить scheduledTasks которые ссылаются на несуществующие шаги
+   */
+  function cleanupStaleScheduledTasks() {
+    // Собираем все валидные пары goal_id + step_id
+    const validStepIds = new Set()
+    for (const goal of goals.value) {
+      if (goal.steps) {
+        for (const step of goal.steps) {
+          const goalId = goal.backendId || goal.id
+          const stepId = step.backendId || step.id
+          validStepIds.add(`${goalId}-${stepId}`)
+        }
+      }
+    }
+    
+    // Фильтруем scheduledTasks во всех планах
+    let cleanedCount = 0
+    for (const plan of weeklyPlans.value) {
+      if (!plan.scheduledTasks) continue
+      
+      const before = plan.scheduledTasks.length
+      plan.scheduledTasks = plan.scheduledTasks.filter(task => {
+        const key = `${task.goalId}-${task.stepId}`
+        return validStepIds.has(key)
+      })
+      cleanedCount += before - plan.scheduledTasks.length
+    }
+    
+    if (cleanedCount > 0 && DEBUG_MODE) {
+      console.log('[Store] Cleaned stale scheduledTasks:', cleanedCount)
     }
   }
   

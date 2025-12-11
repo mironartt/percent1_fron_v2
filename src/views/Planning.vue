@@ -1913,6 +1913,22 @@ function formatTimeLabel(time) {
 async function toggleStepComplete() {
   if (!selectedGoal.value || !selectedStep.value) return
   
+  const goalId = selectedGoal.value.backendId || selectedGoal.value.id
+  const stepId = selectedStep.value.backendId || selectedStep.value.id
+  
+  // Валидация
+  const actualGoal = store.goals.find(g => g.backendId === goalId || g.id === goalId)
+  if (actualGoal) {
+    const stepExists = actualGoal.steps?.some(s => s.backendId === stepId || s.id === stepId)
+    if (!stepExists) {
+      console.warn('[Planning] Step not found, refreshing data:', { goalId, stepId })
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await loadWeeklySteps()
+      closeBottomSheet()
+      return
+    }
+  }
+  
   const newCompleted = !selectedStep.value.completed
   selectedStep.value.completed = newCompleted
   
@@ -1922,22 +1938,46 @@ async function toggleStepComplete() {
   
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
-    await updateGoalSteps({
+    const result = await updateGoalSteps({
       goals_steps_data: [{
-        goal_id: selectedGoal.value.backendId || selectedGoal.value.id,
-        step_id: selectedStep.value.backendId || selectedStep.value.id,
+        goal_id: goalId,
+        step_id: stepId,
         is_complete: newCompleted
       }]
     })
+    
+    if (result?.error_code === 'GOALS_STEPS_UPDATE__STEP_NOT_ACCESS') {
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+    }
+    
     await loadWeeklySteps()
     closeBottomSheet()
   } catch (error) {
     console.error('[Planning] Error toggling step complete:', error)
     selectedStep.value.completed = !newCompleted
+    if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await loadWeeklySteps()
+    }
   }
 }
 
 async function quickToggleStepComplete(goal, step) {
+  const goalId = goal.backendId || goal.id
+  const stepId = step.backendId || step.id
+  
+  // Валидация
+  const actualGoal = store.goals.find(g => g.backendId === goalId || g.id === goalId)
+  if (actualGoal) {
+    const stepExists = actualGoal.steps?.some(s => s.backendId === stepId || s.id === stepId)
+    if (!stepExists) {
+      console.warn('[Planning] Step not found, refreshing data:', { goalId, stepId })
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await loadWeeklySteps()
+      return
+    }
+  }
+  
   const newCompleted = !step.completed
   step.completed = newCompleted
   
@@ -1947,85 +1987,182 @@ async function quickToggleStepComplete(goal, step) {
   
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
-    await updateGoalSteps({
+    const result = await updateGoalSteps({
       goals_steps_data: [{
-        goal_id: goal.backendId || goal.id,
-        step_id: step.backendId || step.id,
+        goal_id: goalId,
+        step_id: stepId,
         is_complete: newCompleted
       }]
     })
+    
+    if (result?.error_code === 'GOALS_STEPS_UPDATE__STEP_NOT_ACCESS') {
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+    }
+    
     await loadWeeklySteps()
   } catch (error) {
     console.error('[Planning] Error toggling step complete:', error)
     step.completed = !newCompleted
+    if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await loadWeeklySteps()
+    }
   }
 }
 
 async function rescheduleStep(newDate) {
   if (!selectedGoal.value || !selectedStep.value) return
   
+  const goalId = selectedGoal.value.backendId || selectedGoal.value.id
+  const stepId = selectedStep.value.backendId || selectedStep.value.id
+  
+  // Валидация
+  const actualGoal = store.goals.find(g => g.backendId === goalId || g.id === goalId)
+  if (actualGoal) {
+    const stepExists = actualGoal.steps?.some(s => s.backendId === stepId || s.id === stepId)
+    if (!stepExists) {
+      console.warn('[Planning] Step not found, refreshing data:', { goalId, stepId })
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await loadWeeklySteps()
+      return
+    }
+  }
+  
   // Сначала обновляем локально
   saveStepToLocalPlan(selectedGoal.value, selectedStep.value, newDate)
   
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
-    await updateGoalSteps({
+    const result = await updateGoalSteps({
       goals_steps_data: [{
-        goal_id: selectedGoal.value.backendId || selectedGoal.value.id,
-        step_id: selectedStep.value.backendId || selectedStep.value.id,
+        goal_id: goalId,
+        step_id: stepId,
         dt: newDate
       }]
     })
+    
+    if (result?.error_code === 'GOALS_STEPS_UPDATE__STEP_NOT_ACCESS') {
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+    }
+    
     await loadWeeklySteps()
   } catch (error) {
     console.error('[Planning] Error rescheduling step:', error)
+    if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await loadWeeklySteps()
+    }
   }
 }
 
 async function updateStepPriority(priority) {
   if (!selectedGoal.value || !selectedStep.value) return
   
+  const goalId = selectedGoal.value.backendId || selectedGoal.value.id
+  const stepId = selectedStep.value.backendId || selectedStep.value.id
+  
+  // Валидация
+  const actualGoal = store.goals.find(g => g.backendId === goalId || g.id === goalId)
+  if (actualGoal) {
+    const stepExists = actualGoal.steps?.some(s => s.backendId === stepId || s.id === stepId)
+    if (!stepExists) {
+      console.warn('[Planning] Step not found, refreshing data:', { goalId, stepId })
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await loadWeeklySteps()
+      return
+    }
+  }
+  
   // Сначала обновляем локально
   updateStepInLocalPlan(selectedGoal.value, selectedStep.value, { priority })
   
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
-    await updateGoalSteps({
+    const result = await updateGoalSteps({
       goals_steps_data: [{
-        goal_id: selectedGoal.value.backendId || selectedGoal.value.id,
-        step_id: selectedStep.value.backendId || selectedStep.value.id,
+        goal_id: goalId,
+        step_id: stepId,
         priority: priorityFrontendToBackend[priority] || priority || null
       }]
     })
+    
+    if (result?.error_code === 'GOALS_STEPS_UPDATE__STEP_NOT_ACCESS') {
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+    }
+    
     await loadWeeklySteps()
   } catch (error) {
     console.error('[Planning] Error updating step priority:', error)
+    if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await loadWeeklySteps()
+    }
   }
 }
 
 async function updateStepTime(time) {
   if (!selectedGoal.value || !selectedStep.value) return
   
+  const goalId = selectedGoal.value.backendId || selectedGoal.value.id
+  const stepId = selectedStep.value.backendId || selectedStep.value.id
+  
+  // Валидация
+  const actualGoal = store.goals.find(g => g.backendId === goalId || g.id === goalId)
+  if (actualGoal) {
+    const stepExists = actualGoal.steps?.some(s => s.backendId === stepId || s.id === stepId)
+    if (!stepExists) {
+      console.warn('[Planning] Step not found, refreshing data:', { goalId, stepId })
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await loadWeeklySteps()
+      return
+    }
+  }
+  
   // Сначала обновляем локально
   updateStepInLocalPlan(selectedGoal.value, selectedStep.value, { timeEstimate: time })
   
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
-    await updateGoalSteps({
+    const result = await updateGoalSteps({
       goals_steps_data: [{
-        goal_id: selectedGoal.value.backendId || selectedGoal.value.id,
-        step_id: selectedStep.value.backendId || selectedStep.value.id,
+        goal_id: goalId,
+        step_id: stepId,
         time_duration: timeDurationFrontendToBackend[time] || time || null
       }]
     })
+    
+    if (result?.error_code === 'GOALS_STEPS_UPDATE__STEP_NOT_ACCESS') {
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+    }
+    
     await loadWeeklySteps()
   } catch (error) {
     console.error('[Planning] Error updating step time:', error)
+    if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await loadWeeklySteps()
+    }
   }
 }
 
 async function removeStepFromSchedule() {
   if (!selectedGoal.value || !selectedStep.value) return
+  
+  const goalId = selectedGoal.value.backendId || selectedGoal.value.id
+  const stepId = selectedStep.value.backendId || selectedStep.value.id
+  
+  // Валидация
+  const actualGoal = store.goals.find(g => g.backendId === goalId || g.id === goalId)
+  if (actualGoal) {
+    const stepExists = actualGoal.steps?.some(s => s.backendId === stepId || s.id === stepId)
+    if (!stepExists) {
+      console.warn('[Planning] Step not found, refreshing data:', { goalId, stepId })
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await loadWeeklySteps()
+      closeBottomSheet()
+      return
+    }
+  }
   
   // Сначала удаляем локально
   removeStepFromLocalPlan(selectedGoal.value, selectedStep.value)
@@ -2033,16 +2170,25 @@ async function removeStepFromSchedule() {
   
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
-    await updateGoalSteps({
+    const result = await updateGoalSteps({
       goals_steps_data: [{
-        goal_id: selectedGoal.value.backendId || selectedGoal.value.id,
-        step_id: selectedStep.value.backendId || selectedStep.value.id,
+        goal_id: goalId,
+        step_id: stepId,
         dt: null
       }]
     })
+    
+    if (result?.error_code === 'GOALS_STEPS_UPDATE__STEP_NOT_ACCESS') {
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+    }
+    
     await loadWeeklySteps()
   } catch (error) {
     console.error('[Planning] Error removing step from schedule:', error)
+    if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await loadWeeklySteps()
+    }
   }
 }
 
@@ -2233,18 +2379,42 @@ async function saveTaskChangesAndClose() {
 async function removeTaskFromSchedule(task) {
   if (!task) return
   
+  const goalId = task.goalId
+  const stepId = task.stepId
+  
+  // Валидация: проверяем что шаг существует
+  const actualGoal = store.goals.find(g => g.backendId === goalId || g.id === goalId)
+  if (actualGoal) {
+    const stepExists = actualGoal.steps?.some(s => s.backendId === stepId || s.id === stepId)
+    if (!stepExists) {
+      console.warn('[Planning] Step not found, refreshing data:', { goalId, stepId })
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await loadWeeklySteps()
+      return
+    }
+  }
+  
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
-    await updateGoalSteps({
+    const result = await updateGoalSteps({
       goals_steps_data: [{
-        goal_id: task.goalId,
-        step_id: task.stepId,
+        goal_id: goalId,
+        step_id: stepId,
         dt: '1700-01-01'
       }]
     })
+    
+    if (result?.error_code === 'GOALS_STEPS_UPDATE__STEP_NOT_ACCESS') {
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+    }
+    
     await loadWeeklySteps()
   } catch (error) {
     console.error('[Planning] Error removing task from schedule:', error)
+    if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await loadWeeklySteps()
+    }
   }
 }
 
@@ -2253,22 +2423,49 @@ async function scheduleStepToDay(goal, step, date) {
   
   const { DEBUG_MODE } = await import('@/config/settings.js')
   
+  // Валидация: проверяем что шаг существует в актуальных данных цели
+  const goalId = goal.backendId || goal.id
+  const stepId = step.backendId || step.id
+  const actualGoal = store.goals.find(g => g.backendId === goalId || g.id === goalId)
+  
+  if (actualGoal) {
+    const stepExists = actualGoal.steps?.some(s => s.backendId === stepId || s.id === stepId)
+    if (!stepExists) {
+      console.warn('[Planning] Step not found in goal, refreshing data:', { goalId, stepId })
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await loadWeeklySteps()
+      return
+    }
+  }
+  
   // Сначала обновляем локально для мгновенного отклика
   saveStepToLocalPlan(goal, step, date)
   closeBottomSheet()
   
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
-    await updateGoalSteps({
+    const result = await updateGoalSteps({
       goals_steps_data: [{
-        goal_id: goal.backendId || goal.id,
-        step_id: step.backendId || step.id,
+        goal_id: goalId,
+        step_id: stepId,
         dt: date
       }]
     })
+    
+    // Проверяем на ошибку step_not_access
+    if (result?.error_code === 'GOALS_STEPS_UPDATE__STEP_NOT_ACCESS') {
+      console.warn('[Planning] Step not accessible, refreshing data')
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+    }
+    
     await loadWeeklySteps()
   } catch (error) {
     console.error('[Planning] Error scheduling step:', error)
+    // При ошибке доступа к шагу - обновляем данные
+    if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await loadWeeklySteps()
+    }
     // В DEV_MODE данные уже сохранены локально, всё ок
     if (DEBUG_MODE) {
       console.log('[Planning] DEV_MODE: Step saved locally')
@@ -2282,6 +2479,21 @@ async function scheduleNewStep() {
   const goal = selectedGoal.value
   const step = selectedStep.value
   const date = newStepDay.value
+  
+  // Валидация: проверяем что шаг существует в актуальных данных цели
+  const goalId = goal.backendId || goal.id
+  const stepId = step.backendId || step.id
+  const actualGoal = store.goals.find(g => g.backendId === goalId || g.id === goalId)
+  
+  if (actualGoal) {
+    const stepExists = actualGoal.steps?.some(s => s.backendId === stepId || s.id === stepId)
+    if (!stepExists) {
+      console.warn('[Planning] Step not found in goal, refreshing data:', { goalId, stepId })
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await loadWeeklySteps()
+      return
+    }
+  }
   
   // Сохраняем с приоритетом и временем
   saveStepToLocalPlan(goal, step, date)
@@ -2298,18 +2510,29 @@ async function scheduleNewStep() {
   
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
-    await updateGoalSteps({
+    const result = await updateGoalSteps({
       goals_steps_data: [{
-        goal_id: goal.backendId || goal.id,
-        step_id: step.backendId || step.id,
+        goal_id: goalId,
+        step_id: stepId,
         dt: date,
         priority: newStepPriority.value || undefined,
         time_estimate: newStepTime.value || undefined
       }]
     })
+    
+    // Проверяем на ошибку step_not_access
+    if (result?.error_code === 'GOALS_STEPS_UPDATE__STEP_NOT_ACCESS') {
+      console.warn('[Planning] Step not accessible, refreshing data')
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+    }
+    
     await loadWeeklySteps()
   } catch (error) {
     console.error('[Planning] Error scheduling new step:', error)
+    if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
+      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await loadWeeklySteps()
+    }
   }
 }
 
