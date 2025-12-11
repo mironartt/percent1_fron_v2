@@ -67,16 +67,16 @@
         </span>
       </div>
 
-      <div class="tasks-list" v-if="getTasksForDay(selectedDay).length > 0">
+      <div class="tasks-list" v-if="selectedDayTasks.length > 0">
         <div 
-          v-for="group in getGroupedTasksForDay(selectedDay)" 
+          v-for="group in selectedDayGroupedTasks" 
           :key="group.goalId"
           class="task-group"
           :class="{ collapsed: collapsedGoalGroups[group.goalId] }"
         >
           <div 
             class="group-header clickable" 
-            v-if="getGroupedTasksForDay(selectedDay).length > 1 || group.tasks.length > 1"
+            v-if="selectedDayGroupedTasks.length > 1 || group.tasks.length > 1"
             @click="toggleGoalGroupCollapse(group.goalId)"
           >
             <ChevronRight 
@@ -117,7 +117,7 @@
               </button>
               <div class="task-info">
                 <span class="task-title">{{ task.stepTitle }}</span>
-                <span class="task-goal" v-if="getGroupedTasksForDay(selectedDay).length === 1 && group.tasks.length === 1">{{ task.goalTitle }}</span>
+                <span class="task-goal" v-if="selectedDayGroupedTasks.length === 1 && group.tasks.length === 1">{{ task.goalTitle }}</span>
               </div>
               <div class="task-meta">
                 <span v-if="task.timeEstimate" class="time-badge">
@@ -173,7 +173,7 @@
         </div>
       </div>
 
-      <div v-else-if="getTasksForDay(selectedDay).length === 0" class="empty-day">
+      <div v-else-if="selectedDayTasks.length === 0" class="empty-day">
         <Calendar :size="48" class="empty-icon" />
         <p>Нет задач на этот день</p>
         <span class="empty-hint">Добавьте шаги из целей ниже</span>
@@ -1336,6 +1336,25 @@ function initSelectedDay() {
 const weeklyStepsData = ref([])
 const weeklyStepsLoading = ref(false)
 const localUpdateTrigger = ref(0)
+
+// Computed для задач выбранного дня - обеспечивает реактивность таймлайна
+const selectedDayTasks = computed(() => {
+  // Явные зависимости для реактивности
+  void localUpdateTrigger.value
+  void weeklyStepsData.value
+  
+  if (!selectedDay.value) return []
+  return getTasksForDay(selectedDay.value)
+})
+
+const selectedDayGroupedTasks = computed(() => {
+  // Явные зависимости для реактивности
+  void localUpdateTrigger.value
+  void weeklyStepsData.value
+  
+  if (!selectedDay.value) return []
+  return getGroupedTasksForDay(selectedDay.value)
+})
 
 function generateDemoWeeklySteps(days) {
   const demoGoals = [
