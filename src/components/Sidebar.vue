@@ -33,8 +33,19 @@
         :key="item.path"
         class="nav-item-wrapper"
       >
+        <a 
+          v-if="item.external"
+          :href="item.href"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="nav-item"
+          :title="isCollapsed ? item.label : ''"
+        >
+          <component :is="item.icon" class="icon" :size="20" :stroke-width="1.5" />
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
         <router-link 
-          v-if="!item.locked || hasAccess"
+          v-else-if="!item.locked || hasAccess"
           :to="item.path" 
           class="nav-item" 
           active-class="active"
@@ -286,7 +297,7 @@ const menuItems = [
   { path: '/app/learning', icon: GraduationCap, label: 'Обучение', locked: false, showLock: false },
   { path: '/app/energy', icon: Zap, label: 'Ресурс и энергия', locked: true, showLock: false, comingSoon: true },
   { path: '/app/principles', icon: Gem, label: 'Принципы и убеждения', locked: true, showLock: false, comingSoon: true },
-  { path: '/app/club', icon: Users, label: 'Клуб 1%', locked: true, showLock: false, comingSoon: true }
+  { path: '/app/club', icon: Users, label: 'Клуб 1%', locked: false, showLock: false, external: true, href: 'https://t.me/dmkosik' }
 ]
 </script>
 
