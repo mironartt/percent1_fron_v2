@@ -1265,10 +1265,13 @@ async function loadWeeklySteps() {
     console.log('[Planning] Loading weekly steps for:', startDate, 'to', endDate)
     
     const response = await getPlannedSteps({ date_from: startDate, date_to: endDate })
-    if (response.status === 'success' && response.steps_data) {
-      weeklyStepsData.value = response.steps_data
+    
+    // API возвращает status: 'ok' и данные в data.result_week_data
+    if (response.status === 'ok' && response.data?.result_week_data) {
+      weeklyStepsData.value = response.data.result_week_data
+      console.log('[Planning] Loaded weekly steps from API:', response.data.result_week_data.length, 'days')
     } else {
-      console.log('[Planning] Using demo data (API returned error)')
+      console.log('[Planning] Using demo data (API returned error or no data)', response)
       weeklyStepsData.value = generateDemoWeeklySteps(weekDays.value)
     }
   } catch (error) {

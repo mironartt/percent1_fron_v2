@@ -1,0 +1,277 @@
+Так, давай разберемся еще раз детально по странице планирования, по блоку "таймлайн" (верхний блок, где отображаются запланированные шаги на сегодня, или на другой день).
+Данные для данного блока должны браться из запроса `/api/rest/front/app/goals/steps/planned/get/`.
+Пример конкретного ответа:
+```
+{
+  "status": "ok",
+  "data": {
+    "date_from": "2025-12-08",
+    "date_to": "2025-12-14",
+    "result_week_data": [
+      {
+        "date": "2025-12-08",
+        "steps_data": [],
+        "total_steps": 0,
+        "complete_steps": 0,
+        "uncomplete_steps": 0,
+        "complete_percent": 0
+      },
+      {
+        "date": "2025-12-09",
+        "steps_data": [
+          {
+            "goal_id": 37,
+            "goal_title": "Каждый день пить 1.5 литра воды",
+            "goal_category": "health_sport",
+            "goal_status": "work",
+            "goal_score": "true",
+            "goal_date_created": "2025-12-02 15:29:10",
+            "step_id": 113,
+            "step_title": "Отправить результаты команде",
+            "step_description": "Отправить в чат",
+            "step_priority": "optional",
+            "step_time_duration": "half",
+            "step_dt": "2025-12-09",
+            "step_order": 14,
+            "step_is_complete": false,
+            "step_date_completed": null,
+            "step_date_created": "2025-12-02 08:50:15"
+          }
+        ],
+        "total_steps": 1,
+        "complete_steps": 0,
+        "uncomplete_steps": 1,
+        "complete_percent": 0
+      },
+      {
+        "date": "2025-12-10",
+        "steps_data": [
+          {
+            "goal_id": 8,
+            "goal_title": "Каждый день гулять по 30 минут",
+            "goal_category": "health_sport",
+            "goal_status": "work",
+            "goal_score": "true",
+            "goal_date_created": "2025-12-02 15:29:10",
+            "step_id": 68,
+            "step_title": "Собрать информацию",
+            "step_description": "Первичное исследование темы",
+            "step_priority": "critical",
+            "step_time_duration": "two",
+            "step_dt": "2025-12-10",
+            "step_order": 1,
+            "step_is_complete": false,
+            "step_date_completed": null,
+            "step_date_created": "2025-12-02 08:48:28"
+          },
+          {
+            "goal_id": 37,
+            "goal_title": "Каждый день пить 1.5 литра воды",
+            "goal_category": "health_sport",
+            "goal_status": "work",
+            "goal_score": "true",
+            "goal_date_created": "2025-12-02 15:29:10",
+            "step_id": 135,
+            "step_title": "Определить список инструментов",
+            "step_description": "Оценить, какие инструменты нужны",
+            "step_priority": "important",
+            "step_time_duration": "four",
+            "step_dt": "2025-12-10",
+            "step_order": 3,
+            "step_is_complete": false,
+            "step_date_completed": null,
+            "step_date_created": "2025-12-02 08:51:02"
+          }
+        ],
+        "total_steps": 2,
+        "complete_steps": 0,
+        "uncomplete_steps": 2,
+        "complete_percent": 0
+      },
+      {
+        "date": "2025-12-11",
+        "steps_data": [
+          {
+            "goal_id": 17,
+            "goal_title": "Научиться готовить 5 новых блюд",
+            "goal_category": "hobby",
+            "goal_status": "work",
+            "goal_score": "true",
+            "goal_date_created": "2025-12-02 15:29:10",
+            "step_id": 55,
+            "step_title": "Начать сбор данных",
+            "step_description": "Первый этап",
+            "step_priority": "critical",
+            "step_time_duration": "two",
+            "step_dt": "2025-12-11",
+            "step_order": 16,
+            "step_is_complete": false,
+            "step_date_completed": null,
+            "step_date_created": "2025-12-01 16:12:22"
+          },
+          {
+            "goal_id": 28,
+            "goal_title": "Вырастить растение",
+            "goal_category": "environment",
+            "goal_status": "work",
+            "goal_score": "true",
+            "goal_date_created": "2025-12-02 15:29:10",
+            "step_id": 21,
+            "step_title": "Начать сбор данных",
+            "step_description": "Первый этап",
+            "step_priority": "critical",
+            "step_time_duration": "two",
+            "step_dt": "2025-12-11",
+            "step_order": 0,
+            "step_is_complete": false,
+            "step_date_completed": null,
+            "step_date_created": "2025-12-01 16:12:22"
+          },
+          {
+            "goal_id": 28,
+            "goal_title": "Вырастить растение",
+            "goal_category": "environment",
+            "goal_status": "work",
+            "goal_score": "true",
+            "goal_date_created": "2025-12-02 15:29:10",
+            "step_id": 83,
+            "step_title": "Подготовить презентацию",
+            "step_description": "Необходимо сделать черновик",
+            "step_priority": "attention",
+            "step_time_duration": "half",
+            "step_dt": "2025-12-11",
+            "step_order": 13,
+            "step_is_complete": false,
+            "step_date_completed": null,
+            "step_date_created": "2025-12-02 08:48:28"
+          },
+          {
+            "goal_id": 28,
+            "goal_title": "Вырастить растение",
+            "goal_category": "environment",
+            "goal_status": "work",
+            "goal_score": "true",
+            "goal_date_created": "2025-12-02 15:29:10",
+            "step_id": 130,
+            "step_title": "Начать сбор данных",
+            "step_description": "Первый этап",
+            "step_priority": "critical",
+            "step_time_duration": "two",
+            "step_dt": "2025-12-11",
+            "step_order": 3,
+            "step_is_complete": false,
+            "step_date_completed": null,
+            "step_date_created": "2025-12-02 08:51:02"
+          },
+          {
+            "goal_id": 37,
+            "goal_title": "Каждый день пить 1.5 литра воды",
+            "goal_category": "health_sport",
+            "goal_status": "work",
+            "goal_score": "true",
+            "goal_date_created": "2025-12-02 15:29:10",
+            "step_id": 26,
+            "step_title": "Определить список инструментов",
+            "step_description": "Оценить, какие инструменты нужны",
+            "step_priority": null,
+            "step_time_duration": "one",
+            "step_dt": "2025-12-11",
+            "step_order": 0,
+            "step_is_complete": false,
+            "step_date_completed": null,
+            "step_date_created": "2025-12-01 16:12:22"
+          }
+        ],
+        "total_steps": 5,
+        "complete_steps": 0,
+        "uncomplete_steps": 5,
+        "complete_percent": 0
+      },
+      {
+        "date": "2025-12-12",
+        "steps_data": [
+          {
+            "goal_id": 17,
+            "goal_title": "Научиться готовить 5 новых блюд",
+            "goal_category": "hobby",
+            "goal_status": "work",
+            "goal_score": "true",
+            "goal_date_created": "2025-12-02 15:29:10",
+            "step_id": 72,
+            "step_title": "Разбить задачу на подзадачи",
+            "step_description": "Сформировать список частей",
+            "step_priority": null,
+            "step_time_duration": "one",
+            "step_dt": "2025-12-12",
+            "step_order": 5,
+            "step_is_complete": false,
+            "step_date_completed": null,
+            "step_date_created": "2025-12-02 08:48:28"
+          },
+          {
+            "goal_id": 17,
+            "goal_title": "Научиться готовить 5 новых блюд",
+            "goal_category": "hobby",
+            "goal_status": "work",
+            "goal_score": "true",
+            "goal_date_created": "2025-12-02 15:29:10",
+            "step_id": 73,
+            "step_title": "Проверить совместимость решений",
+            "step_description": "Убедиться, что все компоненты работают вместе",
+            "step_priority": "optional",
+            "step_time_duration": null,
+            "step_dt": "2025-12-12",
+            "step_order": 9,
+            "step_is_complete": false,
+            "step_date_completed": null,
+            "step_date_created": "2025-12-02 08:48:28"
+          },
+          {
+            "goal_id": 28,
+            "goal_title": "Вырастить растение",
+            "goal_category": "environment",
+            "goal_status": "work",
+            "goal_score": "true",
+            "goal_date_created": "2025-12-02 15:29:10",
+            "step_id": 132,
+            "step_title": "Сформировать сводные таблицы",
+            "step_description": "Объединение данных\nПодготовка фильтров\nПроверка структурных ошибок\nСоздание базовых визуализаций",
+            "step_priority": "important",
+            "step_time_duration": null,
+            "step_dt": "2025-12-12",
+            "step_order": 11,
+            "step_is_complete": false,
+            "step_date_completed": null,
+            "step_date_created": "2025-12-02 08:51:02"
+          }
+        ],
+        "total_steps": 3,
+        "complete_steps": 0,
+        "uncomplete_steps": 3,
+        "complete_percent": 0
+      },
+      {
+        "date": "2025-12-13",
+        "steps_data": [],
+        "total_steps": 0,
+        "complete_steps": 0,
+        "uncomplete_steps": 0,
+        "complete_percent": 0
+      },
+      {
+        "date": "2025-12-14",
+        "steps_data": [],
+        "total_steps": 0,
+        "complete_steps": 0,
+        "uncomplete_steps": 0,
+        "complete_percent": 0
+      }
+    ]
+  }
+}
+```
+
+Также я приложил скриншот со старницы планирования, что отрисовалось после данного запроса.
+Кажется это совершенно не то что нужно.
+
+Проверь, исправь если есть проблема, в конце отчет.
