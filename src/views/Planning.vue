@@ -2068,14 +2068,27 @@ async function quickToggleStepComplete(goal, step) {
     const stepExists = actualGoal.steps?.some(s => s.backendId === stepId || s.id === stepId)
     if (!stepExists) {
       console.warn('[Planning] Step not found, refreshing data:', { goalId, stepId })
-      await store.loadGoalsFromBackend({ page: 1 }, false)
-      await loadWeeklySteps()
+      await Promise.all([
+        store.loadGoalsFromBackend({ page: 1 }, false),
+        loadWeeklySteps()
+      ])
       return
     }
   }
   
   const newCompleted = !step.completed
   step.completed = newCompleted
+  
+  // Также обновляем в weeklyStepsData для мгновенной синхронизации с таймлайном
+  for (const day of weeklyStepsData.value) {
+    const timelineStep = day.steps_data?.find(s => 
+      (s.goal_id === goalId || s.goal_id === goal.id) && 
+      (s.step_id === stepId || s.step_id === step.id)
+    )
+    if (timelineStep) {
+      timelineStep.step_is_complete = newCompleted
+    }
+  }
   
   if (newCompleted) {
     xpStore.addXP(10, 'step', `Выполнен шаг: ${step.title}`)
@@ -2095,13 +2108,29 @@ async function quickToggleStepComplete(goal, step) {
       await store.loadGoalsFromBackend({ page: 1 }, false)
     }
     
-    await loadWeeklySteps()
+    // Синхронизируем данные в обоих блоках
+    await Promise.all([
+      loadWeeklySteps(),                              // Таймлайн
+      store.loadGoalsFromBackend({ page: 1 }, false)  // Цели и шаги
+    ])
   } catch (error) {
     console.error('[Planning] Error toggling step complete:', error)
     step.completed = !newCompleted
+    // Откатываем изменение в weeklyStepsData
+    for (const day of weeklyStepsData.value) {
+      const timelineStep = day.steps_data?.find(s => 
+        (s.goal_id === goalId || s.goal_id === goal.id) && 
+        (s.step_id === stepId || s.step_id === step.id)
+      )
+      if (timelineStep) {
+        timelineStep.step_is_complete = !newCompleted
+      }
+    }
     if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
-      await store.loadGoalsFromBackend({ page: 1 }, false)
-      await loadWeeklySteps()
+      await Promise.all([
+        store.loadGoalsFromBackend({ page: 1 }, false),
+        loadWeeklySteps()
+      ])
     }
   }
 }
@@ -2359,6 +2388,19 @@ async function toggleTaskComplete(task) {
   
   task.completed = newCompleted
   
+  // Мгновенно обновляем в блоке "Цели и шаги"
+  const goal = workingGoals.value.find(g => 
+    g.id === task.goalId || g.backendId === task.goalId
+  )
+  if (goal) {
+    const step = goal.steps?.find(s => 
+      s.id === task.stepId || s.backendId === task.stepId
+    )
+    if (step) {
+      step.completed = newCompleted
+    }
+  }
+  
   if (newCompleted) {
     xpStore.addXP(10, 'step', `Выполнен шаг: ${task.stepTitle}`)
   }
@@ -2381,6 +2423,15 @@ async function toggleTaskComplete(task) {
   } catch (error) {
     console.error('[Planning] Error toggling task complete:', error)
     task.completed = !newCompleted
+    // Откатываем изменение в блоке "Цели и шаги"
+    if (goal) {
+      const step = goal.steps?.find(s => 
+        s.id === task.stepId || s.backendId === task.stepId
+      )
+      if (step) {
+        step.completed = !newCompleted
+      }
+    }
   }
 }
 
