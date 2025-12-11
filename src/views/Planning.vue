@@ -1660,8 +1660,13 @@ function getUncompletedSteps(goal) {
   return (goal.steps || []).filter(s => !s.completed)
 }
 
+function getAllSteps(goal) {
+  return goal.steps || []
+}
+
 function getFilteredSteps(goal) {
-  let steps = getUncompletedSteps(goal)
+  // Показываем ВСЕ шаги, включая выполненные (они будут с визуальным отличием)
+  let steps = getAllSteps(goal)
   
   if (filterStatus.value === 'unscheduled') {
     steps = steps.filter(s => !isStepScheduled(goal.id, s.id))
@@ -2058,54 +2063,41 @@ async function toggleStepComplete() {
   }
 }
 
-async function quickToggleStepComplete(goal, step) {
+function quickToggleStepComplete(goal, step) {
   const goalId = goal.backendId || goal.id
   const stepId = step.backendId || step.id
   
-  console.log('[Planning] quickToggleStepComplete:', { goalId, stepId })
+  // Определяем текущее состояние
+  const currentCompleted = step.completed || false
+  const newCompleted = !currentCompleted
   
-  const newCompleted = !step.completed
+  console.log('[Planning] quickToggleStepComplete:', { goalId, stepId, currentCompleted, newCompleted })
+  
+  // Обновляем шаг в store.goals (напрямую - step это ссылка)
   step.completed = newCompleted
+  console.log('[Planning] Updated step.completed =', newCompleted)
   
-  // Также обновляем в weeklyStepsData для мгновенной синхронизации с таймлайном
+  // Обновляем в weeklyStepsData для синхронизации с таймлайном
+  let originalStep = null
   for (const day of weeklyStepsData.value) {
-    const timelineStep = day.steps_data?.find(s => s.goal_id === goalId && s.step_id === stepId)
-    if (timelineStep) {
-      timelineStep.step_is_complete = newCompleted
-      console.log('[Planning] Updated step_is_complete in weeklyStepsData')
+    const found = day.steps_data?.find(s => s.goal_id === goalId && s.step_id === stepId)
+    if (found) {
+      found.step_is_complete = newCompleted
+      originalStep = found
+      console.log('[Planning] Updated weeklyStepsData.step_is_complete =', newCompleted)
     }
   }
   
   // Триггер реактивности
   localUpdateTrigger.value++
   
+  // XP за выполнение
   if (newCompleted) {
     xpStore.addXP(10, 'step', `Выполнен шаг: ${step.title}`)
   }
   
-  try {
-    const { updateGoalSteps } = await import('@/services/api.js')
-    console.log('[Planning] Sending updateGoalSteps request:', { goalId, stepId, is_complete: newCompleted })
-    await updateGoalSteps({
-      goals_steps_data: [{
-        goal_id: goalId,
-        step_id: stepId,
-        is_complete: newCompleted
-      }]
-    })
-    console.log('[Planning] updateGoalSteps success')
-  } catch (error) {
-    console.error('[Planning] Error toggling step complete:', error)
-    // Откатываем изменения
-    step.completed = !newCompleted
-    for (const day of weeklyStepsData.value) {
-      const timelineStep = day.steps_data?.find(s => s.goal_id === goalId && s.step_id === stepId)
-      if (timelineStep) {
-        timelineStep.step_is_complete = !newCompleted
-      }
-    }
-    localUpdateTrigger.value++
-  }
+  // Отправляем запрос на бэкенд
+  sendStepUpdateToBackend(goalId, stepId, newCompleted, originalStep, step)
 }
 
 function rescheduleStep(newDate) {
@@ -2354,47 +2346,61 @@ function closeBottomSheet() {
   selectedStep.value = null
 }
 
-async function toggleTaskComplete(task) {
+function toggleTaskComplete(task) {
   if (!task) return
   
-  const newCompleted = !task.completed
   const goalId = task.goalId
   const stepId = task.stepId
   
-  console.log('[Planning] toggleTaskComplete:', { goalId, stepId, newCompleted })
-  
-  // Мгновенно обновляем в weeklyStepsData (источник данных для таймлайна)
+  // Находим оригинальный шаг в weeklyStepsData
+  let originalStep = null
   for (const day of weeklyStepsData.value) {
-    const timelineStep = day.steps_data?.find(s => s.step_id === stepId && s.goal_id === goalId)
-    if (timelineStep) {
-      timelineStep.step_is_complete = newCompleted
-      console.log('[Planning] Updated step_is_complete in weeklyStepsData')
+    const found = day.steps_data?.find(s => s.step_id === stepId && s.goal_id === goalId)
+    if (found) {
+      originalStep = found
+      break
     }
   }
   
-  // Мгновенно обновляем в блоке "Цели и шаги"
-  const goal = workingGoals.value.find(g => 
-    g.id === goalId || g.backendId === goalId
-  )
-  if (goal) {
-    const step = goal.steps?.find(s => 
-      s.id === stepId || s.backendId === stepId
-    )
-    if (step) {
-      step.completed = newCompleted
-    }
+  // Находим шаг в store.goals
+  const goal = workingGoals.value.find(g => g.id === goalId || g.backendId === goalId)
+  const storeStep = goal?.steps?.find(s => s.id === stepId || s.backendId === stepId)
+  
+  // Определяем текущее состояние из оригинального источника
+  const currentCompleted = originalStep?.step_is_complete || storeStep?.completed || false
+  const newCompleted = !currentCompleted
+  
+  console.log('[Planning] toggleTaskComplete:', { goalId, stepId, currentCompleted, newCompleted })
+  
+  // Обновляем в weeklyStepsData (источник для таймлайна)
+  if (originalStep) {
+    originalStep.step_is_complete = newCompleted
+    console.log('[Planning] Updated weeklyStepsData.step_is_complete =', newCompleted)
+  }
+  
+  // Обновляем в store.goals (источник для блока "Цели и шаги")
+  if (storeStep) {
+    storeStep.completed = newCompleted
+    console.log('[Planning] Updated storeStep.completed =', newCompleted)
   }
   
   // Триггер реактивности
   localUpdateTrigger.value++
   
+  // XP за выполнение
   if (newCompleted) {
     xpStore.addXP(10, 'step', `Выполнен шаг: ${task.stepTitle}`)
   }
   
+  // Отправляем запрос на бэкенд
+  sendStepUpdateToBackend(goalId, stepId, newCompleted, originalStep, storeStep)
+}
+
+async function sendStepUpdateToBackend(goalId, stepId, newCompleted, originalStep, storeStep) {
   try {
     const { updateGoalSteps } = await import('@/services/api.js')
-    console.log('[Planning] Sending updateGoalSteps request:', { goalId, stepId, is_complete: newCompleted })
+    console.log('[Planning] Sending updateGoalSteps:', { goalId, stepId, is_complete: newCompleted })
+    
     await updateGoalSteps({
       goals_steps_data: [{
         goal_id: goalId,
@@ -2402,23 +2408,15 @@ async function toggleTaskComplete(task) {
         is_complete: newCompleted
       }]
     })
-    console.log('[Planning] updateGoalSteps success')
+    console.log('[Planning] updateGoalSteps SUCCESS')
   } catch (error) {
-    console.error('[Planning] Error toggling task complete:', error)
+    console.error('[Planning] updateGoalSteps ERROR:', error)
     // Откатываем изменения
-    for (const day of weeklyStepsData.value) {
-      const timelineStep = day.steps_data?.find(s => s.step_id === stepId && s.goal_id === goalId)
-      if (timelineStep) {
-        timelineStep.step_is_complete = !newCompleted
-      }
+    if (originalStep) {
+      originalStep.step_is_complete = !newCompleted
     }
-    if (goal) {
-      const step = goal.steps?.find(s => 
-        s.id === stepId || s.backendId === stepId
-      )
-      if (step) {
-        step.completed = !newCompleted
-      }
+    if (storeStep) {
+      storeStep.completed = !newCompleted
     }
     localUpdateTrigger.value++
   }
@@ -3315,7 +3313,13 @@ onUnmounted(() => {
 }
 
 .task-card.completed {
-  opacity: 0.6;
+  opacity: 0.7;
+  background: var(--bg-secondary, #f8fafc);
+}
+
+.task-card.completed .task-title {
+  text-decoration: line-through;
+  color: var(--text-tertiary, #94a3b8);
 }
 
 .task-checkbox {
@@ -3356,9 +3360,6 @@ onUnmounted(() => {
   text-overflow: ellipsis;
 }
 
-.task-card.completed .task-title {
-  text-decoration: line-through;
-}
 
 .task-goal {
   display: block;
@@ -3905,7 +3906,13 @@ onUnmounted(() => {
 }
 
 .step-card.completed {
-  opacity: 0.5;
+  opacity: 0.7;
+  background: var(--bg-tertiary, #f1f5f9);
+}
+
+.step-card.completed .step-title {
+  text-decoration: line-through;
+  color: var(--text-tertiary, #94a3b8);
 }
 
 .step-content {
