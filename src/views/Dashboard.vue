@@ -211,7 +211,6 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useAppStore } from '../stores/app'
-import { useXpStore } from '../stores/xp'
 import OnboardingAI from '../components/OnboardingAI.vue'
 import MiniTaskWelcome from '../components/MiniTaskWelcome.vue'
 import MiniTask from '../components/MiniTask.vue'
@@ -240,7 +239,6 @@ import {
 import { useRouter } from 'vue-router'
 
 const store = useAppStore()
-const xpStore = useXpStore()
 const router = useRouter()
 const showJournalModal = ref(false)
 const showMiniTask = ref(false)
@@ -431,11 +429,6 @@ async function toggleFocusTask(task) {
   if (storeStep) {
     storeStep.completed = newCompleted
     console.log('[Dashboard] Synced step.completed in store.goals')
-  }
-  
-  // Начисляем XP за выполнение
-  if (newCompleted) {
-    xpStore.addXP(10, 'step', `Выполнен шаг: ${task.title}`)
   }
   
   try {
