@@ -2660,13 +2660,23 @@ function saveStepToLocalPlan(goal, step, date) {
     store.weeklyPlans.push(plan)
   }
   
-  // Удалить старую запись этого шага если есть (проверяем оба варианта ID)
-  plan.scheduledTasks = (plan.scheduledTasks || []).filter(
-    t => !((t.goalId === goal.id || t.goalId === goal.backendId) && 
-           (t.stepId === step.id || t.stepId === step.backendId))
+  // Найти существующую запись для сохранения текущих значений времени/приоритета
+  const existingTask = plan.scheduledTasks?.find(
+    t => (t.goalId === goal.id || t.goalId === goal.backendId || t.goalId === goalKey) && 
+         (t.stepId === step.id || t.stepId === step.backendId || t.stepId === stepKey)
   )
   
-  // Добавить новую задачу
+  // Получить текущие значения из существующей записи или из бэкенд данных
+  const currentTime = existingTask?.timeEstimate || step.timeEstimate || getScheduledTimeEstimate(goal.id, step.id, step) || ''
+  const currentPriority = existingTask?.priority || step.priority || getScheduledPriority(goal.id, step.id, step) || ''
+  
+  // Удалить старую запись этого шага если есть (проверяем все варианты ID)
+  plan.scheduledTasks = (plan.scheduledTasks || []).filter(
+    t => !((t.goalId === goal.id || t.goalId === goal.backendId || t.goalId === goalKey) && 
+           (t.stepId === step.id || t.stepId === step.backendId || t.stepId === stepKey))
+  )
+  
+  // Добавить новую задачу с сохранением текущих значений
   plan.scheduledTasks.push({
     id: `local-${goalKey}-${stepKey}`,
     goalId: goalKey,
@@ -2674,13 +2684,16 @@ function saveStepToLocalPlan(goal, step, date) {
     stepTitle: step.title,
     goalTitle: goal.text || goal.title,
     scheduledDate: date,
-    timeEstimate: step.timeEstimate || '',
-    priority: step.priority || '',
+    timeEstimate: currentTime,
+    priority: currentPriority,
     completed: step.completed || false
   })
   
   // Обновить дату в шаге для isStepScheduled (в обеих коллекциях)
   updateStepDateInCollections(goal.id, step.id, date)
+  
+  // Триггерим реактивность для перерендера UI
+  localUpdateTrigger.value++
   
   // Сохранить в localStorage
   store.saveToLocalStorage()
