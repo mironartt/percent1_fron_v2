@@ -27,7 +27,7 @@
         <span class="habit-icon">{{ getDisplayIcon(habit) }}</span>
         <span class="habit-name">{{ habit.name }}</span>
         <transition name="xp-fade">
-          <span v-if="showXP === getDisplayId(habit)" class="xp-popup">+{{ habit.xpReward || 5 }} XP</span>
+          <span v-if="showXP === getDisplayId(habit)" class="xp-popup">+{{ earnedXP[getDisplayId(habit)] || habit.xpReward || 5 }} XP</span>
         </transition>
       </div>
     </div>
@@ -60,6 +60,7 @@ const habitsStore = useHabitsStore()
 const xpStore = useXpStore()
 
 const showXP = ref(null)
+const earnedXP = ref({})
 const isToggling = ref(false)
 
 const todayDayOfWeek = new Date().getDay()
@@ -243,6 +244,15 @@ async function handleToggle(habit) {
         const result = await habitsStore.markCompleted(habit.habit_id, todayDateStr)
         
         if (result?.success) {
+          // Сохранить полученный XP из ответа для отображения
+          let xpGain = 0
+          if (result.xpChanges && result.xpChanges.length > 0) {
+            xpGain = result.xpChanges.reduce((sum, c) => sum + (c.amount || 0), 0)
+          }
+          if (xpGain > 0) {
+            earnedXP.value[habitId] = xpGain
+          }
+          
           showXP.value = habitId
           setTimeout(() => {
             showXP.value = null
@@ -251,11 +261,8 @@ async function handleToggle(habit) {
           // Обновить XP из ответа бэкенда
           if (result.xpBalance !== undefined) {
             xpStore.setBalance(result.xpBalance)
-          } else if (result.xpChanges) {
-            const xpGain = result.xpChanges.reduce((sum, c) => sum + (c.amount || 0), 0)
-            if (xpGain > 0) {
-              xpStore.addToBalance(xpGain)
-            }
+          } else if (xpGain > 0) {
+            xpStore.addToBalance(xpGain)
           }
         } else {
           appStore.updateHabitCompletionInDashboard(habit.habit_id, false)
