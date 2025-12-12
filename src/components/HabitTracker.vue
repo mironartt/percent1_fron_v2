@@ -27,7 +27,7 @@
         <span class="habit-icon">{{ getDisplayIcon(habit) }}</span>
         <span class="habit-name">{{ habit.name }}</span>
         <transition name="xp-fade">
-          <span v-if="showXP === getDisplayId(habit)" class="xp-popup">+{{ habit.xpReward || 5 }} XP</span>
+          <span v-if="showXP === getDisplayId(habit)" class="xp-popup">+{{ earnedXP[getDisplayId(habit)] || habit.xpReward || 5 }} XP</span>
         </transition>
       </div>
     </div>
@@ -60,6 +60,7 @@ const habitsStore = useHabitsStore()
 const xpStore = useXpStore()
 
 const showXP = ref(null)
+const earnedXP = ref({})
 const isToggling = ref(false)
 
 const todayDayOfWeek = new Date().getDay()
@@ -227,19 +228,38 @@ async function handleToggle(habit) {
       if (wasCompleted) {
         const result = await habitsStore.unmarkCompleted(habit.habit_id, todayDateStr)
         if (!result?.success) {
-          // Откатить изменения при ошибке
           appStore.updateHabitCompletionInDashboard(habit.habit_id, true)
+        } else {
+          // Обновить XP из ответа бэкенда
+          if (result.xpBalance !== undefined) {
+            xpStore.setBalance(result.xpBalance)
+          }
         }
       } else {
         const result = await habitsStore.markCompleted(habit.habit_id, todayDateStr)
         
         if (result?.success) {
+          // Сохранить полученный XP из ответа для отображения
+          // Используем total_xp_change или xp_change из xp_changes для конкретной привычки
+          let xpGain = result.totalXpChange || 0
+          if (!xpGain && result.xpChanges && result.xpChanges.length > 0) {
+            const habitChange = result.xpChanges.find(c => c.habit_id === habit.habit_id)
+            xpGain = habitChange?.xp_change || 0
+          }
+          if (xpGain > 0) {
+            earnedXP.value[habitId] = xpGain
+          }
+          
           showXP.value = habitId
           setTimeout(() => {
             showXP.value = null
           }, 1200)
+          
+          // Обновить XP из ответа бэкенда
+          if (result.xpBalance !== undefined) {
+            xpStore.setBalance(result.xpBalance)
+          }
         } else {
-          // Откатить изменения при ошибке
           appStore.updateHabitCompletionInDashboard(habit.habit_id, false)
         }
       }

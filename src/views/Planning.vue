@@ -67,16 +67,16 @@
         </span>
       </div>
 
-      <div class="tasks-list" v-if="getTasksForDay(selectedDay).length > 0">
+      <div class="tasks-list" v-if="selectedDayTasks.length > 0">
         <div 
-          v-for="group in getGroupedTasksForDay(selectedDay)" 
+          v-for="group in selectedDayGroupedTasks" 
           :key="group.goalId"
           class="task-group"
           :class="{ collapsed: collapsedGoalGroups[group.goalId] }"
         >
           <div 
             class="group-header clickable" 
-            v-if="getGroupedTasksForDay(selectedDay).length > 1 || group.tasks.length > 1"
+            v-if="selectedDayGroupedTasks.length > 1 || group.tasks.length > 1"
             @click="toggleGoalGroupCollapse(group.goalId)"
           >
             <ChevronRight 
@@ -117,7 +117,7 @@
               </button>
               <div class="task-info">
                 <span class="task-title">{{ task.stepTitle }}</span>
-                <span class="task-goal" v-if="getGroupedTasksForDay(selectedDay).length === 1 && group.tasks.length === 1">{{ task.goalTitle }}</span>
+                <span class="task-goal" v-if="selectedDayGroupedTasks.length === 1 && group.tasks.length === 1">{{ task.goalTitle }}</span>
               </div>
               <div class="task-meta">
                 <span v-if="task.timeEstimate" class="time-badge">
@@ -173,7 +173,7 @@
         </div>
       </div>
 
-      <div v-else-if="getTasksForDay(selectedDay).length === 0" class="empty-day">
+      <div v-else-if="selectedDayTasks.length === 0" class="empty-day">
         <Calendar :size="48" class="empty-icon" />
         <p>Нет задач на этот день</p>
         <span class="empty-hint">Добавьте шаги из целей ниже</span>
@@ -184,7 +184,7 @@
       <span>Цели и шаги</span>
     </div>
 
-    <div class="filters-row compact">
+    <div class="filters-row compact unified">
       <!-- Поиск по названию -->
       <div class="search-filter">
         <Search :size="14" class="search-icon" />
@@ -199,110 +199,7 @@
         </button>
       </div>
       
-      <!-- Статус цели (API фильтр) -->
-      <div class="goal-status-dropdown" :class="{ open: showGoalStatusDropdown }">
-        <button class="dropdown-trigger" @click="showGoalStatusDropdown = !showGoalStatusDropdown">
-          <Target :size="14" />
-          <span>{{ selectedGoalStatusName }}</span>
-          <ChevronDown :size="14" class="dropdown-arrow" />
-        </button>
-        <div class="dropdown-menu" v-if="showGoalStatusDropdown" @click.stop>
-          <button 
-            v-for="option in goalStatusOptions" 
-            :key="option.value"
-            class="dropdown-item"
-            :class="{ active: goalStatusFilter === option.value }"
-            @click="goalStatusFilter = option.value; showGoalStatusDropdown = false"
-          >
-            {{ option.label }}
-          </button>
-        </div>
-      </div>
-      
-      <!-- Категория/сфера -->
-      <div class="sphere-dropdown" :class="{ open: showSphereDropdown }">
-        <button class="dropdown-trigger" @click="showSphereDropdown = !showSphereDropdown">
-          <Filter :size="14" />
-          <span class="desktop-only">{{ selectedSphereName }}</span>
-          <span class="mobile-only">Сфера</span>
-          <span class="dropdown-count" v-if="filterSphere">1</span>
-          <ChevronDown :size="14" class="dropdown-arrow" />
-        </button>
-        <div class="dropdown-menu" v-if="showSphereDropdown" @click.stop>
-          <button 
-            class="dropdown-item"
-            :class="{ active: filterSphere === '' }"
-            @click="filterSphere = ''; showSphereDropdown = false"
-          >
-            Все сферы
-          </button>
-          <button 
-            v-for="sphere in spheresWithGoals" 
-            :key="sphere.id"
-            class="dropdown-item"
-            :class="{ active: filterSphere === sphere.id }"
-            @click="filterSphere = sphere.id; showSphereDropdown = false"
-          >
-            {{ sphere.icon }} {{ sphere.name }}
-          </button>
-        </div>
-      </div>
-      
-      <!-- Сортировка -->
-      <div class="sort-dropdown desktop-only" :class="{ open: showSortDropdown }">
-        <button class="dropdown-trigger" @click="showSortDropdown = !showSortDropdown">
-          <BarChart3 :size="14" />
-          <span>{{ selectedSortName }}</span>
-          <ChevronDown :size="14" class="dropdown-arrow" />
-        </button>
-        <div class="dropdown-menu" v-if="showSortDropdown" @click.stop>
-          <button 
-            v-for="option in sortOptions" 
-            :key="option.value"
-            class="dropdown-item"
-            :class="{ active: orderBy === option.value }"
-            @click="orderBy = option.value; showSortDropdown = false"
-          >
-            {{ option.label }}
-          </button>
-          <div class="dropdown-divider"></div>
-          <button 
-            class="dropdown-item"
-            :class="{ active: orderDirection === 'desc' }"
-            @click="orderDirection = 'desc'; showSortDropdown = false"
-          >
-            По убыванию ↓
-          </button>
-          <button 
-            class="dropdown-item"
-            :class="{ active: orderDirection === 'asc' }"
-            @click="orderDirection = 'asc'; showSortDropdown = false"
-          >
-            По возрастанию ↑
-          </button>
-        </div>
-      </div>
-      
-      <!-- Кнопка сброса фильтров -->
-      <button 
-        v-if="hasActiveFilters" 
-        class="reset-filters-btn" 
-        @click="resetAllFilters"
-        title="Сбросить все фильтры"
-      >
-        <X :size="14" />
-        <span class="desktop-only">Сбросить</span>
-      </button>
-      
-      <!-- AI Planning button -->
-      <button class="ai-planner-btn filters-ai-btn" @click="openAIPlannerModal">
-        <Sparkles :size="16" />
-        <span class="ai-btn-text desktop-only">AI планирование</span>
-      </button>
-    </div>
-    
-    <!-- Вторая строка: локальный фильтр шагов -->
-    <div class="filters-row secondary">
+      <!-- Фильтр по запланированности шагов -->
       <div class="segmented-control">
         <button 
           class="segment"
@@ -326,6 +223,23 @@
           Запл.
         </button>
       </div>
+      
+      <!-- Кнопка сброса фильтров -->
+      <button 
+        v-if="hasActiveFilters" 
+        class="reset-filters-btn" 
+        @click="resetAllFilters"
+        title="Сбросить все фильтры"
+      >
+        <X :size="14" />
+        <span class="desktop-only">Сбросить</span>
+      </button>
+      
+      <!-- AI Planning button -->
+      <button class="ai-planner-btn filters-ai-btn" @click="openAIPlannerModal">
+        <Sparkles :size="16" />
+        <span class="ai-btn-text desktop-only">AI планирование</span>
+      </button>
       
       <span class="results-count" v-if="totalGoalsItems > 0">
         Найдено: {{ totalGoalsItems }} {{ totalGoalsItems === 1 ? 'цель' : 'целей' }}
@@ -1337,6 +1251,25 @@ const weeklyStepsData = ref([])
 const weeklyStepsLoading = ref(false)
 const localUpdateTrigger = ref(0)
 
+// Computed для задач выбранного дня - обеспечивает реактивность таймлайна
+const selectedDayTasks = computed(() => {
+  // Явные зависимости для реактивности
+  void localUpdateTrigger.value
+  void weeklyStepsData.value
+  
+  if (!selectedDay.value) return []
+  return getTasksForDay(selectedDay.value)
+})
+
+const selectedDayGroupedTasks = computed(() => {
+  // Явные зависимости для реактивности
+  void localUpdateTrigger.value
+  void weeklyStepsData.value
+  
+  if (!selectedDay.value) return []
+  return getGroupedTasksForDay(selectedDay.value)
+})
+
 function generateDemoWeeklySteps(days) {
   const demoGoals = [
     { id: 1, title: 'Здоровый образ жизни', category: 'health' },
@@ -1469,10 +1402,10 @@ function getTasksForDay(dateStr) {
           goalTitle: step.goal_title,
           goalCategory: step.goal_category,
           scheduledDate: step.step_dt,
-          // Локальные override-ы имеют приоритет над бэкендом
+          // Локальные override-ы имеют приоритет над бэкендом (кроме completed - берём из weeklyStepsData)
           timeEstimate: localOverride?.timeEstimate ?? backendTime,
           priority: localOverride?.priority ?? backendPriority,
-          completed: localOverride?.completed ?? backendCompleted,
+          completed: backendCompleted,
           order: step.step_order
         }
       })
@@ -1727,18 +1660,7 @@ async function loadGoalsWithFilters() {
   const params = {
     with_steps_data: true,
     page: currentPage.value,
-    order_by: orderBy.value,
-    order_direction: orderDirection.value
-  }
-  
-  // Добавляем фильтр по статусу цели
-  if (goalStatusFilter.value) {
-    params.status_filter = goalStatusFilter.value
-  }
-  
-  // Добавляем фильтр по сфере если выбран
-  if (filterSphere.value) {
-    params.category_filter = categoryFrontendToBackend[filterSphere.value] || filterSphere.value
+    status_filter: 'work'
   }
   
   // Добавляем текстовый поиск (минимум 3 символа)
@@ -1746,11 +1668,18 @@ async function loadGoalsWithFilters() {
     params.query_filter = queryFilter.value
   }
   
+  // Добавляем фильтр по запланированности шагов
+  if (filterStatus.value === 'unscheduled') {
+    params.steps_planning_filter = 'has_unplanned'
+  } else if (filterStatus.value === 'scheduled') {
+    params.steps_planning_filter = 'all_planned'
+  }
+  
   await store.loadGoalsFromBackend(params)
 }
 
-// Watch для фильтров - при изменении делаем запрос к бэку
-watch([filterSphere, goalStatusFilter, orderBy, orderDirection], async () => {
+// Watch для фильтра запланированности - при изменении делаем запрос к бэку
+watch(filterStatus, async () => {
   currentPage.value = 1
   await loadGoalsWithFilters()
 })
@@ -1769,30 +1698,20 @@ watch(queryFilter, async (newVal) => {
 
 // Проверка активности фильтров
 const hasActiveFilters = computed(() => {
-  return filterSphere.value !== '' || 
-         goalStatusFilter.value !== 'work' || 
-         queryFilter.value !== '' ||
-         orderBy.value !== 'date_created' ||
-         orderDirection.value !== 'desc'
+  return queryFilter.value !== '' || filterStatus.value !== ''
 })
 
 // Количество активных фильтров
 const activeFiltersCount = computed(() => {
   let count = 0
-  if (filterSphere.value) count++
-  if (goalStatusFilter.value && goalStatusFilter.value !== 'work') count++
   if (queryFilter.value.length >= 3) count++
-  if (orderBy.value !== 'date_created' || orderDirection.value !== 'desc') count++
+  if (filterStatus.value !== '') count++
   return count
 })
 
 // Сброс всех фильтров
 async function resetAllFilters() {
-  filterSphere.value = ''
-  goalStatusFilter.value = 'work'
   queryFilter.value = ''
-  orderBy.value = 'date_created'
-  orderDirection.value = 'desc'
   filterStatus.value = ''
   currentPage.value = 1
   await loadGoalsWithFilters()
@@ -3045,8 +2964,8 @@ async function scheduleNewStep() {
         goal_id: goalId,
         step_id: stepId,
         dt: date,
-        priority: newStepPriority.value || undefined,
-        time_estimate: newStepTime.value || undefined
+        priority: priorityFrontendToBackend[newStepPriority.value] || newStepPriority.value || undefined,
+        time_duration: timeDurationFrontendToBackend[newStepTime.value] || newStepTime.value || undefined
       }]
     })
     
@@ -3867,6 +3786,65 @@ onUnmounted(() => {
 .filters-row.compact {
   flex-wrap: nowrap;
   gap: 0.75rem;
+}
+
+.filters-row.unified {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.filters-row.unified .search-filter {
+  flex: 1;
+  min-width: 120px;
+  max-width: 200px;
+}
+
+.filters-row.unified .segmented-control {
+  flex-shrink: 0;
+}
+
+.filters-row.unified .results-count {
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  .filters-row.unified {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .filters-row.unified .search-filter {
+    flex: 1 1 100%;
+    max-width: none;
+    order: 1;
+  }
+  
+  .filters-row.unified .segmented-control {
+    flex: 1;
+    order: 2;
+  }
+  
+  .filters-row.unified .segmented-control .segment {
+    flex: 1;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.75rem;
+  }
+  
+  .filters-row.unified .reset-filters-btn {
+    order: 3;
+  }
+  
+  .filters-row.unified .filters-ai-btn {
+    order: 4;
+  }
+  
+  .filters-row.unified .results-count {
+    flex: 1 1 100%;
+    order: 5;
+    margin-left: 0;
+    text-align: center;
+    padding-top: 0.25rem;
+  }
 }
 
 .sphere-dropdown {

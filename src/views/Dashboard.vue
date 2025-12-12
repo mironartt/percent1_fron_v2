@@ -211,6 +211,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useAppStore } from '../stores/app'
+import * as api from '../services/api'
 import OnboardingAI from '../components/OnboardingAI.vue'
 import MiniTaskWelcome from '../components/MiniTaskWelcome.vue'
 import MiniTask from '../components/MiniTask.vue'
@@ -279,7 +280,24 @@ function triggerMentorSpotlight() {
   }, 500)
 }
 
-watch(() => store.user.finish_onboarding, (finished, oldVal) => {
+async function refreshDashboardData() {
+  try {
+    const result = await api.getUserData()
+    if (result.status === 'ok' && result.data) {
+      store.setUser(result.data)
+      if (DEBUG_MODE) {
+        console.log('[Dashboard] Data refreshed:', {
+          todayTasks: result.data.today_tasks?.total_count || 0,
+          topGoals: result.data.top_goals?.goals?.length || 0
+        })
+      }
+    }
+  } catch (error) {
+    console.error('[Dashboard] Failed to refresh data:', error)
+  }
+}
+
+watch(() => store.user.finish_onboarding, async (finished, oldVal) => {
   if (DEBUG_MODE) {
     console.log('[Dashboard] Mentor intro watch:', {
       finish_onboarding: finished,
@@ -288,12 +306,15 @@ watch(() => store.user.finish_onboarding, (finished, oldVal) => {
       isAllCompleted: activationStore.isAllCompleted
     })
   }
+  if (finished && !oldVal) {
+    await refreshDashboardData()
+  }
   if (finished && !activationStore.mentorIntroCompleted && !activationStore.isAllCompleted) {
     triggerMentorSpotlight()
   }
 })
 
-onMounted(() => {
+onMounted(async () => {
   if (DEBUG_MODE) {
     console.log('[Dashboard] onMounted mentor intro check:', {
       finish_onboarding: store.user.finish_onboarding,
@@ -301,6 +322,11 @@ onMounted(() => {
       isAllCompleted: activationStore.isAllCompleted
     })
   }
+  
+  if (store.user.finish_onboarding) {
+    await refreshDashboardData()
+  }
+  
   if (store.user.finish_onboarding && !activationStore.mentorIntroCompleted && !activationStore.isAllCompleted) {
     triggerMentorSpotlight()
   }
