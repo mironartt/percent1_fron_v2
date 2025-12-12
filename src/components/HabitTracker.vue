@@ -233,11 +233,6 @@ async function handleToggle(habit) {
           // Обновить XP из ответа бэкенда
           if (result.xpBalance !== undefined) {
             xpStore.setBalance(result.xpBalance)
-          } else if (result.xpChanges) {
-            const xpDelta = result.xpChanges.reduce((sum, c) => sum + (c.amount || 0), 0)
-            if (xpDelta !== 0) {
-              xpStore.addToBalance(xpDelta)
-            }
           }
         }
       } else {
@@ -245,9 +240,11 @@ async function handleToggle(habit) {
         
         if (result?.success) {
           // Сохранить полученный XP из ответа для отображения
-          let xpGain = 0
-          if (result.xpChanges && result.xpChanges.length > 0) {
-            xpGain = result.xpChanges.reduce((sum, c) => sum + (c.amount || 0), 0)
+          // Используем total_xp_change или xp_change из xp_changes для конкретной привычки
+          let xpGain = result.totalXpChange || 0
+          if (!xpGain && result.xpChanges && result.xpChanges.length > 0) {
+            const habitChange = result.xpChanges.find(c => c.habit_id === habit.habit_id)
+            xpGain = habitChange?.xp_change || 0
           }
           if (xpGain > 0) {
             earnedXP.value[habitId] = xpGain
@@ -261,8 +258,6 @@ async function handleToggle(habit) {
           // Обновить XP из ответа бэкенда
           if (result.xpBalance !== undefined) {
             xpStore.setBalance(result.xpBalance)
-          } else if (xpGain > 0) {
-            xpStore.addToBalance(xpGain)
           }
         } else {
           appStore.updateHabitCompletionInDashboard(habit.habit_id, false)

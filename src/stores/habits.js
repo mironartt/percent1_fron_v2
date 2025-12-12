@@ -495,20 +495,13 @@ export const useHabitsStore = defineStore('habits', () => {
         // Используем xp_balance из ответа бэкенда как источник истины
         if (result.data.xp_balance !== undefined) {
           xpStats.value.xp_balance = result.data.xp_balance
-        } else if (result.data.xp_changes) {
-          // Fallback: инкрементальное обновление
-          const xpGain = result.data.xp_changes.reduce((sum, c) => sum + (c.amount || 0), 0)
-          if (xpGain > 0) {
-            xpStats.value.xp_balance += xpGain
-          }
         }
         
-        if (result.data.xp_changes) {
-          const xpGain = result.data.xp_changes.reduce((sum, c) => sum + (c.amount || 0), 0)
-          if (xpGain > 0) {
-            xpStats.value.today_xp += xpGain
-            xpStats.value.week_xp += xpGain
-          }
+        // Обновляем статистику на основе total_xp_change
+        const totalXpChange = result.data.total_xp_change || 0
+        if (totalXpChange > 0) {
+          xpStats.value.today_xp += totalXpChange
+          xpStats.value.week_xp += totalXpChange
         }
         
         if (result.data.new_achievements?.length > 0) {
@@ -516,12 +509,13 @@ export const useHabitsStore = defineStore('habits', () => {
         }
         
         if (DEBUG_MODE) {
-          console.log('[HabitsStore] Habit completed:', habitId, date)
+          console.log('[HabitsStore] Habit completed:', habitId, date, 'XP change:', totalXpChange)
         }
         
         return { 
           success: true, 
           xpChanges: result.data.xp_changes,
+          totalXpChange: result.data.total_xp_change,
           xpBalance: result.data.xp_balance,
           newAchievements: result.data.new_achievements
         }
@@ -577,20 +571,13 @@ export const useHabitsStore = defineStore('habits', () => {
         // Используем xp_balance из ответа бэкенда как источник истины
         if (result.data.xp_balance !== undefined) {
           xpStats.value.xp_balance = result.data.xp_balance
-        } else if (result.data.xp_changes) {
-          // Fallback: инкрементальное обновление
-          const xpLoss = result.data.xp_changes.reduce((sum, c) => sum + Math.abs(c.amount || 0), 0)
-          if (xpLoss > 0) {
-            xpStats.value.xp_balance = Math.max(0, xpStats.value.xp_balance - xpLoss)
-          }
         }
         
-        if (result.data.xp_changes) {
-          const xpLoss = result.data.xp_changes.reduce((sum, c) => sum + Math.abs(c.amount || 0), 0)
-          if (xpLoss > 0) {
-            xpStats.value.today_xp = Math.max(0, xpStats.value.today_xp - xpLoss)
-            xpStats.value.week_xp = Math.max(0, xpStats.value.week_xp - xpLoss)
-          }
+        // Обновляем статистику на основе total_xp_change (будет отрицательным при отмене)
+        const totalXpChange = result.data.total_xp_change || 0
+        if (totalXpChange < 0) {
+          xpStats.value.today_xp = Math.max(0, xpStats.value.today_xp + totalXpChange)
+          xpStats.value.week_xp = Math.max(0, xpStats.value.week_xp + totalXpChange)
         }
         
         if (habit && habit.week_schedule) {
@@ -614,7 +601,12 @@ export const useHabitsStore = defineStore('habits', () => {
           console.log('[HabitsStore] Habit unmarked:', habitId, date)
         }
         
-        return { success: true, xpChanges: result.data.xp_changes, xpBalance: result.data.xp_balance }
+        return { 
+          success: true, 
+          xpChanges: result.data.xp_changes, 
+          totalXpChange: result.data.total_xp_change,
+          xpBalance: result.data.xp_balance 
+        }
       } else {
         if (habit && previousCompletions) {
           habit.completions = previousCompletions
