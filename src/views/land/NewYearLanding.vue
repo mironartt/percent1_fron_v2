@@ -58,6 +58,58 @@
         </div>
       </section>
 
+      <section class="new-year-motivation">
+        <div class="container">
+          <div class="motivation-content">
+            <div class="motivation-badge">🎄 Новый год — новый шанс</div>
+            <h2 class="motivation-title">92% людей забрасывают цели<br><span class="highlight">уже к февралю</span></h2>
+            <p class="motivation-text">
+              Каждый год миллионы людей дают себе обещания: похудеть, начать копить, выучить английский...
+              И каждый год — одни и те же провалы. Знаешь почему?
+            </p>
+            <div class="motivation-reasons">
+              <div class="reason-item wrong">
+                <span class="reason-icon">❌</span>
+                <span>Ставят размытые цели без конкретных шагов</span>
+              </div>
+              <div class="reason-item wrong">
+                <span class="reason-icon">❌</span>
+                <span>Нет системы — полагаются на силу воли</span>
+              </div>
+              <div class="reason-item wrong">
+                <span class="reason-icon">❌</span>
+                <span>Не отслеживают прогресс и теряют мотивацию</span>
+              </div>
+            </div>
+            <div class="motivation-solution">
+              <div class="solution-header">
+                <span class="solution-icon">✨</span>
+                <span>Но 2026 может быть другим</span>
+              </div>
+              <p>
+                Представь, что у тебя есть <strong>чёткий план</strong> с конкретными шагами на каждую неделю.
+                Система, которая <strong>напоминает</strong>, <strong>мотивирует</strong> и <strong>показывает прогресс</strong>.
+                Это не магия — это правильное планирование.
+              </p>
+            </div>
+            <div class="motivation-stats">
+              <div class="stat-item">
+                <div class="stat-number">3x</div>
+                <div class="stat-label">выше шанс достижения цели с письменным планом</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-number">42%</div>
+                <div class="stat-label">эффективнее люди с еженедельным трекингом</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-number">10 мин</div>
+                <div class="stat-label">нужно чтобы получить свой персональный план</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="preview">
         <div class="container">
           <h2 class="section-title">Что ты получишь</h2>
@@ -598,6 +650,122 @@ onMounted(() => {
   color: #94a3b8;
   font-size: 14px;
   line-height: 1.5;
+}
+
+.new-year-motivation {
+  padding: 80px 0;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%);
+}
+
+.motivation-content {
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.motivation-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 8px 20px;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+.motivation-title {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.3;
+  margin-bottom: 20px;
+}
+
+.motivation-title .highlight {
+  color: #f59e0b;
+}
+
+.motivation-text {
+  font-size: 18px;
+  color: #94a3b8;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.motivation-reasons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.reason-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 12px;
+  font-size: 15px;
+}
+
+.reason-icon {
+  font-size: 18px;
+}
+
+.motivation-solution {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 40px;
+}
+
+.solution-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #10b981;
+  margin-bottom: 12px;
+}
+
+.solution-icon {
+  font-size: 24px;
+}
+
+.motivation-solution p {
+  color: #e2e8f0;
+  line-height: 1.6;
+}
+
+.motivation-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.stat-item {
+  padding: 20px;
+  background: rgba(30, 41, 59, 0.8);
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.stat-number {
+  font-size: 36px;
+  font-weight: 800;
+  color: #10b981;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.4;
 }
 
 .preview {

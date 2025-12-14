@@ -178,8 +178,13 @@
         </div>
 
         <div class="service-flow-section">
-          <h2 class="section-title">📋 Запланируй задачи в сервисе</h2>
-          <p class="section-subtitle">Все шаги из твоего плана превращаются в удобный таск-менеджер</p>
+          <div class="urgency-banner">
+            <span class="urgency-icon">🎄</span>
+            <span class="urgency-text">До нового года осталось совсем немного — <strong>начни 2026 с готовым планом!</strong></span>
+          </div>
+          
+          <h2 class="section-title">🚀 Твой план уже готов — осталось добавить в календарь</h2>
+          <p class="section-subtitle">Нажми одну кнопку — и все {{ totalSteps }} шагов автоматически появятся в твоём планировщике</p>
           
           <div class="service-content">
             <div class="planner-mockup" aria-hidden="true">
@@ -241,56 +246,46 @@
             </div>
 
             <div class="benefits-section">
-              <div class="benefits-grid">
-                <article class="benefit-card">
-                  <div class="benefit-icon">📅</div>
-                  <div class="benefit-content">
-                    <h4>Всё разбито по неделям</h4>
-                    <p>Ты точно знаешь что делать <strong>сегодня</strong>. Не нужно думать — просто действуй.</p>
-                  </div>
-                </article>
-                <article class="benefit-card">
-                  <div class="benefit-icon">✅</div>
-                  <div class="benefit-content">
-                    <h4>Видимый прогресс</h4>
-                    <p>Отмечай выполненное и наблюдай как <strong>растёт процент</strong> достижения цели.</p>
-                  </div>
-                </article>
-                <article class="benefit-card">
-                  <div class="benefit-icon">🔔</div>
-                  <div class="benefit-content">
-                    <h4>Напоминания в Telegram</h4>
-                    <p>Бот напомнит о задачах утром и <strong>не даст забыть</strong> важное вечером.</p>
-                  </div>
-                </article>
-                <article class="benefit-card">
-                  <div class="benefit-icon">⚡</div>
-                  <div class="benefit-content">
-                    <h4>XP за каждый шаг</h4>
-                    <p>Получай очки опыта, открывай достижения — <strong>геймификация</strong> для дисциплины.</p>
-                  </div>
-                </article>
-                <article class="benefit-card">
-                  <div class="benefit-icon">📊</div>
-                  <div class="benefit-content">
-                    <h4>Аналитика прогресса</h4>
-                    <p>Графики, статистика, streak-и — <strong>мотивация через цифры</strong> и визуализацию.</p>
-                  </div>
-                </article>
-              </div>
-
-              <div class="value-message">
-                <div class="value-icon">🎯</div>
-                <div class="value-text">
-                  <h4>От плана к результату за 4 недели</h4>
-                  <p>AI создаёт план → ты получаешь шаги → выполняешь по 1-2 в день → видишь прогресс → достигаешь цели</p>
+              <div class="instant-action-block">
+                <div class="instant-icon">⚡</div>
+                <div class="instant-content">
+                  <h3>Не откладывай на потом</h3>
+                  <p>92% людей, которые "планируют начать с понедельника", так и не начинают. Сделай первый шаг <strong>прямо сейчас</strong> — это займёт 30 секунд.</p>
                 </div>
               </div>
 
-              <router-link to="/auth/register" class="cta-btn-large">
-                Запланировать задачи
+              <div class="what-happens-block">
+                <h4>Что произойдёт после регистрации:</h4>
+                <div class="happen-list">
+                  <div class="happen-item">
+                    <span class="happen-number">1</span>
+                    <span class="happen-text">Все твои {{ totalSteps }} шагов появятся в личном планировщике</span>
+                  </div>
+                  <div class="happen-item">
+                    <span class="happen-number">2</span>
+                    <span class="happen-text">Задачи автоматически распределятся по неделям января</span>
+                  </div>
+                  <div class="happen-item">
+                    <span class="happen-number">3</span>
+                    <span class="happen-text">Telegram-бот будет напоминать о задачах каждый день</span>
+                  </div>
+                  <div class="happen-item">
+                    <span class="happen-number">4</span>
+                    <span class="happen-text">Ты начнёшь получать XP и видеть реальный прогресс</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="final-motivation">
+                <p>🎯 Этот план создан специально для тебя на основе твоих ответов. Не дай ему пылиться — <strong>начни действовать!</strong></p>
+              </div>
+
+              <router-link to="/auth/register" class="cta-btn-large pulse">
+                Добавить план в календарь
                 <span class="arrow">→</span>
               </router-link>
+              
+              <p class="cta-subtext">Бесплатно • Без спама • Занимает 30 секунд</p>
             </div>
           </div>
         </div>
@@ -323,6 +318,17 @@ const activeZone = computed(() => {
 const activeZoneData = computed(() => {
   if (!activeZone.value) return null
   return store.recommendations[activeZone.value.id] || null
+})
+
+const totalSteps = computed(() => {
+  let count = 0
+  store.growthZones.forEach(zone => {
+    const rec = store.recommendations[zone.id]
+    if (rec && rec.steps) {
+      count += rec.steps.length
+    }
+  })
+  return count
 })
 
 onMounted(() => {
@@ -801,6 +807,130 @@ function restartTest() {
   content: '○';
   color: #64748b;
   flex-shrink: 0;
+}
+
+.urgency-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(245, 158, 11, 0.15) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 16px 24px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.urgency-icon {
+  font-size: 24px;
+}
+
+.urgency-text {
+  font-size: 16px;
+  color: #fbbf24;
+}
+
+.instant-action-block {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.instant-icon {
+  font-size: 32px;
+}
+
+.instant-content h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fbbf24;
+  margin-bottom: 8px;
+}
+
+.instant-content p {
+  color: #e2e8f0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.what-happens-block {
+  background: rgba(30, 41, 59, 0.8);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.what-happens-block h4 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #10b981;
+}
+
+.happen-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.happen-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.happen-number {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.happen-text {
+  font-size: 14px;
+  color: #e2e8f0;
+}
+
+.final-motivation {
+  text-align: center;
+  padding: 20px;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.final-motivation p {
+  font-size: 15px;
+  color: #e2e8f0;
+  line-height: 1.5;
+}
+
+.cta-btn-large.pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  50% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); }
+}
+
+.cta-subtext {
+  text-align: center;
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 12px;
 }
 
 .share-section {
