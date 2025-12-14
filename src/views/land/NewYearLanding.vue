@@ -106,6 +106,12 @@
                 <div class="stat-label">нужно чтобы получить свой персональный план</div>
               </div>
             </div>
+            <div class="motivation-cta">
+              <router-link to="/land/newyear/test" class="btn-start">
+                Узнать свой план на 2026
+                <span class="arrow">→</span>
+              </router-link>
+            </div>
           </div>
         </div>
       </section>
@@ -284,6 +290,12 @@
           </div>
 
           <p class="preview-note">После теста ты получишь такие же рекомендации для своей главной зоны роста</p>
+          <div class="section-cta">
+            <router-link to="/land/newyear/test" class="btn-start">
+              Получить свои рекомендации
+              <span class="arrow">→</span>
+            </router-link>
+          </div>
         </div>
       </section>
 
@@ -388,6 +400,12 @@
                 </div>
               </div>
             </div>
+          </div>
+          <div class="section-cta">
+            <router-link to="/land/newyear/test" class="btn-start">
+              Создать свой план
+              <span class="arrow">→</span>
+            </router-link>
           </div>
         </div>
       </section>
@@ -766,6 +784,16 @@ onMounted(() => {
   font-size: 13px;
   color: #94a3b8;
   line-height: 1.4;
+}
+
+.motivation-cta {
+  margin-top: 40px;
+  text-align: center;
+}
+
+.section-cta {
+  margin-top: 48px;
+  text-align: center;
 }
 
 .preview {
