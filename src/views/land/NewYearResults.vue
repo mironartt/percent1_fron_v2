@@ -84,56 +84,80 @@
           </div>
         </div>
 
-        <!-- Рекомендации: цели и шаги -->
-        <div class="recommendations-section" v-if="store.mainLeverRecommendations">
-          <h2 class="section-title">🎯 Твой план действий</h2>
+        <!-- Рекомендации: планы для 3 зон роста -->
+        <div class="recommendations-section" v-if="store.growthZones.length > 0">
+          <h2 class="section-title">🎯 Планы действий по зонам роста</h2>
           
-          <div class="goals-block">
-            <h3>Цели на 2026</h3>
-            <div class="goals-list">
-              <div 
-                v-for="(goal, index) in store.mainLeverRecommendations.goals" 
-                :key="index"
-                class="goal-item"
-              >
-                <div class="goal-number">{{ index + 1 }}</div>
-                <div class="goal-content">
-                  <div class="goal-title">{{ goal.title }}</div>
-                  <div class="goal-metric">{{ goal.metric }}</div>
+          <div class="zone-tabs">
+            <button 
+              v-for="(zone, index) in store.growthZones" 
+              :key="zone.id"
+              class="zone-tab"
+              :class="{ active: activeZoneIndex === index }"
+              @click="activeZoneIndex = index"
+            >
+              <span class="zone-tab-icon">{{ zone.icon }}</span>
+              <span class="zone-tab-name">{{ zone.name }}</span>
+              <span class="zone-tab-score">{{ store.sphereScores[zone.id] }}/10</span>
+            </button>
+          </div>
+
+          <div class="zone-content" v-if="activeZoneData">
+            <div class="zone-header-banner" :style="{ background: `linear-gradient(135deg, ${activeZone.color}22, ${activeZone.color}11)`, borderColor: `${activeZone.color}44` }">
+              <span class="zone-banner-icon">{{ activeZone.icon }}</span>
+              <div class="zone-banner-text">
+                <h3>{{ activeZone.name }}</h3>
+                <p>План улучшения этой сферы жизни на 2026 год</p>
+              </div>
+            </div>
+
+            <div class="goals-block">
+              <h3>Цели на 2026</h3>
+              <div class="goals-list">
+                <div 
+                  v-for="(goal, index) in activeZoneData.goals" 
+                  :key="index"
+                  class="goal-item"
+                >
+                  <div class="goal-number">{{ index + 1 }}</div>
+                  <div class="goal-content">
+                    <div class="goal-title">{{ goal.title }}</div>
+                    <div class="goal-metric">{{ goal.metric }}</div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div class="steps-block">
-            <h3>Первые шаги</h3>
-            <div class="steps-list">
-              <div 
-                v-for="(step, index) in store.mainLeverRecommendations.steps" 
-                :key="index"
-                class="step-item"
-              >
-                <div class="step-checkbox">☐</div>
-                <div class="step-title">{{ step.title }}</div>
-                <div class="step-hours">{{ step.hours }}ч</div>
+            <div class="steps-block">
+              <h3>Первые шаги</h3>
+              <div class="steps-list">
+                <div 
+                  v-for="(step, index) in activeZoneData.steps" 
+                  :key="index"
+                  class="step-item"
+                >
+                  <div class="step-checkbox">☐</div>
+                  <div class="step-title">{{ step.title }}</div>
+                  <div class="step-hours">{{ step.hours }}ч</div>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="week-plan-block">
-            <h3>План на 4 недели</h3>
-            <div class="weeks-list">
-              <div 
-                v-for="weekItem in store.mainLeverRecommendations.weekPlan" 
-                :key="weekItem.week"
-                class="week-item-detailed"
-              >
-                <div class="week-header">
-                  <div class="week-number">Неделя {{ weekItem.week }}</div>
+            <div class="week-plan-block">
+              <h3>План на 4 недели</h3>
+              <div class="weeks-list">
+                <div 
+                  v-for="weekItem in activeZoneData.weekPlan" 
+                  :key="weekItem.week"
+                  class="week-item-detailed"
+                >
+                  <div class="week-header">
+                    <div class="week-number">Неделя {{ weekItem.week }}</div>
+                  </div>
+                  <ul class="week-tasks">
+                    <li v-for="(task, idx) in weekItem.tasks" :key="idx">{{ task }}</li>
+                  </ul>
                 </div>
-                <ul class="week-tasks">
-                  <li v-for="(task, idx) in weekItem.tasks" :key="idx">{{ task }}</li>
-                </ul>
               </div>
             </div>
           </div>
@@ -283,13 +307,23 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNewYearStore } from '@/stores/newyear'
 
 const router = useRouter()
 const store = useNewYearStore()
 const copied = ref(false)
+const activeZoneIndex = ref(0)
+
+const activeZone = computed(() => {
+  return store.growthZones[activeZoneIndex.value] || null
+})
+
+const activeZoneData = computed(() => {
+  if (!activeZone.value) return null
+  return store.recommendations[activeZone.value.id] || null
+})
 
 onMounted(() => {
   if (!store.isCompleted) {
@@ -541,6 +575,90 @@ function restartTest() {
   font-weight: 700;
   text-align: center;
   margin-bottom: 32px;
+}
+
+.zone-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.zone-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 20px;
+  background: rgba(30, 41, 59, 0.8);
+  border: 2px solid rgba(148, 163, 184, 0.2);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+  min-width: 120px;
+}
+
+.zone-tab:hover {
+  border-color: rgba(148, 163, 184, 0.4);
+  background: rgba(30, 41, 59, 1);
+}
+
+.zone-tab.active {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.zone-tab-icon {
+  font-size: 28px;
+}
+
+.zone-tab-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f8fafc;
+  text-align: center;
+}
+
+.zone-tab-score {
+  font-size: 12px;
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.zone-content {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.zone-header-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  border-radius: 16px;
+  border: 1px solid;
+  margin-bottom: 24px;
+}
+
+.zone-banner-icon {
+  font-size: 40px;
+}
+
+.zone-banner-text h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.zone-banner-text p {
+  font-size: 14px;
+  color: #94a3b8;
 }
 
 .goals-block,
@@ -1091,6 +1209,44 @@ function restartTest() {
 
   .section-title {
     font-size: 24px;
+  }
+
+  .zone-tabs {
+    gap: 8px;
+  }
+
+  .zone-tab {
+    padding: 12px 14px;
+    min-width: 100px;
+  }
+
+  .zone-tab-icon {
+    font-size: 24px;
+  }
+
+  .zone-tab-name {
+    font-size: 11px;
+  }
+
+  .zone-tab-score {
+    font-size: 11px;
+  }
+
+  .zone-header-banner {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .zone-banner-icon {
+    font-size: 32px;
+  }
+
+  .zone-banner-text h3 {
+    font-size: 16px;
+  }
+
+  .zone-banner-text p {
+    font-size: 13px;
   }
 
   .goals-block,
