@@ -28,7 +28,6 @@ const NotFound = () => import('@/views/NotFound.vue')
 const NewYearLanding = () => import('@/views/land/NewYearLanding.vue')
 const NewYearTest = () => import('@/views/land/NewYearTest.vue')
 const NewYearResults = () => import('@/views/land/NewYearResults.vue')
-const NewYearPlan = () => import('@/views/land/NewYearPlan.vue')
 
 const router = createRouter({
   history: createWebHistory(),
@@ -58,13 +57,7 @@ const router = createRouter({
       path: '/land/newyear/results',
       name: 'newyear-results',
       component: NewYearResults,
-      meta: { title: 'Результаты — Итоги 2025', public: true }
-    },
-    {
-      path: '/land/newyear/plan',
-      name: 'newyear-plan',
-      component: NewYearPlan,
-      meta: { title: 'Твой план на 2026 — OnePercent', public: true }
+      meta: { title: 'Твои итоги 2025 и план на 2026 — OnePercent', public: true }
     },
     
     // Onboarding (требует авторизации)
