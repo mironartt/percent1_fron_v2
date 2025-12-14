@@ -72,8 +72,8 @@
             </div>
           </div>
           <div class="section-cta">
-            <router-link to="/auth/register" class="cta-btn-secondary">
-              Сохранить результаты
+            <router-link to="/land/newyear/plan" class="cta-btn-secondary">
+              Получить ИИ-план на 2026
               <span class="arrow">→</span>
             </router-link>
           </div>
@@ -178,11 +178,11 @@
             </div>
           </div>
           <div class="section-cta">
-            <router-link to="/auth/register" class="cta-btn-secondary">
-              Добавить план в сервис
+            <router-link to="/land/newyear/plan" class="cta-btn-secondary">
+              Получить персональный ИИ-план
               <span class="arrow">→</span>
             </router-link>
-            <p class="cta-hint">Бесплатно • Все шаги появятся в твоём планировщике</p>
+            <p class="cta-hint">Бесплатно • AI создаст план по твоим зонам роста</p>
           </div>
         </div>
 
@@ -303,12 +303,12 @@
                 <p>🎯 Этот план создан специально для тебя на основе твоих ответов. Не дай ему пылиться — <strong>начни действовать!</strong></p>
               </div>
 
-              <router-link to="/auth/register" class="cta-btn-large pulse">
-                Добавить план в календарь
+              <router-link to="/land/newyear/plan" class="cta-btn-large pulse">
+                🤖 Получить ИИ-план на 2026
                 <span class="arrow">→</span>
               </router-link>
               
-              <p class="cta-subtext">Бесплатно • Без спама • Занимает 30 секунд</p>
+              <p class="cta-subtext">Бесплатно • AI создаст персональный план за 30 секунд</p>
             </div>
           </div>
         </div>
