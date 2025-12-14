@@ -24,6 +24,11 @@ const Habits = () => import('@/views/Habits.vue')
 const OnboardingAI = () => import('@/components/OnboardingAI.vue')
 const NotFound = () => import('@/views/NotFound.vue')
 
+// Year Review (New Year)
+const NewYearLanding = () => import('@/views/land/NewYearLanding.vue')
+const NewYearTest = () => import('@/views/land/NewYearTest.vue')
+const NewYearResults = () => import('@/views/land/NewYearResults.vue')
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -33,6 +38,26 @@ const router = createRouter({
       name: 'landing',
       component: Landing,
       meta: { title: 'OnePercent - Система управления жизнью', public: true }
+    },
+    
+    // Year Review (Итоги года)
+    {
+      path: '/land/newyear',
+      name: 'newyear-landing',
+      component: NewYearLanding,
+      meta: { title: 'Итоги 2025 — OnePercent', public: true }
+    },
+    {
+      path: '/land/newyear/test',
+      name: 'newyear-test',
+      component: NewYearTest,
+      meta: { title: 'Тест — Итоги 2025', public: true }
+    },
+    {
+      path: '/land/newyear/results',
+      name: 'newyear-results',
+      component: NewYearResults,
+      meta: { title: 'Результаты — Итоги 2025', public: true }
     },
     
     // Onboarding (требует авторизации)
