@@ -1,0 +1,336 @@
+Сейчас будем заниматься большой задачей по интеграции чата AI ментора с бэкендом.  
+
+
+У нас в интерфейса на фронте, это правый блок поверх каждой страницы `AI Ментор`.    
+Общие моменты:  
+- Юзер может писать сообщение в чат, и бэк должен отвечать в данный чат.   
+- Пользователь не сможет написать сообщение пока бэк не даст ответа.  
+Тут получается нужно принимать от пользователя сообщения, блокировать ему ввод (это будет делать фронт, а на бэке должна быть валидация что еще не поступил ответ),
+подготавливаться ответ (отдельная задача будет для бэка) и давать ответ фронту, чтобы он отрисовал пользователю ответ.   
+При этом нужно как-то чтобы всегда чат был на связи, т.к. бэк может периодически отправлять сообщения без инициативы пользователя.  
+Поэтому нужно чтобы у пользователя почти всегда было активно соединение с бэком.  
+
+На бэке нужно проверять и закрывать не активыне соединения, и поддерживать активные.   
+Если соединение будет потеряно, фрот будет сам пытаться восстановить соединение.  
+Поэтому нужно предусмотреть что для пользователя может быть только одно соединение для чата. И чтобы оно отвечало всем требованием безопасности.  
+
+По функционалу чата частично уже описано:
+- юзер может писать в него (нужно также заложить возможность отправлять голосвые сообщения, но в этой итерации это реализовывать не будем, но в будущем будем)
+- юзер не может писать в чат, пока не получит ответ на прошлое сообщение
+- юзер может листать историю сообщений
+- на бэке должно поддерживаться возможность сохранения времени когда пользователь просмотрел сообщение
+- также фронт, при отправке сообщения должен будет дополнительно указывать с какой страницы на сайте идет чат с пользователем, т.е. нужно заложить что фронт будет передавать какие-то meta данные (как обычно словарь json)
+- подумать на форматом сообщений, полагаю что должна поддерживаться или markdown или html верскта для сообщений, чтобы они выглядели более презентабельно.
+
+Выше я указал все пожелания и нужные возможности для данного функционала.  
+
+В данном сообщение я прикрепил файл `chat_v3_integration.md` где детально описан весь процесс интеграции, логики работы каждого эндпоинта и подключений.  
+
+----
+
+## пример
+Добавлю примеры, как я тестировал подключение к сокетам локально (это не призыв к действию, а лишь пример).  
+Я авторизовывался на сайте, открывал консоль браузера и вставлял:
+```js
+let chatWS = null;
+
+// ========================================
+// CONNECTION
+// ========================================
+
+function connectWebSocket(url = 'wss://ft1zzp-95-72-16-20.ru.tuna.am/ws/chat/') {
+    console.log(`🔄 Connecting to ${url}...`);
+
+    chatWS = new WebSocket(url);
+
+    chatWS.onopen = function(event) {
+        console.log('✅ WebSocket Connected!');
+        console.log('   Use helper functions:');
+        console.log('   - sendMessage(conversationId, content)');
+        console.log('   - startTyping(conversationId)');
+        console.log('   - stopTyping(conversationId)');
+        console.log('   - markAsRead(conversationId, messageIds)');
+        console.log('   - addReaction(messageId, reactionType)');
+        console.log('   - disconnect()');
+    };
+
+    chatWS.onmessage = function(event) {
+        console.log('📨 Message received:', event.data);
+
+        try {
+            const data = JSON.parse(event.data);
+            console.log('📦 Parsed:', data);
+
+            // Pretty print based on type
+            switch(data.type) {
+                case 'new_message':
+                    const msg = data.data?.message || data.message;
+                    console.log(`💬 New message (${msg.message_type}):`);
+                    console.log(`   "${msg.content}"`);
+                    if (msg.message_type === 'bot') {
+                        console.log('   🤖 From AI Bot');
+                        if (msg.bot_metadata?.is_proactive) {
+                            console.log('   📢 Proactive message');
+                        }
+                    }
+                    break;
+
+                case 'bot_typing':
+                    const typing = data.data?.typing;
+                    if (typing) {
+                        console.log('⌨️  Bot is typing...');
+                    } else {
+                        console.log('⌨️  Bot stopped typing');
+                    }
+                    break;
+
+                case 'message_sent':
+                    const sentMsg = data.data?.message;
+                    console.log('✅ Message sent successfully');
+                    console.log('   Message ID:', sentMsg?.message_id);
+                    break;
+
+                case 'messages_read':
+                    console.log(`👁️  Messages marked as read: ${data.message_ids.join(', ')}`);
+                    break;
+
+                case 'reaction_added':
+                    console.log(`👍 Reaction "${data.reaction.reaction_type}" added to message ${data.reaction.message_id}`);
+                    break;
+
+                // === v2 Events ===
+                case 'ping':
+                    console.log('🏓 Ping received, sending pong...');
+                    chatWS.send(JSON.stringify({ action: 'pong', data: {} }));
+                    console.log('🏓 Pong sent!');
+                    break;
+
+                case 'force_disconnect':
+                    console.warn('⚠️  FORCE DISCONNECT!');
+                    console.warn('   Reason:', data.data?.reason);
+                    console.warn('   Chat opened in another tab/device');
+                    break;
+
+                case 'error':
+                    console.error('❌ Error:', data.data?.error_message || data.error_message);
+                    console.error('   Code:', data.data?.error_code || data.error_code);
+                    break;
+
+                default:
+                    console.log('📬 Unknown message type:', data.type);
+            }
+        } catch (e) {
+            console.error('⚠️  Failed to parse message:', e);
+        }
+    };
+
+    chatWS.onerror = function(error) {
+        console.error('❌ WebSocket Error:', error);
+    };
+
+    chatWS.onclose = function(event) {
+        console.log('🔌 WebSocket Disconnected');
+        console.log('   Code:', event.code);
+        console.log('   Reason:', event.reason || 'No reason');
+        console.log('   Clean:', event.wasClean);
+
+        // v2 close codes
+        switch(event.code) {
+            case 4001:
+                console.error('❌ Not authenticated! Please login first.');
+                break;
+            case 4002:
+                console.warn('⏰ Heartbeat timeout - no pong response');
+                break;
+            case 4003:
+                console.warn('🔄 Force disconnected - new connection opened elsewhere');
+                break;
+            default:
+                if (!event.wasClean) {
+                    console.warn('⚠️  Connection closed unexpectedly!');
+                }
+        }
+    };
+
+    return chatWS;
+}
+
+// ========================================
+// HELPER FUNCTIONS
+// ========================================
+
+function sendMessage(conversationId, content, sourcePage = '/test-console', clientContext = null) {
+    if (!chatWS || chatWS.readyState !== WebSocket.OPEN) {
+        console.error('❌ WebSocket not connected! Call connectWebSocket() first.');
+        return;
+    }
+
+    const message = {
+        action: 'send_message',
+        data: {
+            conversation_id: conversationId,
+            content: content,
+            source_page: sourcePage,
+            client_context: clientContext
+        }
+    };
+
+    console.log('📤 Sending message:', message);
+    chatWS.send(JSON.stringify(message));
+}
+
+// v2: Send pong manually (for testing)
+function sendPong() {
+    if (!chatWS || chatWS.readyState !== WebSocket.OPEN) {
+        console.error('❌ WebSocket not connected!');
+        return;
+    }
+    chatWS.send(JSON.stringify({ action: 'pong', data: {} }));
+    console.log('🏓 Pong sent manually');
+}
+
+function startTyping(conversationId) {
+    if (!chatWS || chatWS.readyState !== WebSocket.OPEN) {
+        console.error('❌ WebSocket not connected!');
+        return;
+    }
+
+    chatWS.send(JSON.stringify({
+        action: 'typing_start',
+        data: { conversation_id: conversationId }
+    }));
+    console.log('⌨️  Started typing...');
+}
+
+function stopTyping(conversationId) {
+    if (!chatWS || chatWS.readyState !== WebSocket.OPEN) {
+        console.error('❌ WebSocket not connected!');
+        return;
+    }
+
+    chatWS.send(JSON.stringify({
+        action: 'typing_stop',
+        data: { conversation_id: conversationId }
+    }));
+    console.log('⌨️  Stopped typing');
+}
+
+function markAsRead(conversationId, messageIds = null) {
+    if (!chatWS || chatWS.readyState !== WebSocket.OPEN) {
+        console.error('❌ WebSocket not connected!');
+        return;
+    }
+
+    const data = { conversation_id: conversationId };
+    if (messageIds) {
+        data.message_ids = Array.isArray(messageIds) ? messageIds : [messageIds];
+    }
+
+    chatWS.send(JSON.stringify({
+        action: 'mark_read',
+        data: data
+    }));
+    console.log('👁️  Marking as read...');
+}
+
+function addReaction(messageId, reactionType = 'like') {
+    if (!chatWS || chatWS.readyState !== WebSocket.OPEN) {
+        console.error('❌ WebSocket not connected!');
+        return;
+    }
+
+    chatWS.send(JSON.stringify({
+        action: 'add_reaction',
+        data: {
+            message_id: messageId,
+            reaction_type: reactionType  // like, dislike, helpful
+        }
+    }));
+    console.log(`👍 Adding "${reactionType}" reaction...`);
+}
+
+function disconnect() {
+    if (chatWS) {
+        chatWS.close();
+        console.log('🔌 Disconnecting...');
+    } else {
+        console.log('⚠️  Already disconnected');
+    }
+}
+
+function getStatus() {
+    if (!chatWS) {
+        console.log('Status: Not initialized');
+        return;
+    }
+
+    const states = {
+        0: 'CONNECTING',
+        1: 'OPEN',
+        2: 'CLOSING',
+        3: 'CLOSED'
+    };
+
+    console.log('WebSocket Status:', states[chatWS.readyState]);
+    console.log('URL:', chatWS.url);
+}
+
+// ========================================
+// AUTO CONNECT
+// ========================================
+
+console.log('🚀 WebSocket Test Script v2 Loaded!');
+console.log('');
+console.log('Available functions:');
+console.log('  connectWebSocket(url)                    - Connect to WebSocket server');
+console.log('  sendMessage(convId, text, page, ctx)    - Send a message with meta data');
+console.log('  startTyping(convId)                      - Start typing indicator');
+console.log('  stopTyping(convId)                       - Stop typing indicator');
+console.log('  markAsRead(convId, [msgIds])             - Mark messages as read');
+console.log('  addReaction(msgId, type)                 - Add reaction (like/dislike/helpful)');
+console.log('  sendPong()                               - Send pong manually (v2)');
+console.log('  disconnect()                             - Close connection');
+console.log('  getStatus()                              - Check connection status');
+console.log('');
+console.log('v2 Features:');
+console.log('  - Auto pong response to ping (heartbeat)');
+console.log('  - Force disconnect handling (multi-tab)');
+console.log('  - source_page & client_context support');
+console.log('');
+console.log('Close codes: 4001=Not auth, 4002=Heartbeat timeout, 4003=Force disconnect');
+console.log('');
+
+// === Choose connection URL ===
+// For PRODUCTION:
+// connectWebSocket('wss://ft1zzp-95-72-16-20.ru.tuna.am/ws/chat/');
+
+// For LOCAL testing:
+// connectWebSocket('ws://localhost:8001/ws/chat/');
+
+console.log('⚠️  Auto-connect disabled. Run one of:');
+console.log('   connectWebSocket("wss://ft1zzp-95-72-16-20.ru.tuna.am/ws/chat/")  - Production');
+console.log('   connectWebSocket("ws://localhost:8001/ws/chat/") - Local');
+console.log('');
+```
+После подключался:
+```js
+connectWebSocket('wss://ft1zzp-95-72-16-20.ru.tuna.am/ws/chat/')
+```
+После мог успешно взаимодействовать:
+```js
+sendMessage(2, 'Привет! Это тестовое сообщение3', '/goals', { test: true })
+```
+ID чата я получал из эндпоинта get-user-data, в нем были добавлены данные для получения (это описано в прикрепленном файле):
+```js
+// В get-user-data возвращается объект ai_bot_chat:
+{
+    conversation_id: number,  // ID беседы (создаётся автоматически)
+    unread_count: number,     // Непрочитанных сообщений от бота
+    is_bot_processing: boolean // Флаг блокировки
+}
+```
+
+----
+
+Твоя задача изучить всё, составить детальный план реализации.  
+Важно учитывать отказоустойчивость, что может быть только одно соединение для пользователя, если соединение прервалось не по причине открытия нового, то пытаться восстановить его.

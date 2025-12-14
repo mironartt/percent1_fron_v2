@@ -1,0 +1,78 @@
+А ты учел в своем плане что для работы с чатом  AI ментора есть не только сокет-эндпоинты, но и обычные REST эндпоинты?
+
+### REST vs WebSocket: когда что использовать
+
+REST и WebSocket частично дублируют функционал — это сделано намеренно для гибкости и fallback.
+
+#### Сравнение
+
+| Сценарий | REST | WebSocket | Почему |
+|----------|:----:|:---------:|--------|
+| Загрузка истории | ✅ | ❌ | Пагинация, HTTP кэш, можно до connect |
+| Список бесед | ✅ | ❌ | Не требует real-time |
+| Удаление беседы | ✅ | ❌ | Одноразовое действие |
+| Fallback (файрволы) | ✅ | ❌ | Корп. сети блокируют WS |
+| SSR/SEO | ✅ | ❌ | Серверный рендеринг |
+| Real-time сообщения | ❌ | ✅ | Низкая латентность |
+| Typing индикатор | ❌ | ✅ | Частые события |
+| Статусы read/online | ❌ | ✅ | Push от сервера |
+
+#### Что дублируется
+
+```
+REST                              WebSocket
+────────────────────────────      ─────────────────────────
+/chat/messages/send/         ←→   action: send_message
+/chat/messages/mark-read/    ←→   action: mark_read
+/chat/reactions/update/      ←→   action: add_reaction
+```
+
+#### Рекомендуемый паттерн
+
+```javascript
+// 1. При открытии приложения — REST
+const userData = await api.post('/get-user-data/')
+const { conversation_id } = userData.ai_bot_chat
+
+// 2. При открытии чата — REST для истории
+const history = await api.post('/chat/messages/get/', {
+  conversation_id,
+  page: 1,
+  order_direction: 'desc'
+})
+messages.value = history.data.messages_data.reverse()
+
+// 3. Подключаем WebSocket для real-time
+const socket = new WebSocket('wss://domain/ws/chat/')
+
+// 4. Отправка сообщений — через WebSocket (быстрее)
+function sendMessage(content) {
+  if (socket.readyState === WebSocket.OPEN) {
+    // Предпочтительно — WebSocket
+    socket.send(JSON.stringify({
+      action: 'send_message',
+      data: { conversation_id, content, source_page }
+    }))
+  } else {
+    // Fallback — REST
+    api.post('/chat/messages/send/', {
+      conversation_id, content, source_page
+    })
+  }
+}
+
+// 5. Новые сообщения — только WebSocket
+socket.onmessage = (event) => {
+  const data = JSON.parse(event.data)
+  if (data.type === 'new_message') {
+    messages.value.push(data.data.message)
+  }
+}
+```
+
+#### Итого
+
+| Используй | Для |
+|-----------|-----|
+| **REST** | История, списки бесед, удаление, fallback |
+| **WebSocket** | Отправка сообщений, typing, статусы, получение новых сообщений |
