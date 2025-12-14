@@ -129,14 +129,21 @@
                 <span class="goal-check">✓</span>
                 <div class="goal-content">
                   <strong>Создать финансовую подушку на 3 месяца</strong>
-                  <span class="goal-metric">Накопить сумму = 3 месячных расхода</span>
+                  <span class="goal-metric">Накопить 150-300 тыс. ₽ к июню 2026</span>
                 </div>
               </div>
               <div class="goal-item">
                 <span class="goal-check">✓</span>
                 <div class="goal-content">
                   <strong>Увеличить доход на 20%</strong>
-                  <span class="goal-metric">Найти дополнительный источник дохода</span>
+                  <span class="goal-metric">Через фриланс, повышение или смену работы</span>
+                </div>
+              </div>
+              <div class="goal-item">
+                <span class="goal-check">✓</span>
+                <div class="goal-content">
+                  <strong>Оптимизировать расходы на 15%</strong>
+                  <span class="goal-metric">Сократить траты на 10-15 тыс. ₽ в месяц</span>
                 </div>
               </div>
             </div>
@@ -145,44 +152,80 @@
               <h4>Первые шаги:</h4>
               <div class="step-item">
                 <span class="step-number">1</span>
-                <span class="step-title">Составить бюджет на январь</span>
-                <span class="step-time">2 ч</span>
-              </div>
-              <div class="step-item">
-                <span class="step-number">2</span>
-                <span class="step-title">Открыть накопительный счёт</span>
+                <span class="step-title">Скачать выписки из банков за 2025 и выгрузить в Google Sheets</span>
                 <span class="step-time">1 ч</span>
               </div>
               <div class="step-item">
+                <span class="step-number">2</span>
+                <span class="step-title">Категоризировать расходы: жильё, еда, транспорт, развлечения</span>
+                <span class="step-time">2 ч</span>
+              </div>
+              <div class="step-item">
                 <span class="step-number">3</span>
-                <span class="step-title">Проанализировать расходы за 2025</span>
-                <span class="step-time">3 ч</span>
+                <span class="step-title">Открыть накопительный счёт в Тинькофф/Альфа с 10%+ годовых</span>
+                <span class="step-time">30 мин</span>
               </div>
               <div class="step-item">
                 <span class="step-number">4</span>
-                <span class="step-title">Найти 3 идеи для доп. дохода</span>
+                <span class="step-title">Настроить автоперевод 10% зарплаты на накопительный счёт</span>
+                <span class="step-time">30 мин</span>
+              </div>
+              <div class="step-item">
+                <span class="step-number">5</span>
+                <span class="step-title">Составить бюджет на январь в приложении (ZenMoney, CoinKeeper)</span>
                 <span class="step-time">2 ч</span>
+              </div>
+              <div class="step-item">
+                <span class="step-number">6</span>
+                <span class="step-title">Изучить 5 вакансий на HeadHunter для понимания рынка</span>
+                <span class="step-time">1 ч</span>
+              </div>
+              <div class="step-item">
+                <span class="step-number">7</span>
+                <span class="step-title">Написать список из 3 идей дополнительного дохода</span>
+                <span class="step-time">1 ч</span>
+              </div>
+              <div class="step-item">
+                <span class="step-number">8</span>
+                <span class="step-title">Найти 3 статьи экономии (подписки, тарифы, кешбэк)</span>
+                <span class="step-time">1 ч</span>
               </div>
             </div>
 
             <div class="example-plan">
               <h4>План на 4 недели:</h4>
-              <div class="week-items">
-                <div class="week-item">
+              <div class="week-items-detailed">
+                <div class="week-item-detailed">
                   <span class="week-num">Неделя 1</span>
-                  <span class="week-focus">Анализ и планирование</span>
+                  <ul class="week-tasks-list">
+                    <li>Выгрузить выписки из банков</li>
+                    <li>Категоризировать расходы за 6 месяцев</li>
+                    <li>Найти подписки на отмену</li>
+                  </ul>
                 </div>
-                <div class="week-item">
+                <div class="week-item-detailed">
                   <span class="week-num">Неделя 2</span>
-                  <span class="week-focus">Первые шаги</span>
+                  <ul class="week-tasks-list">
+                    <li>Открыть накопительный счёт</li>
+                    <li>Настроить автоперевод 10%</li>
+                    <li>Установить приложение для бюджета</li>
+                  </ul>
                 </div>
-                <div class="week-item">
+                <div class="week-item-detailed">
                   <span class="week-num">Неделя 3</span>
-                  <span class="week-focus">Набор темпа</span>
+                  <ul class="week-tasks-list">
+                    <li>Составить бюджет на февраль</li>
+                    <li>Изучить 5 вакансий</li>
+                    <li>Выбрать 1 идею доп. дохода</li>
+                  </ul>
                 </div>
-                <div class="week-item">
+                <div class="week-item-detailed">
                   <span class="week-num">Неделя 4</span>
-                  <span class="week-focus">Рефлексия</span>
+                  <ul class="week-tasks-list">
+                    <li>Сделать первый шаг к доп. доходу</li>
+                    <li>Проверить баланс накоплений</li>
+                    <li>Скорректировать бюджет</li>
+                  </ul>
                 </div>
               </div>
             </div>
@@ -737,6 +780,39 @@ onMounted(() => {
   text-align: center;
 }
 
+.week-items-detailed {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.week-item-detailed {
+  background: rgba(30, 41, 59, 0.8);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.week-tasks-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0 0;
+}
+
+.week-tasks-list li {
+  font-size: 13px;
+  color: #cbd5e1;
+  padding: 4px 0;
+  padding-left: 16px;
+  position: relative;
+}
+
+.week-tasks-list li::before {
+  content: '○';
+  position: absolute;
+  left: 0;
+  color: #64748b;
+}
+
 .week-num {
   display: block;
   font-size: 12px;
@@ -772,6 +848,10 @@ onMounted(() => {
 
   .week-items {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .week-items-detailed {
+    grid-template-columns: 1fr;
   }
 
   .recommendation-example {

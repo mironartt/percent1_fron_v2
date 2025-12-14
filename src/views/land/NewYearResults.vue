@@ -122,15 +122,18 @@
 
           <div class="week-plan-block">
             <h3>План на 4 недели</h3>
-            <div class="weeks-grid">
+            <div class="weeks-list">
               <div 
-                v-for="week in store.weekPlan" 
-                :key="week.week"
-                class="week-item"
+                v-for="weekItem in store.mainLeverRecommendations.weekPlan" 
+                :key="weekItem.week"
+                class="week-item-detailed"
               >
-                <div class="week-number">Неделя {{ week.week }}</div>
-                <div class="week-title">{{ week.title }}</div>
-                <div class="week-focus">{{ week.focus }}</div>
+                <div class="week-header">
+                  <div class="week-number">Неделя {{ weekItem.week }}</div>
+                </div>
+                <ul class="week-tasks">
+                  <li v-for="(task, idx) in weekItem.tasks" :key="idx">{{ task }}</li>
+                </ul>
               </div>
             </div>
           </div>
@@ -532,35 +535,52 @@ function restartTest() {
   font-weight: 600;
 }
 
-.weeks-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+.weeks-list {
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 }
 
-.week-item {
+.week-item-detailed {
   background: rgba(15, 23, 42, 0.5);
   border-radius: 12px;
   padding: 16px;
 }
 
+.week-header {
+  margin-bottom: 12px;
+}
+
 .week-number {
-  font-size: 12px;
+  font-size: 14px;
   color: #10b981;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-bottom: 8px;
 }
 
-.week-title {
-  font-weight: 600;
-  margin-bottom: 4px;
+.week-tasks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.week-focus {
-  font-size: 13px;
-  color: #94a3b8;
+.week-tasks li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  color: #e2e8f0;
   line-height: 1.4;
+}
+
+.week-tasks li::before {
+  content: '○';
+  color: #64748b;
+  flex-shrink: 0;
 }
 
 .share-section {
@@ -706,8 +726,12 @@ function restartTest() {
     padding: 16px;
   }
 
-  .weeks-grid {
-    grid-template-columns: 1fr;
+  .weeks-list {
+    gap: 12px;
+  }
+  
+  .week-item-detailed {
+    padding: 12px;
   }
 
   .goal-item {
