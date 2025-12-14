@@ -71,6 +71,12 @@
               </div>
             </div>
           </div>
+          <div class="section-cta">
+            <router-link to="/auth/register" class="cta-btn-secondary">
+              Сохранить результаты
+              <span class="arrow">→</span>
+            </router-link>
+          </div>
         </div>
 
         <div class="lever-section" v-if="store.mainLever">
@@ -160,6 +166,13 @@
                 </div>
               </div>
             </div>
+          </div>
+          <div class="section-cta">
+            <router-link to="/auth/register" class="cta-btn-secondary">
+              Добавить план в сервис
+              <span class="arrow">→</span>
+            </router-link>
+            <p class="cta-hint">Бесплатно • Все шаги появятся в твоём планировщике</p>
           </div>
         </div>
 
@@ -1282,6 +1295,41 @@ function restartTest() {
   color: #cbd5e1;
   line-height: 1.5;
   margin: 0;
+}
+
+.section-cta {
+  margin-top: 32px;
+  text-align: center;
+}
+
+.cta-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  transition: all 0.2s;
+}
+
+.cta-btn-secondary:hover {
+  background: rgba(16, 185, 129, 0.25);
+  transform: translateY(-2px);
+}
+
+.cta-btn-secondary .arrow {
+  font-size: 18px;
+}
+
+.cta-hint {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #64748b;
 }
 
 .cta-btn-large {
