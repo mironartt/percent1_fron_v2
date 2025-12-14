@@ -32,7 +32,7 @@
           <span v-if="unreadCount > 0" class="unread-badge-collapsed">{{ unreadCount }}</span>
         </div>
         <span class="collapsed-label">AI Ментор</span>
-        <div class="collapsed-indicator" :class="{ 'has-messages': messages.length > 0 || unreadCount > 0 }">
+        <div class="collapsed-indicator" :class="{ 'has-messages': hasMessages || unreadCount > 0 }">
           <MessageCircle :size="14" :stroke-width="1.5" />
         </div>
         <ChevronLeft :size="16" :stroke-width="1.5" class="collapsed-arrow" />
@@ -47,8 +47,8 @@
           <div class="mentor-info">
             <h3>AI Ментор</h3>
             <span class="mentor-status">
-              <span class="status-dot"></span>
-              Онлайн
+              <span :class="['status-dot', connectionStatusClass]"></span>
+              {{ connectionStatusText }}
             </span>
           </div>
         </div>
@@ -63,8 +63,13 @@
         </div>
       </div>
 
-      <div class="chat-container" ref="chatContainer">
-        <div v-if="messages.length === 0" class="welcome-message">
+      <div class="chat-container" ref="chatContainer" @scroll="handleScroll">
+        <div v-if="chatStore.isLoadingMore" class="loading-more">
+          <Loader2 :size="20" :stroke-width="1.5" class="spin" />
+          <span>Загрузка сообщений...</span>
+        </div>
+        
+        <div v-if="!hasMessages && !chatStore.isLoading" class="welcome-message">
           <div class="welcome-icon">
             <Sparkles :size="40" :stroke-width="1.5" />
           </div>
@@ -76,6 +81,7 @@
               :key="prompt.id"
               class="quick-prompt-btn"
               @click="sendQuickPrompt(prompt.text)"
+              :disabled="!canSendMessage"
             >
               <component :is="prompt.icon" :size="14" :stroke-width="1.5" />
               {{ prompt.label }}
@@ -83,22 +89,27 @@
           </div>
         </div>
 
+        <div v-else-if="chatStore.isLoading" class="loading-container">
+          <Loader2 :size="32" :stroke-width="1.5" class="spin" />
+          <span>Загрузка чата...</span>
+        </div>
+
         <div v-else class="messages-list">
           <div 
             v-for="msg in messages" 
-            :key="msg.id"
-            :class="['message', msg.role]"
+            :key="msg.message_id"
+            :class="['message', msg.message_type === 'bot' ? 'assistant' : 'user']"
           >
-            <div v-if="msg.role === 'assistant'" class="message-avatar">
+            <div v-if="msg.message_type === 'bot'" class="message-avatar">
               <Bot :size="16" :stroke-width="1.5" />
             </div>
             <div class="message-bubble">
-              <p v-html="formatMessage(msg.content)"></p>
-              <span class="message-time">{{ formatTime(msg.timestamp) }}</span>
+              <div v-html="formatMessage(msg.content)"></div>
+              <span class="message-time">{{ formatTime(msg.date_created) }}</span>
             </div>
           </div>
 
-          <div v-if="isTyping" class="message assistant">
+          <div v-if="chatStore.isBotTyping" class="message assistant">
             <div class="message-avatar">
               <Bot :size="16" :stroke-width="1.5" />
             </div>
@@ -111,22 +122,29 @@
         </div>
       </div>
 
-      <form class="input-container" @submit.prevent="sendMessage">
+      <div v-if="chatStore.forceDisconnected" class="force-disconnect-banner">
+        <AlertCircle :size="16" :stroke-width="1.5" />
+        <span>Чат открыт в другой вкладке</span>
+        <button @click="reconnectChat" class="reconnect-btn">Подключиться</button>
+      </div>
+
+      <form class="input-container" @submit.prevent="handleSendMessage">
         <textarea
           v-model="inputText"
           placeholder="Напишите сообщение..."
-          :disabled="isTyping"
+          :disabled="!canSendMessage"
           ref="inputRef"
           rows="3"
-          @keydown.enter.exact.prevent="sendMessage"
+          @keydown.enter.exact.prevent="handleSendMessage"
           @keydown.enter.shift.exact="() => {}"
         ></textarea>
         <button 
           type="submit" 
           class="send-btn"
-          :disabled="!inputText.trim() || isTyping"
+          :disabled="!inputText.trim() || !canSendMessage"
         >
-          <Send :size="18" :stroke-width="1.5" />
+          <Send v-if="!chatStore.isBotProcessing" :size="18" :stroke-width="1.5" />
+          <Loader2 v-else :size="18" :stroke-width="1.5" class="spin" />
         </button>
       </form>
       </div>
@@ -138,12 +156,12 @@
 import { ref, computed, nextTick, watch, onMounted, onUnmounted, markRaw } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { useChatStore } from '../stores/chat'
 import { useXpStore } from '../stores/xp'
 import { 
   Bot, 
   Sparkles, 
   Send, 
-  Trash2, 
   Target, 
   Lightbulb, 
   Calendar, 
@@ -152,24 +170,46 @@ import {
   PanelRightClose,
   MessageCircle,
   ChevronLeft,
-  X
+  Loader2,
+  AlertCircle
 } from 'lucide-vue-next'
 
 const route = useRoute()
 const store = useAppStore()
+const chatStore = useChatStore()
 const xpStore = useXpStore()
 
 const inputText = ref('')
-const isTyping = ref(false)
 const chatContainer = ref(null)
 const inputRef = ref(null)
 const isMobile = ref(false)
+const isInitialized = ref(false)
 
-const messages = computed(() => store.mentor.messages)
+const messages = computed(() => chatStore.messages)
+const hasMessages = computed(() => chatStore.messages.length > 0)
 const isCollapsed = computed(() => store.mentorPanelCollapsed)
 const isMobileOpen = computed(() => store.mentorMobileOpen)
-const unreadCount = computed(() => store.unreadMentorCount)
+const unreadCount = computed(() => chatStore.unreadCount)
 const spotlightMode = computed(() => store.mentorSpotlightMode)
+const canSendMessage = computed(() => chatStore.canSendMessage && !chatStore.forceDisconnected)
+
+const connectionStatusClass = computed(() => {
+  if (chatStore.forceDisconnected) return 'offline'
+  switch (chatStore.connectionStatus) {
+    case 'connected': return 'online'
+    case 'reconnecting': return 'connecting'
+    default: return 'offline'
+  }
+})
+
+const connectionStatusText = computed(() => {
+  if (chatStore.forceDisconnected) return 'Отключен'
+  switch (chatStore.connectionStatus) {
+    case 'connected': return 'Онлайн'
+    case 'reconnecting': return 'Подключение...'
+    default: return 'Офлайн'
+  }
+})
 
 function checkMobile() {
   isMobile.value = window.innerWidth < 1024
@@ -187,6 +227,7 @@ function toggleMobile() {
   } else {
     store.openMentorMobile()
     document.body.style.overflow = 'hidden'
+    initializeChat()
   }
 }
 
@@ -197,6 +238,29 @@ function closeMobile() {
 
 function exitSpotlight() {
   store.disableMentorSpotlight()
+}
+
+async function initializeChat() {
+  if (!chatStore.conversationId) return
+  
+  if (!isInitialized.value) {
+    const result = await chatStore.loadMessages()
+    
+    if (result.success) {
+      isInitialized.value = true
+    }
+    
+    await nextTick()
+    scrollToBottom()
+  }
+  
+  if (!chatStore.isConnected && !chatStore.forceDisconnected) {
+    chatStore.connectWebSocket()
+  }
+  
+  if (chatStore.unreadCount > 0) {
+    chatStore.markAsRead()
+  }
 }
 
 const quickPrompts = computed(() => {
@@ -219,138 +283,45 @@ const quickPrompts = computed(() => {
   return basePrompts
 })
 
-const demoResponses = {
-  default: `Отличный вопрос! Я помогу вам разобраться.
-
-Для начала рекомендую:
-1. Оценить текущее состояние жизни через модуль ССП (Сбалансированная система показателей)
-2. Записать все идеи целей в Банк Целей
-3. Выбрать 1-3 ключевые цели для работы
-
-Что из этого вас интересует больше всего?`,
-
-  'С чего начать': `Рад помочь с первыми шагами! Вот оптимальный путь:
-
-**1. Оцените свою жизнь (ССП)**
-Пройдите модуль «Сбалансированная система» — это займет 10-15 минут. Вы оцените 8 сфер жизни и увидите, где нужны улучшения.
-
-**2. Соберите идеи целей**
-В «Банке Целей» запишите все, чего хотите достичь. Не фильтруйте — записывайте всё!
-
-**3. Выберите фокус**
-Из всех идей выберите 1-3 главные цели на ближайший период.
-
-Начните с модуля ССП — он даст понимание приоритетов.`,
-
-  'Как правильно формулировать': `Хороший вопрос о формулировке целей!
-
-**Используйте принцип SMART:**
-• **S** (Specific) — Конкретная: «Пробежать 5 км» вместо «Заняться бегом»
-• **M** (Measurable) — Измеримая: как вы поймёте, что достигли?
-• **A** (Achievable) — Достижимая: реально ли это сейчас?
-• **R** (Relevant) — Актуальная: зачем вам это?
-• **T** (Time-bound) — Ограниченная во времени: к какой дате?
-
-**Пример:**
-Вместо: «Хочу выучить английский»
-Лучше: «К 1 марта пройти курс B1 и сдать тест на 80%»
-
-Хотите попрактиковаться с вашей целью?`,
-
-  'Как эффективно планировать': `Планирование недели — ключ к прогрессу!
-
-**Метод еженедельного планирования:**
-
-1. **Воскресенье вечером (15 мин)**
-   • Посмотрите на ключевые цели
-   • Выберите 2-3 главные задачи недели
-   • Распределите их по дням
-
-2. **Каждое утро (5 мин)**
-   • Проверьте план на день
-   • Выберите 1-3 приоритетные задачи
-   • Начните с самой важной
-
-3. **Вечером (5 мин)**
-   • Отметьте выполненное
-   • Запишите в дневник рефлексию
-   • Скорректируйте план на завтра
-
-**Правило 1%:** Достаточно делать одну маленькую задачу в день!`,
-
-  'О методе 1%': `**Философия 1% улучшений**
-
-Это принцип, что маленькие ежедневные улучшения приводят к огромным результатам.
-
-**Математика:**
-• 1% улучшения каждый день = 37x рост за год
-• 1% ухудшения каждый день = почти 0 через год
-
-**Как применять:**
-1. Не пытайтесь изменить всё сразу
-2. Выберите одну маленькую привычку
-3. Делайте её каждый день
-4. Добавляйте новую только когда первая стала автоматической
-
-**Примеры 1% действий:**
-• 5 минут чтения
-• 1 отжимание
-• 1 благодарность в дневнике
-• 1 новое слово на иностранном
-
-Какую привычку хотите внедрить первой?`
-}
-
 function togglePanel() {
   if (isMobile.value) {
     closeMobile()
   } else {
     store.toggleMentorPanel()
-  }
-}
-
-function findResponse(userMessage) {
-  const lowerMessage = userMessage.toLowerCase()
-  
-  for (const [key, response] of Object.entries(demoResponses)) {
-    if (key !== 'default' && lowerMessage.includes(key.toLowerCase())) {
-      return response
+    if (!store.mentorPanelCollapsed) {
+      initializeChat()
     }
   }
-  
-  return demoResponses.default
 }
 
 function formatMessage(text) {
+  if (!text) return ''
   return text
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/`(.*?)`/g, '<code>$1</code>')
     .replace(/\n/g, '<br>')
 }
 
 function formatTime(timestamp) {
+  if (!timestamp) return ''
   const date = new Date(timestamp)
   return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
 }
 
-async function sendMessage() {
-  if (!inputText.value.trim() || isTyping.value) return
+async function handleSendMessage() {
+  if (!inputText.value.trim() || !canSendMessage.value) return
   
   const userText = inputText.value.trim()
   inputText.value = ''
   
-  store.sendMentorMessage(userText)
-  
-  await nextTick()
-  scrollToBottom()
-  
-  isTyping.value = true
-  
-  await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000))
-  
-  const response = findResponse(userText)
-  store.sendMentorMessage(response, 'assistant')
-  
-  isTyping.value = false
+  await chatStore.sendMessage(userText, {
+    sourcePage: route.path,
+    clientContext: {
+      routeName: route.name,
+      isMobile: isMobile.value
+    }
+  })
   
   await nextTick()
   scrollToBottom()
@@ -358,17 +329,29 @@ async function sendMessage() {
 
 function sendQuickPrompt(text) {
   inputText.value = text
-  sendMessage()
-}
-
-function clearChat() {
-  store.clearMentorMessages()
+  handleSendMessage()
 }
 
 function scrollToBottom() {
   if (chatContainer.value) {
     chatContainer.value.scrollTop = chatContainer.value.scrollHeight
   }
+}
+
+async function handleScroll() {
+  if (!chatContainer.value) return
+  
+  if (chatContainer.value.scrollTop < 100 && chatStore.pagination.hasMore && !chatStore.isLoadingMore) {
+    const scrollHeightBefore = chatContainer.value.scrollHeight
+    await chatStore.loadOlderMessages()
+    await nextTick()
+    const scrollHeightAfter = chatContainer.value.scrollHeight
+    chatContainer.value.scrollTop = scrollHeightAfter - scrollHeightBefore
+  }
+}
+
+function reconnectChat() {
+  chatStore.reconnectAfterForceDisconnect()
 }
 
 watch(messages, () => {
@@ -385,15 +368,34 @@ watch(() => route.path, () => {
   }
 })
 
+watch(() => store.mentorPanelCollapsed, (collapsed) => {
+  if (!collapsed && !isMobile.value) {
+    initializeChat()
+  }
+})
+
+watch(() => chatStore.conversationId, (newId, oldId) => {
+  if (newId && newId !== oldId) {
+    isInitialized.value = false
+    if (!store.mentorPanelCollapsed && !isMobile.value) {
+      initializeChat()
+    }
+  }
+})
+
 onMounted(() => {
-  scrollToBottom()
   checkMobile()
   window.addEventListener('resize', checkMobile)
+  
+  if (!store.mentorPanelCollapsed && !isMobile.value) {
+    initializeChat()
+  }
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
   document.body.style.overflow = ''
+  chatStore.disconnectWebSocket()
 })
 </script>
 
@@ -679,7 +681,26 @@ onUnmounted(() => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
+  background: #6b7280;
+  transition: background 0.3s;
+}
+
+.status-dot.online {
   background: #22c55e;
+}
+
+.status-dot.connecting {
+  background: #f59e0b;
+  animation: pulse-dot 1s ease-in-out infinite;
+}
+
+.status-dot.offline {
+  background: #6b7280;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 .header-actions {
@@ -710,6 +731,35 @@ onUnmounted(() => {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 16px;
+  color: var(--text-secondary);
+}
+
+.loading-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .welcome-message {
@@ -763,9 +813,14 @@ onUnmounted(() => {
   text-align: left;
 }
 
-.quick-prompt-btn:hover {
+.quick-prompt-btn:hover:not(:disabled) {
   background: var(--bg-hover);
   border-color: var(--primary-color);
+}
+
+.quick-prompt-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .messages-list {
@@ -803,6 +858,14 @@ onUnmounted(() => {
   position: relative;
 }
 
+.message-bubble code {
+  background: var(--bg-secondary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.875em;
+}
+
 .message.assistant .message-bubble {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
@@ -815,21 +878,21 @@ onUnmounted(() => {
   border-bottom-right-radius: 4px;
 }
 
-.message-bubble p {
-  margin: 0;
-  font-size: 0.875rem;
-  line-height: 1.5;
-}
-
 .message-time {
   display: block;
-  font-size: 0.7rem;
-  opacity: 0.7;
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
   margin-top: 4px;
+  opacity: 0.7;
+}
+
+.message.user .message-time {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .message-bubble.typing {
   display: flex;
+  align-items: center;
   gap: 4px;
   padding: 14px 18px;
 }
@@ -837,23 +900,53 @@ onUnmounted(() => {
 .typing-dot {
   width: 8px;
   height: 8px;
-  background: var(--text-secondary);
   border-radius: 50%;
-  animation: typingBounce 1.4s infinite ease-in-out;
+  background: var(--text-secondary);
+  animation: typing-bounce 1.4s ease-in-out infinite;
 }
 
-.typing-dot:nth-child(1) { animation-delay: -0.32s; }
-.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+.typing-dot:nth-child(1) { animation-delay: 0s; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
 
-@keyframes typingBounce {
-  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-  40% { transform: scale(1); opacity: 1; }
+@keyframes typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-4px); }
+}
+
+.force-disconnect-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #fef3c7;
+  border-top: 1px solid #fcd34d;
+  color: #92400e;
+  font-size: 0.875rem;
+}
+
+.reconnect-btn {
+  margin-left: auto;
+  padding: 4px 12px;
+  background: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.reconnect-btn:hover {
+  background: #d97706;
 }
 
 .input-container {
   display: flex;
+  align-items: flex-end;
   gap: 8px;
-  padding: 16px;
+  padding: 12px 16px;
   border-top: 1px solid var(--border-color);
   background: var(--bg-secondary);
   flex-shrink: 0;
@@ -861,32 +954,32 @@ onUnmounted(() => {
 
 .input-container textarea {
   flex: 1;
-  padding: 12px 16px;
+  padding: 10px 12px;
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: 12px;
   background: var(--card-bg);
-  font-size: 0.875rem;
   color: var(--text-primary);
+  font-size: 0.875rem;
+  resize: none;
   outline: none;
   transition: border-color 0.2s;
-  resize: none;
   font-family: inherit;
   line-height: 1.5;
-  min-height: 72px;
 }
 
 .input-container textarea:focus {
   border-color: var(--primary-color);
 }
 
-.input-container textarea::placeholder {
-  color: var(--text-secondary);
+.input-container textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .send-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
   color: white;
@@ -894,20 +987,22 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.2s, transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
   flex-shrink: 0;
 }
 
 .send-btn:hover:not(:disabled) {
   transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 .send-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1023px) {
   .mentor-mobile-btn {
     display: flex;
   }
@@ -921,15 +1016,6 @@ onUnmounted(() => {
   .mentor-panel.mobile-open {
     transform: translateX(0);
   }
-  
-  .mentor-panel.collapsed {
-    width: 100%;
-    max-width: 400px;
-  }
-  
-  .collapsed-content {
-    display: none;
-  }
 }
 
 @media (max-width: 480px) {
@@ -938,41 +1024,7 @@ onUnmounted(() => {
   }
   
   .mentor-mobile-btn {
-    bottom: 16px;
-    right: 16px;
-    width: 52px;
-    height: 52px;
+    bottom: 80px;
   }
-}
-
-/* Dark theme overrides */
-:root.dark .mentor-panel {
-  background: var(--bg-primary);
-  border-color: var(--border-color);
-}
-
-:root.dark .mentor-header {
-  background: var(--bg-tertiary);
-  border-color: var(--border-color);
-}
-
-:root.dark .chat-message.user {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-}
-
-:root.dark .chat-message.assistant {
-  background: rgba(129, 140, 248, 0.15);
-  color: var(--text-primary);
-}
-
-:root.dark .mentor-input {
-  background: var(--bg-tertiary);
-  border-color: var(--border-color);
-  color: var(--text-primary);
-}
-
-:root.dark .mentor-input::placeholder {
-  color: var(--text-tertiary);
 }
 </style>

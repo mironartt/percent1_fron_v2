@@ -1050,6 +1050,106 @@ export async function getXPHistoryGrouped(params = {}) {
   return request('POST', '/api/rest/front/app/habits/xp/history-grouped/', params)
 }
 
+// ========================================
+// CHAT API (AI Mentor WebSocket + REST fallback)
+// ========================================
+
+/**
+ * Получить список бесед (чатов) пользователя
+ * @param {object} params - Параметры запроса
+ * @param {string} [params.conversation_type_filter] - Фильтр типа: 'ai_bot' | 'user_to_user'
+ * @param {string} [params.order_by] - Поле сортировки: 'last_message_at'
+ * @param {string} [params.order_direction] - Направление: 'asc' | 'desc'
+ * @param {number} [params.page] - Номер страницы
+ * @param {number} [params.page_size] - Размер страницы (default 20)
+ * @returns {Promise<object>} - Список бесед
+ * @property {Array} data.conversations_data - Массив бесед
+ * @property {number} data.total_items - Всего бесед
+ * @property {number} data.total_pages - Всего страниц
+ */
+export async function getChatConversations(params = {}) {
+  return request('POST', '/api/rest/front/app/chat/conversations/get/', params)
+}
+
+/**
+ * Создать новую беседу
+ * @param {object} params - Параметры
+ * @param {string} [params.conversation_type] - Тип: 'ai_bot' (default) | 'user_to_user'
+ * @param {string} [params.title] - Название беседы
+ * @returns {Promise<object>} - Созданная беседа
+ * @property {object} data.conversation - Данные беседы
+ */
+export async function createChatConversation(params = {}) {
+  return request('POST', '/api/rest/front/app/chat/conversations/create/', params)
+}
+
+/**
+ * Удалить беседу (soft delete)
+ * @param {number} conversationId - ID беседы
+ * @returns {Promise<object>} - Результат
+ */
+export async function deleteChatConversation(conversationId) {
+  return request('POST', '/api/rest/front/app/chat/conversations/delete/', {
+    conversation_id: conversationId
+  })
+}
+
+/**
+ * Получить сообщения из беседы с пагинацией
+ * @param {object} params - Параметры запроса
+ * @param {number} params.conversation_id - ID беседы (обязательный)
+ * @param {string} [params.order_by] - Поле сортировки: 'date_created'
+ * @param {string} [params.order_direction] - Направление: 'asc' (старые сверху) | 'desc' (новые сверху)
+ * @param {number} [params.page] - Номер страницы
+ * @param {number} [params.page_size] - Размер страницы (default 50)
+ * @returns {Promise<object>} - Сообщения с пагинацией
+ * @property {Array} data.messages_data - Массив сообщений
+ * @property {number} data.total_items - Всего сообщений
+ * @property {number} data.total_pages - Всего страниц
+ * @property {number} data.page - Текущая страница
+ */
+export async function getChatMessages(params) {
+  return request('POST', '/api/rest/front/app/chat/messages/get/', params)
+}
+
+/**
+ * Отправить сообщение в беседу (REST fallback, если WebSocket недоступен)
+ * @param {object} params - Параметры
+ * @param {number} params.conversation_id - ID беседы
+ * @param {string} params.content - Текст сообщения (1-10000 символов)
+ * @param {number} [params.reply_to_id] - ID сообщения для ответа
+ * @param {string} [params.source_page] - URL страницы отправки (например '/goals')
+ * @param {object} [params.client_context] - Контекст UI (произвольный JSON)
+ * @returns {Promise<object>} - Отправленное сообщение
+ * @property {object} data.message - Данные сообщения
+ */
+export async function sendChatMessage(params) {
+  return request('POST', '/api/rest/front/app/chat/messages/send/', params)
+}
+
+/**
+ * Отметить сообщения как прочитанные
+ * @param {object} params - Параметры
+ * @param {number} params.conversation_id - ID беседы
+ * @param {Array<number>} [params.message_ids] - ID сообщений (если не указан - все непрочитанные)
+ * @returns {Promise<object>} - Результат
+ */
+export async function markChatMessagesRead(params) {
+  return request('POST', '/api/rest/front/app/chat/messages/mark-read/', params)
+}
+
+/**
+ * Обновить реакцию на сообщение
+ * @param {object} params - Параметры
+ * @param {number} params.message_id - ID сообщения
+ * @param {string} params.reaction_type - Тип реакции: 'like' | 'dislike' | 'helpful'
+ * @param {boolean} [params.remove] - Удалить реакцию (true) или добавить (false)
+ * @returns {Promise<object>} - Результат
+ */
+export async function updateChatReaction(params) {
+  return request('POST', '/api/rest/front/app/chat/reactions/update/', params)
+}
+
 // Экспорт API как объекта для удобства
 export const api = {
   request,
@@ -1105,7 +1205,15 @@ export const api = {
   updateReward,
   deleteReward,
   redeemReward,
-  getXPHistoryGrouped
+  getXPHistoryGrouped,
+  // Chat API
+  getChatConversations,
+  createChatConversation,
+  deleteChatConversation,
+  getChatMessages,
+  sendChatMessage,
+  markChatMessagesRead,
+  updateChatReaction
 }
 
 export default api
