@@ -84,6 +84,58 @@
           </div>
         </div>
 
+        <!-- Рекомендации: цели и шаги -->
+        <div class="recommendations-section" v-if="store.mainLeverRecommendations">
+          <h2 class="section-title">🎯 Твой план действий</h2>
+          
+          <div class="goals-block">
+            <h3>Цели на 2026</h3>
+            <div class="goals-list">
+              <div 
+                v-for="(goal, index) in store.mainLeverRecommendations.goals" 
+                :key="index"
+                class="goal-item"
+              >
+                <div class="goal-number">{{ index + 1 }}</div>
+                <div class="goal-content">
+                  <div class="goal-title">{{ goal.title }}</div>
+                  <div class="goal-metric">{{ goal.metric }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="steps-block">
+            <h3>Первые шаги</h3>
+            <div class="steps-list">
+              <div 
+                v-for="(step, index) in store.mainLeverRecommendations.steps" 
+                :key="index"
+                class="step-item"
+              >
+                <div class="step-checkbox">☐</div>
+                <div class="step-title">{{ step.title }}</div>
+                <div class="step-hours">{{ step.hours }}ч</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="week-plan-block">
+            <h3>План на 4 недели</h3>
+            <div class="weeks-grid">
+              <div 
+                v-for="week in store.weekPlan" 
+                :key="week.week"
+                class="week-item"
+              >
+                <div class="week-number">Неделя {{ week.week }}</div>
+                <div class="week-title">{{ week.title }}</div>
+                <div class="week-focus">{{ week.focus }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="share-section">
           <h3>Поделись результатами</h3>
           <div class="share-buttons">
@@ -95,25 +147,21 @@
               <span class="btn-icon">🔗</span>
               {{ copied ? 'Скопировано!' : 'Копировать ссылку' }}
             </button>
-            <button class="share-btn download" @click="downloadCard">
-              <span class="btn-icon">📥</span>
-              Скачать карточку
-            </button>
           </div>
         </div>
 
         <div class="cta-section">
           <div class="cta-card">
-            <h2>Хочешь план действий на 2026?</h2>
-            <p>Зарегистрируйся и получи персональный AI-план с конкретными целями и шагами</p>
+            <h2>Запланируй задачи в сервисе</h2>
+            <p>Зарегистрируйся, и твои цели и шаги уже будут ждать тебя в приложении</p>
             <ul class="cta-benefits">
-              <li>✓ 3-5 целей на основе твоих зон роста</li>
-              <li>✓ Декомпозиция на шаги по 1-4 часа</li>
-              <li>✓ План на первые 4 недели с датами</li>
+              <li>✓ Цели и шаги уже добавлены</li>
+              <li>✓ Трекер привычек и прогресса</li>
               <li>✓ AI-ментор для поддержки</li>
+              <li>✓ Напоминания в Telegram</li>
             </ul>
             <router-link to="/auth/register" class="cta-btn">
-              Получить AI-план бесплатно
+              Запланировать задачи
             </router-link>
           </div>
         </div>
@@ -126,9 +174,6 @@
       </div>
     </main>
 
-    <div class="share-card-container" ref="shareCardRef">
-      <ShareCard :store="store" />
-    </div>
   </div>
 </template>
 
@@ -136,12 +181,10 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNewYearStore } from '@/stores/newyear'
-import ShareCard from '@/components/newyear/ShareCard.vue'
 
 const router = useRouter()
 const store = useNewYearStore()
 const copied = ref(false)
-const shareCardRef = ref(null)
 
 onMounted(() => {
   if (!store.isCompleted) {
@@ -162,28 +205,6 @@ function copyLink() {
   setTimeout(() => {
     copied.value = false
   }, 2000)
-}
-
-async function downloadCard() {
-  try {
-    const html2canvas = (await import('html2canvas')).default
-    const cardElement = document.querySelector('.share-card')
-    if (!cardElement) return
-
-    const canvas = await html2canvas(cardElement, {
-      scale: 2,
-      backgroundColor: '#0f172a',
-      logging: false
-    })
-
-    const link = document.createElement('a')
-    link.download = 'my-year-2025.png'
-    link.href = canvas.toDataURL('image/png')
-    link.click()
-  } catch (error) {
-    console.error('Error generating image:', error)
-    alert('Не удалось скачать карточку. Попробуйте ещё раз.')
-  }
 }
 
 function restartTest() {
@@ -406,6 +427,142 @@ function restartTest() {
   line-height: 1.6;
 }
 
+.recommendations-section {
+  margin-bottom: 48px;
+}
+
+.section-title {
+  font-size: 28px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.goals-block,
+.steps-block,
+.week-plan-block {
+  background: rgba(30, 41, 59, 0.8);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.goals-block h3,
+.steps-block h3,
+.week-plan-block h3 {
+  font-size: 18px;
+  margin-bottom: 20px;
+  color: #10b981;
+}
+
+.goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.goal-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 12px;
+}
+
+.goal-number {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.goal-content {
+  flex: 1;
+}
+
+.goal-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.goal-metric {
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+.steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 10px;
+}
+
+.step-checkbox {
+  font-size: 18px;
+  color: #64748b;
+}
+
+.step-title {
+  flex: 1;
+  font-size: 15px;
+}
+
+.step-hours {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.weeks-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.week-item {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.week-number {
+  font-size: 12px;
+  color: #10b981;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.week-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.week-focus {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
 .share-section {
   text-align: center;
   margin-bottom: 48px;
@@ -444,11 +601,6 @@ function restartTest() {
 .share-btn.copy {
   background: rgba(148, 163, 184, 0.2);
   color: #f8fafc;
-}
-
-.share-btn.download {
-  background: rgba(16, 185, 129, 0.2);
-  color: #10b981;
 }
 
 .share-btn:hover {
@@ -527,12 +679,6 @@ function restartTest() {
   color: #f8fafc;
 }
 
-.share-card-container {
-  position: absolute;
-  left: -9999px;
-  top: -9999px;
-}
-
 @media (max-width: 768px) {
   .spheres-grid {
     grid-template-columns: 1fr;
@@ -548,6 +694,32 @@ function restartTest() {
   
   .cta-card {
     padding: 24px;
+  }
+
+  .section-title {
+    font-size: 24px;
+  }
+
+  .goals-block,
+  .steps-block,
+  .week-plan-block {
+    padding: 16px;
+  }
+
+  .weeks-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .goal-item {
+    padding: 12px;
+  }
+
+  .step-item {
+    padding: 10px 12px;
+  }
+
+  .step-title {
+    font-size: 14px;
   }
 }
 </style>
