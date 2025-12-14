@@ -1,0 +1,70 @@
+[vite] connecting... client:733:9
+[vite] connected. client:827:12
+[Settings] Configuration loaded: 
+Object { DEV_MODE: true, SKIP_AUTH_CHECK: false, API_BASE_URL: "https://ft1zzp-95-72-16-20.ru.tuna.am", MIN_REQUEST_INTERVAL: 500, DEBUG_MODE: true, FORCE_SHOW_ONBOARDING: false, FORCE_SHOW_MINITASK: false, DEMO_PLANNING_MODE: false, CREDENTIALS_MODE: "include", YANDEX_METRIKA_ID: 105671462 }
+settings.js:42:11
+[API] Refreshing CSRF token from: https://ft1zzp-95-72-16-20.ru.tuna.am/api/rest/front/csrf/ api.js:255:15
+[Router] Navigation: / → /app index.js:250:13
+[API] Refreshing CSRF token from: https://ft1zzp-95-72-16-20.ru.tuna.am/api/rest/front/csrf/ api.js:255:15
+Предупреждения о куках 2
+[API] CSRF token saved to memory api.js:40:13
+[API] CSRF token initialized api.js:287:17
+[Store] User dashboard data loaded from localStorage app.js:702:19
+<Suspense> is an experimental feature and its API will likely change. runtime-core.esm-bundler.js:7112:42
+[API] CSRF token saved to memory api.js:40:13
+[API] CSRF token initialized api.js:287:17
+[Router] Fetching fresh user data from API... index.js:219:15
+[API] POST https://ft1zzp-95-72-16-20.ru.tuna.am/api/rest/front/get-user-data/ null api.js:163:13
+[API] Response: 
+Object { status: "ok", data: {…} }
+api.js:184:15
+[Router] User authenticated: 
+Object { id: 23, email: "cvlkj23lkjcxvklj@example.com", name: "cvlkj23lkjcxvklj", finish_onboarding: true, finish_minitask: true }
+index.js:226:17
+[Vue Router warn]: uncaught error during route navigation: devtools-BLCumUwL.mjs:59:15
+ReferenceError: require is not defined
+    setUser app.js:625
+    wrappedAction pinia.mjs:1400
+    actionName pinia.mjs:955
+    <anonymous> index.js:273
+    guardReturn devtools-BLCumUwL.mjs:753
+    runWithContext devtools-BLCumUwL.mjs:735
+    guardToPromiseFn devtools-BLCumUwL.mjs:753
+    guardToPromiseFn devtools-BLCumUwL.mjs:737
+    runWithContext runtime-core.esm-bundler.js:4065
+    runWithContext vue-router.mjs:1332
+    runGuardQueue vue-router.mjs:1534
+    promise callback*createRouter/runGuardQueue/< vue-router.mjs:1534
+    runGuardQueue vue-router.mjs:1534
+    navigate vue-router.mjs:1347
+    promise callback*navigate vue-router.mjs:1343
+    pushWithRedirect vue-router.mjs:1304
+    push vue-router.mjs:1257
+    install vue-router.mjs:1504
+    use runtime-core.esm-bundler.js:3928
+    <anonymous> main.js:11
+vue-router.mjs:1446:12
+[Vue Router warn]: Unexpected error when starting the router: ReferenceError: require is not defined
+    setUser app.js:625
+    wrappedAction pinia.mjs:1400
+    actionName pinia.mjs:955
+    <anonymous> index.js:273
+    guardReturn devtools-BLCumUwL.mjs:753
+    runWithContext devtools-BLCumUwL.mjs:735
+    guardToPromiseFn devtools-BLCumUwL.mjs:753
+    guardToPromiseFn devtools-BLCumUwL.mjs:737
+    runWithContext runtime-core.esm-bundler.js:4065
+    runWithContext vue-router.mjs:1332
+    runGuardQueue vue-router.mjs:1534
+    promise callback*createRouter/runGuardQueue/< vue-router.mjs:1534
+    runGuardQueue vue-router.mjs:1534
+    navigate vue-router.mjs:1347
+    promise callback*navigate vue-router.mjs:1343
+    pushWithRedirect vue-router.mjs:1304
+    push vue-router.mjs:1257
+    install vue-router.mjs:1504
+    use runtime-core.esm-bundler.js:3928
+    <anonymous> main.js:11
+devtools-BLCumUwL.mjs:59:15
+
+​
