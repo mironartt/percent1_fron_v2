@@ -69,17 +69,17 @@
               </div>
               <div class="card-body">
                 <div class="sphere-item">
-                  <span class="sphere-name">Здоровье</span>
+                  <span class="sphere-name">Здоровье и спорт</span>
                   <div class="progress-bar"><div class="fill" style="width: 85%"></div></div>
                   <span class="score">8.5</span>
                 </div>
                 <div class="sphere-item">
-                  <span class="sphere-name">Карьера</span>
+                  <span class="sphere-name">Работа и карьера</span>
                   <div class="progress-bar"><div class="fill" style="width: 80%"></div></div>
                   <span class="score">8.0</span>
                 </div>
                 <div class="sphere-item">
-                  <span class="sphere-name">Развитие</span>
+                  <span class="sphere-name">Дружба и окружение</span>
                   <div class="progress-bar"><div class="fill" style="width: 75%"></div></div>
                   <span class="score">7.5</span>
                 </div>
@@ -92,23 +92,103 @@
               </div>
               <div class="card-body">
                 <div class="sphere-item">
-                  <span class="sphere-name">Финансы</span>
+                  <span class="sphere-name">Благосостояние</span>
                   <div class="progress-bar orange"><div class="fill" style="width: 45%"></div></div>
                   <span class="score">4.5</span>
                 </div>
                 <div class="sphere-item">
-                  <span class="sphere-name">Отдых</span>
+                  <span class="sphere-name">Хобби и отдых</span>
                   <div class="progress-bar orange"><div class="fill" style="width: 50%"></div></div>
                   <span class="score">5.0</span>
                 </div>
                 <div class="sphere-item">
-                  <span class="sphere-name">Отношения</span>
+                  <span class="sphere-name">Семья и отношения</span>
                   <div class="progress-bar orange"><div class="fill" style="width: 55%"></div></div>
                   <span class="score">5.5</span>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="recommendations-preview">
+        <div class="container">
+          <h2 class="section-title">Пример рекомендаций</h2>
+          <p class="section-subtitle">Вот что получит пользователь с низкой оценкой в сфере "Благосостояние"</p>
+          
+          <div class="recommendation-example">
+            <div class="example-header">
+              <span class="example-icon">💰</span>
+              <span class="example-sphere">Благосостояние — главный рычаг 2026</span>
+            </div>
+            
+            <div class="example-goals">
+              <h4>Цели на год:</h4>
+              <div class="goal-item">
+                <span class="goal-check">✓</span>
+                <div class="goal-content">
+                  <strong>Создать финансовую подушку на 3 месяца</strong>
+                  <span class="goal-metric">Накопить сумму = 3 месячных расхода</span>
+                </div>
+              </div>
+              <div class="goal-item">
+                <span class="goal-check">✓</span>
+                <div class="goal-content">
+                  <strong>Увеличить доход на 20%</strong>
+                  <span class="goal-metric">Найти дополнительный источник дохода</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="example-steps">
+              <h4>Первые шаги:</h4>
+              <div class="step-item">
+                <span class="step-number">1</span>
+                <span class="step-title">Составить бюджет на январь</span>
+                <span class="step-time">2 ч</span>
+              </div>
+              <div class="step-item">
+                <span class="step-number">2</span>
+                <span class="step-title">Открыть накопительный счёт</span>
+                <span class="step-time">1 ч</span>
+              </div>
+              <div class="step-item">
+                <span class="step-number">3</span>
+                <span class="step-title">Проанализировать расходы за 2025</span>
+                <span class="step-time">3 ч</span>
+              </div>
+              <div class="step-item">
+                <span class="step-number">4</span>
+                <span class="step-title">Найти 3 идеи для доп. дохода</span>
+                <span class="step-time">2 ч</span>
+              </div>
+            </div>
+
+            <div class="example-plan">
+              <h4>План на 4 недели:</h4>
+              <div class="week-items">
+                <div class="week-item">
+                  <span class="week-num">Неделя 1</span>
+                  <span class="week-focus">Анализ и планирование</span>
+                </div>
+                <div class="week-item">
+                  <span class="week-num">Неделя 2</span>
+                  <span class="week-focus">Первые шаги</span>
+                </div>
+                <div class="week-item">
+                  <span class="week-num">Неделя 3</span>
+                  <span class="week-focus">Набор темпа</span>
+                </div>
+                <div class="week-item">
+                  <span class="week-num">Неделя 4</span>
+                  <span class="week-focus">Рефлексия</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p class="preview-note">После теста ты получишь такие же рекомендации для своей главной зоны роста</p>
         </div>
       </section>
 
@@ -527,6 +607,156 @@ onMounted(() => {
   font-size: 14px;
 }
 
+.recommendations-preview {
+  padding: 80px 0;
+  background: rgba(30, 41, 59, 0.5);
+}
+
+.section-subtitle {
+  text-align: center;
+  color: #94a3b8;
+  margin-bottom: 40px;
+  font-size: 16px;
+}
+
+.recommendation-example {
+  background: rgba(15, 23, 42, 0.8);
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 700px;
+  margin: 0 auto;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.example-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.example-icon {
+  font-size: 32px;
+}
+
+.example-sphere {
+  font-size: 20px;
+  font-weight: 600;
+  color: #eab308;
+}
+
+.example-goals,
+.example-steps,
+.example-plan {
+  margin-bottom: 24px;
+}
+
+.example-goals h4,
+.example-steps h4,
+.example-plan h4 {
+  font-size: 14px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+}
+
+.goal-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.goal-check {
+  color: #10b981;
+  font-weight: 700;
+}
+
+.goal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.goal-content strong {
+  font-weight: 600;
+}
+
+.goal-metric {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(30, 41, 59, 0.8);
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.step-number {
+  width: 24px;
+  height: 24px;
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.step-title {
+  flex: 1;
+  font-size: 14px;
+}
+
+.step-time {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.week-items {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.week-item {
+  background: rgba(30, 41, 59, 0.8);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+
+.week-num {
+  display: block;
+  font-size: 12px;
+  color: #10b981;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.week-focus {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.preview-note {
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
+  margin-top: 24px;
+}
+
 @media (max-width: 768px) {
   .hero-title {
     font-size: 32px;
@@ -538,6 +768,19 @@ onMounted(() => {
   
   .preview-cards {
     grid-template-columns: 1fr;
+  }
+
+  .week-items {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .recommendation-example {
+    padding: 20px;
+  }
+
+  .sphere-name {
+    width: auto;
+    min-width: 100px;
   }
 }
 </style>
