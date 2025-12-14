@@ -134,35 +134,45 @@
               </div>
             </div>
 
-            <div class="steps-block">
-              <h3>Первые шаги</h3>
-              <div class="steps-list">
-                <div 
-                  v-for="(step, index) in activeZoneData.steps" 
-                  :key="index"
-                  class="step-item"
-                >
-                  <div class="step-checkbox">☐</div>
-                  <div class="step-title">{{ step.title }}</div>
-                  <div class="step-hours">{{ step.hours }}ч</div>
+            <div class="steps-block collapsible-block" :class="{ collapsed: stepsCollapsed }">
+              <button class="collapsible-header" @click="stepsCollapsed = !stepsCollapsed">
+                <h3>Первые шаги</h3>
+                <span class="collapse-icon">{{ stepsCollapsed ? '+' : '−' }}</span>
+              </button>
+              <div class="collapsible-content" v-show="!stepsCollapsed">
+                <div class="steps-list">
+                  <div 
+                    v-for="(step, index) in activeZoneData.steps" 
+                    :key="index"
+                    class="step-item"
+                  >
+                    <div class="step-checkbox">☐</div>
+                    <div class="step-title">{{ step.title }}</div>
+                    <div class="step-hours">{{ step.hours }}ч</div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div class="week-plan-block">
-              <h3>План на 4 недели</h3>
-              <div class="weeks-list">
-                <div 
-                  v-for="weekItem in activeZoneData.weekPlan" 
-                  :key="weekItem.week"
-                  class="week-item-detailed"
-                >
-                  <div class="week-header">
-                    <div class="week-number">Неделя {{ weekItem.week }}</div>
+            <div class="week-plan-block collapsible-block" :class="{ collapsed: weekPlanCollapsed }">
+              <button class="collapsible-header" @click="weekPlanCollapsed = !weekPlanCollapsed">
+                <h3>План на 4 недели</h3>
+                <span class="collapse-icon">{{ weekPlanCollapsed ? '+' : '−' }}</span>
+              </button>
+              <div class="collapsible-content" v-show="!weekPlanCollapsed">
+                <div class="weeks-list">
+                  <div 
+                    v-for="weekItem in activeZoneData.weekPlan" 
+                    :key="weekItem.week"
+                    class="week-item-detailed"
+                  >
+                    <div class="week-header">
+                      <div class="week-number">Неделя {{ weekItem.week }}</div>
+                    </div>
+                    <ul class="week-tasks">
+                      <li v-for="(task, idx) in weekItem.tasks" :key="idx">{{ task }}</li>
+                    </ul>
                   </div>
-                  <ul class="week-tasks">
-                    <li v-for="(task, idx) in weekItem.tasks" :key="idx">{{ task }}</li>
-                  </ul>
                 </div>
               </div>
             </div>
@@ -323,6 +333,8 @@ const router = useRouter()
 const store = useNewYearStore()
 const copied = ref(false)
 const activeZoneIndex = ref(0)
+const stepsCollapsed = ref(true)
+const weekPlanCollapsed = ref(true)
 
 const activeZone = computed(() => {
   return store.growthZones[activeZoneIndex.value] || null
@@ -696,6 +708,41 @@ function restartTest() {
   font-size: 18px;
   margin-bottom: 20px;
   color: #10b981;
+}
+
+.collapsible-block {
+  padding: 0;
+}
+
+.collapsible-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 20px 24px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.collapsible-header h3 {
+  margin: 0;
+}
+
+.collapse-icon {
+  font-size: 24px;
+  font-weight: 300;
+  color: #64748b;
+  transition: transform 0.2s;
+}
+
+.collapsible-block.collapsed .collapsible-header {
+  border-radius: 16px;
+}
+
+.collapsible-content {
+  padding: 0 24px 24px;
 }
 
 .goals-list {
