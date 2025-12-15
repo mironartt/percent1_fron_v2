@@ -4,14 +4,28 @@
     <div class="snowflakes" aria-hidden="true">
       <div class="snowflake">❄</div>
       <div class="snowflake">❅</div>
+      <div class="snowflake">✨</div>
+      <div class="snowflake">❆</div>
+      <div class="snowflake">❄</div>
+      <div class="snowflake">⭐</div>
+      <div class="snowflake">❅</div>
+      <div class="snowflake">✨</div>
       <div class="snowflake">❆</div>
       <div class="snowflake">❄</div>
       <div class="snowflake">❅</div>
+      <div class="snowflake">⭐</div>
       <div class="snowflake">❆</div>
+      <div class="snowflake">✨</div>
       <div class="snowflake">❄</div>
-      <div class="snowflake">❅</div>
-      <div class="snowflake">❆</div>
-      <div class="snowflake">❄</div>
+    </div>
+
+    <!-- Sparkle decorations -->
+    <div class="sparkles" aria-hidden="true">
+      <div class="sparkle">✦</div>
+      <div class="sparkle">✧</div>
+      <div class="sparkle">✦</div>
+      <div class="sparkle">✧</div>
+      <div class="sparkle">✦</div>
     </div>
 
     <header class="landing-header">
@@ -535,16 +549,21 @@ onMounted(() => {
   animation: fall linear infinite;
 }
 
-.snowflake:nth-child(1) { left: 5%; animation-duration: 10s; animation-delay: 0s; font-size: 0.8rem; }
-.snowflake:nth-child(2) { left: 15%; animation-duration: 12s; animation-delay: 2s; font-size: 1.2rem; }
-.snowflake:nth-child(3) { left: 25%; animation-duration: 8s; animation-delay: 4s; font-size: 0.9rem; }
-.snowflake:nth-child(4) { left: 35%; animation-duration: 14s; animation-delay: 1s; font-size: 1rem; }
-.snowflake:nth-child(5) { left: 50%; animation-duration: 11s; animation-delay: 3s; font-size: 1.1rem; }
-.snowflake:nth-child(6) { left: 60%; animation-duration: 9s; animation-delay: 5s; font-size: 0.8rem; }
-.snowflake:nth-child(7) { left: 70%; animation-duration: 13s; animation-delay: 2s; font-size: 1.3rem; }
-.snowflake:nth-child(8) { left: 80%; animation-duration: 10s; animation-delay: 4s; font-size: 0.9rem; }
-.snowflake:nth-child(9) { left: 90%; animation-duration: 15s; animation-delay: 0s; font-size: 1rem; }
-.snowflake:nth-child(10) { left: 95%; animation-duration: 12s; animation-delay: 3s; font-size: 1.1rem; }
+.snowflake:nth-child(1) { left: 3%; animation-duration: 10s; animation-delay: 0s; font-size: 1rem; }
+.snowflake:nth-child(2) { left: 10%; animation-duration: 12s; animation-delay: 2s; font-size: 1.4rem; }
+.snowflake:nth-child(3) { left: 18%; animation-duration: 8s; animation-delay: 4s; font-size: 0.9rem; }
+.snowflake:nth-child(4) { left: 26%; animation-duration: 14s; animation-delay: 1s; font-size: 1.2rem; }
+.snowflake:nth-child(5) { left: 35%; animation-duration: 11s; animation-delay: 3s; font-size: 1.1rem; }
+.snowflake:nth-child(6) { left: 44%; animation-duration: 9s; animation-delay: 5s; font-size: 1rem; }
+.snowflake:nth-child(7) { left: 52%; animation-duration: 13s; animation-delay: 2s; font-size: 1.5rem; }
+.snowflake:nth-child(8) { left: 62%; animation-duration: 10s; animation-delay: 4s; font-size: 1rem; }
+.snowflake:nth-child(9) { left: 70%; animation-duration: 15s; animation-delay: 0s; font-size: 1.3rem; }
+.snowflake:nth-child(10) { left: 78%; animation-duration: 12s; animation-delay: 3s; font-size: 1.1rem; }
+.snowflake:nth-child(11) { left: 84%; animation-duration: 9s; animation-delay: 1s; font-size: 0.9rem; }
+.snowflake:nth-child(12) { left: 89%; animation-duration: 11s; animation-delay: 5s; font-size: 1.2rem; }
+.snowflake:nth-child(13) { left: 93%; animation-duration: 14s; animation-delay: 2s; font-size: 1rem; }
+.snowflake:nth-child(14) { left: 96%; animation-duration: 8s; animation-delay: 4s; font-size: 1.4rem; }
+.snowflake:nth-child(15) { left: 99%; animation-duration: 12s; animation-delay: 0s; font-size: 1.1rem; }
 
 @keyframes fall {
   0% { 
@@ -555,6 +574,36 @@ onMounted(() => {
     transform: translateY(100vh) rotate(360deg); 
     opacity: 0.3;
   }
+}
+
+/* Sparkle decorations */
+.sparkles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 999;
+  overflow: hidden;
+}
+
+.sparkle {
+  position: absolute;
+  color: #fbbf24;
+  font-size: 1.5rem;
+  animation: twinkle 2s ease-in-out infinite;
+}
+
+.sparkle:nth-child(1) { top: 15%; left: 8%; animation-delay: 0s; }
+.sparkle:nth-child(2) { top: 25%; right: 12%; animation-delay: 0.5s; }
+.sparkle:nth-child(3) { top: 45%; left: 5%; animation-delay: 1s; }
+.sparkle:nth-child(4) { top: 60%; right: 8%; animation-delay: 1.5s; }
+.sparkle:nth-child(5) { top: 80%; left: 15%; animation-delay: 0.7s; }
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
 }
 
 /* Main Styles - Light Theme */
