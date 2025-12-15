@@ -9,7 +9,7 @@
  * - События для обновления UI
  */
 
-import { API_BASE_URL, DEBUG_MODE } from '@/config/settings.js'
+import { API_BASE_URL, WS_BASE_URL, DEBUG_MODE } from '@/config/settings.js'
 
 class ChatWebSocket {
   constructor() {
@@ -24,7 +24,7 @@ class ChatWebSocket {
   }
 
   getWebSocketUrl() {
-    let baseUrl = API_BASE_URL || window.location.origin
+    let baseUrl = WS_BASE_URL || API_BASE_URL || window.location.origin
     baseUrl = baseUrl.replace(/^http/, 'ws')
     baseUrl = baseUrl.replace(/\/+$/, '')
     return `${baseUrl}/ws/chat/`

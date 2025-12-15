@@ -23,6 +23,7 @@ const Profile = () => import('@/views/Profile.vue')
 const Habits = () => import('@/views/Habits.vue')
 const OnboardingAI = () => import('@/components/OnboardingAI.vue')
 const NotFound = () => import('@/views/NotFound.vue')
+const LegalPage = () => import('@/views/LegalPage.vue')
 
 // Year Review (New Year)
 const NewYearLanding = () => import('@/views/land/NewYearLanding.vue')
@@ -86,6 +87,26 @@ const router = createRouter({
       name: 'recovery',
       component: Recovery,
       meta: { title: 'Восстановление пароля', public: true, guestOnly: true }
+    },
+    
+    // Legal pages (публичные)
+    {
+      path: '/privacy',
+      name: 'privacy',
+      component: LegalPage,
+      meta: { title: 'Политика конфиденциальности', public: true, docType: 'privacy' }
+    },
+    {
+      path: '/termspolicy',
+      name: 'terms',
+      component: LegalPage,
+      meta: { title: 'Условия использования', public: true, docType: 'terms' }
+    },
+    {
+      path: '/disclaimer',
+      name: 'disclaimer',
+      component: LegalPage,
+      meta: { title: 'Отказ от ответственности', public: true, docType: 'disclaimer' }
     },
     {
       path: '/auth/logout',

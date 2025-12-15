@@ -547,7 +547,12 @@
           </div>
         </div>
         <div class="footer-bottom">
-          <p>&copy; 2025 OnePercent. Все права защищены.</p>
+          <p>&copy; 2026 OnePercent. Все права защищены.</p>
+          <div class="footer-legal">
+            <router-link to="/privacy">Политика конфиденциальности</router-link>
+            <span class="separator">|</span>
+            <router-link to="/termspolicy">Пользовательское соглашение</router-link>
+          </div>
         </div>
       </div>
     </footer>
@@ -2419,6 +2424,29 @@ onUnmounted(() => {
 .footer-bottom p {
   color: rgba(255, 255, 255, 0.5);
   font-size: 0.875rem;
+}
+
+.footer-legal {
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.footer-legal a {
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footer-legal a:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.footer-legal .separator {
+  color: rgba(255, 255, 255, 0.3);
 }
 
 @media (max-width: 768px) {
