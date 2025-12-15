@@ -37,12 +37,17 @@ export const CREDENTIALS_MODE = localSettings.CREDENTIALS_MODE ?? undefined
 // ID счётчика Яндекс.Метрики
 export const YANDEX_METRIKA_ID = localSettings.YANDEX_METRIKA_ID ?? 105671462
 
+// Базовый URL для WebSocket (если отличается от API_BASE_URL)
+// Пустой = использовать API_BASE_URL или window.location.origin
+export const WS_BASE_URL = localSettings.WS_BASE_URL ?? ''
+
 // Логируем загрузку настроек
 if (DEBUG_MODE) {
   console.log('[Settings] Configuration loaded:', {
     DEV_MODE,
     SKIP_AUTH_CHECK,
     API_BASE_URL,
+    WS_BASE_URL,
     MIN_REQUEST_INTERVAL,
     DEBUG_MODE,
     FORCE_SHOW_ONBOARDING,
@@ -58,6 +63,7 @@ export const settings = {
   DEV_MODE,
   SKIP_AUTH_CHECK,
   API_BASE_URL,
+  WS_BASE_URL,
   MIN_REQUEST_INTERVAL,
   DEBUG_MODE,
   FORCE_SHOW_ONBOARDING,

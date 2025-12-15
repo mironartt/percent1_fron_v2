@@ -51,6 +51,14 @@ export const MIN_REQUEST_INTERVAL = 500;
 // undefined - автоматический выбор на основе API_BASE_URL
 export const CREDENTIALS_MODE = undefined;
 
+// Базовый URL для WebSocket (если отличается от API_BASE_URL)
+// Пустой = использовать API_BASE_URL или window.location.origin
+// Примеры:
+//   ''                                  - автоопределение
+//   'wss://percent1.ru'                 - явный WebSocket URL
+//   'wss://xxx.ru.tuna.am'              - WebSocket через туннель
+// export const WS_BASE_URL = '';
+
 // =============================================================================
 // VITE HMR (Hot Module Replacement) — для работы через туннель/proxy
 // =============================================================================
