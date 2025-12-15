@@ -541,12 +541,12 @@
             <a href="https://percent1.ru/termspolicy" target="_blank" rel="noopener noreferrer">Пользовательское соглашение</a>
             <a href="https://percent1.ru/disclaimer" target="_blank" rel="noopener noreferrer">Отказ от ответственности</a>
           </div>
+        </div>
+        <div class="footer-bottom">
           <div class="company-info">
             <p>ИП Косик Дмитрий Владимирович</p>
             <p>ИНН: 711280092908 | ОГРНИП: 321774600674346</p>
           </div>
-        </div>
-        <div class="footer-bottom">
           <p>&copy; 2025 OnePercent. Все права защищены.</p>
         </div>
       </div>
