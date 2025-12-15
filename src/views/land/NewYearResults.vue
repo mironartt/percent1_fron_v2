@@ -440,7 +440,14 @@ async function generatePlan() {
 }
 
 function shareToTelegram() {
-  const text = `Мои итоги 2025 года! 🎯\n\nГлавный рычаг на 2026: ${store.mainLever?.name || 'определён'}\n\nПройди тест и узнай свои:`
+  const leverName = store.mainLever?.name || 'определён'
+  const text = `92% людей забросят новогодние цели к февралю 😬
+
+Я решил быть в 8% — прошёл тест и получил чёткий план на 2026.
+
+Главный рычаг: ${leverName}
+
+Узнай свой за 10 минут ⬇️`
   const url = window.location.origin + '/land/newyear'
   window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank')
 }
