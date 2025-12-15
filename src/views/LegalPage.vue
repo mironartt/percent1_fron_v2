@@ -20,7 +20,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ArrowLeft } from 'lucide-vue-next'
 
@@ -30,6 +30,16 @@ const rawContent = ref('')
 const documents = {
   privacy: () => import('@/assets/legal/privacy_policy.md?raw'),
   terms: () => import('@/assets/legal/terms_of_service.md?raw')
+}
+
+async function loadDocument() {
+  const docType = route.meta.docType || 'privacy'
+  try {
+    const module = await documents[docType]()
+    rawContent.value = module.default
+  } catch (e) {
+    rawContent.value = '# Документ не найден\n\nПожалуйста, попробуйте позже.'
+  }
 }
 
 function parseMarkdown(md) {
@@ -58,14 +68,12 @@ const renderedContent = computed(() => {
   return parseMarkdown(rawContent.value)
 })
 
-onMounted(async () => {
-  const docType = route.meta.docType || 'privacy'
-  try {
-    const module = await documents[docType]()
-    rawContent.value = module.default
-  } catch (e) {
-    rawContent.value = '# Документ не найден\n\nПожалуйста, попробуйте позже.'
-  }
+watch(() => route.meta.docType, () => {
+  loadDocument()
+}, { immediate: false })
+
+onMounted(() => {
+  loadDocument()
 })
 </script>
 
