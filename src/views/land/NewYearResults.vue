@@ -211,6 +211,22 @@
         </div>
       </div>
     </main>
+
+    <footer class="results-footer">
+      <div class="container">
+        <div class="footer-legal">
+          <div class="legal-links">
+            <a href="https://percent1.ru/privacy" target="_blank" rel="noopener noreferrer">Политика конфиденциальности</a>
+            <a href="https://percent1.ru/termspolicy" target="_blank" rel="noopener noreferrer">Пользовательское соглашение</a>
+            <a href="https://percent1.ru/disclaimer" target="_blank" rel="noopener noreferrer">Отказ от ответственности</a>
+          </div>
+          <div class="company-info">
+            <p>ИП Косик Дмитрий Владимирович | ИНН: 711280092908 | ОГРНИП: 321774600674346</p>
+          </div>
+          <p class="copyright">© 2025 OnePercent. Все права защищены.</p>
+        </div>
+      </div>
+    </footer>
   </div>
 </template>
 
@@ -1113,5 +1129,48 @@ onMounted(() => {
   .loading-text h2 {
     font-size: 22px;
   }
+}
+
+.results-footer {
+  padding: 40px 0;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.footer-legal {
+  text-align: center;
+}
+
+.legal-links {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.legal-links a {
+  color: rgba(148, 163, 184, 0.6);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  transition: color 0.2s;
+}
+
+.legal-links a:hover {
+  color: #f8fafc;
+}
+
+.company-info {
+  color: rgba(148, 163, 184, 0.4);
+  font-size: 0.75rem;
+}
+
+.company-info p {
+  margin: 0;
+}
+
+.copyright {
+  color: rgba(148, 163, 184, 0.5);
+  font-size: 0.875rem;
+  margin: 0.75rem 0 0;
 }
 </style>
