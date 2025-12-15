@@ -103,6 +103,12 @@ const router = createRouter({
       meta: { title: 'Условия использования', public: true, docType: 'terms' }
     },
     {
+      path: '/disclaimer',
+      name: 'disclaimer',
+      component: LegalPage,
+      meta: { title: 'Отказ от ответственности', public: true, docType: 'disclaimer' }
+    },
+    {
       path: '/auth/logout',
       name: 'logout',
       component: null,

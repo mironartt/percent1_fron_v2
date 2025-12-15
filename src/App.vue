@@ -56,7 +56,7 @@ const isLandingPage = computed(() => {
 })
 
 const isLegalPage = computed(() => {
-  return route.name === 'privacy' || route.name === 'terms'
+  return route.name === 'privacy' || route.name === 'terms' || route.name === 'disclaimer'
 })
 
 const isOnboarding = computed(() => {

@@ -29,7 +29,8 @@ const rawContent = ref('')
 
 const documents = {
   privacy: () => import('@/assets/legal/privacy_policy.md?raw'),
-  terms: () => import('@/assets/legal/terms_of_service.md?raw')
+  terms: () => import('@/assets/legal/terms_of_service.md?raw'),
+  disclaimer: () => import('@/assets/legal/disclaimer.md?raw')
 }
 
 async function loadDocument() {
