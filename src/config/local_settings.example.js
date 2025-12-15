@@ -9,31 +9,77 @@
  * Команда: cp src/config/local_settings.example.js src/config/local_settings.js
  */
 
+// =============================================================================
+// РЕЖИМ РАБОТЫ
+// =============================================================================
+
 // Режим разработки
 export const DEV_MODE = true;
 
 // Пропустить проверку авторизации (удобно для разработки UI)
 export const SKIP_AUTH_CHECK = true;
 
+// Показывать отладочную информацию в консоли
+export const DEBUG_MODE = true;
+
+// =============================================================================
+// API НАСТРОЙКИ
+// =============================================================================
+
 // Базовый URL API
-// Оставить пустым '' для использования Vite proxy (рекомендуется)
-// Или указать URL для прямого подключения: 'https://api.example.com'
+// Варианты:
+//   ''                                  - использовать Vite proxy (рекомендуется)
+//   'https://percent1.ru'               - прямое подключение к продакшену
+//   'https://xxx.ru.tuna.am'            - подключение через туннель
 export const API_BASE_URL = "";
 
 // URL бэкенда для Vite proxy (используется только при API_BASE_URL = '')
 // Vite проксирует /api/* запросы на этот адрес, решая проблему third-party cookies
 // Приоритет: local_settings.js → env VITE_API_BACKEND_URL → localhost:8017
 // Примеры:
-//   'http://127.0.0.1:8017'                    - локальный Django
-//   'https://myapp.tunnel.com'                 - туннель к локальному серверу
-//   'https://api.production.com'               - продакшен API
+//   'http://127.0.0.1:8017'             - локальный Django runserver
+//   'https://xxx.ru.tuna.am'            - туннель к локальному серверу
+//   'https://api.production.com'        - продакшен API
 export const VITE_PROXY_TARGET = "http://127.0.0.1:8017";
 
 // Минимальный интервал между запросами (мс)
 export const MIN_REQUEST_INTERVAL = 500;
 
-// Показывать отладочную информацию в консоли
-export const DEBUG_MODE = true;
+// Режим credentials для fetch запросов
+// 'include' - отправлять куки для cross-origin запросов
+// 'same-origin' - отправлять куки только для same-origin запросов
+// undefined - автоматический выбор на основе API_BASE_URL
+export const CREDENTIALS_MODE = undefined;
+
+// =============================================================================
+// VITE HMR (Hot Module Replacement) — для работы через туннель/proxy
+// =============================================================================
+// 
+// Эти настройки нужны ТОЛЬКО если вы работаете через внешний туннель (tuna, ngrok)
+// и хотите чтобы hot reload работал.
+// 
+// Если не указаны — используется стандартное поведение Vite (localhost).
+//
+// Пример настройки для tuna:
+//   VITE_HMR_HOST = 'xxx.ru.tuna.am'
+//   VITE_HMR_PROTOCOL = 'wss'
+//   VITE_HMR_CLIENT_PORT = 443
+
+// Хост для HMR WebSocket соединения
+// Укажите домен вашего туннеля без протокола
+// export const VITE_HMR_HOST = 'ft1zzp-95-72-16-20.ru.tuna.am';
+
+// Протокол для HMR: 'ws' (http) или 'wss' (https)
+// Для туннелей с HTTPS используйте 'wss'
+// export const VITE_HMR_PROTOCOL = 'wss';
+
+// Порт клиента для HMR
+// Для HTTPS туннелей обычно 443
+// export const VITE_HMR_CLIENT_PORT = 443;
+
+// =============================================================================
+// ТЕСТИРОВАНИЕ И ОТЛАДКА
+// =============================================================================
 
 // Принудительно показывать онбординг (для тестирования и разработки)
 // Если true - онбординг будет показан даже если уже пройден
@@ -43,8 +89,39 @@ export const FORCE_SHOW_ONBOARDING = false;
 // Если true - мини-задание будет показано даже если уже пройдено
 export const FORCE_SHOW_MINITASK = false;
 
-// Режим credentials для fetch запросов
-// 'include' - отправлять куки для cross-origin запросов
-// 'same-origin' - отправлять куки только для same-origin запросов
-// undefined - автоматический выбор на основе API_BASE_URL
-export const CREDENTIALS_MODE = undefined;
+// Демо-режим планирования (показывает фейковые данные)
+export const DEMO_PLANNING_MODE = false;
+
+// =============================================================================
+// ПРИМЕРЫ КОНФИГУРАЦИЙ
+// =============================================================================
+
+/**
+ * ПРИМЕР 1: Локальная разработка (стандартно)
+ * - Фронт на localhost:5000
+ * - Бэк на localhost:8017
+ * 
+ * export const API_BASE_URL = "";
+ * export const VITE_PROXY_TARGET = "http://127.0.0.1:8017";
+ */
+
+/**
+ * ПРИМЕР 2: Локальная разработка через tuna
+ * - Фронт и бэк через один домен tuna
+ * - nginx проксирует /api на Django, остальное на Vite
+ * 
+ * export const API_BASE_URL = "";
+ * export const VITE_PROXY_TARGET = "http://127.0.0.1:8017";
+ * export const VITE_HMR_HOST = 'ft1zzp-95-72-16-20.ru.tuna.am';
+ * export const VITE_HMR_PROTOCOL = 'wss';
+ * export const VITE_HMR_CLIENT_PORT = 443;
+ */
+
+/**
+ * ПРИМЕР 3: Подключение к удалённому бэкенду
+ * - Фронт локально
+ * - API на продакшене или тестовом сервере
+ * 
+ * export const API_BASE_URL = "https://percent1.ru";
+ * export const CREDENTIALS_MODE = "include";
+ */

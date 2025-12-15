@@ -1,0 +1,209 @@
+Такой момент. Я пытаюсь настроить разработку локально, и готовлю бэк и фронт.  
+
+По бэку:
+
+Я настроил tuna:
+```text
+(venv) truba@truba-comp:~/repo_work/one_percent/percent1/front$ tuna http 8080
+INFO[16:08:18] Welcome to Tuna                              
+INFO[16:08:18] Account: mironartt@gmail.com (Paid till 08.01.2026) 
+INFO[16:08:18] Web Interface: http://127.0.0.1:4041         
+INFO[16:08:18] Forwarding https://ft1zzp-95-72-16-20.ru.tuna.am -> 127.0.0.1:8080 
+```
+И настроил nginx:
+```text
+truba@truba-comp:/etc/nginx/conf.d$ cat local-test.conf
+server {
+  listen 8080;
+
+  # REST API → Django runserver
+  location / {
+      proxy_pass http://127.0.0.1:8017;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+  }
+
+  # WebSocket → Daphne
+  location /ws/ {
+      proxy_pass http://127.0.0.1:8018;
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+      proxy_set_header Host $host;
+      proxy_read_timeout 86400;
+  }
+}
+```
+
+В настройках фронта указываю: 
+```js
+// Базовый URL API (оставить пустым для использования proxy)
+// export const API_BASE_URL = ''
+// export const API_BASE_URL = 'https://percent1.ru'
+export const API_BASE_URL = 'https://ft1zzp-95-72-16-20.ru.tuna.am'
+```
+
+Также на фронте стоит настройка в `vite.config.js`:
+```js
+// Читаем VITE_PROXY_TARGET из local_settings.js
+function getProxyTarget() {
+  const localSettingsPath = path.resolve(__dirname, './src/config/local_settings.js')
+  
+  if (fs.existsSync(localSettingsPath)) {
+    const content = fs.readFileSync(localSettingsPath, 'utf-8')
+    const match = content.match(/export\s+const\s+VITE_PROXY_TARGET\s*=\s*['"]([^'"]+)['"]/)
+    if (match) {
+      console.log('[Vite] Proxy target from local_settings.js:', match[1])
+      return match[1]
+    }
+  }
+  
+  // Fallback на переменную окружения или localhost
+  const envTarget = process.env.VITE_API_BACKEND_URL
+  if (envTarget) {
+    console.log('[Vite] Proxy target from env:', envTarget)
+    return envTarget
+  }
+  
+  console.log('[Vite] Proxy target: localhost (default)')
+  return 'http://127.0.0.1:8017'
+}
+
+const API_BACKEND_URL = getProxyTarget()
+```
+
+И запускаю фронт локально:
+```shell
+(venv) truba@truba-comp:~/repo_work/one_percent/percent1/front$ npm run dev
+
+> onepercent-mvp@1.0.0 dev
+> vite
+
+[Vite] Proxy target: localhost (default)
+
+  VITE v7.2.4  ready in 153 ms
+
+  ➜  Local:   http://localhost:5000/
+  ➜  Network: http://192.168.0.33:5000/
+  ➜  Network: http://10.8.117.1:5000/
+  ➜  press h + enter to show help
+```
+
+Может ли быть проблема связана с этим?  
+И можно ли как-то фронт запускать не на `http://localhost:5000/` а по адресу tuna, аналогично как это делает бэк через nginx?  
+
+
+----
+
+Получившиеся ответы:
+
+Понял. Нужно обновить nginx конфиг, чтобы фронт тоже проксировался через tuna.
+
+Обновлённый nginx конфиг для разработки
+```
+# /etc/nginx/conf.d/local-test.conf
+
+server {
+    listen 8080;
+
+    # ===========================================================================
+    # DJANGO REST API
+    # ===========================================================================
+    location /api/ {
+        proxy_pass http://127.0.0.1:8017;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
+    # ===========================================================================
+    # WEBSOCKET → Daphne
+    # ===========================================================================
+    location /ws/ {
+        proxy_pass http://127.0.0.1:8018;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_read_timeout 86400;
+    }
+
+    # ===========================================================================
+    # VITE HMR WebSocket (для hot reload)
+    # ===========================================================================
+    location /@vite/ {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+
+    location /__vite_ping {
+        proxy_pass http://127.0.0.1:5000;
+    }
+
+    location /node_modules/ {
+        proxy_pass http://127.0.0.1:5000;
+    }
+
+    location /src/ {
+        proxy_pass http://127.0.0.1:5000;
+    }
+
+    # ===========================================================================
+    # FRONTEND → Vite dev server (всё остальное)
+    # ===========================================================================
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+
+        # WebSocket для HMR
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+```
+Настройки фронта
+`src/config/local_settings.js`:
+```
+// API на том же домене (через nginx proxy)
+export const API_BASE_URL = ''
+
+// Не нужен отдельный proxy target - всё через nginx
+export const VITE_PROXY_TARGET = 'http://127.0.0.1:8017'
+
+vite.config.js — добавь настройку для HMR через proxy:
+export default defineConfig({
+  server: {
+    port: 5000,
+    host: true,
+    // HMR через внешний URL (tuna)
+    hmr: {
+      host: 'ft1zzp-95-72-16-20.ru.tuna.am',
+      protocol: 'wss',
+      clientPort: 443
+    }
+  },
+  // ...
+})
+```
+После изменений
+
+# Перезагрузить nginx
+sudo nginx -t && sudo systemctl reload nginx
+
+# Запустить фронт
+npm run dev
+
+Теперь открывай https://ft1zzp-95-72-16-20.ru.tuna.am — и фронт, и API будут на одном домене, cookie будут работать!
+
+----
+
+Вопросы: что значат доработки указанные для фронта? Не поломают ли они мой текущий формат работы? Можно ли будет откатиться? Можно ли будет это делать все через `src/config/local_settings.js`?

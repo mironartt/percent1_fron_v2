@@ -620,6 +620,29 @@ export const useAppStore = defineStore('app', () => {
         userDashboardData.value.top_goals = userData.top_goals
       }
       
+      // Обновить данные AI бот чата если присутствуют
+      if (userData.ai_bot_chat) {
+        import('@/stores/chat.js').then(({ useChatStore }) => {
+          const chatStore = useChatStore()
+          
+          if (userData.ai_bot_chat.conversation_id) {
+            chatStore.setConversationId(userData.ai_bot_chat.conversation_id)
+          }
+          if (userData.ai_bot_chat.unread_count !== undefined) {
+            chatStore.setUnreadCount(userData.ai_bot_chat.unread_count)
+          }
+          if (userData.ai_bot_chat.is_bot_processing !== undefined) {
+            chatStore.setIsBotProcessing(userData.ai_bot_chat.is_bot_processing)
+          }
+          
+          if (DEBUG_MODE) {
+            console.log('[Store] AI bot chat data set:', userData.ai_bot_chat)
+          }
+        }).catch(err => {
+          console.error('[Store] Failed to load chat store:', err)
+        })
+      }
+      
       // Сохранить в localStorage
       saveUserDataToLocalStorage(userData)
       
