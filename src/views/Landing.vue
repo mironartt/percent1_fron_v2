@@ -529,7 +529,6 @@
               <span class="logo-icon small">1%</span>
               <span>OnePercent</span>
             </div>
-            <p>Система управления жизнью</p>
           </div>
           <div class="footer-links">
             <router-link to="/auth/login">Войти</router-link>
