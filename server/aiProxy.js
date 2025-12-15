@@ -633,6 +633,125 @@ app.post('/api/ai/suggest-rewards', async (req, res) => {
   }
 })
 
+// Year Plan endpoint for New Year results page
+app.post('/api/ai/year-plan', async (req, res) => {
+  try {
+    const { sphereScores, growthZones, answers } = req.body
+    
+    if (!sphereScores || !growthZones || growthZones.length === 0) {
+      return res.status(400).json({ success: false, error: 'Sphere scores and growth zones are required' })
+    }
+
+    const systemPrompt = `Ты - персональный коуч-планировщик. На основе результатов теста "Итоги 2025" создай персонализированный план на 2026 год.
+
+Создай:
+1. 3-5 целей на 2026 год (по зонам роста пользователя)
+2. Декомпозицию каждой цели на конкретные шаги по 1-4 часа
+3. Реалистичный план на первые 4 недели января
+
+Верни JSON:
+{
+  "goals": [
+    {
+      "id": "goal-1",
+      "title": "Название цели (конкретное, до 80 символов)",
+      "sphereId": "id сферы (welfare/hobby/environment/health/work/family)",
+      "metric": "Измеримый результат к концу года",
+      "steps": [
+        { "title": "Конкретный шаг (до 60 символов)", "hours": 1 }
+      ]
+    }
+  ],
+  "weekPlan": [
+    { 
+      "week": 1, 
+      "focus": "Название фокуса недели",
+      "tasks": ["Задача 1", "Задача 2", "Задача 3"]
+    }
+  ],
+  "motivation": "Персональное мотивационное сообщение на 2-3 предложения"
+}
+
+Правила:
+- Создай 3-5 целей, фокусируясь на зонах роста
+- Каждая цель имеет 3-6 конкретных шагов
+- hours: от 0.5 до 4 часов на шаг
+- weekPlan: 4 недели, по 3-4 задачи в неделю
+- Задачи в weekPlan должны быть первыми шагами из целей
+- Мотивация должна быть персонализированной
+- Отвечай на русском языке
+- Отвечай ТОЛЬКО валидным JSON`
+
+    let userMessage = 'Результаты теста пользователя:\n\n'
+    
+    userMessage += 'Оценки сфер жизни:\n'
+    Object.entries(sphereScores).forEach(([id, score]) => {
+      const sphereNames = {
+        welfare: 'Благосостояние',
+        hobby: 'Хобби и отдых',
+        environment: 'Дружба и окружение',
+        health: 'Здоровье и спорт',
+        work: 'Работа и карьера',
+        family: 'Любовь, семья, отношения'
+      }
+      userMessage += `- ${sphereNames[id] || id}: ${score}/10\n`
+    })
+    userMessage += '\n'
+    
+    userMessage += 'Зоны роста (приоритетные направления):\n'
+    growthZones.forEach((zone, i) => {
+      userMessage += `${i + 1}. ${zone.name} (${sphereScores[zone.id]}/10)\n`
+    })
+    userMessage += '\n'
+    
+    if (answers) {
+      userMessage += 'Рефлексии пользователя:\n'
+      Object.entries(answers).forEach(([qId, answer]) => {
+        if (typeof answer === 'string' && answer.trim()) {
+          userMessage += `- ${answer}\n`
+        }
+      })
+    }
+
+    const response = await openai.chat.completions.create({
+      model: MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
+      ],
+      response_format: { type: 'json_object' },
+      max_completion_tokens: 4096
+    })
+
+    const content = response.choices?.[0]?.message?.content
+    if (!content) {
+      console.error('[AI Proxy] Year plan: Empty response. Finish reason:', response.choices?.[0]?.finish_reason)
+      throw new Error('Empty response from AI')
+    }
+
+    const parsed = JSON.parse(content)
+    
+    if (!Array.isArray(parsed.goals) || parsed.goals.length === 0) {
+      throw new Error('Invalid response format from AI')
+    }
+
+    res.json({
+      success: true,
+      data: {
+        goals: parsed.goals,
+        weekPlan: parsed.weekPlan || [],
+        motivation: parsed.motivation || 'Начни 2026 с первого шага!'
+      }
+    })
+  } catch (error) {
+    console.error('[AI Proxy] Year plan error:', error)
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error generating year plan'
+    })
+  }
+})
+
 app.get('/api/ai/health', (req, res) => {
   res.json({ status: 'ok' })
 })

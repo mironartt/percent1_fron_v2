@@ -52,7 +52,7 @@ const isAuthPage = computed(() => {
 })
 
 const isLandingPage = computed(() => {
-  return route.name === 'landing' || route.path === '/'
+  return route.name === 'landing' || route.path === '/' || route.path.startsWith('/land')
 })
 
 const isOnboarding = computed(() => {

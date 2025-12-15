@@ -28,6 +28,7 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite (with pro
 -   **Habit Tracker**: Dashboard-integrated widget and a dedicated Habits Page for full management, scheduling, and gamification settings, including analytics and habit suggestions.
 -   **Bidirectional Calendar ↔ Goals Block Sync**: Synchronizes step dates, completion, priority, and time estimates.
 -   **Marketing Landing Page**: Conversion-focused landing page with an interactive 1% effect slider, app preview, feature cards, and calls to action.
+-   **Year Review 2025 (Итоги года)**: Single-page flow at `/land/newyear` with test → results workflow. Results page now includes AI-generated 2026 plan with loading animation, confetti effect, and CTA block for app registration. AI plan generation uses `/api/ai/year-plan` with demo fallback.
 -   **Achievements Page**: Improved UX with grouped XP history, filterable transactions, and pagination.
 -   **Settings Page**: Redesigned with profile management (email for Telegram users), Telegram bot integration, and an "Мой старт" section displaying onboarding data.
 
