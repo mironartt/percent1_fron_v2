@@ -6502,13 +6502,12 @@ onUnmounted(() => {
 }
 
 .quick-action-btn.action-decompose {
-  background: var(--bg, #f3f4f6);
-  color: var(--text-primary, #1f2937);
-  border: 1px solid var(--border-color, #e5e7eb);
+  background: #8b5cf6;
+  color: white;
 }
 
 .quick-action-btn.action-decompose:hover {
-  background: var(--hover-bg, #e5e7eb);
+  background: #7c3aed;
 }
 
 .quick-action-btn.action-complete {
