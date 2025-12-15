@@ -547,12 +547,7 @@
           </div>
         </div>
         <div class="footer-bottom">
-          <p>&copy; 2026 OnePercent. Все права защищены.</p>
-          <div class="footer-legal">
-            <router-link to="/privacy">Политика конфиденциальности</router-link>
-            <span class="separator">|</span>
-            <router-link to="/termspolicy">Пользовательское соглашение</router-link>
-          </div>
+          <p>&copy; 2025 OnePercent. Все права защищены.</p>
         </div>
       </div>
     </footer>
