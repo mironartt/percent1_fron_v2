@@ -55,11 +55,15 @@ const isLandingPage = computed(() => {
   return route.name === 'landing' || route.path === '/' || route.path.startsWith('/land')
 })
 
+const isLegalPage = computed(() => {
+  return route.name === 'privacy' || route.name === 'terms'
+})
+
 const isOnboarding = computed(() => {
   return store.shouldShowOnboarding && route.path === '/app'
 })
 
-const hasSidebar = computed(() => !isAuthPage.value && !isOnboarding.value && !isLandingPage.value)
+const hasSidebar = computed(() => !isAuthPage.value && !isOnboarding.value && !isLandingPage.value && !isLegalPage.value)
 
 const isAppPage = computed(() => {
   return route.path === '/app' || route.path.startsWith('/app/')

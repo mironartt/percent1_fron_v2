@@ -113,22 +113,36 @@
             <span v-if="errors.password2" class="form-error">{{ errors.password2 }}</span>
           </div>
 
-          <!-- Terms -->
+          <!-- Terms Checkbox -->
           <div class="form-group checkbox-group">
             <label class="checkbox-label">
               <input
                 v-model="form.agreeTerms"
                 type="checkbox"
                 class="checkbox-input"
-                required
               />
               <span class="checkbox-text">
                 Я согласен с
-                <a href="#" @click.prevent class="link">условиями использования</a>
-                и
-                <a href="#" @click.prevent class="link">политикой конфиденциальности</a>
+                <router-link to="/termspolicy" target="_blank" class="link">условиями использования</router-link>
               </span>
             </label>
+            <span v-if="errors.agreeTerms" class="form-error checkbox-error">{{ errors.agreeTerms }}</span>
+          </div>
+
+          <!-- Privacy Checkbox -->
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label">
+              <input
+                v-model="form.agreePrivacy"
+                type="checkbox"
+                class="checkbox-input"
+              />
+              <span class="checkbox-text">
+                Я согласен с
+                <router-link to="/privacy" target="_blank" class="link">политикой конфиденциальности</router-link>
+              </span>
+            </label>
+            <span v-if="errors.agreePrivacy" class="form-error checkbox-error">{{ errors.agreePrivacy }}</span>
           </div>
 
           <!-- API Error -->
@@ -264,14 +278,17 @@ const form = reactive({
   email: '',
   password: '',
   password2: '',
-  agreeTerms: false
+  agreeTerms: false,
+  agreePrivacy: false
 })
 
 const errors = reactive({
   name: '',
   email: '',
   password: '',
-  password2: ''
+  password2: '',
+  agreeTerms: '',
+  agreePrivacy: ''
 })
 
 const showPassword = ref(false)
@@ -410,13 +427,16 @@ function validateForm() {
   validateField('password')
   validateField('password2')
 
-  return !errors.name && !errors.email && !errors.password && !errors.password2 && form.agreeTerms
+  errors.agreeTerms = form.agreeTerms ? '' : 'Необходимо согласиться с условиями использования'
+  errors.agreePrivacy = form.agreePrivacy ? '' : 'Необходимо согласиться с политикой конфиденциальности'
+
+  return !errors.name && !errors.email && !errors.password && !errors.password2 && form.agreeTerms && form.agreePrivacy
 }
 
 async function handleRegister() {
   if (!validateForm()) {
-    if (!form.agreeTerms) {
-      apiError.value = 'Необходимо согласиться с условиями использования'
+    if (!form.agreeTerms || !form.agreePrivacy) {
+      apiError.value = 'Необходимо согласиться с условиями использования и политикой конфиденциальности'
     }
     return
   }
@@ -649,6 +669,11 @@ function closeSuccess() {
 .checkbox-text {
   color: var(--text-secondary);
   line-height: 1.5;
+}
+
+.checkbox-error {
+  margin-left: 1.75rem;
+  margin-top: 0.25rem;
 }
 
 .link {
