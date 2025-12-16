@@ -16,6 +16,7 @@ const GoalsBank = () => import('@/views/GoalsBank.vue')
 const Planner = () => import('@/views/Planner.vue')
 const Planning = () => import('@/views/Planning.vue')
 const Settings = () => import('@/views/Settings.vue')
+const Subscription = () => import('@/views/Subscription.vue')
 const Club = () => import('@/views/Club.vue')
 const JournalHistory = () => import('@/views/JournalHistory.vue')
 const LearningCenter = () => import('@/views/LearningCenter.vue')
@@ -183,6 +184,12 @@ const router = createRouter({
       name: 'settings',
       component: Settings,
       meta: { title: 'Настройки', requiresAuth: true }
+    },
+    {
+      path: '/app/subscription',
+      name: 'subscription',
+      component: Subscription,
+      meta: { title: 'Тарифы и подписка', requiresAuth: true }
     },
     {
       path: '/app/club',

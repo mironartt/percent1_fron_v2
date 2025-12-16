@@ -65,23 +65,7 @@
             <p class="status-text">Осталось 7 дней бесплатного доступа</p>
           </div>
 
-          <div class="pricing-info">
-            <h4>Тарифы OnePercent</h4>
-            <div class="price-options">
-              <div class="price-option">
-                <div class="price-name">Месячный</div>
-                <div class="price-value">990 ₽/мес</div>
-              </div>
-              <div class="price-option recommended">
-                <div class="price-badge">Выгодно</div>
-                <div class="price-name">Годовой</div>
-                <div class="price-value">7 990 ₽/год</div>
-                <div class="price-save">Экономия 4 000 ₽</div>
-              </div>
-            </div>
-          </div>
-
-          <button class="btn btn-primary btn-lg" style="width: 100%; margin-top: 1rem;">
+          <button class="btn btn-primary btn-lg" style="width: 100%;" @click="goToSubscription">
             Оформить подписку
           </button>
         </div>
@@ -481,6 +465,10 @@ async function resetOnboarding() {
       router.push('/onboarding')
     }
   }
+}
+
+function goToSubscription() {
+  router.push('/app/subscription')
 }
 
 function handleLogout() {
