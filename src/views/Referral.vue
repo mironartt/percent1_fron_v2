@@ -77,7 +77,7 @@
               <div class="example-earning">Вы получите <strong>897 ₽</strong></div>
             </div>
           </div>
-          <p class="examples-hint">Пригласите 10 друзей на тариф Pro — заработайте 2 970 ₽</p>
+          <p class="examples-hint">Пригласите 10 друзей на тариф Клуб 1% — заработайте 8 970 ₽</p>
         </div>
       </div>
     </div>
