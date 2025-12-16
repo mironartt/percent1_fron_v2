@@ -80,7 +80,7 @@
             <div class="step-number">3</div>
             <div class="step-content">
               <h4>Получаете награду</h4>
-              <p>Вы получаете 20% от первой оплаты друга</p>
+              <p>Вы получаете 30% от первой оплаты друга</p>
             </div>
           </div>
         </div>
@@ -97,17 +97,10 @@
       <div class="card-body">
         <div class="rewards-info">
           <div class="reward-item">
-            <div class="reward-percent">20%</div>
+            <div class="reward-percent">30%</div>
             <div class="reward-desc">
               <h4>От первой оплаты</h4>
-              <p>Получайте 20% от первой оплаты каждого приглашённого друга</p>
-            </div>
-          </div>
-          <div class="reward-item">
-            <div class="reward-percent">10%</div>
-            <div class="reward-desc">
-              <h4>От продлений</h4>
-              <p>Продолжайте получать 10% от всех последующих продлений</p>
+              <p>Получайте 30% от первой оплаты каждого приглашённого друга</p>
             </div>
           </div>
         </div>
