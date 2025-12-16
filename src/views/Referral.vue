@@ -46,6 +46,42 @@
       </div>
     </div>
 
+    <div class="card rewards-card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <Gift :size="18" class="card-icon" />
+          Ваши награды
+        </h3>
+      </div>
+      <div class="card-body">
+        <div class="rewards-info">
+          <div class="reward-item">
+            <div class="reward-percent">30%</div>
+            <div class="reward-desc">
+              <h4>От первой оплаты</h4>
+              <p>Получайте 30% от первой оплаты каждого приглашённого друга</p>
+            </div>
+          </div>
+        </div>
+        <div class="earnings-examples">
+          <h4 class="examples-title">Примеры заработка</h4>
+          <div class="examples-grid">
+            <div class="example-card">
+              <div class="example-plan">Pro</div>
+              <div class="example-price">990 ₽/мес</div>
+              <div class="example-earning">Вы получите <strong>297 ₽</strong></div>
+            </div>
+            <div class="example-card featured">
+              <div class="example-plan">Клуб 1%</div>
+              <div class="example-price">2 990 ₽/мес</div>
+              <div class="example-earning">Вы получите <strong>897 ₽</strong></div>
+            </div>
+          </div>
+          <p class="examples-hint">Пригласите 10 друзей на тариф Pro — заработайте 2 970 ₽</p>
+        </div>
+      </div>
+    </div>
+
     <div class="card how-it-works-card">
       <div class="card-header">
         <h3 class="card-title">
@@ -74,26 +110,6 @@
             <div class="step-content">
               <h4>Получаете награду</h4>
               <p>Вы получаете 30% от первой оплаты друга</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card rewards-card">
-      <div class="card-header">
-        <h3 class="card-title">
-          <Gift :size="18" class="card-icon" />
-          Ваши награды
-        </h3>
-      </div>
-      <div class="card-body">
-        <div class="rewards-info">
-          <div class="reward-item">
-            <div class="reward-percent">30%</div>
-            <div class="reward-desc">
-              <h4>От первой оплаты</h4>
-              <p>Получайте 30% от первой оплаты каждого приглашённого друга</p>
             </div>
           </div>
         </div>
@@ -495,6 +511,67 @@ onMounted(() => {
 .reward-desc p {
   font-size: 0.875rem;
   color: var(--text-secondary);
+  margin: 0;
+}
+
+.earnings-examples {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.examples-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+  text-align: center;
+}
+
+.examples-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.example-card {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  text-align: center;
+}
+
+.example-card.featured {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.example-plan {
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 0.25rem;
+}
+
+.example-price {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.example-earning {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.example-earning strong {
+  color: var(--success-color);
+  font-weight: 700;
+}
+
+.examples-hint {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  text-align: center;
   margin: 0;
 }
 
