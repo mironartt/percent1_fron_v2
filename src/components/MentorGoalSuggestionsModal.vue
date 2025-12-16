@@ -188,11 +188,12 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onBeforeUnmount, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { useAITasksStore } from '@/stores/aiTasks'
 import { updateGoals, updateGoalSteps } from '@/services/api.js'
+
 import {
   Bot,
   X,
