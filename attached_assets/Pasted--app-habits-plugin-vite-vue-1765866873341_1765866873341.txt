@@ -1,0 +1,35 @@
+При попытке открыть раздел "привычки" (`/app/habits`), падает ошибка на фронте:
+```
+[plugin:vite:vue] [vue/compiler-sfc] Identifier 'weekDays' has already been declared. (248:6)
+
+/home/truba/repo_work/one_percent/percent1/front/src/views/Habits.vue
+1920|  }
+1921|
+1922|  const weekDays = computed(() => {
+1923|    const today = new Date()
+1924|    const currentDay = today.getDay()
+
+/home/truba/repo_work/one_percent/percent1/front/src/views/Habits.vue:248:6
+
+243 |            <div class="habit-row-single" @click="toggleHabitCompletion(habit)">
+244 |              <div class="habit-check">
+245 |                <div class="checkbox" :class="{ checked: isHabitCompletedToday(habit), disabled: !isScheduledForToday(h...
+    |                                        ^
+246 |                  <Check v-if="isHabitCompletedToday(habit)" :size="14" :stroke-width="2.5" />
+247 |                </div>
+
+    at constructor (/home/truba/repo_work/one_percent/percent1/front/node_modules/@babel/parser/lib/index.js:367:19)
+    at Parser.raise (/home/truba/repo_work/one_percent/percent1/front/node_modules/@babel/parser/lib/index.js:6624:19)
+    at ScopeHandler.checkRedeclarationInScope (/home/truba/repo_work/one_percent/percent1/front/node_modules/@babel/parser/lib/index.js:1646:19)
+    at ScopeHandler.declareName (/home/truba/repo_work/one_percent/percent1/front/node_modules/@babel/parser/lib/index.js:1612:12)
+    at Parser.declareNameFromIdentifier (/home/truba/repo_work/one_percent/percent1/front/node_modules/@babel/parser/lib/index.js:7594:16)
+    at Parser.checkIdentifier (/home/truba/repo_work/one_percent/percent1/front/node_modules/@babel/parser/lib/index.js:7590:12)
+    at Parser.checkLVal (/home/truba/repo_work/one_percent/percent1/front/node_modules/@babel/parser/lib/index.js:7527:12)
+    at Parser.parseVarId (/home/truba/repo_work/one_percent/percent1/front/node_modules/@babel/parser/lib/index.js:13488:10)
+    at Parser.parseVar (/home/truba/repo_work/one_percent/percent1/front/node_modules/@babel/parser/lib/index.js:13459:12)
+    at Parser.parseVarStatement (/home/truba/repo_work/one_percent/percent1/front/node_modules/@babel/parser/lib/index.js:13306:10)
+```
+
+Поправь не ломая логики всего остально.
+
+Также для сведения: это произошло в процессе интеграции с бэкендом по использованию "AI-кнопок" генерации данных (в данном случе это кнопка в модальном окне добавления привычки "подбор от ментора")

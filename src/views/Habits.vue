@@ -1727,16 +1727,6 @@ const scheduleOptions = [
   { value: '3times', label: '3 раза в неделю', days: [1, 3, 5] }
 ]
 
-const weekDays = [
-  { key: 1, short: 'Пн' },
-  { key: 2, short: 'Вт' },
-  { key: 3, short: 'Ср' },
-  { key: 4, short: 'Чт' },
-  { key: 5, short: 'Пт' },
-  { key: 6, short: 'Сб' },
-  { key: 0, short: 'Вс' }
-]
-
 const xpOptions = [5, 10, 15, 20, 25, 30]
 
 const HABIT_TASK_TYPE = 'habit_create_help'
