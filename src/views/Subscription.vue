@@ -42,74 +42,72 @@
         </div>
         <ul class="plan-features">
           <li><Check :size="16" class="feature-icon included" /> Колесо баланса (ССП)</li>
-          <li><Check :size="16" class="feature-icon included" /> Банк целей (до 5 целей)</li>
+          <li><Check :size="16" class="feature-icon included" /> Банк целей (до 4 целей)</li>
           <li><Check :size="16" class="feature-icon included" /> Базовое планирование</li>
           <li><Check :size="16" class="feature-icon included" /> Трекер привычек (до 3)</li>
           <li><Check :size="16" class="feature-icon included" /> Дневник рефлексии</li>
-          <li><Check :size="16" class="feature-icon included" /> Уведомления в Telegram</li>
-          <li><X :size="16" class="feature-icon excluded" /> AI Ментор</li>
-          <li><X :size="16" class="feature-icon excluded" /> Клуб 1%</li>
+          <li><Check :size="16" class="feature-icon included" /> Достижения (до 5)</li>
+          <li><Check :size="16" class="feature-icon included" /> Напоминания в Telegram</li>
         </ul>
         <button class="btn btn-secondary btn-lg plan-btn">
           Текущий план
         </button>
       </div>
 
-      <div class="plan-card extra popular">
+      <div class="plan-card pro popular">
         <div class="popular-badge">Популярный выбор</div>
         <div class="plan-header">
-          <h3 class="plan-name">Extra</h3>
+          <h3 class="plan-name">Pro</h3>
           <div class="plan-price">
-            <span class="price-value">{{ formatPrice(extraPrice) }} ₽</span>
+            <span class="price-value">{{ formatPrice(proPrice) }} ₽</span>
             <span class="price-period">{{ priceLabel }}</span>
           </div>
-          <div v-if="extraSavings > 0" class="savings">
-            Экономия {{ formatPrice(extraSavings) }} ₽
+          <div v-if="proSavings > 0" class="savings">
+            Экономия {{ formatPrice(proSavings) }} ₽
           </div>
         </div>
         <ul class="plan-features">
           <li><Check :size="16" class="feature-icon included" /> Всё из Бесплатного плана</li>
           <li><Check :size="16" class="feature-icon included" /> Безлимитные цели и привычки</li>
-          <li><Check :size="16" class="feature-icon included" /> <strong>AI Ментор</strong> — персональный коуч</li>
-          <li><Check :size="16" class="feature-icon included" /> Продвинутая аналитика</li>
-          <li><Check :size="16" class="feature-icon included" /> Приоритетная поддержка</li>
-          <li><Check :size="16" class="feature-icon included" /> Экспорт данных</li>
-          <li><X :size="16" class="feature-icon excluded" /> Клуб 1%</li>
+          <li><Check :size="16" class="feature-icon included" /> <strong>AI ментор</strong></li>
+          <li><Check :size="16" class="feature-icon included" /> <strong>AI планирование</strong></li>
+          <li><Check :size="16" class="feature-icon included" /> <strong>AI помощь</strong></li>
+          <li><Check :size="16" class="feature-icon included" /> Голосовой чат с ментором в Telegram</li>
+          <li><Check :size="16" class="feature-icon included" /> Клуб 1%</li>
         </ul>
         <button class="btn btn-primary btn-lg plan-btn">
-          Выбрать Extra
+          Выбрать Pro
         </button>
       </div>
 
-      <div class="plan-card deluxe">
+      <div class="plan-card pro-plus">
         <div class="plan-header">
-          <h3 class="plan-name">Deluxe</h3>
+          <h3 class="plan-name">Pro+</h3>
           <div class="plan-price">
-            <span class="price-value">{{ formatPrice(deluxePrice) }} ₽</span>
+            <span class="price-value">{{ formatPrice(proPlusPrice) }} ₽</span>
             <span class="price-period">{{ priceLabel }}</span>
           </div>
-          <div v-if="deluxeSavings > 0" class="savings">
-            Экономия {{ formatPrice(deluxeSavings) }} ₽
+          <div v-if="proPlusSavings > 0" class="savings">
+            Экономия {{ formatPrice(proPlusSavings) }} ₽
           </div>
         </div>
         <ul class="plan-features">
-          <li><Check :size="16" class="feature-icon included" /> Всё из Extra плана</li>
+          <li><Check :size="16" class="feature-icon included" /> Всё из Pro плана</li>
           <li><Check :size="16" class="feature-icon included" /> <strong>Еженедельные мастермайнды</strong></li>
           <li><Check :size="16" class="feature-icon included" /> <strong>Групповые челленджи</strong></li>
-          <li><Check :size="16" class="feature-icon included" /> <strong>Персональные разборы</strong></li>
           <li><Check :size="16" class="feature-icon included" /> Ранний доступ к новым функциям</li>
-          <li><Check :size="16" class="feature-icon included" /> Доступ в закрытое сообщество</li>
-          <li><Check :size="16" class="feature-icon included" /> Эксклюзивные материалы</li>
+          <li><Check :size="16" class="feature-icon included" /> <strong>Нетворкинг 2.0</strong></li>
+          <li><Check :size="16" class="feature-icon included" /> Клуб 1%</li>
         </ul>
-        <button class="btn btn-primary btn-lg plan-btn deluxe-btn">
-          Выбрать Deluxe
+        <button class="btn btn-primary btn-lg plan-btn pro-plus-btn">
+          Выбрать Pro+
         </button>
       </div>
     </div>
 
     <div class="guarantee">
       <Shield :size="20" />
-      <p>Гарантия возврата денег в течение 14 дней. Без вопросов.</p>
+      <p>Гарантия возврата денег в течение 7 дней. Без вопросов.</p>
     </div>
   </div>
 </template>
@@ -130,34 +128,34 @@ const periods = [
 
 const selectedPeriod = ref(12)
 
-const baseExtraPrice = 990
-const baseDeluxePrice = 2990
+const baseProPrice = 990
+const baseProPlusPrice = 2990
 
 const currentDiscount = computed(() => {
   const period = periods.find(p => p.months === selectedPeriod.value)
   return period ? period.discount : 0
 })
 
-const extraPrice = computed(() => {
-  const fullPrice = baseExtraPrice * selectedPeriod.value
+const proPrice = computed(() => {
+  const fullPrice = baseProPrice * selectedPeriod.value
   const discount = currentDiscount.value / 100
   return Math.round(fullPrice * (1 - discount))
 })
 
-const deluxePrice = computed(() => {
-  const fullPrice = baseDeluxePrice * selectedPeriod.value
+const proPlusPrice = computed(() => {
+  const fullPrice = baseProPlusPrice * selectedPeriod.value
   const discount = currentDiscount.value / 100
   return Math.round(fullPrice * (1 - discount))
 })
 
-const extraSavings = computed(() => {
-  const fullPrice = baseExtraPrice * selectedPeriod.value
-  return fullPrice - extraPrice.value
+const proSavings = computed(() => {
+  const fullPrice = baseProPrice * selectedPeriod.value
+  return fullPrice - proPrice.value
 })
 
-const deluxeSavings = computed(() => {
-  const fullPrice = baseDeluxePrice * selectedPeriod.value
-  return deluxePrice.value < fullPrice ? fullPrice - deluxePrice.value : 0
+const proPlusSavings = computed(() => {
+  const fullPrice = baseProPlusPrice * selectedPeriod.value
+  return proPlusPrice.value < fullPrice ? fullPrice - proPlusPrice.value : 0
 })
 
 const priceLabel = computed(() => {
@@ -422,19 +420,19 @@ function goBack() {
   cursor: default;
 }
 
-.plan-card.deluxe .plan-name {
+.plan-card.pro-plus .plan-name {
   background: linear-gradient(135deg, #d97706, #f59e0b);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.deluxe-btn {
+.pro-plus-btn {
   background: linear-gradient(135deg, #d97706, #f59e0b);
   border: none;
 }
 
-.deluxe-btn:hover {
+.pro-plus-btn:hover {
   background: linear-gradient(135deg, #b45309, #d97706);
 }
 
