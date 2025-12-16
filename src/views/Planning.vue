@@ -939,15 +939,96 @@ const aiPlannerDontShowIntro = ref(localStorage.getItem('ai_planner_skip_intro')
 const aiPlannerDontShowCheck = ref(false)
 const aiPlannerSelectedTasks = ref([])
 
-function openAIPlannerModal() {
+const PLANNING_TASK_TYPE = 'week_planning_help'
+const PLANNING_VIEWED_RESULTS_KEY = 'planning_ai_results_viewed'
+
+async function openAIPlannerModal() {
+  showAIPlannerModal.value = true
   aiPlannerDontShowCheck.value = aiPlannerDontShowIntro.value
+  
+  aiTasksStore.connect()
+  
+  const runningTask = aiTasksStore.getActiveTaskByType(PLANNING_TASK_TYPE)
+  if (runningTask) {
+    aiPlannerStep.value = 'loading'
+    aiPlannerLoading.value = true
+    await waitForExistingPlanningTask(runningTask.task_id)
+    return
+  }
+  
+  const completedTask = aiTasksStore.getCompletedTaskByType(PLANNING_TASK_TYPE)
+  const cachedResult = aiTasksStore.getTaskResult(PLANNING_TASK_TYPE)
+  
+  if (completedTask || cachedResult) {
+    const viewedTaskIds = getViewedPlanningResults()
+    const taskId = completedTask?.task_id || 'cached'
+    
+    if (!viewedTaskIds.includes(String(taskId))) {
+      const result = cachedResult || completedTask?.result
+      if (result) {
+        handleAIPlanningResult(result, taskId)
+        return
+      }
+    }
+  }
+  
   if (aiPlannerDontShowIntro.value) {
-    showAIPlannerModal.value = true
     startAIPlanning()
   } else {
-    showAIPlannerModal.value = true
     aiPlannerStep.value = 'intro'
   }
+}
+
+function getViewedPlanningResults() {
+  try {
+    const stored = localStorage.getItem(PLANNING_VIEWED_RESULTS_KEY)
+    return stored ? JSON.parse(stored) : []
+  } catch {
+    return []
+  }
+}
+
+function markPlanningResultViewed(taskId) {
+  const viewed = getViewedPlanningResults()
+  if (!viewed.includes(String(taskId))) {
+    viewed.push(String(taskId))
+    if (viewed.length > 10) {
+      viewed.shift()
+    }
+    localStorage.setItem(PLANNING_VIEWED_RESULTS_KEY, JSON.stringify(viewed))
+  }
+}
+
+async function waitForExistingPlanningTask(taskId) {
+  const maxAttempts = 60
+  let attempts = 0
+  
+  while (attempts < maxAttempts) {
+    const status = await aiTasksStore.getTaskStatus(taskId)
+    
+    if (!status) {
+      aiPlannerLoading.value = false
+      aiPlannerStep.value = 'intro'
+      return
+    }
+    
+    if (status.status === 'completed' && status.result) {
+      handleAIPlanningResult(status.result, taskId)
+      return
+    }
+    
+    if (status.status === 'failed') {
+      aiPlannerLoading.value = false
+      aiPlannerStep.value = 'intro'
+      return
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    attempts++
+  }
+  
+  aiPlannerLoading.value = false
+  aiPlannerStep.value = 'intro'
 }
 
 // Просроченные шаги (загружаются с бэкенда)
@@ -1042,9 +1123,13 @@ function formatOverdueDate(dateStr) {
 
 function closeAIPlannerModal() {
   showAIPlannerModal.value = false
-  aiPlannerStep.value = 'intro'
-  aiPlannerResult.value = null
-  aiPlannerSelectedTasks.value = []
+  
+  const runningTask = aiTasksStore.getActiveTaskByType(PLANNING_TASK_TYPE)
+  if (!runningTask) {
+    aiPlannerStep.value = 'intro'
+    aiPlannerResult.value = null
+    aiPlannerSelectedTasks.value = []
+  }
 }
 
 function goBackToIntro() {
@@ -1121,15 +1206,81 @@ watch(() => aiTasksStore.getTaskProgress('week_planning_help'), (progress) => {
   }
 }, { deep: true })
 
-function handleAIPlanningResult(result) {
-  const dayNames = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
+function handleAIPlanningResult(result, taskId = null) {
+  const dayNames = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота']
   
-  if (result.days && result.days.length > 0) {
+  console.log('[Planning] Processing AI result:', result)
+  
+  if (result.plan && Array.isArray(result.plan) && result.plan.length > 0) {
+    const stepsByDate = {}
+    const stepIdToInfo = buildStepIdMap()
+    
+    result.plan.forEach(item => {
+      const date = item.date
+      if (!date) return
+      
+      if (!stepsByDate[date]) {
+        stepsByDate[date] = []
+      }
+      
+      const stepInfo = stepIdToInfo[item.stepId]
+      
+      stepsByDate[date].push({
+        id: item.stepId,
+        title: stepInfo?.title || `Задача #${item.stepId}`,
+        goalTitle: stepInfo?.goalTitle || '',
+        goalId: stepInfo?.goalId || null,
+        priority: stepInfo?.priority || '',
+        timeEstimate: item.estimatedTime || stepInfo?.timeEstimate || '',
+        reason: item.reason || '',
+        notFound: !stepInfo
+      })
+    })
+    
+    const sortedDates = Object.keys(stepsByDate).sort()
+    
+    if (sortedDates.length > 0) {
+      aiPlannerResult.value = {
+        totalTasks: result.plan.length,
+        notThisWeek: (result.not_this_week || []).map(item => ({
+          id: item.stepId,
+          title: stepIdToInfo[item.stepId]?.title || `Задача #${item.stepId}`,
+          reason: item.reason || ''
+        })),
+        summary: result.summary || {},
+        reasoning: result.reasoning || '',
+        days: sortedDates.map(date => {
+          const d = new Date(date)
+          const dayOfWeek = d.getDay()
+          return {
+            date: date,
+            dayName: dayNames[dayOfWeek],
+            dateFormatted: d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }),
+            tasks: stepsByDate[date]
+          }
+        })
+      }
+      
+      const allTaskIds = result.plan.map(item => item.stepId)
+      aiPlannerSelectedTasks.value = [...allTaskIds]
+      aiDayExpandState.value = {}
+      
+      const completedTask = aiTasksStore.getCompletedTaskByType(PLANNING_TASK_TYPE)
+      const idToMark = taskId || completedTask?.task_id || `result_${Date.now()}`
+      markPlanningResultViewed(idToMark)
+      
+      aiPlannerStep.value = 'result'
+      aiPlannerLoading.value = false
+      return
+    }
+  }
+  
+  if (result.days && Array.isArray(result.days) && result.days.length > 0) {
     aiPlannerResult.value = {
       totalTasks: result.total_tasks || result.days.reduce((sum, d) => sum + (d.tasks?.length || 0), 0),
-      days: result.days.map((day, idx) => ({
+      days: result.days.map((day) => ({
         date: day.date,
-        dayName: dayNames[idx] || day.day_name,
+        dayName: dayNames[(new Date(day.date)).getDay()] || day.day_name,
         tasks: (day.tasks || []).map(t => ({
           id: t.id || t.step_id,
           title: t.title || t.step_title,
@@ -1144,12 +1295,51 @@ function handleAIPlanningResult(result) {
     aiPlannerSelectedTasks.value = [...allTaskIds]
     aiDayExpandState.value = {}
     
+    const completedTask = aiTasksStore.getCompletedTaskByType(PLANNING_TASK_TYPE)
+    const idToMark = taskId || completedTask?.task_id || `result_${Date.now()}`
+    markPlanningResultViewed(idToMark)
+    
     aiPlannerStep.value = 'result'
-  } else {
-    aiPlannerStep.value = 'intro'
+    aiPlannerLoading.value = false
+    return
   }
   
+  console.warn('[Planning] No valid plan data in result')
+  aiPlannerStep.value = 'intro'
   aiPlannerLoading.value = false
+}
+
+function buildStepIdMap() {
+  const map = {}
+  for (const goal of store.goals) {
+    for (const step of (goal.steps || [])) {
+      const stepId = step.backendId || step.id
+      map[stepId] = {
+        title: step.title,
+        goalTitle: goal.title || goal.text,
+        goalId: goal.backendId || goal.id,
+        priority: step.priority,
+        timeEstimate: step.timeEstimate
+      }
+    }
+  }
+  return map
+}
+
+function findStepById(stepId) {
+  for (const goal of store.goals) {
+    const step = (goal.steps || []).find(s => s.backendId === stepId || s.id === stepId)
+    if (step) {
+      return {
+        title: step.title,
+        goalTitle: goal.title || goal.text,
+        goalId: goal.backendId || goal.id,
+        priority: step.priority,
+        timeEstimate: step.timeEstimate
+      }
+    }
+  }
+  return null
 }
 
 function applyAIPlan() {
