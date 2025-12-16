@@ -1646,6 +1646,9 @@ const aiSuggestedHabits = ref([])
 const selectedAiHabits = ref([])
 const createdAiHabits = ref([])
 const suggestionsErrorMessage = ref('')
+
+const HABIT_TASK_TYPE = 'habit_create_help'
+const HABIT_VIEWED_RESULTS_KEY = 'habit_suggestions_viewed'
 const scheduleHabitsImmediately = ref(true)
 const skipHabitSuggestionsIntro = ref(localStorage.getItem('skipHabitSuggestionsIntro') === 'true')
 const showAmnestyModal = ref(false)
@@ -3714,11 +3717,15 @@ function selectSuggestedHabit(habit) {
 
 function closeSuggestionsModal() {
   showSuggestionsModal.value = false
-  suggestionsStep.value = skipHabitSuggestionsIntro.value ? 'templates' : 'intro'
-  aiSuggestedHabits.value = []
-  selectedAiHabits.value = []
-  createdAiHabits.value = []
-  suggestionsErrorMessage.value = ''
+  
+  const runningTask = aiTasksStore.getActiveTaskByType(HABIT_TASK_TYPE)
+  if (!runningTask) {
+    suggestionsStep.value = skipHabitSuggestionsIntro.value ? 'templates' : 'intro'
+    aiSuggestedHabits.value = []
+    selectedAiHabits.value = []
+    createdAiHabits.value = []
+    suggestionsErrorMessage.value = ''
+  }
 }
 
 function saveSkipIntroPreference() {
@@ -3734,13 +3741,60 @@ function openTemplatesModal() {
   suggestionsStep.value = 'templates'
 }
 
-function openAiSuggestionsModal() {
+async function openAiSuggestionsModal() {
   showSuggestionsModal.value = true
+  
+  aiTasksStore.connect()
+  
+  const runningTask = aiTasksStore.getActiveTaskByType(HABIT_TASK_TYPE)
+  if (runningTask) {
+    suggestionsStep.value = 'loading'
+    await waitForExistingTask(runningTask.task_id)
+    return
+  }
+  
+  const completedTask = aiTasksStore.getCompletedTaskByType(HABIT_TASK_TYPE)
+  const cachedResult = aiTasksStore.getTaskResult(HABIT_TASK_TYPE)
+  
+  if (completedTask || cachedResult) {
+    const viewedTaskIds = getViewedHabitResults()
+    const taskId = completedTask?.task_id || 'cached'
+    
+    if (!viewedTaskIds.includes(String(taskId))) {
+      const result = cachedResult || completedTask?.result
+      if (result) {
+        handleHabitSuggestionsResult(result)
+        markHabitResultViewed(taskId)
+        return
+      }
+    }
+  }
+  
   const skipIntro = localStorage.getItem('skipHabitSuggestionsIntro') === 'true'
   if (skipIntro) {
     startHabitSuggestions()
   } else {
     suggestionsStep.value = 'intro'
+  }
+}
+
+function getViewedHabitResults() {
+  try {
+    const stored = localStorage.getItem(HABIT_VIEWED_RESULTS_KEY)
+    return stored ? JSON.parse(stored) : []
+  } catch {
+    return []
+  }
+}
+
+function markHabitResultViewed(taskId) {
+  const viewed = getViewedHabitResults()
+  if (!viewed.includes(String(taskId))) {
+    viewed.push(String(taskId))
+    if (viewed.length > 10) {
+      viewed.shift()
+    }
+    localStorage.setItem(HABIT_VIEWED_RESULTS_KEY, JSON.stringify(viewed))
   }
 }
 
@@ -3814,7 +3868,7 @@ async function waitForExistingTask(taskId) {
   suggestionsStep.value = 'error'
 }
 
-function handleHabitSuggestionsResult(result) {
+function handleHabitSuggestionsResult(result, taskId = null) {
   const habits = result.habits || result.suggestions || []
   
   if (habits.length > 0) {
@@ -3831,6 +3885,10 @@ function handleHabitSuggestionsResult(result) {
       trigger: h.trigger || ''
     }))
     suggestionsStep.value = 'selection'
+    
+    const completedTask = aiTasksStore.getCompletedTaskByType(HABIT_TASK_TYPE)
+    const idToMark = taskId || completedTask?.task_id || `result_${Date.now()}`
+    markHabitResultViewed(idToMark)
   } else {
     suggestionsErrorMessage.value = 'Не удалось получить рекомендации'
     suggestionsStep.value = 'error'
@@ -3912,6 +3970,9 @@ async function confirmAiHabitSelection() {
   }
   
   suggestionsStep.value = 'confirmation'
+  
+  aiTasksStore.clearTaskResult(HABIT_TASK_TYPE)
+  
   toast.showToast({ 
     title: `Добавлено ${createdAiHabits.value.length} ${getHabitsWord(createdAiHabits.value.length)}`, 
     type: 'success' 
