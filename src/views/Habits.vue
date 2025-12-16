@@ -1608,6 +1608,7 @@ import { useAppStore } from '../stores/app'
 import { useXpStore } from '../stores/xp'
 import { useToastStore } from '../stores/toast'
 import { useHabitsStore } from '../stores/habits'
+import { useAITasksStore } from '../stores/aiTasks'
 import { DEBUG_MODE } from '@/config/settings.js'
 import { getLocalDateString, getTodayDateString } from '@/utils/dateUtils'
 import { 
@@ -1621,6 +1622,7 @@ import { apiFetch } from '@/services/api.js'
 
 const appStore = useAppStore()
 const xpStore = useXpStore()
+const aiTasksStore = useAITasksStore()
 const toast = useToastStore()
 const habitsStore = useHabitsStore()
 
@@ -3762,24 +3764,75 @@ async function startHabitSuggestions() {
   selectedAiHabits.value = []
   
   try {
+    aiTasksStore.connect()
+    
     const userData = prepareUserDataForHabits()
-    const response = await apiFetch('/api/ai/suggest-habits', {
-      method: 'POST',
-      body: JSON.stringify(userData)
-    })
     
-    const result = await response.json()
+    const result = await aiTasksStore.startTaskAndWait('habit_create_help', userData, 120000)
     
-    if (result.success && result.suggestions?.length > 0) {
-      aiSuggestedHabits.value = result.suggestions
-      suggestionsStep.value = 'selection'
+    if (result.status === 'already_running' && result.task_id) {
+      await waitForExistingTask(result.task_id)
     } else {
-      suggestionsErrorMessage.value = result.error || 'Не удалось получить рекомендации'
-      suggestionsStep.value = 'error'
+      handleHabitSuggestionsResult(result)
     }
   } catch (error) {
     console.error('[Habits] AI suggestion error:', error)
-    suggestionsErrorMessage.value = 'Произошла ошибка при генерации привычек'
+    suggestionsErrorMessage.value = error.message || 'Произошла ошибка при генерации привычек'
+    suggestionsStep.value = 'error'
+  }
+}
+
+async function waitForExistingTask(taskId) {
+  const maxAttempts = 60
+  let attempts = 0
+  
+  while (attempts < maxAttempts) {
+    const status = await aiTasksStore.getTaskStatus(taskId)
+    
+    if (!status) {
+      suggestionsErrorMessage.value = 'Не удалось получить статус задачи'
+      suggestionsStep.value = 'error'
+      return
+    }
+    
+    if (status.status === 'completed' && status.result) {
+      handleHabitSuggestionsResult(status.result)
+      return
+    }
+    
+    if (status.status === 'failed') {
+      suggestionsErrorMessage.value = status.error?.message || 'Ошибка генерации'
+      suggestionsStep.value = 'error'
+      return
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    attempts++
+  }
+  
+  suggestionsErrorMessage.value = 'Время ожидания истекло'
+  suggestionsStep.value = 'error'
+}
+
+function handleHabitSuggestionsResult(result) {
+  const habits = result.habits || result.suggestions || []
+  
+  if (habits.length > 0) {
+    aiSuggestedHabits.value = habits.map((h, idx) => ({
+      id: `habit-${Date.now()}-${idx}`,
+      name: h.name,
+      icon: h.icon || 'fire',
+      description: h.description || '',
+      frequencyType: h.frequency_type || 'daily',
+      scheduleDays: h.schedule_days || [0, 1, 2, 3, 4, 5, 6],
+      scheduleLabel: h.schedule_label || 'Каждый день',
+      xpReward: h.xp_reward || 10,
+      whyUseful: h.why_useful || '',
+      trigger: h.trigger || ''
+    }))
+    suggestionsStep.value = 'selection'
+  } else {
+    suggestionsErrorMessage.value = 'Не удалось получить рекомендации'
     suggestionsStep.value = 'error'
   }
 }
@@ -3824,7 +3877,7 @@ async function confirmAiHabitSelection() {
     const habitData = {
       name: habit.name,
       icon: habit.icon || 'fire',
-      description: habit.whyUseful || '',
+      description: habit.description || habit.whyUseful || '',
       xpReward: habit.xpReward || 10,
       xpPenalty: 0,
       frequencyType: habit.frequencyType || 'daily',
