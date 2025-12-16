@@ -226,11 +226,11 @@ onMounted(() => {
 }
 
 .stat-card {
-  background: var(--bg-card);
+  background: white;
   border-radius: var(--radius-lg);
   padding: 1.5rem;
   text-align: center;
-  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
 .stat-icon {
@@ -258,9 +258,9 @@ onMounted(() => {
 }
 
 .card {
-  background: var(--bg-card);
+  background: white;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   margin-bottom: 1.5rem;
 }
 
