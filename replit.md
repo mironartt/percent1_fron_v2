@@ -31,6 +31,7 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite (with pro
 -   **Year Review 2025 (Итоги года)**: Single-page flow at `/land/newyear` with test → results workflow. Results page now includes AI-generated 2026 plan with loading animation, confetti effect, and CTA block for app registration. AI plan generation uses `/api/ai/year-plan` with demo fallback.
 -   **Achievements Page**: Improved UX with grouped XP history, filterable transactions, and pagination.
 -   **Settings Page**: Redesigned with profile management (email for Telegram users), Telegram bot integration, and an "Мой старт" section displaying onboarding data.
+-   **Subscription Page** (`/app/subscription`): Dedicated pricing page with 3 tiers (Free, Extra 990₽/mo, Deluxe 2,990₽/mo), period selector (1/3/6/12 months) with progressive discounts (0%/10%/20%/30%), and trial status indicator.
 
 ### System Design Choices
 The application uses a modular structure with dedicated components, services, views, router, and Pinia stores. It emphasizes user guidance, visual feedback, and a clean interface. The AI Mentor is a core value proposition. Backend synchronization includes immediate UI feedback, goal routing with `backendId`, race condition prevention, optimized step synchronization, and API pagination.
