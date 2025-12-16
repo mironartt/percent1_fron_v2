@@ -529,20 +529,25 @@
               <span class="logo-icon small">1%</span>
               <span>OnePercent</span>
             </div>
-            <p>Система управления жизнью</p>
           </div>
           <div class="footer-links">
             <router-link to="/auth/login">Войти</router-link>
             <router-link to="/auth/register">Регистрация</router-link>
           </div>
         </div>
-        <div class="footer-bottom">
-          <p>&copy; 2026 OnePercent. Все права защищены.</p>
-          <div class="footer-legal">
-            <router-link to="/privacy">Политика конфиденциальности</router-link>
-            <span class="separator">|</span>
-            <router-link to="/termspolicy">Пользовательское соглашение</router-link>
+        <div class="footer-legal">
+          <div class="legal-links">
+            <a href="https://percent1.ru/privacy" target="_blank" rel="noopener noreferrer">Политика конфиденциальности</a>
+            <a href="https://percent1.ru/termspolicy" target="_blank" rel="noopener noreferrer">Пользовательское соглашение</a>
+            <a href="https://percent1.ru/disclaimer" target="_blank" rel="noopener noreferrer">Отказ от ответственности</a>
           </div>
+        </div>
+        <div class="footer-bottom">
+          <div class="company-info">
+            <p>ИП Косик Дмитрий Владимирович</p>
+            <p>ИНН: 711280092908 | ОГРНИП: 321774600674346</p>
+          </div>
+          <p>&copy; 2025 OnePercent. Все права защищены.</p>
         </div>
       </div>
     </footer>
@@ -2370,6 +2375,40 @@ onUnmounted(() => {
 
 .footer-links a:hover {
   color: white;
+}
+
+.footer-legal {
+  padding-top: 1rem;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.legal-links {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.legal-links a {
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  transition: color 0.2s;
+}
+
+.legal-links a:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.company-info {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.75rem;
+}
+
+.company-info p {
+  margin: 0.25rem 0;
 }
 
 .footer-bottom {
