@@ -498,7 +498,7 @@
                 <li><span class="check"><Check :size="16" /></span> Голосовой чат с ментором в Telegram</li>
                 <li><span class="check"><Check :size="16" /></span> Клуб 1%</li>
               </ul>
-              <router-link to="/auth/register" class="btn btn-primary">
+              <router-link to="/auth/register" class="btn btn-white">
                 Попробовать Pro
               </router-link>
             </div>
@@ -820,6 +820,16 @@ onUnmounted(() => {
 .btn-lg {
   padding: 1rem 2rem;
   font-size: 1.125rem;
+}
+
+.btn-white {
+  background: white;
+  color: #6366f1;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-white:hover {
+  opacity: 0.9;
 }
 
 .hero {
