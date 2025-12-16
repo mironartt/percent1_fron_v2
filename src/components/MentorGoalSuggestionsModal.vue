@@ -157,10 +157,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
-import { generateMentorGoalSuggestions, generateStepsWithAI } from '@/services/aiGoalService.js'
+import { useAITasksStore } from '@/stores/aiTasks'
 import {
   Bot,
   X,
@@ -187,6 +187,7 @@ const emit = defineEmits(['close', 'goals-created'])
 
 const router = useRouter()
 const appStore = useAppStore()
+const aiTasksStore = useAITasksStore()
 
 const step = ref('intro')
 const suggestions = ref([])
@@ -194,6 +195,9 @@ const selectedGoals = ref([])
 const createdGoals = ref([])
 const creatingProgress = ref('')
 const errorMessage = ref('')
+const isMentorActive = ref(false)
+const isDecompositionActive = ref(false)
+const mentorProgress = ref({ percent: 0, text: '' })
 
 const sphereColors = {
   wealth: '#f59e0b',
@@ -239,21 +243,50 @@ function toggleGoalSelection(idx) {
 async function startGeneration() {
   step.value = 'loading'
   selectedGoals.value = []
+  isMentorActive.value = true
+  mentorProgress.value = { percent: 0, text: 'Анализирую ваш профиль...' }
   
   try {
     const sspData = prepareSSPData()
-    const result = await generateMentorGoalSuggestions(sspData)
-    
-    if (result.success && result.suggestions?.length > 0) {
-      suggestions.value = result.suggestions
-      step.value = 'selection'
-    } else {
-      errorMessage.value = result.error || 'Не удалось получить рекомендации'
-      step.value = 'error'
-    }
+    const result = await aiTasksStore.startTaskAndWait('goal_mentor_help', { ssp_data: sspData }, 120000)
+    handleMentorResult(result)
   } catch (error) {
     console.error('[MentorModal] Generation error:', error)
-    errorMessage.value = 'Произошла ошибка при генерации целей'
+    errorMessage.value = error.message || 'Произошла ошибка при генерации целей'
+    step.value = 'error'
+    isMentorActive.value = false
+  }
+}
+
+watch(() => aiTasksStore.getTaskProgress('goal_mentor_help'), (progress) => {
+  if (progress && isMentorActive.value) {
+    mentorProgress.value = progress
+  }
+}, { deep: true })
+
+function handleMentorResult(result) {
+  isMentorActive.value = false
+  
+  if (result.suggestions && result.suggestions.length > 0) {
+    const categoryBackendToFrontend = {
+      'welfare': 'wealth',
+      'hobby': 'hobbies',
+      'environment': 'friendship',
+      'health_sport': 'health',
+      'health': 'health',
+      'work': 'career',
+      'family': 'love'
+    }
+    
+    suggestions.value = result.suggestions.map((s, idx) => ({
+      id: `suggestion-${Date.now()}-${idx}`,
+      title: s.title,
+      sphereId: s.category ? categoryBackendToFrontend[s.category] || s.category : null,
+      whyUseful: s.why_important || s.description || ''
+    }))
+    step.value = 'selection'
+  } else {
+    errorMessage.value = 'Не удалось получить рекомендации'
     step.value = 'error'
   }
 }
@@ -283,6 +316,7 @@ function prepareSSPData() {
 async function confirmSelection() {
   step.value = 'creating'
   createdGoals.value = []
+  isDecompositionActive.value = true
   
   const selected = selectedGoals.value.map(idx => suggestions.value[idx])
   
@@ -301,19 +335,26 @@ async function confirmSelection() {
       
       creatingProgress.value = `Генерируем шаги для цели ${i + 1}...`
       
-      const stepsResult = await generateStepsWithAI(suggestion.title, suggestion.sphereId)
-      
-      if (stepsResult.success && stepsResult.steps?.length > 0) {
-        const goal = appStore.ideas.find(g => g.id === goalId)
-        if (goal) {
-          stepsResult.steps.forEach((stepText, idx) => {
-            goal.steps.push({
-              id: `step-${Date.now()}-${idx}`,
-              text: stepText,
-              completed: false
+      try {
+        const stepsResult = await aiTasksStore.startTaskAndWait('goal_decomposition', {
+          goal_title: suggestion.title,
+          category: suggestion.sphereId
+        }, 120000)
+        
+        if (stepsResult.steps && stepsResult.steps.length > 0) {
+          const goal = appStore.ideas.find(g => g.id === goalId)
+          if (goal) {
+            stepsResult.steps.forEach((step, idx) => {
+              goal.steps.push({
+                id: `step-${Date.now()}-${idx}`,
+                text: step.title || step,
+                completed: false
+              })
             })
-          })
+          }
         }
+      } catch (stepsError) {
+        console.error('[MentorModal] Error generating steps:', stepsError)
       }
       
       createdGoals.value.push({
@@ -325,6 +366,7 @@ async function confirmSelection() {
     }
   }
   
+  isDecompositionActive.value = false
   step.value = 'confirmation'
   emit('goals-created', createdGoals.value)
 }
@@ -339,8 +381,15 @@ function closeModal() {
   suggestions.value = []
   selectedGoals.value = []
   createdGoals.value = []
+  isMentorActive.value = false
+  isDecompositionActive.value = false
   emit('close')
 }
+
+onBeforeUnmount(() => {
+  isMentorActive.value = false
+  isDecompositionActive.value = false
+})
 </script>
 
 <style scoped>
