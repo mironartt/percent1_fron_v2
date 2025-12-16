@@ -801,21 +801,20 @@ onUnmounted(() => {
   border-radius: 10px;
   font-weight: 600;
   text-decoration: none;
-  transition: filter 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+  transition: opacity 0.15s ease;
   border: none;
   cursor: pointer;
   white-space: nowrap;
+}
+
+.btn:hover {
+  opacity: 0.85;
 }
 
 .btn-primary {
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   color: white;
   box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
-}
-
-.btn-primary:hover {
-  filter: brightness(1.1);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
 }
 
 .btn-lg {
@@ -2321,13 +2320,12 @@ onUnmounted(() => {
   color: #6366f1;
   border-radius: 12px;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: opacity 0.15s ease;
   text-decoration: none;
 }
 
 .btn-outline:hover {
-  background: #6366f1;
-  color: white;
+  opacity: 0.85;
 }
 
 .btn-premium {
@@ -2336,14 +2334,13 @@ onUnmounted(() => {
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  transition: filter 0.2s ease, box-shadow 0.2s ease;
+  transition: opacity 0.15s ease;
   text-decoration: none;
   box-shadow: 0 4px 15px rgba(251, 191, 36, 0.25);
 }
 
 .btn-premium:hover {
-  filter: brightness(1.05);
-  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.35);
+  opacity: 0.9;
 }
 
 .pricing-note {
