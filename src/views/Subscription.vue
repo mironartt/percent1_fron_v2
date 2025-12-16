@@ -1,13 +1,8 @@
 <template>
   <div class="subscription-container">
-    <header class="page-header">
-      <button class="btn-back" @click="goBack">
-        <ArrowLeft :size="20" />
-      </button>
-      <div>
-        <h1>Выберите тариф</h1>
-        <p class="subtitle">Выберите план, который подходит именно вам</p>
-      </div>
+    <header class="page-header centered">
+      <h1>Выберите тариф</h1>
+      <p class="subtitle">Выберите план, который подходит именно вам</p>
     </header>
 
     <div class="current-status">
@@ -114,7 +109,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft, Check, X, Clock, Shield } from 'lucide-vue-next'
+import { Check, X, Clock, Shield } from 'lucide-vue-next'
 
 const router = useRouter()
 
@@ -183,6 +178,11 @@ function goBack() {
   align-items: center;
   gap: 1rem;
   margin-bottom: 2rem;
+}
+
+.page-header.centered {
+  flex-direction: column;
+  text-align: center;
 }
 
 .btn-back {

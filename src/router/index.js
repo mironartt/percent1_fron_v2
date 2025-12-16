@@ -183,7 +183,7 @@ const router = createRouter({
       path: '/app/settings',
       name: 'settings',
       component: Settings,
-      meta: { title: 'Настройки', requiresAuth: true }
+      meta: { title: 'Профиль', requiresAuth: true }
     },
     {
       path: '/app/subscription',
