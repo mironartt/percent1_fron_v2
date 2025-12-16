@@ -645,7 +645,7 @@
                     </div>
                     <div class="ai-suggestion-content">
                       <div class="ai-suggestion-header">
-                        <span class="ai-habit-emoji">{{ habit.icon }}</span>
+                        <span class="ai-habit-emoji">{{ getIconEmoji(habit.icon) }}</span>
                         <h5 class="ai-suggestion-title">{{ habit.name }}</h5>
                       </div>
                       <p class="ai-suggestion-reason">
@@ -3970,6 +3970,8 @@ async function confirmAiHabitSelection() {
   }
   
   suggestionsStep.value = 'confirmation'
+  
+  showModal.value = false
   
   aiTasksStore.clearTaskResult(HABIT_TASK_TYPE)
   
