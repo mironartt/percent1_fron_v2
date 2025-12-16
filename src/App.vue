@@ -24,22 +24,37 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
 import TelegramAuthModals from './components/TelegramAuthModals.vue'
 import MentorPanel from './components/MentorPanel.vue'
 import ToastNotification from './components/ToastNotification.vue'
 import { useAppStore } from './stores/app'
+import { useAITasksStore } from './stores/aiTasks'
 
 const route = useRoute()
 const store = useAppStore()
+const aiTasksStore = useAITasksStore()
 const sidebarCollapsed = ref(false)
 
 onMounted(() => {
   const savedCollapsed = localStorage.getItem('sidebar-collapsed')
   if (savedCollapsed !== null) {
     sidebarCollapsed.value = savedCollapsed === 'true'
+  }
+  
+  if (store.isAuthenticated) {
+    aiTasksStore.connect()
+  }
+})
+
+watch(() => store.isAuthenticated, (isAuth, wasAuth) => {
+  if (isAuth && !aiTasksStore.isConnected && !aiTasksStore.isConnecting) {
+    aiTasksStore.connect()
+  } else if (!isAuth && wasAuth && aiTasksStore.isConnected) {
+    // User logged out - disconnect to prevent data leakage
+    aiTasksStore.disconnect()
   }
 })
 

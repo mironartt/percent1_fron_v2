@@ -494,7 +494,7 @@
         <div class="ai-modal-content" v-else-if="aiPlannerStep === 'loading'">
           <div class="ai-loading-section">
             <div class="ai-loading-spinner"></div>
-            <p>AI анализирует ваши задачи...</p>
+            <p>{{ aiPlannerProgress.text || 'AI анализирует ваши задачи...' }}</p>
             <span class="ai-loading-hint">Это займёт несколько секунд</span>
           </div>
         </div>
@@ -875,6 +875,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { useAITasksStore } from '../stores/aiTasks'
 import { 
   Calendar, 
   ChevronLeft,
@@ -903,6 +904,7 @@ import {
 
 const store = useAppStore()
 const router = useRouter()
+const aiTasksStore = useAITasksStore()
 
 const weekOffset = ref(0)
 const selectedDay = ref(null)
@@ -1080,6 +1082,8 @@ function getSelectedCountForDay(day) {
   return day.tasks.filter(t => aiPlannerSelectedTasks.value.includes(t.id)).length
 }
 
+const aiPlannerProgress = ref({ percent: 0, text: '' })
+
 async function startAIPlanning() {
   if (aiPlannerDontShowCheck.value) {
     localStorage.setItem('ai_planner_skip_intro', 'true')
@@ -1091,30 +1095,61 @@ async function startAIPlanning() {
   
   aiPlannerStep.value = 'loading'
   aiPlannerLoading.value = true
+  aiPlannerProgress.value = { percent: 0, text: 'Запуск планирования...' }
   
-  await new Promise(resolve => setTimeout(resolve, 2000))
-  
+  try {
+    const context = {
+      week_start: weekDays.value[0]?.date,
+      week_end: weekDays.value[6]?.date,
+      include_overdue: aiPlannerIncludeOverdue.value
+    }
+    
+    const result = await aiTasksStore.startTaskAndWait('week_planning_help', context, 120000)
+    
+    console.log('[Planning] AI week planning completed:', result)
+    handleAIPlanningResult(result)
+  } catch (error) {
+    console.error('[Planning] AI planning error:', error)
+    aiPlannerLoading.value = false
+    aiPlannerStep.value = 'intro'
+  }
+}
+
+watch(() => aiTasksStore.getTaskProgress('week_planning_help'), (progress) => {
+  if (progress && aiPlannerLoading.value) {
+    aiPlannerProgress.value = progress
+  }
+}, { deep: true })
+
+function handleAIPlanningResult(result) {
   const dayNames = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
   
-  aiPlannerResult.value = {
-    totalTasks: 12,
-    days: weekDays.value.map((day, idx) => ({
-      date: day.date,
-      dayName: dayNames[idx],
-      tasks: idx < 5 ? [
-        { id: `mock-${idx}-1`, title: 'Проверить почту и ответить на важные письма' },
-        { id: `mock-${idx}-2`, title: 'Сделать упражнения для спины' },
-        ...(idx % 2 === 0 ? [{ id: `mock-${idx}-3`, title: 'Прочитать главу книги' }] : [])
-      ] : []
-    }))
+  if (result.days && result.days.length > 0) {
+    aiPlannerResult.value = {
+      totalTasks: result.total_tasks || result.days.reduce((sum, d) => sum + (d.tasks?.length || 0), 0),
+      days: result.days.map((day, idx) => ({
+        date: day.date,
+        dayName: dayNames[idx] || day.day_name,
+        tasks: (day.tasks || []).map(t => ({
+          id: t.id || t.step_id,
+          title: t.title || t.step_title,
+          goalTitle: t.goal_title,
+          priority: t.priority,
+          timeEstimate: t.time_estimate
+        }))
+      }))
+    }
+    
+    const allTaskIds = aiPlannerResult.value.days.flatMap(d => d.tasks.map(t => t.id))
+    aiPlannerSelectedTasks.value = [...allTaskIds]
+    aiDayExpandState.value = {}
+    
+    aiPlannerStep.value = 'result'
+  } else {
+    aiPlannerStep.value = 'intro'
   }
   
-  const allTaskIds = aiPlannerResult.value.days.flatMap(d => d.tasks.map(t => t.id))
-  aiPlannerSelectedTasks.value = [...allTaskIds]
-  aiDayExpandState.value = {}
-  
   aiPlannerLoading.value = false
-  aiPlannerStep.value = 'result'
 }
 
 function applyAIPlan() {

@@ -138,7 +138,7 @@
             >
               <Loader2 v-if="isGeneratingSteps" :size="16" class="spin" />
               <Sparkles v-else :size="16" />
-              <span class="btn-ai-label">{{ isGeneratingSteps ? 'Генерация...' : 'Помощь от ментора' }}</span>
+              <span class="btn-ai-label">{{ isGeneratingSteps ? (aiStepsProgress.text || 'Генерация...') : 'Помощь от ментора' }}</span>
             </button>
           </div>
 
@@ -961,6 +961,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { useAITasksStore } from '../stores/aiTasks'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
 import {
   Trash2, Save, Plus, ArrowLeft, GripVertical, X, Edit2,
@@ -970,11 +971,11 @@ import {
   FileText, Lightbulb, Shield, BarChart2, Play, Pause, GitBranch,
   BookOpen, ChevronDown, ChevronRight, ChevronLeft, Send, MessageSquare, Wand2, Loader2, Sparkles
 } from 'lucide-vue-next'
-import { generateStepsWithAI } from '@/services/aiGoalService.js'
 
 const route = useRoute()
 const router = useRouter()
 const store = useAppStore()
+const aiTasksStore = useAITasksStore()
 
 const lifeSpheres = computed(() => store.lifeSpheres)
 const goals = computed(() => store.goals)
@@ -1197,6 +1198,8 @@ const inlineInputFocused = ref(false)
 const isGeneratingSteps = ref(false)
 const showAIStepsTooltip = ref(false)
 
+const aiStepsProgress = ref({ percent: 0, text: '' })
+
 async function generateStepsAI() {
   if (isGeneratingSteps.value || !goal.value) return
   
@@ -1204,39 +1207,67 @@ async function generateStepsAI() {
   if (!goalTitle) return
   
   isGeneratingSteps.value = true
+  aiStepsProgress.value = { percent: 0, text: 'Запуск генерации...' }
   
   try {
-    const result = await generateStepsWithAI(goalTitle, goalForm.value.sphereId)
-    
-    if (result.success && result.data?.steps?.length > 0) {
-      const existingStepsCount = goalForm.value.steps?.length || 0
-      
-      result.data.steps.forEach((step, idx) => {
-        const newStep = {
-          id: `ai-${Date.now()}-${idx}`,
-          title: step.title,
-          description: step.description || '',
-          completed: false,
-          isNew: true,
-          order: existingStepsCount + idx + 1,
-          priority: null,
-          timeEstimate: step.timeEstimate || null,
-          scheduledDate: null,
-          checklist: []
-        }
-        goalForm.value.steps.push(newStep)
-      })
-      
-      showToast(`ИИ добавил ${result.data.steps.length} шагов`, 'success')
-    } else {
-      showToast('Не удалось сгенерировать шаги', 'error')
+    const context = {
+      goal_title: goalTitle
     }
+    
+    if (goalBackendId.value && !isLocalId.value) {
+      context.goal_id = parseInt(goalBackendId.value)
+    }
+    
+    const result = await aiTasksStore.startTaskAndWait('goal_decomposition', context, 120000)
+    
+    if (DEBUG_MODE) {
+      console.log('[GoalEdit] AI decomposition completed:', result)
+    }
+    
+    handleAIStepsResult(result)
   } catch (error) {
     console.error('[GoalEdit] AI steps generation error:', error)
-    showToast('Ошибка генерации', 'error')
-  } finally {
+    showToast(error.message || 'Ошибка генерации', 'error')
     isGeneratingSteps.value = false
   }
+}
+
+watch(() => aiTasksStore.getTaskProgress('goal_decomposition'), (progress) => {
+  if (progress && isGeneratingSteps.value) {
+    aiStepsProgress.value = progress
+  }
+}, { deep: true })
+
+function handleAIStepsResult(result) {
+  if (result.steps && result.steps.length > 0) {
+    const existingStepsCount = goalForm.value.steps?.length || 0
+    
+    result.steps.forEach((step, idx) => {
+      const newStep = {
+        id: `ai-${Date.now()}-${idx}`,
+        title: step.title,
+        description: step.description || '',
+        completed: false,
+        isNew: true,
+        order: existingStepsCount + idx + 1,
+        priority: null,
+        timeEstimate: step.time_estimate || null,
+        scheduledDate: null,
+        checklist: []
+      }
+      goalForm.value.steps.push(newStep)
+    })
+    
+    showToast(`ИИ добавил ${result.steps.length} шагов`, 'success')
+    
+    if (DEBUG_MODE) {
+      console.log('[GoalEdit] AI steps added:', result.steps.length)
+    }
+  } else {
+    showToast('Не удалось сгенерировать шаги', 'error')
+  }
+  
+  isGeneratingSteps.value = false
 }
 
 async function addInlineStep() {
