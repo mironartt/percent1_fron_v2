@@ -1,0 +1,75 @@
+~/workspace$ git pull origin main --no-rebase --allow-unrelated-histories
+From https://github.com/mironartt/percent1_fron_v2
+ * branch            main       -> FETCH_HEAD
+Auto-merging replit.md
+CONFLICT (add/add): Merge conflict in replit.md
+Auto-merging src/components/Sidebar.vue
+CONFLICT (add/add): Merge conflict in src/components/Sidebar.vue
+Auto-merging src/router/index.js
+CONFLICT (add/add): Merge conflict in src/router/index.js
+Auto-merging src/views/Landing.vue
+CONFLICT (add/add): Merge conflict in src/views/Landing.vue
+Auto-merging src/views/Settings.vue
+CONFLICT (add/add): Merge conflict in src/views/Settings.vue
+Automatic merge failed; fix conflicts and then commit the result.
+~/workspace$ git status
+On branch back_intergration_v2
+Your branch is up to date with 'origin/back_intergration_v2'.
+
+You have unmerged paths.
+  (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
+
+Changes to be committed:
+    new file:   attached_assets/image_1765869782144.png
+    new file:   attached_assets/image_1765871809309.png
+    new file:   attached_assets/image_1765871900166.png
+    new file:   attached_assets/image_1765872442419.png
+    new file:   attached_assets/image_1765872617097.png
+    new file:   attached_assets/image_1765872842213.png
+    new file:   attached_assets/image_1765880074337.png
+    new file:   attached_assets/image_1765882289316.png
+    new file:   src/views/Referral.vue
+    new file:   src/views/Subscription.vue
+
+Unmerged paths:
+  (use "git add <file>..." to mark resolution)
+    both added:      replit.md
+    both added:      src/components/Sidebar.vue
+    both added:      src/router/index.js
+    both added:      src/views/Landing.vue
+    both added:      src/views/Settings.vue
+
+~/workspace$ git add .
+~/workspace$ git status
+On branch back_intergration_v2
+Your branch is up to date with 'origin/back_intergration_v2'.
+
+All conflicts fixed but you are still merging.
+  (use "git commit" to conclude merge)
+
+Changes to be committed:
+    new file:   attached_assets/image_1765869782144.png
+    new file:   attached_assets/image_1765871809309.png
+    new file:   attached_assets/image_1765871900166.png
+    new file:   attached_assets/image_1765872442419.png
+    new file:   attached_assets/image_1765872617097.png
+    new file:   attached_assets/image_1765872842213.png
+    new file:   attached_assets/image_1765880074337.png
+    new file:   attached_assets/image_1765882289316.png
+    modified:   replit.md
+    modified:   src/components/Sidebar.vue
+    modified:   src/router/index.js
+    modified:   src/views/Landing.vue
+    new file:   src/views/Referral.vue
+    modified:   src/views/Settings.vue
+    new file:   src/views/Subscription.vue
+
+~/workspace$ git commit -m 'bad merge'
+[back_intergration_v2 d2760a1] bad merge
+~/workspace$ git status
+On branch back_intergration_v2
+Your branch is ahead of 'origin/back_intergration_v2' by 2 commits.
+  (use "git push" to publish your local commits)
+
+nothing to commit, working tree clean
