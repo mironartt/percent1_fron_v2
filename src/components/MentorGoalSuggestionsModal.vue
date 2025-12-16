@@ -267,7 +267,9 @@ watch(() => aiTasksStore.getTaskProgress('goal_mentor_help'), (progress) => {
 function handleMentorResult(result) {
   isMentorActive.value = false
   
-  if (result.suggestions && result.suggestions.length > 0) {
+  const goals = result.goals || result.suggestions || []
+  
+  if (goals.length > 0) {
     const categoryBackendToFrontend = {
       'welfare': 'wealth',
       'hobby': 'hobbies',
@@ -278,10 +280,10 @@ function handleMentorResult(result) {
       'family': 'love'
     }
     
-    suggestions.value = result.suggestions.map((s, idx) => ({
+    suggestions.value = goals.map((s, idx) => ({
       id: `suggestion-${Date.now()}-${idx}`,
       title: s.title,
-      sphereId: s.category ? categoryBackendToFrontend[s.category] || s.category : null,
+      sphereId: s.sphere_id || (s.category ? categoryBackendToFrontend[s.category] || s.category : null),
       whyUseful: s.why_important || s.description || ''
     }))
     step.value = 'selection'
@@ -297,19 +299,8 @@ function prepareSSPData() {
   return {
     spheres: lifeSpheres.map(s => ({
       id: s.id,
-      name: s.name,
-      score: s.score || 0,
-      reflection: s.reflection || {}
-    })),
-    growthZones: lifeSpheres
-      .filter(s => s.score > 0 && s.score <= 5)
-      .map(s => ({
-        id: s.id,
-        name: s.name,
-        score: s.score,
-        desired: s.reflection?.desired || '',
-        prevents: s.reflection?.prevents || ''
-      }))
+      score: s.score || 0
+    }))
   }
 }
 

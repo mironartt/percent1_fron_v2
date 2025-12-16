@@ -242,13 +242,15 @@ watch(() => aiTasksStore.getTaskProgress('goal_mentor_help'), (progress) => {
 function handleMentorResult(result) {
   isMentorLoading.value = false
   
-  if (result.suggestions && result.suggestions.length > 0) {
-    mentorSuggestions.value = result.suggestions.map((s, idx) => ({
+  const goals = result.goals || result.suggestions || []
+  
+  if (goals.length > 0) {
+    mentorSuggestions.value = goals.map((s, idx) => ({
       id: `suggestion-${Date.now()}-${idx}`,
       title: s.title,
       description: s.description,
       whyImportant: s.why_important,
-      category: s.category ? categoryBackendToFrontend[s.category] || s.category : null
+      category: s.sphere_id || (s.category ? categoryBackendToFrontend[s.category] || s.category : null)
     }))
   }
 }
