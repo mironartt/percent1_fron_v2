@@ -193,10 +193,17 @@
                   <span></span>
                   <span></span>
                 </div>
-                <p>Анализирую ваши результаты...</p>
+                <p>{{ aiTaskProgress.text || 'Анализирую ваши результаты...' }}</p>
+                <div v-if="aiTaskProgress.percent > 0" class="progress-bar-wrapper">
+                  <div class="progress-bar" :style="{ width: aiTaskProgress.percent + '%' }"></div>
+                </div>
+              </div>
+              <div v-if="aiTaskError && !isAnalyzing" class="error-state">
+                <AlertTriangle :size="24" />
+                <p>{{ aiTaskError }}</p>
               </div>
 
-              <div v-else class="ai-message">
+              <div v-if="!isAnalyzing && aiAnalysis" class="ai-message">
                 <div class="message-bubble">
                   <p v-html="aiAnalysis"></p>
                 </div>
@@ -365,6 +372,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { useAITasksStore } from '../stores/aiTasks'
 import WheelOfLife from './WheelOfLife.vue'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
 import * as api from '@/services/api.js'
@@ -378,12 +386,25 @@ import {
 
 const router = useRouter()
 const store = useAppStore()
+const aiTasksStore = useAITasksStore()
 
 const currentStep = ref(1)
 const totalSteps = 5
 const stepLabels = ['Знакомство', 'Диагностика', 'Результат', 'Анализ', 'План']
 const isLoading = ref(false)
 const isAnalyzing = ref(false)
+const aiTaskProgress = ref({ percent: 0, text: '' })
+const aiTaskError = ref(null)
+
+const categoryBackendToFrontend = {
+  'welfare': 'wealth',
+  'hobby': 'hobbies',
+  'environment': 'friendship',
+  'health_sport': 'health',
+  'health': 'health',
+  'work': 'career',
+  'family': 'love'
+}
 
 const surveyData = ref({
   timeCommitment: null
@@ -552,50 +573,169 @@ function skipAllGoals() {
   completeOnboarding()
 }
 
-function generateAIAnalysis() {
+async function generateAIAnalysis() {
   isAnalyzing.value = true
+  aiTaskError.value = null
+  aiTaskProgress.value = { percent: 0, text: 'Запуск анализа...' }
   
-  setTimeout(() => {
-    const weak = weakestSphere.value
-    const strong = strongestSphere.value
-    const avg = averageScore.value
+  try {
+    const result = await aiTasksStore.startTaskAndWait('onboarding_generate_goals', {}, 120000)
     
-    aiAnalysis.value = `
-      <strong>Отличная работа!</strong> Вы честно оценили свою жизнь — это первый шаг к изменениям.<br><br>
-      
-      Ваш средний балл <strong>${avg.toFixed(1)}/10</strong> показывает ${avg >= 7 ? 'хороший уровень баланса' : avg >= 5 ? 'есть пространство для роста' : 'серьёзный потенциал улучшений'}.<br><br>
-      
-      <strong>${strong.name}</strong> (${strong.score}/10) — ваша сильная сторона. Используйте этот ресурс для развития других сфер.<br><br>
-      
-      <strong>${weak.name}</strong> (${weak.score}/10) — главная зона роста. Рекомендую начать с небольших ежедневных действий в этой области.
-    `
+    if (DEBUG_MODE) {
+      console.log('[OnboardingAI] AI task completed:', result)
+    }
     
-    insights.value = [
-      {
-        id: 1,
-        icon: Lightbulb,
-        title: 'Ключевой инсайт',
-        text: `Фокус на "${weak.name}" даст максимальный эффект на общий баланс`
-      },
-      {
-        id: 2,
-        icon: Zap,
-        title: 'Быстрая победа',
-        text: `Уделяйте 15 минут в день на "${weak.name}" — за неделю увидите прогресс`
-      },
-      {
-        id: 3,
-        icon: TrendingUp,
-        title: 'Стратегия роста',
-        text: `Используйте силу "${strong.name}" как мотивацию для развития слабых сфер`
-      }
-    ]
+    handleAITaskCompleted(result)
     
-    isAnalyzing.value = false
-  }, 2000)
+  } catch (error) {
+    if (DEBUG_MODE) {
+      console.error('[OnboardingAI] Failed AI task:', error)
+    }
+    aiTaskError.value = error.message
+    generateFallbackAnalysis()
+  }
 }
 
-function generateAIGoals() {
+function generateFallbackAnalysis() {
+  const weak = weakestSphere.value
+  const strong = strongestSphere.value
+  const avg = averageScore.value
+  
+  aiAnalysis.value = `
+    <strong>Отличная работа!</strong> Вы честно оценили свою жизнь — это первый шаг к изменениям.<br><br>
+    
+    Ваш средний балл <strong>${avg.toFixed(1)}/10</strong> показывает ${avg >= 7 ? 'хороший уровень баланса' : avg >= 5 ? 'есть пространство для роста' : 'серьёзный потенциал улучшений'}.<br><br>
+    
+    <strong>${strong.name}</strong> (${strong.score}/10) — ваша сильная сторона. Используйте этот ресурс для развития других сфер.<br><br>
+    
+    <strong>${weak.name}</strong> (${weak.score}/10) — главная зона роста. Рекомендую начать с небольших ежедневных действий в этой области.
+  `
+  
+  insights.value = [
+    {
+      id: 1,
+      icon: Lightbulb,
+      title: 'Ключевой инсайт',
+      text: `Фокус на "${weak.name}" даст максимальный эффект на общий баланс`
+    },
+    {
+      id: 2,
+      icon: Zap,
+      title: 'Быстрая победа',
+      text: `Уделяйте 15 минут в день на "${weak.name}" — за неделю увидите прогресс`
+    },
+    {
+      id: 3,
+      icon: TrendingUp,
+      title: 'Стратегия роста',
+      text: `Используйте силу "${strong.name}" как мотивацию для развития слабых сфер`
+    }
+  ]
+  
+  isAnalyzing.value = false
+  generateFallbackGoals()
+}
+
+watch(() => aiTasksStore.getTaskProgress('onboarding_generate_goals'), (progress) => {
+  if (progress) {
+    aiTaskProgress.value = progress
+  }
+}, { deep: true })
+
+watch(() => aiTasksStore.activeTasks, (tasks) => {
+  const task = tasks.find(t => t.task_type === 'onboarding_generate_goals')
+  
+  if (task) {
+    if (task.status === 'completed' && task.result) {
+      handleAITaskCompleted(task.result)
+    } else if (task.status === 'failed') {
+      if (DEBUG_MODE) {
+        console.error('[OnboardingAI] AI task failed:', task.error)
+      }
+      aiTaskError.value = task.error?.message || 'Ошибка генерации'
+      generateFallbackAnalysis()
+    }
+  }
+}, { deep: true })
+
+function handleAITaskCompleted(result) {
+  if (DEBUG_MODE) {
+    console.log('[OnboardingAI] AI task completed:', result)
+  }
+  
+  const weak = weakestSphere.value
+  const strong = strongestSphere.value
+  const avg = averageScore.value
+  
+  aiAnalysis.value = `
+    <strong>Отличная работа!</strong> Вы честно оценили свою жизнь — это первый шаг к изменениям.<br><br>
+    
+    Ваш средний балл <strong>${avg.toFixed(1)}/10</strong> показывает ${avg >= 7 ? 'хороший уровень баланса' : avg >= 5 ? 'есть пространство для роста' : 'серьёзный потенциал улучшений'}.<br><br>
+    
+    <strong>${strong.name}</strong> (${strong.score}/10) — ваша сильная сторона. Используйте этот ресурс для развития других сфер.<br><br>
+    
+    <strong>${weak.name}</strong> (${weak.score}/10) — главная зона роста. Рекомендую начать с небольших ежедневных действий в этой области.
+  `
+  
+  insights.value = [
+    {
+      id: 1,
+      icon: Lightbulb,
+      title: 'Ключевой инсайт',
+      text: `Фокус на "${weak.name}" даст максимальный эффект на общий баланс`
+    },
+    {
+      id: 2,
+      icon: Zap,
+      title: 'Быстрая победа',
+      text: `Уделяйте 15 минут в день на "${weak.name}" — за неделю увидите прогресс`
+    },
+    {
+      id: 3,
+      icon: TrendingUp,
+      title: 'Стратегия роста',
+      text: `Используйте силу "${strong.name}" как мотивацию для развития слабых сфер`
+    }
+  ]
+  
+  isAnalyzing.value = false
+  
+  if (result.goals && result.goals.length > 0) {
+    processAIGoals(result.goals)
+  } else {
+    generateFallbackGoals()
+  }
+}
+
+function processAIGoals(goals) {
+  const generatedGoals = goals.map((goal, index) => {
+    const frontendCategory = categoryBackendToFrontend[goal.category] || goal.category
+    
+    return {
+      id: `ai-goal-${frontendCategory}-${Date.now()}-${index}`,
+      sphereId: frontendCategory,
+      title: goal.title,
+      description: goal.description || '',
+      whyImportant: goal.why_important || '',
+      status: 'pending',
+      expanded: false,
+      steps: (goal.steps || []).map((step, stepIndex) => ({
+        id: `step-${Date.now()}-${index}-${stepIndex}`,
+        title: step.title,
+        description: step.description || '',
+        order: stepIndex + 1
+      }))
+    }
+  })
+  
+  aiGoals.value = generatedGoals
+  
+  if (DEBUG_MODE) {
+    console.log('[OnboardingAI] Processed AI goals:', generatedGoals)
+  }
+}
+
+function generateFallbackGoals() {
   const goalTemplates = {
     wealth: {
       title: 'Улучшить финансовое положение',
@@ -714,9 +854,6 @@ async function nextStep() {
       generateAIAnalysis()
     }
     
-    if (currentStep.value === 5) {
-      generateAIGoals()
-    }
   }
 }
 

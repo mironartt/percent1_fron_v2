@@ -494,7 +494,7 @@
         <div class="ai-modal-content" v-else-if="aiPlannerStep === 'loading'">
           <div class="ai-loading-section">
             <div class="ai-loading-spinner"></div>
-            <p>AI анализирует ваши задачи...</p>
+            <p>{{ aiPlannerProgress.text || 'AI анализирует ваши задачи...' }}</p>
             <span class="ai-loading-hint">Это займёт несколько секунд</span>
           </div>
         </div>
@@ -525,7 +525,7 @@
                     v-for="task in day.tasks" 
                     :key="task.id" 
                     class="ai-task-preview"
-                    :class="{ selected: isTaskSelected(task.id) }"
+                    :class="{ selected: isTaskSelected(task.id), 'not-found': task.notFound }"
                     @click="toggleTaskSelection(task.id)"
                   >
                     <component 
@@ -533,7 +533,10 @@
                       :size="18" 
                       class="ai-task-checkbox"
                     />
-                    <span class="ai-task-title">{{ task.title }}</span>
+                    <div class="ai-task-info">
+                      <span class="ai-task-title">{{ task.title }}</span>
+                      <span v-if="task.goalTitle" class="ai-task-goal">{{ task.goalTitle }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -875,6 +878,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { useAITasksStore } from '../stores/aiTasks'
 import { 
   Calendar, 
   ChevronLeft,
@@ -903,6 +907,7 @@ import {
 
 const store = useAppStore()
 const router = useRouter()
+const aiTasksStore = useAITasksStore()
 
 const weekOffset = ref(0)
 const selectedDay = ref(null)
@@ -937,15 +942,96 @@ const aiPlannerDontShowIntro = ref(localStorage.getItem('ai_planner_skip_intro')
 const aiPlannerDontShowCheck = ref(false)
 const aiPlannerSelectedTasks = ref([])
 
-function openAIPlannerModal() {
+const PLANNING_TASK_TYPE = 'week_planning_help'
+const PLANNING_VIEWED_RESULTS_KEY = 'planning_ai_results_viewed'
+
+async function openAIPlannerModal() {
+  showAIPlannerModal.value = true
   aiPlannerDontShowCheck.value = aiPlannerDontShowIntro.value
+  
+  aiTasksStore.connect()
+  
+  const runningTask = aiTasksStore.getActiveTaskByType(PLANNING_TASK_TYPE)
+  if (runningTask) {
+    aiPlannerStep.value = 'loading'
+    aiPlannerLoading.value = true
+    await waitForExistingPlanningTask(runningTask.task_id)
+    return
+  }
+  
+  const completedTask = aiTasksStore.getCompletedTaskByType(PLANNING_TASK_TYPE)
+  const cachedResult = aiTasksStore.getTaskResult(PLANNING_TASK_TYPE)
+  
+  if (completedTask || cachedResult) {
+    const viewedTaskIds = getViewedPlanningResults()
+    const taskId = completedTask?.task_id || 'cached'
+    
+    if (!viewedTaskIds.includes(String(taskId))) {
+      const result = cachedResult || completedTask?.result
+      if (result) {
+        handleAIPlanningResult(result, taskId)
+        return
+      }
+    }
+  }
+  
   if (aiPlannerDontShowIntro.value) {
-    showAIPlannerModal.value = true
     startAIPlanning()
   } else {
-    showAIPlannerModal.value = true
     aiPlannerStep.value = 'intro'
   }
+}
+
+function getViewedPlanningResults() {
+  try {
+    const stored = localStorage.getItem(PLANNING_VIEWED_RESULTS_KEY)
+    return stored ? JSON.parse(stored) : []
+  } catch {
+    return []
+  }
+}
+
+function markPlanningResultViewed(taskId) {
+  const viewed = getViewedPlanningResults()
+  if (!viewed.includes(String(taskId))) {
+    viewed.push(String(taskId))
+    if (viewed.length > 10) {
+      viewed.shift()
+    }
+    localStorage.setItem(PLANNING_VIEWED_RESULTS_KEY, JSON.stringify(viewed))
+  }
+}
+
+async function waitForExistingPlanningTask(taskId) {
+  const maxAttempts = 60
+  let attempts = 0
+  
+  while (attempts < maxAttempts) {
+    const status = await aiTasksStore.getTaskStatus(taskId)
+    
+    if (!status) {
+      aiPlannerLoading.value = false
+      aiPlannerStep.value = 'intro'
+      return
+    }
+    
+    if (status.status === 'completed' && status.result) {
+      handleAIPlanningResult(status.result, taskId)
+      return
+    }
+    
+    if (status.status === 'failed') {
+      aiPlannerLoading.value = false
+      aiPlannerStep.value = 'intro'
+      return
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    attempts++
+  }
+  
+  aiPlannerLoading.value = false
+  aiPlannerStep.value = 'intro'
 }
 
 // Просроченные шаги (загружаются с бэкенда)
@@ -1040,9 +1126,13 @@ function formatOverdueDate(dateStr) {
 
 function closeAIPlannerModal() {
   showAIPlannerModal.value = false
-  aiPlannerStep.value = 'intro'
-  aiPlannerResult.value = null
-  aiPlannerSelectedTasks.value = []
+  
+  const runningTask = aiTasksStore.getActiveTaskByType(PLANNING_TASK_TYPE)
+  if (!runningTask) {
+    aiPlannerStep.value = 'intro'
+    aiPlannerResult.value = null
+    aiPlannerSelectedTasks.value = []
+  }
 }
 
 function goBackToIntro() {
@@ -1080,6 +1170,8 @@ function getSelectedCountForDay(day) {
   return day.tasks.filter(t => aiPlannerSelectedTasks.value.includes(t.id)).length
 }
 
+const aiPlannerProgress = ref({ percent: 0, text: '' })
+
 async function startAIPlanning() {
   if (aiPlannerDontShowCheck.value) {
     localStorage.setItem('ai_planner_skip_intro', 'true')
@@ -1091,33 +1183,252 @@ async function startAIPlanning() {
   
   aiPlannerStep.value = 'loading'
   aiPlannerLoading.value = true
+  aiPlannerProgress.value = { percent: 0, text: 'Запуск планирования...' }
   
-  await new Promise(resolve => setTimeout(resolve, 2000))
-  
-  const dayNames = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
-  
-  aiPlannerResult.value = {
-    totalTasks: 12,
-    days: weekDays.value.map((day, idx) => ({
-      date: day.date,
-      dayName: dayNames[idx],
-      tasks: idx < 5 ? [
-        { id: `mock-${idx}-1`, title: 'Проверить почту и ответить на важные письма' },
-        { id: `mock-${idx}-2`, title: 'Сделать упражнения для спины' },
-        ...(idx % 2 === 0 ? [{ id: `mock-${idx}-3`, title: 'Прочитать главу книги' }] : [])
-      ] : []
-    }))
+  try {
+    const context = {
+      week_start: weekDays.value[0]?.date,
+      week_end: weekDays.value[6]?.date,
+      include_overdue: aiPlannerIncludeOverdue.value
+    }
+    
+    const result = await aiTasksStore.startTaskAndWait('week_planning_help', context, 120000)
+    
+    console.log('[Planning] AI week planning completed:', result)
+    handleAIPlanningResult(result)
+  } catch (error) {
+    console.error('[Planning] AI planning error:', error)
+    aiPlannerLoading.value = false
+    aiPlannerStep.value = 'intro'
   }
-  
-  const allTaskIds = aiPlannerResult.value.days.flatMap(d => d.tasks.map(t => t.id))
-  aiPlannerSelectedTasks.value = [...allTaskIds]
-  aiDayExpandState.value = {}
-  
-  aiPlannerLoading.value = false
-  aiPlannerStep.value = 'result'
 }
 
-function applyAIPlan() {
+watch(() => aiTasksStore.getTaskProgress('week_planning_help'), (progress) => {
+  if (progress && aiPlannerLoading.value) {
+    aiPlannerProgress.value = progress
+  }
+}, { deep: true })
+
+function handleAIPlanningResult(result, taskId = null) {
+  const dayNames = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота']
+  
+  console.log('[Planning] Processing AI result:', result)
+  
+  if (result.plan && Array.isArray(result.plan) && result.plan.length > 0) {
+    const stepsByDate = {}
+    const stepIdToInfo = buildStepIdMap()
+    
+    result.plan.forEach(item => {
+      const date = item.date
+      if (!date) return
+      
+      if (!stepsByDate[date]) {
+        stepsByDate[date] = []
+      }
+      
+      const stepInfo = stepIdToInfo[item.stepId]
+      
+      // Use backend data first, then fallback to local store data
+      const stepTitle = item.step_title || item.stepTitle || stepInfo?.title
+      const goalTitle = item.goal_title || item.goalTitle || stepInfo?.goalTitle || ''
+      const goalId = item.goal_id || item.goalId || stepInfo?.goalId || null
+      
+      stepsByDate[date].push({
+        id: item.stepId,
+        title: stepTitle || `Шаг #${item.stepId}`,
+        goalTitle: goalTitle,
+        goalId: goalId,
+        priority: stepInfo?.priority || '',
+        timeEstimate: item.estimatedTime || stepInfo?.timeEstimate || '',
+        reason: item.reason || '',
+        notFound: !stepInfo && !stepTitle
+      })
+    })
+    
+    const sortedDates = Object.keys(stepsByDate).sort()
+    
+    if (sortedDates.length > 0) {
+      aiPlannerResult.value = {
+        totalTasks: result.plan.length,
+        rawPlan: result.plan, // Store raw plan for applying
+        notThisWeek: (result.not_this_week || []).map(item => {
+          const stepInfo = stepIdToInfo[item.stepId]
+          const stepTitle = item.step_title || item.stepTitle || stepInfo?.title
+          return {
+            id: item.stepId,
+            title: stepTitle || `Шаг #${item.stepId}`,
+            goalTitle: item.goal_title || item.goalTitle || stepInfo?.goalTitle || '',
+            reason: item.reason || ''
+          }
+        }),
+        summary: result.summary || {},
+        reasoning: result.reasoning || '',
+        days: sortedDates.map(date => {
+          const d = new Date(date)
+          const dayOfWeek = d.getDay()
+          return {
+            date: date,
+            dayName: dayNames[dayOfWeek],
+            dateFormatted: d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }),
+            tasks: stepsByDate[date]
+          }
+        })
+      }
+      
+      const allTaskIds = result.plan.map(item => item.stepId)
+      aiPlannerSelectedTasks.value = [...allTaskIds]
+      aiDayExpandState.value = {}
+      
+      const completedTask = aiTasksStore.getCompletedTaskByType(PLANNING_TASK_TYPE)
+      const idToMark = taskId || completedTask?.task_id || `result_${Date.now()}`
+      markPlanningResultViewed(idToMark)
+      
+      aiPlannerStep.value = 'result'
+      aiPlannerLoading.value = false
+      return
+    }
+  }
+  
+  if (result.days && Array.isArray(result.days) && result.days.length > 0) {
+    aiPlannerResult.value = {
+      totalTasks: result.total_tasks || result.days.reduce((sum, d) => sum + (d.tasks?.length || 0), 0),
+      days: result.days.map((day) => ({
+        date: day.date,
+        dayName: dayNames[(new Date(day.date)).getDay()] || day.day_name,
+        tasks: (day.tasks || []).map(t => ({
+          id: t.id || t.step_id,
+          title: t.title || t.step_title,
+          goalTitle: t.goal_title,
+          priority: t.priority,
+          timeEstimate: t.time_estimate
+        }))
+      }))
+    }
+    
+    const allTaskIds = aiPlannerResult.value.days.flatMap(d => d.tasks.map(t => t.id))
+    aiPlannerSelectedTasks.value = [...allTaskIds]
+    aiDayExpandState.value = {}
+    
+    const completedTask = aiTasksStore.getCompletedTaskByType(PLANNING_TASK_TYPE)
+    const idToMark = taskId || completedTask?.task_id || `result_${Date.now()}`
+    markPlanningResultViewed(idToMark)
+    
+    aiPlannerStep.value = 'result'
+    aiPlannerLoading.value = false
+    return
+  }
+  
+  console.warn('[Planning] No valid plan data in result')
+  aiPlannerStep.value = 'intro'
+  aiPlannerLoading.value = false
+}
+
+function buildStepIdMap() {
+  const map = {}
+  for (const goal of store.goals) {
+    for (const step of (goal.steps || [])) {
+      const stepId = step.backendId || step.id
+      map[stepId] = {
+        title: step.title,
+        goalTitle: goal.title || goal.text,
+        goalId: goal.backendId || goal.id,
+        priority: step.priority,
+        timeEstimate: step.timeEstimate
+      }
+    }
+  }
+  return map
+}
+
+function findStepById(stepId) {
+  for (const goal of store.goals) {
+    const step = (goal.steps || []).find(s => s.backendId === stepId || s.id === stepId)
+    if (step) {
+      return {
+        title: step.title,
+        goalTitle: goal.title || goal.text,
+        goalId: goal.backendId || goal.id,
+        priority: step.priority,
+        timeEstimate: step.timeEstimate
+      }
+    }
+  }
+  return null
+}
+
+async function applyAIPlan() {
+  if (!aiPlannerResult.value?.rawPlan || aiPlannerSelectedTasks.value.length === 0) {
+    closeAIPlannerModal()
+    return
+  }
+  
+  const selectedIds = new Set(aiPlannerSelectedTasks.value)
+  const tasksToApply = aiPlannerResult.value.rawPlan.filter(item => selectedIds.has(item.stepId))
+  
+  console.log('[Planning] Applying AI plan for', tasksToApply.length, 'tasks')
+  
+  aiPlannerLoading.value = true
+  aiPlannerProgress.value = { text: 'Применение плана...' }
+  
+  // Time mapping: backend format -> frontend format for API
+  const timeBackendToFrontend = {
+    'half': '30min',
+    'one': '1h',
+    'two': '2h',
+    'three': '3h',
+    'four': '4h'
+  }
+  
+  let successCount = 0
+  let errorCount = 0
+  
+  for (const task of tasksToApply) {
+    try {
+      const updateData = {
+        step_id: task.stepId,
+        dt: task.date
+      }
+      
+      // Add time estimate if provided
+      if (task.estimatedTime) {
+        const frontendTime = timeBackendToFrontend[task.estimatedTime] || task.estimatedTime
+        updateData.time = frontendTime
+      }
+      
+      console.log('[Planning] Updating step:', updateData)
+      
+      const response = await api.updateGoalStep(updateData)
+      
+      if (response.status === 'ok') {
+        successCount++
+      } else {
+        console.warn('[Planning] Step update returned non-ok status:', response)
+        errorCount++
+      }
+    } catch (error) {
+      console.error('[Planning] Error updating step:', task.stepId, error)
+      errorCount++
+    }
+  }
+  
+  console.log('[Planning] AI plan applied:', successCount, 'success,', errorCount, 'errors')
+  
+  // Reload data after applying
+  aiPlannerProgress.value = { text: 'Обновление данных...' }
+  
+  try {
+    // Reload goals and calendar data
+    await Promise.all([
+      store.loadGoalsFromBackend({ search: searchQuery.value, sphere: filterSphere.value }),
+      loadWeeklySteps()
+    ])
+    
+    console.log('[Planning] Data reloaded after AI plan application')
+  } catch (error) {
+    console.error('[Planning] Error reloading data:', error)
+  }
+  
+  aiPlannerLoading.value = false
   closeAIPlannerModal()
 }
 
@@ -5142,12 +5453,36 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
+.ai-task-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  flex: 1;
+}
+
 .ai-task-title {
   font-size: 0.8125rem;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.ai-task-goal {
+  font-size: 0.6875rem;
+  color: var(--text-tertiary, #9ca3af);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ai-task-preview.not-found {
+  opacity: 0.6;
+}
+
+.ai-task-preview.not-found .ai-task-title {
+  font-style: italic;
 }
 
 .ai-result-title {

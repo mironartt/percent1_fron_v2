@@ -62,26 +62,57 @@
                 <div 
                   v-for="(suggestion, idx) in suggestions" 
                   :key="idx"
-                  class="suggestion-card"
-                  :class="{ selected: selectedGoals.includes(idx) }"
-                  @click="toggleGoalSelection(idx)"
+                  class="suggestion-wrapper"
                 >
-                  <div class="suggestion-checkbox">
-                    <CheckSquare v-if="selectedGoals.includes(idx)" :size="20" />
-                    <Square v-else :size="20" />
-                  </div>
-                  <div class="suggestion-content">
-                    <div class="suggestion-header">
-                      <span class="sphere-badge" :style="{ background: getSphereColor(suggestion.sphereId) }">
-                        {{ getSphereName(suggestion.sphereId) }}
-                      </span>
+                  <div 
+                    class="suggestion-card"
+                    :class="{ selected: selectedGoals.includes(idx) }"
+                    @click="toggleGoalSelection(idx)"
+                  >
+                    <div class="suggestion-checkbox">
+                      <CheckSquare v-if="selectedGoals.includes(idx)" :size="20" />
+                      <Square v-else :size="20" />
                     </div>
-                    <h5 class="suggestion-title">{{ suggestion.title }}</h5>
-                    <p class="suggestion-reason">
-                      <Bot :size="14" />
-                      {{ suggestion.whyUseful }}
-                    </p>
+                    <div class="suggestion-content">
+                      <div class="suggestion-header">
+                        <span class="sphere-badge" :style="{ background: getSphereColor(suggestion.sphereId) }">
+                          {{ getSphereName(suggestion.sphereId) }}
+                        </span>
+                      </div>
+                      <h5 class="suggestion-title">{{ suggestion.title }}</h5>
+                      <p class="suggestion-reason">
+                        <Bot :size="14" />
+                        {{ suggestion.whyUseful }}
+                      </p>
+                      
+                      <button 
+                        v-if="suggestion.steps && suggestion.steps.length > 0"
+                        class="steps-toggle-btn"
+                        @click.stop="toggleStepsExpand(idx)"
+                      >
+                        <ListChecks :size="14" />
+                        <span>{{ suggestion.steps.length }} {{ getStepsWord(suggestion.steps.length) }}</span>
+                        <ChevronUp v-if="expandedGoals.includes(idx)" :size="14" />
+                        <ChevronDown v-else :size="14" />
+                      </button>
+                    </div>
                   </div>
+                  
+                  <Transition name="steps-expand">
+                    <div 
+                      v-if="expandedGoals.includes(idx) && suggestion.steps && suggestion.steps.length > 0"
+                      class="steps-dropdown"
+                    >
+                      <div 
+                        v-for="(stepItem, stepIdx) in suggestion.steps" 
+                        :key="stepItem.id"
+                        class="step-item"
+                      >
+                        <span class="step-number">{{ stepIdx + 1 }}</span>
+                        <span class="step-title">{{ stepItem.title }}</span>
+                      </div>
+                    </div>
+                  </Transition>
                 </div>
               </div>
 
@@ -157,10 +188,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onBeforeUnmount, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
-import { generateMentorGoalSuggestions, generateStepsWithAI } from '@/services/aiGoalService.js'
+import { useAITasksStore } from '@/stores/aiTasks'
+import { updateGoals, updateGoalSteps } from '@/services/api.js'
+
 import {
   Bot,
   X,
@@ -173,7 +206,9 @@ import {
   ArrowLeft,
   CheckCircle,
   Calendar,
-  AlertTriangle
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -187,6 +222,7 @@ const emit = defineEmits(['close', 'goals-created'])
 
 const router = useRouter()
 const appStore = useAppStore()
+const aiTasksStore = useAITasksStore()
 
 const step = ref('intro')
 const suggestions = ref([])
@@ -194,6 +230,28 @@ const selectedGoals = ref([])
 const createdGoals = ref([])
 const creatingProgress = ref('')
 const errorMessage = ref('')
+const isMentorActive = ref(false)
+const isDecompositionActive = ref(false)
+const mentorProgress = ref({ percent: 0, text: '' })
+const expandedGoals = ref([])
+
+const categoryFrontendToBackend = {
+  wealth: 'welfare',
+  hobbies: 'hobby',
+  friendship: 'environment',
+  health: 'health_sport',
+  career: 'work',
+  love: 'family'
+}
+
+function toggleStepsExpand(idx) {
+  const index = expandedGoals.value.indexOf(idx)
+  if (index === -1) {
+    expandedGoals.value.push(idx)
+  } else {
+    expandedGoals.value.splice(index, 1)
+  }
+}
 
 const sphereColors = {
   wealth: '#f59e0b',
@@ -227,6 +285,12 @@ function getGoalsWord(count) {
   return 'целей'
 }
 
+function getStepsWord(count) {
+  if (count === 1) return 'шаг'
+  if (count >= 2 && count <= 4) return 'шага'
+  return 'шагов'
+}
+
 function toggleGoalSelection(idx) {
   const index = selectedGoals.value.indexOf(idx)
   if (index === -1) {
@@ -239,21 +303,57 @@ function toggleGoalSelection(idx) {
 async function startGeneration() {
   step.value = 'loading'
   selectedGoals.value = []
+  isMentorActive.value = true
+  mentorProgress.value = { percent: 0, text: 'Анализирую ваш профиль...' }
   
   try {
     const sspData = prepareSSPData()
-    const result = await generateMentorGoalSuggestions(sspData)
-    
-    if (result.success && result.suggestions?.length > 0) {
-      suggestions.value = result.suggestions
-      step.value = 'selection'
-    } else {
-      errorMessage.value = result.error || 'Не удалось получить рекомендации'
-      step.value = 'error'
-    }
+    const result = await aiTasksStore.startTaskAndWait('goal_mentor_help', { ssp_data: sspData }, 120000)
+    handleMentorResult(result)
   } catch (error) {
     console.error('[MentorModal] Generation error:', error)
-    errorMessage.value = 'Произошла ошибка при генерации целей'
+    errorMessage.value = error.message || 'Произошла ошибка при генерации целей'
+    step.value = 'error'
+    isMentorActive.value = false
+  }
+}
+
+watch(() => aiTasksStore.getTaskProgress('goal_mentor_help'), (progress) => {
+  if (progress && isMentorActive.value) {
+    mentorProgress.value = progress
+  }
+}, { deep: true })
+
+function handleMentorResult(result) {
+  isMentorActive.value = false
+  
+  const goals = result.goals || result.suggestions || []
+  
+  if (goals.length > 0) {
+    const categoryBackendToFrontend = {
+      'welfare': 'wealth',
+      'hobby': 'hobbies',
+      'environment': 'friendship',
+      'health_sport': 'health',
+      'health': 'health',
+      'work': 'career',
+      'family': 'love'
+    }
+    
+    suggestions.value = goals.map((s, idx) => ({
+      id: `suggestion-${Date.now()}-${idx}`,
+      title: s.title,
+      sphereId: s.sphere_id || (s.category ? categoryBackendToFrontend[s.category] || s.category : null),
+      whyUseful: s.why_important || s.description || '',
+      steps: (s.steps || []).map((step, stepIdx) => ({
+        id: `step-${Date.now()}-${idx}-${stepIdx}`,
+        title: step.title || step,
+        order: stepIdx + 1
+      }))
+    }))
+    step.value = 'selection'
+  } else {
+    errorMessage.value = 'Не удалось получить рекомендации'
     step.value = 'error'
   }
 }
@@ -264,69 +364,122 @@ function prepareSSPData() {
   return {
     spheres: lifeSpheres.map(s => ({
       id: s.id,
-      name: s.name,
-      score: s.score || 0,
-      reflection: s.reflection || {}
-    })),
-    growthZones: lifeSpheres
-      .filter(s => s.score > 0 && s.score <= 5)
-      .map(s => ({
-        id: s.id,
-        name: s.name,
-        score: s.score,
-        desired: s.reflection?.desired || '',
-        prevents: s.reflection?.prevents || ''
-      }))
+      score: s.score || 0
+    }))
   }
 }
 
 async function confirmSelection() {
   step.value = 'creating'
   createdGoals.value = []
+  isDecompositionActive.value = true
   
   const selected = selectedGoals.value.map(idx => suggestions.value[idx])
   
-  for (let i = 0; i < selected.length; i++) {
-    const suggestion = selected[i]
-    creatingProgress.value = `Создаем цель ${i + 1} из ${selected.length}...`
-    
-    try {
-      const goalId = appStore.addGoalFromBank({
-        text: suggestion.title,
-        sphereId: suggestion.sphereId,
-        whyImportant: suggestion.whyUseful,
-        generatedByAI: true,
-        steps: []
-      })
-      
-      creatingProgress.value = `Генерируем шаги для цели ${i + 1}...`
-      
-      const stepsResult = await generateStepsWithAI(suggestion.title, suggestion.sphereId)
-      
-      if (stepsResult.success && stepsResult.steps?.length > 0) {
-        const goal = appStore.ideas.find(g => g.id === goalId)
-        if (goal) {
-          stepsResult.steps.forEach((stepText, idx) => {
-            goal.steps.push({
-              id: `step-${Date.now()}-${idx}`,
-              text: stepText,
-              completed: false
-            })
-          })
-        }
-      }
-      
-      createdGoals.value.push({
-        id: goalId,
-        text: suggestion.title
-      })
-    } catch (error) {
-      console.error('[MentorModal] Error creating goal:', error)
-    }
+  if (selected.length === 0) {
+    step.value = 'selection'
+    isDecompositionActive.value = false
+    return
   }
   
-  step.value = 'confirmation'
-  emit('goals-created', createdGoals.value)
+  creatingProgress.value = `Создаем ${selected.length} ${getGoalsWord(selected.length)}...`
+  
+  try {
+    const goalsData = selected.map(suggestion => ({
+      goal_id: null,
+      title: suggestion.title,
+      category: categoryFrontendToBackend[suggestion.sphereId] || suggestion.sphereId || 'welfare',
+      score: 'true',
+      status: 'work',
+      why_important: suggestion.whyUseful || 'Рекомендовано AI-ментором'
+    }))
+    
+    console.log('[MentorModal] Sending goals to backend:', goalsData)
+    
+    const goalsResult = await updateGoals({ goals_data: goalsData })
+    
+    console.log('[MentorModal] Goals API response:', goalsResult)
+    
+    if (!goalsResult || goalsResult.status !== 'ok') {
+      throw new Error(goalsResult?.message || 'Не удалось создать цели')
+    }
+    
+    let createdIds = goalsResult.data?.created_goals_ids
+    if (!createdIds || createdIds.length === 0) {
+      if (goalsResult.data?.goals_data) {
+        createdIds = goalsResult.data.goals_data.map(g => g.goal_id).filter(id => id != null)
+      }
+    }
+    
+    if (!createdIds || createdIds.length === 0) {
+      throw new Error('Сервер не вернул ID созданных целей')
+    }
+    
+    console.log('[MentorModal] Goals created with IDs:', createdIds)
+    
+    const allStepsData = []
+    const createdGoalsInfo = []
+    
+    selected.forEach((suggestion, index) => {
+      const backendId = createdIds[index]
+      if (!backendId) return
+      
+      createdGoalsInfo.push({
+        backendId,
+        title: suggestion.title,
+        steps: suggestion.steps || []
+      })
+      
+      if (suggestion.steps && suggestion.steps.length > 0) {
+        suggestion.steps.forEach((stepItem, stepIndex) => {
+          allStepsData.push({
+            goal_id: backendId,
+            step_id: null,
+            title: stepItem.title,
+            order: stepIndex + 1,
+            is_complete: false,
+            priority: null,
+            time_duration: null,
+            dt: null
+          })
+        })
+      }
+    })
+    
+    if (allStepsData.length > 0) {
+      creatingProgress.value = `Создаем ${allStepsData.length} ${getStepsWord(allStepsData.length)}...`
+      
+      console.log('[MentorModal] Sending steps to backend:', allStepsData)
+      
+      try {
+        const stepsResult = await updateGoalSteps({ goals_steps_data: allStepsData })
+        console.log('[MentorModal] Steps API response:', stepsResult)
+        
+        if (stepsResult.status !== 'ok') {
+          console.warn('[MentorModal] Steps creation had issues:', stepsResult)
+        }
+      } catch (stepsError) {
+        console.error('[MentorModal] Error creating steps:', stepsError)
+      }
+    }
+    
+    createdGoals.value = createdGoalsInfo.map(info => ({
+      id: info.backendId,
+      text: info.title
+    }))
+    
+    await appStore.loadGoalsFromBackend()
+    
+    isDecompositionActive.value = false
+    step.value = 'confirmation'
+    emit('goals-created', createdGoals.value)
+    
+  } catch (error) {
+    console.error('[MentorModal] Error in confirmSelection:', error)
+    errorMessage.value = error.message || 'Произошла ошибка при создании целей'
+    isDecompositionActive.value = false
+    step.value = 'error'
+  }
 }
 
 function goToPlanning() {
@@ -339,8 +492,16 @@ function closeModal() {
   suggestions.value = []
   selectedGoals.value = []
   createdGoals.value = []
+  expandedGoals.value = []
+  isMentorActive.value = false
+  isDecompositionActive.value = false
   emit('close')
 }
+
+onBeforeUnmount(() => {
+  isMentorActive.value = false
+  isDecompositionActive.value = false
+})
 </script>
 
 <style scoped>
@@ -631,6 +792,98 @@ function closeModal() {
   flex-shrink: 0;
   margin-top: 2px;
   color: #10b981;
+}
+
+.suggestion-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.steps-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--bg-tertiary, #e5e7eb);
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.steps-toggle-btn:hover {
+  background: var(--bg-quaternary, #d1d5db);
+  color: var(--text-primary, #1f2937);
+}
+
+.steps-toggle-btn svg {
+  flex-shrink: 0;
+}
+
+.steps-dropdown {
+  margin-left: 2rem;
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: var(--bg-tertiary, #f9fafb);
+  border-radius: 8px;
+  border-left: 3px solid #10b981;
+}
+
+.step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.step-item:not(:last-child) {
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.step-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  background: #10b981;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.step-title {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.steps-expand-enter-active,
+.steps-expand-leave-active {
+  transition: all 0.2s ease;
+}
+
+.steps-expand-enter-from,
+.steps-expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+  margin-top: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.steps-expand-enter-to,
+.steps-expand-leave-from {
+  opacity: 1;
+  max-height: 500px;
 }
 
 .selection-actions {

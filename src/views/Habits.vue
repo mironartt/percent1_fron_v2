@@ -645,7 +645,7 @@
                     </div>
                     <div class="ai-suggestion-content">
                       <div class="ai-suggestion-header">
-                        <span class="ai-habit-emoji">{{ habit.icon }}</span>
+                        <span class="ai-habit-emoji">{{ getIconEmoji(habit.icon) }}</span>
                         <h5 class="ai-suggestion-title">{{ habit.name }}</h5>
                       </div>
                       <p class="ai-suggestion-reason">
@@ -653,12 +653,82 @@
                         {{ habit.whyUseful }}
                       </p>
                       <div class="ai-habit-meta">
-                        <span class="ai-habit-schedule">{{ habit.scheduleLabel }}</span>
-                        <span class="ai-habit-xp">+{{ habit.xpReward }} XP</span>
+                        <div class="ai-habit-schedule-wrapper">
+                          <button 
+                            class="ai-habit-schedule clickable" 
+                            @click.stop="openScheduleEditor(idx)"
+                          >
+                            <Calendar :size="12" />
+                            {{ habit.scheduleLabel }}
+                            <ChevronDown :size="12" />
+                          </button>
+                          <div 
+                            v-if="editingScheduleIdx === idx" 
+                            class="ai-schedule-dropdown"
+                            @click.stop
+                          >
+                            <div class="dropdown-header">Расписание</div>
+                            <button 
+                              v-for="option in scheduleOptions" 
+                              :key="option.value"
+                              class="dropdown-option"
+                              :class="{ active: isScheduleMatch(habit, option.value) }"
+                              @click="selectScheduleForHabit(idx, option)"
+                            >
+                              {{ option.label }}
+                            </button>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-custom-days">
+                              <div class="custom-days-label">Выбрать дни:</div>
+                              <div class="custom-days-grid">
+                                <button 
+                                  v-for="day in weekDays" 
+                                  :key="day.key"
+                                  class="day-btn"
+                                  :class="{ active: habit.scheduleDays.includes(day.key) }"
+                                  @click="toggleDayForHabit(idx, day.key)"
+                                >
+                                  {{ day.short }}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="ai-habit-xp-wrapper">
+                          <button 
+                            class="ai-habit-xp clickable" 
+                            @click.stop="openXpEditor(idx)"
+                          >
+                            +{{ habit.xpReward }} XP
+                            <ChevronDown :size="12" />
+                          </button>
+                          <div 
+                            v-if="editingXpIdx === idx" 
+                            class="ai-xp-dropdown"
+                            @click.stop
+                          >
+                            <div class="dropdown-header">Награда XP</div>
+                            <button 
+                              v-for="xp in xpOptions" 
+                              :key="xp"
+                              class="dropdown-option"
+                              :class="{ active: habit.xpReward === xp }"
+                              @click="selectXpForHabit(idx, xp)"
+                            >
+                              +{{ xp }} XP
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
+                
+                <div 
+                  v-if="editingScheduleIdx !== null || editingXpIdx !== null" 
+                  class="dropdown-overlay"
+                  @click="closeAllEditors"
+                ></div>
                 
                 <div class="ai-schedule-option" v-if="selectedAiHabits.length > 0">
                   <label class="ai-schedule-toggle">
@@ -1608,12 +1678,13 @@ import { useAppStore } from '../stores/app'
 import { useXpStore } from '../stores/xp'
 import { useToastStore } from '../stores/toast'
 import { useHabitsStore } from '../stores/habits'
+import { useAITasksStore } from '../stores/aiTasks'
 import { DEBUG_MODE } from '@/config/settings.js'
 import { getLocalDateString, getTodayDateString } from '@/utils/dateUtils'
 import { 
   Flame, Plus, Minus, Zap, CheckCircle, Sparkles, Shield, Bot,
   Check, Pencil, X, Trash2, Settings, Gift, Archive, Info, TrendingUp, Calendar, Award,
-  Ellipsis, CircleAlert, Lightbulb, Heart, ChevronLeft, ChevronRight, RotateCcw, Lock,
+  Ellipsis, CircleAlert, Lightbulb, Heart, ChevronLeft, ChevronRight, ChevronDown, RotateCcw, Lock,
   ChartBar, CalendarDays, Target, Save, Loader2,
   RefreshCw, BarChart3, Clock, ArrowLeft, Square, CheckSquare, AlertTriangle
 } from 'lucide-vue-next'
@@ -1621,6 +1692,7 @@ import { apiFetch } from '@/services/api.js'
 
 const appStore = useAppStore()
 const xpStore = useXpStore()
+const aiTasksStore = useAITasksStore()
 const toast = useToastStore()
 const habitsStore = useHabitsStore()
 
@@ -1644,6 +1716,21 @@ const aiSuggestedHabits = ref([])
 const selectedAiHabits = ref([])
 const createdAiHabits = ref([])
 const suggestionsErrorMessage = ref('')
+
+const editingScheduleIdx = ref(null)
+const editingXpIdx = ref(null)
+
+const scheduleOptions = [
+  { value: 'daily', label: 'Каждый день', days: [0, 1, 2, 3, 4, 5, 6] },
+  { value: 'weekdays', label: 'По будням', days: [1, 2, 3, 4, 5] },
+  { value: 'weekends', label: 'По выходным', days: [0, 6] },
+  { value: '3times', label: '3 раза в неделю', days: [1, 3, 5] }
+]
+
+const xpOptions = [5, 10, 15, 20, 25, 30]
+
+const HABIT_TASK_TYPE = 'habit_create_help'
+const HABIT_VIEWED_RESULTS_KEY = 'habit_suggestions_viewed'
 const scheduleHabitsImmediately = ref(true)
 const skipHabitSuggestionsIntro = ref(localStorage.getItem('skipHabitSuggestionsIntro') === 'true')
 const showAmnestyModal = ref(false)
@@ -3712,11 +3799,15 @@ function selectSuggestedHabit(habit) {
 
 function closeSuggestionsModal() {
   showSuggestionsModal.value = false
-  suggestionsStep.value = skipHabitSuggestionsIntro.value ? 'templates' : 'intro'
-  aiSuggestedHabits.value = []
-  selectedAiHabits.value = []
-  createdAiHabits.value = []
-  suggestionsErrorMessage.value = ''
+  
+  const runningTask = aiTasksStore.getActiveTaskByType(HABIT_TASK_TYPE)
+  if (!runningTask) {
+    suggestionsStep.value = skipHabitSuggestionsIntro.value ? 'templates' : 'intro'
+    aiSuggestedHabits.value = []
+    selectedAiHabits.value = []
+    createdAiHabits.value = []
+    suggestionsErrorMessage.value = ''
+  }
 }
 
 function saveSkipIntroPreference() {
@@ -3732,13 +3823,60 @@ function openTemplatesModal() {
   suggestionsStep.value = 'templates'
 }
 
-function openAiSuggestionsModal() {
+async function openAiSuggestionsModal() {
   showSuggestionsModal.value = true
+  
+  aiTasksStore.connect()
+  
+  const runningTask = aiTasksStore.getActiveTaskByType(HABIT_TASK_TYPE)
+  if (runningTask) {
+    suggestionsStep.value = 'loading'
+    await waitForExistingTask(runningTask.task_id)
+    return
+  }
+  
+  const completedTask = aiTasksStore.getCompletedTaskByType(HABIT_TASK_TYPE)
+  const cachedResult = aiTasksStore.getTaskResult(HABIT_TASK_TYPE)
+  
+  if (completedTask || cachedResult) {
+    const viewedTaskIds = getViewedHabitResults()
+    const taskId = completedTask?.task_id || 'cached'
+    
+    if (!viewedTaskIds.includes(String(taskId))) {
+      const result = cachedResult || completedTask?.result
+      if (result) {
+        handleHabitSuggestionsResult(result)
+        markHabitResultViewed(taskId)
+        return
+      }
+    }
+  }
+  
   const skipIntro = localStorage.getItem('skipHabitSuggestionsIntro') === 'true'
   if (skipIntro) {
     startHabitSuggestions()
   } else {
     suggestionsStep.value = 'intro'
+  }
+}
+
+function getViewedHabitResults() {
+  try {
+    const stored = localStorage.getItem(HABIT_VIEWED_RESULTS_KEY)
+    return stored ? JSON.parse(stored) : []
+  } catch {
+    return []
+  }
+}
+
+function markHabitResultViewed(taskId) {
+  const viewed = getViewedHabitResults()
+  if (!viewed.includes(String(taskId))) {
+    viewed.push(String(taskId))
+    if (viewed.length > 10) {
+      viewed.shift()
+    }
+    localStorage.setItem(HABIT_VIEWED_RESULTS_KEY, JSON.stringify(viewed))
   }
 }
 
@@ -3749,6 +3887,82 @@ function toggleAiHabitSelection(idx) {
   } else {
     selectedAiHabits.value.splice(index, 1)
   }
+}
+
+function openScheduleEditor(idx) {
+  editingXpIdx.value = null
+  editingScheduleIdx.value = editingScheduleIdx.value === idx ? null : idx
+}
+
+function openXpEditor(idx) {
+  editingScheduleIdx.value = null
+  editingXpIdx.value = editingXpIdx.value === idx ? null : idx
+}
+
+function closeAllEditors() {
+  editingScheduleIdx.value = null
+  editingXpIdx.value = null
+}
+
+function isScheduleMatch(habit, optionValue) {
+  const option = scheduleOptions.find(o => o.value === optionValue)
+  if (!option) return false
+  
+  const habitDays = [...habit.scheduleDays].sort((a, b) => a - b)
+  const optionDays = [...option.days].sort((a, b) => a - b)
+  
+  return habitDays.length === optionDays.length && 
+    habitDays.every((d, i) => d === optionDays[i])
+}
+
+function selectScheduleForHabit(idx, option) {
+  const habit = aiSuggestedHabits.value[idx]
+  if (habit) {
+    habit.scheduleDays = [...option.days]
+    habit.scheduleLabel = option.label
+    habit.frequencyType = option.value === 'daily' ? 'daily' : 'custom'
+  }
+  closeAllEditors()
+}
+
+function toggleDayForHabit(idx, dayKey) {
+  const habit = aiSuggestedHabits.value[idx]
+  if (!habit) return
+  
+  const dayIndex = habit.scheduleDays.indexOf(dayKey)
+  if (dayIndex === -1) {
+    habit.scheduleDays.push(dayKey)
+  } else if (habit.scheduleDays.length > 1) {
+    habit.scheduleDays.splice(dayIndex, 1)
+  }
+  
+  updateScheduleLabelForHabit(habit)
+}
+
+function updateScheduleLabelForHabit(habit) {
+  const days = [...habit.scheduleDays].sort((a, b) => a - b)
+  
+  for (const option of scheduleOptions) {
+    const optionDays = [...option.days].sort((a, b) => a - b)
+    if (days.length === optionDays.length && days.every((d, i) => d === optionDays[i])) {
+      habit.scheduleLabel = option.label
+      habit.frequencyType = option.value === 'daily' ? 'daily' : 'custom'
+      return
+    }
+  }
+  
+  const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
+  const selectedDayNames = days.map(d => dayNames[d])
+  habit.scheduleLabel = selectedDayNames.join(', ')
+  habit.frequencyType = 'custom'
+}
+
+function selectXpForHabit(idx, xp) {
+  const habit = aiSuggestedHabits.value[idx]
+  if (habit) {
+    habit.xpReward = xp
+  }
+  closeAllEditors()
 }
 
 function getHabitsWord(count) {
@@ -3762,24 +3976,79 @@ async function startHabitSuggestions() {
   selectedAiHabits.value = []
   
   try {
+    aiTasksStore.connect()
+    
     const userData = prepareUserDataForHabits()
-    const response = await apiFetch('/api/ai/suggest-habits', {
-      method: 'POST',
-      body: JSON.stringify(userData)
-    })
     
-    const result = await response.json()
+    const result = await aiTasksStore.startTaskAndWait('habit_create_help', userData, 120000)
     
-    if (result.success && result.suggestions?.length > 0) {
-      aiSuggestedHabits.value = result.suggestions
-      suggestionsStep.value = 'selection'
+    if (result.status === 'already_running' && result.task_id) {
+      await waitForExistingTask(result.task_id)
     } else {
-      suggestionsErrorMessage.value = result.error || 'Не удалось получить рекомендации'
-      suggestionsStep.value = 'error'
+      handleHabitSuggestionsResult(result)
     }
   } catch (error) {
     console.error('[Habits] AI suggestion error:', error)
-    suggestionsErrorMessage.value = 'Произошла ошибка при генерации привычек'
+    suggestionsErrorMessage.value = error.message || 'Произошла ошибка при генерации привычек'
+    suggestionsStep.value = 'error'
+  }
+}
+
+async function waitForExistingTask(taskId) {
+  const maxAttempts = 60
+  let attempts = 0
+  
+  while (attempts < maxAttempts) {
+    const status = await aiTasksStore.getTaskStatus(taskId)
+    
+    if (!status) {
+      suggestionsErrorMessage.value = 'Не удалось получить статус задачи'
+      suggestionsStep.value = 'error'
+      return
+    }
+    
+    if (status.status === 'completed' && status.result) {
+      handleHabitSuggestionsResult(status.result)
+      return
+    }
+    
+    if (status.status === 'failed') {
+      suggestionsErrorMessage.value = status.error?.message || 'Ошибка генерации'
+      suggestionsStep.value = 'error'
+      return
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    attempts++
+  }
+  
+  suggestionsErrorMessage.value = 'Время ожидания истекло'
+  suggestionsStep.value = 'error'
+}
+
+function handleHabitSuggestionsResult(result, taskId = null) {
+  const habits = result.habits || result.suggestions || []
+  
+  if (habits.length > 0) {
+    aiSuggestedHabits.value = habits.map((h, idx) => ({
+      id: `habit-${Date.now()}-${idx}`,
+      name: h.name,
+      icon: h.icon || 'fire',
+      description: h.description || '',
+      frequencyType: h.frequency_type || 'daily',
+      scheduleDays: h.schedule_days || [0, 1, 2, 3, 4, 5, 6],
+      scheduleLabel: h.schedule_label || 'Каждый день',
+      xpReward: h.xp_reward || 10,
+      whyUseful: h.why_useful || '',
+      trigger: h.trigger || ''
+    }))
+    suggestionsStep.value = 'selection'
+    
+    const completedTask = aiTasksStore.getCompletedTaskByType(HABIT_TASK_TYPE)
+    const idToMark = taskId || completedTask?.task_id || `result_${Date.now()}`
+    markHabitResultViewed(idToMark)
+  } else {
+    suggestionsErrorMessage.value = 'Не удалось получить рекомендации'
     suggestionsStep.value = 'error'
   }
 }
@@ -3824,7 +4093,7 @@ async function confirmAiHabitSelection() {
     const habitData = {
       name: habit.name,
       icon: habit.icon || 'fire',
-      description: habit.whyUseful || '',
+      description: habit.description || habit.whyUseful || '',
       xpReward: habit.xpReward || 10,
       xpPenalty: 0,
       frequencyType: habit.frequencyType || 'daily',
@@ -3859,6 +4128,11 @@ async function confirmAiHabitSelection() {
   }
   
   suggestionsStep.value = 'confirmation'
+  
+  showModal.value = false
+  
+  aiTasksStore.clearTaskResult(HABIT_TASK_TYPE)
+  
   toast.showToast({ 
     title: `Добавлено ${createdAiHabits.value.length} ${getHabitsWord(createdAiHabits.value.length)}`, 
     type: 'success' 
@@ -6674,20 +6948,155 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.ai-habit-schedule-wrapper,
+.ai-habit-xp-wrapper {
+  position: relative;
 }
 
 .ai-habit-schedule {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
+  padding: 0.3rem 0.5rem;
   background: var(--bg-tertiary, #e5e7eb);
-  border-radius: 4px;
+  border-radius: 6px;
   color: var(--text-secondary, #6b7280);
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ai-habit-schedule:hover {
+  background: var(--bg-hover, #d1d5db);
+  color: var(--text-primary, #374151);
 }
 
 .ai-habit-xp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   font-size: 0.75rem;
+  padding: 0.3rem 0.5rem;
   color: #10b981;
   font-weight: 600;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ai-habit-xp:hover {
+  background: rgba(16, 185, 129, 0.2);
+}
+
+.ai-schedule-dropdown,
+.ai-xp-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 180px;
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  padding: 0.5rem 0;
+}
+
+.ai-xp-dropdown {
+  min-width: 120px;
+}
+
+.dropdown-header {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.25rem 0.75rem 0.5rem;
+}
+
+.dropdown-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-primary, #374151);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.dropdown-option:hover {
+  background: var(--bg-tertiary, #f3f4f6);
+}
+
+.dropdown-option.active {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--color-primary, #6366f1);
+  font-weight: 500;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--border-color, #e5e7eb);
+  margin: 0.5rem 0;
+}
+
+.dropdown-custom-days {
+  padding: 0.5rem 0.75rem;
+}
+
+.custom-days-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  margin-bottom: 0.5rem;
+}
+
+.custom-days-grid {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.custom-days-grid .day-btn {
+  width: 28px;
+  height: 28px;
+  font-size: 0.65rem;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-primary, #fff);
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.custom-days-grid .day-btn:hover {
+  border-color: var(--color-primary, #6366f1);
+  color: var(--color-primary, #6366f1);
+}
+
+.custom-days-grid .day-btn.active {
+  background: var(--color-primary, #6366f1);
+  border-color: var(--color-primary, #6366f1);
+  color: white;
+}
+
+.dropdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99;
 }
 
 .ai-schedule-option {

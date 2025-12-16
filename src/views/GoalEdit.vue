@@ -138,7 +138,7 @@
             >
               <Loader2 v-if="isGeneratingSteps" :size="16" class="spin" />
               <Sparkles v-else :size="16" />
-              <span class="btn-ai-label">{{ isGeneratingSteps ? 'Генерация...' : 'Помощь от ментора' }}</span>
+              <span class="btn-ai-label">{{ isGeneratingSteps ? (aiStepsProgress.text || 'Генерация...') : 'Помощь от ментора' }}</span>
             </button>
           </div>
 
@@ -961,6 +961,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { useAITasksStore } from '../stores/aiTasks'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
 import {
   Trash2, Save, Plus, ArrowLeft, GripVertical, X, Edit2,
@@ -970,11 +971,11 @@ import {
   FileText, Lightbulb, Shield, BarChart2, Play, Pause, GitBranch,
   BookOpen, ChevronDown, ChevronRight, ChevronLeft, Send, MessageSquare, Wand2, Loader2, Sparkles
 } from 'lucide-vue-next'
-import { generateStepsWithAI } from '@/services/aiGoalService.js'
 
 const route = useRoute()
 const router = useRouter()
 const store = useAppStore()
+const aiTasksStore = useAITasksStore()
 
 const lifeSpheres = computed(() => store.lifeSpheres)
 const goals = computed(() => store.goals)
@@ -1197,6 +1198,8 @@ const inlineInputFocused = ref(false)
 const isGeneratingSteps = ref(false)
 const showAIStepsTooltip = ref(false)
 
+const aiStepsProgress = ref({ percent: 0, text: '' })
+
 async function generateStepsAI() {
   if (isGeneratingSteps.value || !goal.value) return
   
@@ -1204,39 +1207,68 @@ async function generateStepsAI() {
   if (!goalTitle) return
   
   isGeneratingSteps.value = true
+  aiStepsProgress.value = { percent: 0, text: 'Запуск генерации...' }
   
   try {
-    const result = await generateStepsWithAI(goalTitle, goalForm.value.sphereId)
-    
-    if (result.success && result.data?.steps?.length > 0) {
-      const existingStepsCount = goalForm.value.steps?.length || 0
-      
-      result.data.steps.forEach((step, idx) => {
-        const newStep = {
-          id: `ai-${Date.now()}-${idx}`,
-          title: step.title,
-          description: step.description || '',
-          completed: false,
-          isNew: true,
-          order: existingStepsCount + idx + 1,
-          priority: null,
-          timeEstimate: step.timeEstimate || null,
-          scheduledDate: null,
-          checklist: []
-        }
-        goalForm.value.steps.push(newStep)
-      })
-      
-      showToast(`ИИ добавил ${result.data.steps.length} шагов`, 'success')
-    } else {
-      showToast('Не удалось сгенерировать шаги', 'error')
+    const context = {
+      goal_title: goalTitle
     }
+    
+    if (goalBackendId.value && !isLocalId.value) {
+      context.goal_id = parseInt(goalBackendId.value)
+    }
+    
+    const result = await aiTasksStore.startTaskAndWait('goal_decomposition', context, 120000)
+    
+    if (DEBUG_MODE) {
+      console.log('[GoalEdit] AI decomposition completed:', result)
+    }
+    
+    handleAIStepsResult(result)
   } catch (error) {
     console.error('[GoalEdit] AI steps generation error:', error)
-    showToast('Ошибка генерации', 'error')
-  } finally {
+    showToast(error.message || 'Ошибка генерации', 'error')
     isGeneratingSteps.value = false
   }
+}
+
+watch(() => aiTasksStore.getTaskProgress('goal_decomposition'), (progress) => {
+  if (progress && isGeneratingSteps.value) {
+    aiStepsProgress.value = progress
+  }
+}, { deep: true })
+
+function handleAIStepsResult(result) {
+  if (result.steps && result.steps.length > 0) {
+    const existingStepsCount = goalForm.value.steps?.length || 0
+    
+    result.steps.forEach((step, idx) => {
+      const newStep = {
+        id: `ai-${Date.now()}-${idx}`,
+        title: step.title,
+        comment: step.description || '',
+        showComment: !!step.description,
+        completed: false,
+        isNew: true,
+        order: existingStepsCount + idx + 1,
+        priority: null,
+        timeEstimate: step.time_estimate || null,
+        scheduledDate: null,
+        checklist: []
+      }
+      goalForm.value.steps.push(newStep)
+    })
+    
+    showToast(`ИИ добавил ${result.steps.length} шагов`, 'success')
+    
+    if (DEBUG_MODE) {
+      console.log('[GoalEdit] AI steps added:', result.steps.length)
+    }
+  } else {
+    showToast('Не удалось сгенерировать шаги', 'error')
+  }
+  
+  isGeneratingSteps.value = false
 }
 
 async function addInlineStep() {
@@ -2786,22 +2818,81 @@ function addStep() {
 }
 
 // Сохранить новый шаг (кнопка "Добавить")
-function saveNewStep(step) {
+async function saveNewStep(step) {
   // Валидация: нельзя создать шаг с пустым названием
   if (!step.title?.trim()) {
     showToast('Введите название шага', 'error')
     return
   }
   
-  // Убираем флаг isNew - шаг готов к сохранению
-  step.isNew = false
+  // Сохраняем шаг (флаг isNew будет убран только при успехе)
+  await saveSingleStep(step)
+}
+
+async function saveSingleStep(step) {
+  if (!goalBackendId.value || isLocalId.value) {
+    // Для локальных целей просто обновляем UI
+    step.isNew = false
+    store.updateGoal(goal.value.id, { steps: goalForm.value.steps })
+    showToast('Шаг добавлен')
+    return
+  }
   
-  // Сохраняем
-  flushSave(true)
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    
+    const goalIdInt = parseInt(goalBackendId.value, 10)
+    
+    const stepData = {
+      goal_id: goalIdInt,
+      step_id: step.backendId || null,
+      title: step.title,
+      description: step.comment || '',
+      priority: mapPriorityToBackend(step.priority) || null,
+      time_duration: mapTimeToBackend(step.timeEstimate),
+      dt: step.scheduledDate || null,
+      is_complete: step.completed || false
+    }
+    
+    console.log('[GoalEdit] Saving single step:', stepData)
+    
+    const result = await updateGoalSteps({ goals_steps_data: [stepData] })
+    
+    if (result.status === 'ok') {
+      // Только при успехе убираем флаг isNew
+      step.isNew = false
+      
+      // Обновляем backendId для созданного шага
+      if (result.data?.created_steps?.length > 0) {
+        step.backendId = result.data.created_steps[0].step_id
+      }
+      
+      // Обновляем snapshot для этого шага
+      takeStepsSnapshot()
+      
+      // Обновляем локальное хранилище
+      store.updateGoal(goal.value.id, { steps: goalForm.value.steps })
+      
+      showToast('Шаг добавлен')
+    } else {
+      // При ошибке шаг остаётся в списке "новых" для повторной попытки
+      showToast('Ошибка сохранения шага', 'error')
+    }
+  } catch (error) {
+    console.error('[GoalEdit] Error saving step:', error)
+    // При ошибке шаг остаётся в списке "новых" для повторной попытки
+    showToast('Ошибка сохранения шага', 'error')
+  }
 }
 
 // Обработка focusout со всего шаблона нового шага
 function handleNewStepFocusOut(step, event) {
+  // Для AI-сгенерированных шагов НЕ сохраняем автоматически при потере фокуса
+  // Пользователь должен явно нажать "Добавить" или "Удалить"
+  if (step.id?.startsWith('ai-')) {
+    return
+  }
+  
   // Проверяем, остаётся ли фокус внутри этого же шаблона
   const stepCard = event.currentTarget
   const relatedTarget = event.relatedTarget
@@ -2812,7 +2903,7 @@ function handleNewStepFocusOut(step, event) {
   }
   
   // Фокус ушёл полностью с шаблона
-  // Если есть название - сохраняем автоматически
+  // Если есть название - сохраняем автоматически (только для ручных шагов)
   if (step.title?.trim()) {
     saveNewStep(step)
   }
@@ -3031,12 +3122,9 @@ async function doSave(showNotification = true) {
       progress: progress
     })
     
-    // Убрать флаг isNew у сохранённых шагов
-    goalForm.value.steps.forEach(s => {
-      if (s.isNew && s.title.trim()) {
-        delete s.isNew
-      }
-    })
+    // НЕ убираем флаг isNew здесь автоматически!
+    // Флаг убирается только при явном сохранении шага через saveNewStep()
+    // Это позволяет AI-сгенерированным шагам оставаться "новыми" до явного подтверждения
     
     lastSavedHash = currentHash
     
@@ -3045,8 +3133,12 @@ async function doSave(showNotification = true) {
     }
     
     // Sync with backend (non-blocking)
+    // Только шаги БЕЗ флага isNew - они ждут явного подтверждения
     if (goalBackendId.value) {
-      syncStepsToBackend(stepsToSave)
+      const confirmedSteps = goalForm.value.steps.filter(s => !s.isNew && s.title?.trim())
+      if (confirmedSteps.length > 0) {
+        syncStepsToBackend(confirmedSteps)
+      }
     }
   } catch (e) {
     showToast('Ошибка сохранения', 'error')

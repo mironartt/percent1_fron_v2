@@ -55,6 +55,43 @@
                   {{ icon }}
                 </button>
               </div>
+              
+              <button 
+                class="btn btn-ai-suggest"
+                @click="generateHabitSuggestions"
+                :disabled="isGeneratingHabits"
+              >
+                <Loader2 v-if="isGeneratingHabits" :size="16" class="spin" />
+                <Sparkles v-else :size="16" />
+                <span>{{ isGeneratingHabits ? (aiProgress.text || 'Подбираем...') : 'Подбор от ментора' }}</span>
+              </button>
+            </div>
+            
+            <div v-if="aiHabitSuggestions.length > 0" class="ai-suggestions-section">
+              <h4>Рекомендации от ментора</h4>
+              <div class="suggestion-cards">
+                <div 
+                  v-for="habit in aiHabitSuggestions" 
+                  :key="habit.name"
+                  class="suggestion-card"
+                >
+                  <div class="suggestion-header">
+                    <span class="habit-icon">{{ habit.icon }}</span>
+                    <span class="habit-name">{{ habit.name }}</span>
+                    <span class="habit-xp">{{ habit.xpReward }} XP</span>
+                  </div>
+                  <p v-if="habit.description" class="suggestion-description">{{ habit.description }}</p>
+                  <div class="suggestion-actions">
+                    <button class="btn btn-sm btn-primary" @click="addSuggestedHabit(habit)">
+                      <Plus :size="14" />
+                      Добавить
+                    </button>
+                    <button class="btn btn-sm btn-ghost" @click="dismissSuggestion(habit)">
+                      <X :size="14" />
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="habits-list">
@@ -151,13 +188,15 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useAppStore } from '../stores/app'
-import { X, Plus, Pencil, Trash2 } from 'lucide-vue-next'
+import { useAITasksStore } from '../stores/aiTasks'
+import { X, Plus, Pencil, Trash2, Sparkles, Loader2 } from 'lucide-vue-next'
 
 const emit = defineEmits(['close'])
 
 const appStore = useAppStore()
+const aiTasksStore = useAITasksStore()
 
 const newHabit = ref({
   name: '',
@@ -232,6 +271,68 @@ function deleteHabit() {
   appStore.removeHabit(confirmingDelete.value.id)
   confirmingDelete.value = null
 }
+
+const isGeneratingHabits = ref(false)
+const aiHabitSuggestions = ref([])
+const aiProgress = ref({ percent: 0, text: '' })
+
+async function generateHabitSuggestions() {
+  if (isGeneratingHabits.value) return
+  
+  isGeneratingHabits.value = true
+  aiProgress.value = { percent: 0, text: 'Анализ ваших целей...' }
+  
+  try {
+    const result = await aiTasksStore.startTaskAndWait('habit_create_help', {}, 120000)
+    console.log('[HabitManager] AI habit suggestions completed:', result)
+    handleAIHabitResult(result)
+  } catch (error) {
+    console.error('[HabitManager] AI habit generation error:', error)
+    isGeneratingHabits.value = false
+  }
+}
+
+watch(() => aiTasksStore.getTaskProgress('habit_create_help'), (progress) => {
+  if (progress && isGeneratingHabits.value) {
+    aiProgress.value = progress
+  }
+}, { deep: true })
+
+function handleAIHabitResult(result) {
+  if (result.habits && result.habits.length > 0) {
+    aiHabitSuggestions.value = result.habits.map(h => ({
+      name: h.name || h.title,
+      icon: h.icon || '✨',
+      xpReward: h.xp_reward || 5,
+      description: h.description
+    }))
+  }
+  isGeneratingHabits.value = false
+}
+
+function addSuggestedHabit(habit) {
+  appStore.addHabit({
+    name: habit.name,
+    icon: habit.icon,
+    xpReward: habit.xpReward || 5
+  })
+  
+  aiHabitSuggestions.value = aiHabitSuggestions.value.filter(h => h.name !== habit.name)
+}
+
+function dismissSuggestion(habit) {
+  aiHabitSuggestions.value = aiHabitSuggestions.value.filter(h => h.name !== habit.name)
+}
+
+function cleanup() {
+  aiHabitSuggestions.value = []
+  isGeneratingHabits.value = false
+  aiProgress.value = { percent: 0, text: '' }
+}
+
+onBeforeUnmount(() => {
+  cleanup()
+})
 </script>
 
 <style scoped>
@@ -562,5 +663,126 @@ function deleteHabit() {
 
 .default-section {
   opacity: 0.8;
+}
+
+.btn-ai-suggest {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, var(--primary-color) 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  justify-content: center;
+}
+
+.btn-ai-suggest:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.btn-ai-suggest:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.ai-suggestions-section {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: rgba(139, 92, 246, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.ai-suggestions-section h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.suggestion-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.suggestion-card {
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+}
+
+.suggestion-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.suggestion-header .habit-icon {
+  font-size: 1.25rem;
+}
+
+.suggestion-header .habit-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.suggestion-header .habit-xp {
+  font-size: 0.8rem;
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.suggestion-description {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.75rem;
+  line-height: 1.4;
+}
+
+.suggestion-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.btn-sm {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.btn-ghost:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 </style>
