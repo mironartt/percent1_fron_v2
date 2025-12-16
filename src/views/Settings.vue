@@ -74,6 +74,31 @@
       <div class="card">
         <div class="card-header">
           <h3 class="card-title">
+            <Users :size="18" :stroke-width="1.5" class="card-icon" />
+            Реферальная программа
+          </h3>
+        </div>
+        <div class="card-body">
+          <div class="referral-stats">
+            <div class="referral-stat">
+              <div class="referral-stat-value">{{ referralStats.invitedCount }}</div>
+              <div class="referral-stat-label">Приглашено друзей</div>
+            </div>
+            <div class="referral-stat">
+              <div class="referral-stat-value">{{ referralStats.earnedAmount }} ₽</div>
+              <div class="referral-stat-label">Заработано</div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-lg" style="width: 100%;" @click="goToReferral">
+            Открыть программу
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">
             <Bell :size="18" :stroke-width="1.5" class="card-icon" />
             Уведомления
           </h3>
@@ -303,7 +328,7 @@ import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useToastStore } from '../stores/toast'
 import * as api from '@/services/api.js'
-import { Bot, Sparkles, MessageCircle, VolumeX, User, CreditCard, Bell, FileText, Settings, LogOut, Send, Mail, X } from 'lucide-vue-next'
+import { Bot, Sparkles, MessageCircle, VolumeX, User, CreditCard, Bell, FileText, Settings, LogOut, Send, Mail, X, Users } from 'lucide-vue-next'
 
 const router = useRouter()
 const store = useAppStore()
@@ -322,6 +347,11 @@ const setupError = ref('')
 const isSubmittingEmail = ref(false)
 
 const backendOnboardingData = ref(null)
+
+const referralStats = ref({
+  invitedCount: 0,
+  earnedAmount: 0
+})
 const onboardingData = computed(() => {
   if (backendOnboardingData.value) {
     return {
@@ -471,6 +501,10 @@ function goToSubscription() {
   router.push('/app/subscription')
 }
 
+function goToReferral() {
+  router.push('/app/referral')
+}
+
 function handleLogout() {
   router.push('/auth/logout')
 }
@@ -540,6 +574,32 @@ function handleLogout() {
 .status-text {
   color: var(--text-secondary);
   margin: 0;
+}
+
+.referral-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.referral-stat {
+  padding: 1.25rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.referral-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 0.25rem;
+}
+
+.referral-stat-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
 }
 
 .pricing-info h4 {
