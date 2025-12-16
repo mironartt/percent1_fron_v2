@@ -69,9 +69,9 @@
         <ul class="plan-features">
           <li><Check :size="16" class="feature-icon included" /> Всё из Бесплатного плана</li>
           <li><Check :size="16" class="feature-icon included" /> Безлимитные цели и привычки</li>
-          <li><Check :size="16" class="feature-icon included" /> <strong>AI ментор</strong></li>
-          <li><Check :size="16" class="feature-icon included" /> <strong>AI планирование</strong></li>
-          <li><Check :size="16" class="feature-icon included" /> <strong>AI помощь</strong></li>
+          <li><Check :size="16" class="feature-icon included" /> AI ментор</li>
+          <li><Check :size="16" class="feature-icon included" /> AI планирование</li>
+          <li><Check :size="16" class="feature-icon included" /> AI помощь</li>
           <li><Check :size="16" class="feature-icon included" /> Голосовой чат с ментором в Telegram</li>
           <li><Check :size="16" class="feature-icon included" /> Клуб 1%</li>
         </ul>
@@ -82,7 +82,7 @@
 
       <div class="plan-card pro-plus">
         <div class="plan-header">
-          <h3 class="plan-name">Pro+</h3>
+          <h3 class="plan-name">Клуб 1%</h3>
           <div class="plan-price">
             <span class="price-value">{{ formatPrice(proPlusPrice) }} ₽</span>
             <span class="price-period">{{ priceLabel }}</span>
@@ -93,14 +93,13 @@
         </div>
         <ul class="plan-features">
           <li><Check :size="16" class="feature-icon included" /> Всё из Pro плана</li>
-          <li><Check :size="16" class="feature-icon included" /> <strong>Еженедельные мастермайнды</strong></li>
-          <li><Check :size="16" class="feature-icon included" /> <strong>Групповые челленджи</strong></li>
+          <li><Check :size="16" class="feature-icon included" /> Еженедельные мастермайнды</li>
+          <li><Check :size="16" class="feature-icon included" /> Групповые челленджи</li>
           <li><Check :size="16" class="feature-icon included" /> Ранний доступ к новым функциям</li>
-          <li><Check :size="16" class="feature-icon included" /> <strong>Нетворкинг 2.0</strong></li>
-          <li><Check :size="16" class="feature-icon included" /> Клуб 1%</li>
+          <li><Check :size="16" class="feature-icon included" /> Нетворкинг 2.0</li>
         </ul>
         <button class="btn btn-primary btn-lg plan-btn pro-plus-btn">
-          Выбрать Pro+
+          Выбрать Клуб 1%
         </button>
       </div>
     </div>
