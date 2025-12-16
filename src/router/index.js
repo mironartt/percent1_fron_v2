@@ -17,6 +17,7 @@ const Planner = () => import('@/views/Planner.vue')
 const Planning = () => import('@/views/Planning.vue')
 const Settings = () => import('@/views/Settings.vue')
 const Subscription = () => import('@/views/Subscription.vue')
+const Referral = () => import('@/views/Referral.vue')
 const Club = () => import('@/views/Club.vue')
 const JournalHistory = () => import('@/views/JournalHistory.vue')
 const LearningCenter = () => import('@/views/LearningCenter.vue')
@@ -190,6 +191,12 @@ const router = createRouter({
       name: 'subscription',
       component: Subscription,
       meta: { title: 'Тарифы и подписка', requiresAuth: true }
+    },
+    {
+      path: '/app/referral',
+      name: 'referral',
+      component: Referral,
+      meta: { title: 'Реферальная программа', requiresAuth: true }
     },
     {
       path: '/app/club',
