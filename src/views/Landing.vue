@@ -55,7 +55,7 @@
                   <line x1="30" y1="30" x2="30" y2="270" stroke="#e5e7eb" stroke-width="1"/>
                   <text x="30" y="290" font-size="12" fill="#9ca3af">Сегодня</text>
                   <text x="340" y="290" font-size="12" fill="#9ca3af">1 год</text>
-                  <text x="370" y="25" font-size="14" font-weight="600" fill="#6366f1">×37.8</text>
+                  <text x="340" y="25" font-size="14" font-weight="600" fill="#6366f1">×37.8</text>
                 </svg>
                 <div class="chart-label">
                   <span class="chart-highlight">+1% каждый день</span>
@@ -826,7 +826,7 @@ onUnmounted(() => {
   position: relative;
   padding: 10rem 0 6rem;
   overflow: hidden;
-  min-height: 90vh;
+  min-height: 75vh;
   display: flex;
   align-items: center;
 }
