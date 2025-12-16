@@ -24,28 +24,97 @@
 </template>
 
 <script setup>
-import { computed, ref, watch, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, ref, watch, onMounted, watchEffect } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
 import TelegramAuthModals from './components/TelegramAuthModals.vue'
 import MentorPanel from './components/MentorPanel.vue'
 import ToastNotification from './components/ToastNotification.vue'
 import { useAppStore } from './stores/app'
 import { useAITasksStore } from './stores/aiTasks'
+import { useTelegram } from './composables/useTelegram'
+import { telegramWebAppAuth, getUserData } from './services/api'
 
 const route = useRoute()
+const router = useRouter()
 const store = useAppStore()
 const aiTasksStore = useAITasksStore()
 const sidebarCollapsed = ref(false)
 
-onMounted(() => {
+// Telegram Mini Apps интеграция
+const {
+  isInTelegram,
+  initData,
+  themeParams,
+  colorScheme,
+  applyTelegramTheme,
+} = useTelegram()
+
+// Авторизация через Telegram Mini Apps
+async function handleTelegramAuth() {
+  if (!isInTelegram.value || !initData.value) {
+    return
+  }
+
+  // Если уже авторизован — пропускаем
+  if (store.isAuthenticated) {
+    console.log('[TWA] Already authenticated, skipping TWA auth')
+    return
+  }
+
+  console.log('[TWA] Starting authentication...')
+
+  try {
+    const response = await telegramWebAppAuth(initData.value)
+
+    if (response.status === 'ok') {
+      console.log('[TWA] Auth successful:', response.data)
+
+      // Загружаем данные пользователя
+      const userData = await getUserData()
+      if (userData.status === 'ok') {
+        store.setUser(userData.data)
+      }
+
+      // Если нужно завершить регистрацию
+      if (response.data.needs_registration_complete) {
+        console.log('[TWA] Needs registration complete, redirecting...')
+        router.push('/app/?telegram_complete_registration=1')
+      } else if (route.path === '/' || route.path === '/auth/login') {
+        // Редирект на дашборд если на лендинге или логине
+        router.push('/app')
+      }
+    } else {
+      console.error('[TWA] Auth failed:', response)
+    }
+  } catch (error) {
+    console.error('[TWA] Auth error:', error)
+  }
+}
+
+onMounted(async () => {
   const savedCollapsed = localStorage.getItem('sidebar-collapsed')
   if (savedCollapsed !== null) {
     sidebarCollapsed.value = savedCollapsed === 'true'
   }
-  
+
+  // Применяем тему Telegram если запущены из TWA
+  if (isInTelegram.value) {
+    applyTelegramTheme()
+  }
+
+  // Авторизация через Telegram Mini Apps
+  await handleTelegramAuth()
+
   if (store.isAuthenticated) {
     aiTasksStore.connect()
+  }
+})
+
+// Следим за изменением темы Telegram
+watchEffect(() => {
+  if (isInTelegram.value && themeParams.value) {
+    applyTelegramTheme()
   }
 })
 
@@ -175,5 +244,38 @@ const appClasses = computed(() => ({
   .section-header h1 {
     margin-left: 2.5rem;
   }
+}
+
+/* Telegram Mini Apps theme integration */
+:root {
+  /* Default TWA colors (will be overwritten by JS) */
+  --tg-bg-color: #ffffff;
+  --tg-text-color: #1f2937;
+  --tg-hint-color: #6b7280;
+  --tg-link-color: #4f46e5;
+  --tg-button-color: #4f46e5;
+  --tg-button-text-color: #ffffff;
+  --tg-secondary-bg-color: #f9fafb;
+}
+
+/* Apply Telegram theme when in TWA */
+.in-telegram {
+  --bg-primary: var(--tg-bg-color);
+  --bg-secondary: var(--tg-secondary-bg-color);
+  --text-primary: var(--tg-text-color);
+  --text-secondary: var(--tg-hint-color);
+  --primary-color: var(--tg-button-color);
+}
+
+.in-telegram.telegram-dark {
+  --bg-primary: var(--tg-bg-color);
+  --bg-secondary: var(--tg-secondary-bg-color);
+  --text-primary: var(--tg-text-color);
+  --text-secondary: var(--tg-hint-color);
+}
+
+/* Hide browser-specific elements in TWA */
+.in-telegram .hide-in-telegram {
+  display: none !important;
 }
 </style>
