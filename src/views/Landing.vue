@@ -801,20 +801,22 @@ onUnmounted(() => {
   border-radius: 10px;
   font-weight: 600;
   text-decoration: none;
-  transition: all 0.2s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
   border: none;
   cursor: pointer;
   white-space: nowrap;
+  will-change: transform, box-shadow;
 }
 
 .btn-primary {
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   color: white;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.35);
 }
 
 .btn-lg {
@@ -2320,13 +2322,15 @@ onUnmounted(() => {
   color: #6366f1;
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
   text-decoration: none;
+  will-change: transform, background;
 }
 
 .btn-outline:hover {
   background: #6366f1;
   color: white;
+  transform: translateY(-1px);
 }
 
 .btn-premium {
@@ -2335,12 +2339,15 @@ onUnmounted(() => {
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   text-decoration: none;
+  box-shadow: 0 4px 15px rgba(251, 191, 36, 0.25);
+  will-change: transform, box-shadow;
 }
 
 .btn-premium:hover {
-  box-shadow: 0 10px 30px rgba(251, 191, 36, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(251, 191, 36, 0.4);
 }
 
 .pricing-note {
