@@ -16,11 +16,8 @@ const GoalsBank = () => import('@/views/GoalsBank.vue')
 const Planner = () => import('@/views/Planner.vue')
 const Planning = () => import('@/views/Planning.vue')
 const Settings = () => import('@/views/Settings.vue')
-<<<<<<< HEAD
-=======
 const Subscription = () => import('@/views/Subscription.vue')
 const Referral = () => import('@/views/Referral.vue')
->>>>>>> 8c69604f427058fbaaaf3d72587cf1985cebbe82
 const Club = () => import('@/views/Club.vue')
 const JournalHistory = () => import('@/views/JournalHistory.vue')
 const LearningCenter = () => import('@/views/LearningCenter.vue')
@@ -187,9 +184,6 @@ const router = createRouter({
       path: '/app/settings',
       name: 'settings',
       component: Settings,
-<<<<<<< HEAD
-      meta: { title: 'Настройки', requiresAuth: true }
-=======
       meta: { title: 'Профиль', requiresAuth: true }
     },
     {
@@ -203,7 +197,6 @@ const router = createRouter({
       name: 'referral',
       component: Referral,
       meta: { title: 'Реферальная программа', requiresAuth: true }
->>>>>>> 8c69604f427058fbaaaf3d72587cf1985cebbe82
     },
     {
       path: '/app/club',
