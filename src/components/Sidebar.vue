@@ -70,9 +70,15 @@
     </nav>
 
     <div class="sidebar-footer">
+<<<<<<< HEAD
       <router-link to="/app/settings" class="settings-link" :title="isCollapsed ? 'Настройки' : ''">
         <Settings class="icon" :size="20" :stroke-width="1.5" />
         <span class="nav-label">Настройки</span>
+=======
+      <router-link to="/app/settings" class="settings-link" :title="isCollapsed ? 'Профиль' : ''">
+        <Settings class="icon" :size="20" :stroke-width="1.5" />
+        <span class="nav-label">Профиль</span>
+>>>>>>> 8c69604f427058fbaaaf3d72587cf1985cebbe82
       </router-link>
     </div>
   </aside>

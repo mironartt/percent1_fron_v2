@@ -22,6 +22,7 @@
       <!-- 1. HERO — захват внимания -->
       <section class="hero">
         <div class="container">
+<<<<<<< HEAD
           <div class="hero-content">
             <h1 class="hero-title">
               Системный рост в жизни<br>
@@ -35,6 +36,48 @@
               <router-link to="/auth/register" class="btn btn-primary btn-lg">
                 Сделать +1% уже сегодня
               </router-link>
+=======
+          <div class="hero-grid">
+            <div class="hero-content">
+              <h1 class="hero-title">
+                Системный рост в жизни<br>
+                <span class="highlight">через простые действия</span>
+              </h1>
+              <p class="hero-description">
+                Ты можешь стать сильнее на 1% сегодня — и это изменит всё завтра.
+                Не курс. Не марафон. А система, которая делает развитие предсказуемым.
+              </p>
+              <div class="hero-actions">
+                <router-link to="/auth/register" class="btn btn-primary btn-lg">
+                  Сделать +1% уже сегодня
+                </router-link>
+              </div>
+            </div>
+            <div class="hero-image">
+              <div class="compound-chart">
+                <svg viewBox="0 0 400 300" class="chart-svg">
+                  <defs>
+                    <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.3" />
+                      <stop offset="100%" style="stop-color:#6366f1;stop-opacity:0" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M 30 270 Q 100 268, 150 260 T 250 220 T 320 120 T 370 30" 
+                        fill="none" stroke="#6366f1" stroke-width="3" class="chart-line"/>
+                  <path d="M 30 270 Q 100 268, 150 260 T 250 220 T 320 120 T 370 30 L 370 270 L 30 270 Z" 
+                        fill="url(#chartGradient)" class="chart-area"/>
+                  <line x1="30" y1="270" x2="370" y2="270" stroke="#e5e7eb" stroke-width="1"/>
+                  <line x1="30" y1="30" x2="30" y2="270" stroke="#e5e7eb" stroke-width="1"/>
+                  <text x="30" y="290" font-size="12" fill="#9ca3af">Сегодня</text>
+                  <text x="340" y="290" font-size="12" fill="#9ca3af">1 год</text>
+                  <text x="340" y="25" font-size="14" font-weight="600" fill="#6366f1">×37.8</text>
+                </svg>
+                <div class="chart-label">
+                  <span class="chart-highlight">+1% каждый день</span>
+                  <span class="chart-text">= экспоненциальный рост</span>
+                </div>
+              </div>
+>>>>>>> 8c69604f427058fbaaaf3d72587cf1985cebbe82
             </div>
           </div>
         </div>
@@ -441,12 +484,21 @@
               </div>
               <ul class="pricing-features">
                 <li><span class="check"><Check :size="16" /></span> Колесо баланса (ССП)</li>
+<<<<<<< HEAD
                 <li><span class="check"><Check :size="16" /></span> Банк целей (до 5 целей)</li>
                 <li><span class="check"><Check :size="16" /></span> Базовое планирование</li>
                 <li><span class="check"><Check :size="16" /></span> Трекер привычек (до 3)</li>
                 <li><span class="check"><Check :size="16" /></span> Дневник рефлексии</li>
                 <li class="disabled"><span class="cross"><X :size="16" /></span> AI Mentor</li>
                 <li class="disabled"><span class="cross"><X :size="16" /></span> Клуб 1%</li>
+=======
+                <li><span class="check"><Check :size="16" /></span> Банк целей (до 4 целей)</li>
+                <li><span class="check"><Check :size="16" /></span> Базовое планирование</li>
+                <li><span class="check"><Check :size="16" /></span> Трекер привычек (до 3)</li>
+                <li><span class="check"><Check :size="16" /></span> Дневник рефлексии</li>
+                <li><span class="check"><Check :size="16" /></span> Достижения (до 5)</li>
+                <li><span class="check"><Check :size="16" /></span> Напоминания в Telegram</li>
+>>>>>>> 8c69604f427058fbaaaf3d72587cf1985cebbe82
               </ul>
               <router-link to="/auth/register" class="btn btn-outline">
                 Начать бесплатно
@@ -463,6 +515,7 @@
                 </div>
               </div>
               <ul class="pricing-features">
+<<<<<<< HEAD
                 <li><span class="check"><Check :size="16" /></span> Всё из бесплатного плана</li>
                 <li><span class="check"><Check :size="16" /></span> Безлимитные цели и привычки</li>
                 <li><span class="check"><Check :size="16" /></span> AI Mentor — персональный коуч</li>
@@ -472,6 +525,17 @@
                 <li class="disabled"><span class="cross"><X :size="16" /></span> Клуб 1%</li>
               </ul>
               <router-link to="/auth/register" class="btn btn-primary">
+=======
+                <li><span class="check"><Check :size="16" /></span> Всё из Бесплатного плана</li>
+                <li><span class="check"><Check :size="16" /></span> Безлимитные цели и привычки</li>
+                <li><span class="check"><Check :size="16" /></span> AI ментор</li>
+                <li><span class="check"><Check :size="16" /></span> AI планирование</li>
+                <li><span class="check"><Check :size="16" /></span> AI помощь</li>
+                <li><span class="check"><Check :size="16" /></span> Голосовой чат с ментором в Telegram</li>
+                <li><span class="check"><Check :size="16" /></span> Клуб 1%</li>
+              </ul>
+              <router-link to="/auth/register" class="btn btn-white">
+>>>>>>> 8c69604f427058fbaaaf3d72587cf1985cebbe82
                 Попробовать Pro
               </router-link>
             </div>
@@ -486,12 +550,19 @@
               </div>
               <ul class="pricing-features">
                 <li><span class="check"><Check :size="16" /></span> Всё из Pro плана</li>
+<<<<<<< HEAD
                 <li><span class="check"><Check :size="16" /></span> Доступ в закрытое сообщество</li>
                 <li><span class="check"><Check :size="16" /></span> Эксклюзивные материалы</li>
                 <li><span class="check"><Check :size="16" /></span> Еженедельные мастермайнды</li>
                 <li><span class="check"><Check :size="16" /></span> Групповые челленджи</li>
                 <li><span class="check"><Check :size="16" /></span> Персональные разборы</li>
                 <li><span class="check"><Check :size="16" /></span> Ранний доступ к новым функциям</li>
+=======
+                <li><span class="check"><Check :size="16" /></span> Еженедельные мастермайнды</li>
+                <li><span class="check"><Check :size="16" /></span> Групповые челленджи</li>
+                <li><span class="check"><Check :size="16" /></span> Ранний доступ к новым функциям</li>
+                <li><span class="check"><Check :size="16" /></span> Нетворкинг 2.0</li>
+>>>>>>> 8c69604f427058fbaaaf3d72587cf1985cebbe82
               </ul>
               <router-link to="/auth/register" class="btn btn-premium">
                 Вступить в Клуб
@@ -776,12 +847,17 @@ onUnmounted(() => {
   border-radius: 10px;
   font-weight: 600;
   text-decoration: none;
+<<<<<<< HEAD
   transition: all 0.2s;
+=======
+  transition: opacity 0.15s ease;
+>>>>>>> 8c69604f427058fbaaaf3d72587cf1985cebbe82
   border: none;
   cursor: pointer;
   white-space: nowrap;
 }
 
+<<<<<<< HEAD
 .btn-primary {
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   color: white;
@@ -790,6 +866,16 @@ onUnmounted(() => {
 .btn-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+=======
+.btn:hover {
+  opacity: 0.85;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
+>>>>>>> 8c69604f427058fbaaaf3d72587cf1985cebbe82
 }
 
 .btn-lg {
@@ -797,10 +883,30 @@ onUnmounted(() => {
   font-size: 1.125rem;
 }
 
+<<<<<<< HEAD
 .hero {
   position: relative;
   padding: 8rem 0 5rem;
   overflow: hidden;
+=======
+.btn-white {
+  background: white;
+  color: #6366f1;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-white:hover {
+  opacity: 0.9;
+}
+
+.hero {
+  position: relative;
+  padding: 10rem 0 6rem;
+  overflow: hidden;
+  min-height: 75vh;
+  display: flex;
+  align-items: center;
+>>>>>>> 8c69604f427058fbaaaf3d72587cf1985cebbe82
 }
 
 .hero-bg {
@@ -814,8 +920,82 @@ onUnmounted(() => {
   z-index: -1;
 }
 
+<<<<<<< HEAD
 .hero-content {
   max-width: 700px;
+=======
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.hero-content {
+  max-width: 600px;
+}
+
+.hero-image {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.compound-chart {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 20px 60px rgba(99, 102, 241, 0.15);
+  width: 100%;
+  max-width: 450px;
+}
+
+.chart-svg {
+  width: 100%;
+  height: auto;
+}
+
+.chart-line {
+  stroke-dasharray: 500;
+  stroke-dashoffset: 500;
+  animation: drawLine 2s ease-out forwards;
+}
+
+.chart-area {
+  opacity: 0;
+  animation: fadeIn 1s ease-out 1.5s forwards;
+}
+
+@keyframes drawLine {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+.chart-label {
+  text-align: center;
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.chart-highlight {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #6366f1;
+}
+
+.chart-text {
+  font-size: 0.9375rem;
+  color: #6b7280;
+>>>>>>> 8c69604f427058fbaaaf3d72587cf1985cebbe82
 }
 
 .hero-title {
@@ -2223,13 +2403,21 @@ onUnmounted(() => {
   color: #6366f1;
   border-radius: 12px;
   cursor: pointer;
+<<<<<<< HEAD
   transition: all 0.2s;
+=======
+  transition: opacity 0.15s ease;
+>>>>>>> 8c69604f427058fbaaaf3d72587cf1985cebbe82
   text-decoration: none;
 }
 
 .btn-outline:hover {
+<<<<<<< HEAD
   background: #6366f1;
   color: white;
+=======
+  opacity: 0.85;
+>>>>>>> 8c69604f427058fbaaaf3d72587cf1985cebbe82
 }
 
 .btn-premium {
@@ -2238,12 +2426,22 @@ onUnmounted(() => {
   border: none;
   border-radius: 12px;
   cursor: pointer;
+<<<<<<< HEAD
   transition: all 0.2s;
   text-decoration: none;
 }
 
 .btn-premium:hover {
   box-shadow: 0 10px 30px rgba(251, 191, 36, 0.4);
+=======
+  transition: opacity 0.15s ease;
+  text-decoration: none;
+  box-shadow: 0 4px 15px rgba(251, 191, 36, 0.25);
+}
+
+.btn-premium:hover {
+  opacity: 0.9;
+>>>>>>> 8c69604f427058fbaaaf3d72587cf1985cebbe82
 }
 
 .pricing-note {
@@ -2456,6 +2654,24 @@ onUnmounted(() => {
   
   .hero {
     padding: 7rem 0 4rem;
+<<<<<<< HEAD
+=======
+    min-height: auto;
+  }
+  
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .hero-image {
+    order: -1;
+  }
+  
+  .compound-chart {
+    max-width: 320px;
+    padding: 1.5rem;
+>>>>>>> 8c69604f427058fbaaaf3d72587cf1985cebbe82
   }
   
   .hero-bg {
