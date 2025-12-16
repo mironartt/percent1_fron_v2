@@ -20,13 +20,6 @@
         <div class="stat-value">{{ stats.earnedAmount }} ₽</div>
         <div class="stat-label">Заработано</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon">
-          <TrendingUp :size="24" />
-        </div>
-        <div class="stat-value">{{ stats.activeReferrals }}</div>
-        <div class="stat-label">Активных рефералов</div>
-      </div>
     </div>
 
     <div class="card referral-link-card">
@@ -236,7 +229,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
-import { Users, Coins, TrendingUp, Link, Copy, HelpCircle, Gift, History, Wallet } from 'lucide-vue-next'
+import { Users, Coins, Link, Copy, HelpCircle, Gift, History, Wallet } from 'lucide-vue-next'
 
 const router = useRouter()
 const store = useAppStore()
@@ -245,8 +238,7 @@ const ITEMS_PER_PAGE = 10
 
 const stats = ref({
   invitedCount: 0,
-  earnedAmount: 0,
-  activeReferrals: 0
+  earnedAmount: 0
 })
 
 const copied = ref(false)
@@ -343,7 +335,7 @@ onMounted(() => {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
   margin-bottom: 2rem;
 }
