@@ -350,6 +350,21 @@ export async function completeTelegramRegistration(email, password1, password2) 
 }
 
 /**
+ * Авторизация через Telegram Mini Apps (TWA).
+ *
+ * Принимает initData от Telegram WebApp и авторизует пользователя.
+ * Если пользователь новый — создаёт аккаунт автоматически.
+ *
+ * @param {string} initData - initData строка от window.Telegram.WebApp.initData
+ * @returns {Promise<Object>} - { status, data: { user_id, telegram_id, needs_registration_complete, is_new_user, csrf_token } }
+ */
+export async function telegramWebAppAuth(initData) {
+  return request('POST', '/api/rest/front/telegram/webapp-auth/', {
+    init_data: initData
+  })
+}
+
+/**
  * Выход из системы
  */
 export async function logout() {
