@@ -1,0 +1,108 @@
+По "Вопросы для уточнения":
+- 1. Под "кнопка генерирования целей в онбординге" имелась ввиду кнопка "Получить анализ от AI" на шаге 3 онбординга.
+- 2. Да
+- 3. Показать для подтверждения
+- 4. Глобальное соединение (одно на приложение)
+
+Детали ответа разработчика по пунтку 4:
+```
+  Причины
+
+  1. Бэкенд форсирует одно соединение на пользователя
+  // При новом connect() бэкенд закрывает старое соединение:
+  await self._handle_existing_connection()  // отправляет force_disconnect
+  1. Если создавать WS на каждой странице — при переходах будет происходить постоянное переподключение.
+  2. AI задачи глобальны
+    - Задача может быть запущена на странице "Цели", а результат нужен на "Dashboard"
+    - Нотификация о завершении должна показываться независимо от текущего роута
+  3. При подключении приходят активные задачи
+  { "type": "active_tasks", "data": { "tasks": [...] } }
+  3. Это нужно получить один раз при входе в приложение.
+  4. Потеря событий при переключении страниц
+  При навигации между страницами будет окно, когда нет активного соединения, и события могут потеряться.
+
+  Рекомендуемая архитектура для Vue
+
+  ┌─────────────────────────────────────────────────────────────┐
+  │  App.vue                                                    │
+  │  ├── useAITasksWebSocket() — глобальный composable          │
+  │  │   └── подключается при mount, отключается при unmount    │
+  │  │                                                          │
+  │  └── Pinia store: aiTasksStore                              │
+  │      ├── activeTasks: []                                    │
+  │      ├── taskResults: {}                                    │
+  │      └── subscribeToTask(taskId) / unsubscribe(taskId)      │
+  └─────────────────────────────────────────────────────────────┘
+
+  Пример реализации
+
+  // stores/aiTasks.ts
+  export const useAITasksStore = defineStore('aiTasks', () => {
+    const ws = ref<WebSocket | null>(null)
+    const activeTasks = ref<AITask[]>([])
+    const isConnected = ref(false)
+
+    function connect() {
+      ws.value = new WebSocket(`${WS_URL}/ws/tasks/`)
+
+      ws.value.onmessage = (event) => {
+        const { type, data } = JSON.parse(event.data)
+
+        switch (type) {
+          case 'active_tasks':
+            activeTasks.value = data.tasks
+            break
+          case 'task_progress':
+            updateTaskProgress(data)
+            break
+          case 'task_completed':
+            handleTaskCompleted(data)
+            break
+          case 'ping':
+            ws.value?.send(JSON.stringify({ action: 'pong' }))
+            break
+          case 'force_disconnect':
+            // Переподключиться через 1 сек
+            setTimeout(connect, 1000)
+            break
+        }
+      }
+    }
+
+    // Подключение при инициализации store
+    if (authStore.isAuthenticated) {
+      connect()
+    }
+
+    return { activeTasks, isConnected, connect, disconnect }
+  })
+
+  // App.vue
+  const aiTasksStore = useAITasksStore()
+
+  onMounted(() => {
+    if (authStore.isAuthenticated && !aiTasksStore.isConnected) {
+      aiTasksStore.connect()
+    }
+  })
+
+  onUnmounted(() => {
+    aiTasksStore.disconnect()
+  })
+
+  Когда НЕ держать соединение
+
+  - Пользователь не авторизован
+  - Пользователь на страницах без AI-функций (настройки, профиль и т.д.) — опционально, можно и держать
+
+  Heartbeat
+
+  Бэкенд шлёт ping каждые 30 сек. Фронт должен отвечать pong:
+
+  case 'ping':
+    ws.value?.send(JSON.stringify({ action: 'pong' }))
+    break
+
+  Если не отвечать — соединение закроется через 60 сек.
+```
+PS. данный ответ не является указанием кода, а лишь пример демонстрации!
