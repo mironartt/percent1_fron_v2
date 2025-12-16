@@ -525,7 +525,7 @@
                     v-for="task in day.tasks" 
                     :key="task.id" 
                     class="ai-task-preview"
-                    :class="{ selected: isTaskSelected(task.id) }"
+                    :class="{ selected: isTaskSelected(task.id), 'not-found': task.notFound }"
                     @click="toggleTaskSelection(task.id)"
                   >
                     <component 
@@ -533,7 +533,10 @@
                       :size="18" 
                       class="ai-task-checkbox"
                     />
-                    <span class="ai-task-title">{{ task.title }}</span>
+                    <div class="ai-task-info">
+                      <span class="ai-task-title">{{ task.title }}</span>
+                      <span v-if="task.goalTitle" class="ai-task-goal">{{ task.goalTitle }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1225,15 +1228,20 @@ function handleAIPlanningResult(result, taskId = null) {
       
       const stepInfo = stepIdToInfo[item.stepId]
       
+      // Use backend data first, then fallback to local store data
+      const stepTitle = item.step_title || item.stepTitle || stepInfo?.title
+      const goalTitle = item.goal_title || item.goalTitle || stepInfo?.goalTitle || ''
+      const goalId = item.goal_id || item.goalId || stepInfo?.goalId || null
+      
       stepsByDate[date].push({
         id: item.stepId,
-        title: stepInfo?.title || `Задача #${item.stepId}`,
-        goalTitle: stepInfo?.goalTitle || '',
-        goalId: stepInfo?.goalId || null,
+        title: stepTitle || `Шаг #${item.stepId}`,
+        goalTitle: goalTitle,
+        goalId: goalId,
         priority: stepInfo?.priority || '',
         timeEstimate: item.estimatedTime || stepInfo?.timeEstimate || '',
         reason: item.reason || '',
-        notFound: !stepInfo
+        notFound: !stepInfo && !stepTitle
       })
     })
     
@@ -1242,11 +1250,17 @@ function handleAIPlanningResult(result, taskId = null) {
     if (sortedDates.length > 0) {
       aiPlannerResult.value = {
         totalTasks: result.plan.length,
-        notThisWeek: (result.not_this_week || []).map(item => ({
-          id: item.stepId,
-          title: stepIdToInfo[item.stepId]?.title || `Задача #${item.stepId}`,
-          reason: item.reason || ''
-        })),
+        rawPlan: result.plan, // Store raw plan for applying
+        notThisWeek: (result.not_this_week || []).map(item => {
+          const stepInfo = stepIdToInfo[item.stepId]
+          const stepTitle = item.step_title || item.stepTitle || stepInfo?.title
+          return {
+            id: item.stepId,
+            title: stepTitle || `Шаг #${item.stepId}`,
+            goalTitle: item.goal_title || item.goalTitle || stepInfo?.goalTitle || '',
+            reason: item.reason || ''
+          }
+        }),
         summary: result.summary || {},
         reasoning: result.reasoning || '',
         days: sortedDates.map(date => {
@@ -1342,7 +1356,79 @@ function findStepById(stepId) {
   return null
 }
 
-function applyAIPlan() {
+async function applyAIPlan() {
+  if (!aiPlannerResult.value?.rawPlan || aiPlannerSelectedTasks.value.length === 0) {
+    closeAIPlannerModal()
+    return
+  }
+  
+  const selectedIds = new Set(aiPlannerSelectedTasks.value)
+  const tasksToApply = aiPlannerResult.value.rawPlan.filter(item => selectedIds.has(item.stepId))
+  
+  console.log('[Planning] Applying AI plan for', tasksToApply.length, 'tasks')
+  
+  aiPlannerLoading.value = true
+  aiPlannerProgress.value = { text: 'Применение плана...' }
+  
+  // Time mapping: backend format -> frontend format for API
+  const timeBackendToFrontend = {
+    'half': '30min',
+    'one': '1h',
+    'two': '2h',
+    'three': '3h',
+    'four': '4h'
+  }
+  
+  let successCount = 0
+  let errorCount = 0
+  
+  for (const task of tasksToApply) {
+    try {
+      const updateData = {
+        step_id: task.stepId,
+        dt: task.date
+      }
+      
+      // Add time estimate if provided
+      if (task.estimatedTime) {
+        const frontendTime = timeBackendToFrontend[task.estimatedTime] || task.estimatedTime
+        updateData.time = frontendTime
+      }
+      
+      console.log('[Planning] Updating step:', updateData)
+      
+      const response = await api.updateGoalStep(updateData)
+      
+      if (response.status === 'ok') {
+        successCount++
+      } else {
+        console.warn('[Planning] Step update returned non-ok status:', response)
+        errorCount++
+      }
+    } catch (error) {
+      console.error('[Planning] Error updating step:', task.stepId, error)
+      errorCount++
+    }
+  }
+  
+  console.log('[Planning] AI plan applied:', successCount, 'success,', errorCount, 'errors')
+  
+  // Reload data after applying
+  aiPlannerProgress.value = { text: 'Обновление данных...' }
+  
+  try {
+    // Reload goals and calendar data
+    await Promise.all([
+      store.loadGoalsFromBackend({ search: searchQuery.value, sphere: filterSphere.value }),
+      loadWeeklySteps()
+    ])
+    
+    console.log('[Planning] Data reloaded after AI plan application')
+  } catch (error) {
+    console.error('[Planning] Error reloading data:', error)
+  }
+  
+  aiPlannerLoading.value = false
   closeAIPlannerModal()
 }
 
@@ -5367,12 +5453,36 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
+.ai-task-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  flex: 1;
+}
+
 .ai-task-title {
   font-size: 0.8125rem;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.ai-task-goal {
+  font-size: 0.6875rem;
+  color: var(--text-tertiary, #9ca3af);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ai-task-preview.not-found {
+  opacity: 0.6;
+}
+
+.ai-task-preview.not-found .ai-task-title {
+  font-style: italic;
 }
 
 .ai-result-title {
