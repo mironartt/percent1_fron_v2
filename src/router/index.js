@@ -57,7 +57,7 @@ const router = createRouter({
       meta: { title: 'Тест — Итоги 2025', public: true }
     },
     {
-      path: '/land/newyear/results',
+      path: '/land/newyear/results/:hash?',
       name: 'newyear-results',
       component: NewYearResults,
       meta: { title: 'Твои итоги 2025 и план на 2026 — OnePercent', public: true }

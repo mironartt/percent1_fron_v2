@@ -35,7 +35,8 @@
             <span class="logo-icon">1%</span>
             <span class="logo-text">OnePercent</span>
           </div>
-          <router-link to="/auth/login" class="login-link">Войти</router-link>
+          <router-link v-if="isAuthenticated" to="/app" class="login-link">Личный кабинет</router-link>
+          <router-link v-else to="/auth/login" class="login-link">Войти</router-link>
         </div>
       </div>
     </header>
@@ -485,12 +486,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useNewYearStore } from '@/stores/newyear'
+import { useAppStore } from '@/stores/app'
 
 const route = useRoute()
 const store = useNewYearStore()
+const appStore = useAppStore()
+
+const isAuthenticated = computed(() => appStore.isAuthenticated)
 const openFaq = ref(null)
 
 const faqItems = [
