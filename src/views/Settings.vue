@@ -65,7 +65,7 @@
             <p class="status-text">Осталось 7 дней бесплатного доступа</p>
           </div>
 
-          <button class="btn btn-primary btn-lg" style="width: 100%;" @click="goToSubscription">
+          <button class="btn btn-success btn-lg" style="width: 100%;" @click="goToSubscription">
             Оформить подписку
           </button>
         </div>
