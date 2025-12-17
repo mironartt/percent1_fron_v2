@@ -65,7 +65,7 @@
             <p class="status-text">Осталось 7 дней бесплатного доступа</p>
           </div>
 
-          <button class="btn btn-success btn-lg" style="width: 100%;" @click="goToSubscription">
+          <button class="btn btn-lg subscribe-btn" @click="goToSubscription">
             Оформить подписку
           </button>
         </div>
@@ -745,6 +745,16 @@ function handleLogout() {
 
 .btn-danger:hover {
   background: #dc2626;
+}
+
+.subscribe-btn {
+  width: 100%;
+  background: #57cea7;
+  color: white;
+}
+
+.subscribe-btn:hover {
+  background: #4bb899;
 }
 
 .onboarding-data {
