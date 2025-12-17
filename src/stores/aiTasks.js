@@ -130,6 +130,22 @@ export const useAITasksStore = defineStore('aiTasks', () => {
       return
     }
 
+    if (code === 4004) {
+      // Policy acceptance required - показать модалку
+      if (DEBUG_MODE) {
+        console.log('[AITasks] Policy acceptance required, showing modal')
+      }
+      shouldReconnect.value = false
+      
+      import('@/stores/app').then(({ useAppStore }) => {
+        const appStore = useAppStore()
+        appStore.showPolicyModal()
+      }).catch(err => {
+        console.error('[AITasks] Failed to load app store:', err)
+      })
+      return
+    }
+
     if (shouldReconnect.value && reconnectAttempts.value < maxReconnectAttempts) {
       reconnectAttempts.value++
       const delay = reconnectDelay * reconnectAttempts.value

@@ -200,6 +200,30 @@ export async function request(method, endpoint, data = null, options = {}) {
     
     // Обработка HTTP ошибок
     if (!response.ok) {
+      // Обработка 403 policy_acceptance_required - показать модалку
+      if (response.status === 403 && 
+          (result.error_data?.key === 'policy_acceptance_required' || 
+           result.error_code === 'policy_acceptance_required')) {
+        if (DEBUG_MODE) {
+          console.log('[API] Policy acceptance required, triggering modal')
+        }
+        
+        import('@/stores/app').then(({ useAppStore }) => {
+          const appStore = useAppStore()
+          appStore.showPolicyModal()
+        }).catch(err => {
+          console.error('[API] Failed to load app store:', err)
+        })
+        
+        return {
+          status: 'error',
+          error_data: {
+            message: 'Необходимо принять условия использования',
+            key: 'policy_acceptance_required'
+          }
+        }
+      }
+      
       // Если ответ уже содержит структуру ошибки - возвращаем как есть
       if (result.status === 'error' && result.error_data) {
         return result

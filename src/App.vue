@@ -18,6 +18,10 @@
       </router-view>
     </main>
     <TelegramAuthModals />
+    <PolicyAcceptanceModal 
+      :show="showPolicyModal" 
+      @accepted="onPolicyAccepted" 
+    />
     <MentorPanel v-if="showMentorPanel" />
     <ToastNotification />
   </div>
@@ -28,6 +32,7 @@ import { computed, ref, watch, onMounted, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
 import TelegramAuthModals from './components/TelegramAuthModals.vue'
+import PolicyAcceptanceModal from './components/PolicyAcceptanceModal.vue'
 import MentorPanel from './components/MentorPanel.vue'
 import ToastNotification from './components/ToastNotification.vue'
 import { useAppStore } from './stores/app'
@@ -163,6 +168,14 @@ const isAppPage = computed(() => {
 const showMentorPanel = computed(() => {
   return hasSidebar.value && isAppPage.value && !isOnboarding.value
 })
+
+const showPolicyModal = computed(() => {
+  return store.isAuthenticated && store.needsPolicyAcceptance && isAppPage.value
+})
+
+function onPolicyAccepted() {
+  console.log('[App] Policy accepted by user')
+}
 
 const appClasses = computed(() => ({
   'has-sidebar': hasSidebar.value,
