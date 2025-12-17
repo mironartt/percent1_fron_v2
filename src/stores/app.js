@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { DEBUG_MODE, FORCE_SHOW_ONBOARDING, FORCE_SHOW_MINITASK } from '@/config/settings.js'
+import { DEBUG_MODE, FORCE_SHOW_ONBOARDING, FORCE_SHOW_MINITASK, SKIP_POLICY_CHECK } from '@/config/settings.js'
 import { getLocalDateString, getTodayDateString } from '@/utils/dateUtils.js'
 import { 
   getOnboardingData, 
@@ -617,7 +617,7 @@ export const useAppStore = defineStore('app', () => {
         is_privacy_accepted: isPrivacyAccepted
       }
       
-      needsPolicyAcceptance.value = !isTermsAccepted || !isPrivacyAccepted
+      needsPolicyAcceptance.value = SKIP_POLICY_CHECK ? false : (!isTermsAccepted || !isPrivacyAccepted)
       
       if (DEBUG_MODE && needsPolicyAcceptance.value) {
         console.log('[Store] User needs policy acceptance')
@@ -799,6 +799,12 @@ export const useAppStore = defineStore('app', () => {
   }
   
   function showPolicyModal() {
+    if (SKIP_POLICY_CHECK) {
+      if (DEBUG_MODE) {
+        console.log('[Store] Policy modal skipped (SKIP_POLICY_CHECK=true)')
+      }
+      return
+    }
     needsPolicyAcceptance.value = true
     if (DEBUG_MODE) {
       console.log('[Store] Policy modal triggered')

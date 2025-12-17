@@ -13,6 +13,9 @@ export const DEV_MODE = localSettings.DEV_MODE ?? import.meta.env.DEV ?? false
 // Пропустить проверку авторизации (только для разработки)
 export const SKIP_AUTH_CHECK = localSettings.SKIP_AUTH_CHECK ?? false
 
+// Пропустить проверку политик (только для разработки)
+export const SKIP_POLICY_CHECK = localSettings.SKIP_POLICY_CHECK ?? false
+
 // Базовый URL API (пустой = относительные пути через proxy)
 export const API_BASE_URL = localSettings.API_BASE_URL ?? ''
 
@@ -46,6 +49,7 @@ if (DEBUG_MODE) {
   console.log('[Settings] Configuration loaded:', {
     DEV_MODE,
     SKIP_AUTH_CHECK,
+    SKIP_POLICY_CHECK,
     API_BASE_URL,
     WS_BASE_URL,
     MIN_REQUEST_INTERVAL,
@@ -62,6 +66,7 @@ if (DEBUG_MODE) {
 export const settings = {
   DEV_MODE,
   SKIP_AUTH_CHECK,
+  SKIP_POLICY_CHECK,
   API_BASE_URL,
   WS_BASE_URL,
   MIN_REQUEST_INTERVAL,
