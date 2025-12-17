@@ -1,0 +1,71 @@
+Посмотри еще еще раз все ли корректно.
+Я пытаюсь авторизоваться. На эндпоинт login бэк возвращает что все хорошо. И возвращает `/api/rest/front/login/`:
+```
+// тело ответа
+{"status": "ok", "data": {"id": 23, "email": "cvlkj23lkjcxvklj@example.com", "first_name": "cvlkj23lkjcxvklj", "finish_onboarding": true, "finish_minitask": true, "is_telegram_registration": false, "telegram_bot_link": "https://t.me/Percent_One_bot?start=user_start_ad1bd9cd484d4f11ba8e", "is_terms_accepted": false, "is_privacy_accepted": false, "date_policy_accepted": null, "has_diary_entry_today": false, "xp_balance": 3497, "lifetime_xp": 4136, "today_habits": {"total_count": 10, "completed_count": 0, "habits": [{"habit_id": 67, "name": "Откладывать 50 рублей каждый день", "icon": "graph", "is_completed": false}, {"habit_id": 66, "name": "Читать 10 страниц книги о финансах", "icon": "book", "is_completed": false}, {"habit_id": 65, "name": "Читать 5 минут о финансах", "icon": "book", "is_completed": false}, {"habit_id": 64, "name": "Записывать расходы за день", "icon": "money", "is_completed": false}, {"habit_id": 63, "name": "Читать 10 минут перед сном", "icon": "book", "is_completed": false}, {"habit_id": 13, "name": "Разбор почты", "icon": "laptop", "is_completed": false}, {"habit_id": 12, "name": "Цифровой детокс", "icon": "shield", "is_completed": false}, {"habit_id": 10, "name": "Тренировка в зале", "icon": "dumbbell", "is_completed": false}, {"habit_id": 9, "name": "Фокус-сессия 25 мин", "icon": "target", "is_completed": false}, {"habit_id": 8, "name": "Планирование дня", "icon": "sleep", "is_completed": false}]}, "today_tasks": {"total_count": 1, "completed_count": 0, "tasks": [{"step_id": 193, "step_title": "какой-то тест 3", "goal_id": 23, "goal_title": "Улучшить финансовую дисциплину 1", "is_complete": false, "priority": null, "time_duration": "two", "order": 1}]}, "top_goals": {"total_incomplete_goals": 10, "goals": [{"goal_id": 23, "title": "Улучшить финансовую дисциплину 1", "category": "welfare", "status": "work", "score": "true", "total_steps": 24, "completed_steps": 7, "progress_percent": 29, "date_created": "2025-12-02 15:29:10"}, {"goal_id": 17, "title": "Научиться готовить 5 новых блюд", "category": "hobby", "status": "work", "score": "true", "total_steps": 25, "completed_steps": 3, "progress_percent": 12, "date_created": "2025-12-02 15:29:10"}, {"goal_id": 37, "title": "Каждый день пить 1.5 литра воды", "category": "health_sport", "status": "work", "score": "true", "total_steps": 16, "completed_steps": 2, "progress_percent": 12, "date_created": "2025-12-02 15:29:10"}]}, "ai_bot_chat": {"conversation_id": 10, "unread_count": 0, "is_bot_processing": false}}, "already_authenticated": false}
+```
+```
+// заголовки ответа
+HTTP/1.1 200 OK
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Origin: http://mgoat0-77-51-124-101.ru.tuna.am
+Allow: POST
+Content-Length: 2855
+Content-Type: application/json
+Cross-Origin-Opener-Policy: same-origin
+Date: Wed, 17 Dec 2025 15:09:54 GMT
+Referrer-Policy: same-origin
+Server: nginx/1.24.0 (Ubuntu)
+Server-Timing: TimerPanel_utime;dur=163.37800000000024;desc="User CPU time", TimerPanel_stime;dur=1.1410000000000031;desc="System CPU time", TimerPanel_total;dur=164.51900000000023;desc="Total CPU time", TimerPanel_total_time;dur=258.17629997618496;desc="Elapsed time", SQLPanel_sql_time;dur=45.012152928393334;desc="SQL 10 queries", CachePanel_total_time;dur=25.116075994446874;desc="Cache 7 Calls"
+Set-Cookie: csrftoken=WCb3sZe1C9YKyqmfs1L7Uq9kv13egJsq; expires=Wed, 16 Dec 2026 15:09:54 GMT; Max-Age=31449600; Path=/; SameSite=None; Secure
+Set-Cookie: sessionid=0y0r204cy9ctria8s028ypqtn92x3iqc; expires=Wed, 31 Dec 2025 15:09:54 GMT; HttpOnly; Max-Age=1209600; Path=/; SameSite=None; Secure
+Vary: Cookie, origin
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+```
+
+Но после юзер запрашивает эндпоинт `/api/rest/front/get-user-data/` и запрос падает с 500 ответом.
+В заголовках данного запроса вижу:
+```
+POST /api/rest/front/get-user-data/ HTTP/1.1
+Host: mgoat0-77-51-124-101.ru.tuna.am
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0
+Accept: application/json
+Accept-Language: ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3
+Accept-Encoding: gzip, deflate
+Referer: http://mgoat0-77-51-124-101.ru.tuna.am/auth/login?redirect=/app
+Content-Type: application/json
+X-CSRFToken: Ni5Xeuldkk5dvSwLIcgtxlwp1zHqWbtoAZUxTnpJbXMk8HbGrFkbWAWkfuxL8vAn
+Origin: http://mgoat0-77-51-124-101.ru.tuna.am
+Sec-GPC: 1
+Connection: keep-alive
+Priority: u=4
+Content-Length: 0
+```
+Не вижу покидки кук которые были проставлены в ответе `/api/rest/front/login/`. 
+
+
+Вот пример (из текущего продакшена) какой там происходит запрос, его заголовки:
+```
+POST /api/rest/front/get-user-data/ HTTP/2
+Host: percent1.ru
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0
+Accept: application/json
+Accept-Language: ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3
+Accept-Encoding: gzip, deflate, br, zstd
+Referer: https://percent1.ru/app/goals-bank
+Content-Type: application/json
+X-CSRFToken: W4nI9zzPY5PdulUn4oc9Pd31Jm6apJcswkqRDlpWmIfnGJ95k4Da8aKDpGKnlI5X
+Origin: https://percent1.ru
+Sec-GPC: 1
+Connection: keep-alive
+Cookie: csrftoken=KqdjEW0hyNAkmypSqQBbt7RMQuOn693F; sessionid=49jo005ppp725c25tk0qcbobaeduqpfg
+Sec-Fetch-Dest: empty
+Sec-Fetch-Mode: cors
+Sec-Fetch-Site: same-origin
+Priority: u=4
+Content-Length: 0
+TE: trailers
+```
+
+Проверь, не поломал ли ты что-то!!!
