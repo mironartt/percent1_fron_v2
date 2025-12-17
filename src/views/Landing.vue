@@ -587,6 +587,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAppStore } from '@/stores/app'
+import { checkAuth } from '@/services/api'
 import { 
   Target, 
   Calendar, 
@@ -702,8 +703,20 @@ function handleScroll() {
   isScrolled.value = window.scrollY > 50
 }
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('scroll', handleScroll)
+  
+  // Проверяем авторизацию через API если в localStorage нет данных
+  if (!appStore.isAuthenticated) {
+    try {
+      const userData = await checkAuth()
+      if (userData) {
+        appStore.setUser(userData)
+      }
+    } catch (e) {
+      // Пользователь не авторизован - это нормально для лендинга
+    }
+  }
 })
 
 onUnmounted(() => {
