@@ -113,6 +113,8 @@ async function handleAccept() {
     if (result.status === 'ok') {
       store.setPolicyAccepted()
       emit('accepted')
+      
+      window.location.reload()
     } else {
       apiError.value = result.error_data?.message || 'Произошла ошибка при сохранении'
     }
