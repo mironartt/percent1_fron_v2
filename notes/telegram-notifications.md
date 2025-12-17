@@ -5,6 +5,16 @@
 Система уведомлений предназначена для поддержания вовлечённости пользователя без навязчивости. 
 Основной принцип: **максимум 2-3 уведомления в день** с возможностью гибкой настройки.
 
+### Статус реализации
+
+| Компонент | Статус | Файл |
+|-----------|--------|------|
+| **Страница настроек (веб)** | ✅ Готово | `src/views/NotificationSettings.vue` |
+| **Роут** | ✅ Готово | `/app/settings/notifications` |
+| **Хранение настроек** | ⏳ localStorage (заглушка) | Ожидает API бэкенда |
+| **Telegram бот уведомления** | ⏳ В планах | `server/telegramBot.js` |
+| **Backend API** | ⏳ В планах | Django REST API |
+
 ---
 
 ## Типы уведомлений
@@ -280,9 +290,12 @@ userNotificationSettings = {
 [10:00] [11:00] [12:00]
 ```
 
-### UI настроек в веб-приложении
+### UI настроек в веб-приложении ✅
 
-Страница `/settings` должна содержать раздел "Telegram уведомления":
+> **Реализовано:** `src/views/NotificationSettings.vue`  
+> **URL:** `/app/settings/notifications`
+
+Страница реализована со всеми настройками ниже:
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -399,22 +412,27 @@ POST /api/rest/front/user/notification-settings/
 
 ## Порядок реализации
 
+### Этап 0 (Подготовка) ✅
+- [x] Документация системы уведомлений
+- [x] UI страницы настроек в веб-приложении (`/app/settings/notifications`)
+- [x] Структура хранения настроек (localStorage)
+
 ### Этап 1 (MVP)
-1. Streak Warning
-2. Achievement Unlocked
+- [ ] Streak Warning — отправка через бота
+- [ ] Achievement Unlocked — отправка через бота
+- [ ] Backend API для настроек (`GET/POST /api/rest/front/user/notification-settings/`)
 
 ### Этап 2
-3. Утреннее сводное
-4. Вечернее напоминание
-5. Настройки в боте (вкл/выкл, время)
+- [ ] Утреннее сводное
+- [ ] Вечернее напоминание
+- [ ] Настройки в боте (вкл/выкл, время)
 
 ### Этап 3
-6. Level Up
-7. Deadline Reminder
-8. Weekly Report
-9. Настройки в веб-приложении
+- [ ] Level Up
+- [ ] Deadline Reminder
+- [ ] Weekly Report
 
 ### Этап 4
-10. XP Reward Reminder
-11. SSP Reassessment
-12. Аналитика и A/B тесты
+- [ ] XP Reward Reminder
+- [ ] SSP Reassessment
+- [ ] Аналитика и A/B тесты
