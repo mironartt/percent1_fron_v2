@@ -9,7 +9,7 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { postRequest } from '@/services/api.js'
+import { request } from '@/services/api.js'
 import { DEBUG_MODE } from '@/config/settings.js'
 
 const STORAGE_KEY = 'landing_ssp_hash'
@@ -82,7 +82,7 @@ export const useLandingSSPStore = defineStore('landingSSP', () => {
         console.log('[LandingSSP] Saving test:', payload)
       }
       
-      const response = await postRequest('/api/rest/front/land/ssp-test/save/', payload)
+      const response = await request('POST', '/api/rest/front/land/ssp-test/save/', payload)
       
       if (response.status === 'ok') {
         currentTest.value = {
@@ -123,7 +123,7 @@ export const useLandingSSPStore = defineStore('landingSSP', () => {
         console.log('[LandingSSP] Getting test by hash:', hash)
       }
       
-      const response = await postRequest('/api/rest/front/land/ssp-test/get/', { hash })
+      const response = await request('POST', '/api/rest/front/land/ssp-test/get/', { hash })
       
       if (response.status === 'ok') {
         currentTest.value = {
@@ -166,7 +166,7 @@ export const useLandingSSPStore = defineStore('landingSSP', () => {
         console.log('[LandingSSP] Linking test to user:', pendingHash.value)
       }
       
-      const response = await postRequest('/api/rest/front/land/ssp-test/link/', {
+      const response = await request('POST', '/api/rest/front/land/ssp-test/link/', {
         hash: pendingHash.value
       })
       

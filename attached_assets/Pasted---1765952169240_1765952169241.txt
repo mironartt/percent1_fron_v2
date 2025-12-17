@@ -1,0 +1,110 @@
+Хорошо.  
+Данная логика должна быть и для страниц: главная и лендинги.
+
+----
+
+Также, почему-то на старнице лендинга я вижу в логах браузера:
+```js
+[AITasks] Received: force_disconnect 
+Object { reason: "new_connection" }
+aiTasks.js:140:15
+[AITasks] Force disconnect: new_connection aiTasks.js:214:19
+[AITasks] WebSocket closed: 4003 <empty string> aiTasks.js:75:19
+[AITasks] Force disconnected (new connection), reconnecting... aiTasks.js:118:17
+[AITasks] Connecting to: wss://e54emx-77-51-124-101.ru.tuna.am/ws/tasks/ aiTasks.js:54:15
+[AITasks] WebSocket connected aiTasks.js:66:19
+[AITasks] Received: active_tasks 
+Object { tasks: [] }
+aiTasks.js:140:15
+[AITasks] Received: force_disconnect 
+Object { reason: "new_connection" }
+aiTasks.js:140:15
+[AITasks] Force disconnect: new_connection aiTasks.js:214:19
+[AITasks] WebSocket closed: 4003 <empty string> aiTasks.js:75:19
+[AITasks] Force disconnected (new connection), reconnecting... aiTasks.js:118:17
+[AITasks] Connecting to: wss://e54emx-77-51-124-101.ru.tuna.am/ws/tasks/ aiTasks.js:54:15
+[AITasks] WebSocket connected aiTasks.js:66:19
+[AITasks] Received: active_tasks 
+Object { tasks: [] }
+aiTasks.js:140:15
+[AITasks] Received: force_disconnect 
+Object { reason: "new_connection" }
+aiTasks.js:140:15
+[AITasks] Force disconnect: new_connection aiTasks.js:214:19
+[AITasks] WebSocket closed: 4003 <empty string> aiTasks.js:75:19
+[AITasks] Force disconnected (new connection), reconnecting... aiTasks.js:118:17
+[AITasks] Connecting to: wss://e54emx-77-51-124-101.ru.tuna.am/ws/tasks/ aiTasks.js:54:15
+[AITasks] WebSocket connected aiTasks.js:66:19
+[AITasks] Received: active_tasks 
+Object { tasks: [] }
+aiTasks.js:140:15
+[AITasks] Received: force_disconnect 
+Object { reason: "new_connection" }
+aiTasks.js:140:15
+[AITasks] Force disconnect: new_connection aiTasks.js:214:19
+[AITasks] WebSocket closed: 4003 <empty string> aiTasks.js:75:19
+[AITasks] Force disconnected (new connection), reconnecting... aiTasks.js:118:17
+[AITasks] Connecting to: wss://e54emx-77-51-124-101.ru.tuna.am/ws/tasks/ aiTasks.js:54:15
+[AITasks] WebSocket connected aiTasks.js:66:19
+[AITasks] Received: active_tasks 
+Object { tasks: [] }
+aiTasks.js:140:15
+[AITasks] Received: force_disconnect 
+Object { reason: "new_connection" }
+aiTasks.js:140:15
+[AITasks] Force disconnect: new_connection aiTasks.js:214:19
+[AITasks] WebSocket closed: 4003 <empty string> aiTasks.js:75:19
+[AITasks] Force disconnected (new connection), reconnecting... aiTasks.js:118:17
+[AITasks] Connecting to: wss://e54emx-77-51-124-101.ru.tuna.am/ws/tasks/ aiTasks.js:54:15
+[AITasks] WebSocket connected aiTasks.js:66:19
+[AITasks] Received: active_tasks 
+Object { tasks: [] }
+aiTasks.js:140:15
+[AITasks] Received: force_disconnect 
+Object { reason: "new_connection" }
+aiTasks.js:140:15
+[AITasks] Force disconnect: new_connection aiTasks.js:214:19
+[AITasks] WebSocket closed: 4003 <empty string> aiTasks.js:75:19
+[AITasks] Force disconnected (new connection), reconnecting... aiTasks.js:118:17
+[AITasks] Connecting to: wss://e54emx-77-51-124-101.ru.tuna.am/ws/tasks/ aiTasks.js:54:15
+[AITasks] WebSocket connected aiTasks.js:66:19
+[AITasks] Received: active_tasks 
+Object { tasks: [] }
+aiTasks.js:140:15
+[AITasks] Received: force_disconnect 
+Object { reason: "new_connection" }
+aiTasks.js:140:15
+[AITasks] Force disconnect: new_connection aiTasks.js:214:19
+[AITasks] WebSocket closed: 4003 <empty string> aiTasks.js:75:19
+[AITasks] Force disconnected (new connection), reconnecting... aiTasks.js:118:17
+[AITasks] Connecting to: wss://e54emx-77-51-124-101.ru.tuna.am/ws/tasks/ aiTasks.js:54:15
+[AITasks] WebSocket connected aiTasks.js:66:19
+[AITasks] Received: active_tasks 
+Object { tasks: [] }
+aiTasks.js:140:15
+[AITasks] Received: force_disconnect 
+Object { reason: "new_connection" }
+aiTasks.js:140:15
+[AITasks] Force disconnect: new_connection aiTasks.js:214:19
+[AITasks] WebSocket closed: 4003 <empty string> aiTasks.js:75:19
+[AITasks] Force disconnected (new connection), reconnecting... aiTasks.js:118:17
+[AITasks] Connecting to: wss://e54emx-77-51-124-101.ru.tuna.am/ws/tasks/ aiTasks.js:54:15
+[AITasks] WebSocket connected aiTasks.js:66:19
+[AITasks] Received: active_tasks 
+Object { tasks: [] }
+aiTasks.js:140:15
+[AITasks] Received: force_disconnect 
+Object { reason: "new_connection" }
+aiTasks.js:140:15
+[AITasks] Force disconnect: new_connection aiTasks.js:214:19
+[AITasks] WebSocket closed: 4003 <empty string> aiTasks.js:75:19
+[AITasks] Force disconnected (new connection), reconnecting... aiTasks.js:118:17
+[AITasks] Connecting to: wss://e54emx-77-51-124-101.ru.tuna.am/ws/tasks/ aiTasks.js:54:15
+[AITasks] WebSocket connected aiTasks.js:66:19
+[AITasks] Received: active_tasks 
+Object { tasks: [] }
+```
+
+Тут важно понимать, что соединение с сокет-эндпоинтами должно поддерживаться только в рамках страниц `app/` - личного кабинета. Вне их поддерживать их не нужно. И подобных ретраев быть точно не должно.
+
+Это актуально и для главной страницы.

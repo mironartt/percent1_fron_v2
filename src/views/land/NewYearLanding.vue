@@ -490,6 +490,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useNewYearStore } from '@/stores/newyear'
 import { useAppStore } from '@/stores/app'
+import { checkAuth } from '@/services/api'
 
 const route = useRoute()
 const store = useNewYearStore()
@@ -525,10 +526,22 @@ function toggleFaq(index) {
   openFaq.value = openFaq.value === index ? null : index
 }
 
-onMounted(() => {
+onMounted(async () => {
   const refCode = route.query.ref
   if (refCode) {
     store.setReferralCode(refCode)
+  }
+  
+  // Проверяем авторизацию через API если в localStorage нет данных
+  if (!appStore.isAuthenticated) {
+    try {
+      const userData = await checkAuth()
+      if (userData) {
+        appStore.setUser(userData)
+      }
+    } catch (e) {
+      // Пользователь не авторизован - это нормально для лендинга
+    }
   }
 })
 </script>

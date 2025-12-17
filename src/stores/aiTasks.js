@@ -114,10 +114,19 @@ export const useAITasksStore = defineStore('aiTasks', () => {
     }
 
     if (code === 4003) {
-      if (DEBUG_MODE) {
-        console.log('[AITasks] Force disconnected (new connection), reconnecting...')
+      // Force disconnect - ограничиваем ретраи как для обычных дисконнектов
+      if (reconnectAttempts.value < maxReconnectAttempts) {
+        reconnectAttempts.value++
+        if (DEBUG_MODE) {
+          console.log(`[AITasks] Force disconnected, reconnecting (${reconnectAttempts.value}/${maxReconnectAttempts})...`)
+        }
+        setTimeout(connect, reconnectDelay)
+      } else {
+        if (DEBUG_MODE) {
+          console.log('[AITasks] Max reconnect attempts reached after force disconnect')
+        }
+        shouldReconnect.value = false
       }
-      setTimeout(connect, 1000)
       return
     }
 

@@ -399,52 +399,31 @@ async function generatePlan() {
   loadingStep.value = 1
   loadingMessage.value = 'Анализируем твои ответы...'
 
-  try {
-    setTimeout(() => {
-      loadingStep.value = 2
-      loadingMessage.value = 'Подбираем персональные цели...'
-    }, 1500)
-    
-    setTimeout(() => {
-      loadingStep.value = 3
-      loadingMessage.value = 'Составляем план на 4 недели...'
-    }, 3000)
+  setTimeout(() => {
+    loadingStep.value = 2
+    loadingMessage.value = 'Подбираем персональные цели...'
+  }, 1500)
+  
+  setTimeout(() => {
+    loadingStep.value = 3
+    loadingMessage.value = 'Составляем план на 4 недели...'
+  }, 3000)
 
-    const response = await fetch('/api/ai/year-plan', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sphereScores: store.sphereScores,
-        growthZones: store.growthZones.map(z => ({
-          id: z.id,
-          name: z.name
-        })),
-        answers: store.answers
-      })
-    })
-
-    const data = await response.json()
-    
-    if (!data.success) {
-      throw new Error(data.error || 'Ошибка генерации плана')
-    }
-
-    plan.value = data.data
-    loading.value = false
-    
-    setTimeout(() => {
-      fireConfetti()
-    }, 300)
-    
-  } catch (err) {
-    console.error('Year plan generation error:', err)
-    console.log('Using demo plan as fallback')
+  setTimeout(() => {
     plan.value = demoPlan
     loading.value = false
     setTimeout(() => {
       fireConfetti()
     }, 300)
+  }, 4000)
+}
+
+function getShareUrl() {
+  const hash = route.params.hash || landingSSPStore.currentTest?.hash
+  if (hash) {
+    return `${window.location.origin}/land/newyear/results/${hash}`
   }
+  return `${window.location.origin}/land/newyear`
 }
 
 function shareToTelegram() {
@@ -458,12 +437,12 @@ function shareToTelegram() {
 Главный рычаг: ${leverName}
 
 Узнай свой за 10 минут ⬇️`
-  const url = window.location.origin + '/land/newyear'
+  const url = getShareUrl()
   window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank')
 }
 
 function copyLink() {
-  const url = window.location.origin + '/land/newyear'
+  const url = getShareUrl()
   navigator.clipboard.writeText(url)
   copied.value = true
   setTimeout(() => {
@@ -501,6 +480,15 @@ async function loadFromBackend(hash) {
   try {
     if (DEBUG_MODE) {
       console.log('[NewYearResults] Loading from backend with hash:', hash)
+    }
+    
+    if (landingSSPStore.currentTest?.hash === hash) {
+      if (DEBUG_MODE) {
+        console.log('[NewYearResults] Using cached data from store')
+      }
+      backendData.value = landingSSPStore.currentTest
+      mapBackendDataToStore(landingSSPStore.currentTest)
+      return true
     }
     
     const data = await landingSSPStore.getTest(hash)

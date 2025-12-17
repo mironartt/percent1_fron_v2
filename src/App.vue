@@ -106,7 +106,8 @@ onMounted(async () => {
   // Авторизация через Telegram Mini Apps
   await handleTelegramAuth()
 
-  if (store.isAuthenticated) {
+  // WebSocket подключается только на страницах /app/
+  if (store.isAuthenticated && route.path.startsWith('/app')) {
     aiTasksStore.connect()
   }
 })
@@ -118,12 +119,18 @@ watchEffect(() => {
   }
 })
 
-watch(() => store.isAuthenticated, (isAuth, wasAuth) => {
-  if (isAuth && !aiTasksStore.isConnected && !aiTasksStore.isConnecting) {
+// WebSocket подключение только для страниц /app/
+watch([() => store.isAuthenticated, () => route.path], ([isAuth, path], [wasAuth, wasPath]) => {
+  const isAppRoute = path?.startsWith('/app')
+  const wasAppRoute = wasPath?.startsWith('/app')
+  
+  if (isAuth && isAppRoute && !aiTasksStore.isConnected && !aiTasksStore.isConnecting) {
     aiTasksStore.connect()
-  } else if (!isAuth && wasAuth && aiTasksStore.isConnected) {
-    // User logged out - disconnect to prevent data leakage
-    aiTasksStore.disconnect()
+  } else if ((!isAuth && wasAuth) || (wasAppRoute && !isAppRoute)) {
+    // User logged out or left /app/ - disconnect
+    if (aiTasksStore.isConnected) {
+      aiTasksStore.disconnect()
+    }
   }
 })
 

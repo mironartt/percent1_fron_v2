@@ -51,6 +51,20 @@ export function getCsrfToken() {
 }
 
 /**
+ * Синхронизировать CSRF токен из cookie в память
+ * Используется после регистрации/логина когда бэкенд устанавливает новый токен
+ */
+export function syncCsrfFromCookie() {
+  const cookieToken = getCookie('csrftoken')
+  if (cookieToken) {
+    csrfTokenInMemory = cookieToken
+    if (DEBUG_MODE) {
+      console.log('[API] CSRF token synced from cookie')
+    }
+  }
+}
+
+/**
  * Определить режим credentials для запроса
  * Приоритет: CREDENTIALS_MODE из настроек > авто-определение по API_BASE_URL
  * @returns {RequestCredentials} - 'include' | 'same-origin'
@@ -316,7 +330,11 @@ export async function refreshCsrf() {
  * @param {string} password - Пароль
  */
 export async function login(email, password) {
-  return request('POST', '/api/rest/front/login/', { email, password })
+  const result = await request('POST', '/api/rest/front/login/', { email, password })
+  if (result.status === 'ok') {
+    syncCsrfFromCookie()
+  }
+  return result
 }
 
 /**
@@ -327,12 +345,16 @@ export async function login(email, password) {
  * @param {string} password2 - Подтверждение пароля
  */
 export async function register(first_name, email, password1, password2) {
-  return request('POST', '/api/rest/front/registration/', {
+  const result = await request('POST', '/api/rest/front/registration/', {
     first_name,
     email,
     password1,
     password2
   })
+  if (result.status === 'ok') {
+    syncCsrfFromCookie()
+  }
+  return result
 }
 
 /**
@@ -342,11 +364,15 @@ export async function register(first_name, email, password1, password2) {
  * @param {string} password2 - Подтверждение пароля
  */
 export async function completeTelegramRegistration(email, password1, password2) {
-  return request('POST', '/api/rest/front/registration/fill-data/', {
+  const result = await request('POST', '/api/rest/front/registration/fill-data/', {
     email,
     password1,
     password2
   })
+  if (result.status === 'ok') {
+    syncCsrfFromCookie()
+  }
+  return result
 }
 
 /**
@@ -359,9 +385,13 @@ export async function completeTelegramRegistration(email, password1, password2) 
  * @returns {Promise<Object>} - { status, data: { user_id, telegram_id, needs_registration_complete, is_new_user, csrf_token } }
  */
 export async function telegramWebAppAuth(initData) {
-  return request('POST', '/api/rest/front/telegram/webapp-auth/', {
+  const result = await request('POST', '/api/rest/front/telegram/webapp-auth/', {
     init_data: initData
   })
+  if (result.status === 'ok') {
+    syncCsrfFromCookie()
+  }
+  return result
 }
 
 /**
