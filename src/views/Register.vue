@@ -460,7 +460,7 @@ async function handleRegister() {
   apiErrorDetail.value = ''
 
   try {
-    const result = await api.register(form.name, form.email, form.password, form.password2)
+    const result = await api.register(form.name, form.email, form.password, form.password2, form.agreeTerms, form.agreePrivacy)
 
     if (result.status === 'ok') {
       resetAuthCache()

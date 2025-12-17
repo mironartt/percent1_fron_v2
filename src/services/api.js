@@ -200,6 +200,30 @@ export async function request(method, endpoint, data = null, options = {}) {
     
     // Обработка HTTP ошибок
     if (!response.ok) {
+      // Обработка 403 policy_acceptance_required - показать модалку
+      if (response.status === 403 && 
+          (result.error_data?.key === 'policy_acceptance_required' || 
+           result.error_code === 'policy_acceptance_required')) {
+        if (DEBUG_MODE) {
+          console.log('[API] Policy acceptance required, triggering modal')
+        }
+        
+        import('@/stores/app').then(({ useAppStore }) => {
+          const appStore = useAppStore()
+          appStore.showPolicyModal()
+        }).catch(err => {
+          console.error('[API] Failed to load app store:', err)
+        })
+        
+        return {
+          status: 'error',
+          error_data: {
+            message: 'Необходимо принять условия использования',
+            key: 'policy_acceptance_required'
+          }
+        }
+      }
+      
       // Если ответ уже содержит структуру ошибки - возвращаем как есть
       if (result.status === 'error' && result.error_data) {
         return result
@@ -343,13 +367,17 @@ export async function login(email, password) {
  * @param {string} email - Email
  * @param {string} password1 - Пароль
  * @param {string} password2 - Подтверждение пароля
+ * @param {boolean} is_terms_accepted - Согласие с условиями использования
+ * @param {boolean} is_privacy_accepted - Согласие с политикой конфиденциальности
  */
-export async function register(first_name, email, password1, password2) {
+export async function register(first_name, email, password1, password2, is_terms_accepted = true, is_privacy_accepted = true) {
   const result = await request('POST', '/api/rest/front/registration/', {
     first_name,
     email,
     password1,
-    password2
+    password2,
+    is_terms_accepted,
+    is_privacy_accepted
   })
   if (result.status === 'ok') {
     syncCsrfFromCookie()
@@ -406,6 +434,17 @@ export async function logout() {
  */
 export async function getUserData() {
   return request('POST', '/api/rest/front/get-user-data/')
+}
+
+/**
+ * Обновление данных пользователя (согласие с политиками)
+ * @param {object} data - Данные для обновления
+ * @param {boolean} data.is_terms_accepted - Согласие с условиями использования
+ * @param {boolean} data.is_privacy_accepted - Согласие с политикой конфиденциальности
+ * @returns {Promise<object>} - Результат обновления
+ */
+export async function updateUserData(data) {
+  return request('POST', '/api/rest/front/update-user-data/', data)
 }
 
 /**
