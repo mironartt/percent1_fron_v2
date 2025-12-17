@@ -581,10 +581,13 @@ export const useAppStore = defineStore('app', () => {
     telegram_bot_link: '',
     has_diary_entry_today: false,
     xp_balance: 0,
-    lifetime_xp: 0
+    lifetime_xp: 0,
+    is_terms_accepted: false,
+    is_privacy_accepted: false
   })
   
   const userLoading = ref(false)
+  const needsPolicyAcceptance = ref(false)
   
   // Данные из get-user-data API (обновляются при каждом запросе)
   const userDashboardData = ref({
@@ -595,6 +598,9 @@ export const useAppStore = defineStore('app', () => {
   
   function setUser(userData) {
     if (userData) {
+      const isTermsAccepted = userData.is_terms_accepted ?? false
+      const isPrivacyAccepted = userData.is_privacy_accepted ?? false
+      
       user.value = {
         id: userData.id || null,
         email: userData.email || '',
@@ -606,7 +612,15 @@ export const useAppStore = defineStore('app', () => {
         telegram_bot_link: userData.telegram_bot_link || '',
         has_diary_entry_today: userData.has_diary_entry_today ?? false,
         xp_balance: userData.xp_balance ?? 0,
-        lifetime_xp: userData.lifetime_xp ?? 0
+        lifetime_xp: userData.lifetime_xp ?? 0,
+        is_terms_accepted: isTermsAccepted,
+        is_privacy_accepted: isPrivacyAccepted
+      }
+      
+      needsPolicyAcceptance.value = !isTermsAccepted || !isPrivacyAccepted
+      
+      if (DEBUG_MODE && needsPolicyAcceptance.value) {
+        console.log('[Store] User needs policy acceptance')
       }
       
       // Обновить dashboard данные если они присутствуют
@@ -746,8 +760,12 @@ export const useAppStore = defineStore('app', () => {
       telegram_bot_link: '',
       has_diary_entry_today: false,
       xp_balance: 0,
-      lifetime_xp: 0
+      lifetime_xp: 0,
+      is_terms_accepted: false,
+      is_privacy_accepted: false
     }
+    
+    needsPolicyAcceptance.value = false
     
     userDashboardData.value = {
       today_tasks: { total_count: 0, completed_count: 0, tasks: [] },
@@ -769,6 +787,22 @@ export const useAppStore = defineStore('app', () => {
       console.log('[Store] User finish_onboarding set to:', value)
     }
     saveToLocalStorage()
+  }
+  
+  function setPolicyAccepted() {
+    user.value.is_terms_accepted = true
+    user.value.is_privacy_accepted = true
+    needsPolicyAcceptance.value = false
+    if (DEBUG_MODE) {
+      console.log('[Store] Policy accepted')
+    }
+  }
+  
+  function showPolicyModal() {
+    needsPolicyAcceptance.value = true
+    if (DEBUG_MODE) {
+      console.log('[Store] Policy modal triggered')
+    }
   }
   
   const isAuthenticated = computed(() => user.value.is_authenticated)
@@ -3305,9 +3339,12 @@ export const useAppStore = defineStore('app', () => {
     user,
     userLoading,
     userDashboardData,
+    needsPolicyAcceptance,
     setUser,
     clearUser,
     setUserFinishOnboarding,
+    setPolicyAccepted,
+    showPolicyModal,
     loadUserDataFromLocalStorage,
     isAuthenticated,
     displayName,
