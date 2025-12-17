@@ -59,19 +59,6 @@
           ></textarea>
         </div>
 
-        <div class="form-section">
-          <label class="form-label">
-            <ListTodo :size="16" :stroke-width="1.5" />
-            Планы на завтра (1-3 задачи)
-          </label>
-          <textarea
-            v-model="form.tomorrowPlans"
-            class="form-textarea"
-            placeholder="Запишите 1-3 основных задачи на завтра..."
-            rows="2"
-          ></textarea>
-        </div>
-
         <div class="form-actions">
           <button 
             v-if="isEditing && hasTodayEntry" 
@@ -88,7 +75,7 @@
           >
             <Loader2 v-if="saving" :size="18" :stroke-width="1.5" class="spin" />
             <Send v-else :size="18" :stroke-width="1.5" />
-            {{ saving ? 'Сохранение...' : 'Сохранить и получить ответ AI' }}
+            {{ saving ? 'Сохранение...' : 'Сохранить и получить ответ от AI ментора' }}
           </button>
         </div>
       </form>
@@ -109,28 +96,8 @@
           <p>{{ todayEntry.reflection }}</p>
         </div>
 
-        <div class="entry-section" v-if="todayEntry.tomorrowPlans">
-          <h4><ListTodo :size="16" :stroke-width="1.5" /> Планы на завтра</h4>
-          <p>{{ todayEntry.tomorrowPlans }}</p>
-        </div>
       </div>
 
-      <div v-if="todayEntry?.aiResponse" class="ai-response">
-        <div class="ai-header">
-          <div class="ai-avatar">
-            <Sparkles :size="18" :stroke-width="1.5" />
-          </div>
-          <span>AI-коуч</span>
-        </div>
-        <div class="ai-content">
-          {{ todayEntry.aiResponse }}
-        </div>
-      </div>
-
-      <div v-if="todayEntry?.aiResponseLoading" class="ai-loading">
-        <Loader2 :size="20" :stroke-width="1.5" class="spin" />
-        <span>AI-коуч анализирует вашу запись...</span>
-      </div>
     </div>
   </div>
 </template>
@@ -143,10 +110,8 @@ import {
   CheckCircle, 
   XCircle, 
   Lightbulb, 
-  ListTodo, 
   Send, 
   Pencil,
-  Sparkles,
   Loader2
 } from 'lucide-vue-next'
 
@@ -300,11 +265,9 @@ async function saveEntry() {
       console.error('[JournalEntry] Error syncing to backend:', apiError)
     }
     
-    // Get AI response (demo mode) - only for new entries
-    if (!isUpdate && localEntry) {
-      store.setJournalAILoading(localEntry.id, true)
-      const aiResponse = await getAIResponse(form.value)
-      store.updateJournalAIResponse(localEntry.id, aiResponse)
+    // Open mentor panel and send journal data for AI analysis
+    if (localEntry) {
+      await sendToMentor(form.value, isUpdate)
     }
     
   } catch (error) {
@@ -314,16 +277,76 @@ async function saveEntry() {
   }
 }
 
-async function getAIResponse(entryData) {
+async function sendToMentor(entryData, isUpdate) {
+  // Open mentor panel
+  store.toggleMentorPanel(true)
+  
+  // Build context message for the mentor
+  const journalSummary = buildJournalSummary(entryData)
+  
+  // Send user's journal as context (system message style)
+  const contextMessage = isUpdate 
+    ? `Я обновил свой дневник за сегодня:\n\n${journalSummary}`
+    : `Вот мои итоги дня:\n\n${journalSummary}`
+  
+  // Add user context message
+  store.sendMentorMessage(contextMessage, 'user')
+  
+  // Simulate AI thinking delay
   await new Promise(resolve => setTimeout(resolve, 1500))
   
-  const responses = [
-    `Отличная работа сегодня! Вижу, что вы продвинулись вперёд. Особенно ценно, что вы отметили "${entryData.whatDone.substring(0, 50)}...". Продолжайте в том же духе!`,
-    `Рад видеть вашу рефлексию. Планы на завтра выглядят реалистично. Помните: маленькие шаги каждый день приводят к большим результатам.`,
-    `Хороший день! Заметил, что вы честно оценили, что не получилось — это важный навык. Завтра у вас есть возможность улучшиться на 1%.`
-  ]
+  // Generate personalized AI response based on journal content
+  const aiResponse = generateMentorResponse(entryData, isUpdate)
+  store.sendMentorMessage(aiResponse, 'assistant')
+}
+
+function buildJournalSummary(data) {
+  let summary = ''
   
-  return responses[Math.floor(Math.random() * responses.length)]
+  if (data.whatDone) {
+    summary += `**Что сделал:** ${data.whatDone}\n\n`
+  }
+  if (data.whatNotDone) {
+    summary += `**Что не сделал:** ${data.whatNotDone}\n\n`
+  }
+  if (data.reflection) {
+    summary += `**Рефлексия:** ${data.reflection}\n\n`
+  }
+  return summary.trim()
+}
+
+function generateMentorResponse(data, isUpdate) {
+  const userName = store.user?.first_name || 'друг'
+  
+  // Analyze what was written
+  const hasWhatDone = data.whatDone && data.whatDone.trim().length > 0
+  const hasWhatNotDone = data.whatNotDone && data.whatNotDone.trim().length > 0
+  const hasReflection = data.reflection && data.reflection.trim().length > 0
+  
+  let response = ''
+  
+  if (isUpdate) {
+    response = `Отлично, ${userName}! Вижу, что ты дополнил свой дневник. `
+  } else {
+    response = `Спасибо за рефлексию, ${userName}! `
+  }
+  
+  if (hasWhatDone) {
+    const donePreview = data.whatDone.substring(0, 80)
+    response += `Вижу, что сегодня ты поработал над "${donePreview}${data.whatDone.length > 80 ? '...' : ''}". Каждый шаг вперёд — это прогресс! `
+  }
+  
+  if (hasWhatNotDone) {
+    response += `\n\nТо, что ты честно написал о том, что не получилось — это важный навык самоанализа. Не ругай себя, а используй это как информацию для улучшения. `
+  }
+  
+  if (hasReflection) {
+    response += `\n\nТвоя рефлексия показывает, что ты осознанно подходишь к своему развитию. `
+  }
+  
+  response += `\n\n💪 Ты стал на 1% лучше сегодня!`
+  
+  return response
 }
 
 watch(() => todayEntry.value, (entry) => {
@@ -483,54 +506,6 @@ watch(() => todayEntry.value, (entry) => {
   line-height: 1.6;
   margin: 0;
   white-space: pre-wrap;
-}
-
-.ai-response {
-  margin: 0 1.5rem 1.5rem;
-  padding: 1.25rem;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  border-radius: var(--radius-lg);
-}
-
-.ai-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-.ai-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.ai-header span {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--primary-color);
-}
-
-.ai-content {
-  font-size: 0.9375rem;
-  color: var(--text-primary);
-  line-height: 1.6;
-}
-
-.ai-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  padding: 1.5rem;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
 }
 
 .spin {
