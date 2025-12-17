@@ -1,0 +1,97 @@
+[AITasks] Received: force_disconnect 
+Object { reason: "new_connection" }
+index-mtMlQq1y.js:2:226536
+[AITasks] Force disconnect: new_connection index-mtMlQq1y.js:2:227547
+[AITasks] WebSocket closed: 4003 <empty string> index-mtMlQq1y.js:2:225350
+[AITasks] Force disconnected, reconnecting (1/5)... index-mtMlQq1y.js:2:225844
+[AITasks] Connecting to: wss://percent1.ru/ws/tasks/ index-mtMlQq1y.js:2:225131
+[AITasks] WebSocket connected index-mtMlQq1y.js:2:225258
+[AITasks] Received: active_tasks 
+Object { tasks: [] }
+index-mtMlQq1y.js:2:226536
+[AITasks] Received: force_disconnect 
+Object { reason: "new_connection" }
+index-mtMlQq1y.js:2:226536
+[AITasks] Force disconnect: new_connection index-mtMlQq1y.js:2:227547
+[AITasks] WebSocket closed: 4003 <empty string> index-mtMlQq1y.js:2:225350
+[AITasks] Force disconnected, reconnecting (1/5)... index-mtMlQq1y.js:2:225844
+[AITasks] Connecting to: wss://percent1.ru/ws/tasks/ index-mtMlQq1y.js:2:225131
+[AITasks] WebSocket connected index-mtMlQq1y.js:2:225258
+[AITasks] Received: active_tasks 
+Object { tasks: [] }
+index-mtMlQq1y.js:2:226536
+[AITasks] Received: force_disconnect 
+Object { reason: "new_connection" }
+index-mtMlQq1y.js:2:226536
+[AITasks] Force disconnect: new_connection index-mtMlQq1y.js:2:227547
+[AITasks] WebSocket closed: 4003 <empty string> index-mtMlQq1y.js:2:225350
+[AITasks] Force disconnected, reconnecting (1/5)... index-mtMlQq1y.js:2:225844
+[AITasks] Connecting to: wss://percent1.ru/ws/tasks/ index-mtMlQq1y.js:2:225131
+[AITasks] WebSocket connected index-mtMlQq1y.js:2:225258
+[AITasks] Received: active_tasks 
+Object { tasks: [] }
+index-mtMlQq1y.js:2:226536
+[AITasks] Received: force_disconnect 
+Object { reason: "new_connection" }
+index-mtMlQq1y.js:2:226536
+[AITasks] Force disconnect: new_connection index-mtMlQq1y.js:2:227547
+[AITasks] WebSocket closed: 4003 <empty string> index-mtMlQq1y.js:2:225350
+[AITasks] Force disconnected, reconnecting (1/5)... index-mtMlQq1y.js:2:225844
+[AITasks] Connecting to: wss://percent1.ru/ws/tasks/ index-mtMlQq1y.js:2:225131
+[AITasks] WebSocket connected index-mtMlQq1y.js:2:225258
+[AITasks] Received: active_tasks 
+Object { tasks: [] }
+index-mtMlQq1y.js:2:226536
+[AITasks] Received: force_disconnect 
+Object { reason: "new_connection" }
+index-mtMlQq1y.js:2:226536
+[AITasks] Force disconnect: new_connection index-mtMlQq1y.js:2:227547
+[AITasks] WebSocket closed: 4003 <empty string> index-mtMlQq1y.js:2:225350
+[AITasks] Force disconnected, reconnecting (1/5)... index-mtMlQq1y.js:2:225844
+[AITasks] Connecting to: wss://percent1.ru/ws/tasks/ index-mtMlQq1y.js:2:225131
+[AITasks] WebSocket connected index-mtMlQq1y.js:2:225258
+[AITasks] Received: active_tasks 
+Object { tasks: [] }
+index-mtMlQq1y.js:2:226536
+[AITasks] Received: force_disconnect 
+Object { reason: "new_connection" }
+index-mtMlQq1y.js:2:226536
+[AITasks] Force disconnect: new_connection index-mtMlQq1y.js:2:227547
+[AITasks] WebSocket closed: 4003 <empty string> index-mtMlQq1y.js:2:225350
+[AITasks] Force disconnected, reconnecting (1/5)... index-mtMlQq1y.js:2:225844
+[AITasks] Connecting to: wss://percent1.ru/ws/tasks/ index-mtMlQq1y.js:2:225131
+[AITasks] WebSocket connected index-mtMlQq1y.js:2:225258
+[AITasks] Received: active_tasks 
+Object { tasks: [] }
+index-mtMlQq1y.js:2:226536
+[AITasks] Received: force_disconnect 
+Object { reason: "new_connection" }
+index-mtMlQq1y.js:2:226536
+[AITasks] Force disconnect: new_connection index-mtMlQq1y.js:2:227547
+[AITasks] WebSocket closed: 4003 <empty string> index-mtMlQq1y.js:2:225350
+[AITasks] Force disconnected, reconnecting (1/5)... index-mtMlQq1y.js:2:225844
+[AITasks] Connecting to: wss://percent1.ru/ws/tasks/ index-mtMlQq1y.js:2:225131
+[AITasks] WebSocket connected index-mtMlQq1y.js:2:225258
+[AITasks] Received: active_tasks 
+Object { tasks: [] }
+index-mtMlQq1y.js:2:226536
+[AITasks] Received: force_disconnect 
+Object { reason: "new_connection" }
+index-mtMlQq1y.js:2:226536
+[AITasks] Force disconnect: new_connection index-mtMlQq1y.js:2:227547
+[AITasks] WebSocket closed: 4003 <empty string> index-mtMlQq1y.js:2:225350
+[AITasks] Force disconnected, reconnecting (1/5)... index-mtMlQq1y.js:2:225844
+[AITasks] Connecting to: wss://percent1.ru/ws/tasks/ index-mtMlQq1y.js:2:225131
+[AITasks] WebSocket connected index-mtMlQq1y.js:2:225258
+[AITasks] Received: active_tasks 
+Object { tasks: [] }
+index-mtMlQq1y.js:2:226536
+[AITasks] Received: force_disconnect 
+Object { reason: "new_connection" }
+index-mtMlQq1y.js:2:226536
+[AITasks] Force disconnect: new_connection index-mtMlQq1y.js:2:227547
+[AITasks] WebSocket closed: 4003 <empty string> index-mtMlQq1y.js:2:225350
+[AITasks] Force disconnected, reconnecting (1/5)... index-mtMlQq1y.js:2:225844
+
+​
+
