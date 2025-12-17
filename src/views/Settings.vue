@@ -109,10 +109,9 @@
               <div class="setting-title">Ежедневные напоминания</div>
               <div class="setting-desc">Утренние и вечерние чек-ины</div>
             </div>
-            <label class="toggle">
-              <input type="checkbox" checked>
-              <span class="toggle-slider"></span>
-            </label>
+            <button class="btn btn-primary btn-sm" @click="goToNotificationSettings">
+              Настроить
+            </button>
           </div>
 
           <div class="setting-item telegram-bot-item">
@@ -503,6 +502,10 @@ function goToSubscription() {
 
 function goToReferral() {
   router.push('/app/referral')
+}
+
+function goToNotificationSettings() {
+  router.push('/app/settings/notifications')
 }
 
 function handleLogout() {
