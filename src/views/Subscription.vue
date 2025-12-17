@@ -5,12 +5,23 @@
       <p class="subtitle">Выберите план, который подходит именно вам</p>
     </header>
 
-    <div class="current-status">
-      <div class="status-badge trial">
-        <Clock :size="16" />
-        Пробный период
+    <div class="current-plan-block">
+      <div class="current-plan-info">
+        <div class="current-plan-header">
+          <span class="current-plan-label">Текущий тариф</span>
+          <div :class="['plan-status-badge', currentPlan.status]">
+            <Clock v-if="currentPlan.status === 'trial'" :size="14" />
+            <Check v-else-if="currentPlan.status === 'active'" :size="14" />
+            {{ currentPlan.statusLabel }}
+          </div>
+        </div>
+        <div class="current-plan-name">{{ currentPlan.name }}</div>
+        <p class="current-plan-details">{{ currentPlan.details }}</p>
       </div>
-      <p>Осталось 7 дней бесплатного доступа ко всем функциям</p>
+      <div v-if="currentPlan.nextBillingDate" class="next-billing">
+        <span class="next-billing-label">Следующее списание</span>
+        <span class="next-billing-date">{{ currentPlan.nextBillingDate }}</span>
+      </div>
     </div>
 
     <div class="period-selector">
@@ -75,7 +86,8 @@
         </button>
       </div>
 
-      <div class="plan-card pro-plus">
+      <div class="plan-card pro-plus coming-soon">
+        <div class="coming-soon-badge">Скоро</div>
         <div class="plan-header">
           <h3 class="plan-name">Клуб 1%</h3>
           <div class="plan-price">
@@ -93,8 +105,8 @@
           <li><Check :size="16" class="feature-icon included" /> Ранний доступ к новым функциям</li>
           <li><Check :size="16" class="feature-icon included" /> Нетворкинг 2.0</li>
         </ul>
-        <button class="btn btn-primary btn-lg plan-btn pro-plus-btn">
-          Выбрать Клуб 1%
+        <button class="btn btn-primary btn-lg plan-btn pro-plus-btn" disabled>
+          Скоро
         </button>
       </div>
     </div>
@@ -103,15 +115,61 @@
       <Shield :size="20" />
       <p>Гарантия возврата денег в течение 7 дней. Без вопросов.</p>
     </div>
+
+    <div class="billing-history-section">
+      <h2 class="section-title">
+        <Receipt :size="20" />
+        История платежей
+      </h2>
+      <div v-if="billingHistory.length > 0" class="billing-table-wrapper">
+        <table class="billing-table">
+          <thead>
+            <tr>
+              <th>Дата</th>
+              <th>Описание</th>
+              <th>Сумма</th>
+              <th>Статус</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in billingHistory" :key="item.id">
+              <td class="date-cell">{{ item.date }}</td>
+              <td>{{ item.description }}</td>
+              <td class="amount-cell">{{ formatPrice(item.amount) }} ₽</td>
+              <td>
+                <span :class="['payment-status', item.status]">
+                  {{ item.statusLabel }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div v-else class="no-billing-history">
+        <Receipt :size="32" class="empty-icon" />
+        <p>История платежей пуста</p>
+        <span class="hint">Здесь будут отображаться ваши платежи после оформления подписки</span>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Check, X, Clock, Shield } from 'lucide-vue-next'
+import { Check, X, Clock, Shield, Receipt } from 'lucide-vue-next'
 
 const router = useRouter()
+
+const currentPlan = ref({
+  name: 'Бесплатный',
+  status: 'trial',
+  statusLabel: 'Пробный период',
+  details: 'Осталось 7 дней бесплатного доступа ко всем функциям',
+  nextBillingDate: null
+})
+
+const billingHistory = ref([])
 
 const periods = [
   { months: 1, label: '1 мес', discount: 0 },
@@ -456,10 +514,234 @@ function goBack() {
   font-size: 0.9375rem;
 }
 
+.current-plan-block {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  margin-bottom: 2rem;
+  border: 1px solid var(--border-color);
+}
+
+.current-plan-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.current-plan-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.plan-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.plan-status-badge.trial {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--primary-color);
+}
+
+.plan-status-badge.active {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--success-color);
+}
+
+.plan-status-badge.expired {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger-color);
+}
+
+.current-plan-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.current-plan-details {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+}
+
+.next-billing {
+  text-align: right;
+}
+
+.next-billing-label {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.next-billing-date {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.coming-soon-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  padding: 0.375rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  border: 1px solid var(--border-color);
+}
+
+.plan-card.coming-soon {
+  opacity: 0.7;
+}
+
+.plan-card.coming-soon .pro-plus-btn {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+.plan-card.coming-soon .pro-plus-btn:hover {
+  background: var(--bg-tertiary);
+}
+
+.billing-history-section {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-title svg {
+  color: var(--text-secondary);
+}
+
+.billing-table-wrapper {
+  overflow-x: auto;
+}
+
+.billing-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.billing-table th,
+.billing-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.billing-table th {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+}
+
+.billing-table td {
+  font-size: 0.9375rem;
+}
+
+.date-cell {
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+.amount-cell {
+  font-weight: 600;
+}
+
+.payment-status {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.payment-status.paid {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--success-color);
+}
+
+.payment-status.refunded {
+  background: rgba(249, 115, 22, 0.15);
+  color: #f97316;
+}
+
+.payment-status.pending {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--primary-color);
+}
+
+.no-billing-history {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.no-billing-history .empty-icon {
+  color: var(--text-tertiary);
+  margin-bottom: 1rem;
+}
+
+.no-billing-history p {
+  margin: 0 0 0.5rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.no-billing-history .hint {
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+}
+
 @media (max-width: 768px) {
-  .current-status {
+  .current-plan-block {
     flex-direction: column;
     text-align: center;
+    gap: 1rem;
+  }
+  
+  .next-billing {
+    text-align: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    width: 100%;
+  }
+  
+  .billing-table th,
+  .billing-table td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.875rem;
   }
   
   .period-selector {
