@@ -215,7 +215,7 @@
           </div>
 
           <div class="share-section">
-            <h3>Поделись результатами</h3>
+            <h3>Помоги другу подвести итоги года, отправь ссылку 👍</h3>
             <div class="share-buttons">
               <button class="share-btn telegram" @click="shareToTelegram">
                 <span class="btn-icon">📱</span>
@@ -419,10 +419,6 @@ async function generatePlan() {
 }
 
 function getShareUrl() {
-  const hash = route.params.hash || landingSSPStore.currentTest?.hash
-  if (hash) {
-    return `${window.location.origin}/land/newyear/results/${hash}`
-  }
   return `${window.location.origin}/land/newyear`
 }
 
