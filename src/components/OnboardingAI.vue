@@ -235,9 +235,6 @@
 
         <div v-if="currentStep === 5" class="step-content step-plan">
           <div class="plan-header">
-            <div class="plan-icon-wrapper">
-              <Sparkles :size="24" class="plan-icon" />
-            </div>
             <div class="plan-header-text">
               <h2 class="step-title">Ваши цели на старт</h2>
               <p class="step-subtitle">AI подготовил цели с шагами на основе анализа ССП. Утвердите или откажитесь от целей.</p>
