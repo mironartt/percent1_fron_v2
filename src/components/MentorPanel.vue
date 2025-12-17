@@ -358,6 +358,13 @@ watch(messages, () => {
   nextTick(() => scrollToBottom())
 }, { deep: true })
 
+// Scroll to bottom when bot starts typing (typing indicator appears)
+watch(() => chatStore.isBotTyping, (isTyping) => {
+  if (isTyping) {
+    nextTick(() => scrollToBottom())
+  }
+})
+
 watch(isMobileOpen, (newValue) => {
   document.body.style.overflow = newValue ? 'hidden' : ''
 })
