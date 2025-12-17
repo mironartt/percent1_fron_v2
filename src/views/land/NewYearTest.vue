@@ -147,10 +147,14 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNewYearStore } from '@/stores/newyear'
+import { useLandingSSPStore } from '@/stores/landingSSP'
+import { DEBUG_MODE } from '@/config/settings.js'
 
 const router = useRouter()
 const store = useNewYearStore()
+const landingSSPStore = useLandingSSPStore()
 const textAnswer = ref('')
+const isSubmitting = ref(false)
 
 const currentAnswer = computed(() => {
   if (!store.currentQuestionData) return undefined
@@ -199,9 +203,72 @@ function handleTextChange() {
   store.setAnswer(store.currentQuestionData.id, textAnswer.value)
 }
 
-function finishTest() {
+function buildCategoriesData() {
+  const sphereQuestions = {}
+  
+  for (const question of store.questions) {
+    if (!sphereQuestions[question.sphere]) {
+      sphereQuestions[question.sphere] = { score: null, answer: null }
+    }
+    
+    const answerValue = store.answers[question.id]
+    if (question.type === 'scale' && answerValue !== undefined) {
+      sphereQuestions[question.sphere].score = answerValue
+    } else if (question.type === 'text' && answerValue) {
+      sphereQuestions[question.sphere].answer = answerValue
+    }
+  }
+  
+  const categoriesData = []
+  for (const [sphereId, data] of Object.entries(sphereQuestions)) {
+    const backendCategory = landingSSPStore.mapCategoryToBackend(sphereId)
+    categoriesData.push({
+      category: backendCategory,
+      score: data.score,
+      answer: data.answer || null
+    })
+  }
+  
+  return categoriesData
+}
+
+async function finishTest() {
+  if (isSubmitting.value) return
+  
+  isSubmitting.value = true
   store.completeTest()
-  router.push('/land/newyear/results')
+  
+  try {
+    const categoriesData = buildCategoriesData()
+    
+    if (DEBUG_MODE) {
+      console.log('[NewYearTest] Submitting test data:', categoriesData)
+    }
+    
+    const meta = {}
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get('utm_source')) meta.utm_source = urlParams.get('utm_source')
+    if (urlParams.get('utm_campaign')) meta.utm_campaign = urlParams.get('utm_campaign')
+    if (urlParams.get('utm_medium')) meta.utm_medium = urlParams.get('utm_medium')
+    if (store.referralCode) meta.ref = store.referralCode
+    
+    const result = await landingSSPStore.saveTest(
+      categoriesData,
+      'newyear_test',
+      Object.keys(meta).length > 0 ? meta : null
+    )
+    
+    if (result?.hash) {
+      router.push(`/land/newyear/results/${result.hash}`)
+    } else {
+      router.push('/land/newyear/results')
+    }
+  } catch (error) {
+    console.error('[NewYearTest] Error saving test:', error)
+    router.push('/land/newyear/results')
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>
 

@@ -643,6 +643,24 @@ export const useAppStore = defineStore('app', () => {
         })
       }
       
+      // Привязать landing SSP тест к пользователю (если есть pending hash)
+      import('@/stores/landingSSP.js').then(({ useLandingSSPStore }) => {
+        const landingSSPStore = useLandingSSPStore()
+        if (landingSSPStore.hasPendingTest) {
+          landingSSPStore.linkToUser().then(result => {
+            if (DEBUG_MODE && result) {
+              console.log('[Store] Landing SSP test linked to user:', result)
+            }
+          }).catch(err => {
+            if (DEBUG_MODE) {
+              console.log('[Store] Failed to link landing SSP test:', err.message)
+            }
+          })
+        }
+      }).catch(err => {
+        console.error('[Store] Failed to load landingSSP store:', err)
+      })
+      
       // Сохранить в localStorage
       saveUserDataToLocalStorage(userData)
       

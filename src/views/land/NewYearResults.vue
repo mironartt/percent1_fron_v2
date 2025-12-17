@@ -257,12 +257,16 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useNewYearStore } from '@/stores/newyear'
+import { useLandingSSPStore } from '@/stores/landingSSP'
+import { DEBUG_MODE } from '@/config/settings.js'
 import confetti from 'canvas-confetti'
 
 const router = useRouter()
+const route = useRoute()
 const store = useNewYearStore()
+const landingSSPStore = useLandingSSPStore()
 
 const loading = ref(true)
 const loadingStep = ref(1)
@@ -270,14 +274,16 @@ const loadingMessage = ref('Анализируем твои ответы...')
 const plan = ref(null)
 const expandedGoal = ref(0)
 const copied = ref(false)
+const backendData = ref(null)
+const loadError = ref(null)
 
-const sphereMap = {
-  welfare: { name: 'Благосостояние', icon: '💰' },
-  hobby: { name: 'Хобби и отдых', icon: '🎨' },
-  environment: { name: 'Дружба и окружение', icon: '👥' },
-  health: { name: 'Здоровье и спорт', icon: '💪' },
-  work: { name: 'Работа и карьера', icon: '💼' },
-  family: { name: 'Любовь, семья', icon: '❤️' }
+const backendCategoryToSphereId = {
+  'welfare': 'welfare',
+  'hobby': 'hobby',
+  'environment': 'environment',
+  'health_sport': 'health',
+  'work': 'work',
+  'family': 'family'
 }
 
 const demoPlan = {
@@ -334,11 +340,13 @@ const totalSteps = computed(() => {
 })
 
 function getSphereIcon(id) {
-  return sphereMap[id]?.icon || '🎯'
+  const sphere = store.spheres.find(s => s.id === id)
+  return sphere?.icon || '🎯'
 }
 
 function getSphereName(id) {
-  return sphereMap[id]?.name || id
+  const sphere = store.spheres.find(s => s.id === id)
+  return sphere?.name || id
 }
 
 function getTotalHours(steps) {
@@ -468,12 +476,62 @@ function restartTest() {
   router.push('/land/newyear/test')
 }
 
-onMounted(() => {
-  if (!store.isCompleted) {
+function mapBackendDataToStore(data) {
+  if (!data?.categories_data) return
+  
+  for (const cat of data.categories_data) {
+    const sphereId = backendCategoryToSphereId[cat.category] || cat.category
+    const scaleQuestion = store.questions.find(q => q.sphere === sphereId && q.type === 'scale')
+    const textQuestion = store.questions.find(q => q.sphere === sphereId && q.type === 'text')
+    
+    if (scaleQuestion && cat.score !== null) {
+      store.setAnswer(scaleQuestion.id, cat.score)
+    }
+    if (textQuestion && cat.answer) {
+      store.setAnswer(textQuestion.id, cat.answer)
+    }
+  }
+  
+  if (DEBUG_MODE) {
+    console.log('[NewYearResults] Mapped backend data to store:', store.sphereScores)
+  }
+}
+
+async function loadFromBackend(hash) {
+  try {
+    if (DEBUG_MODE) {
+      console.log('[NewYearResults] Loading from backend with hash:', hash)
+    }
+    
+    const data = await landingSSPStore.getTest(hash)
+    backendData.value = data
+    mapBackendDataToStore(data)
+    
+    return true
+  } catch (error) {
+    console.error('[NewYearResults] Error loading from backend:', error)
+    loadError.value = error.message
+    return false
+  }
+}
+
+onMounted(async () => {
+  const hash = route.params.hash
+  
+  if (hash) {
+    const success = await loadFromBackend(hash)
+    if (!success) {
+      loadError.value = 'Результаты не найдены'
+      loading.value = false
+      return
+    }
+    generatePlan()
+  } else if (!store.isCompleted) {
     router.push('/land/newyear/test')
     return
+  } else {
+    generatePlan()
   }
-  generatePlan()
 })
 </script>
 

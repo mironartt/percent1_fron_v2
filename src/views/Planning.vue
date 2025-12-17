@@ -1506,7 +1506,7 @@ async function applyAIPlan() {
     aiPlannerProgress.value = { text: 'Обновление данных...' }
     
     await Promise.all([
-      store.loadGoalsFromBackend({ search: searchQuery.value, sphere: filterSphere.value }),
+      store.loadGoalsFromBackend({ sphere: filterSphere.value }),
       loadWeeklySteps()
     ])
     

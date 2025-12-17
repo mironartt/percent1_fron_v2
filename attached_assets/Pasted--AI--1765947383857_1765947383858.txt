@@ -1,0 +1,77 @@
+На странице планирования после работы AI-планирования, и клика по "добавить", вижу в консоли ошибки:
+```js
+[Planning] Sending steps data to backend: 
+Array(7) [ {…}, {…}, {…}, {…}, {…}, {…}, {…} ]
+Planning-C11cdPVp.js:2:12998
+[API] POST /api/rest/front/app/goals/steps/update/ 
+Object { goals_steps_data: (7) […] }
+​
+goals_steps_data: Array(7) [ {…}, {…}, {…}, … ]
+​​
+0: Object { goal_id: 351, step_id: 1130, dt: "2025-12-17", … }
+​​
+1: Object { goal_id: 351, step_id: 1131, dt: "2025-12-18", … }
+​​
+2: Object { goal_id: 351, step_id: 1132, dt: "2025-12-19", … }
+​​
+3: Object { goal_id: 351, step_id: 1133, dt: "2025-12-20", … }
+​​
+4: Object { goal_id: 351, step_id: 1134, dt: "2025-12-21", … }
+​​
+5: Object { goal_id: 352, step_id: 1135, dt: "2025-12-22", … }
+​​
+6: Object { goal_id: 352, step_id: 1136, dt: "2025-12-23", … }
+​​
+length: 7
+​​
+<prototype>: Array []
+​
+<prototype>: Object { … }
+index-BzRZ6vIi.js:2:115337
+[API] Response: 
+Object { status: "ok", data: {…} }
+index-BzRZ6vIi.js:2:115536
+[Planning] Backend response: 
+Object { status: "ok", data: {…} }
+Planning-C11cdPVp.js:2:13095
+[Planning] Error applying AI plan: ReferenceError: searchQuery is not defined
+    Ta https://percent1.ru/assets/Planning-C11cdPVp.js:2
+    Es https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    Et https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    n https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    zt https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    Rh https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    Bh https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    D https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    y https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    I https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    X https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    D https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    y https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    I https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    X https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    D https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    y https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    I https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    Q https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    L https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    y https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    I https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    Q https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    L https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    y https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    I https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    z https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    run https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    runIfDirty https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    Es https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    xl https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    promise callback*El https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    jr https://percent1.ru/assets/index-BzRZ6vIi.js:2
+    scheduler https://percent1.ru/assets/index-BzRZ6vIi.js:2
+Planning-C11cdPVp.js:2:13347
+```
+
+При этом запрос `/api/rest/front/app/goals/steps/update/` отработал, и я вижу что ответ тоже был успешен. И после обновления страницы шаги были на нужных днях.
+
+В чем проблема и исправь?

@@ -11,8 +11,13 @@
             </div>
           </div>
           <nav class="header-nav">
-            <router-link to="/auth/login" class="nav-link">Войти</router-link>
-            <router-link to="/auth/register" class="btn btn-primary">Начать бесплатно</router-link>
+            <template v-if="isAuthenticated">
+              <router-link to="/app" class="btn btn-primary">Личный кабинет</router-link>
+            </template>
+            <template v-else>
+              <router-link to="/auth/login" class="nav-link">Войти</router-link>
+              <router-link to="/auth/register" class="btn btn-primary">Начать бесплатно</router-link>
+            </template>
           </nav>
         </div>
       </div>
@@ -581,6 +586,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useAppStore } from '@/stores/app'
 import { 
   Target, 
   Calendar, 
@@ -617,6 +623,9 @@ import {
   Feather,
   BookMarked
 } from 'lucide-vue-next'
+
+const appStore = useAppStore()
+const isAuthenticated = computed(() => appStore.isAuthenticated)
 
 const days = ref(90)
 const isScrolled = ref(false)
