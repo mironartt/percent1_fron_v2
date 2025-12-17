@@ -317,7 +317,7 @@
                   class="goal-step-item"
                 >
                   <span class="step-number">{{ index + 1 }}</span>
-                  <span class="step-title">{{ step.title }}</span>
+                  <span class="step-text">{{ step.title }}</span>
                 </div>
               </div>
 
@@ -2119,9 +2119,11 @@ async function createStepsOnBackend(acceptedGoals, goalIds) {
   flex-shrink: 0;
 }
 
-.goal-step-item .step-title {
+.goal-step-item .step-text {
   font-size: 0.875rem;
+  line-height: 1.4;
   color: var(--text-primary);
+  text-align: left;
 }
 
 .goal-actions {
@@ -2426,6 +2428,26 @@ async function createStepsOnBackend(acceptedGoals, goalIds) {
   .summary-item svg {
     width: 16px;
     height: 16px;
+  }
+  
+  .goal-steps-list {
+    padding: 0.5rem;
+  }
+  
+  .goal-step-item {
+    gap: 0.5rem;
+    padding: 0.4rem 0;
+  }
+  
+  .goal-step-item .step-number {
+    width: 20px;
+    height: 20px;
+    font-size: 0.65rem;
+  }
+  
+  .goal-step-item .step-text {
+    font-size: 0.8rem;
+    line-height: 1.3;
   }
 }
 </style>
