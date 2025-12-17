@@ -16,6 +16,7 @@ const GoalsBank = () => import('@/views/GoalsBank.vue')
 const Planner = () => import('@/views/Planner.vue')
 const Planning = () => import('@/views/Planning.vue')
 const Settings = () => import('@/views/Settings.vue')
+const NotificationSettings = () => import('@/views/NotificationSettings.vue')
 const Subscription = () => import('@/views/Subscription.vue')
 const Referral = () => import('@/views/Referral.vue')
 const Club = () => import('@/views/Club.vue')
@@ -185,6 +186,12 @@ const router = createRouter({
       name: 'settings',
       component: Settings,
       meta: { title: 'Профиль', requiresAuth: true }
+    },
+    {
+      path: '/app/settings/notifications',
+      name: 'notification-settings',
+      component: NotificationSettings,
+      meta: { title: 'Уведомления', requiresAuth: true }
     },
     {
       path: '/app/subscription',
