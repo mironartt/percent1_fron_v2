@@ -1,0 +1,312 @@
+Есть проблема с работой сокет-эндпоинтов на продакшене.  
+
+Локально все работает, а на проде нет. 
+
+Как выглядит локальный формат работы:
+- в `local_settings.js` у меня указано:
+```js
+// Режим разработки
+export const DEV_MODE = true
+
+// Пропустить проверку авторизации (удобно для разработки UI)
+export const SKIP_AUTH_CHECK = false
+
+// Базовый URL API (оставить пустым для использования proxy)
+export const API_BASE_URL = ''
+
+// Минимальный интервал между запросами (мс)
+export const MIN_REQUEST_INTERVAL = 500
+
+// Показывать отладочную информацию в консоли
+export const DEBUG_MODE = true
+
+// Принудительно показывать онбординг (для тестирования и разработки)
+// Если true - онбординг будет показан даже если уже пройден
+export const FORCE_SHOW_ONBOARDING = false
+
+// Принудительно показывать мини-задание (для тестирования и разработки)
+// Если true - мини-задание будет показано даже если уже пройдено
+export const FORCE_SHOW_MINITASK = false
+
+// Режим credentials для fetch запросов
+// 'include' - отправлять куки для cross-origin запросов
+// 'same-origin' - отправлять куки только для same-origin запросов
+// undefined - автоматический выбор на основе API_BASE_URL
+export const CREDENTIALS_MODE = 'include'
+
+// =============================================================================
+// HMR через tuna (чтобы hot reload работал)
+// =============================================================================
+export const VITE_HMR_HOST = 'e54emx-77-51-124-101.ru.tuna.am'
+export const VITE_HMR_PROTOCOL = 'wss'
+export const VITE_HMR_CLIENT_PORT = 443
+```
+
+Запущен бэк:
+- rest api - на 8017 порту
+- soket api - на 8018 порту
+- запущен nginx на 8080 порту
+
+В nginx прописано:
+```shell
+# /etc/nginx/conf.d/local-test.conf
+
+server {
+    listen 8080;
+
+    # ===========================================================================
+    # DJANGO REST API
+    # ===========================================================================
+    location /api/ {
+        proxy_pass http://127.0.0.1:8017;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
+    # ===========================================================================
+    # DJANGO ADMIN
+    # ===========================================================================
+    location /admin/ {
+        proxy_pass http://127.0.0.1:8017;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
+    # ===========================================================================
+    # DJANGO STATIC FILES
+    # ===========================================================================
+    location /static/ {
+        proxy_pass http://127.0.0.1:8017;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
+    # ===========================================================================
+    # WEBSOCKET → Daphne
+    # ===========================================================================
+    location /ws/ {
+        proxy_pass http://127.0.0.1:8018;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_read_timeout 86400;
+    }
+
+    # ===========================================================================
+    # VITE HMR WebSocket (для hot reload)
+    # ===========================================================================
+    location /@vite/ {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+
+    location /__vite_ping {
+        proxy_pass http://127.0.0.1:5000;
+    }
+
+    location /node_modules/ {
+        proxy_pass http://127.0.0.1:5000;
+    }
+
+    location /src/ {
+        proxy_pass http://127.0.0.1:5000;
+    }
+
+    # ===========================================================================
+    # FRONTEND → Vite dev server (всё остальное)
+    # ===========================================================================
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+
+        # WebSocket для HMR
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+```
+
+И после запущена tuna:
+```shell
+(venv) truba@truba-comp:~/repo_work/one_percent/percent1/front$ tuna http 8080
+INFO[03:09:30] Welcome to Tuna                              
+INFO[03:09:30] Account: mironartt@gmail.com (Paid till 08.01.2026) 
+INFO[03:09:30] Web Interface: http://127.0.0.1:4040         
+INFO[03:09:31] Forwarding https://e54emx-77-51-124-101.ru.tuna.am -> 127.0.0.1:8080 
+```
+
+Получается фронт и бэк работают через tuna по адресу `e54emx-77-51-124-101.ru.tuna.am`. Tuna стучится мне на локальный компьютер в nginx на 8080 порт. 
+Далее nginx сам проксирует запросы на бэк или на фронт (`npm run dev` на 5000 порту)
+
+И в таком формате локально все работает без проблем, все сокеты цепляются без проблем.
+
+
+-----  
+
+На проде:
+- в `local_settings.js` у меня указано:
+```js
+onepercent@cv5482553:~/www/percent1.ru/front$ cat source/src/config/local_settings.js 
+/**
+ * Пример файла локальных настроек
+ * 
+ * Для использования:
+ * 1. Скопируйте этот файл как local_settings.js
+ * 2. Измените настройки под вашу среду
+ * 3. local_settings.js НЕ должен быть в git
+ * 
+ * Команда: cp src/config/local_settings.example.js src/config/local_settings.js
+ */
+
+// Режим разработки
+export const DEV_MODE = false
+
+// Пропустить проверку авторизации (удобно для разработки UI)
+export const SKIP_AUTH_CHECK = false
+
+// Базовый URL API (оставить пустым для использования proxy)
+export const API_BASE_URL = ''
+
+// Минимальный интервал между запросами (мс)
+export const MIN_REQUEST_INTERVAL = 500
+
+// Показывать отладочную информацию в консоли
+export const DEBUG_MODE = true
+
+// =============================================================================
+// HMR через tuna (чтобы hot reload работал)
+// =============================================================================
+export const VITE_HMR_HOST = ''
+export const VITE_HMR_PROTOCOL = 'wss'
+export const VITE_HMR_CLIENT_PORT = 443
+```
+
+И боевые настройки всего бэка на локальный nginx, который ожидает запросы с хоста `https://percent1.ru`
+
+Но при открытие ЛК вижу в консоли барузера логи:
+```js
+[AITasks] Connecting to: wss://percent1.ru/ws/tasks/ index-B-dA_4VR.js:2:220082
+[Store] AI bot chat data set: 
+Object { conversation_id: 15, unread_count: 0, is_bot_processing: false }
+index-B-dA_4VR.js:2:133889
+[XP] Synced xpBalance from user data: 0 index-B-dA_4VR.js:2:209617
+GET
+wss://percent1.ru/ws/tasks/
+NS_ERROR_WEBSOCKET_CONNECTION_REFUSED
+
+[Router] Auth status: 
+Object { isAuthenticated: true, skipped: false, requiresAuth: true, guestOnly: undefined, targetRoute: "/app/planning" }
+index-B-dA_4VR.js:2:238594
+[Router] Navigation allowed index-B-dA_4VR.js:2:239240
+[YandexMetrika] Page view tracked: 
+Object { id: 105671462, path: "/app/planning", title: "Планирование недели" }
+index-B-dA_4VR.js:2:239425
+[API] POST /api/rest/front/app/chat/messages/get/ 
+Object { conversation_id: 15, order_by: "date_created", order_direction: "desc", page: 1, page_size: 50 }
+index-B-dA_4VR.js:2:115337
+[API] POST /api/rest/front/app/goals/get/ 
+Object { score_filter: "true", status_filter: "work", with_steps_data: true, has_steps: true, page_size: 10 }
+index-B-dA_4VR.js:2:115337
+[Planning] Loading weekly steps for: 2025-12-15 to 2025-12-21 Planning-WveL_9er.js:2:18401
+[API] POST /api/rest/front/app/goals/steps/planned/get/ 
+Object { date_from: "2025-12-15", date_to: "2025-12-21" }
+index-B-dA_4VR.js:2:115337
+Firefox не может установить соединение с сервером wss://percent1.ru/ws/tasks/. index-B-dA_4VR.js:2:220128
+[AITasks] WebSocket error: 
+error { target: WebSocket, isTrusted: true, srcElement: WebSocket, currentTarget: WebSocket, eventPhase: 2, bubbles: false, cancelable: false, returnValue: true, defaultPrevented: false, composed: false, … }
+index-B-dA_4VR.js:2:220406
+[AITasks] WebSocket closed: 1006 <empty string> index-B-dA_4VR.js:2:220301
+[AITasks] Reconnecting in 3000ms (attempt 1) index-B-dA_4VR.js:2:220928
+[API] Response: 
+Object { status: "ok", data: {…} }
+index-B-dA_4VR.js:2:115536
+[ChatStore] Messages loaded: 
+Object { page: 1, count: 6, total: 6 }
+index-B-dA_4VR.js:2:199519
+[ChatStore] WebSocket listeners attached index-B-dA_4VR.js:2:201570
+[ChatWS] Connecting to: wss://percent1.ru/ws/chat/ index-B-dA_4VR.js:2:194793
+[API] Response: 
+Object { status: "ok", data: {…} }
+index-B-dA_4VR.js:2:115536
+[Planning] Loaded weekly steps from API: 7 days Planning-WveL_9er.js:2:18656
+[Planning] Overdue steps: 0 Planning-WveL_9er.js:2:18750
+GET
+wss://percent1.ru/ws/chat/
+NS_ERROR_WEBSOCKET_CONNECTION_REFUSED
+
+[API] Response: 
+Object { status: "ok", data: {…} }
+index-B-dA_4VR.js:2:115536
+[Store] Goals synced from backend: 
+Object { rawIdeas: 3, goalsInWork: 3 }
+index-B-dA_4VR.js:2:129617
+[Store] Goals loaded from backend: 
+Object { count: 3, total: 4, page: null, append: false }
+index-B-dA_4VR.js:2:126987
+Firefox не может установить соединение с сервером wss://percent1.ru/ws/chat/. index-B-dA_4VR.js:2:194842
+[ChatWS] Error: 
+error { target: WebSocket, isTrusted: true, srcElement: WebSocket, currentTarget: WebSocket, eventPhase: 2, bubbles: false, cancelable: false, returnValue: true, defaultPrevented: false, composed: false, … }
+index-B-dA_4VR.js:2:195211
+[ChatWS] Closed: 1006 <empty string> index-B-dA_4VR.js:2:195088
+[ChatWS] Reconnecting in 3000ms (attempt 1) index-B-dA_4VR.js:2:196284
+[AITasks] Connecting to: wss://percent1.ru/ws/tasks/ index-B-dA_4VR.js:2:220082
+GET
+wss://percent1.ru/ws/tasks/
+NS_ERROR_WEBSOCKET_CONNECTION_REFUSED
+
+Firefox не может установить соединение с сервером wss://percent1.ru/ws/tasks/. index-B-dA_4VR.js:2:220128
+[AITasks] WebSocket error: 
+error { target: WebSocket, isTrusted: true, srcElement: WebSocket, currentTarget: WebSocket, eventPhase: 2, bubbles: false, cancelable: false, returnValue: true, defaultPrevented: false, composed: false, … }
+index-B-dA_4VR.js:2:220406
+[AITasks] WebSocket closed: 1006 <empty string> index-B-dA_4VR.js:2:220301
+[AITasks] Reconnecting in 6000ms (attempt 2) index-B-dA_4VR.js:2:220928
+[ChatWS] Connecting to: wss://percent1.ru/ws/chat/ index-B-dA_4VR.js:2:194793
+GET
+wss://percent1.ru/ws/chat/
+NS_ERROR_WEBSOCKET_CONNECTION_REFUSED
+
+Firefox не может установить соединение с сервером wss://percent1.ru/ws/chat/. index-B-dA_4VR.js:2:194842
+[ChatWS] Error: 
+error { target: WebSocket, isTrusted: true, srcElement: WebSocket, currentTarget: WebSocket, eventPhase: 2, bubbles: false, cancelable: false, returnValue: true, defaultPrevented: false, composed: false, … }
+index-B-dA_4VR.js:2:195211
+[ChatWS] Closed: 1006 <empty string> index-B-dA_4VR.js:2:195088
+[ChatWS] Reconnecting in 4500ms (attempt 2) index-B-dA_4VR.js:2:196284
+[ChatWS] Connecting to: wss://percent1.ru/ws/chat/ index-B-dA_4VR.js:2:194793
+GET
+wss://percent1.ru/ws/chat/
+NS_ERROR_WEBSOCKET_CONNECTION_REFUSED
+
+Firefox не может установить соединение с сервером wss://percent1.ru/ws/chat/. index-B-dA_4VR.js:2:194842
+[ChatWS] Error: 
+error { target: WebSocket, isTrusted: true, srcElement: WebSocket, currentTarget: WebSocket, eventPhase: 2, bubbles: false, cancelable: false, returnValue: true, defaultPrevented: false, composed: false, … }
+index-B-dA_4VR.js:2:195211
+[ChatWS] Closed: 1006 <empty string> index-B-dA_4VR.js:2:195088
+[ChatWS] Reconnecting in 6750ms (attempt 3) index-B-dA_4VR.js:2:196284
+[AITasks] Connecting to: wss://percent1.ru/ws/tasks/ index-B-dA_4VR.js:2:220082
+GET
+wss://percent1.ru/ws/tasks/
+NS_ERROR_WEBSOCKET_CONNECTION_REFUSED
+
+Firefox не может установить соединение с сервером wss://percent1.ru/ws/tasks/. index-B-dA_4VR.js:2:220128
+[AITasks] WebSocket error: 
+error { target: WebSocket, isTrusted: true, srcElement: WebSocket, currentTarget: WebSocket, eventPhase: 2, bubbles: false, cancelable: false, returnValue: true, defaultPrevented: false, composed: false, … }
+```
+
+В логах запросов вижу что все запросы к `/ws/` падает в статусе: `502 Bad Gateway`.
+
+В чем проблема и как я могу исправить это.

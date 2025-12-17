@@ -15,7 +15,12 @@
     </transition-group>
 
 
-    <div v-if="!goal" class="empty-state card">
+    <div v-if="showGoalLoading" class="loading-state card">
+      <div class="loading-spinner"></div>
+      <p>Загрузка цели...</p>
+    </div>
+
+    <div v-else-if="showGoalNotFound" class="empty-state card">
       <div class="empty-icon">
         <AlertCircle :size="48" />
       </div>
@@ -2456,6 +2461,25 @@ let autoScrollInterval = null
 const isLoadingSteps = ref(false)
 const stepsLoadedFromBackend = ref(false)
 
+// Goal fetch state: 'idle' | 'loading' | 'loaded' | 'error'
+const goalFetchStatus = ref('idle')
+
+// Computed properties for template
+const showGoalLoading = computed(() => {
+  // Show loading when goal is not available and we're loading or just waiting for hydration
+  return !goal.value && (goalFetchStatus.value === 'loading' || goalFetchStatus.value === 'idle')
+})
+
+const showGoalNotFound = computed(() => {
+  // Show "not found" only when API explicitly returned error or loaded with no data
+  // For 'loaded' status, only show empty if goal is still null (actual API completion)
+  if (goal.value) return false
+  if (goalFetchStatus.value === 'error') return true
+  // For 'loaded' status - show empty only if we actually tried to load from API (not local)
+  if (goalFetchStatus.value === 'loaded' && !isLocalId.value) return true
+  return false
+})
+
 // Steps pagination from backend
 const totalStepsFromBackend = ref(0)      // total_items (всего без фильтров)
 const totalFilteredSteps = ref(0)         // total_filtered_items (с учётом фильтров)
@@ -2499,6 +2523,7 @@ async function loadStepsFromBackend(page = 1, append = false) {
   // Skip backend load for local goals (dev mode)
   if (!backendId || isLocalId.value) {
     console.log('[GoalEdit] Skipping backend load for local goal')
+    // For local goals, don't change goalFetchStatus - it's managed by onMounted/watch
     return
   }
   
@@ -2506,6 +2531,10 @@ async function loadStepsFromBackend(page = 1, append = false) {
   const currentBackendId = backendId
   
   isLoadingSteps.value = true
+  // Only set goal loading on first page if goal is not already loaded
+  if (page === 1 && !goal.value) {
+    isLoadingGoal.value = true
+  }
   
   try {
     const { getGoalSteps } = await import('@/services/api.js')
@@ -2662,9 +2691,17 @@ async function loadStepsFromBackend(page = 1, append = false) {
     }
     
     isLoadingSteps.value = false
+    // Mark goal fetch complete (we got goal data from API on first page)
+    if (page === 1) {
+      goalFetchStatus.value = 'loaded'
+    }
   } catch (error) {
     console.error('[GoalEdit] Error loading steps from backend:', error)
     isLoadingSteps.value = false
+    // Mark goal fetch as error only on first page
+    if (page === 1) {
+      goalFetchStatus.value = 'error'
+    }
   }
 }
 
@@ -2708,6 +2745,20 @@ onBeforeRouteLeave(() => {
 })
 
 onMounted(async () => {
+  // If goal is already in store, mark as loaded immediately
+  if (goal.value) {
+    goalFetchStatus.value = 'loaded'
+  } else if (isLocalId.value) {
+    // Local goal - wait a tick for store to hydrate, then mark as loaded
+    await nextTick()
+    goalFetchStatus.value = 'loaded'
+  } else if (goalBackendId.value) {
+    // Need to fetch from API
+    goalFetchStatus.value = 'loading'
+  } else {
+    goalFetchStatus.value = 'idle'
+  }
+  
   loadGoalData()
 
   // Reset flags on mount
@@ -2725,14 +2776,39 @@ onBeforeUnmount(() => {
   }
 })
 
-watch(goalBackendId, () => {
-  // Reset flag on route change
+watch(goalBackendId, async () => {
+  // Reset flags on route change
   stepsLoadedFromBackend.value = false
   notesLoadedFromStepsApi.value = false
   notesData.value = []
   goalDataFromApi.value = null  // Clear goal data from previous goal
+  
+  // Determine if goal exists in store
+  const goalInStore = goals.value.find(g => g.backendId === goalBackendId.value || String(g.backendId) === goalBackendId.value)
+  
+  if (goalInStore) {
+    goalFetchStatus.value = 'loaded'
+  } else if (isLocalId.value) {
+    // Local goal - wait a tick for computed to update
+    await nextTick()
+    goalFetchStatus.value = 'loaded'
+  } else if (goalBackendId.value) {
+    goalFetchStatus.value = 'loading'
+  } else {
+    goalFetchStatus.value = 'idle'
+  }
+  
   loadGoalData()
   loadStepsFromBackend()
+})
+
+// Watch for goalDataFromApi changes - load goal data when API returns
+watch(goalDataFromApi, (newValue) => {
+  if (newValue) {
+    console.log('[GoalEdit] goalDataFromApi updated, reloading goal data')
+    // Flags are set in loadStepsFromBackend, just reload the form
+    loadGoalData()
+  }
 })
 
 const commentTextareas = ref([])
@@ -3833,6 +3909,33 @@ function formatDate(dateString) {
 .empty-state p {
   color: var(--text-secondary);
   margin-bottom: 2rem;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.loading-state p {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color, #e5e7eb);
+  border-top-color: var(--primary-color, #6366f1);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .steps-empty-state {
