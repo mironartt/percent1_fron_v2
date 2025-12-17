@@ -576,15 +576,29 @@
               <Calendar :size="16" />
               <span>День</span>
             </div>
-            <div class="option-chips">
+            <div class="option-chips days-row">
               <button 
-                v-for="day in weekDays" 
+                v-for="day in next7Days" 
                 :key="day.date"
-                class="chip"
-                :class="{ active: selectedTask?.scheduledDate === day.date }"
+                class="chip day-chip"
+                :class="{ 
+                  active: selectedTask?.scheduledDate === day.date,
+                  today: isToday(day.date)
+                }"
                 @click="rescheduleTask(selectedTask, day.date, true)"
               >
-                {{ day.label }} {{ day.dayNum }}
+                {{ day.shortName }} {{ day.dayNum }}
+              </button>
+              <button 
+                class="chip calendar-chip"
+                :class="{ 'has-custom-date': selectedTask?.scheduledDate && !isDateInNext7Days(selectedTask.scheduledDate) }"
+                @click="openDatePicker('task')"
+                :title="selectedTask?.scheduledDate && !isDateInNext7Days(selectedTask.scheduledDate) ? formatCustomDate(selectedTask.scheduledDate) : 'Выбрать дату'"
+              >
+                <CalendarDays :size="16" />
+                <span v-if="selectedTask?.scheduledDate && !isDateInNext7Days(selectedTask.scheduledDate)" class="custom-date-label">
+                  {{ formatCustomDate(selectedTask.scheduledDate) }}
+                </span>
               </button>
             </div>
           </div>
@@ -651,15 +665,29 @@
                 <Calendar :size="16" />
                 <span>День</span>
               </div>
-              <div class="option-chips">
+              <div class="option-chips days-row">
                 <button 
-                  v-for="day in weekDays" 
+                  v-for="day in next7Days" 
                   :key="day.date"
-                  class="chip"
-                  :class="{ active: getScheduledStepDate === day.date }"
+                  class="chip day-chip"
+                  :class="{ 
+                    active: getScheduledStepDate === day.date,
+                    today: isToday(day.date)
+                  }"
                   @click="rescheduleStep(day.date)"
                 >
-                  {{ day.label }} {{ day.dayNum }}
+                  {{ day.shortName }} {{ day.dayNum }}
+                </button>
+                <button 
+                  class="chip calendar-chip"
+                  :class="{ 'has-custom-date': getScheduledStepDate && !isDateInNext7Days(getScheduledStepDate) }"
+                  @click="openDatePicker('stepScheduled')"
+                  :title="getScheduledStepDate && !isDateInNext7Days(getScheduledStepDate) ? formatCustomDate(getScheduledStepDate) : 'Выбрать дату'"
+                >
+                  <CalendarDays :size="16" />
+                  <span v-if="getScheduledStepDate && !isDateInNext7Days(getScheduledStepDate)" class="custom-date-label">
+                    {{ formatCustomDate(getScheduledStepDate) }}
+                  </span>
                 </button>
               </div>
             </div>
@@ -722,15 +750,29 @@
                 <Calendar :size="16" />
                 <span>День</span>
               </div>
-              <div class="option-chips">
+              <div class="option-chips days-row">
                 <button 
-                  v-for="day in futureDays" 
+                  v-for="day in next7Days" 
                   :key="day.date"
-                  class="chip"
-                  :class="{ active: newStepDay === day.date, today: isToday(day.date) }"
+                  class="chip day-chip"
+                  :class="{ 
+                    active: newStepDay === day.date, 
+                    today: isToday(day.date) 
+                  }"
                   @click="newStepDay = day.date"
                 >
                   {{ day.shortName }} {{ day.dayNum }}
+                </button>
+                <button 
+                  class="chip calendar-chip"
+                  :class="{ 'has-custom-date': newStepDay && !isDateInNext7Days(newStepDay) }"
+                  @click="openDatePicker('stepNew')"
+                  :title="newStepDay && !isDateInNext7Days(newStepDay) ? formatCustomDate(newStepDay) : 'Выбрать дату'"
+                >
+                  <CalendarDays :size="16" />
+                  <span v-if="newStepDay && !isDateInNext7Days(newStepDay)" class="custom-date-label">
+                    {{ formatCustomDate(newStepDay) }}
+                  </span>
                 </button>
               </div>
             </div>
@@ -871,6 +913,26 @@
         </template>
       </div>
     </div>
+
+    <div class="date-picker-overlay" v-if="showDatePicker" @click="closeDatePicker">
+      <div class="date-picker-popup" @click.stop>
+        <div class="date-picker-header">
+          <h4>Выбрать дату</h4>
+          <button class="close-btn" @click="closeDatePicker">
+            <X :size="18" />
+          </button>
+        </div>
+        <div class="date-picker-calendar">
+          <input 
+            type="date" 
+            :value="getCurrentDateForPicker()"
+            :min="formatDateLocal(new Date())"
+            @change="selectCustomDate($event.target.value)"
+            class="date-input"
+          />
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -902,7 +964,8 @@ import {
   X,
   Square,
   CheckSquare,
-  BarChart3
+  BarChart3,
+  CalendarDays
 } from 'lucide-vue-next'
 
 const store = useAppStore()
@@ -1290,18 +1353,25 @@ function handleAIPlanningResult(result, taskId = null) {
   }
   
   if (result.days && Array.isArray(result.days) && result.days.length > 0) {
+    const stepIdToInfo = buildStepIdMap()
+    
     aiPlannerResult.value = {
       totalTasks: result.total_tasks || result.days.reduce((sum, d) => sum + (d.tasks?.length || 0), 0),
       days: result.days.map((day) => ({
         date: day.date,
         dayName: dayNames[(new Date(day.date)).getDay()] || day.day_name,
-        tasks: (day.tasks || []).map(t => ({
-          id: t.id || t.step_id,
-          title: t.title || t.step_title,
-          goalTitle: t.goal_title,
-          priority: t.priority,
-          timeEstimate: t.time_estimate
-        }))
+        tasks: (day.tasks || []).map(t => {
+          const stepId = t.id || t.step_id
+          const stepInfo = stepIdToInfo[stepId]
+          return {
+            id: stepId,
+            title: t.title || t.step_title || stepInfo?.title,
+            goalTitle: t.goal_title || stepInfo?.goalTitle,
+            goalId: t.goal_id || stepInfo?.goalId,
+            priority: t.priority || stepInfo?.priority,
+            timeEstimate: t.time_estimate || stepInfo?.timeEstimate
+          }
+        })
       }))
     }
     
@@ -1357,67 +1427,84 @@ function findStepById(stepId) {
 }
 
 async function applyAIPlan() {
-  if (!aiPlannerResult.value?.rawPlan || aiPlannerSelectedTasks.value.length === 0) {
+  if (aiPlannerSelectedTasks.value.length === 0) {
     closeAIPlannerModal()
     return
   }
   
   const selectedIds = new Set(aiPlannerSelectedTasks.value)
-  const tasksToApply = aiPlannerResult.value.rawPlan.filter(item => selectedIds.has(item.stepId))
+  
+  let tasksToApply = []
+  
+  if (aiPlannerResult.value?.rawPlan) {
+    tasksToApply = aiPlannerResult.value.rawPlan.filter(item => selectedIds.has(item.stepId))
+  } else if (aiPlannerResult.value?.days) {
+    for (const day of aiPlannerResult.value.days) {
+      for (const task of day.tasks) {
+        if (selectedIds.has(task.id)) {
+          tasksToApply.push({
+            stepId: task.id,
+            goalId: task.goalId,
+            date: day.date,
+            estimatedTime: task.timeEstimate
+          })
+        }
+      }
+    }
+  }
+  
+  if (tasksToApply.length === 0) {
+    closeAIPlannerModal()
+    return
+  }
   
   console.log('[Planning] Applying AI plan for', tasksToApply.length, 'tasks')
   
   aiPlannerLoading.value = true
   aiPlannerProgress.value = { text: 'Применение плана...' }
   
-  // Time mapping: backend format -> frontend format for API
-  const timeBackendToFrontend = {
-    'half': '30min',
-    'one': '1h',
-    'two': '2h',
-    'three': '3h',
-    'four': '4h'
+  const timeToBackend = {
+    '30min': 'half',
+    '1h': 'one',
+    '2h': 'two',
+    '3h': 'three',
+    '4h': 'four'
   }
   
-  let successCount = 0
-  let errorCount = 0
-  
-  for (const task of tasksToApply) {
-    try {
-      const updateData = {
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    
+    const stepIdToGoalId = buildStepToGoalMap()
+    
+    const stepsData = tasksToApply.map(task => {
+      const goalId = task.goalId || task.goal_id || stepIdToGoalId[task.stepId]
+      
+      const stepData = {
+        goal_id: goalId,
         step_id: task.stepId,
         dt: task.date
       }
       
-      // Add time estimate if provided
       if (task.estimatedTime) {
-        const frontendTime = timeBackendToFrontend[task.estimatedTime] || task.estimatedTime
-        updateData.time = frontendTime
+        const backendTime = timeToBackend[task.estimatedTime] || task.estimatedTime
+        stepData.time_duration = backendTime
       }
       
-      console.log('[Planning] Updating step:', updateData)
+      return stepData
+    }).filter(s => s.goal_id)
+    
+    if (stepsData.length > 0) {
+      console.log('[Planning] Sending steps data to backend:', stepsData)
       
-      const response = await api.updateGoalStep(updateData)
+      const response = await updateGoalSteps({
+        goals_steps_data: stepsData
+      })
       
-      if (response.status === 'ok') {
-        successCount++
-      } else {
-        console.warn('[Planning] Step update returned non-ok status:', response)
-        errorCount++
-      }
-    } catch (error) {
-      console.error('[Planning] Error updating step:', task.stepId, error)
-      errorCount++
+      console.log('[Planning] Backend response:', response)
     }
-  }
-  
-  console.log('[Planning] AI plan applied:', successCount, 'success,', errorCount, 'errors')
-  
-  // Reload data after applying
-  aiPlannerProgress.value = { text: 'Обновление данных...' }
-  
-  try {
-    // Reload goals and calendar data
+    
+    aiPlannerProgress.value = { text: 'Обновление данных...' }
+    
     await Promise.all([
       store.loadGoalsFromBackend({ search: searchQuery.value, sphere: filterSphere.value }),
       loadWeeklySteps()
@@ -1425,11 +1512,23 @@ async function applyAIPlan() {
     
     console.log('[Planning] Data reloaded after AI plan application')
   } catch (error) {
-    console.error('[Planning] Error reloading data:', error)
+    console.error('[Planning] Error applying AI plan:', error)
   }
   
   aiPlannerLoading.value = false
   closeAIPlannerModal()
+}
+
+function buildStepToGoalMap() {
+  const map = {}
+  for (const goal of store.goals) {
+    const goalId = goal.backendId || goal.id
+    for (const step of (goal.steps || [])) {
+      const stepId = step.backendId || step.id
+      map[stepId] = goalId
+    }
+  }
+  return map
 }
 
 const showBottomSheet = ref(false)
@@ -1506,6 +1605,75 @@ const futureDays = computed(() => {
   const todayStr = formatDateLocal(new Date())
   return weekDays.value.filter(day => day.date >= todayStr)
 })
+
+const next7Days = computed(() => {
+  const days = []
+  const today = new Date()
+  today.setHours(12, 0, 0, 0)
+  
+  const shortNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
+  
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(today)
+    date.setDate(today.getDate() + i)
+    const dayOfWeek = date.getDay()
+    days.push({
+      date: formatDateLocal(date),
+      dayNum: date.getDate(),
+      shortName: shortNames[dayOfWeek],
+      isWeekend: dayOfWeek === 0 || dayOfWeek === 6
+    })
+  }
+  return days
+})
+
+const showDatePicker = ref(false)
+const customDatePickerFor = ref(null)
+const customSelectedDate = ref('')
+
+function isDateInNext7Days(dateStr) {
+  return next7Days.value.some(d => d.date === dateStr)
+}
+
+function formatCustomDate(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const day = date.getDate()
+  const monthNames = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
+  return `${day} ${monthNames[date.getMonth()]}`
+}
+
+function openDatePicker(target) {
+  customDatePickerFor.value = target
+  showDatePicker.value = true
+}
+
+function closeDatePicker() {
+  showDatePicker.value = false
+  customDatePickerFor.value = null
+}
+
+function selectCustomDate(dateStr) {
+  if (customDatePickerFor.value === 'task' && selectedTask.value) {
+    rescheduleTask(selectedTask.value, dateStr, true)
+  } else if (customDatePickerFor.value === 'stepScheduled') {
+    rescheduleStep(dateStr)
+  } else if (customDatePickerFor.value === 'stepNew') {
+    newStepDay.value = dateStr
+  }
+  closeDatePicker()
+}
+
+function getCurrentDateForPicker() {
+  if (customDatePickerFor.value === 'task' && selectedTask.value?.scheduledDate) {
+    return selectedTask.value.scheduledDate
+  } else if (customDatePickerFor.value === 'stepScheduled') {
+    return getScheduledStepDate.value
+  } else if (customDatePickerFor.value === 'stepNew') {
+    return newStepDay.value || formatDateLocal(new Date())
+  }
+  return formatDateLocal(new Date())
+}
 
 const newStepDay = ref(null)
 const newStepPriority = ref('')
@@ -5980,5 +6148,145 @@ onUnmounted(() => {
 :root.dark .chip-filter.active {
   background: var(--primary-color);
   color: white;
+}
+
+/* Unified Days Row */
+.days-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.day-chip {
+  min-width: 48px;
+  padding: 0.5rem 0.625rem;
+  font-size: 0.8125rem;
+}
+
+.day-chip.today {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.day-chip.today.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+.calendar-chip {
+  min-width: 44px;
+  padding: 0.5rem 0.625rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.calendar-chip:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.calendar-chip.has-custom-date {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.custom-date-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Date Picker Popup */
+.date-picker-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  animation: fadeIn 0.2s ease;
+}
+
+.date-picker-popup {
+  background: var(--bg-primary, white);
+  border-radius: 16px;
+  padding: 1.25rem;
+  width: calc(100% - 2rem);
+  max-width: 320px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s ease;
+}
+
+.date-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.date-picker-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.date-picker-header .close-btn {
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.date-picker-header .close-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.date-picker-calendar {
+  display: flex;
+  justify-content: center;
+}
+
+.date-input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  font-size: 1rem;
+  background: var(--bg-secondary, #f8fafc);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.date-input:hover {
+  border-color: var(--primary-color);
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+:root.dark .date-picker-popup {
+  background: var(--bg-primary);
+}
+
+:root.dark .date-input {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
 }
 </style>

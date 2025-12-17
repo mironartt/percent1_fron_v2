@@ -1300,15 +1300,10 @@ export const useAppStore = defineStore('app', () => {
   
   const habits = ref([])
   const habitLog = ref({})
-  
-  const defaultHabits = [
-    { id: 'journal', name: 'Дневник', icon: '📝', xpReward: 10, isDefault: true },
-    { id: 'balance', name: 'Баланс жизни', icon: '⚖️', xpReward: 5, isDefault: true }
-  ]
 
   const todayHabits = computed(() => {
     const today = getTodayDateString()
-    const allHabits = [...defaultHabits, ...habits.value.filter(h => !h.archived)]
+    const allHabits = habits.value.filter(h => !h.archived)
     
     return allHabits.map(habit => ({
       ...habit,
