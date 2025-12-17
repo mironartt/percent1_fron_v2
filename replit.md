@@ -32,6 +32,7 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite (with pro
 -   **Achievements Page**: Improved UX with grouped XP history, filterable transactions, and pagination.
 -   **Settings Page**: Redesigned with profile management (email for Telegram users), Telegram bot integration, and an "Мой старт" section displaying onboarding data.
 -   **Subscription Page** (`/app/subscription`): Dedicated pricing page with 3 tiers (Free, Pro 990₽/mo, Клуб 1% 2,990₽/mo), period selector (1/3/6/12 months) with progressive discounts (0%/10%/20%/30%), trial status indicator, and 7-day money-back guarantee.
+-   **Policy Acceptance Modal**: Mandatory modal for users who haven't accepted Terms & Privacy Policy. Blocks app usage until both checkboxes are confirmed. Triggered on login (if user.is_terms_accepted/is_privacy_accepted is false), on 403 policy_acceptance_required API error, or on WebSocket close code 4004. Key files: `src/components/PolicyAcceptanceModal.vue`, store flags in `src/stores/app.js` (needsPolicyAcceptance, setPolicyAccepted, showPolicyModal).
 
 ### System Design Choices
 The application uses a modular structure with dedicated components, services, views, router, and Pinia stores. It emphasizes user guidance, visual feedback, and a clean interface. The AI Mentor is a core value proposition. Backend synchronization includes immediate UI feedback, goal routing with `backendId`, race condition prevention, optimized step synchronization, and API pagination.
