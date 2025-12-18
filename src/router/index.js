@@ -359,6 +359,13 @@ router.beforeEach(async (to, from, next) => {
     const { useXpStore } = await import('@/stores/xp.js')
     const xpStore = useXpStore()
     xpStore.syncFromUserData(userData)
+    
+    // Загружаем данные подписки
+    const { useSubscriptionStore } = await import('@/stores/subscription.js')
+    const subscriptionStore = useSubscriptionStore()
+    if (!subscriptionStore.subscription) {
+      subscriptionStore.loadSubscription()
+    }
   }
   
   if (DEBUG_MODE) {
