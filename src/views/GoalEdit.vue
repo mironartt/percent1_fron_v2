@@ -2459,6 +2459,7 @@ let autoScrollInterval = null
 
 // Loading state for API
 const isLoadingSteps = ref(false)
+const isLoadingGoal = ref(false)
 const stepsLoadedFromBackend = ref(false)
 
 // Goal fetch state: 'idle' | 'loading' | 'loaded' | 'error'
@@ -2693,6 +2694,7 @@ async function loadStepsFromBackend(page = 1, append = false) {
     isLoadingSteps.value = false
     // Mark goal fetch complete (we got goal data from API on first page)
     if (page === 1) {
+      isLoadingGoal.value = false
       goalFetchStatus.value = 'loaded'
     }
   } catch (error) {
@@ -2700,6 +2702,7 @@ async function loadStepsFromBackend(page = 1, append = false) {
     isLoadingSteps.value = false
     // Mark goal fetch as error only on first page
     if (page === 1) {
+      isLoadingGoal.value = false
       goalFetchStatus.value = 'error'
     }
   }
