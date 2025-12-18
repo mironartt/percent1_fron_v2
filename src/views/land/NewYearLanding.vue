@@ -661,11 +661,16 @@ onMounted(async () => {
 }
 
 /* Main Styles - Light Theme */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 .newyear-landing {
   min-height: 100vh;
   background: linear-gradient(180deg, #f8fafc 0%, #e8f4f8 50%, #f0f9ff 100%);
   color: #1a1a2e;
   position: relative;
+  overflow-x: hidden;
 }
 
 .container {
@@ -1725,12 +1730,19 @@ onMounted(async () => {
   }
 
   .motivation-stats {
+    display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
   }
 
   .stat-item {
     padding: 16px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .stat-label {
+    font-size: 13px;
   }
 
   .benefits-grid {
@@ -1760,16 +1772,30 @@ onMounted(async () => {
   }
 
   .btn-start {
-    padding: 14px 28px;
+    padding: 14px 20px;
     font-size: 16px;
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     justify-content: center;
+  }
+
+  .motivation-cta {
+    padding: 0;
+  }
+
+  .motivation-cta .btn-start {
+    margin: 0;
   }
 }
 
 @media (max-width: 480px) {
   .newyear-landing {
     overflow-x: hidden;
+  }
+
+  * {
+    box-sizing: border-box;
   }
 
   .landing-header {
