@@ -167,11 +167,19 @@ if (!result.allowed) {
 }
 ```
 
-**Лимиты Free тарифа:**
-- `max_goals`: 4
-- `max_habits`: 3
-- `max_rewards`: 5
-- Дневник: без лимитов
+**Лимиты берутся из API** (`subscription.effective_tariff.limits`):
+```json
+{
+  "code": "free",
+  "limits": {
+    "max_goals": 4,
+    "max_habits": 3,
+    "max_rewards": 5
+  }
+}
+```
+- `limits: null` = безлимит (Pro, Club)
+- Дневник: без лимитов для всех тарифов
 
 **Ошибки лимитов от бэкенда (HTTP 400):**
 - `goals_limit_exceeded` — лимит целей

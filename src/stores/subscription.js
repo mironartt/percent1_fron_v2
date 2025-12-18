@@ -77,17 +77,6 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     ]
   }
 
-  const LIMITS_MAP = {
-    free: {
-      max_goals: 4,
-      max_habits: 3,
-      max_rewards: 5
-    },
-    basic: null,
-    pro: null,
-    club: null
-  }
-
   function hasFeature(featureId) {
     if (isTrial.value && !isTrialExpired.value) {
       return FEATURE_MAP.pro.includes(featureId)
@@ -105,10 +94,9 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     if (isTrial.value && !isTrialExpired.value) {
       return null
     }
-    const tariffCode = effectiveTariffCode.value
-    const limits = LIMITS_MAP[tariffCode]
+    const limits = subscription.value?.effective_tariff?.limits
     if (!limits) return null
-    return limits[limitKey] || null
+    return limits[limitKey] ?? null
   }
 
   function checkLimit(limitKey, currentCount) {

@@ -1,0 +1,19 @@
+
+лимиты возвращаются в API /api/rest/front/app/tariffs/get/:                                                                    
+                                                                                                                                 
+{                                                                                                                                  
+"tariffs": [                                                                                                                     
+  {                                                                                                                              
+    "code": "free",                                                                                                              
+    "limits": {                                                                                                                  
+      "max_goals": 4,                                                                                                            
+      "max_habits": 3,                                                                                                           
+      "max_rewards": 5                                                                                                           
+    }                                                                                                                            
+  },                                                                                                                             
+  {                                                                                                                              
+    "code": "pro",                                                                                                               
+    "limits": null  // null = безлимит                                                                                           
+  }                                                                                                                              
+]                                                                                                                                
+}   
