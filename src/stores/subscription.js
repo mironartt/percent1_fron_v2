@@ -78,6 +78,10 @@ export const useSubscriptionStore = defineStore('subscription', () => {
   }
 
   function hasFeature(featureId) {
+    // Пока данные подписки не загружены — разрешаем доступ (бэкенд проверит)
+    if (!subscription.value) {
+      return true
+    }
     if (isTrial.value && !isTrialExpired.value) {
       return FEATURE_MAP.pro.includes(featureId)
     }
@@ -87,10 +91,18 @@ export const useSubscriptionStore = defineStore('subscription', () => {
   }
 
   function hasAIAccess() {
+    // Пока данные подписки не загружены — разрешаем доступ (бэкенд проверит)
+    if (!subscription.value) {
+      return true
+    }
     return hasFeature('chat_ai') || hasFeature('goals_ai_assistant')
   }
 
   function getLimit(limitKey) {
+    // Пока данные подписки не загружены — нет лимитов
+    if (!subscription.value) {
+      return null
+    }
     if (isTrial.value && !isTrialExpired.value) {
       return null
     }
@@ -100,6 +112,10 @@ export const useSubscriptionStore = defineStore('subscription', () => {
   }
 
   function checkLimit(limitKey, currentCount) {
+    // Пока данные подписки не загружены — разрешаем
+    if (!subscription.value) {
+      return { allowed: true, limit: null, remaining: null }
+    }
     const limit = getLimit(limitKey)
     if (limit === null) return { allowed: true, limit: null, remaining: null }
     const remaining = Math.max(0, limit - currentCount)
