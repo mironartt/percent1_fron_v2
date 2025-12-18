@@ -9,103 +9,124 @@
       <div class="current-plan-info">
         <div class="current-plan-header">
           <span class="current-plan-label">Текущий тариф</span>
-          <div :class="['plan-status-badge', currentPlan.status]">
-            <Clock v-if="currentPlan.status === 'trial'" :size="14" />
-            <Check v-else-if="currentPlan.status === 'active'" :size="14" />
-            {{ currentPlan.statusLabel }}
+          <div :class="['plan-status-badge', subscriptionStore.effectiveStatus]">
+            <Clock v-if="subscriptionStore.isTrial" :size="14" />
+            <Check v-else-if="subscriptionStore.isPaid" :size="14" />
+            <AlertCircle v-else-if="subscriptionStore.isTrialExpired" :size="14" />
+            {{ statusLabel }}
           </div>
         </div>
-        <div class="current-plan-name">{{ currentPlan.name }}</div>
-        <p class="current-plan-details">{{ currentPlan.details }}</p>
+        <div class="current-plan-name">{{ currentTariffName }}</div>
+        <p class="current-plan-details">{{ planDetails }}</p>
       </div>
-      <div v-if="currentPlan.nextBillingDate" class="next-billing">
+      <div v-if="nextBillingDate" class="next-billing">
         <span class="next-billing-label">Следующее списание</span>
-        <span class="next-billing-date">{{ currentPlan.nextBillingDate }}</span>
+        <span class="next-billing-date">{{ nextBillingDate }}</span>
       </div>
     </div>
 
-    <div class="period-selector">
+    <div v-if="activePromocode" class="promocode-active">
+      <Tag :size="18" />
+      <div class="promocode-info">
+        <span class="promocode-label">Активный промокод</span>
+        <span class="promocode-code">{{ activePromocode.code }}</span>
+        <span class="promocode-discount">
+          {{ activePromocode.discount_type === 'percent' ? `-${activePromocode.discount_value}%` : `-${activePromocode.discount_value}₽` }}
+        </span>
+      </div>
+    </div>
+
+    <div class="promocode-input-section">
+      <div class="promocode-form">
+        <input 
+          v-model="promocodeInput"
+          type="text"
+          placeholder="Введите промокод"
+          class="promocode-input"
+          :disabled="promocodeLoading"
+        />
+        <button 
+          class="btn btn-secondary"
+          @click="applyPromocode"
+          :disabled="!promocodeInput.trim() || promocodeLoading"
+        >
+          {{ promocodeLoading ? 'Применяем...' : 'Применить' }}
+        </button>
+      </div>
+      <p v-if="promocodeError" class="promocode-error">{{ promocodeError }}</p>
+      <p v-if="promocodeSuccess" class="promocode-success">{{ promocodeSuccess }}</p>
+    </div>
+
+    <div v-if="terms.length > 0" class="period-selector">
       <button 
-        v-for="period in periods" 
-        :key="period.months"
-        :class="['period-btn', { active: selectedPeriod === period.months }]"
-        @click="selectedPeriod = period.months"
+        v-for="term in terms" 
+        :key="term.id"
+        :class="['period-btn', { active: selectedTerm?.id === term.id, hit: term.is_hit }]"
+        @click="selectTerm(term.id)"
       >
-        <span class="period-name">{{ period.label }}</span>
-        <span v-if="period.discount > 0" class="period-discount">-{{ period.discount }}%</span>
-        <span v-if="period.months === 12" class="best-value-badge">Выгодно</span>
+        <span class="period-name">{{ term.title }}</span>
+        <span v-if="term.discount > 0" class="period-discount">-{{ term.discount }}%</span>
+        <span v-if="term.is_hit" class="best-value-badge">Хит</span>
       </button>
     </div>
 
-    <div class="plans-grid">
-      <div class="plan-card free">
-        <div class="plan-header">
-          <h3 class="plan-name">Бесплатный</h3>
-          <div class="plan-price">
-            <span class="price-value">0 ₽</span>
-            <span class="price-period">навсегда</span>
-          </div>
-        </div>
-        <ul class="plan-features">
-          <li><Check :size="16" class="feature-icon included" /> Колесо баланса (ССП)</li>
-          <li><Check :size="16" class="feature-icon included" /> Банк целей (до 4 целей)</li>
-          <li><Check :size="16" class="feature-icon included" /> Базовое планирование</li>
-          <li><Check :size="16" class="feature-icon included" /> Трекер привычек (до 3)</li>
-          <li><Check :size="16" class="feature-icon included" /> Дневник рефлексии</li>
-          <li><Check :size="16" class="feature-icon included" /> Достижения (до 5)</li>
-          <li><Check :size="16" class="feature-icon included" /> Напоминания в Telegram</li>
-        </ul>
-        <button class="btn btn-secondary btn-lg plan-btn">
-          Текущий план
-        </button>
-      </div>
+    <div v-if="subscriptionStore.tariffsLoading" class="loading-state">
+      <div class="spinner"></div>
+      <p>Загрузка тарифов...</p>
+    </div>
 
-      <div class="plan-card pro popular">
-        <div class="popular-badge">Популярный выбор</div>
+    <div v-else class="plans-grid">
+      <div 
+        v-for="(tariff, index) in tariffs" 
+        :key="tariff.id"
+        :class="['plan-card', getTariffClass(tariff, index)]"
+      >
+        <div v-if="index === 1" class="popular-badge">Популярный выбор</div>
+        <div v-if="tariff.code === 'coming_soon'" class="coming-soon-badge">Скоро</div>
+        
         <div class="plan-header">
-          <h3 class="plan-name">Pro</h3>
+          <h3 class="plan-name">{{ tariff.title }}</h3>
           <div class="plan-price">
-            <span class="price-value">{{ formatPrice(proPrice) }} ₽</span>
-            <span class="price-period">{{ priceLabel }}</span>
+            <span class="price-value">{{ formatPrice(getTariffPrice(tariff)) }} ₽</span>
+            <span class="price-period">{{ getPriceLabel(tariff) }}</span>
           </div>
-          <div v-if="proSavings > 0" class="savings">
-            Экономия {{ formatPrice(proSavings) }} ₽
+          <div v-if="getTariffSavings(tariff) > 0" class="savings">
+            Экономия {{ formatPrice(getTariffSavings(tariff)) }} ₽
           </div>
         </div>
+        
+        <p v-if="tariff.description" class="plan-description">{{ tariff.description }}</p>
+        
         <ul class="plan-features">
-          <li><Check :size="16" class="feature-icon included" /> Всё из Бесплатного плана</li>
-          <li><Check :size="16" class="feature-icon included" /> Безлимитные цели и привычки</li>
-          <li><Check :size="16" class="feature-icon included" /> AI ментор</li>
-          <li><Check :size="16" class="feature-icon included" /> AI планирование</li>
-          <li><Check :size="16" class="feature-icon included" /> AI помощь</li>
-          <li><Check :size="16" class="feature-icon included" /> Голосовой чат с ментором в Telegram</li>
-          <li><Check :size="16" class="feature-icon included" /> Клуб 1%</li>
+          <li 
+            v-for="item in getSortedFeatureItems(tariff)" 
+            :key="item.id"
+          >
+            <Check :size="16" class="feature-icon included" />
+            {{ item.text }}
+          </li>
         </ul>
-        <button class="btn btn-primary btn-lg plan-btn">
-          Выбрать Pro
+        
+        <button 
+          v-if="tariff.code === 'free'"
+          class="btn btn-secondary btn-lg plan-btn"
+          :disabled="isCurrentTariff(tariff)"
+        >
+          {{ isCurrentTariff(tariff) ? 'Текущий план' : 'Выбрать' }}
         </button>
-      </div>
-
-      <div class="plan-card pro-plus coming-soon">
-        <div class="coming-soon-badge">Скоро</div>
-        <div class="plan-header">
-          <h3 class="plan-name">Клуб 1%</h3>
-          <div class="plan-price">
-            <span class="price-value">{{ formatPrice(proPlusPrice) }} ₽</span>
-            <span class="price-period">{{ priceLabel }}</span>
-          </div>
-          <div v-if="proPlusSavings > 0" class="savings">
-            Экономия {{ formatPrice(proPlusSavings) }} ₽
-          </div>
-        </div>
-        <ul class="plan-features">
-          <li><Check :size="16" class="feature-icon included" /> Всё из Pro плана</li>
-          <li><Check :size="16" class="feature-icon included" /> Еженедельные мастермайнды</li>
-          <li><Check :size="16" class="feature-icon included" /> Групповые челленджи</li>
-          <li><Check :size="16" class="feature-icon included" /> Ранний доступ к новым функциям</li>
-          <li><Check :size="16" class="feature-icon included" /> Нетворкинг 2.0</li>
-        </ul>
-        <button class="btn btn-primary btn-lg plan-btn pro-plus-btn" disabled>
+        <button 
+          v-else-if="tariff.code !== 'coming_soon'"
+          :class="['btn', 'btn-lg', 'plan-btn', index === 1 ? 'btn-primary' : 'btn-secondary']"
+          @click="selectTariff(tariff)"
+          :disabled="paymentLoading"
+        >
+          {{ getButtonText(tariff) }}
+        </button>
+        <button 
+          v-else
+          class="btn btn-secondary btn-lg plan-btn"
+          disabled
+        >
           Скоро
         </button>
       </div>
@@ -121,7 +142,7 @@
         <Receipt :size="20" />
         История платежей
       </h2>
-      <div v-if="billingHistory.length > 0" class="billing-table-wrapper">
+      <div v-if="paymentHistory.length > 0" class="billing-table-wrapper">
         <table class="billing-table">
           <thead>
             <tr>
@@ -132,13 +153,13 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in billingHistory" :key="item.id">
-              <td class="date-cell">{{ item.date }}</td>
-              <td>{{ item.description }}</td>
+            <tr v-for="item in paymentHistory" :key="item.id">
+              <td class="date-cell">{{ formatDate(item.date) }}</td>
+              <td>{{ item.tariff }} ({{ item.term_months }} мес)</td>
               <td class="amount-cell">{{ formatPrice(item.amount) }} ₽</td>
               <td>
                 <span :class="['payment-status', item.status]">
-                  {{ item.statusLabel }}
+                  {{ getPaymentStatusLabel(item.status) }}
                 </span>
               </td>
             </tr>
@@ -151,77 +172,202 @@
         <span class="hint">Здесь будут отображаться ваши платежи после оформления подписки</span>
       </div>
     </div>
+
+    <PaymentModal 
+      v-if="showPaymentModal"
+      :tariff="selectedTariff"
+      :term="selectedTerm"
+      @close="closePaymentModal"
+      @payment-success="onPaymentSuccess"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Check, X, Clock, Shield, Receipt } from 'lucide-vue-next'
+import { Check, Clock, Shield, Receipt, Tag, AlertCircle } from 'lucide-vue-next'
+import { useSubscriptionStore } from '@/stores/subscription'
+import PaymentModal from '@/components/PaymentModal.vue'
 
 const router = useRouter()
+const subscriptionStore = useSubscriptionStore()
 
-const currentPlan = ref({
-  name: 'Бесплатный',
-  status: 'trial',
-  statusLabel: 'Пробный период',
-  details: 'Осталось 7 дней бесплатного доступа ко всем функциям',
-  nextBillingDate: null
+const promocodeInput = ref('')
+const promocodeLoading = ref(false)
+const promocodeError = ref('')
+const promocodeSuccess = ref('')
+const selectedTermId = ref(null)
+const showPaymentModal = ref(false)
+const selectedTariff = ref(null)
+const paymentLoading = ref(false)
+
+const tariffs = computed(() => subscriptionStore.tariffs)
+const terms = computed(() => subscriptionStore.terms)
+const paymentHistory = computed(() => subscriptionStore.paymentHistory)
+const activePromocode = computed(() => subscriptionStore.activePromocode)
+
+const selectedTerm = computed(() => {
+  if (!terms.value.length) return null
+  if (selectedTermId.value) {
+    return terms.value.find(t => t.id === selectedTermId.value) || terms.value[0]
+  }
+  return terms.value.find(t => t.is_hit) || terms.value[0]
 })
 
-const billingHistory = ref([])
-
-const periods = [
-  { months: 1, label: '1 мес', discount: 0 },
-  { months: 3, label: '3 мес', discount: 10 },
-  { months: 6, label: '6 мес', discount: 20 },
-  { months: 12, label: '12 мес', discount: 30 }
-]
-
-const selectedPeriod = ref(12)
-
-const baseProPrice = 990
-const baseProPlusPrice = 2990
-
-const currentDiscount = computed(() => {
-  const period = periods.find(p => p.months === selectedPeriod.value)
-  return period ? period.discount : 0
+const currentTariffName = computed(() => {
+  return subscriptionStore.subscription?.effective_tariff?.title || 'Бесплатный'
 })
 
-const proPrice = computed(() => {
-  const fullPrice = baseProPrice * selectedPeriod.value
-  const discount = currentDiscount.value / 100
-  return Math.round(fullPrice * (1 - discount))
+const statusLabel = computed(() => {
+  if (subscriptionStore.isTrial) return 'Пробный период'
+  if (subscriptionStore.isTrialExpired) return 'Триал истёк'
+  if (subscriptionStore.isPaid) return 'Активна'
+  return 'Бесплатный'
 })
 
-const proPlusPrice = computed(() => {
-  const fullPrice = baseProPlusPrice * selectedPeriod.value
-  const discount = currentDiscount.value / 100
-  return Math.round(fullPrice * (1 - discount))
+const planDetails = computed(() => {
+  if (subscriptionStore.isTrial) {
+    return `Осталось ${subscriptionStore.daysRemaining} дней бесплатного доступа ко всем функциям`
+  }
+  if (subscriptionStore.isTrialExpired) {
+    return 'Пробный период закончился. Оформите подписку для доступа к Pro-функциям'
+  }
+  if (subscriptionStore.isPaid) {
+    return `Подписка активна ещё ${subscriptionStore.daysRemaining} дней`
+  }
+  return 'Базовый функционал'
 })
 
-const proSavings = computed(() => {
-  const fullPrice = baseProPrice * selectedPeriod.value
-  return fullPrice - proPrice.value
+const nextBillingDate = computed(() => {
+  const sub = subscriptionStore.subscription
+  if (!sub) return null
+  if (sub.paid_end) {
+    return formatDate(sub.paid_end)
+  }
+  return null
 })
 
-const proPlusSavings = computed(() => {
-  const fullPrice = baseProPlusPrice * selectedPeriod.value
-  return proPlusPrice.value < fullPrice ? fullPrice - proPlusPrice.value : 0
-})
+function selectTerm(termId) {
+  selectedTermId.value = termId
+}
 
-const priceLabel = computed(() => {
-  if (selectedPeriod.value === 1) return '/ месяц'
-  return `за ${selectedPeriod.value} мес`
-})
+function getTariffClass(tariff, index) {
+  if (tariff.code === 'coming_soon') return 'coming-soon'
+  if (index === 1) return 'popular'
+  if (index === 2) return 'pro-plus'
+  if (tariff.code === 'free') return 'free'
+  return ''
+}
+
+function getTariffPrice(tariff) {
+  if (!tariff || tariff.code === 'free') return 0
+  if (!selectedTerm.value || !tariff.terms) return tariff.price
+  
+  const term = tariff.terms.find(t => t.id === selectedTerm.value.id)
+  if (!term) return tariff.price
+  
+  return term.final_price
+}
+
+function getTariffSavings(tariff) {
+  if (!tariff || tariff.code === 'free' || !selectedTerm.value) return 0
+  const term = tariff.terms?.find(t => t.id === selectedTerm.value.id)
+  if (!term) return 0
+  return parseFloat(term.savings) || 0
+}
+
+function getSortedFeatureItems(tariff) {
+  if (!tariff?.feature_items?.length) return []
+  return [...tariff.feature_items].sort((a, b) => a.sort_order - b.sort_order)
+}
+
+function getPriceLabel(tariff) {
+  if (tariff.code === 'free') return 'навсегда'
+  if (!selectedTerm.value) return '/ месяц'
+  if (selectedTerm.value.months === 1) return '/ месяц'
+  return `за ${selectedTerm.value.months} мес`
+}
+
+function isCurrentTariff(tariff) {
+  return subscriptionStore.effectiveTariffCode === tariff.code
+}
+
+function getButtonText(tariff) {
+  if (isCurrentTariff(tariff)) {
+    return subscriptionStore.canProlong ? 'Продлить' : 'Текущий план'
+  }
+  return 'Выбрать'
+}
+
+function selectTariff(tariff) {
+  if (!selectedTerm.value) return
+  selectedTariff.value = tariff
+  showPaymentModal.value = true
+}
+
+function closePaymentModal() {
+  showPaymentModal.value = false
+  selectedTariff.value = null
+}
+
+function onPaymentSuccess() {
+  closePaymentModal()
+  subscriptionStore.loadSubscription()
+  subscriptionStore.loadPaymentHistory()
+}
+
+async function applyPromocode() {
+  if (!promocodeInput.value.trim()) return
+  
+  promocodeLoading.value = true
+  promocodeError.value = ''
+  promocodeSuccess.value = ''
+  
+  const result = await subscriptionStore.activatePromocode(promocodeInput.value.trim())
+  
+  promocodeLoading.value = false
+  
+  if (result.success) {
+    promocodeSuccess.value = `Промокод ${result.promocode.code} активирован!`
+    promocodeInput.value = ''
+  } else {
+    promocodeError.value = result.error
+  }
+}
 
 function formatPrice(price) {
-  return price.toLocaleString('ru-RU')
+  return Math.round(price).toLocaleString('ru-RU')
 }
 
-function goBack() {
-  router.push('/app/settings')
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
 }
+
+function getPaymentStatusLabel(status) {
+  const labels = {
+    'done': 'Оплачено',
+    'pending': 'Ожидает',
+    'failed': 'Ошибка',
+    'refunded': 'Возврат'
+  }
+  return labels[status] || status
+}
+
+onMounted(() => {
+  subscriptionStore.loadSubscription()
+  subscriptionStore.loadTariffs()
+  subscriptionStore.loadPaymentHistory()
+  
+  if (terms.value.length > 0) {
+    const hitTerm = terms.value.find(t => t.is_hit)
+    if (hitTerm) {
+      selectedTermId.value = hitTerm.id
+    }
+  }
+})
 </script>
 
 <style scoped>
@@ -243,23 +389,6 @@ function goBack() {
   text-align: center;
 }
 
-.btn-back {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md);
-  background: var(--bg-secondary);
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-back:hover {
-  background: var(--bg-tertiary);
-}
-
 .page-header h1 {
   font-size: 1.75rem;
   margin-bottom: 0.25rem;
@@ -270,250 +399,6 @@ function goBack() {
   margin: 0;
 }
 
-.current-status {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem 1.5rem;
-  background: rgba(99, 102, 241, 0.1);
-  border-radius: var(--radius-md);
-  margin-bottom: 2rem;
-}
-
-.current-status .status-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: var(--primary-color);
-  color: white;
-  border-radius: var(--radius-sm);
-  font-weight: 600;
-  font-size: 0.875rem;
-  white-space: nowrap;
-}
-
-.current-status p {
-  margin: 0;
-  color: var(--text-secondary);
-}
-
-.period-selector {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-}
-
-.period-btn {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 1rem 1.5rem;
-  background: var(--bg-secondary);
-  border: 2px solid transparent;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 100px;
-}
-
-.period-btn:hover {
-  border-color: var(--border-color);
-}
-
-.period-btn.active {
-  border-color: var(--primary-color);
-  background: rgba(99, 102, 241, 0.1);
-}
-
-.period-name {
-  font-weight: 600;
-  font-size: 1rem;
-}
-
-.period-discount {
-  font-size: 0.875rem;
-  color: var(--success-color);
-  font-weight: 600;
-}
-
-.best-value-badge {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  background: linear-gradient(135deg, #d97706, #f59e0b);
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.plans-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.plan-card {
-  position: relative;
-  background: var(--bg-primary);
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  transition: all 0.3s ease;
-}
-
-.plan-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-}
-
-.plan-card.popular {
-  border-color: var(--primary-color);
-  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.2);
-}
-
-.popular-badge {
-  position: absolute;
-  top: -12px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--primary-color);
-  color: white;
-  padding: 0.375rem 1rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.75rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.plan-header {
-  text-align: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.plan-name {
-  font-size: 1.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.plan-price {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.price-value {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.price-period {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
-.savings {
-  margin-top: 0.5rem;
-  font-size: 0.875rem;
-  color: var(--success-color);
-  font-weight: 600;
-}
-
-.plan-features {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 1.5rem;
-  flex: 1;
-}
-
-.plan-features li {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.625rem 0;
-  font-size: 0.9375rem;
-  line-height: 1.4;
-}
-
-.feature-icon {
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.feature-icon.included {
-  color: var(--success-color);
-}
-
-.feature-icon.excluded {
-  color: var(--text-tertiary);
-}
-
-.plan-features li:has(.excluded) {
-  color: var(--text-tertiary);
-}
-
-.plan-btn {
-  width: 100%;
-  margin-top: auto;
-}
-
-.plan-card.free .plan-btn {
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
-  cursor: default;
-}
-
-.plan-card.pro-plus .plan-name {
-  background: linear-gradient(135deg, #d97706, #f59e0b);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.pro-plus-btn {
-  background: linear-gradient(135deg, #d97706, #f59e0b);
-  border: none;
-}
-
-.pro-plus-btn:hover {
-  background: linear-gradient(135deg, #b45309, #d97706);
-}
-
-.guarantee {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-}
-
-.guarantee svg {
-  color: var(--success-color);
-  flex-shrink: 0;
-}
-
-.guarantee p {
-  margin: 0;
-  font-size: 0.9375rem;
-}
-
 .current-plan-block {
   display: flex;
   justify-content: space-between;
@@ -521,7 +406,7 @@ function goBack() {
   padding: 1.5rem;
   background: var(--bg-secondary);
   border-radius: var(--radius-lg);
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   border: 1px solid var(--border-color);
 }
 
@@ -592,6 +477,209 @@ function goBack() {
   color: var(--text-primary);
 }
 
+.promocode-active {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+  color: var(--success-color);
+}
+
+.promocode-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.promocode-label {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.promocode-code {
+  font-weight: 600;
+}
+
+.promocode-discount {
+  background: var(--success-color);
+  color: white;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.promocode-input-section {
+  margin-bottom: 2rem;
+}
+
+.promocode-form {
+  display: flex;
+  gap: 0.75rem;
+  max-width: 400px;
+}
+
+.promocode-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.promocode-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.promocode-error {
+  color: var(--danger-color);
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+.promocode-success {
+  color: var(--success-color);
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+.period-selector {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.period-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 1rem 1.5rem;
+  background: var(--bg-secondary);
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.period-btn:hover {
+  border-color: var(--border-color);
+}
+
+.period-btn.active {
+  border-color: var(--primary-color);
+  background: var(--primary-color);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.period-btn.active .period-name {
+  color: white;
+}
+
+.period-btn.active .period-discount {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.period-name {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.period-discount {
+  font-size: 0.875rem;
+  color: var(--success-color);
+  font-weight: 600;
+}
+
+.best-value-badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: linear-gradient(135deg, #d97706, #f59e0b);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem;
+  gap: 1rem;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.plan-card {
+  position: relative;
+  background: var(--bg-primary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+}
+
+.plan-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.plan-card.popular {
+  border-color: var(--primary-color);
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.2);
+}
+
+.popular-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--primary-color);
+  color: white;
+  padding: 0.375rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .coming-soon-badge {
   position: absolute;
   top: -12px;
@@ -611,14 +699,105 @@ function goBack() {
   opacity: 0.7;
 }
 
-.plan-card.coming-soon .pro-plus-btn {
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
-  cursor: not-allowed;
+.plan-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.plan-card.coming-soon .pro-plus-btn:hover {
+.plan-name {
+  font-size: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.price-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.price-period {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.savings {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--success-color);
+  font-weight: 600;
+}
+
+.plan-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0 0 1rem;
+  text-align: center;
+}
+
+.plan-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem;
+  flex: 1;
+}
+
+.plan-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.625rem 0;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
+.feature-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.feature-icon.included {
+  color: var(--success-color);
+}
+
+.plan-btn {
+  width: 100%;
+  margin-top: auto;
+}
+
+.plan-card.free .plan-btn:disabled {
   background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  cursor: default;
+}
+
+.guarantee {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+}
+
+.guarantee svg {
+  color: var(--success-color);
+  flex-shrink: 0;
+}
+
+.guarantee p {
+  margin: 0;
+  font-size: 0.9375rem;
 }
 
 .billing-history-section {
@@ -683,19 +862,24 @@ function goBack() {
   font-weight: 600;
 }
 
-.payment-status.paid {
+.payment-status.done {
   background: rgba(34, 197, 94, 0.15);
   color: var(--success-color);
-}
-
-.payment-status.refunded {
-  background: rgba(249, 115, 22, 0.15);
-  color: #f97316;
 }
 
 .payment-status.pending {
   background: rgba(99, 102, 241, 0.15);
   color: var(--primary-color);
+}
+
+.payment-status.failed {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger-color);
+}
+
+.payment-status.refunded {
+  background: rgba(249, 115, 22, 0.15);
+  color: #f97316;
 }
 
 .no-billing-history {
@@ -736,6 +920,11 @@ function goBack() {
     padding-top: 1rem;
     border-top: 1px solid var(--border-color);
     width: 100%;
+  }
+  
+  .promocode-form {
+    flex-direction: column;
+    max-width: 100%;
   }
   
   .billing-table th,

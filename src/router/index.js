@@ -18,6 +18,8 @@ const Planning = () => import('@/views/Planning.vue')
 const Settings = () => import('@/views/Settings.vue')
 const NotificationSettings = () => import('@/views/NotificationSettings.vue')
 const Subscription = () => import('@/views/Subscription.vue')
+const BillingSuccess = () => import('@/views/BillingSuccess.vue')
+const BillingFail = () => import('@/views/BillingFail.vue')
 const Referral = () => import('@/views/Referral.vue')
 const Club = () => import('@/views/Club.vue')
 const JournalHistory = () => import('@/views/JournalHistory.vue')
@@ -198,6 +200,18 @@ const router = createRouter({
       name: 'subscription',
       component: Subscription,
       meta: { title: 'Тарифы и подписка', requiresAuth: true }
+    },
+    {
+      path: '/app/billing/success',
+      name: 'billing-success',
+      component: BillingSuccess,
+      meta: { title: 'Оплата успешна', requiresAuth: true }
+    },
+    {
+      path: '/app/billing/fail',
+      name: 'billing-fail',
+      component: BillingFail,
+      meta: { title: 'Ошибка оплаты', requiresAuth: true }
     },
     {
       path: '/app/referral',
