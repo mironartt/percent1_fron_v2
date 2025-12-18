@@ -61,7 +61,7 @@
       <button 
         v-for="term in terms" 
         :key="term.id"
-        :class="['period-btn', { active: selectedTermId === term.id, hit: term.is_hit }]"
+        :class="['period-btn', { active: selectedTerm?.id === term.id, hit: term.is_hit }]"
         @click="selectTerm(term.id)"
       >
         <span class="period-name">{{ term.title }}</span>
