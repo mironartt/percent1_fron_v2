@@ -495,26 +495,11 @@
                 </div>
                 <p v-if="tariff.description" class="tariff-description">{{ tariff.description }}</p>
                 <ul class="pricing-features">
-                  <li v-if="tariff.limits">
-                    <span class="check"><Check :size="16" /></span> Цели (до {{ tariff.limits.max_goals }})
-                  </li>
-                  <li v-if="tariff.limits">
-                    <span class="check"><Check :size="16" /></span> Привычки (до {{ tariff.limits.max_habits }})
-                  </li>
-                  <li v-if="!tariff.limits && tariff.code !== 'free'">
-                    <span class="check"><Check :size="16" /></span> Безлимитные цели и привычки
-                  </li>
-                  <li v-if="tariff.features?.includes('goals_ai_assistant')">
-                    <span class="check"><Check :size="16" /></span> AI ментор и помощь
-                  </li>
-                  <li v-if="tariff.features?.includes('habits_analytics')">
-                    <span class="check"><Check :size="16" /></span> Аналитика привычек
-                  </li>
-                  <li v-if="tariff.features?.includes('ssp_history')">
-                    <span class="check"><Check :size="16" /></span> История ССП
-                  </li>
-                  <li v-if="tariff.features?.includes('priority_support')">
-                    <span class="check"><Check :size="16" /></span> Приоритетная поддержка
+                  <li 
+                    v-for="item in getSortedFeatureItems(tariff)" 
+                    :key="item.id"
+                  >
+                    <span class="check"><Check :size="16" /></span> {{ item.text }}
                   </li>
                 </ul>
                 <router-link 
@@ -704,7 +689,12 @@ function getTariffSavings(tariff) {
   if (!tariff || tariff.code === 'free' || !selectedTerm.value) return 0
   const term = tariff.terms?.find(t => t.id === selectedTerm.value.id)
   if (!term) return 0
-  return term.term_discount_value + term.promocode_discount_value
+  return parseFloat(term.savings) || 0
+}
+
+function getSortedFeatureItems(tariff) {
+  if (!tariff?.feature_items?.length) return []
+  return [...tariff.feature_items].sort((a, b) => a.sort_order - b.sort_order)
 }
 
 function formatPrice(price) {

@@ -1,0 +1,42 @@
+  Что изменилось в API тарифов                                                                                                       
+                                                                                                                                     
+  1. Новое поле savings в terms                                                                                                      
+                                                                                                                                     
+  В каждом элементе массива terms теперь есть поле savings — готовое значение экономии:                                              
+                                                                                                                                     
+  {                                                                                                                                  
+    "terms": [                                                                                                                       
+      {                                                                                                                              
+        "id": 1,                                                                                                                     
+        "months": 1,                                                                                                                 
+        "total_price": "990.00",                                                                                                     
+        "final_price": "990.00",                                                                                                     
+        "savings": "0.00"  // ← НОВОЕ: экономия уже рассчитана                                                                       
+      },                                                                                                                             
+      {                                                                                                                              
+        "id": 12,                                                                                                                    
+        "months": 12,                                                                                                                
+        "total_price": "11880.00",                                                                                                   
+        "final_price": "8316.00",                                                                                                    
+        "savings": "3564.00"  // ← total_price - final_price                                                                         
+      }                                                                                                                              
+    ]                                                                                                                                
+  }                                                                                                                                  
+                                                                                                                                     
+  Что делать: Использовать savings напрямую вместо расчёта на фронте.                                                                
+                                                                                                                                     
+  2. Новое поле feature_items в тарифе                                                                                               
+                                                                                                                                     
+  Тексты преимуществ теперь приходят с бэка:                                                                                         
+                                                                                                                                     
+  {                                                                                                                                  
+    "id": 2,                                                                                                                         
+    "code": "pro",                                                                                                                   
+    "title": "Pro",                                                                                                                  
+    "feature_items": [  // ← НОВОЕ: тексты для UI                                                                                    
+      {"id": 1, "text": "Безлимитные цели", "sort_order": 0},                                                                        
+      {"id": 2, "text": "AI ментор", "sort_order": 1},                                                                               
+      {"id": 3, "text": "Аналитика прогресса", "sort_order": 2}                                                                      
+    ],                                                                                                                               
+    "features": ["unlimited_goals", "ai_mentor", ...]  // для has_feature                                                            
+  }                            

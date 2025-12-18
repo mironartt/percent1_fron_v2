@@ -239,3 +239,42 @@ if (!result.allowed) {
 4. **Параллельные запросы**: При загрузке страницы подписки все 3 запроса выполняются параллельно для ускорения
 
 5. **Обработка ошибок**: Все методы store возвращают `{ success: boolean, error?: string }` для единообразной обработки
+
+---
+
+## Структура данных API
+
+### Tariff (тариф)
+```json
+{
+  "id": 2,
+  "code": "pro",
+  "title": "Pro",
+  "description": "Полный доступ ко всем возможностям",
+  "feature_items": [
+    {"id": 1, "text": "Безлимитные цели", "sort_order": 0},
+    {"id": 2, "text": "AI ментор", "sort_order": 1},
+    {"id": 3, "text": "Аналитика прогресса", "sort_order": 2}
+  ],
+  "features": ["unlimited_goals", "ai_mentor", "habits_analytics"],
+  "terms": [...]
+}
+```
+
+**Примечание:** `feature_items` — тексты для отображения в UI, `features` — коды для проверки `hasFeature()`
+
+### Term (период подписки)
+```json
+{
+  "id": 12,
+  "months": 12,
+  "title": "12 месяцев",
+  "discount": 30,
+  "is_hit": true,
+  "total_price": "11880.00",
+  "final_price": "8316.00",
+  "savings": "3564.00"
+}
+```
+
+**Примечание:** `savings` — готовое значение экономии, рассчитанное на бэкенде (total_price - final_price)
