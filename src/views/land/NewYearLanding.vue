@@ -270,49 +270,55 @@
               </div>
             </details>
 
-            <div class="example-steps">
-              <h4>Первые шаги:</h4>
-              <div class="step-item">
-                <span class="step-number">1</span>
-                <span class="step-title">Скачать выписки из всех банков за 2025 год и выгрузить в Google Sheets</span>
-                <span class="step-time">1 ч</span>
+            <details class="example-accordion" open>
+              <summary class="accordion-header">
+                <span class="accordion-icon">👣</span>
+                <span class="accordion-title">Первые шаги</span>
+                <span class="accordion-arrow">▼</span>
+              </summary>
+              <div class="accordion-content">
+                <div class="step-item">
+                  <span class="step-number">1</span>
+                  <span class="step-title">Скачать выписки из всех банков за 2025 год и выгрузить в Google Sheets</span>
+                  <span class="step-time">1 ч</span>
+                </div>
+                <div class="step-item">
+                  <span class="step-number">2</span>
+                  <span class="step-title">Категоризировать расходы: жильё, еда, транспорт, развлечения, подписки</span>
+                  <span class="step-time">2 ч</span>
+                </div>
+                <div class="step-item">
+                  <span class="step-number">3</span>
+                  <span class="step-title">Найти 3 статьи экономии (отказ от подписок, оптимизация тарифов, кешбэк)</span>
+                  <span class="step-time">1 ч</span>
+                </div>
+                <div class="step-item">
+                  <span class="step-number">4</span>
+                  <span class="step-title">Открыть накопительный счёт в Тинькофф/Альфа с 10%+ годовых</span>
+                  <span class="step-time">30 мин</span>
+                </div>
+                <div class="step-item">
+                  <span class="step-number">5</span>
+                  <span class="step-title">Настроить автоперевод 10% зарплаты на накопительный счёт</span>
+                  <span class="step-time">30 мин</span>
+                </div>
+                <div class="step-item">
+                  <span class="step-number">6</span>
+                  <span class="step-title">Составить бюджет на январь в приложении (YNAB, ZenMoney, CoinKeeper)</span>
+                  <span class="step-time">2 ч</span>
+                </div>
+                <div class="step-item">
+                  <span class="step-number">7</span>
+                  <span class="step-title">Изучить 5 вакансий на HeadHunter в своей сфере для понимания рынка</span>
+                  <span class="step-time">1 ч</span>
+                </div>
+                <div class="step-item">
+                  <span class="step-number">8</span>
+                  <span class="step-title">Написать список из 3 идей дополнительного дохода (фриланс, консультации, курсы)</span>
+                  <span class="step-time">1 ч</span>
+                </div>
               </div>
-              <div class="step-item">
-                <span class="step-number">2</span>
-                <span class="step-title">Категоризировать расходы: жильё, еда, транспорт, развлечения, подписки</span>
-                <span class="step-time">2 ч</span>
-              </div>
-              <div class="step-item">
-                <span class="step-number">3</span>
-                <span class="step-title">Найти 3 статьи экономии (отказ от подписок, оптимизация тарифов, кешбэк)</span>
-                <span class="step-time">1 ч</span>
-              </div>
-              <div class="step-item">
-                <span class="step-number">4</span>
-                <span class="step-title">Открыть накопительный счёт в Тинькофф/Альфа с 10%+ годовых</span>
-                <span class="step-time">30 мин</span>
-              </div>
-              <div class="step-item">
-                <span class="step-number">5</span>
-                <span class="step-title">Настроить автоперевод 10% зарплаты на накопительный счёт</span>
-                <span class="step-time">30 мин</span>
-              </div>
-              <div class="step-item">
-                <span class="step-number">6</span>
-                <span class="step-title">Составить бюджет на январь в приложении (YNAB, ZenMoney, CoinKeeper)</span>
-                <span class="step-time">2 ч</span>
-              </div>
-              <div class="step-item">
-                <span class="step-number">7</span>
-                <span class="step-title">Изучить 5 вакансий на HeadHunter в своей сфере для понимания рынка</span>
-                <span class="step-time">1 ч</span>
-              </div>
-              <div class="step-item">
-                <span class="step-number">8</span>
-                <span class="step-title">Написать список из 3 идей дополнительного дохода (фриланс, консультации, курсы)</span>
-                <span class="step-time">1 ч</span>
-              </div>
-            </div>
+            </details>
 
             <details class="example-accordion" open>
               <summary class="accordion-header">
