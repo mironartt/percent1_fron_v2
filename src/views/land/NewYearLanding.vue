@@ -64,7 +64,7 @@
       <section class="how-it-works">
         <div class="container">
           <h2 class="section-title">Как это работает</h2>
-          <div class="steps">
+          <div class="steps steps-desktop">
             <div class="step">
               <div class="step-number">1</div>
               <div class="step-icon">📝</div>
@@ -83,6 +83,35 @@
               <h3>Создай план</h3>
               <p>AI сгенерирует персональный план целей на 2026 год.</p>
             </div>
+          </div>
+          <div class="steps-accordion">
+            <details class="step-accordion">
+              <summary class="step-summary">
+                <span class="step-number">1</span>
+                <span class="step-icon">📝</span>
+                <span class="step-title">Пройди тест</span>
+                <span class="chevron">▼</span>
+              </summary>
+              <p class="step-description">12 вопросов по 6 сферам жизни. Оцени свой год честно.</p>
+            </details>
+            <details class="step-accordion">
+              <summary class="step-summary">
+                <span class="step-number">2</span>
+                <span class="step-icon">📊</span>
+                <span class="step-title">Получи анализ</span>
+                <span class="chevron">▼</span>
+              </summary>
+              <p class="step-description">Визуализация результатов: сильные стороны и зоны роста.</p>
+            </details>
+            <details class="step-accordion">
+              <summary class="step-summary">
+                <span class="step-number">3</span>
+                <span class="step-icon">🎯</span>
+                <span class="step-title">Создай план</span>
+                <span class="chevron">▼</span>
+              </summary>
+              <p class="step-description">AI сгенерирует персональный план целей на 2026 год.</p>
+            </details>
           </div>
         </div>
       </section>
@@ -815,6 +844,72 @@ onMounted(async () => {
   color: #6b7280;
   font-size: 14px;
   line-height: 1.5;
+}
+
+.steps-accordion {
+  display: none;
+}
+
+.step-accordion {
+  background: white;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.step-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.step-summary::-webkit-details-marker {
+  display: none;
+}
+
+.step-summary .step-number {
+  position: static;
+  transform: none;
+  width: 28px;
+  height: 28px;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.step-summary .step-icon {
+  font-size: 24px;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.step-summary .step-title {
+  flex: 1;
+  font-size: 15px;
+}
+
+.step-summary .chevron {
+  font-size: 12px;
+  color: #9ca3af;
+  transition: transform 0.2s;
+}
+
+.step-accordion[open] .chevron {
+  transform: rotate(180deg);
+}
+
+.step-description {
+  padding: 0 16px 16px 56px;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
 }
 
 .new-year-motivation {
@@ -1626,21 +1721,20 @@ onMounted(async () => {
 }
 
 @media (max-width: 480px) {
-  .header-content {
-    gap: 8px;
+  .newyear-landing {
+    overflow-x: hidden;
   }
 
-  .logo-text {
-    font-size: 16px;
+  .landing-header {
+    display: none;
   }
 
-  .login-link {
-    font-size: 13px;
-    padding: 8px 12px;
+  .container {
+    padding: 0 20px;
   }
 
   .hero {
-    padding: 60px 0 40px;
+    padding: 40px 0 30px;
   }
 
   .hero-title {
@@ -1657,12 +1751,16 @@ onMounted(async () => {
     padding: 6px 12px;
   }
 
-  .step {
-    padding: 20px;
+  .steps-desktop {
+    display: none;
   }
 
-  .step h3 {
-    font-size: 16px;
+  .steps-accordion {
+    display: block;
+  }
+
+  .how-it-works {
+    padding: 40px 0;
   }
 
   .section-title {
