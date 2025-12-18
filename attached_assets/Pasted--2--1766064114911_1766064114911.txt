@@ -1,0 +1,44 @@
+Нахожусь в разделе планирование, вижу блок `2 целей требуют декомпозиции`, и вижу там цель, кликую по ней, перехожу по `/app/goals/344` (344 - это реальный id цели).
+Но данные по цели не прогружаются, в логах запросов вижу лишь запросы к:
+- /api/rest/front/csrf/
+- /api/rest/front/get-user-data/
+И все.
+А логах консоли вижу:
+```
+[Router] Navigation: /app/planning → /app/goals/344 index-eKPq-x4T.js:2:251528
+[API] Refreshing CSRF token from: https://percent1.ru/api/rest/front/csrf/ index-eKPq-x4T.js:2:116870
+[API] CSRF token saved to memory index-eKPq-x4T.js:2:114480
+[API] CSRF token initialized index-eKPq-x4T.js:2:117143
+[Router] Fetching fresh user data from API... index-eKPq-x4T.js:2:251021
+[API] POST /api/rest/front/get-user-data/ null index-eKPq-x4T.js:2:115555
+[API] Response:
+Object { status: "ok", data: {…} }
+index-eKPq-x4T.js:2:115754
+[Router] User authenticated:
+Object { id: 52, email: "admin_user@admin.com", name: "N/A", finish_onboarding: true, finish_minitask: false }
+index-eKPq-x4T.js:2:251125
+[Store] User dashboard data saved to localStorage index-eKPq-x4T.js:2:136964
+[Store] Synced onboarding.completed = true from user.finish_onboarding index-eKPq-x4T.js:2:136002
+[Store] User set:
+Object { id: 52, email: "admin_user@admin.com", name: "", isAuthenticated: true, finishOnboarding: true, finishMinitask: false, telegramBotLink: "present", xpBalance: 0, todayTasks: 2, todayHabits: 1, … }
+index-eKPq-x4T.js:2:136089
+[Store] AI bot chat data set:
+Object { conversation_id: 15, unread_count: 0, is_bot_processing: false }
+index-eKPq-x4T.js:2:135405
+[XP] Synced xpBalance from user data: 0 index-eKPq-x4T.js:2:215043
+[Router] Auth status:
+Object { isAuthenticated: true, skipped: false, requiresAuth: true, guestOnly: undefined, targetRoute: "/app/goals/344" }
+index-eKPq-x4T.js:2:252156
+[Router] Navigation allowed index-eKPq-x4T.js:2:252802
+[YandexMetrika] Page view tracked:
+Object { id: 105671462, path: "/app/goals/344", title: "Редактирование цели" }
+index-eKPq-x4T.js:2:252987
+Uncaught (in promise) ReferenceError: isLoadingGoal is not defined
+    _t https://percent1.ru/assets/GoalEdit-CvsiPTiU.js:2
+    setup https://percent1.ru/assets/GoalEdit-CvsiPTiU.js:2
+    Zt https://percent1.ru/assets/index-eKPq-x4T.js:2
+    Os https://percent1.ru/assets/index-eKPq-x4T.js:2
+    Et https://percent1.ru/assets/index-eKPq-x4T.js:2
+```
+
+Разберись в проблеме и поправь.
