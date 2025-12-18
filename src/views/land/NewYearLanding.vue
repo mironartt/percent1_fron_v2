@@ -239,30 +239,36 @@
               <span class="example-sphere">Благосостояние — главный рычаг 2026</span>
             </div>
             
-            <div class="example-goals">
-              <h4>Цели на год:</h4>
-              <div class="goal-item">
-                <span class="goal-check">✓</span>
-                <div class="goal-content">
-                  <strong>Создать финансовую подушку на 3 месяца</strong>
-                  <span class="goal-metric">Накопить 150-300 тыс. ₽ к июню 2026</span>
+            <details class="example-accordion" open>
+              <summary class="accordion-header">
+                <span class="accordion-icon">🎯</span>
+                <span class="accordion-title">Цели на год</span>
+                <span class="accordion-arrow">▼</span>
+              </summary>
+              <div class="accordion-content">
+                <div class="goal-item">
+                  <span class="goal-check">✓</span>
+                  <div class="goal-content">
+                    <strong>Создать финансовую подушку на 3 месяца</strong>
+                    <span class="goal-metric">Накопить 150-300 тыс. ₽ к июню 2026</span>
+                  </div>
+                </div>
+                <div class="goal-item">
+                  <span class="goal-check">✓</span>
+                  <div class="goal-content">
+                    <strong>Увеличить доход на 20%</strong>
+                    <span class="goal-metric">Через фриланс, повышение или смену работы</span>
+                  </div>
+                </div>
+                <div class="goal-item">
+                  <span class="goal-check">✓</span>
+                  <div class="goal-content">
+                    <strong>Оптимизировать расходы на 15%</strong>
+                    <span class="goal-metric">Сократить траты на 10-15 тыс. ₽ в месяц</span>
+                  </div>
                 </div>
               </div>
-              <div class="goal-item">
-                <span class="goal-check">✓</span>
-                <div class="goal-content">
-                  <strong>Увеличить доход на 20%</strong>
-                  <span class="goal-metric">Через фриланс, повышение или смену работы</span>
-                </div>
-              </div>
-              <div class="goal-item">
-                <span class="goal-check">✓</span>
-                <div class="goal-content">
-                  <strong>Оптимизировать расходы на 15%</strong>
-                  <span class="goal-metric">Сократить траты на 10-15 тыс. ₽ в месяц</span>
-                </div>
-              </div>
-            </div>
+            </details>
 
             <div class="example-steps">
               <h4>Первые шаги:</h4>
@@ -308,43 +314,49 @@
               </div>
             </div>
 
-            <div class="example-plan">
-              <h4>План на 4 недели:</h4>
-              <div class="week-items-detailed">
-                <div class="week-item-detailed">
-                  <span class="week-num">Неделя 1</span>
-                  <ul class="week-tasks-list">
-                    <li>Выгрузить выписки из банков</li>
-                    <li>Категоризировать расходы за 6 месяцев</li>
-                    <li>Найти подписки на отмену</li>
-                  </ul>
-                </div>
-                <div class="week-item-detailed">
-                  <span class="week-num">Неделя 2</span>
-                  <ul class="week-tasks-list">
-                    <li>Открыть накопительный счёт</li>
-                    <li>Настроить автоперевод 10%</li>
-                    <li>Установить приложение для бюджета</li>
-                  </ul>
-                </div>
-                <div class="week-item-detailed">
-                  <span class="week-num">Неделя 3</span>
-                  <ul class="week-tasks-list">
-                    <li>Составить бюджет на февраль</li>
-                    <li>Изучить 5 вакансий</li>
-                    <li>Выбрать 1 идею доп. дохода</li>
-                  </ul>
-                </div>
-                <div class="week-item-detailed">
-                  <span class="week-num">Неделя 4</span>
-                  <ul class="week-tasks-list">
-                    <li>Сделать первый шаг к доп. доходу</li>
-                    <li>Проверить баланс накоплений</li>
-                    <li>Скорректировать бюджет</li>
-                  </ul>
+            <details class="example-accordion" open>
+              <summary class="accordion-header">
+                <span class="accordion-icon">📅</span>
+                <span class="accordion-title">План на 4 недели</span>
+                <span class="accordion-arrow">▼</span>
+              </summary>
+              <div class="accordion-content">
+                <div class="week-items-detailed">
+                  <div class="week-item-detailed">
+                    <span class="week-num">Неделя 1</span>
+                    <ul class="week-tasks-list">
+                      <li>Выгрузить выписки из банков</li>
+                      <li>Категоризировать расходы за 6 месяцев</li>
+                      <li>Найти подписки на отмену</li>
+                    </ul>
+                  </div>
+                  <div class="week-item-detailed">
+                    <span class="week-num">Неделя 2</span>
+                    <ul class="week-tasks-list">
+                      <li>Открыть накопительный счёт</li>
+                      <li>Настроить автоперевод 10%</li>
+                      <li>Установить приложение для бюджета</li>
+                    </ul>
+                  </div>
+                  <div class="week-item-detailed">
+                    <span class="week-num">Неделя 3</span>
+                    <ul class="week-tasks-list">
+                      <li>Составить бюджет на февраль</li>
+                      <li>Изучить 5 вакансий</li>
+                      <li>Выбрать 1 идею доп. дохода</li>
+                    </ul>
+                  </div>
+                  <div class="week-item-detailed">
+                    <span class="week-num">Неделя 4</span>
+                    <ul class="week-tasks-list">
+                      <li>Сделать первый шаг к доп. доходу</li>
+                      <li>Проверить баланс накоплений</li>
+                      <li>Скорректировать бюджет</li>
+                    </ul>
+                  </div>
                 </div>
               </div>
-            </div>
+            </details>
           </div>
 
           <p class="preview-note">После теста ты получишь такие же рекомендации для своей главной зоны роста</p>
@@ -1295,6 +1307,60 @@ onMounted(async () => {
   color: #d97706;
 }
 
+/* Example Accordion Styles */
+.example-accordion {
+  margin-bottom: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+}
+
+.example-accordion .accordion-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.example-accordion .accordion-header:hover {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+}
+
+.example-accordion .accordion-header::-webkit-details-marker {
+  display: none;
+}
+
+.example-accordion .accordion-icon {
+  font-size: 20px;
+}
+
+.example-accordion .accordion-title {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.example-accordion .accordion-arrow {
+  font-size: 12px;
+  color: #6b7280;
+  transition: transform 0.3s ease;
+}
+
+.example-accordion[open] .accordion-arrow {
+  transform: rotate(180deg);
+}
+
+.example-accordion .accordion-content {
+  padding: 20px;
+}
+
 .example-goals,
 .example-steps,
 .example-plan {
@@ -1956,21 +2022,28 @@ onMounted(async () => {
 
   .preview-cards {
     display: flex;
+    flex-direction: column;
     gap: 16px;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    padding: 0 20px 16px;
-    margin: 0 -20px;
-  }
-
-  .preview-cards::-webkit-scrollbar {
-    display: none;
+    padding: 0;
+    margin: 0;
   }
 
   .preview-card {
-    flex: 0 0 85%;
-    scroll-snap-align: center;
+    width: 100%;
+    flex: none;
+  }
+
+  /* Accordion mobile styles */
+  .example-accordion .accordion-header {
+    padding: 14px 16px;
+  }
+
+  .example-accordion .accordion-content {
+    padding: 16px;
+  }
+
+  .example-accordion .accordion-title {
+    font-size: 15px;
   }
 
   .section-title {
