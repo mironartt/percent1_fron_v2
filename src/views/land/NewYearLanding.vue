@@ -1674,6 +1674,45 @@ onMounted(async () => {
   margin: 0;
 }
 
+/* Footer Legal - moved above media queries */
+.footer-legal {
+  text-align: center;
+}
+
+.legal-links {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.legal-links a {
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  transition: color 0.2s;
+}
+
+.legal-links a:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.company-info {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.75rem;
+}
+
+.company-info p {
+  margin: 0;
+}
+
+.copyright {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.875rem;
+  margin: 0.75rem 0 0;
+}
+
 @media (max-width: 960px) {
   .service-content {
     grid-template-columns: 1fr;
@@ -1792,10 +1831,25 @@ onMounted(async () => {
 @media (max-width: 480px) {
   .newyear-landing {
     overflow-x: hidden;
+    max-width: 100vw;
   }
 
   * {
     box-sizing: border-box;
+  }
+
+  /* Global section overflow control */
+  section,
+  .hero,
+  .how-it-works,
+  .preview-section,
+  .service-section,
+  .benefits-section,
+  .faq-section,
+  .cta-section,
+  .motivation-section {
+    overflow: hidden;
+    max-width: 100vw;
   }
 
   .landing-header {
@@ -1803,7 +1857,58 @@ onMounted(async () => {
   }
 
   .container {
-    padding: 0 20px;
+    padding: 0 16px;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  /* Benefits grid mobile fix */
+  .benefits-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .benefit-card {
+    max-width: 100%;
+    width: 100%;
+    padding: 16px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .benefit-card p {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* App mockup mobile fix */
+  .app-mockup,
+  .planner-mockup {
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .mockup-content {
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  /* Recommendation example mobile fix */
+  .recommendation-example {
+    padding: 16px;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .week-content {
+    max-width: 100%;
+  }
+
+  /* Service content mobile fix */
+  .service-content {
+    max-width: 100%;
+    overflow: hidden;
   }
 
   .hero {
@@ -1961,15 +2066,27 @@ onMounted(async () => {
   .faq-question {
     font-size: 14px;
     padding: 14px;
+    word-wrap: break-word;
   }
 
   .faq-answer {
     font-size: 14px;
     padding: 14px;
+    word-wrap: break-word;
+  }
+
+  .faq-item {
+    max-width: 100%;
+    overflow: hidden;
   }
 
   .cta-section {
     padding: 40px 0;
+    overflow: hidden;
+  }
+
+  .cta-section .container {
+    padding: 0 16px;
   }
 
   .cta-section h2 {
@@ -1991,43 +2108,5 @@ onMounted(async () => {
   .company-info {
     font-size: 11px;
   }
-}
-
-.footer-legal {
-  text-align: center;
-}
-
-.legal-links {
-  display: flex;
-  justify-content: center;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.75rem;
-}
-
-.legal-links a {
-  color: rgba(255, 255, 255, 0.6);
-  text-decoration: none;
-  font-size: 0.8125rem;
-  transition: color 0.2s;
-}
-
-.legal-links a:hover {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.company-info {
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 0.75rem;
-}
-
-.company-info p {
-  margin: 0;
-}
-
-.copyright {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.875rem;
-  margin: 0.75rem 0 0;
 }
 </style>
