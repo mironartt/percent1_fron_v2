@@ -599,7 +599,18 @@ onMounted(() => {
 
 .period-btn.active {
   border-color: var(--primary-color);
-  background: rgba(99, 102, 241, 0.1);
+  background: var(--primary-color);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.period-btn.active .period-name {
+  color: white;
+}
+
+.period-btn.active .period-discount {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .period-name {
