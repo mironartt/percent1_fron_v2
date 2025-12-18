@@ -95,11 +95,23 @@
         </button>
       </div>
     </div>
+
+    <UpgradeModal 
+      v-if="showUpgradeModal"
+      title="AI Помощник доступен на Pro"
+      message="Получите доступ к AI помощнику и персональным рекомендациям с подпиской Pro."
+      @close="closeUpgradeModal"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, nextTick, computed } from 'vue'
+import { useSubscriptionStore } from '@/stores/subscription'
+import UpgradeModal from './UpgradeModal.vue'
+
+const subscriptionStore = useSubscriptionStore()
+const showUpgradeModal = ref(false)
 
 const props = defineProps({
   context: {
@@ -157,8 +169,17 @@ function toggleMinimize() {
   }
 }
 
+function closeUpgradeModal() {
+  showUpgradeModal.value = false
+}
+
 async function sendMessage() {
   if (!inputMessage.value.trim() || isLoading.value) return
+
+  if (!subscriptionStore.hasAIAccess()) {
+    showUpgradeModal.value = true
+    return
+  }
 
   const userMessage = {
     id: Date.now(),

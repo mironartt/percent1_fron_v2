@@ -32,7 +32,14 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite (with pro
 -   **Achievements Page**: Improved UX with grouped XP history, filterable transactions, and pagination.
 -   **Settings Page**: Redesigned with profile management (email for Telegram users), Telegram bot integration, and an "Мой старт" section displaying onboarding data.
 -   **Notification Settings Page** (`/app/settings/notifications`): Dedicated page for Telegram notification preferences. Includes global toggle, daily reminders (morning/evening with time picker), event notifications (streak warning, achievements, level up, deadlines), weekly report settings (day/time), additional options (XP rewards, SSP reassessment), and timezone selection. Settings stored in localStorage with API integration placeholder. See `notes/telegram-notifications.md` for full specification.
--   **Subscription Page** (`/app/subscription`): Dedicated pricing page with 3 tiers (Free, Pro 990₽/mo, Клуб 1% 2,990₽/mo), period selector (1/3/6/12 months) with progressive discounts (0%/10%/20%/30%), trial status indicator, and 7-day money-back guarantee.
+-   **Subscription Page** (`/app/subscription`): Dynamic pricing page integrated with backend API. Displays real tariffs, terms with discounts, current subscription status, promocode activation, and payment history.
+-   **Billing System (NEW - December 2025)**: Complete billing integration with Robokassa payments.
+    - **Key Files**: `src/services/billing.js` (API service), `src/stores/subscription.js` (Pinia store), `src/components/PaymentModal.vue`, `src/components/UpgradeModal.vue`, `src/views/BillingSuccess.vue`, `src/views/BillingFail.vue`
+    - **API Endpoints**: `/app/subscription/get/`, `/app/tariffs/`, `/app/promocode/activate/`, `/app/payment/calculate/`, `/app/payment/create/`, `/app/payment/history/`
+    - **Feature Access Control**: Uses `effective_tariff` (not `tariff`) to account for trial expiration. `hasFeature()` and `checkLimit()` helpers in subscription store.
+    - **Tariff Limits**: Free tier limits - 3 goals, 5 habits, 10 diary entries/month. Pro/Basic - unlimited.
+    - **Payment Flow**: calculate → PaymentModal → create → redirect to Robokassa → callback to `/app/billing/success` or `/app/billing/fail`
+    - **AI Access Control**: MentorPanel and AICurator check `hasAIAccess()` before sending messages. Shows UpgradeModal for Free users.
 -   **Policy Acceptance Modal**: Mandatory modal for users who haven't accepted Terms & Privacy Policy. Blocks app usage until both checkboxes are confirmed. Triggered on login (if user.is_terms_accepted/is_privacy_accepted is false), on 403 policy_acceptance_required API error, or on WebSocket close code 4004. Key files: `src/components/PolicyAcceptanceModal.vue`, store flags in `src/stores/app.js` (needsPolicyAcceptance, setPolicyAccepted, showPolicyModal).
 
 ### System Design Choices

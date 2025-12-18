@@ -462,71 +462,110 @@
             Без скрытых платежей. Отмена в любой момент.
           </p>
           
+          <div v-if="pricingTerms.length > 0" class="term-selector">
+            <button 
+              v-for="term in pricingTerms" 
+              :key="term.id"
+              :class="['term-btn', { active: selectedTerm?.id === term.id, hit: term.is_hit }]"
+              @click="selectTerm(term.id)"
+            >
+              <span class="term-name">{{ term.title }}</span>
+              <span v-if="term.discount > 0" class="term-discount">-{{ term.discount }}%</span>
+              <span v-if="term.is_hit" class="hit-badge">Хит</span>
+            </button>
+          </div>
+          
           <div class="pricing-cards">
-            <div class="pricing-card">
-              <div class="pricing-header">
-                <h3>Бесплатно</h3>
-                <div class="price">
-                  <span class="amount">0 ₽</span>
-                  <span class="period">навсегда</span>
+            <template v-if="pricingTariffs.length > 0">
+              <div 
+                v-for="(tariff, index) in pricingTariffs" 
+                :key="tariff.id"
+                :class="['pricing-card', { featured: index === 1, premium: index === 2 }]"
+              >
+                <div v-if="index === 1" class="popular-badge">Популярный выбор</div>
+                <div class="pricing-header">
+                  <h3>{{ tariff.title }}</h3>
+                  <div class="price">
+                    <span class="amount">{{ formatPrice(getTariffPrice(tariff).price) }} ₽</span>
+                    <span class="period">{{ getTariffPrice(tariff).period }}</span>
+                  </div>
+                  <div v-if="getTariffSavings(tariff) > 0" class="savings">
+                    Экономия {{ formatPrice(getTariffSavings(tariff)) }} ₽
+                  </div>
                 </div>
+                <p v-if="tariff.description" class="tariff-description">{{ tariff.description }}</p>
+                <ul class="pricing-features">
+                  <li v-if="tariff.limits">
+                    <span class="check"><Check :size="16" /></span> Цели (до {{ tariff.limits.max_goals }})
+                  </li>
+                  <li v-if="tariff.limits">
+                    <span class="check"><Check :size="16" /></span> Привычки (до {{ tariff.limits.max_habits }})
+                  </li>
+                  <li v-if="!tariff.limits && tariff.code !== 'free'">
+                    <span class="check"><Check :size="16" /></span> Безлимитные цели и привычки
+                  </li>
+                  <li v-if="tariff.features?.includes('goals_ai_assistant')">
+                    <span class="check"><Check :size="16" /></span> AI ментор и помощь
+                  </li>
+                  <li v-if="tariff.features?.includes('habits_analytics')">
+                    <span class="check"><Check :size="16" /></span> Аналитика привычек
+                  </li>
+                  <li v-if="tariff.features?.includes('ssp_history')">
+                    <span class="check"><Check :size="16" /></span> История ССП
+                  </li>
+                  <li v-if="tariff.features?.includes('priority_support')">
+                    <span class="check"><Check :size="16" /></span> Приоритетная поддержка
+                  </li>
+                </ul>
+                <router-link 
+                  to="/auth/register" 
+                  :class="['btn', tariff.code === 'free' ? 'btn-outline' : (index === 1 ? 'btn-white' : 'btn-premium')]"
+                >
+                  {{ tariff.code === 'free' ? 'Начать бесплатно' : 'Попробовать' }}
+                </router-link>
               </div>
-              <ul class="pricing-features">
-                <li><span class="check"><Check :size="16" /></span> Колесо баланса (ССП)</li>
-                <li><span class="check"><Check :size="16" /></span> Банк целей (до 4 целей)</li>
-                <li><span class="check"><Check :size="16" /></span> Базовое планирование</li>
-                <li><span class="check"><Check :size="16" /></span> Трекер привычек (до 3)</li>
-                <li><span class="check"><Check :size="16" /></span> Дневник рефлексии</li>
-                <li><span class="check"><Check :size="16" /></span> Достижения (до 5)</li>
-                <li><span class="check"><Check :size="16" /></span> Напоминания в Telegram</li>
-              </ul>
-              <router-link to="/auth/register" class="btn btn-outline">
-                Начать бесплатно
-              </router-link>
-            </div>
+            </template>
             
-            <div class="pricing-card featured">
-              <div class="popular-badge">Популярный выбор</div>
-              <div class="pricing-header">
-                <h3>Pro</h3>
-                <div class="price">
-                  <span class="amount">990 ₽</span>
-                  <span class="period">/ месяц</span>
+            <template v-else>
+              <div class="pricing-card">
+                <div class="pricing-header">
+                  <h3>Бесплатно</h3>
+                  <div class="price">
+                    <span class="amount">0 ₽</span>
+                    <span class="period">навсегда</span>
+                  </div>
                 </div>
+                <ul class="pricing-features">
+                  <li><span class="check"><Check :size="16" /></span> Колесо баланса (ССП)</li>
+                  <li><span class="check"><Check :size="16" /></span> Банк целей (до 3 целей)</li>
+                  <li><span class="check"><Check :size="16" /></span> Трекер привычек (до 5)</li>
+                  <li><span class="check"><Check :size="16" /></span> Дневник рефлексии</li>
+                </ul>
+                <router-link to="/auth/register" class="btn btn-outline">
+                  Начать бесплатно
+                </router-link>
               </div>
-              <ul class="pricing-features">
-                <li><span class="check"><Check :size="16" /></span> Всё из Бесплатного плана</li>
-                <li><span class="check"><Check :size="16" /></span> Безлимитные цели и привычки</li>
-                <li><span class="check"><Check :size="16" /></span> AI ментор</li>
-                <li><span class="check"><Check :size="16" /></span> AI планирование</li>
-                <li><span class="check"><Check :size="16" /></span> AI помощь</li>
-                <li><span class="check"><Check :size="16" /></span> Голосовой чат с ментором в Telegram</li>
-                <li><span class="check"><Check :size="16" /></span> Клуб 1%</li>
-              </ul>
-              <router-link to="/auth/register" class="btn btn-white">
-                Попробовать Pro
-              </router-link>
-            </div>
-            
-            <div class="pricing-card premium">
-              <div class="pricing-header">
-                <h3>Клуб 1%</h3>
-                <div class="price">
-                  <span class="amount">2 990 ₽</span>
-                  <span class="period">/ месяц</span>
+              
+              <div class="pricing-card featured">
+                <div class="popular-badge">Популярный выбор</div>
+                <div class="pricing-header">
+                  <h3>Pro</h3>
+                  <div class="price">
+                    <span class="amount">599 ₽</span>
+                    <span class="period">/ месяц</span>
+                  </div>
                 </div>
+                <ul class="pricing-features">
+                  <li><span class="check"><Check :size="16" /></span> Всё из бесплатного</li>
+                  <li><span class="check"><Check :size="16" /></span> Безлимитные цели и привычки</li>
+                  <li><span class="check"><Check :size="16" /></span> AI ментор</li>
+                  <li><span class="check"><Check :size="16" /></span> Приоритетная поддержка</li>
+                </ul>
+                <router-link to="/auth/register" class="btn btn-white">
+                  Попробовать Pro
+                </router-link>
               </div>
-              <ul class="pricing-features">
-                <li><span class="check"><Check :size="16" /></span> Всё из Pro плана</li>
-                <li><span class="check"><Check :size="16" /></span> Еженедельные мастермайнды</li>
-                <li><span class="check"><Check :size="16" /></span> Групповые челленджи</li>
-                <li><span class="check"><Check :size="16" /></span> Ранний доступ к новым функциям</li>
-                <li><span class="check"><Check :size="16" /></span> Нетворкинг 2.0</li>
-              </ul>
-              <router-link to="/auth/register" class="btn btn-premium">
-                Вступить в Клуб
-              </router-link>
-            </div>
+            </template>
           </div>
           
           <p class="pricing-note">
@@ -587,6 +626,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAppStore } from '@/stores/app'
+import { useSubscriptionStore } from '@/stores/subscription'
 import { checkAuth } from '@/services/api'
 import { 
   Target, 
@@ -626,7 +666,50 @@ import {
 } from 'lucide-vue-next'
 
 const appStore = useAppStore()
+const subscriptionStore = useSubscriptionStore()
 const isAuthenticated = computed(() => appStore.isAuthenticated)
+
+const pricingTariffs = computed(() => subscriptionStore.tariffs)
+const pricingTerms = computed(() => subscriptionStore.terms)
+const tariffsLoading = computed(() => subscriptionStore.tariffsLoading)
+
+const selectedTermId = ref(null)
+
+const selectedTerm = computed(() => {
+  if (!pricingTerms.value.length) return null
+  if (selectedTermId.value) {
+    return pricingTerms.value.find(t => t.id === selectedTermId.value) || pricingTerms.value[0]
+  }
+  return pricingTerms.value.find(t => t.is_hit) || pricingTerms.value[0]
+})
+
+function selectTerm(termId) {
+  selectedTermId.value = termId
+}
+
+function getTariffPrice(tariff) {
+  if (!tariff || tariff.code === 'free') return { price: 0, period: 'навсегда' }
+  if (!selectedTerm.value || !tariff.terms) return { price: tariff.price, period: '/ месяц' }
+  
+  const term = tariff.terms.find(t => t.id === selectedTerm.value.id)
+  if (!term) return { price: tariff.price, period: '/ месяц' }
+  
+  return {
+    price: term.final_price,
+    period: selectedTerm.value.months === 1 ? '/ месяц' : `за ${selectedTerm.value.months} мес`
+  }
+}
+
+function getTariffSavings(tariff) {
+  if (!tariff || tariff.code === 'free' || !selectedTerm.value) return 0
+  const term = tariff.terms?.find(t => t.id === selectedTerm.value.id)
+  if (!term) return 0
+  return term.term_discount_value + term.promocode_discount_value
+}
+
+function formatPrice(price) {
+  return Math.round(price).toLocaleString('ru-RU')
+}
 
 const days = ref(90)
 const isScrolled = ref(false)
@@ -706,7 +789,8 @@ function handleScroll() {
 onMounted(async () => {
   window.addEventListener('scroll', handleScroll)
   
-  // Проверяем авторизацию через API если в localStorage нет данных
+  subscriptionStore.loadTariffs(true)
+  
   if (!appStore.isAuthenticated) {
     try {
       const userData = await checkAuth()
@@ -714,7 +798,6 @@ onMounted(async () => {
         appStore.setUser(userData)
       }
     } catch (e) {
-      // Пользователь не авторизован - это нормально для лендинга
     }
   }
 })
@@ -2213,6 +2296,77 @@ onUnmounted(() => {
 .pricing-section {
   padding: 5rem 0;
   background: white;
+}
+
+.term-selector {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.term-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 1.25rem;
+  background: #f3f4f6;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 90px;
+}
+
+.term-btn:hover {
+  border-color: #d1d5db;
+}
+
+.term-btn.active {
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.term-name {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: #1f2937;
+}
+
+.term-discount {
+  font-size: 0.8125rem;
+  color: #10b981;
+  font-weight: 600;
+}
+
+.hit-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  padding: 0.125rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.tariff-description {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0 0 1rem;
+  line-height: 1.4;
+}
+
+.savings {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #10b981;
+  font-weight: 600;
 }
 
 .pricing-cards {

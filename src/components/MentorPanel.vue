@@ -149,6 +149,13 @@
       </form>
       </div>
     </div>
+
+    <UpgradeModal 
+      v-if="showUpgradeModal"
+      title="AI Ментор доступен на Pro"
+      message="Получите доступ к AI ментору и персональным рекомендациям с подпиской Pro."
+      @close="closeUpgradeModal"
+    />
   </div>
 </template>
 
@@ -158,6 +165,8 @@ import { useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useChatStore } from '../stores/chat'
 import { useXpStore } from '../stores/xp'
+import { useSubscriptionStore } from '../stores/subscription'
+import UpgradeModal from './UpgradeModal.vue'
 import { 
   Bot, 
   Sparkles, 
@@ -178,8 +187,10 @@ const route = useRoute()
 const store = useAppStore()
 const chatStore = useChatStore()
 const xpStore = useXpStore()
+const subscriptionStore = useSubscriptionStore()
 
 const inputText = ref('')
+const showUpgradeModal = ref(false)
 const chatContainer = ref(null)
 const inputRef = ref(null)
 const isMobile = ref(false)
@@ -312,6 +323,11 @@ function formatTime(timestamp) {
 async function handleSendMessage() {
   if (!inputText.value.trim() || !canSendMessage.value) return
   
+  if (!subscriptionStore.hasAIAccess()) {
+    showUpgradeModal.value = true
+    return
+  }
+  
   const userText = inputText.value.trim()
   inputText.value = ''
   
@@ -325,6 +341,10 @@ async function handleSendMessage() {
   
   await nextTick()
   scrollToBottom()
+}
+
+function closeUpgradeModal() {
+  showUpgradeModal.value = false
 }
 
 function sendQuickPrompt(text) {
