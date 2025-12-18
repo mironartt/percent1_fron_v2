@@ -609,8 +609,41 @@ export const useAppStore = defineStore('app', () => {
     top_goals: { total_incomplete_goals: 0, goals: [] }
   })
   
+  function clearAllLocalStorage() {
+    try {
+      const keysToRemove = []
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key && key.startsWith('onepercent_')) {
+          keysToRemove.push(key)
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key))
+      if (DEBUG_MODE) {
+        console.log('[Store] Cleared all onepercent_* localStorage keys:', keysToRemove.length)
+      }
+    } catch (e) {
+      console.warn('[Store] Failed to clear localStorage:', e)
+    }
+  }
+  
   function setUser(userData) {
     if (userData) {
+      const previousUserId = user.value.id
+      const newUserId = userData.id || null
+      
+      if (previousUserId && newUserId && previousUserId !== newUserId) {
+        if (DEBUG_MODE) {
+          console.log('[Store] User changed, clearing localStorage:', previousUserId, '->', newUserId)
+        }
+        clearAllLocalStorage()
+      } else if (!previousUserId && newUserId) {
+        if (DEBUG_MODE) {
+          console.log('[Store] New login, clearing localStorage for fresh start')
+        }
+        clearAllLocalStorage()
+      }
+      
       const isTermsAccepted = userData.is_terms_accepted ?? false
       const isPrivacyAccepted = userData.is_privacy_accepted ?? false
       
@@ -786,12 +819,8 @@ export const useAppStore = defineStore('app', () => {
       top_goals: { total_incomplete_goals: 0, goals: [] }
     }
     
-    // Очистить localStorage
-    try {
-      localStorage.removeItem('onepercent_user_dashboard')
-    } catch (e) {
-      console.warn('[Store] Failed to clear user data from localStorage:', e)
-    }
+    // Очистить весь localStorage при логауте
+    clearAllLocalStorage()
   }
   
   function setUserFinishOnboarding(value) {
@@ -3361,6 +3390,7 @@ export const useAppStore = defineStore('app', () => {
     needsPolicyAcceptance,
     setUser,
     clearUser,
+    clearAllLocalStorage,
     setUserFinishOnboarding,
     setPolicyAccepted,
     showPolicyModal,
