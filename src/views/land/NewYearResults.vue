@@ -1275,6 +1275,10 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
+  .container {
+    padding: 0 16px;
+  }
+
   .spheres-grid {
     grid-template-columns: 1fr;
   }
@@ -1301,6 +1305,219 @@ onMounted(async () => {
 
   .loading-text h2 {
     font-size: 22px;
+  }
+
+  .goal-header {
+    padding: 16px;
+  }
+
+  .goal-title {
+    font-size: 16px;
+  }
+
+  .share-buttons {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .share-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 48px;
+  }
+
+  .cta-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .results-header {
+    padding: 16px 0;
+  }
+
+  .logo-icon {
+    font-size: 20px;
+  }
+
+  .logo-text {
+    font-size: 16px;
+  }
+
+  .results-main {
+    padding: 20px 0 40px;
+  }
+
+  .results-hero h1 {
+    font-size: 24px;
+  }
+
+  .results-hero p {
+    font-size: 15px;
+  }
+
+  .sphere-card {
+    padding: 16px;
+  }
+
+  .sphere-icon {
+    font-size: 24px;
+  }
+
+  .sphere-name {
+    font-size: 14px;
+  }
+
+  .insight-card {
+    padding: 16px;
+  }
+
+  .insight-card h3 {
+    font-size: 16px;
+  }
+
+  .lever-card {
+    padding: 24px;
+  }
+
+  .lever-content h2 {
+    font-size: 20px;
+  }
+
+  .lever-icon {
+    font-size: 40px;
+  }
+
+  .plan-hero h2 {
+    font-size: 20px;
+  }
+
+  .motivation {
+    font-size: 14px;
+  }
+
+  .goals-section h3,
+  .week-plan-section h3 {
+    font-size: 18px;
+  }
+
+  .goal-card {
+    border-radius: 12px;
+  }
+
+  .goal-header {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .goal-number {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  .goal-title {
+    font-size: 15px;
+  }
+
+  .goal-sphere {
+    font-size: 11px;
+  }
+
+  .goal-metric {
+    font-size: 12px;
+  }
+
+  .goal-steps {
+    padding: 14px;
+  }
+
+  .step-item {
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  .week-card {
+    padding: 16px;
+  }
+
+  .week-number {
+    font-size: 13px;
+  }
+
+  .week-focus {
+    font-size: 14px;
+  }
+
+  .week-tasks li {
+    font-size: 13px;
+  }
+
+  .cta-card h2 {
+    font-size: 20px;
+  }
+
+  .cta-card p {
+    font-size: 14px;
+  }
+
+  .cta-btn {
+    padding: 14px 24px;
+    font-size: 15px;
+  }
+
+  .cta-hint {
+    font-size: 12px;
+  }
+
+  .share-section h3 {
+    font-size: 16px;
+  }
+
+  .share-btn {
+    font-size: 14px;
+    padding: 12px 16px;
+  }
+
+  .restart-btn {
+    font-size: 13px;
+    padding: 10px 20px;
+  }
+
+  .loading-animation {
+    gap: 16px;
+  }
+
+  .spinner {
+    width: 50px;
+    height: 50px;
+  }
+
+  .loading-text h2 {
+    font-size: 18px;
+  }
+
+  .loading-text p {
+    font-size: 14px;
+  }
+
+  .loading-step {
+    font-size: 13px;
+    padding: 10px 14px;
+  }
+
+  .legal-links {
+    gap: 1rem;
+    flex-direction: column;
+  }
+
+  .legal-links a {
+    font-size: 12px;
+  }
+
+  .company-info {
+    font-size: 11px;
   }
 }
 

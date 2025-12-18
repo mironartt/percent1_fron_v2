@@ -620,6 +620,119 @@ async function finishTest() {
   .value-number {
     font-size: 36px;
   }
+
+  .navigation {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .nav-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 48px;
+  }
+
+  .nav-btn.prev {
+    order: 2;
+  }
+
+  .nav-btn.next,
+  .nav-btn.finish {
+    order: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 12px;
+  }
+
+  .test-header {
+    padding: 16px 0;
+  }
+
+  .back-link {
+    font-size: 13px;
+  }
+
+  .progress-bar-container {
+    top: 56px;
+  }
+
+  .test-main {
+    padding: 80px 0 30px;
+  }
+
+  .question-card {
+    padding: 20px;
+    border-radius: 16px;
+  }
+
+  .sphere-badge {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .question-text {
+    font-size: 18px;
+    margin-bottom: 24px;
+  }
+
+  .scale-slider {
+    height: 10px;
+  }
+
+  .scale-slider::-webkit-slider-thumb {
+    width: 32px;
+    height: 32px;
+  }
+
+  .scale-slider::-moz-range-thumb {
+    width: 32px;
+    height: 32px;
+  }
+
+  .value-number {
+    font-size: 32px;
+  }
+
+  .value-label {
+    font-size: 14px;
+  }
+
+  .text-input {
+    font-size: 15px;
+    padding: 14px;
+  }
+
+  .nav-btn {
+    padding: 14px 20px;
+    font-size: 15px;
+    min-height: 50px;
+  }
+
+  .question-dots {
+    gap: 6px;
+    margin-top: 24px;
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+  }
+
+  .legal-links {
+    gap: 1rem;
+    flex-direction: column;
+  }
+
+  .legal-links a {
+    font-size: 12px;
+  }
+
+  .company-info {
+    font-size: 11px;
+  }
 }
 
 /* Footer - Dark for contrast */

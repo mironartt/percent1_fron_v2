@@ -1540,8 +1540,21 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
+  .container {
+    padding: 0 16px;
+  }
+
   .hero-title {
     font-size: 32px;
+  }
+  
+  .hero-description {
+    font-size: 16px;
+  }
+
+  .hero-badge {
+    font-size: 13px;
+    padding: 8px 16px;
   }
   
   .steps {
@@ -1567,6 +1580,170 @@ onMounted(async () => {
   .sphere-name {
     width: auto;
     min-width: 100px;
+  }
+
+  .motivation-stats {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .stat-item {
+    padding: 16px;
+  }
+
+  .benefits-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .benefit-card {
+    padding: 20px;
+  }
+
+  .section-title {
+    font-size: 24px;
+  }
+
+  .motivation-title {
+    font-size: 24px;
+  }
+
+  .faq-question {
+    font-size: 15px;
+    padding: 16px;
+  }
+
+  .cta-section h2 {
+    font-size: 24px;
+  }
+
+  .btn-start {
+    padding: 14px 28px;
+    font-size: 16px;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-content {
+    gap: 8px;
+  }
+
+  .logo-text {
+    font-size: 16px;
+  }
+
+  .login-link {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+
+  .hero {
+    padding: 60px 0 40px;
+  }
+
+  .hero-title {
+    font-size: 26px;
+    line-height: 1.3;
+  }
+
+  .hero-description {
+    font-size: 15px;
+  }
+
+  .hero-badge {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .step {
+    padding: 20px;
+  }
+
+  .step h3 {
+    font-size: 16px;
+  }
+
+  .section-title {
+    font-size: 22px;
+  }
+
+  .motivation-title {
+    font-size: 20px;
+  }
+
+  .stat-number {
+    font-size: 28px;
+  }
+
+  .stat-label {
+    font-size: 13px;
+  }
+
+  .reason-item {
+    font-size: 14px;
+  }
+
+  .goal-item {
+    padding: 12px;
+  }
+
+  .step-item {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .week-items {
+    grid-template-columns: 1fr;
+  }
+
+  .mockup-header {
+    padding: 12px;
+  }
+
+  .task-card {
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  .value-message {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .faq-question {
+    font-size: 14px;
+    padding: 14px;
+  }
+
+  .faq-answer {
+    font-size: 14px;
+    padding: 14px;
+  }
+
+  .cta-section {
+    padding: 40px 0;
+  }
+
+  .cta-section h2 {
+    font-size: 22px;
+  }
+
+  .cta-section p {
+    font-size: 15px;
+  }
+
+  .legal-links {
+    gap: 1rem;
+  }
+
+  .legal-links a {
+    font-size: 12px;
+  }
+
+  .company-info {
+    font-size: 11px;
   }
 }
 
