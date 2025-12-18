@@ -496,6 +496,13 @@
       </section>
     </main>
 
+    <!-- Mobile Sticky CTA -->
+    <div class="mobile-sticky-cta">
+      <router-link to="/land/newyear/test" class="btn-start-sticky">
+        Начать тест →
+      </router-link>
+    </div>
+
     <footer class="landing-footer">
       <div class="container">
         <div class="footer-legal">
@@ -1051,6 +1058,46 @@ onMounted(async () => {
   gap: 24px;
   max-width: 800px;
   margin: 0 auto;
+}
+
+.mobile-sticky-cta {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 16px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.btn-start-sticky {
+  display: block;
+  width: 100%;
+  text-align: center;
+  background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+  color: white;
+  padding: 16px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.1s, box-shadow 0.2s;
+}
+
+.btn-start-sticky:active {
+  transform: scale(0.98);
+}
+
+.btn-start:active,
+.login-link:active,
+.step-summary:active,
+.faq-question:active {
+  transform: scale(0.98);
+  opacity: 0.9;
 }
 
 .preview-card {
@@ -1763,8 +1810,48 @@ onMounted(async () => {
     padding: 40px 0;
   }
 
+  .snowflakes,
+  .sparkles {
+    display: none;
+  }
+
+  .mobile-sticky-cta {
+    display: block;
+  }
+
+  .newyear-landing {
+    padding-bottom: 80px;
+  }
+
+  .preview-cards {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 20px 16px;
+    margin: 0 -20px;
+  }
+
+  .preview-cards::-webkit-scrollbar {
+    display: none;
+  }
+
+  .preview-card {
+    flex: 0 0 85%;
+    scroll-snap-align: center;
+  }
+
   .section-title {
     font-size: 22px;
+  }
+
+  .btn-start,
+  .login-link,
+  .step-summary,
+  .step-accordion,
+  .faq-question {
+    min-height: 48px;
   }
 
   .motivation-title {
