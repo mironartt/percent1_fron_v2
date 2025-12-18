@@ -1,0 +1,83 @@
+На странце "банк целей", создал цель, вижу ушел запрос на бэк на `/api/rest/front/app/goals/update/`, бэк вернул:
+```
+{
+  "status": "ok",
+  "data": {
+    "total_items": 6,
+    "total_filtered_items": 1,
+    "total_pages": 1,
+    "page": null,
+    "page_size": 10,
+    "total_data": {
+      "total_goals": 6,
+      "true_goals": 3,
+      "false_goals": 0,
+      "in_work_goals": 3
+    },
+    "goals_data": [
+      {
+        "goal_id": 430,
+        "title": "111",
+        "category": "welfare",
+        "status": null,
+        "score": null,
+        "why_important": "111",
+        "why_give_me": null,
+        "why_about_me": null,
+        "date_created": "2025-12-18 16:01:16",
+        "date_completed": null,
+        "total_steps_data": {
+          "complete_days_in_row": null,
+          "complete_percent": null,
+          "complete_steps": null,
+          "total_steps": null
+        },
+        "steps_data": [],
+        "notes_data": [],
+        "notes_pagination": null
+      }
+    ],
+    "total_data_steps_data": null,
+    "goals_without_steps": {
+      "total": 3,
+      "goals": [
+        {
+          "goal_id": 430,
+          "title": "111",
+          "category": "welfare"
+        },
+        {
+          "goal_id": 425,
+          "title": "Начать инвестировать регулярно",
+          "category": "welfare"
+        },
+        {
+          "goal_id": 344,
+          "title": "Цель",
+          "category": "welfare"
+        }
+      ]
+    }
+  }
+}
+```
+
+После, при клике на данную цель, ничего не происходит.
+При этом в консоли вижу:
+```
+[API] POST /api/rest/front/app/goals/update/ 
+Object { goals_data: (1) […] }
+index-AeABcvLL.js:2:115555
+[API] Response: 
+Object { status: "ok", data: {…} }
+index-AeABcvLL.js:2:115754
+[Store] Goal created on backend: 
+Object { total_items: 6, total_filtered_items: 1, total_pages: 1, page: null, page_size: 10, total_data: {…}, goals_data: (1) […], total_data_steps_data: null, goals_without_steps: {…} }
+index-AeABcvLL.js:2:131573
+[GoalsBank] Cannot decompose: goal not found or no backendId 1766062851063_nzaphh7ue GoalsBank-BMGsprn_.js:2:25075
+[GoalsBank] Cannot decompose: goal not found or no backendId 1766062851063_nzaphh7ue GoalsBank-BMGsprn_.js:2:25075
+[GoalsBank] Cannot decompose: goal not found or no backendId 1766062851063_nzaphh7ue GoalsBank-BMGsprn_.js:2:25075
+
+```
+
+Кажется фронт не сохраняет и не работает с ID соданой цели?

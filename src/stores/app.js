@@ -445,7 +445,8 @@ export const useAppStore = defineStore('app', () => {
           goalsApiData.value.pagination.totalFilteredItems = (goalsApiData.value.pagination.totalFilteredItems || 0) + 1
         }
         
-        return { success: true, goalId: result.data?.created_goals_ids?.[0] }
+        const createdGoalId = result.data?.goals_data?.[0]?.goal_id || result.data?.created_goals_ids?.[0]
+        return { success: true, goalId: createdGoalId }
       }
       
       if (result.error_data?.error === 'goals_limit_exceeded') {
