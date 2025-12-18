@@ -1892,6 +1892,41 @@ onMounted(async () => {
     font-size: 13px;
   }
 
+  .motivation-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .stat-item {
+    width: 100%;
+    padding: 16px;
+  }
+
+  .motivation-section {
+    overflow: hidden;
+    padding: 40px 0;
+  }
+
+  .motivation-section .container {
+    padding: 0 16px;
+  }
+
+  .motivation-cta {
+    padding: 0 16px;
+    margin-top: 24px;
+  }
+
+  .motivation-cta .btn-start {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .btn-start {
+    max-width: calc(100vw - 32px);
+  }
+
   .reason-item {
     font-size: 14px;
   }
