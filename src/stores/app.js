@@ -28,6 +28,51 @@ import { useToastStore } from '@/stores/toast'
 
 export const useAppStore = defineStore('app', () => {
   // ========================================
+  // LOCALSTORAGE VERSION CONTROL
+  // ========================================
+  
+  const LOCALSTORAGE_VERSION_KEY = 'localstorage_version'
+  
+  function checkLocalStorageVersion(serverVersion) {
+    if (!serverVersion) return false
+    
+    try {
+      const savedVersion = localStorage.getItem(LOCALSTORAGE_VERSION_KEY)
+      
+      if (savedVersion && savedVersion !== serverVersion) {
+        if (DEBUG_MODE) {
+          console.log('[Store] localStorage version mismatch:', savedVersion, '->', serverVersion, '- clearing storage')
+        }
+        
+        const preserveKeys = ['theme', 'language', LOCALSTORAGE_VERSION_KEY]
+        const preserved = {}
+        
+        preserveKeys.forEach(key => {
+          const value = localStorage.getItem(key)
+          if (value) preserved[key] = value
+        })
+        
+        localStorage.clear()
+        
+        preserveKeys.forEach(key => {
+          if (preserved[key]) {
+            localStorage.setItem(key, preserved[key])
+          }
+        })
+        
+        localStorage.setItem(LOCALSTORAGE_VERSION_KEY, serverVersion)
+        return true
+      }
+      
+      localStorage.setItem(LOCALSTORAGE_VERSION_KEY, serverVersion)
+      return false
+    } catch (e) {
+      console.warn('[Store] Failed to check localStorage version:', e)
+      return false
+    }
+  }
+  
+  // ========================================
   // GLOBAL DATA (справочники из бэкенда)
   // ========================================
   
@@ -61,6 +106,10 @@ export const useAppStore = defineStore('app', () => {
       
       if (result.status === 'ok' && result.data) {
         const data = result.data
+        
+        if (data.localstorage_version) {
+          checkLocalStorageVersion(data.localstorage_version)
+        }
         
         globalData.value = {
           loading: false,
@@ -642,6 +691,10 @@ export const useAppStore = defineStore('app', () => {
           console.log('[Store] New login, clearing localStorage for fresh start')
         }
         clearAllLocalStorage()
+      }
+      
+      if (userData.localstorage_version) {
+        checkLocalStorageVersion(userData.localstorage_version)
       }
       
       const isTermsAccepted = userData.is_terms_accepted ?? false
@@ -3391,6 +3444,7 @@ export const useAppStore = defineStore('app', () => {
     setUser,
     clearUser,
     clearAllLocalStorage,
+    checkLocalStorageVersion,
     setUserFinishOnboarding,
     setPolicyAccepted,
     showPolicyModal,
