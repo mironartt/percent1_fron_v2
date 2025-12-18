@@ -201,6 +201,48 @@ if (!result.allowed) {
 
 ---
 
+## Получение деталей платежа
+
+**Эндпоинт:** `POST /api/rest/front/app/payment/get/`
+
+**Запрос:**
+```json
+{
+  "payment_id": 15
+}
+```
+
+**Ответ:**
+```json
+{
+  "status": "ok",
+  "data": {
+    "payment": {
+      "id": 15,
+      "status": "done",
+      "amount": 10.0,
+      "tariff": {
+        "id": 2,
+        "code": "pro",
+        "title": "Профессиональный"
+      },
+      "term_id": 1,
+      "term_months": 1,
+      "term_title": "1 месяц",
+      "date_created": "2025-12-18T10:30:00+00:00",
+      "date_paid": "2025-12-18 10:35:00+00:00",
+      "subscription_end": "2025-01-18 10:35:00+00:00",
+      "promocode_used": "WELCOME20",
+      "discount_total": 2.5
+    }
+  }
+}
+```
+
+Используется на странице `/app/billing/success` для отображения деталей успешного платежа.
+
+---
+
 ## Схема потока оплаты
 
 ```

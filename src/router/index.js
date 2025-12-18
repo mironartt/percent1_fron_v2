@@ -251,6 +251,8 @@ const router = createRouter({
     },
     
     // Редиректы для обратной совместимости со старыми URL
+    { path: '/billing/success', redirect: to => ({ path: '/app/billing/success', query: to.query }) },
+    { path: '/billing/fail', redirect: to => ({ path: '/app/billing/fail', query: to.query }) },
     { path: '/login', redirect: '/auth/login' },
     { path: '/register', redirect: '/auth/register' },
     { path: '/ssp', redirect: '/app/ssp' },

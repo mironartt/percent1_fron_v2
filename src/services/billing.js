@@ -38,3 +38,9 @@ export async function createPayment(tariffId, termId, finalPrice) {
 export async function getPaymentHistory() {
   return request('POST', '/api/rest/front/app/payment/history/', {})
 }
+
+export async function getPaymentDetails(paymentId) {
+  return request('POST', '/api/rest/front/app/payment/get/', {
+    payment_id: paymentId
+  })
+}
