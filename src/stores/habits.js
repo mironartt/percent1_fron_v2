@@ -282,6 +282,19 @@ export const useHabitsStore = defineStore('habits', () => {
         
         return { success: true, habitId: newId }
       }
+      
+      if (result.error?.error === 'habits_limit_exceeded') {
+        return { 
+          success: false, 
+          limitError: {
+            type: 'habits_limit_exceeded',
+            message: result.error.message,
+            currentCount: result.error.current_count,
+            limit: result.error.limit
+          }
+        }
+      }
+      
       return { success: false, error: result.error }
     } catch (e) {
       if (DEBUG_MODE) console.error('[HabitsStore] Create habit error:', e)
@@ -1012,6 +1025,19 @@ export const useHabitsStore = defineStore('habits', () => {
         
         return { success: true, rewardId: result.data.reward_id }
       }
+      
+      if (result.error?.error === 'rewards_limit_exceeded') {
+        return { 
+          success: false, 
+          limitError: {
+            type: 'rewards_limit_exceeded',
+            message: result.error.message,
+            currentCount: result.error.current_count,
+            limit: result.error.limit
+          }
+        }
+      }
+      
       return { success: false, error: result.error }
     } catch (e) {
       if (DEBUG_MODE) console.error('[HabitsStore] Create reward error:', e)

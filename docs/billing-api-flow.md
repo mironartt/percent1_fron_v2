@@ -168,9 +168,28 @@ if (!result.allowed) {
 ```
 
 **Лимиты Free тарифа:**
-- `goals`: 3
-- `habits`: 5
-- `diary_entries`: 10 в месяц
+- `max_goals`: 4
+- `max_habits`: 3
+- `max_rewards`: 5
+- Дневник: без лимитов
+
+**Ошибки лимитов от бэкенда (HTTP 400):**
+- `goals_limit_exceeded` — лимит целей
+- `habits_limit_exceeded` — лимит привычек
+- `rewards_limit_exceeded` — лимит наград
+
+Формат ответа:
+```json
+{
+  "error": "goals_limit_exceeded",
+  "message": "Достигнут лимит целей для вашего тарифа (4)...",
+  "current_count": 4,
+  "limit": 4,
+  "tariff_code": "free"
+}
+```
+
+Функции `createGoal`, `createHabit`, `createReward` возвращают `{ success: false, limitError: {...} }` при получении этих ошибок
 
 ---
 

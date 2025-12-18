@@ -79,12 +79,13 @@ export const useSubscriptionStore = defineStore('subscription', () => {
 
   const LIMITS_MAP = {
     free: {
-      max_goals: 3,
-      max_habits: 5,
-      max_diary_entries_per_month: 10
+      max_goals: 4,
+      max_habits: 3,
+      max_rewards: 5
     },
     basic: null,
-    pro: null
+    pro: null,
+    club: null
   }
 
   function hasFeature(featureId) {
@@ -119,6 +120,22 @@ export const useSubscriptionStore = defineStore('subscription', () => {
       limit,
       remaining
     }
+  }
+
+  function isLimitError(error) {
+    if (!error) return null
+    const errorCode = error.error || error.code || error.key
+    const limitErrors = ['goals_limit_exceeded', 'habits_limit_exceeded', 'rewards_limit_exceeded']
+    if (limitErrors.includes(errorCode)) {
+      return {
+        type: errorCode,
+        message: error.message || 'Достигнут лимит для вашего тарифа',
+        currentCount: error.current_count,
+        limit: error.limit,
+        tariffCode: error.tariff_code
+      }
+    }
+    return null
   }
 
   async function loadSubscription() {
@@ -311,6 +328,7 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     hasAIAccess,
     getLimit,
     checkLimit,
+    isLimitError,
 
     loadSubscription,
     loadTariffs,

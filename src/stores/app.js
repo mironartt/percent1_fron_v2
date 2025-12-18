@@ -448,6 +448,18 @@ export const useAppStore = defineStore('app', () => {
         return { success: true, goalId: result.data?.created_goals_ids?.[0] }
       }
       
+      if (result.error_data?.error === 'goals_limit_exceeded') {
+        return { 
+          success: false, 
+          limitError: {
+            type: 'goals_limit_exceeded',
+            message: result.error_data.message,
+            currentCount: result.error_data.current_count,
+            limit: result.error_data.limit
+          }
+        }
+      }
+      
       return { success: false, error: result.message }
     } catch (error) {
       if (DEBUG_MODE) {
