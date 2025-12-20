@@ -524,6 +524,7 @@
                     class="template-sphere-tab"
                     :class="{ active: selectedTemplateSphere === sphere.id }"
                     :style="{ '--sphere-color': getSphereColor(sphere.id) }"
+                    :title="getSphereNameOnly(sphere.id)"
                     @click="selectedTemplateSphere = sphere.id"
                   >
                     <component :is="getSphereIcon(sphere.id)" :size="16" />
