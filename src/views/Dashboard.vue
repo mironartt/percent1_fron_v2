@@ -86,13 +86,6 @@
                     <span class="focus-sphere" v-if="task.sphere">{{ task.sphere }}</span>
                   </div>
                 </div>
-                <router-link 
-                  v-if="totalFocusTasks > 3"
-                  to="/app/planning" 
-                  class="more-tasks-link"
-                >
-                  +{{ totalFocusTasks - 3 }} {{ pluralize(totalFocusTasks - 3, 'задача', 'задачи', 'задач') }}
-                </router-link>
               </div>
             </div>
           </div>
@@ -397,10 +390,10 @@ const dayMessage = computed(() => {
 
 const isEvening = computed(() => currentHour.value >= 18)
 
-// Фокус дня - используем данные из API today_tasks
+// Фокус дня - используем данные из API today_tasks (показываем все задачи со скроллом)
 const focusTasks = computed(() => {
   const tasks = apiTodayTasks.value.tasks || []
-  return tasks.slice(0, 3).map(task => ({
+  return tasks.map(task => ({
     id: task.step_id,
     title: task.step_title,
     completed: task.is_complete,
@@ -822,6 +815,27 @@ function pluralize(n, one, few, many) {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  max-height: 240px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.focus-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.focus-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.focus-list::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
+.focus-list::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
 }
 
 .focus-item {
