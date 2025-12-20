@@ -324,7 +324,8 @@ function formatTime(timestamp) {
 async function handleSendMessage() {
   if (!inputText.value.trim() || !canSendMessage.value) return
   
-  if (!subscriptionStore.hasAIAccess()) {
+  const hasAccess = await subscriptionStore.verifyAIAccess()
+  if (!hasAccess) {
     showUpgradeModal.value = true
     return
   }

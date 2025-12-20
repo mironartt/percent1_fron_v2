@@ -43,12 +43,18 @@
         </div>
         
         <div class="success-actions">
-          <router-link to="/app" class="btn btn-primary btn-lg">
-            Перейти в приложение
-          </router-link>
-          <router-link to="/app/subscription" class="btn btn-secondary">
-            Посмотреть подписку
-          </router-link>
+          <template v-if="subscriptionLoaded">
+            <router-link to="/app" class="btn btn-primary btn-lg">
+              Перейти в приложение
+            </router-link>
+            <router-link to="/app/subscription" class="btn btn-secondary">
+              Посмотреть подписку
+            </router-link>
+          </template>
+          <div v-else class="loading-subscription">
+            <div class="spinner-small"></div>
+            <span>Обновляем данные подписки...</span>
+          </div>
         </div>
       </div>
     </div>
@@ -66,6 +72,7 @@ const route = useRoute()
 const subscriptionStore = useSubscriptionStore()
 
 const isLoading = ref(true)
+const subscriptionLoaded = ref(false)
 const paymentDetails = ref(null)
 const error = ref(null)
 
@@ -108,7 +115,8 @@ async function loadPaymentDetails() {
 
 onMounted(async () => {
   await loadPaymentDetails()
-  subscriptionStore.loadSubscription()
+  await subscriptionStore.loadSubscription(true)
+  subscriptionLoaded.value = true
 })
 </script>
 
@@ -264,6 +272,25 @@ onMounted(async () => {
 .btn-lg {
   padding: 1rem 2rem;
   font-size: 1rem;
+}
+
+.loading-subscription {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.spinner-small {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
 @media (max-width: 480px) {
