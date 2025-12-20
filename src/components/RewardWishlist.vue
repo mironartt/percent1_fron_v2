@@ -6,22 +6,22 @@
         Мои награды
       </h3>
       <div class="header-actions">
-        <button class="btn-icon" @click="showAddModal = true" title="Добавить награду">
-          <Plus :size="18" :stroke-width="1.5" />
+        <button class="btn-header-action btn-add" @click="showAddModal = true">
+          <Plus :size="14" :stroke-width="2" />
+          <span>Добавить награду</span>
+        </button>
+        <button 
+          class="btn-header-action btn-ai"
+          :class="{ generating: isAiGenerating }"
+          :disabled="isAiGenerating"
+          @click="openAiSuggestionsModal"
+        >
+          <Loader2 v-if="isAiGenerating" :size="14" class="spin" />
+          <Sparkles v-else :size="14" :stroke-width="2" />
+          <span>{{ isAiGenerating ? 'Генерация...' : 'Помощь от ментора' }}</span>
         </button>
       </div>
     </div>
-
-    <button 
-      class="btn-ai-mentor-reward"
-      :class="{ generating: isAiGenerating }"
-      :disabled="isAiGenerating"
-      @click="openAiSuggestionsModal"
-    >
-      <Loader2 v-if="isAiGenerating" :size="16" class="spin" />
-      <Sparkles v-else :size="16" />
-      <span class="btn-ai-label">{{ isAiGenerating ? (aiProgressText || 'Генерация...') : 'Помощь от ментора' }}</span>
-    </button>
 
     <div v-if="rewardsLoading && rewards.length === 0" class="loading-state">
       <Loader2 :size="24" :stroke-width="2" class="spinner" />
@@ -731,6 +731,12 @@ async function confirmAiRewardSelection() {
   color: var(--primary-color);
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .btn-icon {
   background: none;
   border: none;
@@ -746,39 +752,52 @@ async function confirmAiRewardSelection() {
   color: var(--primary-color);
 }
 
-.btn-ai-mentor-reward {
-  display: flex;
+.btn-header-action {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.625rem 1rem;
-  margin-bottom: 1rem;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  border: none;
-  border-radius: var(--radius-md, 8px);
-  font-size: 0.875rem;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
-.btn-ai-mentor-reward:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+.btn-header-action.btn-add {
+  background: transparent;
+  color: #7c3aed;
+  border-color: #7c3aed;
 }
 
-.btn-ai-mentor-reward:disabled {
+.btn-header-action.btn-add:hover {
+  background: rgba(124, 58, 237, 0.08);
+}
+
+.btn-header-action.btn-ai {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border-color: #10b981;
+}
+
+.btn-header-action.btn-ai:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.18);
+}
+
+.btn-header-action.btn-ai:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
 
-.btn-ai-mentor-reward.generating {
-  background: linear-gradient(135deg, #6b7280, #4b5563);
+.btn-header-action.btn-ai.generating {
+  background: rgba(107, 114, 128, 0.1);
+  color: #6b7280;
+  border-color: #9ca3af;
 }
 
-.btn-ai-mentor-reward .spin {
+.btn-header-action .spin {
   animation: spin 1s linear infinite;
 }
 
