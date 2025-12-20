@@ -1058,16 +1058,24 @@ export async function getRewards(params = {}) {
 }
 
 /**
- * Создать новую награду
- * @param {object} data - Данные награды
- * @param {string} data.name - Название награды (обязательно)
- * @param {number} data.cost - Стоимость в XP (обязательно)
- * @param {string} [data.icon] - Иконка (emoji), по умолчанию '🎁'
- * @param {string} [data.description] - Описание
- * @returns {Promise<object>} - { reward_id }
+ * Создать награды (массовое создание до 100 штук)
+ * @param {Array<object>} rewards - Массив наград
+ * @param {string} rewards[].name - Название награды (обязательно)
+ * @param {number} rewards[].cost - Стоимость в XP (обязательно)
+ * @param {string} [rewards[].icon] - Иконка (emoji), по умолчанию '🎁'
+ * @param {string} [rewards[].description] - Описание
+ * @returns {Promise<object>} - { rewards, created_count, total_items, current_balance }
+ */
+export async function createRewards(rewards) {
+  return request('POST', '/api/rest/front/app/habits/rewards/create/', { rewards_data: rewards })
+}
+
+/**
+ * Создать одну награду (обёртка для совместимости)
+ * @deprecated Используйте createRewards([reward])
  */
 export async function createReward(data) {
-  return request('POST', '/api/rest/front/app/habits/rewards/create/', data)
+  return createRewards([data])
 }
 
 /**
@@ -1286,6 +1294,7 @@ export const api = {
   getXPStats,
   getRewards,
   createReward,
+  createRewards,
   updateReward,
   deleteReward,
   redeemReward,
