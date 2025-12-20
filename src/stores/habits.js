@@ -302,6 +302,50 @@ export const useHabitsStore = defineStore('habits', () => {
     }
   }
 
+  async function createHabits(habitsDataArray) {
+    try {
+      const result = await habitsApi.createHabits(habitsDataArray)
+      
+      if (result.success) {
+        const createdIds = result.data?.created_ids || []
+        
+        await loadHabits(lastFetchParams.value || {}, true)
+        await loadStatsPanel()
+        
+        try {
+          const { useActivationStore } = await import('@/stores/activation.js')
+          const activationStore = useActivationStore()
+          activationStore.completeTask('create_habit')
+        } catch (e) {
+          if (DEBUG_MODE) console.error('[HabitsStore] Activation tracking error:', e)
+        }
+        
+        if (DEBUG_MODE) {
+          console.log('[HabitsStore] Habits created (bulk):', createdIds)
+        }
+        
+        return { success: true, habitIds: createdIds }
+      }
+      
+      if (result.error?.error === 'habits_limit_exceeded') {
+        return { 
+          success: false, 
+          limitError: {
+            type: 'habits_limit_exceeded',
+            message: result.error.message,
+            currentCount: result.error.current_count,
+            limit: result.error.limit
+          }
+        }
+      }
+      
+      return { success: false, error: result.error }
+    } catch (e) {
+      if (DEBUG_MODE) console.error('[HabitsStore] Create habits (bulk) error:', e)
+      return { success: false, error: { message: e.message } }
+    }
+  }
+
   async function updateHabit(habitId, habitData) {
     const habitIndex = habits.value.findIndex(h => h.habit_id === habitId)
     const previousHabit = habitIndex >= 0 ? { ...habits.value[habitIndex] } : null
@@ -1277,6 +1321,7 @@ export const useHabitsStore = defineStore('habits', () => {
     saveSettings,
     
     createHabit,
+    createHabits,
     updateHabit,
     deleteHabit,
     restoreHabit,

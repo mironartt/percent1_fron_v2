@@ -4087,6 +4087,9 @@ async function confirmAiHabitSelection() {
   
   const selected = selectedAiHabits.value.map(idx => aiSuggestedHabits.value[idx])
   
+  const localHabits = []
+  const backendHabitsData = []
+  
   for (const habit of selected) {
     const scheduleDays = habit.scheduleDays || [0, 1, 2, 3, 4, 5, 6]
     
@@ -4102,29 +4105,34 @@ async function confirmAiHabitSelection() {
     }
     
     const localHabit = appStore.addHabit(habitData)
+    localHabits.push(localHabit)
     
     createdAiHabits.value.push({
       id: localHabit.id,
       name: habit.name
     })
     
-    const backendHabitData = {
+    backendHabitsData.push({
       name: habitData.name,
       description: habitData.description,
       icon: habitData.icon,
       xp_reward: habitData.xpReward,
       xp_penalty: 0,
       schedule_days: scheduleDays
+    })
+  }
+  
+  try {
+    const backendResult = await habitsStore.createHabits(backendHabitsData)
+    if (backendResult.success && backendResult.habitIds) {
+      backendResult.habitIds.forEach((backendId, index) => {
+        if (localHabits[index] && backendId) {
+          appStore.updateHabit(localHabits[index].id, { backendId })
+        }
+      })
     }
-    
-    try {
-      const backendResult = await habitsStore.createHabit(backendHabitData)
-      if (backendResult.success && backendResult.habitId) {
-        appStore.updateHabit(localHabit.id, { backendId: backendResult.habitId })
-      }
-    } catch (error) {
-      console.error('[Habits] Backend sync error for habit:', habit.name, error)
-    }
+  } catch (error) {
+    console.error('[Habits] Backend sync error for habits:', error)
   }
   
   suggestionsStep.value = 'confirmation'
