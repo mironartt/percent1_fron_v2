@@ -1,0 +1,39 @@
+$ npm run dev
+
+> onepercent-mvp@1.0.0 dev
+> vite
+
+[Vite] Proxy target: localhost (default)
+[Vite] HMR host from local_settings.js: 346f6o-95-72-133-246.ru.tuna.am
+[Vite] HMR protocol from local_settings.js: wss
+[Vite] HMR clientPort from local_settings.js: 443
+
+  VITE v7.2.4  ready in 134 ms
+
+  ➜  Local:   http://localhost:5000/
+  ➜  Network: http://192.168.0.33:5000/
+  ➜  Network: http://10.8.117.1:5000/
+  ➜  press h + enter to show help
+node:internal/fs/watchers:247
+    const error = new UVException({
+                  ^
+
+Error: ENOSPC: System limit for number of file watchers reached, watch '/home/truba/repo_work/one_percent/percent1/front/src/components/Onboarding.vue'
+    at FSWatcher.<computed> (node:internal/fs/watchers:247:19)
+    at Object.watch (node:fs:2491:36)
+    at createFsWatchInstance (file:///home/truba/repo_work/one_percent/percent1/front/node_modules/vite/dist/node/chunks/config.js:13599:16)
+    at setFsWatchListener (file:///home/truba/repo_work/one_percent/percent1/front/node_modules/vite/dist/node/chunks/config.js:13641:14)
+    at NodeFsHandler$1._watchWithNodeFs (file:///home/truba/repo_work/one_percent/percent1/front/node_modules/vite/dist/node/chunks/config.js:13755:20)
+    at NodeFsHandler$1._handleFile (file:///home/truba/repo_work/one_percent/percent1/front/node_modules/vite/dist/node/chunks/config.js:13799:24)
+    at NodeFsHandler$1._addToNodeFs (file:///home/truba/repo_work/one_percent/percent1/front/node_modules/vite/dist/node/chunks/config.js:13973:26)
+Emitted 'error' event on FSWatcher instance at:
+    at FSWatcher._handleError (file:///home/truba/repo_work/one_percent/percent1/front/node_modules/vite/dist/node/chunks/config.js:14774:148)
+    at NodeFsHandler$1._addToNodeFs (file:///home/truba/repo_work/one_percent/percent1/front/node_modules/vite/dist/node/chunks/config.js:13978:18) {
+  errno: -28,
+  syscall: 'watch',
+  code: 'ENOSPC',
+  path: '/home/truba/repo_work/one_percent/percent1/front/src/components/Onboarding.vue',
+  filename: '/home/truba/repo_work/one_percent/percent1/front/src/components/Onboarding.vue'
+}
+
+Node.js v20.19.5
