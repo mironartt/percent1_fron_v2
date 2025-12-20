@@ -201,7 +201,8 @@ const hasMessages = computed(() => chatStore.messages.length > 0)
 const isCollapsed = computed(() => store.mentorPanelCollapsed)
 const isMobileOpen = computed(() => store.mentorMobileOpen)
 const unreadCount = computed(() => chatStore.unreadCount)
-const spotlightMode = computed(() => store.mentorSpotlightMode)
+// Spotlight отключен
+const spotlightMode = computed(() => false)
 const canSendMessage = computed(() => chatStore.canSendMessage && !chatStore.forceDisconnected)
 
 const connectionStatusClass = computed(() => {

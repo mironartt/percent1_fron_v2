@@ -6,11 +6,19 @@
         Мои награды
       </h3>
       <div class="header-actions">
-        <button class="btn-icon" @click="showAddModal = true">
-          <Plus :size="18" :stroke-width="1.5" />
+        <button class="btn-header-action btn-add" @click="showAddModal = true">
+          <Plus :size="14" :stroke-width="2" />
+          <span>Добавить награду</span>
         </button>
-        <button class="btn-icon btn-icon-ai" @click="openAiSuggestionsModal" title="Подбор от ментора">
-          <Sparkles :size="18" :stroke-width="1.5" />
+        <button 
+          class="btn-header-action btn-ai"
+          :class="{ generating: isAiGenerating }"
+          :disabled="isAiGenerating"
+          @click="openAiSuggestionsModal"
+        >
+          <Loader2 v-if="isAiGenerating" :size="14" class="spin" />
+          <Sparkles v-else :size="14" :stroke-width="2" />
+          <span>{{ isAiGenerating ? 'Генерация...' : 'Помощь от ментора' }}</span>
         </button>
       </div>
     </div>
@@ -372,16 +380,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useXpStore } from '../stores/xp'
 import { useToastStore } from '../stores/toast'
 import { useAppStore } from '../stores/app'
-import { apiFetch } from '../services/api'
+import { useAITasksStore } from '../stores/aiTasks'
 import { Gift, Plus, Pencil, Check, X, ChevronDown, Loader2, Sparkles, Target, TrendingUp, Coins, CheckCircle, AlertTriangle } from 'lucide-vue-next'
 
 const xpStore = useXpStore()
 const toast = useToastStore()
 const appStore = useAppStore()
+const aiTasksStore = useAITasksStore()
 
 const showAddModal = ref(false)
 const rewardsExpanded = ref(false)
@@ -395,6 +404,10 @@ const selectedAiRewards = ref([])
 const createdAiRewards = ref([])
 const aiSuggestionsErrorMessage = ref('')
 const skipRewardSuggestionsIntro = ref(false)
+
+const isAiGenerating = ref(false)
+const aiProgressText = ref('')
+const currentTaskId = ref(null)
 
 const formData = ref({
   name: '',
@@ -568,83 +581,122 @@ function getRewardsWord(count) {
 async function startAiSuggestions() {
   aiSuggestionsStep.value = 'loading'
   selectedAiRewards.value = []
+  isAiGenerating.value = true
+  aiProgressText.value = 'Запуск генерации...'
   
   try {
-    const userData = prepareUserDataForRewards()
-    const response = await apiFetch('/api/ai/suggest-rewards', {
-      method: 'POST',
-      body: JSON.stringify(userData)
-    })
-    
-    const result = await response.json()
-    
-    if (result.success && result.suggestions?.length > 0) {
-      aiSuggestedRewards.value = result.suggestions
-      aiSuggestionsStep.value = 'selection'
-    } else {
-      aiSuggestionsErrorMessage.value = result.error || 'Не удалось получить рекомендации'
-      aiSuggestionsStep.value = 'error'
+    if (!aiTasksStore.isConnected) {
+      aiTasksStore.connect()
     }
+    
+    const result = await aiTasksStore.startTask('reward_mentor_help', {})
+    
+    if (result.status === 'already_running') {
+      currentTaskId.value = result.task_id
+      aiProgressText.value = 'Задача уже выполняется...'
+      return
+    }
+    
+    currentTaskId.value = result.task_id
+    aiProgressText.value = 'Анализ профиля...'
+    
   } catch (error) {
-    console.error('[RewardWishlist] AI suggestion error:', error)
-    aiSuggestionsErrorMessage.value = 'Произошла ошибка при генерации наград'
+    console.error('[RewardWishlist] AI task start error:', error)
+    isAiGenerating.value = false
+    aiProgressText.value = ''
+    aiSuggestionsErrorMessage.value = error.message || 'Ошибка запуска генерации'
     aiSuggestionsStep.value = 'error'
   }
 }
 
-function prepareUserDataForRewards() {
-  const lifeSpheres = appStore.lifeSpheres || []
-  const goals = appStore.ideas || []
-  const existingRewards = rewards.value || []
-  
-  return {
-    spheres: lifeSpheres.map(s => ({
-      id: s.id,
-      name: s.name,
-      score: s.score || 0,
-      reflection: s.reflection || {}
-    })),
-    growthZones: lifeSpheres
-      .filter(s => s.score > 0 && s.score <= 5)
-      .map(s => ({
-        id: s.id,
-        name: s.name,
-        score: s.score,
-        desired: s.reflection?.desired || '',
-        prevents: s.reflection?.prevents || ''
-      })),
-    goals: goals.slice(0, 5).map(g => ({
-      text: g.text,
-      sphereId: g.sphereId
-    })),
-    existingRewards: existingRewards.map(r => r.name),
-    xpBalance: xpBalance.value
+const rewardMentorTask = computed(() => {
+  return aiTasksStore.activeTasks.find(t => t.task_type === 'reward_mentor_help')
+})
+
+const rewardMentorResult = computed(() => {
+  return aiTasksStore.taskResults['reward_mentor_help_latest']
+})
+
+const rewardMentorError = computed(() => {
+  return aiTasksStore.taskErrors['reward_mentor_help_latest']
+})
+
+watch(rewardMentorTask, (task) => {
+  if (task) {
+    isAiGenerating.value = true
+    aiProgressText.value = task.progress_text || 'Генерация наград...'
+    currentTaskId.value = task.task_id
   }
-}
+}, { deep: true })
+
+watch(rewardMentorResult, (result) => {
+  if (result && currentTaskId.value) {
+    isAiGenerating.value = false
+    aiProgressText.value = ''
+    
+    if (result.rewards && result.rewards.length > 0) {
+      aiSuggestedRewards.value = result.rewards.map(r => ({
+        name: r.name,
+        icon: r.icon || '🎁',
+        cost: r.cost,
+        description: r.description || '',
+        whyMotivating: r.why_motivating || r.whyMotivating || ''
+      }))
+      aiSuggestionsStep.value = 'selection'
+    } else {
+      aiSuggestionsErrorMessage.value = 'AI не смог сгенерировать награды'
+      aiSuggestionsStep.value = 'error'
+    }
+    
+    currentTaskId.value = null
+  }
+}, { deep: true })
+
+watch(rewardMentorError, (error) => {
+  if (error && currentTaskId.value) {
+    isAiGenerating.value = false
+    aiProgressText.value = ''
+    aiSuggestionsErrorMessage.value = error.message || 'Ошибка генерации наград'
+    aiSuggestionsStep.value = 'error'
+    currentTaskId.value = null
+  }
+}, { deep: true })
+
+onMounted(() => {
+  if (aiTasksStore.isConnected) {
+    const existingTask = rewardMentorTask.value
+    if (existingTask) {
+      isAiGenerating.value = true
+      aiProgressText.value = existingTask.progress_text || 'Генерация...'
+      currentTaskId.value = existingTask.task_id
+      showAiSuggestionsModal.value = true
+      aiSuggestionsStep.value = 'loading'
+    }
+  }
+})
 
 async function confirmAiRewardSelection() {
   createdAiRewards.value = []
   
   const selected = selectedAiRewards.value.map(idx => aiSuggestedRewards.value[idx])
   
-  for (const reward of selected) {
-    const rewardData = {
-      name: reward.name,
-      icon: reward.icon || '🎁',
-      cost: reward.cost || 500,
-      description: reward.whyMotivating || ''
-    }
-    
-    const result = await xpStore.addReward(rewardData)
-    if (result.success && result.reward) {
-      createdAiRewards.value.push(result.reward)
-    }
-  }
+  const rewardsToCreate = selected.map(reward => ({
+    name: reward.name,
+    icon: reward.icon || '🎁',
+    cost: reward.cost || 500,
+    description: reward.whyMotivating || ''
+  }))
   
-  if (createdAiRewards.value.length > 0) {
+  const result = await xpStore.addRewards(rewardsToCreate)
+  
+  if (result.success && result.rewards?.length > 0) {
+    createdAiRewards.value = result.rewards
     aiSuggestionsStep.value = 'confirmation'
   } else {
-    toast.showToast({ title: 'Не удалось добавить награды', type: 'error' })
+    const errorMsg = result.error_code === 'rewards_limit_exceeded' 
+      ? 'Достигнут лимит наград для вашего тарифа'
+      : result.error || 'Не удалось добавить награды'
+    toast.showToast({ title: errorMsg, type: 'error' })
     closeAiSuggestionsModal()
   }
 }
@@ -678,6 +730,12 @@ async function confirmAiRewardSelection() {
   color: var(--primary-color);
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .btn-icon {
   background: none;
   border: none;
@@ -691,6 +749,56 @@ async function confirmAiRewardSelection() {
 .btn-icon:hover {
   background: var(--bg-secondary);
   color: var(--primary-color);
+}
+
+.btn-header-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-header-action.btn-add {
+  background: var(--primary-color, #6366f1);
+  color: white;
+  border-color: var(--primary-color, #6366f1);
+}
+
+.btn-header-action.btn-add:hover {
+  background: #4f46e5;
+  border-color: #4f46e5;
+}
+
+.btn-header-action.btn-ai {
+  background: #d1fae5;
+  color: #059669;
+  border-color: #10b981;
+}
+
+.btn-header-action.btn-ai:hover:not(:disabled) {
+  background: #a7f3d0;
+}
+
+.btn-header-action.btn-ai:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-header-action.btn-ai.generating {
+  background: rgba(107, 114, 128, 0.1);
+  color: #6b7280;
+  border-color: #9ca3af;
+}
+
+.btn-header-action .spin {
+  animation: spin 1s linear infinite;
 }
 
 .loading-state {

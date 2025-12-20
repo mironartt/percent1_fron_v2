@@ -29,7 +29,10 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite (with pro
 -   **Bidirectional Calendar ↔ Goals Block Sync**: Synchronizes step dates, completion, priority, and time estimates.
 -   **Marketing Landing Page**: Conversion-focused landing page with an interactive 1% effect slider, app preview, feature cards, and calls to action.
 -   **Year Review 2025 (Итоги года)**: Single-page flow at `/land/newyear` with test → results workflow. Results page now includes AI-generated 2026 plan with loading animation, confetti effect, and CTA block for app registration. AI plan generation uses `/api/ai/year-plan` with demo fallback.
--   **Achievements Page**: Improved UX with grouped XP history, filterable transactions, and pagination.
+-   **Achievements Page**: Improved UX with grouped XP history, filterable transactions, and pagination. Includes AI Reward Mentor feature for personalized reward suggestions.
+    - **AI Reward Generation**: Uses `aiTasksStore` with `task_type: "reward_mentor_help"` for backend AI task integration.
+    - **Key File**: `src/components/RewardWishlist.vue` - handles reward wishlist, AI suggestions modal, and reward creation.
+    - **API Flow**: Start task → WebSocket progress updates → Receive 3 AI-generated rewards → User selects → Create rewards via `/app/habits/rewards/create/`
 -   **Settings Page**: Redesigned with profile management (email for Telegram users), Telegram bot integration, and an "Мой старт" section displaying onboarding data.
 -   **Notification Settings Page** (`/app/settings/notifications`): Dedicated page for Telegram notification preferences. Includes global toggle, daily reminders (morning/evening with time picker), event notifications (streak warning, achievements, level up, deadlines), weekly report settings (day/time), additional options (XP rewards, SSP reassessment), and timezone selection. Settings stored in localStorage with API integration placeholder. See `notes/telegram-notifications.md` for full specification.
 -   **Subscription Page** (`/app/subscription`): Dynamic pricing page integrated with backend API. Displays real tariffs, terms with discounts, current subscription status, promocode activation, and payment history.
