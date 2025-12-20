@@ -370,6 +370,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useAITasksStore } from '../stores/aiTasks'
+import { useLandingSSPStore } from '../stores/landingSSP'
 import WheelOfLife from './WheelOfLife.vue'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
 import * as api from '@/services/api.js'
@@ -384,11 +385,13 @@ import {
 const router = useRouter()
 const store = useAppStore()
 const aiTasksStore = useAITasksStore()
+const landingSSPStore = useLandingSSPStore()
 
 const currentStep = ref(1)
 const totalSteps = 5
 const stepLabels = ['Знакомство', 'Диагностика', 'Результат', 'Анализ', 'План']
 const isLoading = ref(false)
+const hasLandingSSPTest = ref(false)
 const isAnalyzing = ref(false)
 const aiTaskProgress = ref({ percent: 0, text: '' })
 const aiTaskError = ref(null)
@@ -847,6 +850,14 @@ async function nextStep() {
     
     currentStep.value++
     
+    // Пропускаем шаг 2 (диагностика SSP) если пользователь уже прошёл новогодний тест
+    if (currentStep.value === 2 && hasLandingSSPTest.value) {
+      if (DEBUG_MODE) {
+        console.log('[OnboardingAI] Skipping step 2 - user already has SSP data from landing test')
+      }
+      currentStep.value = 3
+    }
+    
     if (currentStep.value === 4) {
       generateAIAnalysis()
     }
@@ -1085,6 +1096,74 @@ async function createStepsOnBackend(acceptedGoals, goalIds) {
   
   if (result.status === 'error') {
     console.error('[OnboardingAI] Failed to create steps:', result.error_data)
+  }
+}
+
+onMounted(async () => {
+  if (landingSSPStore.currentTest?.categories_data?.length > 0) {
+    loadSSPFromLandingTest(landingSSPStore.currentTest.categories_data)
+    return
+  }
+  
+  if (!SKIP_AUTH_CHECK) {
+    try {
+      isLoading.value = true
+      const response = await api.getSSPData()
+      
+      if (response.status === 'ok' && response.data?.categories_data?.length > 0) {
+        const landingSource = response.data.source
+        
+        if (landingSource && (landingSource.startsWith('landing_') || landingSource === 'newyear_test')) {
+          loadSSPFromBackend(response.data.categories_data)
+          
+          if (DEBUG_MODE) {
+            console.log('[OnboardingAI] Loaded SSP from landing test, source:', landingSource)
+          }
+        }
+      }
+    } catch (error) {
+      if (DEBUG_MODE) {
+        console.error('[OnboardingAI] Failed to check SSP data:', error)
+      }
+    } finally {
+      isLoading.value = false
+    }
+  }
+})
+
+function loadSSPFromLandingTest(categoriesData) {
+  hasLandingSSPTest.value = true
+  
+  categoriesData.forEach(cat => {
+    const frontendId = categoryBackendToFrontend[cat.category] || cat.frontendId
+    if (frontendId) {
+      const sphere = localSpheres.value.find(s => s.id === frontendId)
+      if (sphere) {
+        sphere.score = cat.score || cat.rating || 5
+      }
+    }
+  })
+  
+  if (DEBUG_MODE) {
+    console.log('[OnboardingAI] Loaded SSP data from landing test:', localSpheres.value)
+  }
+}
+
+function loadSSPFromBackend(categoriesData) {
+  hasLandingSSPTest.value = true
+  
+  categoriesData.forEach(cat => {
+    const frontendId = categoryBackendToFrontend[cat.category]
+    if (frontendId) {
+      const sphere = localSpheres.value.find(s => s.id === frontendId)
+      if (sphere) {
+        sphere.score = cat.rating || cat.score || 5
+      }
+    }
+  })
+  
+  if (DEBUG_MODE) {
+    console.log('[OnboardingAI] Loaded SSP data from backend:', localSpheres.value)
   }
 }
 </script>
