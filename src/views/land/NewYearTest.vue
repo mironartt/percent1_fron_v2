@@ -259,13 +259,13 @@ async function finishTest() {
     )
     
     if (result?.hash) {
-      router.push(`/land/newyear/results/${result.hash}`)
+      router.push(`/land/newyear/results/${result.hash}?from=test`)
     } else {
-      router.push('/land/newyear/results')
+      router.push('/land/newyear/results?from=test')
     }
   } catch (error) {
     console.error('[NewYearTest] Error saving test:', error)
-    router.push('/land/newyear/results')
+    router.push('/land/newyear/results?from=test')
   } finally {
     isSubmitting.value = false
   }

@@ -268,6 +268,7 @@ const route = useRoute()
 const store = useNewYearStore()
 const landingSSPStore = useLandingSSPStore()
 
+const isFromTest = ref(false)
 const loading = ref(true)
 const loadingStep = ref(1)
 const loadingMessage = ref('Анализируем твои ответы...')
@@ -501,6 +502,7 @@ async function loadFromBackend(hash) {
 
 onMounted(async () => {
   const hash = route.params.hash
+  isFromTest.value = route.query.from === 'test'
   
   if (hash) {
     const success = await loadFromBackend(hash)
@@ -509,12 +511,25 @@ onMounted(async () => {
       loading.value = false
       return
     }
-    generatePlan()
+    
+    if (isFromTest.value) {
+      generatePlan()
+    } else {
+      plan.value = demoPlan
+      loading.value = false
+      setTimeout(() => fireConfetti(), 300)
+    }
   } else if (!store.isCompleted) {
     router.push('/land/newyear/test')
     return
   } else {
-    generatePlan()
+    if (isFromTest.value) {
+      generatePlan()
+    } else {
+      plan.value = demoPlan
+      loading.value = false
+      setTimeout(() => fireConfetti(), 300)
+    }
   }
 })
 </script>
