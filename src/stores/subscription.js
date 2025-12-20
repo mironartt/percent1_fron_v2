@@ -22,6 +22,9 @@ export const useSubscriptionStore = defineStore('subscription', () => {
   const loading = ref(false)
   const tariffsLoading = ref(false)
   const historyLoading = ref(false)
+  
+  const lastRefreshTime = ref(0)
+  const REFRESH_THROTTLE_MS = 2000
 
   const effectiveTariffCode = computed(() => {
     return subscription.value?.effective_tariff?.code || 'free'
@@ -142,8 +145,17 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     return null
   }
 
-  async function loadSubscription() {
-    if (loading.value) return
+  async function loadSubscription(force = false) {
+    if (loading.value) {
+      return new Promise(resolve => {
+        const check = setInterval(() => {
+          if (!loading.value) {
+            clearInterval(check)
+            resolve()
+          }
+        }, 50)
+      })
+    }
 
     loading.value = true
 
@@ -153,12 +165,14 @@ export const useSubscriptionStore = defineStore('subscription', () => {
       if (result.status === 'ok' && result.data) {
         subscription.value = result.data.subscription
         activePromocode.value = result.data.active_promocode || null
+        lastRefreshTime.value = Date.now()
 
         if (DEBUG_MODE) {
           console.log('[Subscription] Loaded:', {
             status: subscription.value?.effective_status,
             tariff: subscription.value?.effective_tariff?.code,
             isTrial: subscription.value?.is_trial,
+            isTrialExpired: subscription.value?.is_trial_expired,
             daysRemaining: subscription.value?.days_remaining
           })
         }
@@ -170,6 +184,52 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     } finally {
       loading.value = false
     }
+  }
+  
+  async function refreshSubscriptionThrottled() {
+    const now = Date.now()
+    if (now - lastRefreshTime.value < REFRESH_THROTTLE_MS) {
+      if (DEBUG_MODE) {
+        console.log('[Subscription] Refresh throttled, skipping')
+      }
+      return false
+    }
+    
+    await loadSubscription(true)
+    return true
+  }
+  
+  async function verifyFeatureAccess(featureId) {
+    const cachedAccess = hasFeature(featureId)
+    
+    if (!cachedAccess) {
+      await refreshSubscriptionThrottled()
+      return hasFeature(featureId)
+    }
+    
+    return true
+  }
+  
+  async function verifyAIAccess() {
+    const cachedAccess = hasAIAccess()
+    
+    if (!cachedAccess) {
+      await refreshSubscriptionThrottled()
+      return hasAIAccess()
+    }
+    
+    return true
+  }
+  
+  async function verifyLimit(limitKey, currentCount) {
+    const cachedCheck = checkLimit(limitKey, currentCount)
+    
+    if (!cachedCheck.allowed) {
+      await refreshSubscriptionThrottled()
+      return checkLimit(limitKey, currentCount)
+    }
+    
+    return cachedCheck
   }
 
   async function loadTariffs(forLanding = false) {
@@ -335,6 +395,10 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     isLimitError,
 
     loadSubscription,
+    refreshSubscriptionThrottled,
+    verifyFeatureAccess,
+    verifyAIAccess,
+    verifyLimit,
     loadTariffs,
     activatePromocode,
     calculatePayment,
