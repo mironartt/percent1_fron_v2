@@ -1045,13 +1045,15 @@ const goal = computed(() => {
     return {
       id: rawGoal.id,
       backendId: rawGoal.backendId,
-      title: rawGoal.title,
+      title: rawGoal.title || rawGoal.text,
       description: rawGoal.description || rawGoal.why,
-      sphereId: rawGoal.category,
+      sphereId: rawGoal.sphereId || rawGoal.category,
       status: rawGoal.status,
-      steps: [],
+      steps: rawGoal.steps || [],
       source: 'goals-bank',
-      sourceId: rawGoal.id
+      sourceId: rawGoal.id,
+      whyImportant: rawGoal.whyImportant,
+      threeWhys: rawGoal.threeWhys
     }
   }
 
