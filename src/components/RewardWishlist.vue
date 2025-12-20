@@ -614,11 +614,11 @@ const rewardMentorTask = computed(() => {
 })
 
 const rewardMentorResult = computed(() => {
-  return aiTasksStore.taskResults['reward_mentor_help']
+  return aiTasksStore.taskResults['reward_mentor_help_latest']
 })
 
 const rewardMentorError = computed(() => {
-  return aiTasksStore.taskErrors['reward_mentor_help']
+  return aiTasksStore.taskErrors['reward_mentor_help_latest']
 })
 
 watch(rewardMentorTask, (task) => {

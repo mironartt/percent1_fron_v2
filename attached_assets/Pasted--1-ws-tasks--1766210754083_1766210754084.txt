@@ -1,0 +1,99 @@
+Вернемся к интеграции с бекендом.
+
+Я запустил генерацию (скрин 1).
+
+И вижу что в `/ws/tasks/` бэк уже вернул:
+```
+{
+  'type': 'task_completed',
+  'data': {
+    'task_id': 69,
+    'task_type': 'reward_mentor_help',
+    'result': {
+      'rewards': [
+        {
+          'name': 'Книга по инвестициям',
+          'icon': '\ud83d\udcda',
+          'cost': 400,
+          'description': 'Полезная книга, которая поможет разобраться в основах инвестирования.',
+          'why_motivating': 'Эта награда поддержит твою цель изучения основ инвестирования и поможет развить финансовую грамотность.'
+        },
+        {
+          'name': 'Выходной с семьей',
+          'icon': '❤️',
+          'cost': 800,
+          'description': 'Проведи день с близкими, наслаждаясь общением и совместными активностями.',
+          'why_motivating': 'Так ты сможешь укрепить свои отношения и в то же время отдохнуть, что очень важно для твоего эмоционального состояния.'
+        },
+        {
+          'name': 'Курс по финансам',
+          'icon': '\ud83c\udf93',
+          'cost': 1500,
+          'description': 'Онлайн-курс, который поможет улучшить навыки управления финансами.',
+          'why_motivating': 'Этот курс поможет тебе развивать финансовую грамотность и достигать целей по накоплению и инвестициям.'
+        }
+      ],
+      'raw_rewards': [
+        {
+          'name': 'Книга по инвестициям',
+          'icon': '\ud83d\udcda',
+          'cost': 400,
+          'description': 'Полезная книга, которая поможет разобраться в основах инвестирования.',
+          'whyMotivating': 'Эта награда поддержит твою цель изучения основ инвестирования и поможет развить финансовую грамотность.'
+        },
+        {
+          'name': 'Выходной с семьей',
+          'icon': '❤️',
+          'cost': 800,
+          'description': 'Проведи день с близкими, наслаждаясь общением и совместными активностями.',
+          'whyMotivating': 'Так ты сможешь укрепить свои отношения и в то же время отдохнуть, что очень важно для твоего эмоционального состояния.'
+        },
+        {
+          'name': 'Курс по финансам',
+          'icon': '\ud83c\udf93',
+          'cost': 1500,
+          'description': 'Онлайн-курс, который поможет улучшить навыки управления финансами.',
+          'whyMotivating': 'Этот курс поможет тебе развивать финансовую грамотность и достигать целей по накоплению и инвестициям.'
+        }
+      ],
+      'reasoning': 'Выбранные награды направлены на развитие финансовой грамотности, что является твоей зоной роста. Книга и курс помогут тебе в изучении инвестирования, а выходной с семьей поддержит сильные связи и даст возможность отдохнуть.',
+      'summary': 'Сгенерировано 3 наград'
+    }
+  }
+}
+```
+
+В коноли вижу:
+```
+[AITasks] Received: task_started 
+Object { task_id: 69, task_type: "reward_mentor_help" }
+aiTasks.js:171:15
+[AITasks] Received: task_progress 
+Object { task_id: 69, task_type: "reward_mentor_help", progress_percent: 10, progress_text: "Анализ профиля..." }
+aiTasks.js:171:15
+[AITasks] Received: task_progress 
+Object { task_id: 69, task_type: "reward_mentor_help", progress_percent: 20, progress_text: "Загрузка целей..." }
+aiTasks.js:171:15
+[AITasks] Received: task_progress 
+Object { task_id: 69, task_type: "reward_mentor_help", progress_percent: 30, progress_text: "Загрузка привычек..." }
+aiTasks.js:171:15
+[AITasks] Received: task_progress 
+Object { task_id: 69, task_type: "reward_mentor_help", progress_percent: 40, progress_text: "Загрузка существующих наград..." }
+aiTasks.js:171:15
+[AITasks] Received: task_progress 
+Object { task_id: 69, task_type: "reward_mentor_help", progress_percent: 50, progress_text: "Формирование промпта..." }
+aiTasks.js:171:15
+[AITasks] Received: task_progress 
+Object { task_id: 69, task_type: "reward_mentor_help", progress_percent: 70, progress_text: "Генерация наград..." }
+aiTasks.js:171:15
+[AITasks] Received: task_progress 
+Object { task_id: 69, task_type: "reward_mentor_help", progress_percent: 90, progress_text: "Обработка результата..." }
+aiTasks.js:171:15
+[AITasks] Received: task_completed 
+Object { task_id: 69, task_type: "reward_mentor_help", result: {…} }
+aiTasks.js:171:15
+[AITasks] Received: ping 
+Object { timestamp: "2025-12-20T09:04:39.914118" }
+```
+
+Что не так, почему фронт не обработал завершение таска?
