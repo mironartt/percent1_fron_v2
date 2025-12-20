@@ -39,7 +39,7 @@ import { useAppStore } from './stores/app'
 import { useAITasksStore } from './stores/aiTasks'
 import { useTelegram } from './composables/useTelegram'
 import { telegramWebAppAuth, getUserData } from './services/api'
-import { DEV_MODE, SKIP_AUTH_CHECK, DEBUG_MODE } from './settings'
+import { DEV_MODE, SKIP_AUTH_CHECK, DEBUG_MODE } from './config/settings'
 
 const route = useRoute()
 const router = useRouter()
