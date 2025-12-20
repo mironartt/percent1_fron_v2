@@ -938,7 +938,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useAITasksStore } from '../stores/aiTasks'
 import { 
@@ -970,6 +970,10 @@ import {
 
 const store = useAppStore()
 const router = useRouter()
+const route = useRoute()
+
+// Приоритетная цель (передаётся через query параметр priority_goal)
+const priorityGoalId = ref(null)
 const aiTasksStore = useAITasksStore()
 
 const weekOffset = ref(0)
@@ -2142,6 +2146,11 @@ async function loadGoalsWithFilters() {
     status_filter: 'work'
   }
   
+  // Добавляем приоритетную цель (только на первой странице)
+  if (priorityGoalId.value && currentPage.value === 1) {
+    params.first_goal_id = priorityGoalId.value
+  }
+  
   // Добавляем текстовый поиск (минимум 3 символа)
   if (queryFilter.value && queryFilter.value.length >= 3) {
     params.query_filter = queryFilter.value
@@ -2155,6 +2164,13 @@ async function loadGoalsWithFilters() {
   }
   
   await store.loadGoalsFromBackend(params)
+  
+  // Очищаем приоритет после первой загрузки
+  if (priorityGoalId.value) {
+    priorityGoalId.value = null
+    // Очищаем query параметр из URL без перезагрузки
+    router.replace({ query: {} })
+  }
 }
 
 // Watch для фильтра запланированности - при изменении делаем запрос к бэку
@@ -2985,17 +3001,37 @@ function removeStepFromLocalPlan(goal, step) {
   const weekStart = weekDays.value[0]?.date
   if (!weekStart) return
   
+  const goalId = goal.backendId || goal.id
+  const stepId = step.backendId || step.id
+  
   const plan = store.weeklyPlans.find(p => p.weekStart === weekStart)
   if (plan) {
     // Удалить по обоим вариантам ID
     plan.scheduledTasks = (plan.scheduledTasks || []).filter(
-      t => !((t.goalId === goal.id || t.goalId === goal.backendId) && 
-             (t.stepId === step.id || t.stepId === step.backendId))
+      t => !((t.goalId === goal.id || t.goalId === goal.backendId || t.goalId === goalId) && 
+             (t.stepId === step.id || t.stepId === step.backendId || t.stepId === stepId))
     )
+  }
+  
+  // ВАЖНО: Также удаляем из weeklyStepsData для немедленного обновления UI
+  for (const dayData of weeklyStepsData.value) {
+    if (dayData.steps_data) {
+      const stepIndex = dayData.steps_data.findIndex(s => 
+        (s.step_id === stepId || s.step_id === step.id || String(s.step_id) === String(stepId)) &&
+        (s.goal_id === goalId || s.goal_id === goal.id || String(s.goal_id) === String(goalId))
+      )
+      if (stepIndex !== -1) {
+        dayData.steps_data.splice(stepIndex, 1)
+        break
+      }
+    }
   }
   
   // Убрать дату из шага (в обеих коллекциях)
   updateStepDateInCollections(goal.id, step.id, null)
+  
+  // Триггерим реактивность для перерендера UI
+  localUpdateTrigger.value++
   
   store.saveToLocalStorage()
 }
@@ -3514,6 +3550,35 @@ function saveStepToLocalPlan(goal, step, date) {
     completed: step.completed || false
   })
   
+  // ВАЖНО: Перемещаем шаг между днями в weeklyStepsData для немедленного обновления UI
+  let removedStep = null
+  for (const dayData of weeklyStepsData.value) {
+    if (dayData.steps_data) {
+      const stepIndex = dayData.steps_data.findIndex(s => 
+        (s.step_id === stepKey || s.step_id === step.id || String(s.step_id) === String(stepKey)) &&
+        (s.goal_id === goalKey || s.goal_id === goal.id || String(s.goal_id) === String(goalKey))
+      )
+      if (stepIndex !== -1) {
+        removedStep = dayData.steps_data.splice(stepIndex, 1)[0]
+        break
+      }
+    }
+  }
+  
+  // Если нашли шаг, добавляем его в новый день
+  if (removedStep) {
+    removedStep.step_dt = date
+    let targetDay = weeklyStepsData.value.find(d => d.date === date)
+    if (!targetDay) {
+      targetDay = { date, steps_data: [] }
+      weeklyStepsData.value.push(targetDay)
+    }
+    if (!targetDay.steps_data) {
+      targetDay.steps_data = []
+    }
+    targetDay.steps_data.push(removedStep)
+  }
+  
   // Обновить дату в шаге для isStepScheduled (в обеих коллекциях)
   updateStepDateInCollections(goal.id, step.id, date)
   
@@ -3579,10 +3644,40 @@ function closeSphereDropdown(e) {
 
 onMounted(async () => {
   initSelectedDay()
+  
+  // Читаем приоритетную цель из query параметра
+  if (route.query.priority_goal) {
+    const goalId = parseInt(route.query.priority_goal)
+    if (!isNaN(goalId) && goalId > 0) {
+      priorityGoalId.value = goalId
+    }
+  }
+  
+  // Параметры загрузки целей
+  const goalsParams = { 
+    score_filter: 'true', 
+    status_filter: 'work', 
+    with_steps_data: true, 
+    has_steps: true, 
+    page_size: 10 
+  }
+  
+  // Добавляем приоритетную цель если есть
+  if (priorityGoalId.value) {
+    goalsParams.first_goal_id = priorityGoalId.value
+  }
+  
   await Promise.all([
     loadWeeklySteps(),
-    store.loadGoalsFromBackend({ score_filter: 'true', status_filter: 'work', with_steps_data: true, has_steps: true, page_size: 10 })
+    store.loadGoalsFromBackend(goalsParams)
   ])
+  
+  // Очищаем приоритет после загрузки
+  if (priorityGoalId.value) {
+    priorityGoalId.value = null
+    router.replace({ query: {} })
+  }
+  
   setupInfiniteScroll()
   document.addEventListener('click', closeSphereDropdown)
   
