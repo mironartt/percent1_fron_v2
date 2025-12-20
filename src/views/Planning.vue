@@ -938,7 +938,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useAITasksStore } from '../stores/aiTasks'
 import { 
@@ -970,6 +970,10 @@ import {
 
 const store = useAppStore()
 const router = useRouter()
+const route = useRoute()
+
+// Приоритетная цель (передаётся через query параметр priority_goal)
+const priorityGoalId = ref(null)
 const aiTasksStore = useAITasksStore()
 
 const weekOffset = ref(0)
@@ -2142,6 +2146,11 @@ async function loadGoalsWithFilters() {
     status_filter: 'work'
   }
   
+  // Добавляем приоритетную цель (только на первой странице)
+  if (priorityGoalId.value && currentPage.value === 1) {
+    params.first_goal_id = priorityGoalId.value
+  }
+  
   // Добавляем текстовый поиск (минимум 3 символа)
   if (queryFilter.value && queryFilter.value.length >= 3) {
     params.query_filter = queryFilter.value
@@ -2155,6 +2164,13 @@ async function loadGoalsWithFilters() {
   }
   
   await store.loadGoalsFromBackend(params)
+  
+  // Очищаем приоритет после первой загрузки
+  if (priorityGoalId.value) {
+    priorityGoalId.value = null
+    // Очищаем query параметр из URL без перезагрузки
+    router.replace({ query: {} })
+  }
 }
 
 // Watch для фильтра запланированности - при изменении делаем запрос к бэку
@@ -3628,10 +3644,40 @@ function closeSphereDropdown(e) {
 
 onMounted(async () => {
   initSelectedDay()
+  
+  // Читаем приоритетную цель из query параметра
+  if (route.query.priority_goal) {
+    const goalId = parseInt(route.query.priority_goal)
+    if (!isNaN(goalId) && goalId > 0) {
+      priorityGoalId.value = goalId
+    }
+  }
+  
+  // Параметры загрузки целей
+  const goalsParams = { 
+    score_filter: 'true', 
+    status_filter: 'work', 
+    with_steps_data: true, 
+    has_steps: true, 
+    page_size: 10 
+  }
+  
+  // Добавляем приоритетную цель если есть
+  if (priorityGoalId.value) {
+    goalsParams.first_goal_id = priorityGoalId.value
+  }
+  
   await Promise.all([
     loadWeeklySteps(),
-    store.loadGoalsFromBackend({ score_filter: 'true', status_filter: 'work', with_steps_data: true, has_steps: true, page_size: 10 })
+    store.loadGoalsFromBackend(goalsParams)
   ])
+  
+  // Очищаем приоритет после загрузки
+  if (priorityGoalId.value) {
+    priorityGoalId.value = null
+    router.replace({ query: {} })
+  }
+  
   setupInfiniteScroll()
   document.addEventListener('click', closeSphereDropdown)
   

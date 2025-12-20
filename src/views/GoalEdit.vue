@@ -1390,7 +1390,12 @@ const hasUnscheduledSteps = computed(() => {
 })
 
 function goToPlanning() {
-  router.push('/app/planning')
+  const goalId = goal.value?.backendId || goal.value?.id
+  if (goalId) {
+    router.push({ path: '/app/planning', query: { priority_goal: goalId } })
+  } else {
+    router.push('/app/planning')
+  }
 }
 
 // ========================================
