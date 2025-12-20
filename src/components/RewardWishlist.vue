@@ -680,24 +680,23 @@ async function confirmAiRewardSelection() {
   
   const selected = selectedAiRewards.value.map(idx => aiSuggestedRewards.value[idx])
   
-  for (const reward of selected) {
-    const rewardData = {
-      name: reward.name,
-      icon: reward.icon || '🎁',
-      cost: reward.cost || 500,
-      description: reward.whyMotivating || ''
-    }
-    
-    const result = await xpStore.addReward(rewardData)
-    if (result.success && result.reward) {
-      createdAiRewards.value.push(result.reward)
-    }
-  }
+  const rewardsToCreate = selected.map(reward => ({
+    name: reward.name,
+    icon: reward.icon || '🎁',
+    cost: reward.cost || 500,
+    description: reward.whyMotivating || ''
+  }))
   
-  if (createdAiRewards.value.length > 0) {
+  const result = await xpStore.addRewards(rewardsToCreate)
+  
+  if (result.success && result.rewards?.length > 0) {
+    createdAiRewards.value = result.rewards
     aiSuggestionsStep.value = 'confirmation'
   } else {
-    toast.showToast({ title: 'Не удалось добавить награды', type: 'error' })
+    const errorMsg = result.error_code === 'rewards_limit_exceeded' 
+      ? 'Достигнут лимит наград для вашего тарифа'
+      : result.error || 'Не удалось добавить награды'
+    toast.showToast({ title: errorMsg, type: 'error' })
     closeAiSuggestionsModal()
   }
 }

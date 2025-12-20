@@ -237,31 +237,50 @@ export const useXpStore = defineStore('xp', () => {
   }
 
   async function addReward(rewardData) {
+    const result = await addRewards([rewardData])
+    if (result.success && result.rewards?.length > 0) {
+      return { success: true, reward: result.rewards[0], reward_id: result.rewards[0].reward_id }
+    }
+    return result
+  }
+
+  async function addRewards(rewardsData) {
     try {
       rewardsLoading.value = true
       error.value = null
       
-      const result = await api.createReward({
-        name: rewardData.name,
-        cost: rewardData.cost,
-        icon: rewardData.icon || '🎁',
-        description: rewardData.description || ''
-      })
+      const rewardsPayload = rewardsData.map(r => ({
+        name: r.name,
+        cost: r.cost,
+        icon: r.icon || '🎁',
+        description: r.description || ''
+      }))
+      
+      const result = await api.createRewards(rewardsPayload)
       
       if (result.status === 'ok' && result.data) {
         if (DEBUG_MODE) {
-          console.log('[XP] Reward created:', result.data.reward_id)
+          console.log('[XP] Rewards created:', result.data.created_count)
+        }
+        
+        if (result.data.current_balance !== undefined) {
+          xpBalance.value = result.data.current_balance
         }
         
         await fetchRewards()
-        return { success: true, reward_id: result.data.reward_id }
+        return { 
+          success: true, 
+          rewards: result.data.rewards,
+          created_count: result.data.created_count,
+          total_items: result.data.total_items
+        }
       } else {
-        error.value = result.error_data?.message || 'Ошибка создания награды'
-        return { success: false, error: error.value }
+        error.value = result.error_message || result.error_data?.message || 'Ошибка создания наград'
+        return { success: false, error: error.value, error_code: result.error_code }
       }
     } catch (e) {
-      error.value = 'Ошибка сети при создании награды'
-      console.error('[XP] addReward error:', e)
+      error.value = 'Ошибка сети при создании наград'
+      console.error('[XP] addRewards error:', e)
       return { success: false, error: error.value }
     } finally {
       rewardsLoading.value = false
@@ -456,6 +475,7 @@ export const useXpStore = defineStore('xp', () => {
     resetHistoryFilters,
     applyHistoryFilters,
     addReward,
+    addRewards,
     updateReward,
     removeReward,
     redeemReward,

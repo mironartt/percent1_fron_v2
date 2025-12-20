@@ -472,16 +472,24 @@ export async function getRewards(params = {}) {
 }
 
 /**
- * Создать награду
- * @param {object} reward - Данные награды
- * @param {string} reward.name - Название (обязательно)
- * @param {number} reward.cost - Стоимость в XP (обязательно)
- * @param {string} [reward.icon='🎁'] - Emoji иконка
- * @param {string} [reward.description=''] - Описание
- * @returns {Promise<{success: boolean, data?: object, error?: object}>}
+ * Создать награды (массовое создание)
+ * @param {Array<object>} rewards - Массив наград (до 100 штук)
+ * @param {string} rewards[].name - Название (обязательно)
+ * @param {number} rewards[].cost - Стоимость в XP (обязательно)
+ * @param {string} [rewards[].icon='🎁'] - Emoji иконка
+ * @param {string} [rewards[].description=''] - Описание
+ * @returns {Promise<{status: string, data?: {rewards: Array, created_count: number, total_items: number, current_balance: number}}>}
+ */
+export async function createRewards(rewards) {
+  return habitsRequest('/rewards/create/', { rewards_data: rewards })
+}
+
+/**
+ * Создать одну награду (обёртка для совместимости)
+ * @deprecated Используйте createRewards([reward])
  */
 export async function createReward(reward) {
-  return habitsRequest('/rewards/create/', reward)
+  return createRewards([reward])
 }
 
 /**
@@ -552,6 +560,7 @@ export default {
   
   getRewards,
   createReward,
+  createRewards,
   redeemReward,
   updateReward,
   deleteReward
