@@ -182,7 +182,6 @@ import {
   Loader2,
   AlertCircle
 } from 'lucide-vue-next'
-import { DEV_MODE, SKIP_AUTH_CHECK, DEBUG_MODE } from '../config/settings'
 
 const route = useRoute()
 const store = useAppStore()
@@ -202,13 +201,8 @@ const hasMessages = computed(() => chatStore.messages.length > 0)
 const isCollapsed = computed(() => store.mentorPanelCollapsed)
 const isMobileOpen = computed(() => store.mentorMobileOpen)
 const unreadCount = computed(() => chatStore.unreadCount)
-const spotlightMode = computed(() => {
-  // Отключаем spotlight в режиме разработки
-  if (DEV_MODE && SKIP_AUTH_CHECK && DEBUG_MODE) {
-    return false
-  }
-  return store.mentorSpotlightMode
-})
+// Spotlight отключен
+const spotlightMode = computed(() => false)
 const canSendMessage = computed(() => chatStore.canSendMessage && !chatStore.forceDisconnected)
 
 const connectionStatusClass = computed(() => {
