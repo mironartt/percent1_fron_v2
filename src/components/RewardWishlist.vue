@@ -768,22 +768,22 @@ async function confirmAiRewardSelection() {
 
 .btn-header-action.btn-add {
   background: transparent;
-  color: #7c3aed;
-  border-color: #7c3aed;
+  color: var(--primary-color, #6366f1);
+  border-color: var(--primary-color, #6366f1);
 }
 
 .btn-header-action.btn-add:hover {
-  background: rgba(124, 58, 237, 0.08);
+  background: rgba(99, 102, 241, 0.08);
 }
 
 .btn-header-action.btn-ai {
-  background: rgba(16, 185, 129, 0.1);
-  color: #059669;
+  background: rgba(16, 185, 129, 0.08);
+  color: #10b981;
   border-color: #10b981;
 }
 
 .btn-header-action.btn-ai:hover:not(:disabled) {
-  background: rgba(16, 185, 129, 0.18);
+  background: rgba(16, 185, 129, 0.15);
 }
 
 .btn-header-action.btn-ai:disabled {
