@@ -3651,7 +3651,7 @@ function formatDate(dateString) {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  background: linear-gradient(135deg, #10b981, #059669);
   color: #fff;
   border: none;
   border-radius: var(--radius-md);
@@ -3665,7 +3665,7 @@ function formatDate(dateString) {
 
 .btn-ai-steps-inline:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .btn-ai-steps-inline:disabled {
