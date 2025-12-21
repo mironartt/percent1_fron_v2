@@ -82,11 +82,15 @@
           <div class="referral-stats">
             <div class="referral-stat">
               <div class="referral-stat-value">{{ referralStats.invitedCount }}</div>
-              <div class="referral-stat-label">Приглашено друзей</div>
+              <div class="referral-stat-label">Приглашено</div>
             </div>
             <div class="referral-stat">
-              <div class="referral-stat-value">{{ referralStats.earnedAmount }} ₽</div>
+              <div class="referral-stat-value">{{ formatMoney(referralStats.earnedAmount) }} ₽</div>
               <div class="referral-stat-label">Заработано</div>
+            </div>
+            <div class="referral-stat">
+              <div class="referral-stat-value">{{ formatMoney(referralStats.balance) }} ₽</div>
+              <div class="referral-stat-label">К выводу</div>
             </div>
           </div>
 
@@ -349,7 +353,8 @@ const backendOnboardingData = ref(null)
 
 const referralStats = ref({
   invitedCount: 0,
-  earnedAmount: 0
+  earnedAmount: 0,
+  balance: 0
 })
 const onboardingData = computed(() => {
   if (backendOnboardingData.value) {
@@ -377,7 +382,10 @@ const mentorMessagesCount = computed(() => store.mentor.messages?.length || 0)
 
 onMounted(async () => {
   await loadUserData()
-  await loadOnboardingData()
+  await Promise.all([
+    loadOnboardingData(),
+    loadReferralStats()
+  ])
 })
 
 async function loadUserData() {
@@ -405,6 +413,30 @@ async function loadOnboardingData() {
   } catch (error) {
     console.error('[Settings] Failed to load onboarding data:', error)
   }
+}
+
+async function loadReferralStats() {
+  try {
+    const result = await api.getReferralData({ page: 1, page_size: 1 })
+    if (result.status === 'ok' && result.data) {
+      referralStats.value = {
+        invitedCount: result.data.total_referrals || 0,
+        earnedAmount: result.data.total_earned || 0,
+        balance: result.data.balance || 0
+      }
+    }
+  } catch (error) {
+    console.error('[Settings] Failed to load referral stats:', error)
+  }
+}
+
+function formatMoney(value) {
+  if (value === null || value === undefined) return '0'
+  const numValue = Number(value)
+  if (isNaN(numValue)) return '0'
+  return Number.isInteger(numValue) 
+    ? numValue.toLocaleString('ru-RU')
+    : numValue.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
 }
 
 function openEmailSetupModal() {
@@ -581,27 +613,27 @@ function handleLogout() {
 
 .referral-stats {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
   margin-bottom: 1.5rem;
 }
 
 .referral-stat {
-  padding: 1.25rem;
+  padding: 1rem;
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
   text-align: center;
 }
 
 .referral-stat-value {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--primary-color);
   margin-bottom: 0.25rem;
 }
 
 .referral-stat-label {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
 }
 

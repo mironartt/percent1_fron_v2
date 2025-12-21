@@ -44,6 +44,15 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite (with pro
     - **Payment Flow**: calculate → PaymentModal → create → redirect to Robokassa → callback to `/app/billing/success` or `/app/billing/fail`
     - **AI Access Control**: MentorPanel and AICurator check `hasAIAccess()` before sending messages. Shows UpgradeModal for Free users.
 -   **Policy Acceptance Modal**: Mandatory modal for users who haven't accepted Terms & Privacy Policy. Blocks app usage until both checkboxes are confirmed. Triggered on login (if user.is_terms_accepted/is_privacy_accepted is false), on 403 policy_acceptance_required API error, or on WebSocket close code 4004. Key files: `src/components/PolicyAcceptanceModal.vue`, store flags in `src/stores/app.js` (needsPolicyAcceptance, setPolicyAccepted, showPolicyModal).
+-   **Referral System (NEW - December 2025)**: Complete referral program with earnings and withdrawal management.
+    - **Key Files**: `src/views/Referral.vue` (main page), `src/views/Register.vue` (code integration), `src/router/index.js` (referral routes)
+    - **Referral Link Formats**: Direct `/ref/{CODE}` and Query `/?ref={CODE}` - both save code to `onepercent_referral_code` localStorage key
+    - **API Endpoints**: `/app/referral/get/` (stats, links, calculator, referrals), `/app/referral/transactions/get/`, `/app/referral/withdrawal/create/`, `/app/referral/withdrawal/get/`
+    - **Registration Flow**: Referral code from localStorage is sent to backend during registration, cleared after success
+    - **Earnings Calculator**: Dynamic grid showing commission (30%) for each tariff/term combination
+    - **Withdrawal System**: Modal with amount/comment input, minimum amount from API (default 3000 RUB), withdrawal requests list with statuses (pending/approved/rejected/completed)
+    - **Settings Widget**: Compact stats display (invited, earned, balance) with link to full referral page
+    - **SITE_DOMAIN Config**: New config variable in `local_settings.js` (default: `https://percent1.ru`) for absolute URL generation
 
 ### System Design Choices
 The application uses a modular structure with dedicated components, services, views, router, and Pinia stores. It emphasizes user guidance, visual feedback, and a clean interface. The AI Mentor is a core value proposition. Backend synchronization includes immediate UI feedback, goal routing with `backendId`, race condition prevention, optimized step synchronization, and API pagination.

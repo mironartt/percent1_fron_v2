@@ -37,6 +37,9 @@ export const DEMO_PLANNING_MODE = localSettings.DEMO_PLANNING_MODE ?? false
 // Режим credentials для fetch запросов ('include' | 'same-origin' | undefined для авто)
 export const CREDENTIALS_MODE = localSettings.CREDENTIALS_MODE ?? undefined
 
+// Домен сайта для полных ссылок (реферальные ссылки и т.д.)
+export const SITE_DOMAIN = localSettings.SITE_DOMAIN ?? 'https://percent1.ru'
+
 // ID счётчика Яндекс.Метрики
 export const YANDEX_METRIKA_ID = localSettings.YANDEX_METRIKA_ID ?? 105671462
 
@@ -58,7 +61,8 @@ if (DEBUG_MODE) {
     FORCE_SHOW_MINITASK,
     DEMO_PLANNING_MODE,
     CREDENTIALS_MODE,
-    YANDEX_METRIKA_ID
+    YANDEX_METRIKA_ID,
+    SITE_DOMAIN
   })
 }
 
@@ -75,7 +79,8 @@ export const settings = {
   FORCE_SHOW_MINITASK,
   DEMO_PLANNING_MODE,
   CREDENTIALS_MODE,
-  YANDEX_METRIKA_ID
+  YANDEX_METRIKA_ID,
+  SITE_DOMAIN
 }
 
 export default settings
