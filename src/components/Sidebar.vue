@@ -8,10 +8,10 @@
   <aside class="sidebar" :class="{ collapsed: isCollapsed, 'mobile-open': isMobileOpen }">
     <div class="sidebar-header">
       <div class="header-top">
-        <div class="logo-wrapper">
+        <router-link to="/app" class="logo-wrapper">
           <h1 class="logo" v-show="!isCollapsed">OnePercent</h1>
           <h1 class="logo-short" v-show="isCollapsed">1%</h1>
-        </div>
+        </router-link>
         <button class="theme-toggle-icon" @click="toggleTheme" :title="isDark ? 'Светлая тема' : 'Тёмная тема'">
           <Sun v-if="isDark" :size="20" :stroke-width="1.5" />
           <Moon v-else :size="20" :stroke-width="1.5" />
@@ -335,6 +335,8 @@ const menuItems = [
 
 .logo-wrapper {
   flex: 1;
+  text-decoration: none;
+  color: inherit;
 }
 
 .theme-toggle-icon {
