@@ -3788,6 +3788,7 @@ function formatDate(dateString) {
   transition: all 0.2s ease;
   white-space: nowrap;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .btn-ai-steps-inline:hover:not(:disabled) {
