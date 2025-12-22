@@ -98,9 +98,8 @@ const router = createRouter({
     {
       path: '/ref/:code',
       name: 'referral-redirect',
-      component: null,
       meta: { public: true },
-      beforeEnter: (to, from, next) => {
+      redirect: to => {
         const code = to.params.code?.toUpperCase()
         if (code) {
           localStorage.setItem('onepercent_referral_code', code)
@@ -108,7 +107,7 @@ const router = createRouter({
             console.log('[Router] Saved referral code from direct link:', code)
           }
         }
-        next({ name: 'register' })
+        return { name: 'register' }
       }
     },
     
