@@ -66,69 +66,27 @@
         </button>
         <div class="history-content" v-show="historyExpanded">
           <div class="history-filters">
-            <div class="filter-row">
-              <div class="filter-chips">
-                <button 
-                  class="chip-filter"
-                  :class="{ active: !historyFilters.transaction_status_filter }"
-                  @click="setStatusFilter(null)"
-                >
-                  Все
-                </button>
-                <button 
-                  class="chip-filter"
-                  :class="{ active: historyFilters.transaction_status_filter === 'earned' }"
-                  @click="setStatusFilter('earned')"
-                >
-                  Начисления
-                </button>
-                <button 
-                  class="chip-filter"
-                  :class="{ active: historyFilters.transaction_status_filter === 'spent' }"
-                  @click="setStatusFilter('spent')"
-                >
-                  Списания
-                </button>
-              </div>
-            </div>
-            <div class="filter-row">
-              <div class="filter-chips category-chips">
-                <button 
-                  class="chip-filter"
-                  :class="{ active: !historyFilters.transaction_category_filter }"
-                  @click="setCategoryFilter(null)"
-                >
-                  Все
-                </button>
-                <button 
-                  class="chip-filter"
-                  :class="{ active: historyFilters.transaction_category_filter === 'habits' }"
-                  @click="setCategoryFilter('habits')"
-                >
-                  <Flame :size="12" /> Привычки
-                </button>
-                <button 
-                  class="chip-filter"
-                  :class="{ active: historyFilters.transaction_category_filter === 'diary' }"
-                  @click="setCategoryFilter('diary')"
-                >
-                  <BookOpen :size="12" /> Дневник
-                </button>
-                <button 
-                  class="chip-filter"
-                  :class="{ active: historyFilters.transaction_category_filter === 'goals' }"
-                  @click="setCategoryFilter('goals')"
-                >
-                  <Star :size="12" /> Цели
-                </button>
-                <button 
-                  class="chip-filter"
-                  :class="{ active: historyFilters.transaction_category_filter === 'rewards' }"
-                  @click="setCategoryFilter('rewards')"
-                >
-                  <Gift :size="12" /> Награды
-                </button>
-              </div>
+            <div class="filter-row filter-dropdowns">
+              <select 
+                class="filter-select"
+                :value="historyFilters.transaction_status_filter || ''"
+                @change="setStatusFilter($event.target.value || null)"
+              >
+                <option value="">Все операции</option>
+                <option value="earned">Начисления</option>
+                <option value="spent">Списания</option>
+              </select>
+              <select 
+                class="filter-select"
+                :value="historyFilters.transaction_category_filter || ''"
+                @change="setCategoryFilter($event.target.value || null)"
+              >
+                <option value="">Все категории</option>
+                <option value="habits">Привычки</option>
+                <option value="diary">Дневник</option>
+                <option value="goals">Цели</option>
+                <option value="rewards">Награды</option>
+              </select>
             </div>
             <div class="filter-row search-row">
               <div class="search-input-wrapper">
@@ -858,6 +816,37 @@ function getGroupIcon(groupType) {
   color: white;
 }
 
+.filter-dropdowns {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.filter-select {
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  min-width: 140px;
+}
+
+.filter-select:hover {
+  border-color: var(--primary-color);
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
 .search-row {
   gap: 0.75rem;
 }
@@ -1207,6 +1196,16 @@ function getGroupIcon(groupType) {
   
   .filter-chips .chip-filter {
     flex-shrink: 0;
+  }
+  
+  .filter-dropdowns {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .filter-select {
+    width: 100%;
+    min-width: unset;
   }
   
   .pagination-pages {
