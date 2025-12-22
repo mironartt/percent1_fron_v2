@@ -1,5 +1,6 @@
 <template>
   <div id="app" :class="appClasses">
+    <ImpersonateBanner />
     <Sidebar v-if="hasSidebar" @collapse-change="onCollapseChange" />
     <main class="main-content">
       <router-view v-slot="{ Component, route }">
@@ -37,6 +38,7 @@ import PolicyAcceptanceModal from './components/PolicyAcceptanceModal.vue'
 import MentorPanel from './components/MentorPanel.vue'
 import ToastNotification from './components/ToastNotification.vue'
 import XPNotification from './components/XPNotification.vue'
+import ImpersonateBanner from './components/ImpersonateBanner.vue'
 import { useAppStore } from './stores/app'
 import { useAITasksStore } from './stores/aiTasks'
 import { useTelegram } from './composables/useTelegram'
