@@ -554,7 +554,7 @@
         <button class="plan-steps-btn" @click="goToPlanning">
           <Calendar :size="18" />
           <span>Запланировать</span>
-          <span v-if="unscheduledStepsCount > 0" class="unscheduled-count">{{ unscheduledStepsCount }}</span>
+          <span v-if="totalStepsFromBackendCount > 0" class="unscheduled-count">{{ totalStepsFromBackendCount }}</span>
         </button>
       </div>
 
@@ -1396,6 +1396,10 @@ const unscheduledStepsCount = computed(() => {
 
 const hasUnscheduledSteps = computed(() => {
   return unscheduledStepsCount.value > 0
+})
+
+const totalStepsFromBackendCount = computed(() => {
+  return totalStepsFromBackend.value || totalStepsCount.value
 })
 
 function goToPlanning() {
