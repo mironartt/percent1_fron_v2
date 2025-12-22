@@ -1,0 +1,51 @@
+Failed to update step: Error: Ошибка сервера
+    yl https://percent1.ru/assets/GoalEdit-BjsLiK-C.js:2
+    onClick https://percent1.ru/assets/GoalEdit-BjsLiK-C.js:3
+    s https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    Ls https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    It https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    n https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    Jt https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    sg https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    cg https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    x https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    y https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    I https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    $ https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    x https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    y https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    I https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    de https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    Se https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    G https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    I https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    J https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    M https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    y https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    I https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    J https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    M https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    y https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    I https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    Y https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    run https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    runIfDirty https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    Ls https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    Ul https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    promise callback*Hl https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    Xr https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    scheduler https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    trigger https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    Wr https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    notify https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    trigger https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    set value https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    wt https://percent1.ru/assets/GoalEdit-BjsLiK-C.js:2
+    setup https://percent1.ru/assets/GoalEdit-BjsLiK-C.js:2
+    nn https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    Ls https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    It https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    __weh https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    jl https://percent1.ru/assets/index-CEJrL5Q1.js:2
+    Ul https://percent1.ru/assets/index-CEJrL5Q1.js:2
+GoalEdit-BjsLiK-C.js:2:23770
