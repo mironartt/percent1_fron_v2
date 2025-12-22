@@ -1,0 +1,105 @@
+Я проверил:
+Скрин 1 - я нахожусь на странице детали по цели, и килкаю на кнопку "запланировать шаги"
+Скрин 2 - меня после клика перенесло на страницу "планирования" но нужная цель стоит не первой.
+
+Проверяю тело запросов, которые отправил фронт на ``/api/rest/front/app/goals/get/`:
+```
+{"score_filter":"true","status_filter":"work","with_steps_data":true,"has_steps":true,"page_size":10,"first_goal_id":425}
+```
+Как видно в запросе указано: `"first_goal_id":425`.
+И бэк вернул:
+```
+{
+  "status": "ok",
+  "data": {
+    "total_items": 7,
+    "total_filtered_items": 6,
+    "total_pages": 1,
+    "page": null,
+    "page_size": 10,
+    "total_data": {
+      "total_goals": 7,
+      "true_goals": 6,
+      "false_goals": 0,
+      "in_work_goals": 6
+    },
+    "goals_data": [
+      {
+        "goal_id": 425,
+        "title": "Начать инвестировать регулярно",
+        "category": "welfare",
+        "status": "work",
+        "score": "true",
+        "why_important": null,
+        "why_give_me": null,
+        "why_about_me": null,
+        "date_created": "2025-12-18 11:46:12",
+        "date_completed": null,
+        "total_steps_data": {
+          "total_steps": 2,
+          "complete_steps": 0,
+          "complete_percent": 0,
+          "complete_days_in_row": 0
+        },
+        "steps_data": [
+          {
+            "step_id": 1573,
+            "title": "1",
+            "description": "",
+            "status": "unplanned",
+            "priority": null,
+            "time_duration": null,
+            "dt": null,
+            "order": 0,
+            "is_complete": false,
+            "date_completed": null,
+            "date_created": "2025-12-22 11:01:36",
+            "goal_id": 425
+          },
+          {
+            "step_id": 1574,
+            "title": "2",
+            "description": "",
+            "status": "unplanned",
+            "priority": null,
+            "time_duration": null,
+            "dt": null,
+            "order": 1,
+            "is_complete": false,
+            "date_completed": null,
+            "date_created": "2025-12-22 11:01:38",
+            "goal_id": 425
+          }
+        ],
+        "notes_data": [],
+        "notes_pagination": null
+      },
+      // ..... остальные цели
+    ],
+    "total_data_steps_data": {
+      "total_steps": 20,
+      "complete_steps": 2,
+      "complete_percent": 10,
+      "complete_days_in_row": 0
+    },
+    "goals_without_steps": {
+      "total": 1,
+      "goals": [
+        {
+          "goal_id": 433,
+          "title": "2222",
+          "category": "work"
+        }
+      ]
+    }
+  }
+}
+```
+Т.е. бэк вернул первой именно то что было нужно.
+
+Но фронт не отрисовал первой нужную цель.
+Также в урле нет гет параметров, а насколько я помню, в данном кейсе они должны были быть.  
+Нужно чтобы фронт отрисовывал цели в порядке отдаваемом бэком!!
+
+Т.е. очевидно что данный функционал не работает!!!
+Проверь и исправь. В конце дай отчет.
