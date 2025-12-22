@@ -941,6 +941,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useAITasksStore } from '../stores/aiTasks'
+import { useXpStore } from '@/stores/xp'
 import { useXPNotification } from '@/composables/useXPNotification.js'
 import { 
   Calendar, 
@@ -972,7 +973,8 @@ import {
 const store = useAppStore()
 const router = useRouter()
 const route = useRoute()
-const { showStepCompletedXP } = useXPNotification()
+const xpStore = useXpStore()
+const { showStepCompletedXP, XP_AMOUNTS } = useXPNotification()
 
 // Приоритетная цель (передаётся через query параметр first_goal_id)
 // Сохраняется в течение всей сессии работы с Planning для поддержания порядка целей
@@ -2773,8 +2775,12 @@ async function toggleStepComplete() {
       await reloadGoalsWithPriority()
     }
     
+    // XP обновление и уведомление
     if (newCompleted) {
       showStepCompletedXP()
+      xpStore.addToBalance(XP_AMOUNTS.goal_step_completed)
+    } else {
+      xpStore.addToBalance(-XP_AMOUNTS.goal_step_completed)
     }
     
     await loadWeeklySteps()
@@ -3225,8 +3231,12 @@ async function sendStepUpdateToBackend(goalId, stepId, newCompleted, originalSte
     
     if (result?.status === 'ok') {
       console.log('[Planning] updateGoalSteps SUCCESS')
+      // XP обновление и уведомление
       if (newCompleted) {
         showStepCompletedXP()
+        xpStore.addToBalance(XP_AMOUNTS.goal_step_completed)
+      } else {
+        xpStore.addToBalance(-XP_AMOUNTS.goal_step_completed)
       }
     } else {
       console.warn('[Planning] updateGoalSteps returned non-ok status:', result)

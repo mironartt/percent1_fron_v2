@@ -652,6 +652,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { useXpStore } from '@/stores/xp'
 import { useXPNotification } from '@/composables/useXPNotification.js'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
 import MentorGoalSuggestionsModal from '@/components/MentorGoalSuggestionsModal.vue'
@@ -739,7 +740,8 @@ function getSphereColor(sphereId) {
 const store = useAppStore()
 const router = useRouter()
 const route = useRoute()
-const { showGoalCompletedXP } = useXPNotification()
+const xpStore = useXpStore()
+const { showGoalCompletedXP, XP_AMOUNTS } = useXPNotification()
 
 const lifeSpheres = computed(() => store.lifeSpheres)
 const rawIdeas = computed(() => store.goalsBank.rawIdeas)
@@ -1915,6 +1917,7 @@ async function completeGoalFromBank(goal) {
     })
     
     showGoalCompletedXP()
+    xpStore.addToBalance(XP_AMOUNTS.goal_completed)
     
     // Sync with backend (non-blocking)
     const backendId = goal.backendId || transferredGoal.backendId
