@@ -3787,10 +3787,10 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(34, 197, 94, 0.1));
-  border: 1px solid #10b981;
-  border-radius: 20px;
-  color: #10b981;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  border-radius: 8px;
+  color: white;
   font-weight: 600;
   font-size: 0.875rem;
   cursor: pointer;
@@ -3798,7 +3798,7 @@ onUnmounted(() => {
 }
 
 .ai-planner-btn:hover {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(34, 197, 94, 0.2));
+  opacity: 0.9;
   transform: translateY(-1px);
 }
 
@@ -4358,7 +4358,7 @@ onUnmounted(() => {
 
 .filters-row.unified {
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.375rem;
 }
 
 .filters-row.unified .search-filter {
@@ -4378,7 +4378,7 @@ onUnmounted(() => {
 @media (max-width: 640px) {
   .filters-row.unified {
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.375rem;
   }
   
   .filters-row.unified .search-filter {
@@ -4740,9 +4740,9 @@ onUnmounted(() => {
   gap: 0.375rem;
   padding: 0.5rem 0.875rem;
   border-radius: 8px;
-  border: 1px solid #10b981;
-  background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+  border: none;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
   font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
@@ -4751,7 +4751,7 @@ onUnmounted(() => {
 }
 
 .filters-ai-btn:hover {
-  background: rgba(16, 185, 129, 0.2);
+  opacity: 0.9;
 }
 
 .filters-ai-btn .ai-btn-text {
