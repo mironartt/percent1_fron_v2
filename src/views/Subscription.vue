@@ -82,7 +82,7 @@
         :class="['plan-card', getTariffClass(tariff, index)]"
       >
         <div v-if="index === 1" class="popular-badge">Популярный выбор</div>
-        <div v-if="tariff.code === 'coming_soon'" class="coming-soon-badge">Скоро</div>
+        <div v-if="tariff.code === 'coming_soon' || index === 2" class="coming-soon-badge">Скоро</div>
         
         <div class="plan-header">
           <h3 class="plan-name">{{ tariff.title }}</h3>
@@ -115,7 +115,7 @@
           {{ isCurrentTariff(tariff) ? 'Текущий план' : 'Выбрать' }}
         </button>
         <button 
-          v-else-if="tariff.code !== 'coming_soon'"
+          v-else-if="tariff.code !== 'coming_soon' && index !== 2"
           :class="['btn', 'btn-lg', 'plan-btn', index === 1 ? 'btn-primary' : 'btn-secondary']"
           @click="selectTariff(tariff)"
           :disabled="paymentLoading"
