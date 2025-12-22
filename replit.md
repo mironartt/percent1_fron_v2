@@ -25,6 +25,10 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite (with pro
 -   **Dashboard ("День пользователя")**: Redesigned for daily retention, featuring a context-aware header, "Focus of the Day," habit tracker, and evening reflection.
 -   **Journal/Diary Module**: Daily reflection with 3 questions (removed "Планы на завтра"), AI mentor integration (responses appear in mentor chat panel instead of inline), streak tracking, and calendar history. Button: "Сохранить и получить ответ от AI ментора" opens mentor panel with personalized AI analysis.
 -   **XP/Gamification System**: Extrinsic motivation system with XP for habits, focus tasks, and goals, including a reward wishlist.
+    - **XP Notification System**: Visual feedback for XP rewards with animated notifications (Teleport to body, TransitionGroup animations, auto-cleanup timers).
+    - **Key Files**: `src/components/XPNotification.vue` (UI component), `src/composables/useXPNotification.js` (global state management)
+    - **XP Amounts**: Step completion +25, Goal completion +150, Journal entry +10, Habit completion +5
+    - **Notification Behavior**: Shows only on successful completion (not on undo/cancel). Journal XP only for new entries, not edits.
 -   **Habit Tracker**: Dashboard-integrated widget and a dedicated Habits Page for full management, scheduling, and gamification settings, including analytics and habit suggestions.
 -   **Bidirectional Calendar ↔ Goals Block Sync**: Synchronizes step dates, completion, priority, and time estimates.
 -   **Marketing Landing Page**: Conversion-focused landing page with an interactive 1% effect slider, app preview, feature cards, and calls to action.
