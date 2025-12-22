@@ -970,6 +970,7 @@ import { useAITasksStore } from '../stores/aiTasks'
 import { useXpStore } from '@/stores/xp'
 import { useXPNotification } from '@/composables/useXPNotification.js'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
+import { updateGoalSteps } from '@/services/api.js'
 import {
   Trash2, Save, Plus, ArrowLeft, GripVertical, X, Edit2,
   Wallet, Palette, Users, Heart, Briefcase, HeartHandshake, Target,
@@ -2449,26 +2450,47 @@ function formatTimeEstimate(timeEstimate) {
 
 async function toggleStepComplete(step, index) {
   const newCompleted = !step.completed
+  
+  // Проверка: нужен backendId для сохранения на сервер
+  if (!step.backendId || !goalBackendId.value) {
+    console.warn('[GoalEdit] Cannot toggle step - missing backendId:', { stepBackendId: step.backendId, goalBackendId: goalBackendId.value })
+    showToast('Шаг ещё не сохранён на сервере', 'warning')
+    return
+  }
+  
+  // Оптимистичное обновление UI
   updateStep(index, 'completed', newCompleted)
   
-  // Сохранить на бэкенд если есть ID
-  if (step.backendId && goalBackendId.value) {
-    try {
-      await store.updateGoalStep(goalBackendId.value, step.backendId, { completed: newCompleted })
+  try {
+    // Отправляем API запрос на бэкенд
+    const result = await updateGoalSteps({
+      goals_steps_data: [{
+        goal_id: parseInt(goalBackendId.value),
+        step_id: parseInt(step.backendId),
+        is_complete: newCompleted
+      }]
+    })
+    
+    if (result.status === 'success') {
       showToast(newCompleted ? 'Шаг выполнен!' : 'Шаг возвращён в работу', 'success')
-      // XP обновление и уведомление
+      // XP обновление и уведомление только при успешном сохранении
       if (newCompleted) {
         showStepCompletedXP()
         xpStore.addToBalance(XP_AMOUNTS.goal_step_completed)
       } else {
         xpStore.addToBalance(-XP_AMOUNTS.goal_step_completed)
       }
-    } catch (error) {
-      console.error('Failed to update step:', error)
-      // Откатить изменение
-      updateStep(index, 'completed', !newCompleted)
-      showToast('Ошибка при обновлении шага', 'error')
+      
+      // Обновить локальный store для синхронизации
+      store.updateGoalStepByBackendId(goalBackendId.value, step.backendId, { completed: newCompleted })
+    } else {
+      throw new Error(result.error_data?.message || 'Ошибка сервера')
     }
+  } catch (error) {
+    console.error('Failed to update step:', error)
+    // Откатить изменение
+    updateStep(index, 'completed', !newCompleted)
+    showToast('Ошибка при обновлении шага', 'error')
   }
 }
 
