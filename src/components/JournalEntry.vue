@@ -105,6 +105,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'
+import { useXPNotification } from '@/composables/useXPNotification.js'
 import { 
   BookOpen, 
   CheckCircle, 
@@ -124,6 +125,7 @@ const props = defineProps({
 
 const emit = defineEmits(['saved'])
 const store = useAppStore()
+const { showJournalEntryXP } = useXPNotification()
 
 const isEditing = ref(false)
 const saving = ref(false)
@@ -231,6 +233,7 @@ async function saveEntry() {
         reflection: form.value.reflection,
         tomorrowPlans: form.value.tomorrowPlans
       })
+      showJournalEntryXP()
     }
     
     isEditing.value = false

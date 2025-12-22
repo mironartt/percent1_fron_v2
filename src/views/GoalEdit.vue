@@ -967,6 +967,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useAITasksStore } from '../stores/aiTasks'
+import { useXPNotification } from '@/composables/useXPNotification.js'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
 import {
   Trash2, Save, Plus, ArrowLeft, GripVertical, X, Edit2,
@@ -981,6 +982,7 @@ const route = useRoute()
 const router = useRouter()
 const store = useAppStore()
 const aiTasksStore = useAITasksStore()
+const { showStepCompletedXP, showGoalCompletedXP } = useXPNotification()
 
 const lifeSpheres = computed(() => store.lifeSpheres)
 const goals = computed(() => store.goals)
@@ -1176,6 +1178,7 @@ async function handleQuickComplete() {
       status: 'completed',
       completedAt: new Date().toISOString()
     })
+    showGoalCompletedXP()
     showToast('Цель завершена!')
   }
   closeEditModal()
@@ -2450,6 +2453,9 @@ async function toggleStepComplete(step, index) {
     try {
       await store.updateGoalStep(goalBackendId.value, step.backendId, { completed: newCompleted })
       showToast(newCompleted ? 'Шаг выполнен!' : 'Шаг возвращён в работу', 'success')
+      if (newCompleted) {
+        showStepCompletedXP()
+      }
     } catch (error) {
       console.error('Failed to update step:', error)
       // Откатить изменение
