@@ -5062,7 +5062,7 @@ function formatDate(dateString) {
 
 /* Блок рефлексии (свёрнут по умолчанию) */
 .goal-reflection-block {
-  margin: 0.75rem 1rem 0;
+  margin: 0.75rem 0 0;
   padding: 0;
 }
 
