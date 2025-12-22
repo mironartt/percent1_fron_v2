@@ -2539,7 +2539,7 @@ async function toggleStepComplete(step, index) {
       }]
     })
     
-    if (result.status === 'success') {
+    if (result.status === 'ok' || result.status === 'success') {
       showToast(newCompleted ? 'Шаг выполнен!' : 'Шаг возвращён в работу', 'success')
       // XP обновление и уведомление только при успешном сохранении
       if (newCompleted) {
@@ -2552,7 +2552,15 @@ async function toggleStepComplete(step, index) {
       }
       
       // Обновить локальный store для синхронизации
-      store.updateGoalStepByBackendId(goalBackendId.value, step.backendId, { completed: newCompleted })
+      const transferred = store.goals.find(g => 
+        g.backendId === goalBackendId.value && g.source === 'goals-bank'
+      )
+      if (transferred) {
+        const stepToUpdate = transferred.steps?.find(s => s.backendId === step.backendId)
+        if (stepToUpdate) {
+          stepToUpdate.completed = newCompleted
+        }
+      }
     } else {
       throw new Error(result.error_data?.message || 'Ошибка сервера')
     }
