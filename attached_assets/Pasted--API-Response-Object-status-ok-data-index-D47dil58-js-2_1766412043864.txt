@@ -1,0 +1,78 @@
+[API] Response: 
+Object { status: "ok", data: {…} }
+index-D47dil58.js:2:115856
+Failed to return goal to work: TypeError: c.updateGoalByBackendId is not a function
+    ks https://percent1.ru/assets/GoalsBank-1Nj4DTEO.js:2
+    Ls https://percent1.ru/assets/index-D47dil58.js:2
+    It https://percent1.ru/assets/index-D47dil58.js:2
+    n https://percent1.ru/assets/index-D47dil58.js:2
+    Jt https://percent1.ru/assets/index-D47dil58.js:2
+    sg https://percent1.ru/assets/index-D47dil58.js:2
+    cg https://percent1.ru/assets/index-D47dil58.js:2
+    x https://percent1.ru/assets/index-D47dil58.js:2
+    y https://percent1.ru/assets/index-D47dil58.js:2
+    I https://percent1.ru/assets/index-D47dil58.js:2
+    $ https://percent1.ru/assets/index-D47dil58.js:2
+    x https://percent1.ru/assets/index-D47dil58.js:2
+    y https://percent1.ru/assets/index-D47dil58.js:2
+    I https://percent1.ru/assets/index-D47dil58.js:2
+    $ https://percent1.ru/assets/index-D47dil58.js:2
+    x https://percent1.ru/assets/index-D47dil58.js:2
+    y https://percent1.ru/assets/index-D47dil58.js:2
+    I https://percent1.ru/assets/index-D47dil58.js:2
+    $ https://percent1.ru/assets/index-D47dil58.js:2
+    x https://percent1.ru/assets/index-D47dil58.js:2
+    y https://percent1.ru/assets/index-D47dil58.js:2
+    I https://percent1.ru/assets/index-D47dil58.js:2
+    Y https://percent1.ru/assets/index-D47dil58.js:2
+    run https://percent1.ru/assets/index-D47dil58.js:2
+    runIfDirty https://percent1.ru/assets/index-D47dil58.js:2
+    Ls https://percent1.ru/assets/index-D47dil58.js:2
+    Ul https://percent1.ru/assets/index-D47dil58.js:2
+    promise callback*Hl https://percent1.ru/assets/index-D47dil58.js:2
+    Xr https://percent1.ru/assets/index-D47dil58.js:2
+    scheduler https://percent1.ru/assets/index-D47dil58.js:2
+    trigger https://percent1.ru/assets/index-D47dil58.js:2
+    Wr https://percent1.ru/assets/index-D47dil58.js:2
+    notify https://percent1.ru/assets/index-D47dil58.js:2
+    trigger https://percent1.ru/assets/index-D47dil58.js:2
+GoalsBank-1Nj4DTEO.js:2:25916
+ReferenceError: showToast is not defined
+    ks https://percent1.ru/assets/GoalsBank-1Nj4DTEO.js:2
+    Ls https://percent1.ru/assets/index-D47dil58.js:2
+    It https://percent1.ru/assets/index-D47dil58.js:2
+    n https://percent1.ru/assets/index-D47dil58.js:2
+    Jt https://percent1.ru/assets/index-D47dil58.js:2
+    sg https://percent1.ru/assets/index-D47dil58.js:2
+    cg https://percent1.ru/assets/index-D47dil58.js:2
+    x https://percent1.ru/assets/index-D47dil58.js:2
+    y https://percent1.ru/assets/index-D47dil58.js:2
+    I https://percent1.ru/assets/index-D47dil58.js:2
+    $ https://percent1.ru/assets/index-D47dil58.js:2
+    x https://percent1.ru/assets/index-D47dil58.js:2
+    y https://percent1.ru/assets/index-D47dil58.js:2
+    I https://percent1.ru/assets/index-D47dil58.js:2
+    $ https://percent1.ru/assets/index-D47dil58.js:2
+    x https://percent1.ru/assets/index-D47dil58.js:2
+    y https://percent1.ru/assets/index-D47dil58.js:2
+    I https://percent1.ru/assets/index-D47dil58.js:2
+    $ https://percent1.ru/assets/index-D47dil58.js:2
+    x https://percent1.ru/assets/index-D47dil58.js:2
+    y https://percent1.ru/assets/index-D47dil58.js:2
+    I https://percent1.ru/assets/index-D47dil58.js:2
+    Y https://percent1.ru/assets/index-D47dil58.js:2
+    run https://percent1.ru/assets/index-D47dil58.js:2
+    runIfDirty https://percent1.ru/assets/index-D47dil58.js:2
+    Ls https://percent1.ru/assets/index-D47dil58.js:2
+    Ul https://percent1.ru/assets/index-D47dil58.js:2
+    promise callback*Hl https://percent1.ru/assets/index-D47dil58.js:2
+    Xr https://percent1.ru/assets/index-D47dil58.js:2
+    scheduler https://percent1.ru/assets/index-D47dil58.js:2
+    trigger https://percent1.ru/assets/index-D47dil58.js:2
+    Wr https://percent1.ru/assets/index-D47dil58.js:2
+    notify https://percent1.ru/assets/index-D47dil58.js:2
+    trigger https://percent1.ru/assets/index-D47dil58.js:2
+index-D47dil58.js:2:21394
+
+​
+
