@@ -1281,14 +1281,13 @@ async function handleBottomSheetReturnToWork() {
       if (transferredGoal) {
         store.updateGoal(transferredGoal.id, { status: 'active' })
       }
-      store.updateGoalByBackendId(backendId, { status: 'work' })
-      showToast('Цель возвращена в работу')
+      console.log('[GoalsBank] Цель возвращена в работу:', backendId)
     } else {
       throw new Error(result.error_data?.message || 'Ошибка сервера')
     }
   } catch (error) {
     console.error('Failed to return goal to work:', error)
-    showToast('Ошибка при изменении статуса: ' + error.message, 'error')
+    alert('Ошибка при изменении статуса: ' + error.message)
   }
   closeBottomSheet()
 }
@@ -2111,16 +2110,15 @@ async function handleQuickReturnToWork() {
       if (transferredGoal) {
         store.updateGoal(transferredGoal.id, { status: 'active' })
       }
-      store.updateGoalByBackendId(backendId, { status: 'work' })
       
-      showToast('Цель возвращена в работу')
+      console.log('[GoalsBank] Цель возвращена в работу:', backendId)
       closeEditModal()
     } else {
       throw new Error(result.error_data?.message || 'Ошибка сервера')
     }
   } catch (error) {
     console.error('Failed to return goal to work:', error)
-    showToast('Ошибка при изменении статуса: ' + error.message, 'error')
+    alert('Ошибка при изменении статуса: ' + error.message)
   }
 }
 

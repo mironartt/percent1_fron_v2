@@ -1217,7 +1217,14 @@ async function handleQuickReturnToWork() {
       if (goal.value) {
         goal.value.status = 'work'
       }
-      store.updateGoalByBackendId(backendId, { status: 'work' })
+      // Обновляем transferred goal если есть
+      const transferred = store.goals.find(g => 
+        (g.sourceId === goal.value?.id || g.backendId === backendId) && 
+        g.source === 'goals-bank'
+      )
+      if (transferred) {
+        store.updateGoal(transferred.id, { status: 'active' })
+      }
       showToast('Цель возвращена в работу')
       closeEditModal()
     } else {
@@ -3060,7 +3067,14 @@ async function saveSingleStep(step) {
         if (goal.value) {
           goal.value.status = 'work'
         }
-        store.updateGoalByBackendId(goalBackendId.value, { status: 'work' })
+        // Обновляем transferred goal если есть
+        const transferred = store.goals.find(g => 
+          (g.sourceId === goal.value?.id || g.backendId === goalBackendId.value) && 
+          g.source === 'goals-bank'
+        )
+        if (transferred) {
+          store.updateGoal(transferred.id, { status: 'active' })
+        }
         showToast('Шаг добавлен. Цель возвращена в работу')
       } else {
         showToast('Шаг добавлен')
