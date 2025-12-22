@@ -721,7 +721,7 @@ async function confirmAiRewardSelection() {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
   margin: 0;
 }
@@ -1132,6 +1132,10 @@ async function confirmAiRewardSelection() {
   
   .section-header {
     margin-bottom: 0.75rem;
+  }
+  
+  .section-header .header-actions {
+    display: none !important;
   }
   
   .rewards-list.desktop-only {
