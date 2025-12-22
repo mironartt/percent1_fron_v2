@@ -137,9 +137,8 @@
               </div>
             </div>
           </div>
+          <HabitTracker @manage="showHabitManager = true" class="habits-widget" />
         </div>
-
-        <HabitTracker @manage="showHabitManager = true" />
 
         <div v-if="isEvening" class="card evening-card">
           <div class="evening-content">
@@ -713,12 +712,25 @@ function pluralize(n, one, few, many) {
 .focus-goals-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
   gap: 1.25rem;
+}
+
+.focus-card {
+  grid-row: span 2;
+}
+
+.habits-widget {
+  align-self: start;
 }
 
 @media (max-width: 768px) {
   .focus-goals-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .focus-card {
+    grid-row: auto;
   }
 }
 
