@@ -50,7 +50,7 @@
             <div class="progress-bar-track">
               <div class="progress-bar-fill" :style="{ width: completionProgress + '%' }"></div>
             </div>
-            <span class="progress-text-inline">{{ completedStepsCount }}/{{ totalStepsCount }}</span>
+            <span class="progress-text-inline">{{ displayCompletedSteps }}/{{ displayTotalSteps }}</span>
           </div>
         </div>
       </header>
@@ -757,7 +757,7 @@
                   <div class="progress-bar-container">
                     <div class="progress-bar-fill" :style="{ width: completionProgress + '%' }"></div>
                   </div>
-                  <span class="progress-text">{{ completedStepsCount }}/{{ totalStepsCount }} шагов</span>
+                  <span class="progress-text">{{ displayCompletedSteps }}/{{ displayTotalSteps }} шагов</span>
                 </div>
               </div>
             </div>
@@ -1400,6 +1400,20 @@ const hasUnscheduledSteps = computed(() => {
 
 const totalStepsFromBackendCount = computed(() => {
   return totalStepsFromBackend.value || totalStepsCount.value
+})
+
+// Для header: использовать данные из бэкенда если доступны
+const displayTotalSteps = computed(() => {
+  return totalStepsFromBackend.value || totalStepsCount.value
+})
+
+const displayCompletedSteps = computed(() => {
+  // Если есть данные из бэкенда - использовать их
+  if (completedStepsFromBackend.value > 0 || totalStepsFromBackend.value > 0) {
+    return completedStepsFromBackend.value
+  }
+  // Fallback на локальный подсчёт
+  return completedStepsCount.value
 })
 
 function goToPlanning() {
@@ -2211,7 +2225,9 @@ async function loadStepsWithFilters() {
     
     if (result.status === 'ok' && result.data) {
       // Update pagination info (reset to page 1 on filter/sort change)
-      totalStepsFromBackend.value = result.data.total_items || result.data.goal_data?.total_data?.total_steps || 0
+      const goalTotalData = result.data.goal_data?.total_data || {}
+      totalStepsFromBackend.value = result.data.total_items || goalTotalData.total_steps || 0
+      completedStepsFromBackend.value = goalTotalData.complete_steps ?? completedStepsFromBackend.value
       totalFilteredSteps.value = result.data.total_filtered_items || totalStepsFromBackend.value
       totalStepsPages.value = result.data.total_pages || 1
       stepsPageSize.value = result.data.page_size || 6
@@ -2481,8 +2497,10 @@ async function toggleStepComplete(step, index) {
       if (newCompleted) {
         showStepCompletedXP()
         xpStore.addToBalance(XP_AMOUNTS.goal_step_completed)
+        completedStepsFromBackend.value++
       } else {
         xpStore.addToBalance(-XP_AMOUNTS.goal_step_completed)
+        completedStepsFromBackend.value = Math.max(0, completedStepsFromBackend.value - 1)
       }
       
       // Обновить локальный store для синхронизации
@@ -2529,6 +2547,7 @@ const showGoalNotFound = computed(() => {
 
 // Steps pagination from backend
 const totalStepsFromBackend = ref(0)      // total_items (всего без фильтров)
+const completedStepsFromBackend = ref(0)  // количество выполненных шагов из бэкенда
 const totalFilteredSteps = ref(0)         // total_filtered_items (с учётом фильтров)
 const currentStepsPage = ref(1)
 const stepsPageSize = ref(6)
@@ -2609,7 +2628,9 @@ async function loadStepsFromBackend(page = 1, append = false) {
     
     if (result.status === 'ok' && result.data) {
       // Update pagination info
-      totalStepsFromBackend.value = result.data.total_items || result.data.goal_data?.total_data?.total_steps || 0
+      const goalTotalData = result.data.goal_data?.total_data || {}
+      totalStepsFromBackend.value = result.data.total_items || goalTotalData.total_steps || 0
+      completedStepsFromBackend.value = goalTotalData.complete_steps ?? completedStepsFromBackend.value
       totalFilteredSteps.value = result.data.total_filtered_items || totalStepsFromBackend.value
       totalStepsPages.value = result.data.total_pages || 1
       stepsPageSize.value = result.data.page_size || 6
