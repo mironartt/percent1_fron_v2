@@ -92,9 +92,9 @@
           </h3>
         </div>
         <div class="card-body">
-          <div v-if="calculator.length > 0" class="calculator-grid">
+          <div v-if="simplifiedCalculator.length > 0" class="calculator-grid calculator-grid-simple">
             <div 
-              v-for="item in calculator" 
+              v-for="item in simplifiedCalculator" 
               :key="`${item.tariff_code}-${item.term_months}`"
               class="calculator-item"
               :class="{ featured: item.tariff_code === 'club' }"
@@ -477,6 +477,10 @@ const currentLink = computed(() => {
 const isWithdrawalValid = computed(() => {
   const amount = withdrawalForm.value.amount
   return amount >= stats.value.minWithdrawalAmount && amount <= stats.value.balance
+})
+
+const simplifiedCalculator = computed(() => {
+  return calculator.value.filter(item => item.term_months === 12)
 })
 
 // Функции форматирования
@@ -891,6 +895,11 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
+}
+
+.calculator-grid-simple {
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 500px;
 }
 
 .calculator-item {
@@ -1513,6 +1522,11 @@ onMounted(() => {
   
   .calculator-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .calculator-grid-simple {
+    grid-template-columns: 1fr;
+    max-width: 100%;
   }
 }
 </style>
