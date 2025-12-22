@@ -480,9 +480,10 @@
               <div 
                 v-for="(tariff, index) in pricingTariffs" 
                 :key="tariff.id"
-                :class="['pricing-card', { featured: index === 1, premium: index === 2 }]"
+                :class="['pricing-card', { featured: tariff.is_popular, premium: index === 2, 'is-soon': tariff.is_soon }]"
               >
-                <div v-if="index === 1" class="popular-badge">Популярный выбор</div>
+                <div v-if="tariff.is_popular" class="popular-badge">Популярный выбор</div>
+                <div v-if="tariff.is_soon" class="soon-badge">Скоро</div>
                 <div class="pricing-header">
                   <h3>{{ tariff.title }}</h3>
                   <div class="price">
@@ -503,11 +504,13 @@
                   </li>
                 </ul>
                 <router-link 
+                  v-if="!tariff.is_soon"
                   to="/auth/register" 
-                  :class="['btn', tariff.code === 'free' ? 'btn-outline' : (index === 1 ? 'btn-white' : 'btn-premium')]"
+                  :class="['btn', tariff.code === 'free' ? 'btn-outline' : (tariff.is_popular ? 'btn-white' : 'btn-premium')]"
                 >
                   {{ tariff.code === 'free' ? 'Начать бесплатно' : 'Попробовать' }}
                 </router-link>
+                <button v-else class="btn btn-disabled" disabled>Скоро</button>
               </div>
             </template>
             
@@ -2412,6 +2415,25 @@ onUnmounted(() => {
   font-size: 0.75rem;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.soon-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #94a3b8;
+  color: #ffffff;
+  padding: 0.25rem 1rem;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pricing-card.is-soon {
+  opacity: 0.7;
+  pointer-events: none;
 }
 
 .pricing-header {
