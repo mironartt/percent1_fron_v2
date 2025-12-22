@@ -550,11 +550,11 @@
       </div>
 
       <!-- Кнопка "Запланировать шаги" -->
-      <div v-if="hasUnscheduledSteps" class="plan-steps-section">
+      <div class="plan-steps-section">
         <button class="plan-steps-btn" @click="goToPlanning">
           <Calendar :size="18" />
-          <span>Запланировать шаги</span>
-          <span class="unscheduled-count">{{ unscheduledStepsCount }}</span>
+          <span>Запланировать</span>
+          <span v-if="unscheduledStepsCount > 0" class="unscheduled-count">{{ unscheduledStepsCount }}</span>
         </button>
       </div>
 
