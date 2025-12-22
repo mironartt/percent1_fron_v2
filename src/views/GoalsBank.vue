@@ -1265,12 +1265,15 @@ async function handleBottomSheetReturnToWork() {
   const backendId = goal.backendId || goal.id
   
   try {
-    const { updateGoalSteps } = await import('@/services/api.js')
-    const result = await updateGoalSteps(backendId, {
-      work_status: 'work'
+    const { updateGoals } = await import('@/services/api.js')
+    const result = await updateGoals({
+      goals_data: [{
+        goal_id: parseInt(backendId, 10),
+        work_status: 'work'
+      }]
     })
     
-    if (result.status === 'success') {
+    if (result.status === 'ok' || result.status === 'success') {
       const transferredGoal = store.goals.find(g => 
         (g.sourceId === goal.id || g.backendId === backendId) && 
         g.source === 'goals-bank'
@@ -2091,12 +2094,15 @@ async function handleQuickReturnToWork() {
   const backendId = goal.backendId || goal.id
   
   try {
-    const { updateGoalSteps } = await import('@/services/api.js')
-    const result = await updateGoalSteps(backendId, {
-      work_status: 'work'
+    const { updateGoals } = await import('@/services/api.js')
+    const result = await updateGoals({
+      goals_data: [{
+        goal_id: parseInt(backendId, 10),
+        work_status: 'work'
+      }]
     })
     
-    if (result.status === 'success') {
+    if (result.status === 'ok' || result.status === 'success') {
       // Обновляем статус в store
       const transferredGoal = store.goals.find(g => 
         (g.sourceId === goal.id || g.backendId === backendId) && 

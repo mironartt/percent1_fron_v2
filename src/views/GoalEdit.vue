@@ -1204,11 +1204,15 @@ async function handleQuickReturnToWork() {
   try {
     // Отправляем запрос на бэкенд для изменения статуса цели
     const backendId = goal.value.backendId || goalBackendId.value
-    const result = await updateGoalSteps(backendId, {
-      work_status: 'work'
+    const { updateGoals } = await import('@/services/api.js')
+    const result = await updateGoals({
+      goals_data: [{
+        goal_id: parseInt(backendId, 10),
+        work_status: 'work'
+      }]
     })
     
-    if (result.status === 'success') {
+    if (result.status === 'ok' || result.status === 'success') {
       // Обновляем локальный store
       if (goal.value) {
         goal.value.status = 'work'
