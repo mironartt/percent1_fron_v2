@@ -839,7 +839,7 @@ function pluralize(n, one, few, many) {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  max-height: 240px;
+  max-height: 320px;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--border-color) transparent;
