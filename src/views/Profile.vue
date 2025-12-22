@@ -55,10 +55,10 @@
 
       <div class="xp-history" :class="{ collapsed: !historyExpanded }">
         <button class="history-header" @click="toggleHistory">
-          <div class="history-title">
+          <h3 class="history-title">
             <History :size="18" :stroke-width="1.5" />
-            <span>История XP</span>
-          </div>
+            История XP
+          </h3>
           <div class="history-summary" v-if="!historyExpanded && todayXP > 0">
             <span class="summary-text">Сегодня +{{ todayXP }} XP</span>
           </div>
@@ -699,6 +699,7 @@ function getGroupIcon(groupType) {
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
+  margin: 0;
 }
 
 .history-title svg {
