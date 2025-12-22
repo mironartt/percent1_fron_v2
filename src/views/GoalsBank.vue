@@ -302,6 +302,14 @@
               <RotateCcw :size="20" />
               <span>Вернуть в банк</span>
             </button>
+            <button 
+              v-if="isGoalCompleted(bottomSheetGoal?.id)"
+              class="bottom-sheet-action action-success" 
+              @click="handleBottomSheetReturnToWork"
+            >
+              <RotateCcw :size="20" />
+              <span>Вернуть в работу</span>
+            </button>
             <button class="bottom-sheet-action action-cancel" @click="closeBottomSheet">
               <span>Отмена</span>
             </button>
@@ -395,6 +403,15 @@
             >
               <CheckCircle :size="16" />
               <span>Завершить</span>
+            </button>
+            <button 
+              v-if="isGoalCompleted(editingGoal.id)"
+              class="quick-action-btn action-work"
+              title="Вернуть цель в работу"
+              @click="handleQuickReturnToWork"
+            >
+              <RotateCcw :size="16" />
+              <span>Вернуть в работу</span>
             </button>
           </div>
 
@@ -1241,6 +1258,38 @@ function handleBottomSheetRemoveFromWork() {
   closeBottomSheet()
 }
 
+async function handleBottomSheetReturnToWork() {
+  if (!bottomSheetGoal.value) return
+  
+  const goal = bottomSheetGoal.value
+  const backendId = goal.backendId || goal.id
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    const result = await updateGoalSteps(backendId, {
+      work_status: 'work'
+    })
+    
+    if (result.status === 'success') {
+      const transferredGoal = store.goals.find(g => 
+        (g.sourceId === goal.id || g.backendId === backendId) && 
+        g.source === 'goals-bank'
+      )
+      if (transferredGoal) {
+        store.updateGoal(transferredGoal.id, { status: 'active' })
+      }
+      store.updateGoalByBackendId(backendId, { status: 'work' })
+      showToast('Цель возвращена в работу')
+    } else {
+      throw new Error(result.error_data?.message || 'Ошибка сервера')
+    }
+  } catch (error) {
+    console.error('Failed to return goal to work:', error)
+    showToast('Ошибка при изменении статуса: ' + error.message, 'error')
+  }
+  closeBottomSheet()
+}
+
 function getWhyImportant(goal) {
   if (goal.threeWhys?.why1) {
     return goal.threeWhys.why1
@@ -2032,6 +2081,40 @@ function handleQuickComplete() {
   if (editingGoal.value) {
     completeGoalFromBank(editingGoal.value)
     closeEditModal()
+  }
+}
+
+async function handleQuickReturnToWork() {
+  if (!editingGoal.value) return
+  
+  const goal = editingGoal.value
+  const backendId = goal.backendId || goal.id
+  
+  try {
+    const { updateGoalSteps } = await import('@/services/api.js')
+    const result = await updateGoalSteps(backendId, {
+      work_status: 'work'
+    })
+    
+    if (result.status === 'success') {
+      // Обновляем статус в store
+      const transferredGoal = store.goals.find(g => 
+        (g.sourceId === goal.id || g.backendId === backendId) && 
+        g.source === 'goals-bank'
+      )
+      if (transferredGoal) {
+        store.updateGoal(transferredGoal.id, { status: 'active' })
+      }
+      store.updateGoalByBackendId(backendId, { status: 'work' })
+      
+      showToast('Цель возвращена в работу')
+      closeEditModal()
+    } else {
+      throw new Error(result.error_data?.message || 'Ошибка сервера')
+    }
+  } catch (error) {
+    console.error('Failed to return goal to work:', error)
+    showToast('Ошибка при изменении статуса: ' + error.message, 'error')
   }
 }
 
