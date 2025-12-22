@@ -1297,6 +1297,25 @@ export async function getReferralWithdrawals(params = {}) {
   return request('POST', '/api/rest/front/app/referral/withdrawal/get/', params)
 }
 
+// ==================== ALERTS/NOTIFICATIONS API ====================
+
+/**
+ * Получить настройки уведомлений пользователя
+ * @returns {Promise<object>} - Настройки уведомлений
+ */
+export async function getAlertSettings() {
+  return request('POST', '/api/rest/front/app/alerts/settings/get/', {})
+}
+
+/**
+ * Обновить настройки уведомлений
+ * @param {object} data - Изменяемые поля настроек
+ * @returns {Promise<object>} - Обновлённые настройки
+ */
+export async function updateAlertSettings(data) {
+  return request('POST', '/api/rest/front/app/alerts/settings/update/', data)
+}
+
 // Экспорт API как объекта для удобства
 export const api = {
   request,
@@ -1366,7 +1385,10 @@ export const api = {
   getReferralData,
   getReferralTransactions,
   createReferralWithdrawal,
-  getReferralWithdrawals
+  getReferralWithdrawals,
+  // Alerts/Notifications API
+  getAlertSettings,
+  updateAlertSettings
 }
 
 export default api
