@@ -967,6 +967,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useAITasksStore } from '../stores/aiTasks'
+import { useXpStore } from '@/stores/xp'
 import { useXPNotification } from '@/composables/useXPNotification.js'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
 import {
@@ -982,7 +983,8 @@ const route = useRoute()
 const router = useRouter()
 const store = useAppStore()
 const aiTasksStore = useAITasksStore()
-const { showStepCompletedXP, showGoalCompletedXP } = useXPNotification()
+const xpStore = useXpStore()
+const { showStepCompletedXP, showGoalCompletedXP, XP_AMOUNTS } = useXPNotification()
 
 const lifeSpheres = computed(() => store.lifeSpheres)
 const goals = computed(() => store.goals)
@@ -1179,6 +1181,7 @@ async function handleQuickComplete() {
       completedAt: new Date().toISOString()
     })
     showGoalCompletedXP()
+    xpStore.addToBalance(XP_AMOUNTS.goal_completed)
     showToast('Цель завершена!')
   }
   closeEditModal()
@@ -1397,7 +1400,7 @@ const hasUnscheduledSteps = computed(() => {
 function goToPlanning() {
   const goalId = goal.value?.backendId || goal.value?.id
   if (goalId) {
-    router.push({ path: '/app/planning', query: { priority_goal: goalId } })
+    router.push({ path: '/app/planning', query: { first_goal_id: goalId } })
   } else {
     router.push('/app/planning')
   }
@@ -2453,8 +2456,12 @@ async function toggleStepComplete(step, index) {
     try {
       await store.updateGoalStep(goalBackendId.value, step.backendId, { completed: newCompleted })
       showToast(newCompleted ? 'Шаг выполнен!' : 'Шаг возвращён в работу', 'success')
+      // XP обновление и уведомление
       if (newCompleted) {
         showStepCompletedXP()
+        xpStore.addToBalance(XP_AMOUNTS.goal_step_completed)
+      } else {
+        xpStore.addToBalance(-XP_AMOUNTS.goal_step_completed)
       }
     } catch (error) {
       console.error('Failed to update step:', error)

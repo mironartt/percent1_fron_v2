@@ -812,6 +812,14 @@ export const useAppStore = defineStore('app', () => {
         console.error('[Store] Failed to load landingSSP store:', err)
       })
       
+      // Синхронизировать XP store с актуальным балансом из get-user-data
+      import('@/stores/xp.js').then(({ useXpStore }) => {
+        const xpStore = useXpStore()
+        xpStore.syncFromUserData(userData)
+      }).catch(err => {
+        console.error('[Store] Failed to sync XP store:', err)
+      })
+      
       // Сохранить в localStorage
       saveUserDataToLocalStorage(userData)
       

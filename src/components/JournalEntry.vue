@@ -105,6 +105,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'
+import { useXpStore } from '@/stores/xp'
 import { useXPNotification } from '@/composables/useXPNotification.js'
 import { 
   BookOpen, 
@@ -125,7 +126,8 @@ const props = defineProps({
 
 const emit = defineEmits(['saved'])
 const store = useAppStore()
-const { showJournalEntryXP } = useXPNotification()
+const xpStore = useXpStore()
+const { showJournalEntryXP, XP_AMOUNTS } = useXPNotification()
 
 const isEditing = ref(false)
 const saving = ref(false)
@@ -234,6 +236,7 @@ async function saveEntry() {
         tomorrowPlans: form.value.tomorrowPlans
       })
       showJournalEntryXP()
+      xpStore.addToBalance(XP_AMOUNTS.journal_entry)
     }
     
     isEditing.value = false

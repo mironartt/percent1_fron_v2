@@ -26,9 +26,20 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite (with pro
 -   **Journal/Diary Module**: Daily reflection with 3 questions (removed "Планы на завтра"), AI mentor integration (responses appear in mentor chat panel instead of inline), streak tracking, and calendar history. Button: "Сохранить и получить ответ от AI ментора" opens mentor panel with personalized AI analysis.
 -   **XP/Gamification System**: Extrinsic motivation system with XP for habits, focus tasks, and goals, including a reward wishlist.
     - **XP Notification System**: Visual feedback for XP rewards with animated notifications (Teleport to body, TransitionGroup animations, auto-cleanup timers).
-    - **Key Files**: `src/components/XPNotification.vue` (UI component), `src/composables/useXPNotification.js` (global state management)
-    - **XP Amounts**: Step completion +25, Goal completion +150, Journal entry +10, Habit completion +5
+    - **Key Files**: `src/components/XPNotification.vue` (UI component), `src/composables/useXPNotification.js` (global state management), `src/stores/xp.js` (balance management), `src/components/XpBadge.vue` (header badge)
+    - **XP Amounts**: Step completion +25, Goal completion +150, Journal entry +10, Habit completion (variable per habit)
     - **Notification Behavior**: Shows only on successful completion (not on undo/cancel). Journal XP only for new entries, not edits.
+    - **XP Balance Synchronization (December 2025)**: 
+      - `xpStore.xpBalance` is the single source of truth for XP display (used by `XpBadge`)
+      - Syncs from backend via `get-user-data` API on every page navigation through `xpStore.syncFromUserData()`
+      - All XP-granting actions call `xpStore.addToBalance()` for optimistic UI updates:
+        - **Dashboard**: Focus task completion (+25/-25)
+        - **Planning**: Step completion (+25/-25)
+        - **GoalEdit**: Step completion (+25/-25), Goal completion (+150)
+        - **GoalsBank**: Goal completion (+150)
+        - **JournalEntry**: New entry (+10)
+        - **HabitTracker**: Uses `xpStore.setBalance()` with backend response
+      - Backend is authoritative; penalties calculated by backend scripts are reflected on next `get-user-data` call
 -   **Habit Tracker**: Dashboard-integrated widget and a dedicated Habits Page for full management, scheduling, and gamification settings, including analytics and habit suggestions.
 -   **Bidirectional Calendar ↔ Goals Block Sync**: Synchronizes step dates, completion, priority, and time estimates.
 -   **Marketing Landing Page**: Conversion-focused landing page with an interactive 1% effect slider, app preview, feature cards, and calls to action.

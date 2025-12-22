@@ -941,6 +941,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useAITasksStore } from '../stores/aiTasks'
+import { useXpStore } from '@/stores/xp'
 import { useXPNotification } from '@/composables/useXPNotification.js'
 import { 
   Calendar, 
@@ -972,9 +973,11 @@ import {
 const store = useAppStore()
 const router = useRouter()
 const route = useRoute()
-const { showStepCompletedXP } = useXPNotification()
+const xpStore = useXpStore()
+const { showStepCompletedXP, XP_AMOUNTS } = useXPNotification()
 
-// Приоритетная цель (передаётся через query параметр priority_goal)
+// Приоритетная цель (передаётся через query параметр first_goal_id)
+// Сохраняется в течение всей сессии работы с Planning для поддержания порядка целей
 const priorityGoalId = ref(null)
 const aiTasksStore = useAITasksStore()
 
@@ -1170,7 +1173,7 @@ async function toggleOverdueTaskComplete(task) {
     // Синхронизируем данные в обоих блоках
     await Promise.all([
       loadWeeklySteps(),
-      store.loadGoalsFromBackend({ page: 1 }, false)
+      reloadGoalsWithPriority()
     ])
   } catch (error) {
     console.error('[Planning] Error toggling overdue task complete:', error)
@@ -2148,8 +2151,11 @@ async function loadGoalsWithFilters() {
     status_filter: 'work'
   }
   
-  // Добавляем приоритетную цель (только на первой странице)
-  if (priorityGoalId.value && currentPage.value === 1) {
+  // Проверяем есть ли активные фильтры
+  const hasFilters = (queryFilter.value && queryFilter.value.length >= 3) || filterStatus.value !== ''
+  
+  // Добавляем приоритетную цель только если НЕТ активных фильтров и это первая страница
+  if (priorityGoalId.value && currentPage.value === 1 && !hasFilters) {
     params.first_goal_id = priorityGoalId.value
   }
   
@@ -2167,12 +2173,7 @@ async function loadGoalsWithFilters() {
   
   await store.loadGoalsFromBackend(params)
   
-  // Очищаем приоритет после первой загрузки
-  if (priorityGoalId.value) {
-    priorityGoalId.value = null
-    // Очищаем query параметр из URL без перезагрузки
-    router.replace({ query: {} })
-  }
+  // НЕ очищаем priorityGoalId - он нужен для последующих запросов при редактировании шагов
 }
 
 // Watch для фильтра запланированности - при изменении делаем запрос к бэку
@@ -2741,7 +2742,7 @@ async function toggleStepComplete() {
     const stepExists = actualGoal.steps?.some(s => s.backendId === stepId || s.id === stepId)
     if (!stepExists) {
       console.warn('[Planning] Step not found, refreshing data:', { goalId, stepId })
-      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await reloadGoalsWithPriority()
       await loadWeeklySteps()
       closeBottomSheet()
       return
@@ -2771,11 +2772,15 @@ async function toggleStepComplete() {
     })
     
     if (result?.error_code === 'GOALS_STEPS_UPDATE__STEP_NOT_ACCESS') {
-      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await reloadGoalsWithPriority()
     }
     
+    // XP обновление и уведомление
     if (newCompleted) {
       showStepCompletedXP()
+      xpStore.addToBalance(XP_AMOUNTS.goal_step_completed)
+    } else {
+      xpStore.addToBalance(-XP_AMOUNTS.goal_step_completed)
     }
     
     await loadWeeklySteps()
@@ -2784,7 +2789,7 @@ async function toggleStepComplete() {
     console.error('[Planning] Error toggling step complete:', error)
     selectedStep.value.completed = !newCompleted
     if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
-      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await reloadGoalsWithPriority()
       await loadWeeklySteps()
     }
   }
@@ -2902,7 +2907,7 @@ async function saveStepChangesAndClose() {
       const stepExists = actualGoal.steps?.some(s => s.backendId === stepId || s.id === stepId)
       if (!stepExists) {
         console.warn('[Planning] Step not found, refreshing data:', { goalId, stepId })
-        await store.loadGoalsFromBackend({ page: 1 }, false)
+        await reloadGoalsWithPriority()
         await loadWeeklySteps()
         pendingStepChanges.value = {}
         originalStepState.value = null
@@ -2928,13 +2933,13 @@ async function saveStepChangesAndClose() {
       })
       
       if (result?.error_code === 'GOALS_STEPS_UPDATE__STEP_NOT_ACCESS') {
-        await store.loadGoalsFromBackend({ page: 1 }, false)
+        await reloadGoalsWithPriority()
       }
       
       // Синхронизируем данные в обоих блоках
       await Promise.all([
         loadWeeklySteps(),                              // Таймлайн
-        store.loadGoalsFromBackend({ page: 1 }, false)  // Цели и шаги
+        reloadGoalsWithPriority()  // Цели и шаги
       ])
       
     } catch (error) {
@@ -2944,7 +2949,7 @@ async function saveStepChangesAndClose() {
       if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
         await Promise.all([
           loadWeeklySteps(),
-          store.loadGoalsFromBackend({ page: 1 }, false)
+          reloadGoalsWithPriority()
         ])
       }
     }
@@ -2968,7 +2973,7 @@ async function removeStepFromSchedule() {
     const stepExists = actualGoal.steps?.some(s => s.backendId === stepId || s.id === stepId)
     if (!stepExists) {
       console.warn('[Planning] Step not found, refreshing data:', { goalId, stepId })
-      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await reloadGoalsWithPriority()
       await loadWeeklySteps()
       closeBottomSheet()
       return
@@ -2990,14 +2995,14 @@ async function removeStepFromSchedule() {
     })
     
     if (result?.error_code === 'GOALS_STEPS_UPDATE__STEP_NOT_ACCESS') {
-      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await reloadGoalsWithPriority()
     }
     
     await loadWeeklySteps()
   } catch (error) {
     console.error('[Planning] Error removing step from schedule:', error)
     if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
-      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await reloadGoalsWithPriority()
       await loadWeeklySteps()
     }
   }
@@ -3226,8 +3231,12 @@ async function sendStepUpdateToBackend(goalId, stepId, newCompleted, originalSte
     
     if (result?.status === 'ok') {
       console.log('[Planning] updateGoalSteps SUCCESS')
+      // XP обновление и уведомление
       if (newCompleted) {
         showStepCompletedXP()
+        xpStore.addToBalance(XP_AMOUNTS.goal_step_completed)
+      } else {
+        xpStore.addToBalance(-XP_AMOUNTS.goal_step_completed)
       }
     } else {
       console.warn('[Planning] updateGoalSteps returned non-ok status:', result)
@@ -3307,7 +3316,7 @@ async function saveTaskChangesAndClose() {
       // Синхронизируем данные в обоих блоках
       await Promise.all([
         loadWeeklySteps(),                              // Таймлайн
-        store.loadGoalsFromBackend({ page: 1 }, false)  // Цели и шаги
+        reloadGoalsWithPriority()  // Цели и шаги
       ])
       
     } catch (error) {
@@ -3340,7 +3349,7 @@ async function removeTaskFromSchedule(task) {
     const stepExists = actualGoal.steps?.some(s => s.backendId === stepId || s.id === stepId)
     if (!stepExists) {
       console.warn('[Planning] Step not found, refreshing data:', { goalId, stepId })
-      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await reloadGoalsWithPriority()
       await loadWeeklySteps()
       return
     }
@@ -3357,20 +3366,20 @@ async function removeTaskFromSchedule(task) {
     })
     
     if (result?.error_code === 'GOALS_STEPS_UPDATE__STEP_NOT_ACCESS') {
-      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await reloadGoalsWithPriority()
     }
     
     // Синхронизируем данные в обоих блоках
     await Promise.all([
       loadWeeklySteps(),                              // Таймлайн
-      store.loadGoalsFromBackend({ page: 1 }, false)  // Цели и шаги
+      reloadGoalsWithPriority()  // Цели и шаги
     ])
   } catch (error) {
     console.error('[Planning] Error removing task from schedule:', error)
     if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
       await Promise.all([
         loadWeeklySteps(),
-        store.loadGoalsFromBackend({ page: 1 }, false)
+        reloadGoalsWithPriority()
       ])
     }
   }
@@ -3390,7 +3399,7 @@ async function scheduleStepToDay(goal, step, date) {
     const stepExists = actualGoal.steps?.some(s => s.backendId === stepId || s.id === stepId)
     if (!stepExists) {
       console.warn('[Planning] Step not found in goal, refreshing data:', { goalId, stepId })
-      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await reloadGoalsWithPriority()
       await loadWeeklySteps()
       return
     }
@@ -3422,13 +3431,13 @@ async function scheduleStepToDay(goal, step, date) {
     // Проверяем на ошибку step_not_access
     if (result?.error_code === 'GOALS_STEPS_UPDATE__STEP_NOT_ACCESS') {
       console.warn('[Planning] Step not accessible, refreshing data')
-      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await reloadGoalsWithPriority()
     }
     
     // Синхронизируем данные в обоих блоках
     await Promise.all([
       loadWeeklySteps(),                              // Таймлайн
-      store.loadGoalsFromBackend({ page: 1 }, false)  // Цели и шаги
+      reloadGoalsWithPriority()  // Цели и шаги
     ])
   } catch (error) {
     console.error('[Planning] Error scheduling step:', error)
@@ -3436,7 +3445,7 @@ async function scheduleStepToDay(goal, step, date) {
     if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
       await Promise.all([
         loadWeeklySteps(),
-        store.loadGoalsFromBackend({ page: 1 }, false)
+        reloadGoalsWithPriority()
       ])
     }
     // В DEV_MODE данные уже сохранены локально, всё ок
@@ -3462,7 +3471,7 @@ async function scheduleNewStep() {
     const stepExists = actualGoal.steps?.some(s => s.backendId === stepId || s.id === stepId)
     if (!stepExists) {
       console.warn('[Planning] Step not found in goal, refreshing data:', { goalId, stepId })
-      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await reloadGoalsWithPriority()
       await loadWeeklySteps()
       return
     }
@@ -3496,20 +3505,20 @@ async function scheduleNewStep() {
     // Проверяем на ошибку step_not_access
     if (result?.error_code === 'GOALS_STEPS_UPDATE__STEP_NOT_ACCESS') {
       console.warn('[Planning] Step not accessible, refreshing data')
-      await store.loadGoalsFromBackend({ page: 1 }, false)
+      await reloadGoalsWithPriority()
     }
     
     // Синхронизируем данные в обоих блоках
     await Promise.all([
       loadWeeklySteps(),                              // Таймлайн
-      store.loadGoalsFromBackend({ page: 1 }, false)  // Цели и шаги
+      reloadGoalsWithPriority()  // Цели и шаги
     ])
   } catch (error) {
     console.error('[Planning] Error scheduling new step:', error)
     if (error?.response?.data?.error_code?.includes('STEP_NOT_ACCESS')) {
       await Promise.all([
         loadWeeklySteps(),
-        store.loadGoalsFromBackend({ page: 1 }, false)
+        reloadGoalsWithPriority()
       ])
     }
   }
@@ -3651,12 +3660,32 @@ function closeSphereDropdown(e) {
   }
 }
 
+// Хелпер для получения базовых параметров загрузки целей с first_goal_id
+function getGoalsLoadParams(extraParams = {}) {
+  const params = { 
+    page: 1,
+    ...extraParams
+  }
+  
+  // Добавляем first_goal_id если он есть и это первая страница
+  if (priorityGoalId.value && (!extraParams.page || extraParams.page === 1)) {
+    params.first_goal_id = priorityGoalId.value
+  }
+  
+  return params
+}
+
+// Хелпер для перезагрузки целей с сохранением first_goal_id
+async function reloadGoalsWithPriority() {
+  await store.loadGoalsFromBackend(getGoalsLoadParams(), false)
+}
+
 onMounted(async () => {
   initSelectedDay()
   
-  // Читаем приоритетную цель из query параметра
-  if (route.query.priority_goal) {
-    const goalId = parseInt(route.query.priority_goal)
+  // Читаем приоритетную цель из query параметра first_goal_id
+  if (route.query.first_goal_id) {
+    const goalId = parseInt(route.query.first_goal_id)
     if (!isNaN(goalId) && goalId > 0) {
       priorityGoalId.value = goalId
     }
@@ -3681,11 +3710,7 @@ onMounted(async () => {
     store.loadGoalsFromBackend(goalsParams)
   ])
   
-  // Очищаем приоритет после загрузки
-  if (priorityGoalId.value) {
-    priorityGoalId.value = null
-    router.replace({ query: {} })
-  }
+  // НЕ очищаем priorityGoalId - он нужен для последующих запросов при редактировании шагов
   
   setupInfiniteScroll()
   document.addEventListener('click', closeSphereDropdown)

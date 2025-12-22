@@ -214,6 +214,8 @@ import HabitManagerModal from '../components/HabitManagerModal.vue'
 import DailyProgressBar from '../components/DailyProgressBar.vue'
 import XpBadge from '../components/XpBadge.vue'
 import { useActivationStore } from '@/stores/activation'
+import { useXpStore } from '@/stores/xp'
+import { useXPNotification } from '@/composables/useXPNotification.js'
 import { DEBUG_MODE } from '@/config/settings.js'
 import { 
   Sun,
@@ -234,6 +236,8 @@ import { useRouter } from 'vue-router'
 
 const store = useAppStore()
 const activationStore = useActivationStore()
+const xpStore = useXpStore()
+const { showStepCompletedXP, XP_AMOUNTS } = useXPNotification()
 const router = useRouter()
 const showJournalModal = ref(false)
 const showMiniTask = ref(false)
@@ -556,6 +560,14 @@ async function toggleFocusTask(task) {
       }]
     })
     console.log('[Dashboard] updateGoalSteps success')
+    
+    // XP обновление и уведомление
+    if (newCompleted) {
+      showStepCompletedXP()
+      xpStore.addToBalance(XP_AMOUNTS.goal_step_completed)
+    } else {
+      xpStore.addToBalance(-XP_AMOUNTS.goal_step_completed)
+    }
   } catch (error) {
     console.error('[Dashboard] Error toggling focus task:', error)
     // Откатываем изменения при ошибке
