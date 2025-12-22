@@ -24,6 +24,7 @@
     />
     <MentorPanel v-if="showMentorPanel" />
     <ToastNotification />
+    <XPNotification />
   </div>
 </template>
 
@@ -35,6 +36,7 @@ import TelegramAuthModals from './components/TelegramAuthModals.vue'
 import PolicyAcceptanceModal from './components/PolicyAcceptanceModal.vue'
 import MentorPanel from './components/MentorPanel.vue'
 import ToastNotification from './components/ToastNotification.vue'
+import XPNotification from './components/XPNotification.vue'
 import { useAppStore } from './stores/app'
 import { useAITasksStore } from './stores/aiTasks'
 import { useTelegram } from './composables/useTelegram'

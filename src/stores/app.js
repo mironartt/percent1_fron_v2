@@ -334,78 +334,116 @@ export const useAppStore = defineStore('app', () => {
     // Также обновляем goals (цели в работе)
     const goalsInWork = syncedGoals.filter(g => g.workStatus === 'work' || g.workStatus === 'complete')
     
-    // При замене (не append) - удаляем старые цели которых нет в новых данных
-    if (!append) {
-      const newBackendIds = new Set(goalsInWork.map(g => g.backendId))
-      // Заменяем goals только теми что пришли с бэкенда
-      goals.value = goals.value.filter(g => !g.backendId || newBackendIds.has(g.backendId))
-    }
+    // Создаём карту существующих целей для быстрого поиска
+    const existingGoalsMap = new Map(goals.value.map(g => [g.backendId, g]))
     
-    goalsInWork.forEach(backendGoal => {
-      // Transform steps from backend format to frontend format
-      const transformedSteps = (backendGoal.stepsData || []).map(s => ({
-        id: s.step_id,
-        backendId: s.step_id,
-        title: s.title,
-        description: s.description || '',
-        priority: s.priority || null,
-        timeEstimate: timeDurationBackendToFrontend[s.time_duration] || s.time_duration || null,
-        date: s.dt || null,
-        order: s.order,
-        completed: s.is_complete || false,
-        dateCompleted: s.date_completed || null,
-        dateCreated: s.date_created || null,
-        status: s.status || 'unplanned',
-        goalId: s.goal_id
-      }))
-      
-      const existingGoal = goals.value.find(g => g.backendId === backendGoal.backendId)
-      if (!existingGoal) {
-        // Добавляем цель в работу
-        goals.value.push({
-          id: backendGoal.id,
-          backendId: backendGoal.backendId,
-          title: backendGoal.text,
-          description: backendGoal.whyImportant,
-          sphereId: backendGoal.sphereId,
-          source: 'goals-bank',
-          sourceId: backendGoal.id,
-          threeWhys: backendGoal.threeWhys,
-          status: backendGoal.workStatus === 'complete' ? 'completed' : 'active',
-          progress: backendGoal.totalStepsData?.complete_percent || 0,
-          totalStepsData: backendGoal.totalStepsData || null,
-          steps: transformedSteps,
-          stepsPage: 1,
-          createdAt: backendGoal.dateCreated,
-          completedAt: backendGoal.dateCompleted
-        })
-      } else {
-        // Обновляем существующую цель
-        const updates = {
-          title: backendGoal.text,
-          description: backendGoal.whyImportant,
-          sphereId: backendGoal.sphereId,
-          threeWhys: backendGoal.threeWhys,
-          status: backendGoal.workStatus === 'complete' ? 'completed' : 'active',
-          progress: backendGoal.totalStepsData?.complete_percent || 0,
-          totalStepsData: backendGoal.totalStepsData || null,
-          completedAt: backendGoal.dateCompleted
-        }
+    // Функция трансформации шагов
+    const transformSteps = (stepsData) => (stepsData || []).map(s => ({
+      id: s.step_id,
+      backendId: s.step_id,
+      title: s.title,
+      description: s.description || '',
+      priority: s.priority || null,
+      timeEstimate: timeDurationBackendToFrontend[s.time_duration] || s.time_duration || null,
+      date: s.dt || null,
+      order: s.order,
+      completed: s.is_complete || false,
+      dateCompleted: s.date_completed || null,
+      dateCreated: s.date_created || null,
+      status: s.status || 'unplanned',
+      goalId: s.goal_id
+    }))
+    
+    if (!append) {
+      // При замене - создаём новый массив в порядке бэкенда
+      const newGoals = goalsInWork.map(backendGoal => {
+        const transformedSteps = transformSteps(backendGoal.stepsData)
+        const existingGoal = existingGoalsMap.get(backendGoal.backendId)
         
-        // Обновляем шаги только если они пришли с бэкенда (не пустые)
-        // Иначе сохраняем существующие шаги
-        if (transformedSteps.length > 0) {
-          updates.steps = transformedSteps
-        } else if (existingGoal.steps && existingGoal.steps.length > 0) {
-          // Шаги не пришли - сохраняем существующие
-          if (DEBUG_MODE) {
-            console.log('[Store] Keeping existing steps for goal:', existingGoal.backendId)
+        if (existingGoal) {
+          // Обновляем существующую цель, сохраняя локальные данные
+          const updatedGoal = {
+            ...existingGoal,
+            title: backendGoal.text,
+            description: backendGoal.whyImportant,
+            sphereId: backendGoal.sphereId,
+            threeWhys: backendGoal.threeWhys,
+            status: backendGoal.workStatus === 'complete' ? 'completed' : 'active',
+            progress: backendGoal.totalStepsData?.complete_percent || 0,
+            totalStepsData: backendGoal.totalStepsData || null,
+            completedAt: backendGoal.dateCompleted
+          }
+          
+          // Обновляем шаги только если они пришли с бэкенда
+          if (transformedSteps.length > 0) {
+            updatedGoal.steps = transformedSteps
+          }
+          
+          return updatedGoal
+        } else {
+          // Создаём новую цель
+          return {
+            id: backendGoal.id,
+            backendId: backendGoal.backendId,
+            title: backendGoal.text,
+            description: backendGoal.whyImportant,
+            sphereId: backendGoal.sphereId,
+            source: 'goals-bank',
+            sourceId: backendGoal.id,
+            threeWhys: backendGoal.threeWhys,
+            status: backendGoal.workStatus === 'complete' ? 'completed' : 'active',
+            progress: backendGoal.totalStepsData?.complete_percent || 0,
+            totalStepsData: backendGoal.totalStepsData || null,
+            steps: transformedSteps,
+            stepsPage: 1,
+            createdAt: backendGoal.dateCreated,
+            completedAt: backendGoal.dateCompleted
           }
         }
+      })
+      
+      // Полностью заменяем массив целей в порядке бэкенда
+      goals.value = newGoals
+    } else {
+      // При append - добавляем новые цели в конец
+      goalsInWork.forEach(backendGoal => {
+        const transformedSteps = transformSteps(backendGoal.stepsData)
+        const existingGoal = goals.value.find(g => g.backendId === backendGoal.backendId)
         
-        Object.assign(existingGoal, updates)
-      }
-    })
+        if (!existingGoal) {
+          goals.value.push({
+            id: backendGoal.id,
+            backendId: backendGoal.backendId,
+            title: backendGoal.text,
+            description: backendGoal.whyImportant,
+            sphereId: backendGoal.sphereId,
+            source: 'goals-bank',
+            sourceId: backendGoal.id,
+            threeWhys: backendGoal.threeWhys,
+            status: backendGoal.workStatus === 'complete' ? 'completed' : 'active',
+            progress: backendGoal.totalStepsData?.complete_percent || 0,
+            totalStepsData: backendGoal.totalStepsData || null,
+            steps: transformedSteps,
+            stepsPage: 1,
+            createdAt: backendGoal.dateCreated,
+            completedAt: backendGoal.dateCompleted
+          })
+        } else {
+          // Обновляем существующую цель
+          Object.assign(existingGoal, {
+            title: backendGoal.text,
+            description: backendGoal.whyImportant,
+            sphereId: backendGoal.sphereId,
+            threeWhys: backendGoal.threeWhys,
+            status: backendGoal.workStatus === 'complete' ? 'completed' : 'active',
+            progress: backendGoal.totalStepsData?.complete_percent || 0,
+            totalStepsData: backendGoal.totalStepsData || null,
+            completedAt: backendGoal.dateCompleted,
+            ...(transformedSteps.length > 0 ? { steps: transformedSteps } : {})
+          })
+        }
+      })
+    }
     
     // Очистка устаревших scheduledTasks из weeklyPlans
     cleanupStaleScheduledTasks()

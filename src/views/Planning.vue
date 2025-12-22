@@ -941,6 +941,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useAITasksStore } from '../stores/aiTasks'
+import { useXPNotification } from '@/composables/useXPNotification.js'
 import { 
   Calendar, 
   ChevronLeft,
@@ -971,6 +972,7 @@ import {
 const store = useAppStore()
 const router = useRouter()
 const route = useRoute()
+const { showStepCompletedXP } = useXPNotification()
 
 // Приоритетная цель (передаётся через query параметр priority_goal)
 const priorityGoalId = ref(null)
@@ -2772,6 +2774,10 @@ async function toggleStepComplete() {
       await store.loadGoalsFromBackend({ page: 1 }, false)
     }
     
+    if (newCompleted) {
+      showStepCompletedXP()
+    }
+    
     await loadWeeklySteps()
     closeBottomSheet()
   } catch (error) {
@@ -3220,6 +3226,9 @@ async function sendStepUpdateToBackend(goalId, stepId, newCompleted, originalSte
     
     if (result?.status === 'ok') {
       console.log('[Planning] updateGoalSteps SUCCESS')
+      if (newCompleted) {
+        showStepCompletedXP()
+      }
     } else {
       console.warn('[Planning] updateGoalSteps returned non-ok status:', result)
     }
