@@ -751,7 +751,8 @@ export const useAppStore = defineStore('app', () => {
         xp_balance: userData.xp_balance ?? 0,
         lifetime_xp: userData.lifetime_xp ?? 0,
         is_terms_accepted: isTermsAccepted,
-        is_privacy_accepted: isPrivacyAccepted
+        is_privacy_accepted: isPrivacyAccepted,
+        is_impersonate: userData.is_impersonate ?? false
       }
       
       needsPolicyAcceptance.value = SKIP_POLICY_CHECK ? false : (!isTermsAccepted || !isPrivacyAccepted)
