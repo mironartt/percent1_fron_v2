@@ -460,9 +460,15 @@ async function handleRegister() {
   apiErrorDetail.value = ''
 
   try {
-    const result = await api.register(form.name, form.email, form.password, form.password2, form.agreeTerms, form.agreePrivacy)
+    // Получаем реферальный код из localStorage
+    const referralCode = localStorage.getItem('onepercent_referral_code') || null
+    
+    const result = await api.register(form.name, form.email, form.password, form.password2, form.agreeTerms, form.agreePrivacy, referralCode)
 
     if (result.status === 'ok') {
+      // Очищаем реферальный код после успешной регистрации
+      localStorage.removeItem('onepercent_referral_code')
+      
       resetAuthCache()
 
       if (result.data) {

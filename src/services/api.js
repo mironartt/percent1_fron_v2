@@ -369,16 +369,21 @@ export async function login(email, password) {
  * @param {string} password2 - Подтверждение пароля
  * @param {boolean} is_terms_accepted - Согласие с условиями использования
  * @param {boolean} is_privacy_accepted - Согласие с политикой конфиденциальности
+ * @param {string|null} referral_code - Реферальный код (опционально)
  */
-export async function register(first_name, email, password1, password2, is_terms_accepted = true, is_privacy_accepted = true) {
-  const result = await request('POST', '/api/rest/front/registration/', {
+export async function register(first_name, email, password1, password2, is_terms_accepted = true, is_privacy_accepted = true, referral_code = null) {
+  const payload = {
     first_name,
     email,
     password1,
     password2,
     is_terms_accepted,
     is_privacy_accepted
-  })
+  }
+  if (referral_code) {
+    payload.referral_code = referral_code
+  }
+  const result = await request('POST', '/api/rest/front/registration/', payload)
   if (result.status === 'ok') {
     syncCsrfFromCookie()
   }
@@ -1242,6 +1247,56 @@ export async function updateChatReaction(params) {
   return request('POST', '/api/rest/front/app/chat/reactions/update/', params)
 }
 
+// ========================================
+// Referral API (Реферальная система)
+// ========================================
+
+/**
+ * Получить данные страницы рефералов
+ * @param {object} params - Параметры запроса
+ * @param {number} [params.page] - Страница (по умолчанию 1)
+ * @param {number} [params.page_size] - Размер страницы (1-50, по умолчанию 10)
+ * @param {string} [params.order_by] - Поле сортировки: 'date_created' | 'has_first_payment'
+ * @param {string} [params.order_direction] - Направление: 'asc' | 'desc'
+ * @returns {Promise<object>} - Данные страницы рефералов (баланс, статистика, ссылки, калькулятор, рефералы)
+ */
+export async function getReferralData(params = {}) {
+  return request('POST', '/api/rest/front/app/referral/get/', params)
+}
+
+/**
+ * Получить историю транзакций реферальной системы
+ * @param {object} params - Параметры запроса
+ * @param {number} [params.page] - Страница (по умолчанию 1)
+ * @param {number} [params.page_size] - Размер страницы (1-100, по умолчанию 20)
+ * @param {string} [params.type_filter] - Фильтр по типу: 'income' | 'withdrawal' | null
+ * @returns {Promise<object>} - История транзакций с пагинацией
+ */
+export async function getReferralTransactions(params = {}) {
+  return request('POST', '/api/rest/front/app/referral/transactions/get/', params)
+}
+
+/**
+ * Создать заявку на вывод средств
+ * @param {object} params - Параметры запроса
+ * @param {number} params.amount - Сумма вывода (минимум 3000 руб)
+ * @param {string} [params.comment] - Комментарий (реквизиты, пожелания)
+ * @returns {Promise<object>} - Данные созданной заявки и новый баланс
+ */
+export async function createReferralWithdrawal(params) {
+  return request('POST', '/api/rest/front/app/referral/withdrawal/create/', params)
+}
+
+/**
+ * Получить список заявок на вывод
+ * @param {object} params - Параметры запроса
+ * @param {string} [params.status_filter] - Фильтр по статусу: 'pending' | 'approved' | 'rejected' | 'completed' | null
+ * @returns {Promise<object>} - Список заявок на вывод
+ */
+export async function getReferralWithdrawals(params = {}) {
+  return request('POST', '/api/rest/front/app/referral/withdrawal/get/', params)
+}
+
 // Экспорт API как объекта для удобства
 export const api = {
   request,
@@ -1306,7 +1361,12 @@ export const api = {
   getChatMessages,
   sendChatMessage,
   markChatMessagesRead,
-  updateChatReaction
+  updateChatReaction,
+  // Referral API
+  getReferralData,
+  getReferralTransactions,
+  createReferralWithdrawal,
+  getReferralWithdrawals
 }
 
 export default api

@@ -94,6 +94,23 @@ const router = createRouter({
       meta: { title: 'Восстановление пароля', public: true, guestOnly: true }
     },
     
+    // Реферальная ссылка (прямой формат)
+    {
+      path: '/ref/:code',
+      name: 'referral-redirect',
+      meta: { public: true },
+      redirect: to => {
+        const code = to.params.code?.toUpperCase()
+        if (code) {
+          localStorage.setItem('onepercent_referral_code', code)
+          if (DEBUG_MODE) {
+            console.log('[Router] Saved referral code from direct link:', code)
+          }
+        }
+        return { name: 'register' }
+      }
+    },
+    
     // Legal pages (публичные)
     {
       path: '/privacy',
@@ -331,6 +348,16 @@ async function checkUserAuth() {
 router.beforeEach(async (to, from, next) => {
   if (DEBUG_MODE) {
     console.log(`[Router] Navigation: ${from.path} → ${to.path}`)
+  }
+  
+  // Обработка реферального кода из query параметра ?ref=
+  const refCode = to.query.ref
+  if (refCode && typeof refCode === 'string') {
+    const normalizedCode = refCode.toUpperCase()
+    localStorage.setItem('onepercent_referral_code', normalizedCode)
+    if (DEBUG_MODE) {
+      console.log('[Router] Saved referral code from query:', normalizedCode)
+    }
   }
   
   document.title = to.meta.title ? `${to.meta.title} - OnePercent` : 'OnePercent'
