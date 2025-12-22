@@ -108,31 +108,11 @@
               </div>
             </div>
             
-            <div class="filter-chips-scroll">
-              <div class="filter-chips-inner">
-                <button 
-                  class="filter-chip"
-                  :class="{ active: filterStatus === '' }"
-                  @click="filterStatus = ''"
-                >
-                  Все
-                </button>
-                <button 
-                  class="filter-chip"
-                  :class="{ active: filterStatus === 'pending' }"
-                  @click="filterStatus = 'pending'"
-                >
-                  Активные
-                </button>
-                <button 
-                  class="filter-chip"
-                  :class="{ active: filterStatus === 'completed' }"
-                  @click="filterStatus = 'completed'"
-                >
-                  Готовые
-                </button>
-              </div>
-            </div>
+            <select v-model="filterStatus" class="filter-dropdown">
+              <option value="">Все</option>
+              <option value="pending">Активные</option>
+              <option value="completed">Готовые</option>
+            </select>
 
             <button 
               class="btn-ai-steps-inline"
@@ -3701,23 +3681,30 @@ function formatDate(dateString) {
   min-width: 100px;
 }
 
-.filter-chips-scroll {
+/* Filter dropdown (replaces filter chips) */
+.filter-dropdown {
   flex: 1;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  background: var(--bg);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
 }
 
-.filter-chips-scroll::-webkit-scrollbar {
-  display: none;
+.filter-dropdown:focus {
+  outline: none;
+  border-color: var(--primary, #6366f1);
 }
 
-.filter-chips-inner {
-  display: flex;
-  gap: 0.5rem;
-  padding: 2px 4px;
-  white-space: nowrap;
+.filter-dropdown:hover {
+  border-color: var(--primary, #6366f1);
 }
 
 /* Expandable Search */
