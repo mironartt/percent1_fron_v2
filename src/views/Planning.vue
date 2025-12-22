@@ -1758,54 +1758,6 @@ const selectedDayGroupedTasks = computed(() => {
   return getGroupedTasksForDay(selectedDay.value)
 })
 
-function generateDemoWeeklySteps(days) {
-  const demoGoals = [
-    { id: 1, title: 'Здоровый образ жизни', category: 'health' },
-    { id: 2, title: 'Карьерный рост', category: 'career' },
-    { id: 3, title: 'Финансовая грамотность', category: 'finance' },
-    { id: 4, title: 'Личное развитие', category: 'personal' }
-  ]
-  
-  const demoSteps = [
-    { goalIdx: 0, title: 'Сделать зарядку 15 минут', duration: 'half', priority: 'critical' },
-    { goalIdx: 0, title: 'Прогулка на свежем воздухе', duration: 'one', priority: 'important' },
-    { goalIdx: 0, title: 'Приготовить здоровый обед', duration: 'one', priority: 'attention' },
-    { goalIdx: 1, title: 'Изучить новую технологию', duration: 'two', priority: 'critical' },
-    { goalIdx: 1, title: 'Пройти урок онлайн-курса', duration: 'one', priority: 'important' },
-    { goalIdx: 1, title: 'Написать статью для блога', duration: 'two', priority: 'attention' },
-    { goalIdx: 2, title: 'Проверить бюджет за неделю', duration: 'half', priority: 'important' },
-    { goalIdx: 2, title: 'Прочитать главу о инвестициях', duration: 'one', priority: 'optional' },
-    { goalIdx: 3, title: 'Медитация 10 минут', duration: 'half', priority: 'critical' },
-    { goalIdx: 3, title: 'Прочитать 20 страниц книги', duration: 'one', priority: 'attention' },
-    { goalIdx: 3, title: 'Записать мысли в дневник', duration: 'half', priority: 'optional' }
-  ]
-  
-  let stepId = 1
-  return days.map((day, dayIdx) => {
-    const tasksCount = dayIdx < 5 ? (dayIdx % 2 === 0 ? 4 : 3) : (dayIdx === 5 ? 2 : 1)
-    const daySteps = []
-    
-    for (let i = 0; i < tasksCount; i++) {
-      const stepData = demoSteps[(dayIdx * 2 + i) % demoSteps.length]
-      const goal = demoGoals[stepData.goalIdx]
-      daySteps.push({
-        goal_id: goal.id,
-        step_id: stepId++,
-        step_title: stepData.title,
-        goal_title: goal.title,
-        goal_category: goal.category,
-        step_dt: day.date,
-        step_time_duration: stepData.duration,
-        step_priority: stepData.priority,
-        step_is_complete: Math.random() > 0.7,
-        step_order: i + 1
-      })
-    }
-    
-    return { date: day.date, steps_data: daySteps }
-  })
-}
-
 async function loadWeeklySteps() {
   if (weeklyStepsLoading.value) return
   
@@ -1838,14 +1790,16 @@ async function loadWeeklySteps() {
       console.log('[Planning] Loaded weekly steps from API:', response.data.result_week_data.length, 'days')
       console.log('[Planning] Overdue steps:', overdueStepsData.value.length)
     } else {
-      console.log('[Planning] Using demo data (API returned error or no data)', response)
-      weeklyStepsData.value = generateDemoWeeklySteps(weekDays.value)
+      console.log('[Planning] API returned error or no data, showing empty state', response)
+      // Пустые данные вместо демо - доверяем API
+      weeklyStepsData.value = weekDays.value.map(day => ({ date: day.date, steps_data: [] }))
       overdueStepsData.value = []
       totalOverdueSteps.value = 0
     }
   } catch (error) {
-    console.error('[Planning] Error loading weekly steps, using demo data:', error)
-    weeklyStepsData.value = generateDemoWeeklySteps(weekDays.value)
+    console.error('[Planning] Error loading weekly steps:', error)
+    // При ошибке сети - пустые данные, не демо
+    weeklyStepsData.value = weekDays.value.map(day => ({ date: day.date, steps_data: [] }))
     overdueStepsData.value = []
     totalOverdueSteps.value = 0
   } finally {
@@ -1868,7 +1822,15 @@ function getTasksForDay(dateStr) {
   const localTasks = plan?.scheduledTasks || []
   
   const dayData = weeklyStepsData.value.find(d => d.date === dateStr)
-  if (dayData && dayData.steps_data && dayData.steps_data.length > 0) {
+  
+  // Если есть данные от API для этого дня - используем их (даже если steps_data пустой)
+  // Это означает что API корректно вернул информацию о том, что шагов нет
+  if (dayData && dayData.steps_data) {
+    if (dayData.steps_data.length === 0) {
+      // API явно вернул пустой массив - значит шагов нет
+      return []
+    }
+    
     return dayData.steps_data
       .map(step => {
         // Ищем локальные override-ы для этого шага
@@ -1904,7 +1866,8 @@ function getTasksForDay(dateStr) {
       })
   }
   
-  // Если бэкенд данных нет, используем только локальные
+  // Если API данных нет для этого дня (dayData не найден) - используем локальные
+  // Это fallback для случаев когда API ещё не загрузился
   return localTasks
     .filter(t => t.scheduledDate === dateStr)
     .sort((a, b) => {

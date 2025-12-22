@@ -644,6 +644,15 @@
               <CheckCircle :size="16" />
               <span>Завершить</span>
             </button>
+            <button 
+              v-if="isGoalCompleted"
+              class="quick-action-btn action-work"
+              title="Вернуть цель в работу"
+              @click="handleQuickReturnToWork"
+            >
+              <RotateCcw :size="16" />
+              <span>Вернуть в работу</span>
+            </button>
           </div>
 
           <!-- Tab Navigation (Simplified: 2 tabs) -->
@@ -977,7 +986,8 @@ import {
   Square, CheckSquare, Search, CheckCircle2, AlertCircle,
   CheckCircle, XCircle, Check, Filter, Settings, Clock, Calendar, Circle,
   FileText, Lightbulb, Shield, BarChart2, Play, Pause, GitBranch,
-  BookOpen, ChevronDown, ChevronRight, ChevronLeft, Send, MessageSquare, Wand2, Loader2, Sparkles
+  BookOpen, ChevronDown, ChevronRight, ChevronLeft, Send, MessageSquare, Wand2, Loader2, Sparkles,
+  RotateCcw
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -1186,6 +1196,33 @@ async function handleQuickComplete() {
     showToast('Цель завершена!')
   }
   closeEditModal()
+}
+
+async function handleQuickReturnToWork() {
+  if (!goal.value) return
+  
+  try {
+    // Отправляем запрос на бэкенд для изменения статуса цели
+    const backendId = goal.value.backendId || goalBackendId.value
+    const result = await updateGoalSteps(backendId, {
+      work_status: 'work'
+    })
+    
+    if (result.status === 'success') {
+      // Обновляем локальный store
+      if (goal.value) {
+        goal.value.status = 'work'
+      }
+      store.updateGoalByBackendId(backendId, { status: 'work' })
+      showToast('Цель возвращена в работу')
+      closeEditModal()
+    } else {
+      throw new Error(result.error_data?.message || 'Ошибка сервера')
+    }
+  } catch (error) {
+    console.error('Failed to return goal to work:', error)
+    showToast('Ошибка при изменении статуса: ' + error.message, 'error')
+  }
 }
 
 // Toggle work status for goal (in Status tab)
@@ -3013,13 +3050,23 @@ async function saveSingleStep(step) {
         step.backendId = result.data.created_steps[0].step_id
       }
       
+      // Если цель была завершена, бэкенд автоматически возвращает её в работу
+      // Синхронизируем статус на фронте
+      if (isGoalCompleted.value || goal.value?.status === 'completed') {
+        if (goal.value) {
+          goal.value.status = 'work'
+        }
+        store.updateGoalByBackendId(goalBackendId.value, { status: 'work' })
+        showToast('Шаг добавлен. Цель возвращена в работу')
+      } else {
+        showToast('Шаг добавлен')
+      }
+      
       // Обновляем snapshot для этого шага
       takeStepsSnapshot()
       
       // Обновляем локальное хранилище
       store.updateGoal(goal.value.id, { steps: goalForm.value.steps })
-      
-      showToast('Шаг добавлен')
     } else {
       // При ошибке шаг остаётся в списке "новых" для повторной попытки
       showToast('Ошибка сохранения шага', 'error')
