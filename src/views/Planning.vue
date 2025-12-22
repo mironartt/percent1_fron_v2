@@ -185,44 +185,40 @@
     </div>
 
     <div class="filters-row compact unified">
-      <!-- Поиск по названию -->
-      <div class="search-filter">
-        <Search :size="14" class="search-icon" />
-        <input 
-          type="text" 
-          v-model="queryFilter" 
-          placeholder="Поиск целей..." 
-          class="search-input"
-        />
-        <button v-if="queryFilter" class="clear-search" @click="queryFilter = ''">
-          <X :size="14" />
+      <!-- Поиск по названию (сворачиваемый) -->
+      <div class="search-filter" :class="{ expanded: searchExpanded || queryFilter }">
+        <button 
+          v-if="!searchExpanded && !queryFilter" 
+          class="search-toggle" 
+          @click="searchExpanded = true"
+          title="Поиск"
+        >
+          <Search :size="16" />
         </button>
+        <template v-else>
+          <Search :size="14" class="search-icon" />
+          <input 
+            type="text" 
+            v-model="queryFilter" 
+            placeholder="Поиск целей..." 
+            class="search-input"
+            @blur="searchExpanded = false"
+          />
+          <button v-if="queryFilter" class="clear-search" @click="queryFilter = ''; searchExpanded = false">
+            <X :size="14" />
+          </button>
+        </template>
       </div>
       
-      <!-- Фильтр по запланированности шагов -->
-      <div class="segmented-control">
-        <button 
-          class="segment"
-          :class="{ active: filterStatus === '' }"
-          @click="filterStatus = ''"
-        >
-          Все шаги
-        </button>
-        <button 
-          class="segment"
-          :class="{ active: filterStatus === 'unscheduled' }"
-          @click="filterStatus = 'unscheduled'"
-        >
-          Незапл.
-        </button>
-        <button 
-          class="segment"
-          :class="{ active: filterStatus === 'scheduled' }"
-          @click="filterStatus = 'scheduled'"
-        >
-          Запл.
-        </button>
-      </div>
+      <!-- Фильтр по запланированности шагов (dropdown) -->
+      <select 
+        v-model="filterStatus" 
+        class="filter-dropdown"
+      >
+        <option value="">Все шаги</option>
+        <option value="unscheduled">Незапл.</option>
+        <option value="scheduled">Запл.</option>
+      </select>
       
       <!-- Кнопка сброса фильтров -->
       <button 
@@ -994,6 +990,7 @@ const showStatusDropdown = ref(false)
 const showGoalStatusDropdown = ref(false)
 const showSortDropdown = ref(false)
 const addStepSearch = ref('')
+const searchExpanded = ref(false)
 const goalsDisplayLimit = ref(10)
 const currentPage = ref(1)
 const expandedGoals = ref({})
@@ -4385,20 +4382,18 @@ onUnmounted(() => {
   }
   
   .filters-row.unified .search-filter {
-    flex: 1 1 100%;
+    flex: 0 0 auto;
     max-width: none;
     order: 1;
   }
   
-  .filters-row.unified .segmented-control {
-    flex: 1;
-    order: 2;
+  .filters-row.unified .search-filter.expanded {
+    flex: 1 1 auto;
   }
   
-  .filters-row.unified .segmented-control .segment {
+  .filters-row.unified .filter-dropdown {
     flex: 1;
-    padding: 0.375rem 0.5rem;
-    font-size: 0.75rem;
+    order: 2;
   }
   
   .filters-row.unified .reset-filters-btn {
@@ -4594,6 +4589,62 @@ onUnmounted(() => {
 .search-filter .clear-search:hover {
   color: var(--text-primary);
   background: var(--hover-bg, #f3f4f6);
+}
+
+/* Search toggle button (collapsed state) */
+.search-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.search-toggle:hover {
+  border-color: var(--primary, #6366f1);
+  color: var(--primary, #6366f1);
+  background: var(--primary-light, rgba(99, 102, 241, 0.1));
+}
+
+.search-filter:not(.expanded) {
+  flex: 0 0 auto;
+  max-width: none;
+}
+
+.search-filter.expanded {
+  flex: 1;
+  max-width: 200px;
+}
+
+/* Filter dropdown (replaces segmented control) */
+.filter-dropdown {
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  background: var(--bg);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+}
+
+.filter-dropdown:focus {
+  outline: none;
+  border-color: var(--primary, #6366f1);
+}
+
+.filter-dropdown:hover {
+  border-color: var(--primary, #6366f1);
 }
 
 /* Goal status dropdown */
