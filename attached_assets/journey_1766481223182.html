@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OnePercent - Путь к росту</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Screen-height sections */
+    .screen-section {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* Gradient backgrounds for each block */
+    .bg-block-1 {
+      background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
+    }
+
+    .bg-block-2 {
+      background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 100%);
+    }
+
+    .bg-block-3 {
+      background: linear-gradient(135deg, #fce7f3 0%, #fee2e2 100%);
+    }
+
+    .bg-block-4 {
+      background: linear-gradient(135deg, #fed7aa 0%, #fef3c7 100%);
+    }
+
+    .bg-block-5 {
+      background: linear-gradient(135deg, #d1fae5 0%, #ccfbf1 100%);
+    }
+
+    .bg-block-6 {
+      background: linear-gradient(135deg, #bfdbfe 0%, #cffafe 100%);
+    }
+
+    .bg-block-7 {
+      background: linear-gradient(135deg, #a5f3fc 0%, #bfdbfe 100%);
+    }
+
+    /* Connecting arrows between sections */
+    .arrow-connector {
+      position: absolute;
+      bottom: -40px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+    }
+
+    .arrow-svg {
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+    }
+
+    /* Smooth transitions */
+    .fade-in {
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Sidebar navigation */
+    .sidebar-nav {
+      position: fixed;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 40;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .nav-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .nav-dot.active {
+      width: 16px;
+      height: 16px;
+      background: #4f46e5;
+      border-color: #4f46e5;
+    }
+
+    .nav-dot:hover {
+      background: #6366f1;
+      transform: scale(1.2);
+    }
+
+    /* Example cards */
+    .example-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+      border: 2px solid rgba(79, 70, 229, 0.1);
+    }
+
+    /* Interactive wheel */
+    .wheel-segment {
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .wheel-segment:hover {
+      filter: brightness(1.1);
+    }
+
+    /* Slider styles */
+    input[type="range"] {
+      width: 100%;
+      height: 8px;
+      border-radius: 5px;
+      background: linear-gradient(to right, #fca5a5, #86efac);
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #4f46e5;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #4f46e5;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+    }
+
+    /* Progress animation */
+    @keyframes progress {
+      0% { width: 0; }
+      100% { width: 100%; }
+    }
+
+    .progress-bar {
+      animation: progress 1.5s ease-out;
+    }
+
+    /* Floating elements */
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .float {
+      animation: float 3s ease-in-out infinite;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar-nav {
+        display: none;
+      }
+
+      .screen-section {
+        min-height: auto;
+        padding-top: 80px;
+      }
+    }
+  </style>
+</head>
+<body class="bg-white text-gray-900">
+  <!-- Fixed Sidebar Navigation -->
+  <div class="sidebar-nav">
+    <div class="nav-dot active" onclick="scrollToBlock(0)" title="Колесо баланса"></div>
+    <div class="nav-dot" onclick="scrollToBlock(1)" title="Цели"></div>
+    <div class="nav-dot" onclick="scrollToBlock(2)" title="Декомпозиция"></div>
+    <div class="nav-dot" onclick="scrollToBlock(3)" title="Планирование"></div>
+    <div class="nav-dot" onclick="scrollToBlock(4)" title="Привычки"></div>
+    <div class="nav-dot" onclick="scrollToBlock(5)" title="Достижения"></div>
+    <div class="nav-dot" onclick="scrollToBlock(6)" title="AI Ментор"></div>
+  </div>
+
+  <!-- BLOCK 1: Колесо баланса -->
+  <section class="screen-section bg-block-1">
+    <div class="max-w-7xl mx-auto px-4 w-full">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <!-- Left: Content -->
+        <div class="fade-in">
+          <h2 class="text-5xl font-bold mb-4">Колесо баланса</h2>
+          <p class="text-xl text-gray-700 mb-6">Первый шаг — честная оценка. Где ты сейчас по ключевым сферам жизни?</p>
+          
+          <div class="example-card mb-8">
+            <h3 class="font-bold text-lg mb-4 text-indigo-600">Пример: Иван</h3>
+            <p class="text-gray-600 mb-6">Программист, 32 года. Успешен в работе, но чувствует дисбаланс в жизни.</p>
+            
+            <!-- Interactive Wheel -->
+            <div class="space-y-4">
+              <div>
+                <div class="flex justify-between mb-2">
+                  <span class="font-medium text-sm">Здоровье</span>
+                  <span class="text-sm font-bold text-indigo-600" id="health-score">4</span>
+                </div>
+                <input type="range" min="0" max="10" value="4" class="w-full" oninput="updateScore('health', this.value)">
+              </div>
+              
+              <div>
+                <div class="flex justify-between mb-2">
+                  <span class="font-medium text-sm">Благосостояние</span>
+                  <span class="text-sm font-bold text-indigo-600" id="wealth-score">8</span>
+                </div>
+                <input type="range" min="0" max="10" value="8" class="w-full" oninput="updateScore('wealth', this.value)">
+              </div>
+
+              <div>
+                <div class="flex justify-between mb-2">
+                  <span class="font-medium text-sm">Семья</span>
+                  <span class="text-sm font-bold text-indigo-600" id="family-score">5</span>
+                </div>
+                <input type="range" min="0" max="10" value="5" class="w-full" oninput="updateScore('family', this.value)">
+              </div>
+
+              <div>
+                <div class="flex justify-between mb-2">
+                  <span class="font-medium text-sm">Отношения</span>
+                  <span class="text-sm font-bold text-indigo-600" id="relations-score">6</span>
+                </div>
+                <input type="range" min="0" max="10" value="6" class="w-full" oninput="updateScore('relations', this.value)">
+              </div>
+
+              <div>
+                <div class="flex justify-between mb-2">
+                  <span class="font-medium text-sm">Любовь</span>
+                  <span class="text-sm font-bold text-indigo-600" id="love-score">3</span>
+                </div>
+                <input type="range" min="0" max="10" value="3" class="w-full" oninput="updateScore('love', this.value)">
+              </div>
+
+              <div>
+                <div class="flex justify-between mb-2">
+                  <span class="font-medium text-sm">Спорт</span>
+                  <span class="text-sm font-bold text-indigo-600" id="sport-score">2</span>
+                </div>
+                <input type="range" min="0" max="10" value="2" class="w-full" oninput="updateScore('sport', this.value)">
+              </div>
+            </div>
+
+            <div class="mt-6 p-4 bg-indigo-50 rounded-lg border-l-4 border-indigo-600">
+              <p class="text-sm text-gray-700">
+                <strong>AI Интервьюер:</strong> "Я вижу, что здоровье и спорт — твои провалы. Почему ты так оценил здоровье?"
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Wheel visualization -->
+        <div class="flex justify-center fade-in">
+          <svg viewBox="0 0 300 300" class="w-80 h-80 float">
+            <defs>
+              <linearGradient id="wheelGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#ef4444;stop-opacity:0.6" />
+                <stop offset="100%" style="stop-color:#fca5a5;stop-opacity:0.3" />
+              </linearGradient>
+              <linearGradient id="wheelGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.6" />
+                <stop offset="100%" style="stop-color:#a7f3d0;stop-opacity:0.3" />
+              </linearGradient>
+            </defs>
+
+            <!-- Center -->
+            <circle cx="150" cy="150" r="40" fill="#f3f4f6" stroke="#4f46e5" stroke-width="2"/>
+            <text x="150" y="155" text-anchor="middle" font-size="14" fill="#4f46e5" font-weight="bold">Я</text>
+
+            <!-- Outer wheel -->
+            <circle cx="150" cy="150" r="120" fill="none" stroke="#e5e7eb" stroke-width="1" opacity="0.5"/>
+
+            <!-- Segments with different fills based on scores -->
+            <g class="wheel-segment">
+              <path d="M 150 30 A 120 120 0 0 1 233.9 53.5 L 179 116.7 A 60 60 0 0 0 150 90 Z" fill="url(#wheelGrad1)" stroke="#4f46e5" stroke-width="2"/>
+              <text x="200" y="60" font-size="12" fill="#1f2937" font-weight="bold">Здоровье</text>
+              <text x="190" y="75" font-size="16" fill="#4f46e5" font-weight="bold">4/10</text>
+            </g>
+
+            <g class="wheel-segment">
+              <path d="M 233.9 53.5 A 120 120 0 0 1 269.1 150 L 209.5 150 A 60 60 0 0 0 179 116.7 Z" fill="url(#wheelGrad2)" stroke="#4f46e5" stroke-width="2"/>
+              <text x="245" y="95" font-size="12" fill="#1f2937" font-weight="bold">Благо</text>
+              <text x="240" y="115" font-size="16" fill="#4f46e5" font-weight="bold">8/10</text>
+            </g>
+
+            <g class="wheel-segment">
+              <path d="M 269.1 150 A 120 120 0 0 1 233.9 246.5 L 209.5 150 A 60 60 0 0 0 209.5 150 Z" fill="url(#wheelGrad2)" stroke="#4f46e5" stroke-width="2"/>
+              <text x="245" y="210" font-size="12" fill="#1f2937" font-weight="bold">Семья</text>
+              <text x="240" y="230" font-size="16" fill="#4f46e5" font-weight="bold">5/10</text>
+            </g>
+
+            <g class="wheel-segment">
+              <path d="M 233.9 246.5 A 120 120 0 0 1 150 270 L 150 210 A 60 60 0 0 0 209.5 220 Z" fill="url(#wheelGrad1)" stroke="#4f46e5" stroke-width="2"/>
+              <text x="180" y="260" font-size="12" fill="#1f2937" font-weight="bold">Спорт</text>
+              <text x="170" y="280" font-size="16" fill="#4f46e5" font-weight="bold">2/10</text>
+            </g>
+
+            <g class="wheel-segment">
+              <path d="M 150 270 A 120 120 0 0 1 66.1 246.5 L 133 220 A 60 60 0 0 0 150 210 Z" fill="url(#wheelGrad2)" stroke="#4f46e5" stroke-width="2"/>
+              <text x="70" y="260" font-size="12" fill="#1f2937" font-weight="bold">Любовь</text>
+              <text x="60" y="280" font-size="16" fill="#4f46e5" font-weight="bold">3/10</text>
+            </g>
+
+            <g class="wheel-segment">
+              <path d="M 66.1 246.5 A 120 120 0 0 1 30.9 150 L 90.5 150 A 60 60 0 0 0 133 220 Z" fill="url(#wheelGrad1)" stroke="#4f46e5" stroke-width="2"/>
+              <text x="40" y="200" font-size="12" fill="#1f2937" font-weight="bold">Отнош.</text>
+              <text x="45" y="220" font-size="16" fill="#4f46e5" font-weight="bold">6/10</text>
+            </g>
+
+            <!-- Spokes -->
+            <line x1="150" y1="30" x2="150" y2="270" stroke="#e5e7eb" stroke-width="1" opacity="0.3"/>
+            <line x1="30" y1="150" x2="270" y2="150" stroke="#e5e7eb" stroke-width="1" opacity="0.3"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Arrow to next section -->
+      <div class="arrow-connector">
+        <svg width="40" height="40" viewBox="0 0 40 40" class="arrow-svg" fill="none" stroke="#4f46e5" stroke-width="2">
+          <path d="M20 5 L20 30 M10 20 L20 30 L30 20" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- BLOCK 2: Цели -->
+  <section class="screen-section bg-block-2">
+    <div class="max-w-7xl mx-auto px-4 w-full">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div class="fade-in order-2 lg:order-1">
+          <svg viewBox="0 0 300 400" class="w-80 h-full float">
+            <!-- Goal tree -->
+            <defs>
+              <linearGradient id="goalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#a855f7;stop-opacity:0.3" />
+                <stop offset="100%" style="stop-color:#ec4899;stop-opacity:0.3" />
+              </linearGradient>
+            </defs>
+
+            <!-- Branches -->
+            <line x1="150" y1="80" x2="150" y2="150" stroke="#9333ea" stroke-width="3"/>
+            <line x1="150" y1="150" x2="80" y2="200" stroke="#9333ea" stroke-width="2"/>
+            <line x1="150" y1="150" x2="220" y2="200" stroke="#9333ea" stroke-width="2"/>
+            
+            <line x1="80" y1="200" x2="50" y2="250" stroke="#a855f7" stroke-width="2"/>
+            <line x1="80" y1="200" x2="110" y2="250" stroke="#a855f7" stroke-width="2"/>
+            
+            <line x1="220" y1="200" x2="190" y2="250" stroke="#a855f7" stroke-width="2"/>
+            <line x1="220" y1="200" x2="250" y2="250" stroke="#a855f7" stroke-width="2"/>
+
+            <!-- Goal nodes -->
+            <circle cx="150" cy="80" r="25" fill="#9333ea"/>
+            <text x="150" y="85" text-anchor="middle" font-size="11" fill="white" font-weight="bold">Главная цель</text>
+
+            <!-- Subgoals -->
+            <rect x="50" y="240" width="60" height="50" rx="8" fill="url(#goalGrad)" stroke="#9333ea" stroke-width="2"/>
+            <text x="80" y="270" text-anchor="middle" font-size="10" fill="#1f2937" font-weight="bold">Цель 1</text>
+
+            <rect x="110" y="240" width="60" height="50" rx="8" fill="url(#goalGrad)" stroke="#9333ea" stroke-width="2"/>
+            <text x="140" y="270" text-anchor="middle" font-size="10" fill="#1f2937" font-weight="bold">Цель 2</text>
+
+            <rect x="170" y="240" width="60" height="50" rx="8" fill="url(#goalGrad)" stroke="#9333ea" stroke-width="2"/>
+            <text x="200" y="270" text-anchor="middle" font-size="10" fill="#1f2937" font-weight="bold">Цель 3</text>
+
+            <!-- Labels -->
+            <text x="150" y="30" text-anchor="middle" font-size="14" fill="#6b21a8" font-weight="bold">Из слабых зон → Цели</text>
+          </svg>
+        </div>
+
+        <div class="fade-in order-1 lg:order-2">
+          <h2 class="text-5xl font-bold mb-4">Цели</h2>
+          <p class="text-xl text-gray-700 mb-6">Цели не из головы — они рождаются из проблем, выявленных в колесе баланса</p>
+          
+          <div class="example-card mb-8">
+            <h3 class="font-bold text-lg mb-4 text-purple-600">Пример: Цели Ивана</h3>
+            <p class="text-gray-600 mb-6">На основе колеса баланса AI предложил цели в проблемных зонах:</p>
+            
+            <div class="space-y-3">
+              <div class="p-3 bg-red-50 border-l-4 border-red-500 rounded">
+                <p class="font-semibold text-red-700">Здоровье (4/10)</p>
+                <p class="text-sm text-gray-700">Цель: Заниматься спортом 3х в неделю за 3 месяца</p>
+              </div>
+
+              <div class="p-3 bg-pink-50 border-l-4 border-pink-500 rounded">
+                <p class="font-semibold text-pink-700">Любовь (3/10)</p>
+                <p class="text-sm text-gray-700">Цель: Найти партнёра и выстроить отношения</p>
+              </div>
+
+              <div class="p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
+                <p class="font-semibold text-blue-700">Семья (5/10)</p>
+                <p class="text-sm text-gray-700">Цель: Проводить выходные с родителями 2x в месяц</p>
+              </div>
+            </div>
+
+            <div class="mt-6 p-4 bg-purple-50 rounded-lg border-l-4 border-purple-600">
+              <p class="text-sm text-gray-700">
+                <strong>AI Стратег:</strong> "Я вижу 3 критические зоны. Давай начнём со здоровья — это фундамент для остального. Готов?"
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow-connector">
+        <svg width="40" height="40" viewBox="0 0 40 40" class="arrow-svg" fill="none" stroke="#a855f7" stroke-width="2">
+          <path d="M20 5 L20 30 M10 20 L20 30 L30 20" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- BLOCK 3: Декомпозиция -->
+  <section class="screen-section bg-block-3">
+    <div class="max-w-7xl mx-auto px-4 w-full">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div class="fade-in">
+          <h2 class="text-5xl font-bold mb-4">Декомпозиция</h2>
+          <p class="text-xl text-gray-700 mb-6">Большая цель разбивается на конкретные, выполнимые шаги</p>
+          
+          <div class="example-card mb-8">
+            <h3 class="font-bold text-lg mb-4 text-pink-600">Пример: Декомпозиция цели "Спорт 3x в неделю"</h3>
+            
+            <div class="space-y-3">
+              <div class="bg-gradient-to-r from-pink-100 to-pink-50 p-4 rounded-lg border-l-4 border-pink-600">
+                <p class="font-bold text-pink-700 mb-1">Шаг 1: Выбрать вид спорта</p>
+                <p class="text-sm text-gray-700">Протестировать 3 зала за неделю. Выбрать где комфортно.</p>
+              </div>
+
+              <div class="bg-gradient-to-r from-rose-100 to-rose-50 p-4 rounded-lg border-l-4 border-rose-600">
+                <p class="font-bold text-rose-700 mb-1">Шаг 2: Купить форму и оборудование</p>
+                <p class="text-sm text-gray-700">Кроссовки, одежда для спорта. Дедлайн: 1 неделя.</p>
+              </div>
+
+              <div class="bg-gradient-to-r from-red-100 to-red-50 p-4 rounded-lg border-l-4 border-red-600">
+                <p class="font-bold text-red-700 mb-1">Шаг 3: Первая тренировка</p>
+                <p class="text-sm text-gray-700">Записаться на пробный день. Дедлайн: конец недели.</p>
+              </div>
+
+              <div class="bg-gradient-to-r from-orange-100 to-orange-50 p-4 rounded-lg border-l-4 border-orange-600">
+                <p class="font-bold text-orange-700 mb-1">Шаг 4: Привыкнуть к ритму</p>
+                <p class="text-sm text-gray-700">3 тренировки в неделю. Запланировать в календарь.</p>
+              </div>
+            </div>
+
+            <div class="mt-6 p-4 bg-pink-50 rounded-lg border-l-4 border-pink-600">
+              <p class="text-sm text-gray-700">
+                <strong>AI Методолог:</strong> "Я разбил твою цель на 4 реальных шага. Каждый выполним за неделю. Согласен?"
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="fade-in flex justify-center">
+          <svg viewBox="0 0 300 500" class="w-80 h-full float">
+            <!-- Staircase decomposition -->
+            <defs>
+              <linearGradient id="stepGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#ec4899;stop-opacity:0.3" />
+                <stop offset="100%" style="stop-color:#f87171;stop-opacity:0.3" />
+              </linearGradient>
+            </defs>
+
+            <!-- Steps -->
+            <g id="step1">
+              <rect x="50" y="50" width="200" height="60" rx="8" fill="url(#stepGrad)" stroke="#ec4899" stroke-width="2"/>
+              <text x="150" y="85" text-anchor="middle" font-size="12" fill="#1f2937" font-weight="bold">Главная цель</text>
+              <circle cx="150" cy="130" r="3" fill="#ec4899"/>
+            </g>
+
+            <line x1="150" y1="130" x2="150" y2="160" stroke="#ec4899" stroke-width="2"/>
+
+            <g id="step2">
+              <rect x="50" y="160" width="200" height="60" rx="8" fill="url(#stepGrad)" stroke="#f97316" stroke-width="2"/>
+              <text x="150" y="195" text-anchor="middle" font-size="12" fill="#1f2937" font-weight="bold">Шаг 1</text>
+              <circle cx="150" cy="240" r="3" fill="#f97316"/>
+            </g>
+
+            <line x1="150" y1="240" x2="150" y2="270" stroke="#f97316" stroke-width="2"/>
+
+            <g id="step3">
+              <rect x="50" y="270" width="200" height="60" rx="8" fill="url(#stepGrad)" stroke="#f59e0b" stroke-width="2"/>
+              <text x="150" y="305" text-anchor="middle" font-size="12" fill="#1f2937" font-weight="bold">Шаг 2</text>
+              <circle cx="150" cy="350" r="3" fill="#f59e0b"/>
+            </g>
+
+            <line x1="150" y1="350" x2="150" y2="380" stroke="#f59e0b" stroke-width="2"/>
+
+            <g id="step4">
+              <rect x="50" y="380" width="200" height="60" rx="8" fill="url(#stepGrad)" stroke="#eab308" stroke-width="2"/>
+              <text x="150" y="415" text-anchor="middle" font-size="12" fill="#1f2937" font-weight="bold">Шаг 3 & 4</text>
+              <circle cx="150" cy="460" r="3" fill="#eab308"/>
+            </g>
+
+            <!-- Arrow down -->
+            <path d="M150 460 L150 490" stroke="#eab308" stroke-width="2" stroke-linecap="round"/>
+            <text x="160" y="480" font-size="12" fill="#6b21a8" font-weight="bold">↓ В календарь</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="arrow-connector">
+        <svg width="40" height="40" viewBox="0 0 40 40" class="arrow-svg" fill="none" stroke="#ec4899" stroke-width="2">
+          <path d="M20 5 L20 30 M10 20 L20 30 L30 20" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- BLOCK 4: Планирование -->
+  <section class="screen-section bg-block-4">
+    <div class="max-w-7xl mx-auto px-4 w-full">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div class="fade-in order-2 lg:order-1">
+          <!-- Mini calendar visualization -->
+          <svg viewBox="0 0 320 320" class="w-80 h-80 float">
+            <defs>
+              <linearGradient id="calGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#f97316;stop-opacity:0.2" />
+                <stop offset="100%" style="stop-color:#fbbf24;stop-opacity:0.2" />
+              </linearGradient>
+            </defs>
+
+            <!-- Week grid -->
+            <g id="calendar">
+              <!-- Monday -->
+              <rect x="10" y="20" width="40" height="40" rx="4" fill="url(#calGrad)" stroke="#f97316" stroke-width="2"/>
+              <text x="30" y="50" text-anchor="middle" font-size="11" fill="#1f2937" font-weight="bold">Пн</text>
+              <text x="30" y="60" text-anchor="middle" font-size="9" fill="#f97316">Шаг 1</text>
+
+              <!-- Tuesday -->
+              <rect x="60" y="20" width="40" height="40" rx="4" fill="url(#calGrad)" stroke="#f97316" stroke-width="2"/>
+              <text x="80" y="50" text-anchor="middle" font-size="11" fill="#1f2937" font-weight="bold">Вт</text>
+              <text x="80" y="60" text-anchor="middle" font-size="9" fill="#f97316">Шаг 1</text>
+
+              <!-- Wednesday -->
+              <rect x="110" y="20" width="40" height="40" rx="4" fill="#e5e7eb" stroke="#d1d5db" stroke-width="2"/>
+              <text x="130" y="50" text-anchor="middle" font-size="11" fill="#6b7280" font-weight="bold">Ср</text>
+
+              <!-- Thursday -->
+              <rect x="160" y="20" width="40" height="40" rx="4" fill="url(#calGrad)" stroke="#f97316" stroke-width="2"/>
+              <text x="180" y="50" text-anchor="middle" font-size="11" fill="#1f2937" font-weight="bold">Чт</text>
+              <text x="180" y="60" text-anchor="middle" font-size="9" fill="#f97316">Шаг 1</text>
+
+              <!-- Friday -->
+              <rect x="210" y="20" width="40" height="40" rx="4" fill="url(#calGrad)" stroke="#f97316" stroke-width="2"/>
+              <text x="230" y="50" text-anchor="middle" font-size="11" fill="#1f2937" font-weight="bold">Пт</text>
+              <text x="230" y="60" text-anchor="middle" font-size="9" fill="#f97316">Шаг 2</text>
+
+              <!-- Saturday -->
+              <rect x="260" y="20" width="40" height="40" rx="4" fill="#e5e7eb" stroke="#d1d5db" stroke-width="2"/>
+              <text x="280" y="50" text-anchor="middle" font-size="11" fill="#6b7280" font-weight="bold">Сб</text>
+
+              <!-- Sunday -->
+              <rect x="10" y="80" width="40" height="40" rx="4" fill="url(#calGrad)" stroke="#f97316" stroke-width="2"/>
+              <text x="30" y="110" text-anchor="middle" font-size="11" fill="#1f2937" font-weight="bold">Вс</text>
+              <text x="30" y="120" text-anchor="middle" font-size="9" fill="#f97316">Шаг 2</text>
+
+              <!-- Week 2 samples -->
+              <rect x="60" y="160" width="40" height="40" rx="4" fill="url(#calGrad)" stroke="#f97316" stroke-width="2"/>
+              <text x="80" y="190" text-anchor="middle" font-size="11" fill="#1f2937" font-weight="bold">Пн</text>
+              <text x="80" y="200" text-anchor="middle" font-size="9" fill="#f97316">Шаг 3</text>
+
+              <rect x="110" y="160" width="40" height="40" rx="4" fill="url(#calGrad)" stroke="#f97316" stroke-width="2"/>
+              <text x="130" y="190" text-anchor="middle" font-size="11" fill="#1f2937" font-weight="bold">Вт</text>
+              <text x="130" y="200" text-anchor="middle" font-size="9" fill="#f97316">Шаг 3</text>
+
+              <rect x="160" y="160" width="40" height="40" rx="4" fill="url(#calGrad)" stroke="#f97316" stroke-width="2"/>
+              <text x="180" y="190" text-anchor="middle" font-size="11" fill="#1f2937" font-weight="bold">Ср</text>
+              <text x="180" y="200" text-anchor="middle" font-size="9" fill="#f97316">Шаг 4</text>
+            </g>
+
+            <!-- Title -->
+            <text x="160" y="260" text-anchor="middle" font-size="14" fill="#6b21a8" font-weight="bold">4 недели спланировано</text>
+            <text x="160" y="280" text-anchor="middle" font-size="11" fill="#6b7280">Все в календаре</text>
+          </svg>
+        </div>
+
+        <div class="fade-in order-1 lg:order-2">
+          <h2 class="text-5xl font-bold mb-4">Планирование</h2>
+          <p class="text-xl text-gray-700 mb-6">Одна кнопка — и AI раскладывает всё по дням. Нагрузка оптимальна, ничего не забудется</p>
+          
+          <div class="example-card mb-8">
+            <h3 class="font-bold text-lg mb-4 text-orange-600">AI Планирование для Ивана</h3>
+            
+            <div class="mb-4">
+              <button class="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white font-bold py-3 px-6 rounded-lg hover:shadow-lg transition">
+                ⚡ AI планирование одной кнопкой
+              </button>
+            </div>
+
+            <div class="space-y-2 text-sm text-gray-700">
+              <p><strong>Результат:</strong></p>
+              <ul class="list-disc list-inside space-y-2">
+                <li><strong>Неделя 1:</strong> Выбор зала + первая тренировка</li>
+                <li><strong>Неделя 2:</strong> 3 тренировки по расписанию</li>
+                <li><strong>Неделя 3:</strong> Привыкание + покупка экипировки</li>
+                <li><strong>Неделя 4:</strong> Закрепление привычки</li>
+              </ul>
+            </div>
+
+            <div class="mt-6 p-4 bg-orange-50 rounded-lg border-l-4 border-orange-600">
+              <p class="text-sm text-gray-700">
+                <strong>AI Планировщик:</strong> "Вот твой план на 4 недели. Я синхронизировал с твоим Google Calendar. Каждый день получишь напоминание в 10:00"
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow-connector">
+        <svg width="40" height="40" viewBox="0 0 40 40" class="arrow-svg" fill="none" stroke="#f97316" stroke-width="2">
+          <path d="M20 5 L20 30 M10 20 L20 30 L30 20" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- BLOCK 5: Привычки -->
+  <section class="screen-section bg-block-5">
+    <div class="max-w-7xl mx-auto px-4 w-full">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div class="fade-in">
+          <h2 class="text-5xl font-bold mb-4">Привычки</h2>
+          <p class="text-xl text-gray-700 mb-6">Рост не через рывки, а через привычки. Маленькие, повседневные действия</p>
+          
+          <div class="example-card mb-8">
+            <h3 class="font-bold text-lg mb-4 text-green-600">Привычки Ивана (из его целей)</h3>
+            
+            <div class="space-y-3">
+              <div class="flex items-center gap-3 p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+                <input type="checkbox" checked class="w-5 h-5 text-green-600">
+                <div class="flex-1">
+                  <p class="font-semibold text-green-700">Спорт</p>
+                  <p class="text-xs text-gray-600">30 мин тренировки, каждый день в 18:00</p>
+                </div>
+                <span class="text-xs font-bold text-green-600">7 дней</span>
+              </div>
+
+              <div class="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border-l-4 border-emerald-500">
+                <input type="checkbox" checked class="w-5 h-5 text-emerald-600">
+                <div class="flex-1">
+                  <p class="font-semibold text-emerald-700">Здоровое питание</p>
+                  <p class="text-xs text-gray-600">Готовить завтрак дома, избегать фастфуда</p>
+                </div>
+                <span class="text-xs font-bold text-emerald-600">5 дней</span>
+              </div>
+
+              <div class="flex items-center gap-3 p-3 bg-teal-50 rounded-lg border-l-4 border-teal-500">
+                <input type="checkbox" class="w-5 h-5 text-teal-600">
+                <div class="flex-1">
+                  <p class="font-semibold text-teal-700">Уикенд с семьёй</p>
+                  <p class="text-xs text-gray-600">Проводить выходной с родителями, минимум 3 часа</p>
+                </div>
+                <span class="text-xs font-bold text-teal-600">2 дня</span>
+              </div>
+
+              <div class="flex items-center gap-3 p-3 bg-cyan-50 rounded-lg border-l-4 border-cyan-500">
+                <input type="checkbox" class="w-5 h-5 text-cyan-600">
+                <div class="flex-1">
+                  <p class="font-semibold text-cyan-700">Вечерняя рефлексия</p>
+                  <p class="text-xs text-gray-600">15 мин отчёт AI ментору в Telegram</p>
+                </div>
+                <span class="text-xs font-bold text-cyan-600">4 дня</span>
+              </div>
+            </div>
+
+            <div class="mt-6 p-4 bg-green-50 rounded-lg border-l-4 border-green-600">
+              <p class="text-sm text-gray-700">
+                <strong>AI Коуч:</strong> "Отлично! Эти 4 привычки в сумме даст тебе основу для достижения всех целей. Начинаем с одной привычки, потом добавим вторую"
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="fade-in flex justify-center">
+          <svg viewBox="0 0 300 400" class="w-80 h-full float">
+            <!-- Habit stacking visualization -->
+            <defs>
+              <linearGradient id="habitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.3" />
+                <stop offset="100%" style="stop-color:#14b8a6;stop-opacity:0.3" />
+              </linearGradient>
+            </defs>
+
+            <!-- Days progress -->
+            <g id="habit-tracker">
+              <!-- Week 1 -->
+              <text x="150" y="30" text-anchor="middle" font-size="12" fill="#047857" font-weight="bold">Неделя 1</text>
+              
+              <circle cx="30" cy="60" r="15" fill="#10b981" stroke="#059669" stroke-width="2"/>
+              <text x="30" y="65" text-anchor="middle" font-size="10" fill="white" font-weight="bold">✓</text>
+              
+              <circle cx="70" cy="60" r="15" fill="#10b981" stroke="#059669" stroke-width="2"/>
+              <text x="70" y="65" text-anchor="middle" font-size="10" fill="white" font-weight="bold">✓</text>
+              
+              <circle cx="110" cy="60" r="15" fill="#10b981" stroke="#059669" stroke-width="2"/>
+              <text x="110" y="65" text-anchor="middle" font-size="10" fill="white" font-weight="bold">✓</text>
+              
+              <circle cx="150" cy="60" r="15" fill="#10b981" stroke="#059669" stroke-width="2"/>
+              <text x="150" y="65" text-anchor="middle" font-size="10" fill="white" font-weight="bold">✓</text>
+              
+              <circle cx="190" cy="60" r="15" fill="#10b981" stroke="#059669" stroke-width="2"/>
+              <text x="190" y="65" text-anchor="middle" font-size="10" fill="white" font-weight="bold">✓</text>
+              
+              <circle cx="230" cy="60" r="15" fill="#10b981" stroke="#059669" stroke-width="2"/>
+              <text x="230" y="65" text-anchor="middle" font-size="10" fill="white" font-weight="bold">✓</text>
+              
+              <circle cx="270" cy="60" r="15" fill="#a7f3d0" stroke="#059669" stroke-width="2" stroke-dasharray="2,2"/>
+              <text x="270" y="67" text-anchor="middle" font-size="10" fill="#047857">?</text>
+
+              <!-- Week 2 -->
+              <text x="150" y="130" text-anchor="middle" font-size="12" fill="#047857" font-weight="bold">Неделя 2</text>
+              
+              <circle cx="30" cy="160" r="15" fill="#10b981" stroke="#059669" stroke-width="2"/>
+              <text x="30" y="165" text-anchor="middle" font-size="10" fill="white" font-weight="bold">✓</text>
+              
+              <circle cx="70" cy="160" r="15" fill="#10b981" stroke="#059669" stroke-width="2"/>
+              <text x="70" y="165" text-anchor="middle" font-size="10" fill="white" font-weight="bold">✓</text>
+
+              <!-- Streak counter -->
+              <rect x="30" y="250" width="240" height="80" rx="8" fill="url(#habitGrad)" stroke="#10b981" stroke-width="2"/>
+              <text x="150" y="275" text-anchor="middle" font-size="28" fill="#047857" font-weight="bold">14</text>
+              <text x="150" y="300" text-anchor="middle" font-size="12" fill="#047857" font-weight="bold">дней подряд! 🔥</text>
+              <text x="150" y="320" text-anchor="middle" font-size="10" fill="#047857">Ты на пути к изменениям</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <div class="arrow-connector">
+        <svg width="40" height="40" viewBox="0 0 40 40" class="arrow-svg" fill="none" stroke="#10b981" stroke-width="2">
+          <path d="M20 5 L20 30 M10 20 L20 30 L30 20" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- BLOCK 6: Достижения -->
+  <section class="screen-section bg-block-6">
+    <div class="max-w-7xl mx-auto px-4 w-full">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div class="fade-in order-2 lg:order-1">
+          <svg viewBox="0 0 300 400" class="w-80 h-full float">
+            <!-- Progress visualization -->
+            <defs>
+              <linearGradient id="progressGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.4" />
+                <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:0.2" />
+              </linearGradient>
+            </defs>
+
+            <!-- Before/After cards -->
+            <g id="before">
+              <rect x="10" y="20" width="120" height="140" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+              <text x="70" y="45" text-anchor="middle" font-size="12" fill="#7f1d1d" font-weight="bold">БЫЛО</text>
+              
+              <text x="70" y="70" text-anchor="middle" font-size="10" fill="#1f2937">Здоровье</text>
+              <rect x="20" y="75" width="100" height="12" rx="6" fill="#f3f4f6" stroke="#e5e7eb" stroke-width="1"/>
+              <rect x="20" y="75" width="40" height="12" rx="6" fill="#ef4444"/>
+              <text x="80" y="87" font-size="10" fill="#1f2937" font-weight="bold">4/10</text>
+              
+              <text x="70" y="110" text-anchor="middle" font-size="10" fill="#1f2937">Спорт</text>
+              <rect x="20" y="115" width="100" height="12" rx="6" fill="#f3f4f6" stroke="#e5e7eb" stroke-width="1"/>
+              <rect x="20" y="115" width="20" height="12" rx="6" fill="#ef4444"/>
+              <text x="80" y="127" font-size="10" fill="#1f2937" font-weight="bold">2/10</text>
+            </g>
+
+            <!-- Arrow -->
+            <path d="M 150 90 L 170 90" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" marker-end="url(#arrowhead)"/>
+            <defs>
+              <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                <polygon points="0 0, 10 3, 0 6" fill="#3b82f6" />
+              </marker>
+            </defs>
+
+            <!-- After cards -->
+            <g id="after">
+              <rect x="170" y="20" width="120" height="140" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+              <text x="230" y="45" text-anchor="middle" font-size="12" fill="#15803d" font-weight="bold">СТАЛО</text>
+              
+              <text x="230" y="70" text-anchor="middle" font-size="10" fill="#1f2937">Здоровье</text>
+              <rect x="180" y="75" width="100" height="12" rx="6" fill="#f3f4f6" stroke="#e5e7eb" stroke-width="1"/>
+              <rect x="180" y="75" width="80" height="12" rx="6" fill="#22c55e"/>
+              <text x="240" y="87" font-size="10" fill="#1f2937" font-weight="bold">8/10</text>
+              
+              <text x="230" y="110" text-anchor="middle" font-size="10" fill="#1f2937">Спорт</text>
+              <rect x="180" y="115" width="100" height="12" rx="6" fill="#f3f4f6" stroke="#e5e7eb" stroke-width="1"/>
+              <rect x="180" y="115" width="90" height="12" rx="6" fill="#22c55e"/>
+              <text x="240" y="127" font-size="10" fill="#1f2937" font-weight="bold">9/10</text>
+            </g>
+
+            <!-- Badges section -->
+            <text x="150" y="200" text-anchor="middle" font-size="14" fill="#1e40af" font-weight="bold">ДОСТИЖЕНИЯ</text>
+
+            <!-- Badge 1 -->
+            <circle cx="60" cy="260" r="30" fill="url(#progressGrad)" stroke="#3b82f6" stroke-width="2"/>
+            <text x="60" y="270" text-anchor="middle" font-size="20">🏋️</text>
+
+            <!-- Badge 2 -->
+            <circle cx="150" cy="260" r="30" fill="url(#progressGrad)" stroke="#3b82f6" stroke-width="2"/>
+            <text x="150" y="270" text-anchor="middle" font-size="20">🔥</text>
+
+            <!-- Badge 3 -->
+            <circle cx="240" cy="260" r="30" fill="url(#progressGrad)" stroke="#3b82f6" stroke-width="2"/>
+            <text x="240" y="270" text-anchor="middle" font-size="20">⭐</text>
+
+            <text x="150" y="330" text-anchor="middle" font-size="11" fill="#1f2937">Силач</text>
+            <text x="150" y="345" text-anchor="middle" font-size="11" fill="#1f2937">Горячая полоса</text>
+            <text x="150" y="360" text-anchor="middle" font-size="11" fill="#1f2937">Чемпион</text>
+          </svg>
+        </div>
+
+        <div class="fade-in order-1 lg:order-2">
+          <h2 class="text-5xl font-bold mb-4">Достижения</h2>
+          <p class="text-xl text-gray-700 mb-6">Мозгу нужна поддержка. Каждый шаг отмечается и награждается</p>
+          
+          <div class="example-card mb-8">
+            <h3 class="font-bold text-lg mb-4 text-blue-600">Достижения Ивана через 3 месяца</h3>
+            
+            <div class="space-y-4">
+              <div class="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 rounded-lg border-l-4 border-blue-500">
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="text-2xl">🏋️</span>
+                  <div>
+                    <p class="font-bold text-blue-700">Новичок в спорте</p>
+                    <p class="text-xs text-gray-600">Посещена 1-я тренировка</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 rounded-lg border-l-4 border-blue-500">
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="text-2xl">🔥</span>
+                  <div>
+                    <p class="font-bold text-blue-700">Горячая полоса</p>
+                    <p class="text-xs text-gray-600">14 дней подряд в спорте</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 rounded-lg border-l-4 border-blue-500">
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="text-2xl">⭐</span>
+                  <div>
+                    <p class="font-bold text-blue-700">Чемпион</p>
+                    <p class="text-xs text-gray-600">3 месяца спорта 3x в неделю</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 rounded-lg border-l-4 border-blue-500">
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="text-2xl">📈</span>
+                  <div>
+                    <p class="font-bold text-blue-700">Рост в 2 раза</p>
+                    <p class="text-xs text-gray-600">Баланс в здоровье с 4 до 8 из 10</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-600">
+              <p class="text-sm text-gray-700">
+                <strong>AI Мотиватор:</strong> "Ивано, ты в пути! За 3 месяца ты стал сильнее на 100% в здоровье. Продолжим?"
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow-connector">
+        <svg width="40" height="40" viewBox="0 0 40 40" class="arrow-svg" fill="none" stroke="#3b82f6" stroke-width="2">
+          <path d="M20 5 L20 30 M10 20 L20 30 L30 20" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- BLOCK 7: AI Ментор -->
+  <section class="screen-section bg-block-7">
+    <div class="max-w-7xl mx-auto px-4 w-full">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div class="fade-in">
+          <h2 class="text-5xl font-bold mb-4">AI Ментор в Telegram</h2>
+          <p class="text-xl text-gray-700 mb-6">Сквозной помощник на всём пути. Ежедневная поддержка, фидбэк и направление</p>
+          
+          <div class="example-card mb-8">
+            <h3 class="font-bold text-lg mb-4 text-cyan-600">Как работает AI Ментор Ивана</h3>
+            
+            <div class="space-y-4">
+              <div class="bg-cyan-50 p-4 rounded-lg border-l-4 border-cyan-500">
+                <p class="font-bold text-cyan-700 mb-2">📅 Утро (08:00)</p>
+                <p class="text-sm text-gray-700 italic">"Привет, Иван! Сегодня у тебя запланирована тренировка в 18:00. Готов? 💪"</p>
+              </div>
+
+              <div class="bg-sky-50 p-4 rounded-lg border-l-4 border-sky-500">
+                <p class="font-bold text-sky-700 mb-2">🎯 Днём (14:00)</p>
+                <p class="text-sm text-gray-700 italic">"Напоминание: не забудь про завтрак дома. Это одна из твоих привычек! 🥗"</p>
+              </div>
+
+              <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                <p class="font-bold text-blue-700 mb-2">🌙 Вечер (21:00)</p>
+                <p class="text-sm text-gray-700 italic">"Время отчёта! Расскажи как дела. Ты тренировался? Ел здоровую пищу?"</p>
+              </div>
+
+              <div class="bg-indigo-50 p-4 rounded-lg border-l-4 border-indigo-500">
+                <p class="font-bold text-indigo-700 mb-2">✨ Анализ (21:15)</p>
+                <p class="text-sm text-gray-700 italic">"Отлично! Ты выполнил 5 из 6 пунктов. Что помешало 6-му? Давай разберёмся"</p>
+              </div>
+            </div>
+
+            <div class="mt-6 p-4 bg-cyan-50 rounded-lg border-l-4 border-cyan-600">
+              <p class="text-sm text-gray-700">
+                <strong>Ролевая трансформация:</strong> На этапе Колеса - Интервьюер 🎤 → На целях - Стратег 📊 → На спорте - Коуч 💪 → Всегда - Ментор 🤝
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="fade-in flex justify-center">
+          <!-- Telegram chat simulation -->
+          <div class="w-80 h-full bg-white rounded-2xl shadow-2xl border-8 border-gray-900 overflow-hidden flex flex-col">
+            <!-- Phone header -->
+            <div class="bg-gray-900 text-white px-4 py-2 flex items-center justify-between text-xs">
+              <span>9:41</span>
+              <div class="flex gap-1">
+                <span>📶</span>
+                <span>🔋</span>
+              </div>
+            </div>
+
+            <!-- Chat header -->
+            <div class="bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-4 py-3 flex items-center justify-between">
+              <div>
+                <p class="font-bold text-sm">AI Ментор 1%</p>
+                <p class="text-xs opacity-80">online</p>
+              </div>
+              <span>⋮</span>
+            </div>
+
+            <!-- Chat messages -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+              <!-- Mentor message -->
+              <div class="flex justify-start">
+                <div class="bg-white text-gray-900 px-4 py-2 rounded-2xl rounded-tl-none max-w-xs shadow-sm text-sm">
+                  <p>Привет! 👋 Как у тебя дела со спортом?</p>
+                </div>
+              </div>
+
+              <!-- User message -->
+              <div class="flex justify-end">
+                <div class="bg-cyan-600 text-white px-4 py-2 rounded-2xl rounded-tr-none max-w-xs shadow-sm text-sm">
+                  <p>Потренировался! 💪</p>
+                </div>
+              </div>
+
+              <!-- Mentor message -->
+              <div class="flex justify-start">
+                <div class="bg-white text-gray-900 px-4 py-2 rounded-2xl rounded-tl-none max-w-xs shadow-sm text-sm">
+                  <p>Отлично! 🔥 Это твой 7-й день подряд.</p>
+                  <p class="text-xs mt-1 opacity-70">Горячая полоса начинается с 7!</p>
+                </div>
+              </div>
+
+              <!-- User message -->
+              <div class="flex justify-end">
+                <div class="bg-cyan-600 text-white px-4 py-2 rounded-2xl rounded-tr-none max-w-xs shadow-sm text-sm">
+                  <p>Спасибо за поддержку! 😊</p>
+                </div>
+              </div>
+
+              <!-- Mentor message -->
+              <div class="flex justify-start">
+                <div class="bg-white text-gray-900 px-4 py-2 rounded-2xl rounded-tl-none max-w-xs shadow-sm text-sm">
+                  <p>Это твоя победа, Иван!</p>
+                  <p class="font-bold text-xs mt-1 text-cyan-600">+1% каждый день = 37x в год</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Input -->
+            <div class="bg-white border-t border-gray-200 px-4 py-2 flex gap-2">
+              <input type="text" placeholder="Сообщение..." class="flex-1 text-sm border border-gray-300 rounded-full px-4 py-2 focus:outline-none">
+              <button class="bg-cyan-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm">↑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Final CTA -->
+      <div class="mt-16 text-center fade-in">
+        <h3 class="text-4xl font-bold mb-6">Готов начать путь +1%?</h3>
+        <p class="text-xl text-gray-700 mb-8 max-w-2xl mx-auto">
+          Первый шаг — оценить себя в колесе баланса. Это займёт 5 минут. AI ментор уже ждёт тебя.
+        </p>
+        <button class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-10 py-4 rounded-lg font-bold text-lg hover:shadow-lg transition">
+          Сделать +1% уже сегодня
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Navigation
+    const sections = document.querySelectorAll('.screen-section');
+    const navDots = document.querySelectorAll('.nav-dot');
+
+    window.addEventListener('scroll', () => {
+      let current = 0;
+      sections.forEach((section, index) => {
+        const sectionTop = section.offsetTop;
+        if (pageYOffset >= sectionTop - window.innerHeight / 2) {
+          current = index;
+        }
+      });
+      navDots.forEach(dot => dot.classList.remove('active'));
+      navDots[current].classList.add('active');
+    });
+
+    function scrollToBlock(index) {
+      sections[index].scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Update scores
+    function updateScore(sphere, value) {
+      const scoreEl = document.getElementById(sphere + '-score');
+      if (scoreEl) {
+        scoreEl.textContent = value;
+      }
+    }
+  </script>
+</body>
+</html>

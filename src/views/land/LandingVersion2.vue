@@ -1,878 +1,917 @@
 <template>
-  <div class="landing-page">
-    <header class="landing-header" :class="{ scrolled: isScrolled }">
-      <div class="container">
-        <div class="header-content">
-          <div class="logo">
-            <span class="logo-icon">1%</span>
-            <div class="logo-text">
-              <b class="logo-title">OnePercent</b>
-              <span class="tagline">+1% каждый день</span>
-            </div>
-          </div>
-          <nav class="header-nav">
-            <template v-if="isAuthenticated">
-              <router-link to="/app" class="btn btn-primary">Личный кабинет</router-link>
-            </template>
-            <template v-else>
-              <router-link to="/auth/login" class="nav-link">Войти</router-link>
-              <router-link to="/auth/register" class="btn btn-primary">Начать бесплатно</router-link>
-            </template>
-          </nav>
-        </div>
-      </div>
-    </header>
+  <div class="landing-v2">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar-nav" aria-label="Навигация по разделам">
+      <div 
+        v-for="(section, index) in sections" 
+        :key="section.id"
+        class="nav-dot"
+        :class="{ active: activeSection === index }"
+        :title="section.title"
+        @click="scrollToSection(index)"
+      ></div>
+    </nav>
 
-    <main>
-      <section class="hero">
-        <div class="container">
-          <div class="hero-grid">
-            <div class="hero-content">
-              <h1 class="hero-title">
-                Системный рост в жизни<br>
-                <span class="highlight">через простые действия</span>
-              </h1>
-              <p class="hero-description">
-                Не курс. Не марафон. А система, которая делает развитие предсказуемым.
+    <!-- HERO SECTION -->
+    <section id="hero" class="screen-section bg-hero">
+      <div class="section-content">
+        <div class="hero-grid">
+          <div class="hero-text">
+            <h1 class="hero-title">
+              Системный рост в жизни
+              <span class="text-accent">через простые действия</span>
+            </h1>
+            <p class="hero-subtitle">
+              Не курс. Не марафон. А система, которая делает развитие предсказуемым.
+            </p>
+            
+            <!-- Persona Card -->
+            <div class="persona-card">
+              <div class="persona-header">
+                <div class="persona-avatar">М</div>
+                <div class="persona-info">
+                  <h3>Максим, 32 года</h3>
+                  <p>Менеджер проектов, Москва</p>
+                </div>
+              </div>
+              <p class="persona-quote">
+                "Работа отнимает всё время. Здоровье запустил, отношения буксуют, 
+                а планы на жизнь так и остаются планами. Хочу наконец взять жизнь под контроль."
               </p>
-              <div class="hero-actions">
-                <a href="#journey-start" class="btn btn-primary btn-lg">
-                  Сделать +1% уже сегодня
-                </a>
-              </div>
-              <p class="hero-note">Начнём с оценки текущего состояния</p>
-            </div>
-            <div class="hero-image">
-              <div class="compound-chart">
-                <svg viewBox="0 0 400 300" class="chart-svg">
-                  <defs>
-                    <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.3" />
-                      <stop offset="100%" style="stop-color:#6366f1;stop-opacity:0" />
-                    </linearGradient>
-                  </defs>
-                  <path d="M 30 270 Q 100 268, 150 260 T 250 220 T 320 120 T 370 30" 
-                        fill="none" stroke="#6366f1" stroke-width="3" class="chart-line"/>
-                  <path d="M 30 270 Q 100 268, 150 260 T 250 220 T 320 120 T 370 30 L 370 270 L 30 270 Z" 
-                        fill="url(#chartGradient)" class="chart-area"/>
-                  <line x1="30" y1="270" x2="370" y2="270" stroke="#e5e7eb" stroke-width="1"/>
-                  <line x1="30" y1="30" x2="30" y2="270" stroke="#e5e7eb" stroke-width="1"/>
-                  <text x="30" y="290" font-size="12" fill="#9ca3af">Сегодня</text>
-                  <text x="340" y="290" font-size="12" fill="#9ca3af">1 год</text>
-                  <text x="340" y="25" font-size="14" font-weight="600" fill="#6366f1">×37.8</text>
-                </svg>
-                <div class="chart-label">
-                  <span class="chart-highlight">+1% каждый день</span>
-                  <span class="chart-text">= экспоненциальный рост</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="hero-bg"></div>
-      </section>
-
-      <section class="effect-section">
-        <div class="container">
-          <h2 class="section-title">Эффект 1%: маленькие шаги → большие результаты</h2>
-          <p class="section-subtitle">
-            Улучшая каждый день хотя бы на 1%, за год ты станешь сильнее почти в 38 раз.<br>
-            Это эффект сложных процентов, применённый к жизни.
-          </p>
-          
-          <div class="slider-container">
-            <input 
-              type="range" 
-              min="30" 
-              max="365" 
-              v-model="days" 
-              class="days-slider"
-              aria-label="Количество дней для расчёта эффекта 1%"
-            >
-            <div class="slider-labels">
-              <span>1 мес.</span>
-              <span>6 мес.</span>
-              <span>1 год</span>
-            </div>
-          </div>
-
-          <div class="effect-result">
-            <div class="days-display">{{ days }} дней</div>
-            <div class="multiplier">× {{ multiplier }}</div>
-          </div>
-
-          <div class="effect-description">
-            <p v-if="days <= 30">
-              <strong>Ты начнёшь управлять днём</strong>, а не плыть по потоку: меньше хаоса, больше точности.
-            </p>
-            <p v-else-if="days <= 90">
-              <strong>Система становится привычкой</strong>, нет тревоги, есть четкий план и ясность что делать и зачем.
-            </p>
-            <p v-else-if="days <= 180">
-              <strong>Новая «операционка»</strong>: уже есть большие победы и достигнутые цели как в жизни, так и в финансах.
-            </p>
-            <p v-else>
-              <strong>Качественный сдвиг</strong>: ясность, устойчивость, рост дохода и ощущение контроля над жизнью.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section id="journey-start" class="ai-mentor-section">
-        <div class="container">
-          <div class="mentor-header">
-            <div class="mentor-avatar"><Bot :size="48" /></div>
-            <h2 class="section-title">AI Mentor — твой проводник</h2>
-            <p class="mentor-tagline">Он видит то, что сложно заметить в рутине, и помогает каждый день делать маленький шаг в плюс</p>
-          </div>
-          
-          <div class="mentor-benefits">
-            <div class="mentor-card">
-              <div class="mentor-icon"><Target :size="24" /></div>
-              <h3>Ясность вместо хаоса</h3>
-              <p>Перестань гадать, что делать. Ментор анализирует твои сферы жизни и помогает поставить цели, которые действительно важны именно тебе.</p>
-            </div>
-            <div class="mentor-card">
-              <div class="mentor-icon"><Calendar :size="24" /></div>
-              <h3>Неделя спланирована за минуту</h3>
-              <p>Не трать время на раскладывание задач. Ментор сам распределяет шаги по дням с учётом твоей загрузки и приоритетов.</p>
-            </div>
-            <div class="mentor-card">
-              <div class="mentor-icon"><Eye :size="24" /></div>
-              <h3>Видишь то, что упускаешь</h3>
-              <p>В рутине легко не заметить перегрузку или дисбаланс. Ментор подсвечивает паттерны и предупреждает до того, как ты выгоришь.</p>
-            </div>
-            <div class="mentor-card">
-              <div class="mentor-icon"><Lightbulb :size="24" /></div>
-              <h3>Знаешь следующий шаг</h3>
-              <p>Никакого ступора "а что теперь?". Получаешь персональные рекомендации на основе твоего реального прогресса.</p>
-            </div>
-          </div>
-
-          <div class="mentor-chat-demo">
-            <div class="chat-window">
-              <div class="chat-header">
-                <div class="chat-avatar"><Bot :size="24" /></div>
-                <div class="chat-info">
-                  <span class="chat-name">AI Mentor</span>
-                  <span class="chat-status">Онлайн</span>
-                </div>
-              </div>
-              <div class="chat-messages">
-                <div class="message mentor">
-                  <p>Привет, Максим! Вижу, что на этой неделе ты запланировал 12 шагов, но выполнил только 4. Похоже на перегрузку. Давай уберём 3 менее важных?</p>
-                </div>
-                <div class="message user">
-                  <p>Да, ты прав. Какие убрать?</p>
-                </div>
-                <div class="message mentor">
-                  <p>Рекомендую оставить шаги по сфере "Карьера" — они двигают тебя к цели быстрее. Остальное перенесём на следующую неделю.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <div class="section-connector" :class="{ visible: connectorVisible[0] }" ref="connector0">
-        <div class="connector-arrow">
-          <ChevronDown :size="32" />
-        </div>
-        <p class="connector-text">Путь начинается с понимания, где ты сейчас</p>
-      </div>
-
-      <section class="journey-block ssp-block">
-        <div class="container">
-          <div class="journey-content-grid">
-            <div class="journey-mockup">
-              <div class="mockup-window">
-                <div class="mockup-header-bar">
-                  <div class="mockup-dots"><span></span><span></span><span></span></div>
-                  <span class="mockup-title-bar">Колесо баланса</span>
-                </div>
-                <div class="mockup-body-content">
-                  <div class="wheel-demo">
-                    <svg viewBox="0 0 200 200" class="wheel-svg">
-                      <circle cx="100" cy="100" r="90" fill="none" stroke="#e5e7eb" stroke-width="2"/>
-                      <circle cx="100" cy="100" r="70" fill="none" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4,4"/>
-                      <circle cx="100" cy="100" r="50" fill="none" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4,4"/>
-                      <circle cx="100" cy="100" r="30" fill="none" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4,4"/>
-                      <path d="M100,10 L100,100 L100,10" stroke="#6366f1" stroke-width="2" fill="rgba(99,102,241,0.1)"/>
-                      <polygon points="100,100 145,35 190,100 145,165 55,165 10,100 55,35" fill="none" stroke="none"/>
-                      <path d="M100,100 L100,55 L145,35 L165,75 L100,100" fill="rgba(99,102,241,0.15)" stroke="#6366f1" stroke-width="2"/>
-                      <path d="M100,100 L165,75 L185,120 L100,100" fill="rgba(139,92,246,0.15)" stroke="#8b5cf6" stroke-width="2"/>
-                      <path d="M100,100 L185,120 L145,165 L100,100" fill="rgba(167,139,250,0.15)" stroke="#a78bfa" stroke-width="2"/>
-                      <path d="M100,100 L145,165 L55,165 L100,100" fill="rgba(196,181,253,0.15)" stroke="#c4b5fd" stroke-width="2"/>
-                      <path d="M100,100 L55,165 L15,120 L100,100" fill="rgba(221,214,254,0.15)" stroke="#ddd6fe" stroke-width="2"/>
-                      <path d="M100,100 L15,120 L55,35 L100,100" fill="rgba(237,233,254,0.15)" stroke="#ede9fe" stroke-width="2"/>
-                    </svg>
-                  </div>
-                  <div class="ssp-scores">
-                    <div class="score-item low"><span>Здоровье</span><strong>4/10</strong></div>
-                    <div class="score-item medium"><span>Карьера</span><strong>6/10</strong></div>
-                    <div class="score-item low"><span>Финансы</span><strong>5/10</strong></div>
-                    <div class="score-item high"><span>Отношения</span><strong>8/10</strong></div>
-                  </div>
-                  <div class="example-label">Оценки Максима</div>
-                </div>
-              </div>
-            </div>
-            <div class="journey-description">
-              <h2 class="block-title">Колесо баланса — точка старта</h2>
-              <p class="block-text">
-                Оцени ключевые сферы жизни и увидь общую картину.<br>
-                Не абстрактно — а честно.
-              </p>
-              <div class="ai-role">
-                <Bot :size="16" />
-                <span>AI задаёт уточняющие вопросы и помогает увидеть реальные зоны роста</span>
-              </div>
-              <a href="#goals-block" class="btn btn-primary">Сформировать цели</a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <div class="section-connector" :class="{ visible: connectorVisible[1] }" ref="connector1">
-        <div class="connector-lines">
-          <svg viewBox="0 0 100 60" class="flow-lines">
-            <path d="M20,0 Q20,30 50,30 Q80,30 80,60" fill="none" stroke="#6366f1" stroke-width="2" stroke-dasharray="5,5"/>
-            <path d="M50,0 L50,60" fill="none" stroke="#6366f1" stroke-width="2" stroke-dasharray="5,5"/>
-            <path d="M80,0 Q80,30 50,30 Q20,30 20,60" fill="none" stroke="#6366f1" stroke-width="2" stroke-dasharray="5,5"/>
-          </svg>
-        </div>
-        <p class="connector-text">Зоны роста → цели</p>
-      </div>
-
-      <section id="goals-block" class="journey-block goals-block">
-        <div class="container">
-          <h2 class="section-title">Цели, которые вытекают из реальности</h2>
-          <p class="section-subtitle">Не случайные желания, а логичное продолжение твоей оценки жизни</p>
-
-          <div class="maxim-goals">
-            <h3 class="example-heading">Цели Максима после диагностики:</h3>
-            <div class="goals-grid">
-              <div class="goal-demo-card">
-                <span class="goal-sphere-icon">💪</span>
-                <div class="goal-info">
-                  <h4>Пробежать 10 км</h4>
-                  <p class="goal-sphere-label">Здоровье</p>
-                </div>
-                <div class="goal-progress-mini">
-                  <div class="progress-track"><div class="progress-fill" style="width: 20%"></div></div>
-                  <span>1/5 шагов</span>
-                </div>
-              </div>
-              <div class="goal-demo-card">
-                <span class="goal-sphere-icon">💰</span>
-                <div class="goal-info">
-                  <h4>Повысить доход на 20%</h4>
-                  <p class="goal-sphere-label">Финансы</p>
-                </div>
-                <div class="goal-progress-mini">
-                  <div class="progress-track"><div class="progress-fill" style="width: 0%"></div></div>
-                  <span>0/4 шагов</span>
-                </div>
-              </div>
-              <div class="goal-demo-card">
-                <span class="goal-sphere-icon">📚</span>
-                <div class="goal-info">
-                  <h4>Пройти курс по навыку</h4>
-                  <p class="goal-sphere-label">Карьера</p>
-                </div>
-                <div class="goal-progress-mini">
-                  <div class="progress-track"><div class="progress-fill" style="width: 40%"></div></div>
-                  <span>2/5 шагов</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="legends-mini">
-            <p class="legends-intro">Эти люди не гнались за рывками. Они строили системы — через цели, привычки и рефлексию.</p>
-            <h3 class="legends-heading">Системный подход работает веками</h3>
-            <div class="legends-row">
-              <div class="legend-mini-card">
-                <div class="legend-mini-avatar"><Feather :size="20" /></div>
-                <span>Франклин</span>
-              </div>
-              <div class="legend-mini-card">
-                <div class="legend-mini-avatar"><BookMarked :size="20" /></div>
-                <span>Клир</span>
-              </div>
-              <div class="legend-mini-card">
-                <div class="legend-mini-avatar"><TrendingUp :size="20" /></div>
-                <span>Баффетт</span>
-              </div>
-              <div class="legend-mini-card">
-                <div class="legend-mini-avatar"><PenTool :size="20" /></div>
-                <span>Да Винчи</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="ai-role centered">
-            <Bot :size="16" />
-            <span>AI-стратег помогает сформулировать цели и проверить, действительно ли они твои</span>
-          </div>
-
-          <div class="block-cta">
-            <a href="#decomposition-block" class="btn btn-primary">Разложить цели на шаги</a>
-          </div>
-        </div>
-      </section>
-
-      <div class="section-connector" :class="{ visible: connectorVisible[2] }" ref="connector2">
-        <div class="connector-arrow">
-          <ChevronDown :size="32" />
-        </div>
-        <p class="connector-text">Цели → конкретные шаги</p>
-      </div>
-
-      <section id="decomposition-block" class="journey-block decomposition-block">
-        <div class="container">
-          <div class="journey-content-grid reverse">
-            <div class="journey-description">
-              <h2 class="block-title">Большая цель — это просто набор шагов</h2>
-              <p class="block-text">Каждый шаг понятен и выполним</p>
-              <div class="ai-role">
-                <Bot :size="16" />
-                <span>AI-методолог помогает упростить и убрать лишнее</span>
-              </div>
-              <a href="#planning-block" class="btn btn-primary">Запланировать шаги</a>
-            </div>
-            <div class="journey-mockup">
-              <div class="mockup-window">
-                <div class="mockup-header-bar">
-                  <div class="mockup-dots"><span></span><span></span><span></span></div>
-                  <span class="mockup-title-bar">Декомпозиция: Пробежать 10 км</span>
-                </div>
-                <div class="mockup-body-content steps-demo">
-                  <div class="step-item">
-                    <div class="step-check done"><Check :size="14" /></div>
-                    <span>Купить кроссовки для бега</span>
-                  </div>
-                  <div class="step-item">
-                    <div class="step-check done"><Check :size="14" /></div>
-                    <span>Составить план тренировок</span>
-                  </div>
-                  <div class="step-item active">
-                    <div class="step-check"></div>
-                    <span>Бегать 3 раза в неделю по 3 км</span>
-                  </div>
-                  <div class="step-item">
-                    <div class="step-check"></div>
-                    <span>Увеличить дистанцию до 5 км</span>
-                  </div>
-                  <div class="step-item">
-                    <div class="step-check"></div>
-                    <span>Пробежать 10 км на время</span>
-                  </div>
-                  <div class="example-label">Шаги Максима</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <div class="section-connector" :class="{ visible: connectorVisible[3] }" ref="connector3">
-        <div class="connector-flow">
-          <svg viewBox="0 0 100 50" class="flow-svg">
-            <path d="M10,25 Q30,10 50,25 Q70,40 90,25" fill="none" stroke="#6366f1" stroke-width="2" stroke-dasharray="5,5"/>
-            <polygon points="90,25 82,20 82,30" fill="#6366f1"/>
-          </svg>
-        </div>
-        <p class="connector-text">Шаги → календарь</p>
-      </div>
-
-      <section id="planning-block" class="journey-block planning-block">
-        <div class="container">
-          <h2 class="section-title">План, который подстраивается под твою жизнь</h2>
-          
-          <div class="planning-demo">
-            <div class="week-calendar">
-              <div class="week-header">
-                <span v-for="day in ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']" :key="day" class="day-header">{{ day }}</span>
-              </div>
-              <div class="week-body">
-                <div class="day-col">
-                  <div class="task-chip high">Тренировка</div>
-                </div>
-                <div class="day-col">
-                  <div class="task-chip medium">Курс: урок 3</div>
-                </div>
-                <div class="day-col">
-                  <div class="task-chip high">Тренировка</div>
-                  <div class="task-chip low">Чтение 30 мин</div>
-                </div>
-                <div class="day-col">
-                  <div class="task-chip medium">Курс: урок 4</div>
-                </div>
-                <div class="day-col">
-                  <div class="task-chip high">Тренировка</div>
-                </div>
-                <div class="day-col rest">
-                  <span class="rest-label">Отдых</span>
-                </div>
-                <div class="day-col">
-                  <div class="task-chip low">Рефлексия недели</div>
-                </div>
-              </div>
-              <div class="example-label">Неделя Максима</div>
             </div>
 
-            <button class="btn-ai-planning">
-              <Sparkles :size="20" />
-              <span>AI-планирование</span>
+            <button class="cta-button" @click="scrollToSection(1)">
+              Посмотреть путь Максима
             </button>
           </div>
 
-          <div class="ai-role centered">
-            <Bot :size="16" />
-            <span>AI учитывает твою загрузку и расставляет шаги без перегруза</span>
-          </div>
-        </div>
-      </section>
-
-      <div class="section-connector" :class="{ visible: connectorVisible[4] }" ref="connector4">
-        <div class="connector-arrow pulse">
-          <RefreshCw :size="24" />
-        </div>
-        <p class="connector-text">Повтор → привычка</p>
-      </div>
-
-      <section class="journey-block habits-block">
-        <div class="container">
-          <div class="journey-content-grid">
-            <div class="journey-mockup">
-              <div class="mockup-window">
-                <div class="mockup-header-bar">
-                  <div class="mockup-dots"><span></span><span></span><span></span></div>
-                  <span class="mockup-title-bar">Привычки</span>
-                </div>
-                <div class="mockup-body-content habits-demo">
-                  <div class="habit-demo-item">
-                    <span class="habit-emoji">🏃</span>
-                    <div class="habit-info-demo">
-                      <span class="habit-name">Утренняя пробежка</span>
-                      <span class="habit-schedule">Пн, Ср, Пт</span>
-                    </div>
-                    <div class="habit-streak">🔥 12</div>
-                  </div>
-                  <div class="habit-demo-item">
-                    <span class="habit-emoji">📚</span>
-                    <div class="habit-info-demo">
-                      <span class="habit-name">Чтение 30 минут</span>
-                      <span class="habit-schedule">Ежедневно</span>
-                    </div>
-                    <div class="habit-streak">🔥 8</div>
-                  </div>
-                  <div class="habit-demo-item">
-                    <span class="habit-emoji">💧</span>
-                    <div class="habit-info-demo">
-                      <span class="habit-name">Вода 2 литра</span>
-                      <span class="habit-schedule">Ежедневно</span>
-                    </div>
-                    <div class="habit-streak">🔥 21</div>
-                  </div>
-                  <div class="xp-demo">
-                    <div class="xp-bar-demo"><div class="xp-fill" style="width: 65%"></div></div>
-                    <span class="xp-label">+45 XP сегодня</span>
-                  </div>
-                  <div class="example-label">Привычки Максима</div>
-                </div>
+          <div class="hero-visual">
+            <div class="growth-chart">
+              <svg viewBox="0 0 300 200" class="chart-svg">
+                <defs>
+                  <linearGradient id="chartGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.1" />
+                    <stop offset="100%" style="stop-color:#6366f1;stop-opacity:0.4" />
+                  </linearGradient>
+                </defs>
+                <path d="M 0 180 Q 75 170 150 140 T 300 20" fill="none" stroke="#6366f1" stroke-width="3"/>
+                <path d="M 0 180 Q 75 170 150 140 T 300 20 L 300 200 L 0 200 Z" fill="url(#chartGradient)"/>
+              </svg>
+              <div class="chart-label">
+                <span class="chart-multiplier">×37.8</span>
+                <span class="chart-text">+1% каждый день = экспоненциальный рост</span>
               </div>
-            </div>
-            <div class="journey-description">
-              <h2 class="block-title">Рост происходит не через усилия, а через систему</h2>
-              <p class="block-text">
-                Привычки автоматизируют прогресс. Стрики и XP мотивируют продолжать.
-              </p>
-              <div class="ai-role">
-                <Bot :size="16" />
-                <span>AI-коуч рекомендует привычки, которые усиливают именно твои цели</span>
-              </div>
-              <a href="#achievements-block" class="btn btn-primary">Посмотреть прогресс</a>
             </div>
           </div>
         </div>
-      </section>
-
-      <div class="section-connector" :class="{ visible: connectorVisible[5] }" ref="connector5">
-        <div class="connector-arrow">
-          <TrendingUp :size="28" />
-        </div>
-        <p class="connector-text">Прогресс → результаты</p>
       </div>
 
-      <section id="achievements-block" class="journey-block achievements-block">
-        <div class="container">
-          <h2 class="section-title">Ты видишь свой путь</h2>
-          <p class="section-subtitle">Мозгу нужна поддержка. Каждый шаг отмечается и награждается.</p>
+      <div class="arrow-connector">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#6366f1" stroke-width="2">
+          <path d="M20 5 L20 30 M10 20 L20 30 L30 20" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </section>
 
-          <div class="achievements-demo">
+    <!-- AI MENTOR SECTION -->
+    <section id="mentor" class="screen-section bg-mentor">
+      <div class="section-content">
+        <div class="two-column">
+          <div class="column-text">
+            <h2 class="section-title">AI-ментор</h2>
+            <p class="section-subtitle">Твой личный помощник на каждом этапе пути</p>
+            
+            <div class="mentor-features">
+              <div class="feature-item">
+                <div class="feature-icon">🎯</div>
+                <div class="feature-text">
+                  <strong>Диагностика</strong>
+                  <p>Задаёт правильные вопросы, чтобы понять твою ситуацию</p>
+                </div>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon">📋</div>
+                <div class="feature-text">
+                  <strong>Стратегия</strong>
+                  <p>Помогает ставить цели и разбивать их на шаги</p>
+                </div>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon">📅</div>
+                <div class="feature-text">
+                  <strong>Планирование</strong>
+                  <p>Распределяет задачи по дням с учётом твоей загрузки</p>
+                </div>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon">💪</div>
+                <div class="feature-text">
+                  <strong>Поддержка</strong>
+                  <p>Мотивирует, напоминает и празднует победы</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="column-visual">
+            <div class="chat-demo">
+              <div class="chat-message ai">
+                <div class="message-avatar">🤖</div>
+                <div class="message-bubble">
+                  Привет, Максим! Я вижу, что ты хочешь привести жизнь в порядок. 
+                  Давай начнём с честной оценки — где ты сейчас в разных сферах жизни?
+                </div>
+              </div>
+              <div class="chat-message user">
+                <div class="message-bubble">
+                  Да, чувствую, что здоровье запустил. Работа съедает всё время.
+                </div>
+              </div>
+              <div class="chat-message ai">
+                <div class="message-avatar">🤖</div>
+                <div class="message-bubble">
+                  Понимаю. Это частая история. Давай пройдём диагностику по 8 сферам — 
+                  это займёт 5 минут, но даст честную картину. Готов?
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow-connector">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#10b981" stroke-width="2">
+          <path d="M20 5 L20 30 M10 20 L20 30 L30 20" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- WHEEL OF BALANCE SECTION -->
+    <section id="wheel" class="screen-section bg-wheel">
+      <div class="section-content">
+        <div class="two-column">
+          <div class="column-text">
+            <div class="step-badge">День 1</div>
+            <h2 class="section-title">Колесо баланса</h2>
+            <p class="section-subtitle">Первый шаг — честная оценка. Где ты сейчас по ключевым сферам жизни?</p>
+            
+            <div class="example-card">
+              <h3 class="example-title">Диагностика Максима</h3>
+              
+              <div class="scores-list">
+                <div class="score-item" v-for="score in wheelScores" :key="score.name">
+                  <div class="score-header">
+                    <span class="score-name">{{ score.name }}</span>
+                    <span class="score-value" :class="score.level">{{ score.value }}/10</span>
+                  </div>
+                  <div class="score-bar">
+                    <div class="score-fill" :style="{ width: score.value * 10 + '%' }" :class="score.level"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ai-comment">
+                <strong>AI Интервьюер:</strong> "Я вижу, что здоровье и спорт — твои главные провалы. 
+                Расскажи, почему так вышло? Что мешает заниматься собой?"
+              </div>
+            </div>
+          </div>
+
+          <div class="column-visual">
+            <svg viewBox="0 0 300 300" class="wheel-svg">
+              <defs>
+                <linearGradient id="wheelRed" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#ef4444;stop-opacity:0.6" />
+                  <stop offset="100%" style="stop-color:#fca5a5;stop-opacity:0.3" />
+                </linearGradient>
+                <linearGradient id="wheelGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.6" />
+                  <stop offset="100%" style="stop-color:#a7f3d0;stop-opacity:0.3" />
+                </linearGradient>
+                <linearGradient id="wheelYellow" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:0.6" />
+                  <stop offset="100%" style="stop-color:#fcd34d;stop-opacity:0.3" />
+                </linearGradient>
+              </defs>
+
+              <circle cx="150" cy="150" r="120" fill="none" stroke="#e5e7eb" stroke-width="1" opacity="0.5"/>
+              <circle cx="150" cy="150" r="80" fill="none" stroke="#e5e7eb" stroke-width="1" opacity="0.3"/>
+              <circle cx="150" cy="150" r="40" fill="#f3f4f6" stroke="#6366f1" stroke-width="2"/>
+              <text x="150" y="155" text-anchor="middle" font-size="14" fill="#6366f1" font-weight="bold">Я</text>
+
+              <g class="wheel-segment">
+                <path d="M 150 30 A 120 120 0 0 1 254 90 L 202 120 A 60 60 0 0 0 150 90 Z" fill="url(#wheelRed)" stroke="#6366f1" stroke-width="1"/>
+                <text x="195" y="65" font-size="11" fill="#1f2937" font-weight="bold">Здоровье</text>
+                <text x="205" y="80" font-size="14" fill="#ef4444" font-weight="bold">4/10</text>
+              </g>
+
+              <g class="wheel-segment">
+                <path d="M 254 90 A 120 120 0 0 1 254 210 L 202 180 A 60 60 0 0 0 202 120 Z" fill="url(#wheelGreen)" stroke="#6366f1" stroke-width="1"/>
+                <text x="245" y="145" font-size="11" fill="#1f2937" font-weight="bold">Карьера</text>
+                <text x="245" y="165" font-size="14" fill="#10b981" font-weight="bold">8/10</text>
+              </g>
+
+              <g class="wheel-segment">
+                <path d="M 254 210 A 120 120 0 0 1 150 270 L 150 210 A 60 60 0 0 0 202 180 Z" fill="url(#wheelYellow)" stroke="#6366f1" stroke-width="1"/>
+                <text x="195" y="235" font-size="11" fill="#1f2937" font-weight="bold">Семья</text>
+                <text x="195" y="255" font-size="14" fill="#f59e0b" font-weight="bold">5/10</text>
+              </g>
+
+              <g class="wheel-segment">
+                <path d="M 150 270 A 120 120 0 0 1 46 210 L 98 180 A 60 60 0 0 0 150 210 Z" fill="url(#wheelRed)" stroke="#6366f1" stroke-width="1"/>
+                <text x="85" y="255" font-size="11" fill="#1f2937" font-weight="bold">Спорт</text>
+                <text x="95" y="235" font-size="14" fill="#ef4444" font-weight="bold">2/10</text>
+              </g>
+
+              <g class="wheel-segment">
+                <path d="M 46 210 A 120 120 0 0 1 46 90 L 98 120 A 60 60 0 0 0 98 180 Z" fill="url(#wheelYellow)" stroke="#6366f1" stroke-width="1"/>
+                <text x="35" y="145" font-size="11" fill="#1f2937" font-weight="bold">Отнош.</text>
+                <text x="45" y="165" font-size="14" fill="#f59e0b" font-weight="bold">6/10</text>
+              </g>
+
+              <g class="wheel-segment">
+                <path d="M 46 90 A 120 120 0 0 1 150 30 L 150 90 A 60 60 0 0 0 98 120 Z" fill="url(#wheelRed)" stroke="#6366f1" stroke-width="1"/>
+                <text x="75" y="65" font-size="11" fill="#1f2937" font-weight="bold">Финансы</text>
+                <text x="85" y="85" font-size="14" fill="#ef4444" font-weight="bold">3/10</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="transition-text">
+        <p>"После диагностики стало ясно — здоровье и финансы провалены. Пора ставить конкретные цели."</p>
+      </div>
+
+      <div class="arrow-connector">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#6366f1" stroke-width="2">
+          <path d="M20 5 L20 30 M10 20 L20 30 L30 20" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- GOALS SECTION -->
+    <section id="goals" class="screen-section bg-goals">
+      <div class="section-content">
+        <div class="two-column reverse">
+          <div class="column-visual">
+            <svg viewBox="0 0 300 350" class="goals-svg">
+              <line x1="150" y1="60" x2="150" y2="120" stroke="#9333ea" stroke-width="3"/>
+              <line x1="150" y1="120" x2="80" y2="180" stroke="#9333ea" stroke-width="2"/>
+              <line x1="150" y1="120" x2="220" y2="180" stroke="#9333ea" stroke-width="2"/>
+              <line x1="150" y1="120" x2="150" y2="180" stroke="#9333ea" stroke-width="2"/>
+
+              <circle cx="150" cy="50" r="30" fill="#9333ea"/>
+              <text x="150" y="45" text-anchor="middle" font-size="9" fill="white" font-weight="bold">Слабые</text>
+              <text x="150" y="58" text-anchor="middle" font-size="9" fill="white" font-weight="bold">зоны</text>
+
+              <rect x="40" y="190" width="80" height="60" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
+              <text x="80" y="215" text-anchor="middle" font-size="10" fill="#991b1b" font-weight="bold">Здоровье</text>
+              <text x="80" y="235" text-anchor="middle" font-size="9" fill="#7f1d1d">Спорт 3x/нед</text>
+
+              <rect x="110" y="190" width="80" height="60" rx="8" fill="#fce7f3" stroke="#ec4899" stroke-width="2"/>
+              <text x="150" y="215" text-anchor="middle" font-size="10" fill="#9d174d" font-weight="bold">Финансы</text>
+              <text x="150" y="235" text-anchor="middle" font-size="9" fill="#831843">+50к/мес</text>
+
+              <rect x="180" y="190" width="80" height="60" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+              <text x="220" y="215" text-anchor="middle" font-size="10" fill="#1e40af" font-weight="bold">Семья</text>
+              <text x="220" y="235" text-anchor="middle" font-size="9" fill="#1e3a8a">2x в месяц</text>
+
+              <text x="150" y="290" text-anchor="middle" font-size="12" fill="#6b21a8" font-weight="bold">Из проблем → Конкретные цели</text>
+            </svg>
+          </div>
+
+          <div class="column-text">
+            <div class="step-badge">День 1</div>
+            <h2 class="section-title">Цели</h2>
+            <p class="section-subtitle">Цели не из головы — они рождаются из проблем, выявленных в колесе баланса</p>
+            
+            <div class="example-card">
+              <h3 class="example-title">Цели Максима</h3>
+              
+              <div class="goals-list">
+                <div class="goal-item red">
+                  <div class="goal-header">
+                    <span class="goal-sphere">Здоровье (4/10)</span>
+                  </div>
+                  <p class="goal-text">Заниматься спортом 3 раза в неделю</p>
+                </div>
+                <div class="goal-item pink">
+                  <div class="goal-header">
+                    <span class="goal-sphere">Финансы (3/10)</span>
+                  </div>
+                  <p class="goal-text">Увеличить доход на 50 000 ₽/мес</p>
+                </div>
+                <div class="goal-item blue">
+                  <div class="goal-header">
+                    <span class="goal-sphere">Семья (5/10)</span>
+                  </div>
+                  <p class="goal-text">Проводить время с родителями 2 раза в месяц</p>
+                </div>
+              </div>
+
+              <div class="ai-comment purple">
+                <strong>AI Стратег:</strong> "Я вижу 3 критические зоны. Давай начнём со здоровья — 
+                это фундамент для остального. Готов разбить цель на конкретные шаги?"
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="transition-text">
+        <p>"Цели есть. Но как съесть слона? По кусочкам. Время декомпозиции."</p>
+      </div>
+
+      <div class="arrow-connector">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#a855f7" stroke-width="2">
+          <path d="M20 5 L20 30 M10 20 L20 30 L30 20" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- DECOMPOSITION SECTION -->
+    <section id="decomposition" class="screen-section bg-decomposition">
+      <div class="section-content">
+        <div class="two-column">
+          <div class="column-text">
+            <div class="step-badge">Неделя 1</div>
+            <h2 class="section-title">Декомпозиция</h2>
+            <p class="section-subtitle">Большая цель разбивается на конкретные, выполнимые шаги</p>
+            
+            <div class="example-card">
+              <h3 class="example-title">Цель: "Спорт 3x в неделю"</h3>
+              
+              <div class="steps-list">
+                <div class="step-item" v-for="(step, index) in decompositionSteps" :key="index">
+                  <div class="step-number">{{ index + 1 }}</div>
+                  <div class="step-content">
+                    <strong>{{ step.title }}</strong>
+                    <p>{{ step.description }}</p>
+                  </div>
+                  <div class="step-time">{{ step.time }}</div>
+                </div>
+              </div>
+
+              <div class="ai-comment pink">
+                <strong>AI Методолог:</strong> "Разбил твою цель на 5 реальных шагов. 
+                Каждый занимает 15-30 минут. Первый можно сделать прямо сейчас!"
+              </div>
+            </div>
+          </div>
+
+          <div class="column-visual">
+            <svg viewBox="0 0 280 400" class="steps-svg">
+              <defs>
+                <linearGradient id="stepGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#ec4899;stop-opacity:0.2" />
+                  <stop offset="100%" style="stop-color:#f97316;stop-opacity:0.2" />
+                </linearGradient>
+              </defs>
+
+              <rect x="60" y="20" width="160" height="50" rx="10" fill="#9333ea" stroke="none"/>
+              <text x="140" y="50" text-anchor="middle" font-size="12" fill="white" font-weight="bold">🎯 Спорт 3x/неделю</text>
+
+              <line x1="140" y1="70" x2="140" y2="100" stroke="#9333ea" stroke-width="2" stroke-dasharray="4"/>
+
+              <rect x="40" y="100" width="200" height="45" rx="8" fill="url(#stepGrad)" stroke="#ec4899" stroke-width="2"/>
+              <text x="140" y="128" text-anchor="middle" font-size="11" fill="#1f2937">1. Выбрать вид спорта</text>
+
+              <line x1="140" y1="145" x2="140" y2="165" stroke="#f97316" stroke-width="2" stroke-dasharray="4"/>
+
+              <rect x="40" y="165" width="200" height="45" rx="8" fill="url(#stepGrad)" stroke="#f97316" stroke-width="2"/>
+              <text x="140" y="193" text-anchor="middle" font-size="11" fill="#1f2937">2. Купить форму</text>
+
+              <line x1="140" y1="210" x2="140" y2="230" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+
+              <rect x="40" y="230" width="200" height="45" rx="8" fill="url(#stepGrad)" stroke="#f59e0b" stroke-width="2"/>
+              <text x="140" y="258" text-anchor="middle" font-size="11" fill="#1f2937">3. Первая тренировка</text>
+
+              <line x1="140" y1="275" x2="140" y2="295" stroke="#eab308" stroke-width="2" stroke-dasharray="4"/>
+
+              <rect x="40" y="295" width="200" height="45" rx="8" fill="url(#stepGrad)" stroke="#eab308" stroke-width="2"/>
+              <text x="140" y="323" text-anchor="middle" font-size="11" fill="#1f2937">4. Привыкнуть к ритму</text>
+
+              <line x1="140" y1="340" x2="140" y2="360" stroke="#22c55e" stroke-width="2" stroke-dasharray="4"/>
+
+              <rect x="40" y="360" width="200" height="35" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+              <text x="140" y="382" text-anchor="middle" font-size="11" fill="#166534">✓ Цель достигнута!</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="transition-text">
+        <p>"Шаги есть. Теперь нужно вписать их в реальную жизнь — в календарь."</p>
+      </div>
+
+      <div class="arrow-connector">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#ec4899" stroke-width="2">
+          <path d="M20 5 L20 30 M10 20 L20 30 L30 20" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- PLANNING SECTION -->
+    <section id="planning" class="screen-section bg-planning">
+      <div class="section-content">
+        <div class="two-column reverse">
+          <div class="column-visual">
+            <div class="calendar-demo">
+              <div class="calendar-header">
+                <span>Неделя Максима</span>
+              </div>
+              <div class="calendar-grid">
+                <div class="calendar-day" v-for="day in weekDays" :key="day.name">
+                  <div class="day-name">{{ day.name }}</div>
+                  <div class="day-tasks">
+                    <div 
+                      v-for="task in day.tasks" 
+                      :key="task" 
+                      class="day-task"
+                      :class="{ highlight: task.includes('🏃') }"
+                    >
+                      {{ task }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="column-text">
+            <div class="step-badge">Неделя 1</div>
+            <h2 class="section-title">Планирование</h2>
+            <p class="section-subtitle">AI распределяет шаги по дням с учётом твоей загрузки</p>
+            
+            <div class="example-card">
+              <h3 class="example-title">План недели Максима</h3>
+              
+              <div class="planning-stats">
+                <div class="stat-item">
+                  <span class="stat-value">5</span>
+                  <span class="stat-label">шагов запланировано</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">2.5ч</span>
+                  <span class="stat-label">всего времени</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">30м</span>
+                  <span class="stat-label">в среднем/день</span>
+                </div>
+              </div>
+
+              <button class="ai-button">
+                <span class="ai-icon">✨</span>
+                AI распределил шаги по неделе
+              </button>
+
+              <div class="ai-comment orange">
+                <strong>AI Планировщик:</strong> "Вижу, что вторник и четверг у тебя посвободнее. 
+                Поставлю тренировки туда. Утром или вечером удобнее?"
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="transition-text">
+        <p>"План готов. Теперь главное — не забросить. Привычки + геймификация помогут."</p>
+      </div>
+
+      <div class="arrow-connector">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#f97316" stroke-width="2">
+          <path d="M20 5 L20 30 M10 20 L20 30 L30 20" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- HABITS SECTION -->
+    <section id="habits" class="screen-section bg-habits">
+      <div class="section-content">
+        <div class="two-column">
+          <div class="column-text">
+            <div class="step-badge">Месяц 1</div>
+            <h2 class="section-title">Привычки</h2>
+            <p class="section-subtitle">Стрики и XP превращают рутину в игру</p>
+            
+            <div class="example-card">
+              <h3 class="example-title">Привычки Максима</h3>
+              
+              <div class="habits-list">
+                <div class="habit-item" v-for="habit in habits" :key="habit.name">
+                  <div class="habit-icon">{{ habit.icon }}</div>
+                  <div class="habit-info">
+                    <strong>{{ habit.name }}</strong>
+                    <div class="habit-streak">
+                      <span class="streak-fire">🔥</span>
+                      <span class="streak-count">{{ habit.streak }} дней подряд</span>
+                    </div>
+                  </div>
+                  <div class="habit-xp">+{{ habit.xp }} XP</div>
+                </div>
+              </div>
+
+              <div class="xp-total">
+                <span class="xp-label">Сегодня заработал:</span>
+                <span class="xp-value">+45 XP</span>
+              </div>
+
+              <div class="ai-comment green">
+                <strong>AI Ментор:</strong> "14 дней подряд! Это уже привычка. 
+                Ещё неделя — и тело само будет просить тренировку. Горжусь тобой! 💪"
+              </div>
+            </div>
+          </div>
+
+          <div class="column-visual">
+            <div class="streak-visual">
+              <div class="streak-calendar">
+                <div class="streak-month">Декабрь 2025</div>
+                <div class="streak-days">
+                  <div 
+                    v-for="day in 21" 
+                    :key="day" 
+                    class="streak-day"
+                    :class="{ completed: day <= 14, today: day === 15 }"
+                  >
+                    {{ day }}
+                  </div>
+                </div>
+              </div>
+              <div class="streak-badge">
+                <span class="badge-icon">🏆</span>
+                <span class="badge-text">14 дней стрик!</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="transition-text">
+        <p>"Месяц прошёл. Посмотрим, что изменилось?"</p>
+      </div>
+
+      <div class="arrow-connector">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#22c55e" stroke-width="2">
+          <path d="M20 5 L20 30 M10 20 L20 30 L30 20" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- ACHIEVEMENTS SECTION -->
+    <section id="achievements" class="screen-section bg-achievements">
+      <div class="section-content">
+        <div class="two-column reverse">
+          <div class="column-visual">
             <div class="before-after">
-              <div class="state-card before">
-                <h4>БЫЛО</h4>
-                <div class="state-metric"><span>Здоровье</span><div class="metric-bar"><div class="metric-fill" style="width: 40%"></div></div><strong>4/10</strong></div>
-                <div class="state-metric"><span>Спорт</span><div class="metric-bar"><div class="metric-fill" style="width: 20%"></div></div><strong>2/10</strong></div>
+              <div class="ba-column before">
+                <h4>Было</h4>
+                <div class="ba-item">Здоровье: <span class="bad">4/10</span></div>
+                <div class="ba-item">Спорт: <span class="bad">2/10</span></div>
+                <div class="ba-item">Финансы: <span class="bad">3/10</span></div>
+                <div class="ba-item">Семья: <span class="medium">5/10</span></div>
               </div>
-              <div class="state-arrow"><ArrowRight :size="24" /></div>
-              <div class="state-card after">
-                <h4>СТАЛО</h4>
-                <div class="state-metric"><span>Здоровье</span><div class="metric-bar success"><div class="metric-fill" style="width: 80%"></div></div><strong>8/10</strong></div>
-                <div class="state-metric"><span>Спорт</span><div class="metric-bar success"><div class="metric-fill" style="width: 90%"></div></div><strong>9/10</strong></div>
-              </div>
-            </div>
-
-            <div class="badges-demo-list">
-              <h4>Достижения Максима через 3 месяца:</h4>
-              <div class="badge-row">
-                <div class="badge-demo"><span>🏅</span><div><strong>Новичок в спорте</strong><p>Посещена 1-я тренировка</p></div></div>
-                <div class="badge-demo"><span>🔥</span><div><strong>Горячая полоса</strong><p>14 дней подряд в спорте</p></div></div>
-                <div class="badge-demo"><span>⭐</span><div><strong>Чемпион</strong><p>3 месяца спорта 3x в неделю</p></div></div>
-                <div class="badge-demo"><span>📈</span><div><strong>Рост в 2 раза</strong><p>Баланс в здоровье с 4 до 8</p></div></div>
+              <div class="ba-arrow">→</div>
+              <div class="ba-column after">
+                <h4>Стало</h4>
+                <div class="ba-item">Здоровье: <span class="good">7/10</span></div>
+                <div class="ba-item">Спорт: <span class="good">7/10</span></div>
+                <div class="ba-item">Финансы: <span class="medium">5/10</span></div>
+                <div class="ba-item">Семья: <span class="good">7/10</span></div>
               </div>
             </div>
 
-            <div class="mentor-comment">
-              <Bot :size="20" />
-              <p>"Максим, ты в пути! За 3 месяца ты стал сильнее на 100% в здоровье. Продолжим?"</p>
+            <div class="badges-grid">
+              <div class="badge-item" v-for="badge in badges" :key="badge.name">
+                <span class="badge-emoji">{{ badge.icon }}</span>
+                <span class="badge-name">{{ badge.name }}</span>
+              </div>
             </div>
           </div>
 
-          <div class="ai-role centered">
-            <Bot :size="16" />
-            <span>AI-ментор помогает зафиксировать результат и двигаться дальше</span>
-          </div>
+          <div class="column-text">
+            <div class="step-badge success">3 месяца</div>
+            <h2 class="section-title">Достижения</h2>
+            <p class="section-subtitle">Результаты Максима за 3 месяца работы с системой</p>
+            
+            <div class="example-card success">
+              <h3 class="example-title">Итоги пути</h3>
+              
+              <div class="achievements-stats">
+                <div class="achievement-stat">
+                  <span class="stat-number">47</span>
+                  <span class="stat-text">выполненных шагов</span>
+                </div>
+                <div class="achievement-stat">
+                  <span class="stat-number">14</span>
+                  <span class="stat-text">завершённых целей</span>
+                </div>
+                <div class="achievement-stat">
+                  <span class="stat-number">2,450</span>
+                  <span class="stat-text">XP заработано</span>
+                </div>
+              </div>
 
-          <div class="block-cta">
-            <a href="#final-cta" class="btn btn-primary">Пройти следующий цикл</a>
-          </div>
-        </div>
-      </section>
-
-      <section id="final-cta" class="final-cta-section">
-        <div class="container">
-          <div class="final-cta-content">
-            <h2>Начни с малого. Система сделает остальное.</h2>
-            <router-link to="/auth/register" class="btn btn-primary btn-lg">
-              Сделать +1% сегодня
-            </router-link>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <footer class="landing-footer">
-      <div class="container">
-        <div class="footer-content">
-          <div class="footer-brand">
-            <div class="logo">
-              <span class="logo-icon small">1%</span>
-              <span>OnePercent</span>
+              <div class="ai-comment success">
+                <strong>AI Ментор:</strong> "Максим, ты прошёл путь от 'всё плохо' до реальных результатов. 
+                Здоровье +3, семья +2. Это не магия — это система. 
+                Теперь ты знаешь, как это работает. Продолжаем? 🚀"
+              </div>
             </div>
           </div>
-          <div class="footer-links">
-            <router-link to="/auth/login">Войти</router-link>
-            <router-link to="/auth/register">Регистрация</router-link>
-          </div>
-        </div>
-        <div class="footer-legal">
-          <div class="legal-links">
-            <a href="https://percent1.ru/privacy" target="_blank" rel="noopener noreferrer">Политика конфиденциальности</a>
-            <a href="https://percent1.ru/termspolicy" target="_blank" rel="noopener noreferrer">Пользовательское соглашение</a>
-            <a href="https://percent1.ru/disclaimer" target="_blank" rel="noopener noreferrer">Отказ от ответственности</a>
-          </div>
-        </div>
-        <div class="footer-bottom">
-          <div class="company-info">
-            <p>ИП Косик Дмитрий Владимирович</p>
-            <p>ИНН: 711280092908 | ОГРНИП: 321774600674346</p>
-          </div>
-          <p>&copy; 2025 OnePercent. Все права защищены.</p>
         </div>
       </div>
-    </footer>
+    </section>
+
+    <!-- FINAL CTA SECTION -->
+    <section id="cta" class="screen-section bg-cta">
+      <div class="section-content centered">
+        <h2 class="cta-title">Хочешь как Максим?</h2>
+        <p class="cta-subtitle">
+          Начни с малого. Система сделает остальное.
+        </p>
+        
+        <div class="cta-features">
+          <div class="cta-feature">✓ 5 минут на диагностику</div>
+          <div class="cta-feature">✓ AI поможет на каждом шаге</div>
+          <div class="cta-feature">✓ Бесплатный старт</div>
+        </div>
+
+        <router-link to="/register" class="cta-button-large">
+          Начать свой путь
+        </router-link>
+
+        <p class="cta-note">Уже есть аккаунт? <router-link to="/login">Войти</router-link></p>
+      </div>
+    </section>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useAppStore } from '@/stores/app'
-import { checkAuth } from '@/services/api'
-import { 
-  Target, 
-  Calendar, 
-  Lightbulb,
-  RefreshCw,
-  Bot,
-  TrendingUp,
-  Eye,
-  PenTool,
-  Feather,
-  BookMarked,
-  ChevronDown,
-  Check,
-  Sparkles,
-  ArrowRight
-} from 'lucide-vue-next'
+import { ref, onMounted, onUnmounted } from 'vue'
 
-const appStore = useAppStore()
-const isAuthenticated = computed(() => appStore.isAuthenticated)
+const activeSection = ref(0)
 
-const days = ref(90)
-const isScrolled = ref(false)
-const connectorVisible = ref([false, false, false, false, false, false])
+const sections = [
+  { id: 'hero', title: 'Начало' },
+  { id: 'mentor', title: 'AI Ментор' },
+  { id: 'wheel', title: 'Колесо баланса' },
+  { id: 'goals', title: 'Цели' },
+  { id: 'decomposition', title: 'Декомпозиция' },
+  { id: 'planning', title: 'Планирование' },
+  { id: 'habits', title: 'Привычки' },
+  { id: 'achievements', title: 'Достижения' },
+  { id: 'cta', title: 'Начать' }
+]
 
-const connector0 = ref(null)
-const connector1 = ref(null)
-const connector2 = ref(null)
-const connector3 = ref(null)
-const connector4 = ref(null)
-const connector5 = ref(null)
+const wheelScores = [
+  { name: 'Здоровье', value: 4, level: 'low' },
+  { name: 'Карьера', value: 8, level: 'high' },
+  { name: 'Семья', value: 5, level: 'medium' },
+  { name: 'Спорт', value: 2, level: 'low' },
+  { name: 'Отношения', value: 6, level: 'medium' },
+  { name: 'Финансы', value: 3, level: 'low' }
+]
 
-const multiplier = computed(() => {
-  return Math.pow(1.01, days.value).toFixed(2)
-})
+const decompositionSteps = [
+  { title: 'Выбрать вид спорта', description: 'Протестировать 3 варианта', time: '30м' },
+  { title: 'Купить форму', description: 'Кроссовки и одежда', time: '1ч' },
+  { title: 'Первая тренировка', description: 'Пробный день в зале', time: '1ч' },
+  { title: 'Составить расписание', description: 'Вт, Чт, Сб — утро', time: '15м' },
+  { title: 'Привыкнуть к ритму', description: '3 недели без пропусков', time: '3нед' }
+]
 
-function handleScroll() {
-  isScrolled.value = window.scrollY > 50
+const weekDays = [
+  { name: 'Пн', tasks: ['Работа', 'Звонок маме'] },
+  { name: 'Вт', tasks: ['🏃 Тренировка', 'Работа'] },
+  { name: 'Ср', tasks: ['Работа', 'Книга 30м'] },
+  { name: 'Чт', tasks: ['🏃 Тренировка', 'Работа'] },
+  { name: 'Пт', tasks: ['Работа', 'Отдых'] },
+  { name: 'Сб', tasks: ['🏃 Тренировка', 'Семья'] },
+  { name: 'Вс', tasks: ['Планирование', 'Отдых'] }
+]
+
+const habits = [
+  { name: 'Утренняя зарядка', icon: '🏃', streak: 14, xp: 15 },
+  { name: 'Пить воду', icon: '💧', streak: 21, xp: 10 },
+  { name: 'Чтение 30 мин', icon: '📚', streak: 7, xp: 20 }
+]
+
+const badges = [
+  { name: 'Первый шаг', icon: '🎯' },
+  { name: '7 дней стрик', icon: '🔥' },
+  { name: 'Спортсмен', icon: '💪' },
+  { name: 'Планировщик', icon: '📅' }
+]
+
+const scrollToSection = (index) => {
+  const section = document.getElementById(sections[index].id)
+  if (section) {
+    section.scrollIntoView({ behavior: 'smooth' })
+  }
 }
 
-let observer = null
+const handleScroll = () => {
+  const sectionElements = sections.map(s => document.getElementById(s.id))
+  const scrollPosition = window.scrollY + window.innerHeight / 2
 
-onMounted(async () => {
-  window.addEventListener('scroll', handleScroll)
-  
-  const connectors = [connector0, connector1, connector2, connector3, connector4, connector5]
-  
-  observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      const index = connectors.findIndex(c => c.value === entry.target)
-      if (index !== -1 && entry.isIntersecting) {
-        connectorVisible.value[index] = true
-      }
-    })
-  }, { threshold: 0.3 })
-  
-  connectors.forEach(c => {
-    if (c.value) observer.observe(c.value)
-  })
-  
-  if (!appStore.isAuthenticated) {
-    try {
-      const userData = await checkAuth()
-      if (userData) {
-        appStore.setUser(userData)
-      }
-    } catch (e) {}
+  for (let i = sectionElements.length - 1; i >= 0; i--) {
+    const section = sectionElements[i]
+    if (section && section.offsetTop <= scrollPosition) {
+      activeSection.value = i
+      break
+    }
   }
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll)
+  handleScroll()
 })
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
-  if (observer) observer.disconnect()
 })
 </script>
 
 <style scoped>
-.landing-page {
-  min-height: 100vh;
-  background: #fafafa;
-  color: #1a1a2e;
+.landing-v2 {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #1f2937;
 }
 
-.container {
+/* Sidebar Navigation */
+.sidebar-nav {
+  position: fixed;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nav-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.nav-dot.active {
+  width: 14px;
+  height: 14px;
+  background: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+}
+
+.nav-dot:hover {
+  background: #6366f1;
+  transform: scale(1.2);
+}
+
+/* Screen Sections */
+.screen-section {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  padding: 60px 20px;
+}
+
+.section-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  width: 100%;
 }
 
-.landing-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  background: rgba(250, 250, 250, 0.9);
-  backdrop-filter: blur(10px);
-  transition: all 0.3s;
-}
+/* Gradient Backgrounds */
+.bg-hero { background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%); }
+.bg-mentor { background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); }
+.bg-wheel { background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%); }
+.bg-goals { background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 100%); }
+.bg-decomposition { background: linear-gradient(135deg, #fce7f3 0%, #fee2e2 100%); }
+.bg-planning { background: linear-gradient(135deg, #fed7aa 0%, #fef3c7 100%); }
+.bg-habits { background: linear-gradient(135deg, #d1fae5 0%, #ccfbf1 100%); }
+.bg-achievements { background: linear-gradient(135deg, #bfdbfe 0%, #ddd6fe 100%); }
+.bg-cta { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); }
 
-.landing-header.scrolled {
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 0;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.logo-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: white;
-  font-weight: 700;
-  font-size: 0.875rem;
-  border-radius: 10px;
-}
-
-.logo-icon.small {
-  width: 32px;
-  height: 32px;
-  font-size: 0.75rem;
-}
-
-.logo-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1a1a2e;
-}
-
-.tagline {
-  font-size: 0.75rem;
-  color: #6b7280;
-}
-
-.header-nav {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.nav-link {
-  color: #4b5563;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s;
-}
-
-.nav-link:hover {
-  color: #6366f1;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.2s;
-  border: none;
-  cursor: pointer;
-  gap: 0.5rem;
-}
-
-.btn:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: white;
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
-}
-
-.btn-lg {
-  padding: 1rem 2rem;
-  font-size: 1.125rem;
-}
-
-.hero {
-  position: relative;
-  padding: 10rem 0 6rem;
-  overflow: hidden;
-  min-height: 75vh;
-  display: flex;
+/* Two Column Layout */
+.two-column {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
   align-items: center;
 }
 
-.hero-bg {
-  position: absolute;
-  top: 0;
-  right: -20%;
-  width: 60%;
-  height: 100%;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
-  border-radius: 0 0 0 50%;
-  z-index: -1;
+.two-column.reverse .column-visual {
+  order: -1;
 }
 
+/* Hero Section */
 .hero-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4rem;
+  gap: 60px;
   align-items: center;
-}
-
-.hero-content {
-  max-width: 600px;
 }
 
 .hero-title {
-  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-size: 3rem;
   font-weight: 800;
-  line-height: 1.2;
-  margin-bottom: 1.5rem;
-  color: #1a1a2e;
+  line-height: 1.1;
+  margin-bottom: 20px;
 }
 
-.highlight {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.text-accent {
+  display: block;
+  color: #6366f1;
 }
 
-.hero-description {
+.hero-subtitle {
   font-size: 1.25rem;
-  color: #4b5563;
-  line-height: 1.7;
-  margin-bottom: 2rem;
+  color: #6b7280;
+  margin-bottom: 30px;
 }
 
-.hero-actions {
+/* Persona Card */
+.persona-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  margin-bottom: 30px;
+}
+
+.persona-header {
   display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.75rem;
-}
-
-.hero-note {
-  font-size: 0.875rem;
-  color: #9ca3af;
-}
-
-.hero-image {
-  display: flex;
-  justify-content: center;
   align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
 }
 
-.compound-chart {
+.persona-avatar {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 1.25rem;
+}
+
+.persona-info h3 {
+  font-weight: 700;
+  margin: 0;
+}
+
+.persona-info p {
+  color: #6b7280;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.persona-quote {
+  font-style: italic;
+  color: #4b5563;
+  border-left: 3px solid #6366f1;
+  padding-left: 15px;
+  margin: 0;
+}
+
+/* Buttons */
+.cta-button {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.cta-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+}
+
+/* Growth Chart */
+.growth-chart {
   background: white;
   border-radius: 20px;
-  padding: 2rem;
-  box-shadow: 0 20px 60px rgba(99, 102, 241, 0.15);
-  width: 100%;
-  max-width: 450px;
+  padding: 30px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
 .chart-svg {
@@ -880,1230 +919,842 @@ onUnmounted(() => {
   height: auto;
 }
 
-.chart-line {
-  stroke-dasharray: 500;
-  stroke-dashoffset: 500;
-  animation: drawLine 2s ease-out forwards;
-}
-
-.chart-area {
-  opacity: 0;
-  animation: fadeIn 1s ease-out 1.5s forwards;
-}
-
-@keyframes drawLine {
-  to { stroke-dashoffset: 0; }
-}
-
-@keyframes fadeIn {
-  to { opacity: 1; }
-}
-
 .chart-label {
   text-align: center;
-  margin-top: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  margin-top: 20px;
 }
 
-.chart-highlight {
-  font-size: 1.25rem;
-  font-weight: 700;
+.chart-multiplier {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
   color: #6366f1;
 }
 
 .chart-text {
-  font-size: 0.9375rem;
   color: #6b7280;
+  font-size: 0.9rem;
 }
 
-.section-title {
-  font-size: clamp(1.5rem, 4vw, 2.25rem);
-  font-weight: 700;
-  text-align: center;
-  margin-bottom: 1rem;
-  color: #1a1a2e;
-}
-
-.section-subtitle {
-  text-align: center;
-  color: #6b7280;
-  font-size: 1.125rem;
-  max-width: 600px;
-  margin: 0 auto 3rem;
-  line-height: 1.6;
-}
-
-.effect-section {
-  padding: 5rem 0;
-  background: white;
-}
-
-.slider-container {
-  max-width: 500px;
-  margin: 0 auto 2rem;
-}
-
-.days-slider {
-  width: 100%;
-  height: 8px;
-  border-radius: 4px;
-  background: #e5e7eb;
-  outline: none;
-  -webkit-appearance: none;
-  cursor: pointer;
-}
-
-.days-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-}
-
-.slider-labels {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 0.5rem;
-  font-size: 0.875rem;
-  color: #9ca3af;
-}
-
-.effect-result {
-  text-align: center;
-  margin-bottom: 1.5rem;
-}
-
-.days-display {
-  font-size: 1.25rem;
-  color: #6b7280;
-  margin-bottom: 0.5rem;
-}
-
-.multiplier {
-  font-size: 3rem;
-  font-weight: 800;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.effect-description {
-  text-align: center;
-  max-width: 500px;
-  margin: 0 auto;
-  padding: 1.5rem;
-  background: #f9fafb;
-  border-radius: 12px;
-  color: #4b5563;
-  line-height: 1.6;
-}
-
-.ai-mentor-section {
-  padding: 5rem 0;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: white;
-}
-
-.mentor-header {
-  text-align: center;
-  margin-bottom: 3rem;
-}
-
-.mentor-avatar {
-  margin-bottom: 1rem;
-  display: flex;
-  justify-content: center;
-}
-
-.ai-mentor-section .section-title {
-  color: white;
-  margin-bottom: 1rem;
-}
-
-.mentor-tagline {
-  font-size: 1.25rem;
-  opacity: 0.9;
-  max-width: 600px;
-  margin: 0 auto;
-  line-height: 1.6;
-}
-
-.mentor-benefits {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 3rem;
-}
-
-.mentor-card {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
-  padding: 1.5rem;
-  backdrop-filter: blur(10px);
-}
-
-.mentor-icon {
-  margin-bottom: 0.75rem;
-  display: flex;
-}
-
-.mentor-card h3 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-.mentor-card p {
-  font-size: 0.9375rem;
-  opacity: 0.85;
-  line-height: 1.6;
-}
-
-.mentor-chat-demo {
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-.chat-window {
-  background: white;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-}
-
-.chat-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.chat-avatar {
-  color: #6366f1;
-  display: flex;
-}
-
-.chat-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.chat-name {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: #1a1a2e;
-}
-
-.chat-status {
-  font-size: 0.75rem;
-  color: #22c55e;
-}
-
-.chat-messages {
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.message {
-  max-width: 85%;
-  padding: 0.75rem 1rem;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  line-height: 1.5;
-}
-
-.message.mentor {
-  background: #eef2ff;
-  color: #1a1a2e;
-  align-self: flex-start;
-  border-bottom-left-radius: 4px;
-}
-
-.message.user {
-  background: #6366f1;
-  color: white;
-  align-self: flex-end;
-  border-bottom-right-radius: 4px;
-}
-
-.message p {
-  margin: 0;
-}
-
-.section-connector {
-  padding: 2rem 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.section-connector.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.connector-arrow {
-  color: #6366f1;
+/* Arrow Connectors */
+.arrow-connector {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
   animation: bounce 2s infinite;
 }
 
-.connector-arrow.pulse {
-  animation: pulse 2s infinite;
-}
-
 @keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(8px); }
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(10px); }
 }
 
-@keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.1); opacity: 0.8; }
+/* Section Titles */
+.section-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 15px;
 }
 
-.connector-lines {
-  width: 100px;
-  height: 60px;
-}
-
-.flow-lines {
-  width: 100%;
-  height: 100%;
-}
-
-.connector-flow {
-  width: 100px;
-  height: 50px;
-}
-
-.flow-svg {
-  width: 100%;
-  height: 100%;
-}
-
-.connector-text {
-  font-size: 0.9375rem;
+.section-subtitle {
+  font-size: 1.2rem;
   color: #6b7280;
-  font-weight: 500;
+  margin-bottom: 30px;
 }
 
-.journey-block {
-  padding: 5rem 0;
+.step-badge {
+  display: inline-block;
+  background: #6366f1;
+  color: white;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 15px;
 }
 
-.journey-block:nth-child(odd) {
-  background: white;
+.step-badge.success {
+  background: #22c55e;
 }
 
-.journey-block:nth-child(even) {
-  background: #fafafa;
-}
-
-.ssp-block { background: #fafafa; }
-.goals-block { background: white; }
-.decomposition-block { background: #fafafa; }
-.planning-block { background: white; }
-.habits-block { background: #fafafa; }
-.achievements-block { background: white; }
-
-.journey-content-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4rem;
-  align-items: center;
-}
-
-.journey-content-grid.reverse {
-  direction: rtl;
-}
-
-.journey-content-grid.reverse > * {
-  direction: ltr;
-}
-
-.journey-mockup {
-  display: flex;
-  justify-content: center;
-}
-
-.mockup-window {
+/* Example Cards */
+.example-card {
   background: white;
   border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  width: 100%;
-  max-width: 400px;
+  padding: 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
 }
 
-.mockup-header-bar {
+.example-card.success {
+  border: 2px solid #22c55e;
+}
+
+.example-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #6366f1;
+  margin-bottom: 20px;
+}
+
+/* Scores List */
+.scores-list {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  background: #f3f4f6;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.mockup-dots {
-  display: flex;
-  gap: 6px;
-}
-
-.mockup-dots span {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.mockup-dots span:first-child { background: #ef4444; }
-.mockup-dots span:nth-child(2) { background: #f59e0b; }
-.mockup-dots span:last-child { background: #22c55e; }
-
-.mockup-title-bar {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: #6b7280;
-}
-
-.mockup-body-content {
-  padding: 1.5rem;
-  position: relative;
-}
-
-.example-label {
-  position: absolute;
-  bottom: 0.5rem;
-  right: 0.75rem;
-  font-size: 0.6875rem;
-  color: #9ca3af;
-  font-style: italic;
-}
-
-.wheel-demo {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 1rem;
-}
-
-.wheel-svg {
-  width: 160px;
-  height: 160px;
-}
-
-.ssp-scores {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .score-item {
   display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.score-header {
+  display: flex;
   justify-content: space-between;
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  font-size: 0.8125rem;
 }
 
-.score-item.low { background: rgba(239, 68, 68, 0.1); }
-.score-item.medium { background: rgba(245, 158, 11, 0.1); }
-.score-item.high { background: rgba(34, 197, 94, 0.1); }
-
-.score-item span { color: #6b7280; }
-.score-item strong { color: #1a1a2e; }
-
-.journey-description {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.block-title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #1a1a2e;
-  line-height: 1.3;
-}
-
-.block-text {
-  font-size: 1.125rem;
-  color: #6b7280;
-  line-height: 1.6;
-}
-
-.ai-role {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: rgba(99, 102, 241, 0.08);
-  border-radius: 10px;
-  font-size: 0.875rem;
-  color: #6366f1;
-}
-
-.ai-role.centered {
-  justify-content: center;
-  max-width: 600px;
-  margin: 2rem auto 0;
-}
-
-.ai-role svg {
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.maxim-goals {
-  margin-bottom: 3rem;
-}
-
-.example-heading {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #6b7280;
-  margin-bottom: 1rem;
-  text-align: center;
-}
-
-.goals-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.goal-demo-card {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.goal-sphere-icon {
-  font-size: 1.5rem;
-}
-
-.goal-info {
-  flex: 1;
-}
-
-.goal-info h4 {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: #1a1a2e;
-  margin: 0 0 0.25rem;
-}
-
-.goal-sphere-label {
-  font-size: 0.75rem;
-  color: #9ca3af;
-}
-
-.goal-progress-mini {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.25rem;
-}
-
-.progress-track {
-  width: 60px;
-  height: 6px;
-  background: #e5e7eb;
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6);
-  border-radius: 3px;
-}
-
-.goal-progress-mini span {
-  font-size: 0.6875rem;
-  color: #9ca3af;
-}
-
-.legends-mini {
-  background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
-  border-radius: 16px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-}
-
-.legends-intro {
-  text-align: center;
-  color: #6b7280;
-  font-size: 0.9375rem;
-  margin-bottom: 1rem;
-  line-height: 1.5;
-}
-
-.legends-heading {
-  text-align: center;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1a1a2e;
-  margin-bottom: 1.5rem;
-}
-
-.legends-row {
-  display: flex;
-  justify-content: center;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.legend-mini-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.legend-mini-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.legend-mini-card span {
-  font-size: 0.8125rem;
-  color: #6b7280;
+.score-name {
+  font-size: 0.9rem;
   font-weight: 500;
 }
 
-.block-cta {
-  text-align: center;
-  margin-top: 2rem;
+.score-value {
+  font-weight: 700;
+  font-size: 0.9rem;
 }
 
-.steps-demo {
+.score-value.low { color: #ef4444; }
+.score-value.medium { color: #f59e0b; }
+.score-value.high { color: #22c55e; }
+
+.score-bar {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.score-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.score-fill.low { background: linear-gradient(90deg, #ef4444, #f87171); }
+.score-fill.medium { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.score-fill.high { background: linear-gradient(90deg, #22c55e, #4ade80); }
+
+/* AI Comments */
+.ai-comment {
+  background: #eef2ff;
+  border-left: 4px solid #6366f1;
+  padding: 15px;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.95rem;
+  margin-top: 20px;
+}
+
+.ai-comment.purple {
+  background: #faf5ff;
+  border-color: #a855f7;
+}
+
+.ai-comment.pink {
+  background: #fdf2f8;
+  border-color: #ec4899;
+}
+
+.ai-comment.orange {
+  background: #fff7ed;
+  border-color: #f97316;
+}
+
+.ai-comment.green {
+  background: #ecfdf5;
+  border-color: #22c55e;
+}
+
+.ai-comment.success {
+  background: #f0fdf4;
+  border-color: #22c55e;
+}
+
+/* Transition Text */
+.transition-text {
+  text-align: center;
+  margin-top: 40px;
+  padding: 20px;
+}
+
+.transition-text p {
+  font-style: italic;
+  color: #6b7280;
+  font-size: 1.1rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Wheel SVG */
+.wheel-svg {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+}
+
+/* Goals List */
+.goals-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.goal-item {
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid;
+}
+
+.goal-item.red {
+  background: #fef2f2;
+  border-color: #ef4444;
+}
+
+.goal-item.pink {
+  background: #fdf2f8;
+  border-color: #ec4899;
+}
+
+.goal-item.blue {
+  background: #eff6ff;
+  border-color: #3b82f6;
+}
+
+.goal-sphere {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.goal-item.red .goal-sphere { color: #dc2626; }
+.goal-item.pink .goal-sphere { color: #db2777; }
+.goal-item.blue .goal-sphere { color: #2563eb; }
+
+.goal-text {
+  margin: 5px 0 0;
+  font-size: 0.95rem;
+}
+
+/* Steps List */
+.steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .step-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background: #f9fafb;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  color: #4b5563;
+  gap: 15px;
+  padding: 12px;
+  background: #fdf2f8;
+  border-radius: 10px;
 }
 
-.step-item.active {
-  background: #eef2ff;
-  border: 1px solid #6366f1;
-  color: #1a1a2e;
-  font-weight: 500;
-}
-
-.step-check {
-  width: 20px;
-  height: 20px;
+.step-number {
+  width: 32px;
+  height: 32px;
+  background: #ec4899;
+  color: white;
   border-radius: 50%;
-  border: 2px solid #d1d5db;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-weight: 700;
   flex-shrink: 0;
 }
 
-.step-check.done {
-  background: #22c55e;
-  border-color: #22c55e;
-  color: white;
+.step-content {
+  flex: 1;
 }
 
-.step-item.active .step-check {
-  border-color: #6366f1;
+.step-content strong {
+  display: block;
+  font-size: 0.95rem;
 }
 
-.planning-demo {
-  max-width: 800px;
-  margin: 0 auto;
+.step-content p {
+  margin: 3px 0 0;
+  font-size: 0.85rem;
+  color: #6b7280;
 }
 
-.week-calendar {
+.step-time {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+/* Calendar Demo */
+.calendar-demo {
   background: white;
   border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  margin-bottom: 1.5rem;
-  position: relative;
+  padding: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
-.week-header {
+.calendar-header {
+  font-weight: 700;
+  margin-bottom: 15px;
+  text-align: center;
+  color: #6366f1;
+}
+
+.calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  gap: 8px;
 }
 
-.day-header {
+.calendar-day {
   text-align: center;
-  font-size: 0.8125rem;
+}
+
+.day-name {
+  font-size: 0.8rem;
   font-weight: 600;
   color: #6b7280;
-  padding: 0.5rem;
+  margin-bottom: 8px;
 }
 
-.week-body {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 0.5rem;
-  min-height: 100px;
-}
-
-.day-col {
+.day-tasks {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  background: #f9fafb;
-  border-radius: 8px;
-  min-height: 80px;
+  gap: 4px;
 }
 
-.day-col.rest {
+.day-task {
+  font-size: 0.7rem;
+  padding: 4px;
   background: #f3f4f6;
-  justify-content: center;
-  align-items: center;
+  border-radius: 4px;
 }
 
-.rest-label {
-  font-size: 0.75rem;
-  color: #9ca3af;
+.day-task.highlight {
+  background: #dcfce7;
+  color: #166534;
+  font-weight: 600;
 }
 
-.task-chip {
-  padding: 0.375rem 0.5rem;
-  border-radius: 6px;
-  font-size: 0.6875rem;
-  font-weight: 500;
+/* Planning Stats */
+.planning-stats {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20px;
+}
+
+.stat-item {
   text-align: center;
 }
 
-.task-chip.high {
-  background: rgba(239, 68, 68, 0.1);
-  color: #dc2626;
+.stat-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #6366f1;
 }
 
-.task-chip.medium {
-  background: rgba(245, 158, 11, 0.1);
-  color: #d97706;
+.stat-label {
+  font-size: 0.8rem;
+  color: #6b7280;
 }
 
-.task-chip.low {
-  background: rgba(59, 130, 246, 0.1);
-  color: #2563eb;
-}
-
-.btn-ai-planning {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
+/* AI Button */
+.ai-button {
   width: 100%;
-  max-width: 300px;
-  margin: 0 auto;
-  padding: 1rem 2rem;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #10b981, #059669);
   color: white;
   border: none;
-  border-radius: 12px;
-  font-size: 1.125rem;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
-  transition: all 0.2s;
-}
-
-.btn-ai-planning:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.4);
-}
-
-.habits-demo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.habit-demo-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background: #f9fafb;
-  border-radius: 10px;
-}
-
-.habit-emoji {
-  font-size: 1.25rem;
-}
-
-.habit-info-demo {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.habit-name {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #1a1a2e;
-}
-
-.habit-schedule {
-  font-size: 0.75rem;
-  color: #9ca3af;
-}
-
-.habit-streak {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #f59e0b;
-}
-
-.xp-demo {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
-}
-
-.xp-bar-demo {
-  height: 8px;
-  background: #e5e7eb;
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 0.5rem;
-}
-
-.xp-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6);
-  border-radius: 4px;
-}
-
-.xp-label {
-  display: block;
-  text-align: center;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #6366f1;
-}
-
-.achievements-demo {
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.before-after {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2rem;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 15px;
 }
 
-.state-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  min-width: 200px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+.ai-icon {
+  font-size: 1.2rem;
 }
 
-.state-card.before {
-  border: 2px solid #fecaca;
+/* Habits List */
+.habits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
-.state-card.after {
-  border: 2px solid #bbf7d0;
-}
-
-.state-card h4 {
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 1rem;
-  text-align: center;
-}
-
-.state-card.before h4 { color: #dc2626; }
-.state-card.after h4 { color: #16a34a; }
-
-.state-metric {
+.habit-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-  font-size: 0.8125rem;
-}
-
-.state-metric span {
-  width: 70px;
-  color: #6b7280;
-}
-
-.metric-bar {
-  flex: 1;
-  height: 8px;
-  background: #fee2e2;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.metric-bar.success {
-  background: #dcfce7;
-}
-
-.metric-bar .metric-fill {
-  height: 100%;
-  background: #ef4444;
-  border-radius: 4px;
-}
-
-.metric-bar.success .metric-fill {
-  background: #22c55e;
-}
-
-.state-metric strong {
-  width: 40px;
-  text-align: right;
-  color: #1a1a2e;
-}
-
-.state-arrow {
-  color: #6366f1;
-}
-
-.badges-demo-list {
-  background: #f9fafb;
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.badges-demo-list h4 {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: #6b7280;
-  margin-bottom: 1rem;
-}
-
-.badge-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-}
-
-.badge-demo {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background: white;
+  gap: 15px;
+  padding: 12px;
+  background: #f0fdf4;
   border-radius: 10px;
 }
 
-.badge-demo span:first-child {
+.habit-icon {
   font-size: 1.5rem;
 }
 
-.badge-demo strong {
+.habit-info {
+  flex: 1;
+}
+
+.habit-info strong {
   display: block;
-  font-size: 0.875rem;
-  color: #1a1a2e;
-  margin-bottom: 0.125rem;
 }
 
-.badge-demo p {
-  font-size: 0.75rem;
-  color: #9ca3af;
-  margin: 0;
-}
-
-.mentor-comment {
+.habit-streak {
   display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
+  align-items: center;
+  gap: 5px;
+  font-size: 0.85rem;
+  color: #f97316;
+}
+
+.streak-fire {
+  font-size: 1rem;
+}
+
+.habit-xp {
+  background: #6366f1;
+  color: white;
+  padding: 4px 10px;
   border-radius: 12px;
-  border-left: 3px solid #6366f1;
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
-.mentor-comment svg {
-  color: #6366f1;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.mentor-comment p {
-  margin: 0;
-  font-size: 0.9375rem;
-  color: #4b5563;
-  font-style: italic;
-}
-
-.final-cta-section {
-  padding: 5rem 0;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: white;
-}
-
-.final-cta-content {
-  text-align: center;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.final-cta-section h2 {
-  font-size: clamp(1.5rem, 4vw, 2rem);
-  font-weight: 700;
-  margin-bottom: 2rem;
-}
-
-.final-cta-section .btn-primary {
-  background: white;
-  color: #6366f1;
-}
-
-.landing-footer {
-  background: #1a1a2e;
-  color: white;
-  padding: 3rem 0 1.5rem;
-}
-
-.footer-content {
+.xp-total {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding-bottom: 2rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 10px;
+  color: white;
+  margin-bottom: 15px;
 }
 
-.footer-brand .logo span:not(.logo-icon) {
+.xp-value {
+  font-weight: 700;
+}
+
+/* Streak Visual */
+.streak-visual {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.streak-month {
+  text-align: center;
+  font-weight: 700;
+  color: #6366f1;
+  margin-bottom: 15px;
+}
+
+.streak-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.streak-day {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  background: #f3f4f6;
+}
+
+.streak-day.completed {
+  background: #22c55e;
   color: white;
   font-weight: 600;
 }
 
-.footer-links {
+.streak-day.today {
+  background: #fef3c7;
+  border: 2px solid #f59e0b;
+}
+
+.streak-badge {
   display: flex;
-  gap: 2rem;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 15px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-radius: 10px;
 }
 
-.footer-links a {
-  color: rgba(255, 255, 255, 0.8);
-  text-decoration: none;
-  transition: color 0.2s;
+.badge-icon {
+  font-size: 1.5rem;
 }
 
-.footer-links a:hover {
+.badge-text {
+  font-weight: 700;
+  color: #92400e;
+}
+
+/* Before/After */
+.before-after {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.ba-column {
+  flex: 1;
+}
+
+.ba-column h4 {
+  margin: 0 0 15px;
+  font-weight: 700;
+}
+
+.ba-column.before h4 { color: #ef4444; }
+.ba-column.after h4 { color: #22c55e; }
+
+.ba-item {
+  padding: 8px 0;
+  font-size: 0.95rem;
+}
+
+.ba-item .bad { color: #ef4444; font-weight: 700; }
+.ba-item .medium { color: #f59e0b; font-weight: 700; }
+.ba-item .good { color: #22c55e; font-weight: 700; }
+
+.ba-arrow {
+  font-size: 2rem;
+  color: #6366f1;
+}
+
+/* Badges Grid */
+.badges-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.badge-item {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.badge-emoji {
+  font-size: 1.5rem;
+}
+
+.badge-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* Achievements Stats */
+.achievements-stats {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20px;
+}
+
+.achievement-stat {
+  text-align: center;
+}
+
+.stat-number {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #22c55e;
+}
+
+.stat-text {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+/* Final CTA */
+.bg-cta {
   color: white;
 }
 
-.footer-legal {
-  padding-top: 1rem;
+.centered {
   text-align: center;
+  max-width: 600px;
 }
 
-.legal-links {
+.cta-title {
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 20px;
+}
+
+.cta-subtitle {
+  font-size: 1.3rem;
+  opacity: 0.9;
+  margin-bottom: 30px;
+}
+
+.cta-features {
   display: flex;
   justify-content: center;
-  gap: 1.5rem;
+  gap: 30px;
+  margin-bottom: 40px;
   flex-wrap: wrap;
-  margin-bottom: 1rem;
 }
 
-.legal-links a {
-  color: rgba(255, 255, 255, 0.6);
+.cta-feature {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.cta-button-large {
+  display: inline-block;
+  background: white;
+  color: #6366f1;
+  padding: 18px 48px;
+  border-radius: 14px;
+  font-size: 1.2rem;
+  font-weight: 700;
   text-decoration: none;
-  font-size: 0.8125rem;
-  transition: color 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.legal-links a:hover {
-  color: rgba(255, 255, 255, 0.9);
+.cta-button-large:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
-.company-info {
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 0.75rem;
+.cta-note {
+  margin-top: 20px;
+  opacity: 0.8;
 }
 
-.company-info p {
-  margin: 0.25rem 0;
+.cta-note a {
+  color: white;
+  text-decoration: underline;
 }
 
-.footer-bottom {
-  text-align: center;
-  padding-top: 1.5rem;
+/* Mentor Features */
+.mentor-features {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 30px;
 }
 
-.footer-bottom p {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.875rem;
+.feature-item {
+  display: flex;
+  gap: 15px;
+  align-items: flex-start;
 }
 
-@media (max-width: 900px) {
-  .journey-content-grid {
+.feature-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.feature-text strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.feature-text p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+/* Chat Demo */
+.chat-demo {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.chat-message {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.chat-message.user {
+  flex-direction: row-reverse;
+}
+
+.message-avatar {
+  width: 36px;
+  height: 36px;
+  background: #ecfdf5;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.message-bubble {
+  background: #f3f4f6;
+  padding: 12px 16px;
+  border-radius: 16px;
+  max-width: 80%;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.chat-message.ai .message-bubble {
+  background: #ecfdf5;
+  border: 1px solid #d1fae5;
+}
+
+.chat-message.user .message-bubble {
+  background: #6366f1;
+  color: white;
+}
+
+/* Goals SVG */
+.goals-svg {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+}
+
+/* Steps SVG */
+.steps-svg {
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .sidebar-nav {
+    display: none;
+  }
+
+  .screen-section {
+    min-height: auto;
+    padding: 60px 15px;
+  }
+
+  .hero-grid,
+  .two-column {
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: 40px;
   }
-  
-  .journey-content-grid.reverse {
-    direction: ltr;
+
+  .two-column.reverse .column-visual {
+    order: 0;
   }
-  
-  .journey-mockup {
-    order: -1;
+
+  .hero-title {
+    font-size: 2rem;
   }
-  
-  .journey-description {
-    text-align: center;
-    align-items: center;
+
+  .section-title {
+    font-size: 1.8rem;
   }
-  
-  .ai-role {
-    justify-content: center;
+
+  .calendar-grid {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
   }
-  
+
+  .day-task {
+    font-size: 0.6rem;
+    padding: 2px;
+  }
+
   .before-after {
     flex-direction: column;
-    gap: 1rem;
+    gap: 15px;
   }
-  
-  .state-arrow {
+
+  .ba-arrow {
     transform: rotate(90deg);
   }
-}
 
-@media (max-width: 768px) {
-  .hero {
-    padding: 7rem 0 4rem;
-    min-height: auto;
+  .cta-title {
+    font-size: 2rem;
   }
-  
-  .hero-grid {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-  
-  .hero-image {
-    order: -1;
-  }
-  
-  .compound-chart {
-    max-width: 320px;
-    padding: 1.5rem;
-  }
-  
-  .hero-bg {
-    display: none;
-  }
-  
-  .mentor-benefits {
-    grid-template-columns: 1fr;
-  }
-  
-  .week-header,
-  .week-body {
-    grid-template-columns: repeat(7, 1fr);
-    gap: 0.25rem;
-  }
-  
-  .day-header {
-    font-size: 0.6875rem;
-    padding: 0.25rem;
-  }
-  
-  .task-chip {
-    font-size: 0.5625rem;
-    padding: 0.25rem;
-  }
-  
-  .goals-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .badge-row {
-    grid-template-columns: 1fr;
-  }
-  
-  .footer-content {
+
+  .cta-features {
     flex-direction: column;
-    gap: 1.5rem;
-    text-align: center;
+    gap: 15px;
   }
-  
-  .header-nav .nav-link {
-    display: none;
+
+  .streak-days {
+    gap: 4px;
+  }
+
+  .streak-day {
+    width: 30px;
+    height: 30px;
+    font-size: 0.75rem;
   }
 }
 
 @media (max-width: 480px) {
-  .journey-block {
-    padding: 3rem 0;
+  .hero-title {
+    font-size: 1.75rem;
   }
-  
-  .block-title {
-    font-size: 1.375rem;
+
+  .section-title {
+    font-size: 1.5rem;
   }
-  
-  .legends-row {
-    gap: 1rem;
+
+  .planning-stats {
+    flex-direction: column;
+    gap: 15px;
   }
-  
-  .legend-mini-avatar {
-    width: 40px;
-    height: 40px;
+
+  .achievements-stats {
+    flex-direction: column;
+    gap: 15px;
   }
-  
-  .mockup-window {
-    max-width: 100%;
-  }
-  
-  .week-calendar {
-    padding: 1rem;
-  }
-  
-  .btn-ai-planning {
-    font-size: 1rem;
-    padding: 0.875rem 1.5rem;
+
+  .badges-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>
