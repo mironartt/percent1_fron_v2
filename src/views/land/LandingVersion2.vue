@@ -256,45 +256,72 @@
       </div>
     </section>
 
-    <!-- GOALS SECTION - BIGGER VISUAL -->
+    <!-- GOALS SECTION - TWO COLUMN -->
     <section id="goals" class="screen-section bg-goals">
       <div class="section-content">
-        <div class="goals-full-layout">
-          <div class="goals-header-block">
+        <div class="two-column">
+          <div class="column-text">
             <div class="step-badge">День 1</div>
             <h2 class="section-title">Цели</h2>
             <p class="section-subtitle">Цели не из головы — они рождаются из проблем, выявленных в колесе баланса</p>
-          </div>
-
-          <div class="goals-cards-grid">
-            <div class="goal-card-big red">
-              <div class="goal-card-icon">❤️</div>
-              <div class="goal-card-sphere">Здоровье</div>
-              <div class="goal-card-score">4/10</div>
-              <div class="goal-card-title">Заниматься спортом 3 раза в неделю</div>
-              <div class="goal-card-reason">Запустил здоровье из-за работы</div>
-            </div>
-
-            <div class="goal-card-big pink">
-              <div class="goal-card-icon">💰</div>
-              <div class="goal-card-sphere">Финансы</div>
-              <div class="goal-card-score">3/10</div>
-              <div class="goal-card-title">Увеличить доход на 50 000 ₽/мес</div>
-              <div class="goal-card-reason">Нет подушки безопасности</div>
-            </div>
-
-            <div class="goal-card-big blue">
-              <div class="goal-card-icon">👨‍👩‍👧</div>
-              <div class="goal-card-sphere">Семья</div>
-              <div class="goal-card-score">5/10</div>
-              <div class="goal-card-title">Проводить время с родителями 2 раза в месяц</div>
-              <div class="goal-card-reason">Редко вижу близких</div>
+            
+            <div class="example-card">
+              <h3 class="example-title">Цели Максима</h3>
+              <p class="example-desc">На основе диагностики AI помог сформулировать 3 приоритетные цели для работы над слабыми зонами.</p>
+              
+              <div class="ai-comment purple">
+                <strong>AI Стратег:</strong> "Я вижу 3 критические зоны. Давай начнём со здоровья — 
+                это фундамент для остального. Готов разбить цель на конкретные шаги?"
+              </div>
+              
+              <div class="ai-role-label purple-role">
+                <span class="ai-role-icon">📊</span>
+                <span class="ai-role-text">AI превращает проблемы в конкретные, измеримые цели</span>
+              </div>
             </div>
           </div>
 
-          <div class="ai-comment-block purple">
-            <strong>AI Стратег:</strong> "Я вижу 3 критические зоны. Давай начнём со здоровья — 
-            это фундамент для остального. Готов разбить цель на конкретные шаги?"
+          <div class="column-visual">
+            <div class="goals-cards-vertical">
+              <div class="goal-card-compact red">
+                <div class="goal-card-left">
+                  <span class="goal-icon">❤️</span>
+                  <div class="goal-info">
+                    <span class="goal-sphere">Здоровье</span>
+                    <span class="goal-score">4/10</span>
+                  </div>
+                </div>
+                <div class="goal-card-right">
+                  <span class="goal-title">Спорт 3x/неделю</span>
+                </div>
+              </div>
+
+              <div class="goal-card-compact orange">
+                <div class="goal-card-left">
+                  <span class="goal-icon">💰</span>
+                  <div class="goal-info">
+                    <span class="goal-sphere">Финансы</span>
+                    <span class="goal-score">3/10</span>
+                  </div>
+                </div>
+                <div class="goal-card-right">
+                  <span class="goal-title">Доход +50К/мес</span>
+                </div>
+              </div>
+
+              <div class="goal-card-compact blue">
+                <div class="goal-card-left">
+                  <span class="goal-icon">👨‍👩‍👧</span>
+                  <div class="goal-info">
+                    <span class="goal-sphere">Семья</span>
+                    <span class="goal-score">5/10</span>
+                  </div>
+                </div>
+                <div class="goal-card-right">
+                  <span class="goal-title">Родители 2x/мес</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -332,56 +359,68 @@
       </div>
     </section>
 
-    <!-- DECOMPOSITION SECTION - REDESIGNED -->
+    <!-- DECOMPOSITION SECTION - TWO COLUMN -->
     <section id="decomposition" class="screen-section bg-decomposition">
       <div class="section-content">
-        <div class="decomposition-layout">
-          <div class="decomposition-header">
+        <div class="two-column">
+          <div class="column-text">
             <div class="step-badge">Неделя 1</div>
             <h2 class="section-title">Декомпозиция</h2>
             <p class="section-subtitle">Большая цель разбивается на конкретные, выполнимые шаги</p>
-          </div>
-
-          <div class="decomposition-visual">
-            <div class="decomp-goal-card">
-              <span class="decomp-goal-icon">🎯</span>
-              <span class="decomp-goal-text">Спорт 3x/неделю</span>
-            </div>
-
-            <div class="decomp-connector"></div>
-
-            <div class="decomp-step-card step-1">
-              <span class="decomp-step-num">1. Выбрать вид спорта</span>
-            </div>
-
-            <div class="decomp-connector"></div>
-
-            <div class="decomp-step-card step-2">
-              <span class="decomp-step-num">2. Купить форму</span>
-            </div>
-
-            <div class="decomp-connector"></div>
-
-            <div class="decomp-step-card step-3">
-              <span class="decomp-step-num">3. Первая тренировка</span>
-            </div>
-
-            <div class="decomp-connector"></div>
-
-            <div class="decomp-step-card step-4">
-              <span class="decomp-step-num">4. Привыкнуть к ритму</span>
-            </div>
-
-            <div class="decomp-connector"></div>
-
-            <div class="decomp-done-card">
-              <span class="decomp-done-text">✓ Цель достигнута!</span>
+            
+            <div class="example-card">
+              <h3 class="example-title">Как AI разбил цель</h3>
+              <p class="example-desc">Цель "Спорт 3x/неделю" превратилась в 4 простых шага, каждый по 15-30 минут.</p>
+              
+              <div class="ai-comment pink">
+                <strong>AI Методолог:</strong> "Разбил твою цель на 4 реальных шага. 
+                Каждый занимает 15-30 минут. Первый можно сделать прямо сейчас!"
+              </div>
+              
+              <div class="ai-role-label pink-role">
+                <span class="ai-role-icon">🧩</span>
+                <span class="ai-role-text">AI разбивает большие цели на маленькие выполнимые шаги</span>
+              </div>
             </div>
           </div>
 
-          <div class="ai-comment-block pink">
-            <strong>AI Методолог:</strong> "Разбил твою цель на 4 реальных шага. 
-            Каждый занимает 15-30 минут. Первый можно сделать прямо сейчас!"
+          <div class="column-visual">
+            <div class="decomposition-visual-compact">
+              <div class="decomp-goal-card">
+                <span class="decomp-goal-icon">🎯</span>
+                <span class="decomp-goal-text">Спорт 3x/неделю</span>
+              </div>
+
+              <div class="decomp-connector"></div>
+
+              <div class="decomp-step-card step-1">
+                <span class="decomp-step-num">1. Выбрать вид спорта</span>
+              </div>
+
+              <div class="decomp-connector"></div>
+
+              <div class="decomp-step-card step-2">
+                <span class="decomp-step-num">2. Купить форму</span>
+              </div>
+
+              <div class="decomp-connector"></div>
+
+              <div class="decomp-step-card step-3">
+                <span class="decomp-step-num">3. Первая тренировка</span>
+              </div>
+
+              <div class="decomp-connector"></div>
+
+              <div class="decomp-step-card step-4">
+                <span class="decomp-step-num">4. Привыкнуть к ритму</span>
+              </div>
+
+              <div class="decomp-connector"></div>
+
+              <div class="decomp-done-card">
+                <span class="decomp-done-text">✓ Цель достигнута!</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1415,6 +1454,127 @@ onUnmounted(() => {
   font-size: 0.9rem;
   color: #047857;
   font-style: italic;
+}
+
+.ai-role-label.purple-role {
+  background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+  border-left-color: #8b5cf6;
+}
+
+.ai-role-label.purple-role .ai-role-text {
+  color: #6b21a8;
+}
+
+.ai-role-label.pink-role {
+  background: linear-gradient(135deg, #fdf2f8, #fce7f3);
+  border-left-color: #ec4899;
+}
+
+.ai-role-label.pink-role .ai-role-text {
+  color: #be185d;
+}
+
+/* Goals Cards Vertical */
+.goals-cards-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.goal-card-compact {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 18px 20px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+  border-left: 4px solid;
+  transition: transform 0.2s;
+}
+
+.goal-card-compact:hover {
+  transform: translateX(5px);
+}
+
+.goal-card-compact.red { border-left-color: #ef4444; }
+.goal-card-compact.orange { border-left-color: #f97316; }
+.goal-card-compact.blue { border-left-color: #3b82f6; }
+
+.goal-card-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.goal-icon {
+  font-size: 2rem;
+}
+
+.goal-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.goal-sphere {
+  font-size: 0.8rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.goal-score {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.goal-card-compact.red .goal-score { color: #ef4444; }
+.goal-card-compact.orange .goal-score { color: #f97316; }
+.goal-card-compact.blue .goal-score { color: #3b82f6; }
+
+.goal-card-right {
+  flex: 1;
+}
+
+.goal-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Decomposition Visual Compact */
+.decomposition-visual-compact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.decomposition-visual-compact .decomp-goal-card {
+  padding: 15px 25px;
+  font-size: 1rem;
+}
+
+.decomposition-visual-compact .decomp-step-card {
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  max-width: 280px;
+}
+
+.decomposition-visual-compact .decomp-done-card {
+  padding: 12px 25px;
+  font-size: 0.95rem;
+}
+
+.decomposition-visual-compact .decomp-connector {
+  height: 18px;
+}
+
+.example-desc {
+  color: #6b7280;
+  margin-bottom: 15px;
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 /* Element Connections */
