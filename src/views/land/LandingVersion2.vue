@@ -1,6 +1,5 @@
 <template>
   <div class="landing-v2">
-    <!-- Sidebar Navigation -->
     <nav class="sidebar-nav" aria-label="Навигация по разделам">
       <div 
         v-for="(section, index) in sections" 
@@ -25,7 +24,6 @@
               Не курс. Не марафон. А система, которая делает развитие предсказуемым.
             </p>
             
-            <!-- Persona Card -->
             <div class="persona-card">
               <div class="persona-header">
                 <div class="persona-avatar">М</div>
@@ -146,7 +144,7 @@
       </div>
     </section>
 
-    <!-- WHEEL OF BALANCE SECTION -->
+    <!-- WHEEL OF BALANCE SECTION - REDESIGNED -->
     <section id="wheel" class="screen-section bg-wheel">
       <div class="section-content">
         <div class="two-column">
@@ -177,64 +175,31 @@
             </div>
           </div>
 
-          <div class="column-visual">
-            <svg viewBox="0 0 300 300" class="wheel-svg">
-              <defs>
-                <linearGradient id="wheelRed" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style="stop-color:#ef4444;stop-opacity:0.6" />
-                  <stop offset="100%" style="stop-color:#fca5a5;stop-opacity:0.3" />
-                </linearGradient>
-                <linearGradient id="wheelGreen" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.6" />
-                  <stop offset="100%" style="stop-color:#a7f3d0;stop-opacity:0.3" />
-                </linearGradient>
-                <linearGradient id="wheelYellow" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:0.6" />
-                  <stop offset="100%" style="stop-color:#fcd34d;stop-opacity:0.3" />
-                </linearGradient>
-              </defs>
+          <div class="column-visual wheel-visual-container">
+            <div class="wheel-wrapper">
+              <svg viewBox="0 0 400 400" class="wheel-svg-new">
+                <circle cx="200" cy="200" r="180" fill="none" stroke="#e5e7eb" stroke-width="1"/>
+                <circle cx="200" cy="200" r="144" fill="none" stroke="#e5e7eb" stroke-width="1" opacity="0.6"/>
+                <circle cx="200" cy="200" r="108" fill="none" stroke="#e5e7eb" stroke-width="1" opacity="0.4"/>
+                <circle cx="200" cy="200" r="72" fill="none" stroke="#e5e7eb" stroke-width="1" opacity="0.3"/>
+                <circle cx="200" cy="200" r="36" fill="none" stroke="#e5e7eb" stroke-width="1" opacity="0.2"/>
 
-              <circle cx="150" cy="150" r="120" fill="none" stroke="#e5e7eb" stroke-width="1" opacity="0.5"/>
-              <circle cx="150" cy="150" r="80" fill="none" stroke="#e5e7eb" stroke-width="1" opacity="0.3"/>
-              <circle cx="150" cy="150" r="40" fill="#f3f4f6" stroke="#6366f1" stroke-width="2"/>
-              <text x="150" y="155" text-anchor="middle" font-size="14" fill="#6366f1" font-weight="bold">Я</text>
+                <path :d="getWedgePath(0, wheelScoresVisual[0].value)" :fill="wheelScoresVisual[0].color" opacity="0.85"/>
+                <path :d="getWedgePath(1, wheelScoresVisual[1].value)" :fill="wheelScoresVisual[1].color" opacity="0.85"/>
+                <path :d="getWedgePath(2, wheelScoresVisual[2].value)" :fill="wheelScoresVisual[2].color" opacity="0.85"/>
+                <path :d="getWedgePath(3, wheelScoresVisual[3].value)" :fill="wheelScoresVisual[3].color" opacity="0.85"/>
+                <path :d="getWedgePath(4, wheelScoresVisual[4].value)" :fill="wheelScoresVisual[4].color" opacity="0.85"/>
+                <path :d="getWedgePath(5, wheelScoresVisual[5].value)" :fill="wheelScoresVisual[5].color" opacity="0.85"/>
 
-              <g class="wheel-segment">
-                <path d="M 150 30 A 120 120 0 0 1 254 90 L 202 120 A 60 60 0 0 0 150 90 Z" fill="url(#wheelRed)" stroke="#6366f1" stroke-width="1"/>
-                <text x="195" y="65" font-size="11" fill="#1f2937" font-weight="bold">Здоровье</text>
-                <text x="205" y="80" font-size="14" fill="#ef4444" font-weight="bold">4/10</text>
-              </g>
-
-              <g class="wheel-segment">
-                <path d="M 254 90 A 120 120 0 0 1 254 210 L 202 180 A 60 60 0 0 0 202 120 Z" fill="url(#wheelGreen)" stroke="#6366f1" stroke-width="1"/>
-                <text x="245" y="145" font-size="11" fill="#1f2937" font-weight="bold">Карьера</text>
-                <text x="245" y="165" font-size="14" fill="#10b981" font-weight="bold">8/10</text>
-              </g>
-
-              <g class="wheel-segment">
-                <path d="M 254 210 A 120 120 0 0 1 150 270 L 150 210 A 60 60 0 0 0 202 180 Z" fill="url(#wheelYellow)" stroke="#6366f1" stroke-width="1"/>
-                <text x="195" y="235" font-size="11" fill="#1f2937" font-weight="bold">Семья</text>
-                <text x="195" y="255" font-size="14" fill="#f59e0b" font-weight="bold">5/10</text>
-              </g>
-
-              <g class="wheel-segment">
-                <path d="M 150 270 A 120 120 0 0 1 46 210 L 98 180 A 60 60 0 0 0 150 210 Z" fill="url(#wheelRed)" stroke="#6366f1" stroke-width="1"/>
-                <text x="85" y="255" font-size="11" fill="#1f2937" font-weight="bold">Спорт</text>
-                <text x="95" y="235" font-size="14" fill="#ef4444" font-weight="bold">2/10</text>
-              </g>
-
-              <g class="wheel-segment">
-                <path d="M 46 210 A 120 120 0 0 1 46 90 L 98 120 A 60 60 0 0 0 98 180 Z" fill="url(#wheelYellow)" stroke="#6366f1" stroke-width="1"/>
-                <text x="35" y="145" font-size="11" fill="#1f2937" font-weight="bold">Отнош.</text>
-                <text x="45" y="165" font-size="14" fill="#f59e0b" font-weight="bold">6/10</text>
-              </g>
-
-              <g class="wheel-segment">
-                <path d="M 46 90 A 120 120 0 0 1 150 30 L 150 90 A 60 60 0 0 0 98 120 Z" fill="url(#wheelRed)" stroke="#6366f1" stroke-width="1"/>
-                <text x="75" y="65" font-size="11" fill="#1f2937" font-weight="bold">Финансы</text>
-                <text x="85" y="85" font-size="14" fill="#ef4444" font-weight="bold">3/10</text>
-              </g>
-            </svg>
+                <text x="280" y="35" font-size="11" fill="#E86C6C" font-weight="600" transform="rotate(30, 280, 35)">БЛАГОСОСТОЯНИЕ</text>
+                <text x="375" y="200" font-size="11" fill="#2BC4A4" font-weight="600" transform="rotate(90, 375, 200)">ХОББИ И ОТДЫХ</text>
+                <text x="270" y="375" font-size="11" fill="#EFC75E" font-weight="600" transform="rotate(-30, 270, 375)">ДРУЖБА И ОКРУЖЕНИЕ</text>
+                <text x="70" y="375" font-size="11" fill="#2BC4A4" font-weight="600" transform="rotate(30, 70, 375)">ЗДОРОВЬЕ И СПОРТ</text>
+                <text x="10" y="200" font-size="11" fill="#2F4858" font-weight="600" transform="rotate(-90, 10, 200)">РАБОТА И КАРЬЕРА</text>
+                <text x="70" y="35" font-size="11" fill="#A78BFA" font-weight="600" transform="rotate(-30, 70, 35)">ЛЮБОВЬ СЕМЬЯ</text>
+              </svg>
+              <div class="wheel-center-label">Я</div>
+            </div>
           </div>
         </div>
       </div>
@@ -250,71 +215,45 @@
       </div>
     </section>
 
-    <!-- GOALS SECTION -->
+    <!-- GOALS SECTION - BIGGER VISUAL -->
     <section id="goals" class="screen-section bg-goals">
       <div class="section-content">
-        <div class="two-column reverse">
-          <div class="column-visual">
-            <svg viewBox="0 0 300 350" class="goals-svg">
-              <line x1="150" y1="60" x2="150" y2="120" stroke="#9333ea" stroke-width="3"/>
-              <line x1="150" y1="120" x2="80" y2="180" stroke="#9333ea" stroke-width="2"/>
-              <line x1="150" y1="120" x2="220" y2="180" stroke="#9333ea" stroke-width="2"/>
-              <line x1="150" y1="120" x2="150" y2="180" stroke="#9333ea" stroke-width="2"/>
-
-              <circle cx="150" cy="50" r="30" fill="#9333ea"/>
-              <text x="150" y="45" text-anchor="middle" font-size="9" fill="white" font-weight="bold">Слабые</text>
-              <text x="150" y="58" text-anchor="middle" font-size="9" fill="white" font-weight="bold">зоны</text>
-
-              <rect x="40" y="190" width="80" height="60" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
-              <text x="80" y="215" text-anchor="middle" font-size="10" fill="#991b1b" font-weight="bold">Здоровье</text>
-              <text x="80" y="235" text-anchor="middle" font-size="9" fill="#7f1d1d">Спорт 3x/нед</text>
-
-              <rect x="110" y="190" width="80" height="60" rx="8" fill="#fce7f3" stroke="#ec4899" stroke-width="2"/>
-              <text x="150" y="215" text-anchor="middle" font-size="10" fill="#9d174d" font-weight="bold">Финансы</text>
-              <text x="150" y="235" text-anchor="middle" font-size="9" fill="#831843">+50к/мес</text>
-
-              <rect x="180" y="190" width="80" height="60" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
-              <text x="220" y="215" text-anchor="middle" font-size="10" fill="#1e40af" font-weight="bold">Семья</text>
-              <text x="220" y="235" text-anchor="middle" font-size="9" fill="#1e3a8a">2x в месяц</text>
-
-              <text x="150" y="290" text-anchor="middle" font-size="12" fill="#6b21a8" font-weight="bold">Из проблем → Конкретные цели</text>
-            </svg>
-          </div>
-
-          <div class="column-text">
+        <div class="goals-full-layout">
+          <div class="goals-header-block">
             <div class="step-badge">День 1</div>
             <h2 class="section-title">Цели</h2>
             <p class="section-subtitle">Цели не из головы — они рождаются из проблем, выявленных в колесе баланса</p>
-            
-            <div class="example-card">
-              <h3 class="example-title">Цели Максима</h3>
-              
-              <div class="goals-list">
-                <div class="goal-item red">
-                  <div class="goal-header">
-                    <span class="goal-sphere">Здоровье (4/10)</span>
-                  </div>
-                  <p class="goal-text">Заниматься спортом 3 раза в неделю</p>
-                </div>
-                <div class="goal-item pink">
-                  <div class="goal-header">
-                    <span class="goal-sphere">Финансы (3/10)</span>
-                  </div>
-                  <p class="goal-text">Увеличить доход на 50 000 ₽/мес</p>
-                </div>
-                <div class="goal-item blue">
-                  <div class="goal-header">
-                    <span class="goal-sphere">Семья (5/10)</span>
-                  </div>
-                  <p class="goal-text">Проводить время с родителями 2 раза в месяц</p>
-                </div>
-              </div>
+          </div>
 
-              <div class="ai-comment purple">
-                <strong>AI Стратег:</strong> "Я вижу 3 критические зоны. Давай начнём со здоровья — 
-                это фундамент для остального. Готов разбить цель на конкретные шаги?"
-              </div>
+          <div class="goals-cards-grid">
+            <div class="goal-card-big red">
+              <div class="goal-card-icon">❤️</div>
+              <div class="goal-card-sphere">Здоровье</div>
+              <div class="goal-card-score">4/10</div>
+              <div class="goal-card-title">Заниматься спортом 3 раза в неделю</div>
+              <div class="goal-card-reason">Запустил здоровье из-за работы</div>
             </div>
+
+            <div class="goal-card-big pink">
+              <div class="goal-card-icon">💰</div>
+              <div class="goal-card-sphere">Финансы</div>
+              <div class="goal-card-score">3/10</div>
+              <div class="goal-card-title">Увеличить доход на 50 000 ₽/мес</div>
+              <div class="goal-card-reason">Нет подушки безопасности</div>
+            </div>
+
+            <div class="goal-card-big blue">
+              <div class="goal-card-icon">👨‍👩‍👧</div>
+              <div class="goal-card-sphere">Семья</div>
+              <div class="goal-card-score">5/10</div>
+              <div class="goal-card-title">Проводить время с родителями 2 раза в месяц</div>
+              <div class="goal-card-reason">Редко вижу близких</div>
+            </div>
+          </div>
+
+          <div class="ai-comment-block purple">
+            <strong>AI Стратег:</strong> "Я вижу 3 критические зоны. Давай начнём со здоровья — 
+            это фундамент для остального. Готов разбить цель на конкретные шаги?"
           </div>
         </div>
       </div>
@@ -330,73 +269,56 @@
       </div>
     </section>
 
-    <!-- DECOMPOSITION SECTION -->
+    <!-- DECOMPOSITION SECTION - REDESIGNED -->
     <section id="decomposition" class="screen-section bg-decomposition">
       <div class="section-content">
-        <div class="two-column">
-          <div class="column-text">
+        <div class="decomposition-layout">
+          <div class="decomposition-header">
             <div class="step-badge">Неделя 1</div>
             <h2 class="section-title">Декомпозиция</h2>
             <p class="section-subtitle">Большая цель разбивается на конкретные, выполнимые шаги</p>
-            
-            <div class="example-card">
-              <h3 class="example-title">Цель: "Спорт 3x в неделю"</h3>
-              
-              <div class="steps-list">
-                <div class="step-item" v-for="(step, index) in decompositionSteps" :key="index">
-                  <div class="step-number">{{ index + 1 }}</div>
-                  <div class="step-content">
-                    <strong>{{ step.title }}</strong>
-                    <p>{{ step.description }}</p>
-                  </div>
-                  <div class="step-time">{{ step.time }}</div>
-                </div>
-              </div>
+          </div>
 
-              <div class="ai-comment pink">
-                <strong>AI Методолог:</strong> "Разбил твою цель на 5 реальных шагов. 
-                Каждый занимает 15-30 минут. Первый можно сделать прямо сейчас!"
-              </div>
+          <div class="decomposition-visual">
+            <div class="decomp-goal-card">
+              <span class="decomp-goal-icon">🎯</span>
+              <span class="decomp-goal-text">Спорт 3x/неделю</span>
+            </div>
+
+            <div class="decomp-connector"></div>
+
+            <div class="decomp-step-card step-1">
+              <span class="decomp-step-num">1. Выбрать вид спорта</span>
+            </div>
+
+            <div class="decomp-connector"></div>
+
+            <div class="decomp-step-card step-2">
+              <span class="decomp-step-num">2. Купить форму</span>
+            </div>
+
+            <div class="decomp-connector"></div>
+
+            <div class="decomp-step-card step-3">
+              <span class="decomp-step-num">3. Первая тренировка</span>
+            </div>
+
+            <div class="decomp-connector"></div>
+
+            <div class="decomp-step-card step-4">
+              <span class="decomp-step-num">4. Привыкнуть к ритму</span>
+            </div>
+
+            <div class="decomp-connector"></div>
+
+            <div class="decomp-done-card">
+              <span class="decomp-done-text">✓ Цель достигнута!</span>
             </div>
           </div>
 
-          <div class="column-visual">
-            <svg viewBox="0 0 280 400" class="steps-svg">
-              <defs>
-                <linearGradient id="stepGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style="stop-color:#ec4899;stop-opacity:0.2" />
-                  <stop offset="100%" style="stop-color:#f97316;stop-opacity:0.2" />
-                </linearGradient>
-              </defs>
-
-              <rect x="60" y="20" width="160" height="50" rx="10" fill="#9333ea" stroke="none"/>
-              <text x="140" y="50" text-anchor="middle" font-size="12" fill="white" font-weight="bold">🎯 Спорт 3x/неделю</text>
-
-              <line x1="140" y1="70" x2="140" y2="100" stroke="#9333ea" stroke-width="2" stroke-dasharray="4"/>
-
-              <rect x="40" y="100" width="200" height="45" rx="8" fill="url(#stepGrad)" stroke="#ec4899" stroke-width="2"/>
-              <text x="140" y="128" text-anchor="middle" font-size="11" fill="#1f2937">1. Выбрать вид спорта</text>
-
-              <line x1="140" y1="145" x2="140" y2="165" stroke="#f97316" stroke-width="2" stroke-dasharray="4"/>
-
-              <rect x="40" y="165" width="200" height="45" rx="8" fill="url(#stepGrad)" stroke="#f97316" stroke-width="2"/>
-              <text x="140" y="193" text-anchor="middle" font-size="11" fill="#1f2937">2. Купить форму</text>
-
-              <line x1="140" y1="210" x2="140" y2="230" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
-
-              <rect x="40" y="230" width="200" height="45" rx="8" fill="url(#stepGrad)" stroke="#f59e0b" stroke-width="2"/>
-              <text x="140" y="258" text-anchor="middle" font-size="11" fill="#1f2937">3. Первая тренировка</text>
-
-              <line x1="140" y1="275" x2="140" y2="295" stroke="#eab308" stroke-width="2" stroke-dasharray="4"/>
-
-              <rect x="40" y="295" width="200" height="45" rx="8" fill="url(#stepGrad)" stroke="#eab308" stroke-width="2"/>
-              <text x="140" y="323" text-anchor="middle" font-size="11" fill="#1f2937">4. Привыкнуть к ритму</text>
-
-              <line x1="140" y1="340" x2="140" y2="360" stroke="#22c55e" stroke-width="2" stroke-dasharray="4"/>
-
-              <rect x="40" y="360" width="200" height="35" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
-              <text x="140" y="382" text-anchor="middle" font-size="11" fill="#166534">✓ Цель достигнута!</text>
-            </svg>
+          <div class="ai-comment-block pink">
+            <strong>AI Методолог:</strong> "Разбил твою цель на 4 реальных шага. 
+            Каждый занимает 15-30 минут. Первый можно сделать прямо сейчас!"
           </div>
         </div>
       </div>
@@ -412,66 +334,63 @@
       </div>
     </section>
 
-    <!-- PLANNING SECTION -->
+    <!-- PLANNING SECTION - SERVICE DESIGN -->
     <section id="planning" class="screen-section bg-planning">
       <div class="section-content">
-        <div class="two-column reverse">
-          <div class="column-visual">
-            <div class="calendar-demo">
-              <div class="calendar-header">
-                <span>Неделя Максима</span>
-              </div>
-              <div class="calendar-grid">
-                <div class="calendar-day" v-for="day in weekDays" :key="day.name">
-                  <div class="day-name">{{ day.name }}</div>
-                  <div class="day-tasks">
-                    <div 
-                      v-for="task in day.tasks" 
-                      :key="task" 
-                      class="day-task"
-                      :class="{ highlight: task.includes('🏃') }"
-                    >
-                      {{ task }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="column-text">
+        <div class="planning-layout">
+          <div class="planning-header">
             <div class="step-badge">Неделя 1</div>
             <h2 class="section-title">Планирование</h2>
             <p class="section-subtitle">AI распределяет шаги по дням с учётом твоей загрузки</p>
-            
-            <div class="example-card">
-              <h3 class="example-title">План недели Максима</h3>
-              
-              <div class="planning-stats">
-                <div class="stat-item">
-                  <span class="stat-value">5</span>
-                  <span class="stat-label">шагов запланировано</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-value">2.5ч</span>
-                  <span class="stat-label">всего времени</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-value">30м</span>
-                  <span class="stat-label">в среднем/день</span>
-                </div>
-              </div>
+          </div>
 
-              <button class="ai-button">
-                <span class="ai-icon">✨</span>
-                AI распределил шаги по неделе
-              </button>
+          <div class="planning-demo-card">
+            <div class="planning-week-header">
+              <span class="week-title">Неделя Максима</span>
+              <span class="week-range">23-29 декабря</span>
+            </div>
 
-              <div class="ai-comment orange">
-                <strong>AI Планировщик:</strong> "Вижу, что вторник и четверг у тебя посвободнее. 
-                Поставлю тренировки туда. Утром или вечером удобнее?"
+            <div class="planning-stats-row">
+              <div class="plan-stat"><span class="plan-stat-val">5</span><span class="plan-stat-lbl">шагов</span></div>
+              <div class="plan-stat"><span class="plan-stat-val">3</span><span class="plan-stat-lbl">выполнено</span></div>
+              <div class="plan-stat"><span class="plan-stat-val">2.5ч</span><span class="plan-stat-lbl">всего</span></div>
+            </div>
+
+            <div class="week-bar-demo">
+              <div 
+                v-for="day in planningDays" 
+                :key="day.short"
+                class="week-day-tab"
+                :class="{ active: day.active, today: day.today, 'has-tasks': day.tasks > 0 }"
+              >
+                <span class="day-short">{{ day.short }}</span>
+                <span class="day-num">{{ day.num }}</span>
+                <span v-if="day.tasks > 0" class="day-task-count">{{ day.tasks }}</span>
               </div>
             </div>
+
+            <div class="day-tasks-preview">
+              <div class="task-preview-item completed">
+                <div class="task-check done">✓</div>
+                <span class="task-name">Выбрать вид спорта</span>
+                <span class="task-time">30м</span>
+              </div>
+              <div class="task-preview-item">
+                <div class="task-check"></div>
+                <span class="task-name">Купить форму</span>
+                <span class="task-time">1ч</span>
+              </div>
+            </div>
+
+            <button class="ai-button">
+              <span class="ai-icon">✨</span>
+              AI распределил шаги по неделе
+            </button>
+          </div>
+
+          <div class="ai-comment-block orange">
+            <strong>AI Планировщик:</strong> "Вижу, что вторник и четверг у тебя посвободнее. 
+            Поставлю тренировки туда. Утром или вечером удобнее?"
           </div>
         </div>
       </div>
@@ -550,7 +469,7 @@
       </div>
 
       <div class="transition-text">
-        <p>"Месяц прошёл. Посмотрим, что изменилось?"</p>
+        <p>"Месяц прошёл. XP копится — пора себя порадовать!"</p>
       </div>
 
       <div class="arrow-connector">
@@ -560,68 +479,199 @@
       </div>
     </section>
 
-    <!-- ACHIEVEMENTS SECTION -->
+    <!-- ACHIEVEMENTS/REWARDS SECTION - REDESIGNED -->
     <section id="achievements" class="screen-section bg-achievements">
       <div class="section-content">
         <div class="two-column reverse">
           <div class="column-visual">
-            <div class="before-after">
-              <div class="ba-column before">
-                <h4>Было</h4>
-                <div class="ba-item">Здоровье: <span class="bad">4/10</span></div>
-                <div class="ba-item">Спорт: <span class="bad">2/10</span></div>
-                <div class="ba-item">Финансы: <span class="bad">3/10</span></div>
-                <div class="ba-item">Семья: <span class="medium">5/10</span></div>
+            <div class="rewards-demo-card">
+              <div class="rewards-header">
+                <span class="rewards-title">Мои награды</span>
+                <div class="xp-balance">
+                  <span class="xp-icon">⭐</span>
+                  <span class="xp-amount">2,450 XP</span>
+                </div>
               </div>
-              <div class="ba-arrow">→</div>
-              <div class="ba-column after">
-                <h4>Стало</h4>
-                <div class="ba-item">Здоровье: <span class="good">7/10</span></div>
-                <div class="ba-item">Спорт: <span class="good">7/10</span></div>
-                <div class="ba-item">Финансы: <span class="medium">5/10</span></div>
-                <div class="ba-item">Семья: <span class="good">7/10</span></div>
-              </div>
-            </div>
 
-            <div class="badges-grid">
-              <div class="badge-item" v-for="badge in badges" :key="badge.name">
-                <span class="badge-emoji">{{ badge.icon }}</span>
-                <span class="badge-name">{{ badge.name }}</span>
+              <div class="reward-item unlocked">
+                <div class="reward-icon">🎬</div>
+                <div class="reward-info">
+                  <span class="reward-name">Вечер кино</span>
+                  <span class="reward-cost">500 XP</span>
+                </div>
+                <button class="reward-btn claimed">Получено!</button>
+              </div>
+
+              <div class="reward-item unlocked">
+                <div class="reward-icon">🍕</div>
+                <div class="reward-info">
+                  <span class="reward-name">Заказать любимую пиццу</span>
+                  <span class="reward-cost">750 XP</span>
+                </div>
+                <button class="reward-btn claimed">Получено!</button>
+              </div>
+
+              <div class="reward-item available">
+                <div class="reward-icon">🎮</div>
+                <div class="reward-info">
+                  <span class="reward-name">Новая игра</span>
+                  <span class="reward-cost">1500 XP</span>
+                </div>
+                <button class="reward-btn ready">Наградить себя!</button>
+              </div>
+
+              <div class="reward-item locked">
+                <div class="reward-icon">✈️</div>
+                <div class="reward-info">
+                  <span class="reward-name">Поездка на выходные</span>
+                  <span class="reward-cost">5000 XP</span>
+                </div>
+                <div class="reward-progress">
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: 49%"></div>
+                  </div>
+                  <span class="progress-text">2450/5000</span>
+                </div>
               </div>
             </div>
           </div>
 
           <div class="column-text">
             <div class="step-badge success">3 месяца</div>
-            <h2 class="section-title">Достижения</h2>
-            <p class="section-subtitle">Результаты Максима за 3 месяца работы с системой</p>
+            <h2 class="section-title">Награды</h2>
+            <p class="section-subtitle">Планируй награды, зарабатывай XP и поощряй себя за прогресс</p>
             
             <div class="example-card success">
-              <h3 class="example-title">Итоги пути</h3>
+              <h3 class="example-title">Система Максима</h3>
               
-              <div class="achievements-stats">
-                <div class="achievement-stat">
-                  <span class="stat-number">47</span>
-                  <span class="stat-text">выполненных шагов</span>
+              <div class="rewards-explain">
+                <div class="explain-item">
+                  <span class="explain-num">1</span>
+                  <span class="explain-text">Составь список желанных наград</span>
                 </div>
-                <div class="achievement-stat">
-                  <span class="stat-number">14</span>
-                  <span class="stat-text">завершённых целей</span>
+                <div class="explain-item">
+                  <span class="explain-num">2</span>
+                  <span class="explain-text">Назначь каждой цену в XP</span>
                 </div>
-                <div class="achievement-stat">
-                  <span class="stat-number">2,450</span>
-                  <span class="stat-text">XP заработано</span>
+                <div class="explain-item">
+                  <span class="explain-num">3</span>
+                  <span class="explain-text">Выполняй привычки и шаги — копи XP</span>
+                </div>
+                <div class="explain-item">
+                  <span class="explain-num">4</span>
+                  <span class="explain-text">Достиг цели — порадуй себя!</span>
                 </div>
               </div>
 
               <div class="ai-comment success">
-                <strong>AI Ментор:</strong> "Максим, ты прошёл путь от 'всё плохо' до реальных результатов. 
-                Здоровье +3, семья +2. Это не магия — это система. 
-                Теперь ты знаешь, как это работает. Продолжаем? 🚀"
+                <strong>AI Ментор:</strong> "Максим, у тебя хватает на новую игру! 
+                Ты её заслужил — 47 шагов выполнено. Нажми 'Наградить себя'! 🎉"
               </div>
             </div>
           </div>
         </div>
+      </div>
+
+      <div class="arrow-connector">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#8b5cf6" stroke-width="2">
+          <path d="M20 5 L20 30 M10 20 L20 30 L30 20" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- AI MENTOR IN TELEGRAM - NEW SECTION -->
+    <section id="telegram" class="screen-section bg-telegram">
+      <div class="section-content">
+        <div class="two-column">
+          <div class="column-text">
+            <h2 class="section-title">AI Ментор в Telegram</h2>
+            <p class="section-subtitle">Сквозной помощник на всём пути. Ежедневная поддержка, фидбэк и направление</p>
+            
+            <div class="telegram-schedule-card">
+              <h3 class="schedule-title">Как работает AI Ментор Максима</h3>
+              
+              <div class="schedule-item">
+                <div class="schedule-icon">🌅</div>
+                <div class="schedule-content">
+                  <strong>Утро (08:00)</strong>
+                  <p>"Привет, Максим! Сегодня у тебя запланирована тренировка в 18:00. Готов? 💪"</p>
+                </div>
+              </div>
+
+              <div class="schedule-item">
+                <div class="schedule-icon">🍽️</div>
+                <div class="schedule-content">
+                  <strong>Днём (14:00)</strong>
+                  <p>"Напоминание: не забудь про завтрак дома. Это одна из твоих привычек! 🍳"</p>
+                </div>
+              </div>
+
+              <div class="schedule-item">
+                <div class="schedule-icon">🌙</div>
+                <div class="schedule-content">
+                  <strong>Вечер (21:00)</strong>
+                  <p>"Время отчёта! Расскажи как дела. Ты тренировался? Ел здоровую пищу?"</p>
+                </div>
+              </div>
+
+              <div class="schedule-item">
+                <div class="schedule-icon">✨</div>
+                <div class="schedule-content">
+                  <strong>Анализ (21:15)</strong>
+                  <p>"Отлично! Ты выполнил 5 из 6 пунктов. Что помешало 6-му? Давай разберёмся"</p>
+                </div>
+              </div>
+
+              <div class="role-transformation">
+                <strong>Ролевая трансформация:</strong> На этапе Колеса - Интервьюер 🎙 → На целях - Стратег 📊 → На спорте - Коуч 💪 → Всегда - Ментор 🤝
+              </div>
+            </div>
+          </div>
+
+          <div class="column-visual">
+            <div class="phone-mockup">
+              <div class="phone-frame">
+                <div class="phone-notch"></div>
+                <div class="phone-screen">
+                  <div class="tg-header">
+                    <div class="tg-avatar">🤖</div>
+                    <div class="tg-info">
+                      <span class="tg-name">AI Ментор 1%</span>
+                      <span class="tg-status">online</span>
+                    </div>
+                  </div>
+                  <div class="tg-messages">
+                    <div class="tg-msg bot">
+                      <span>Привет! 👋 Как у тебя дела со спортом?</span>
+                    </div>
+                    <div class="tg-msg user">
+                      <span>Потренировался! 💪</span>
+                    </div>
+                    <div class="tg-msg bot">
+                      <span>Отлично! 🔥 Это твой 7-й день подряд.<br/>Горячая полоса начинается с 7!</span>
+                    </div>
+                    <div class="tg-msg user green-btn">
+                      <span>Спасибо за поддержку! 😊</span>
+                    </div>
+                    <div class="tg-msg bot">
+                      <span>Это твоя победа, Максим!<br/><span class="tg-accent">+1% каждый день = 37x в год</span></span>
+                    </div>
+                  </div>
+                  <div class="tg-input">
+                    <span>Сообщение...</span>
+                    <div class="tg-send">!</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow-connector">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#0ea5e9" stroke-width="2">
+          <path d="M20 5 L20 30 M10 20 L20 30 L30 20" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
       </div>
     </section>
 
@@ -662,48 +712,61 @@ const sections = [
   { id: 'decomposition', title: 'Декомпозиция' },
   { id: 'planning', title: 'Планирование' },
   { id: 'habits', title: 'Привычки' },
-  { id: 'achievements', title: 'Достижения' },
+  { id: 'achievements', title: 'Награды' },
+  { id: 'telegram', title: 'Telegram' },
   { id: 'cta', title: 'Начать' }
 ]
 
 const wheelScores = [
+  { name: 'Благосостояние', value: 3, level: 'low' },
+  { name: 'Хобби и отдых', value: 7, level: 'high' },
+  { name: 'Дружба', value: 6, level: 'medium' },
   { name: 'Здоровье', value: 4, level: 'low' },
   { name: 'Карьера', value: 8, level: 'high' },
-  { name: 'Семья', value: 5, level: 'medium' },
-  { name: 'Спорт', value: 2, level: 'low' },
-  { name: 'Отношения', value: 6, level: 'medium' },
-  { name: 'Финансы', value: 3, level: 'low' }
+  { name: 'Семья', value: 5, level: 'medium' }
 ]
 
-const decompositionSteps = [
-  { title: 'Выбрать вид спорта', description: 'Протестировать 3 варианта', time: '30м' },
-  { title: 'Купить форму', description: 'Кроссовки и одежда', time: '1ч' },
-  { title: 'Первая тренировка', description: 'Пробный день в зале', time: '1ч' },
-  { title: 'Составить расписание', description: 'Вт, Чт, Сб — утро', time: '15м' },
-  { title: 'Привыкнуть к ритму', description: '3 недели без пропусков', time: '3нед' }
+const wheelScoresVisual = [
+  { value: 3, color: '#E86C6C' },
+  { value: 7, color: '#2BC4A4' },
+  { value: 6, color: '#EFC75E' },
+  { value: 4, color: '#2BC4A4' },
+  { value: 8, color: '#2F4858' },
+  { value: 5, color: '#A78BFA' }
 ]
 
-const weekDays = [
-  { name: 'Пн', tasks: ['Работа', 'Звонок маме'] },
-  { name: 'Вт', tasks: ['🏃 Тренировка', 'Работа'] },
-  { name: 'Ср', tasks: ['Работа', 'Книга 30м'] },
-  { name: 'Чт', tasks: ['🏃 Тренировка', 'Работа'] },
-  { name: 'Пт', tasks: ['Работа', 'Отдых'] },
-  { name: 'Сб', tasks: ['🏃 Тренировка', 'Семья'] },
-  { name: 'Вс', tasks: ['Планирование', 'Отдых'] }
+const getWedgePath = (index, value) => {
+  const cx = 200
+  const cy = 200
+  const maxRadius = 180
+  const minRadius = 20
+  const radius = minRadius + (value / 10) * (maxRadius - minRadius)
+  const anglePerSector = 60
+  const startAngle = (index * anglePerSector - 90) * Math.PI / 180
+  const endAngle = ((index + 1) * anglePerSector - 90) * Math.PI / 180
+  
+  const x1 = cx + radius * Math.cos(startAngle)
+  const y1 = cy + radius * Math.sin(startAngle)
+  const x2 = cx + radius * Math.cos(endAngle)
+  const y2 = cy + radius * Math.sin(endAngle)
+  
+  return `M${cx},${cy} L${x1},${y1} A${radius},${radius} 0 0,1 ${x2},${y2} Z`
+}
+
+const planningDays = [
+  { short: 'Пн', num: 23, tasks: 2, active: false, today: false },
+  { short: 'Вт', num: 24, tasks: 1, active: true, today: true },
+  { short: 'Ср', num: 25, tasks: 0, active: false, today: false },
+  { short: 'Чт', num: 26, tasks: 2, active: false, today: false },
+  { short: 'Пт', num: 27, tasks: 0, active: false, today: false },
+  { short: 'Сб', num: 28, tasks: 1, active: false, today: false },
+  { short: 'Вс', num: 29, tasks: 0, active: false, today: false }
 ]
 
 const habits = [
   { name: 'Утренняя зарядка', icon: '🏃', streak: 14, xp: 15 },
   { name: 'Пить воду', icon: '💧', streak: 21, xp: 10 },
   { name: 'Чтение 30 мин', icon: '📚', streak: 7, xp: 20 }
-]
-
-const badges = [
-  { name: 'Первый шаг', icon: '🎯' },
-  { name: '7 дней стрик', icon: '🔥' },
-  { name: 'Спортсмен', icon: '💪' },
-  { name: 'Планировщик', icon: '📅' }
 ]
 
 const scrollToSection = (index) => {
@@ -742,7 +805,6 @@ onUnmounted(() => {
   color: #1f2937;
 }
 
-/* Sidebar Navigation */
 .sidebar-nav {
   position: fixed;
   left: 20px;
@@ -775,7 +837,6 @@ onUnmounted(() => {
   transform: scale(1.2);
 }
 
-/* Screen Sections */
 .screen-section {
   min-height: 100vh;
   display: flex;
@@ -791,7 +852,6 @@ onUnmounted(() => {
   width: 100%;
 }
 
-/* Gradient Backgrounds */
 .bg-hero { background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%); }
 .bg-mentor { background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); }
 .bg-wheel { background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%); }
@@ -800,9 +860,9 @@ onUnmounted(() => {
 .bg-planning { background: linear-gradient(135deg, #fed7aa 0%, #fef3c7 100%); }
 .bg-habits { background: linear-gradient(135deg, #d1fae5 0%, #ccfbf1 100%); }
 .bg-achievements { background: linear-gradient(135deg, #bfdbfe 0%, #ddd6fe 100%); }
+.bg-telegram { background: linear-gradient(135deg, #e0f2fe 0%, #cffafe 100%); }
 .bg-cta { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); }
 
-/* Two Column Layout */
 .two-column {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -814,7 +874,6 @@ onUnmounted(() => {
   order: -1;
 }
 
-/* Hero Section */
 .hero-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -840,7 +899,6 @@ onUnmounted(() => {
   margin-bottom: 30px;
 }
 
-/* Persona Card */
 .persona-card {
   background: white;
   border-radius: 16px;
@@ -888,7 +946,6 @@ onUnmounted(() => {
   margin: 0;
 }
 
-/* Buttons */
 .cta-button {
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
   color: white;
@@ -906,7 +963,6 @@ onUnmounted(() => {
   box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
 }
 
-/* Growth Chart */
 .growth-chart {
   background: white;
   border-radius: 20px;
@@ -936,7 +992,6 @@ onUnmounted(() => {
   font-size: 0.9rem;
 }
 
-/* Arrow Connectors */
 .arrow-connector {
   position: absolute;
   bottom: 30px;
@@ -950,7 +1005,6 @@ onUnmounted(() => {
   50% { transform: translateX(-50%) translateY(10px); }
 }
 
-/* Section Titles */
 .section-title {
   font-size: 2.5rem;
   font-weight: 800;
@@ -978,7 +1032,6 @@ onUnmounted(() => {
   background: #22c55e;
 }
 
-/* Example Cards */
 .example-card {
   background: white;
   border-radius: 16px;
@@ -997,7 +1050,6 @@ onUnmounted(() => {
   margin-bottom: 20px;
 }
 
-/* Scores List */
 .scores-list {
   display: flex;
   flex-direction: column;
@@ -1047,7 +1099,6 @@ onUnmounted(() => {
 .score-fill.medium { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
 .score-fill.high { background: linear-gradient(90deg, #22c55e, #4ade80); }
 
-/* AI Comments */
 .ai-comment {
   background: #eef2ff;
   border-left: 4px solid #6366f1;
@@ -1057,32 +1108,26 @@ onUnmounted(() => {
   margin-top: 20px;
 }
 
-.ai-comment.purple {
-  background: #faf5ff;
-  border-color: #a855f7;
+.ai-comment.purple { background: #faf5ff; border-color: #a855f7; }
+.ai-comment.pink { background: #fdf2f8; border-color: #ec4899; }
+.ai-comment.orange { background: #fff7ed; border-color: #f97316; }
+.ai-comment.green { background: #ecfdf5; border-color: #22c55e; }
+.ai-comment.success { background: #f0fdf4; border-color: #22c55e; }
+
+.ai-comment-block {
+  background: white;
+  border-left: 4px solid #6366f1;
+  padding: 20px;
+  border-radius: 0 12px 12px 0;
+  font-size: 1rem;
+  margin-top: 30px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
 
-.ai-comment.pink {
-  background: #fdf2f8;
-  border-color: #ec4899;
-}
+.ai-comment-block.purple { border-color: #a855f7; }
+.ai-comment-block.pink { border-color: #ec4899; }
+.ai-comment-block.orange { border-color: #f97316; }
 
-.ai-comment.orange {
-  background: #fff7ed;
-  border-color: #f97316;
-}
-
-.ai-comment.green {
-  background: #ecfdf5;
-  border-color: #22c55e;
-}
-
-.ai-comment.success {
-  background: #f0fdf4;
-  border-color: #22c55e;
-}
-
-/* Transition Text */
 .transition-text {
   text-align: center;
   margin-top: 40px;
@@ -1097,189 +1142,377 @@ onUnmounted(() => {
   margin: 0 auto;
 }
 
-/* Wheel SVG */
-.wheel-svg {
+/* Wheel - New Design */
+.wheel-visual-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.wheel-wrapper {
+  position: relative;
   width: 100%;
-  max-width: 300px;
+  max-width: 400px;
+}
+
+.wheel-svg-new {
+  width: 100%;
   height: auto;
 }
 
-/* Goals List */
-.goals-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.goal-item {
-  padding: 15px;
-  border-radius: 8px;
-  border-left: 4px solid;
-}
-
-.goal-item.red {
-  background: #fef2f2;
-  border-color: #ef4444;
-}
-
-.goal-item.pink {
-  background: #fdf2f8;
-  border-color: #ec4899;
-}
-
-.goal-item.blue {
-  background: #eff6ff;
-  border-color: #3b82f6;
-}
-
-.goal-sphere {
+.wheel-center-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.5rem;
   font-weight: 700;
-  font-size: 0.9rem;
-}
-
-.goal-item.red .goal-sphere { color: #dc2626; }
-.goal-item.pink .goal-sphere { color: #db2777; }
-.goal-item.blue .goal-sphere { color: #2563eb; }
-
-.goal-text {
-  margin: 5px 0 0;
-  font-size: 0.95rem;
-}
-
-/* Steps List */
-.steps-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.step-item {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 12px;
-  background: #fdf2f8;
-  border-radius: 10px;
-}
-
-.step-number {
-  width: 32px;
-  height: 32px;
-  background: #ec4899;
-  color: white;
+  color: #6366f1;
+  background: white;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  flex-shrink: 0;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-.step-content {
-  flex: 1;
-}
-
-.step-content strong {
-  display: block;
-  font-size: 0.95rem;
-}
-
-.step-content p {
-  margin: 3px 0 0;
-  font-size: 0.85rem;
-  color: #6b7280;
-}
-
-.step-time {
-  font-size: 0.85rem;
-  color: #9ca3af;
-  font-weight: 500;
-}
-
-/* Calendar Demo */
-.calendar-demo {
-  background: white;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-}
-
-.calendar-header {
-  font-weight: 700;
-  margin-bottom: 15px;
+/* Goals - Big Cards */
+.goals-full-layout {
   text-align: center;
-  color: #6366f1;
 }
 
-.calendar-grid {
+.goals-header-block {
+  margin-bottom: 40px;
+}
+
+.goals-cards-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 30px;
 }
 
-.calendar-day {
+.goal-card-big {
+  background: white;
+  border-radius: 20px;
+  padding: 30px 20px;
   text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+  border-top: 4px solid;
+  transition: transform 0.2s;
 }
 
-.day-name {
-  font-size: 0.8rem;
-  font-weight: 600;
+.goal-card-big:hover {
+  transform: translateY(-5px);
+}
+
+.goal-card-big.red { border-color: #ef4444; }
+.goal-card-big.pink { border-color: #ec4899; }
+.goal-card-big.blue { border-color: #3b82f6; }
+
+.goal-card-icon {
+  font-size: 3rem;
+  margin-bottom: 15px;
+}
+
+.goal-card-sphere {
+  font-size: 0.9rem;
   color: #6b7280;
-  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 5px;
 }
 
-.day-tasks {
+.goal-card-score {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 15px;
+}
+
+.goal-card-big.red .goal-card-score { color: #ef4444; }
+.goal-card-big.pink .goal-card-score { color: #ec4899; }
+.goal-card-big.blue .goal-card-score { color: #3b82f6; }
+
+.goal-card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.goal-card-reason {
+  font-size: 0.9rem;
+  color: #9ca3af;
+}
+
+/* Decomposition - New Design */
+.decomposition-layout {
+  text-align: center;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.decomposition-header {
+  margin-bottom: 40px;
+}
+
+.decomposition-visual {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 0;
 }
 
-.day-task {
-  font-size: 0.7rem;
-  padding: 4px;
-  background: #f3f4f6;
-  border-radius: 4px;
-}
-
-.day-task.highlight {
-  background: #dcfce7;
-  color: #166534;
-  font-weight: 600;
-}
-
-/* Planning Stats */
-.planning-stats {
+.decomp-goal-card {
+  background: linear-gradient(135deg, #9333ea, #7c3aed);
+  color: white;
+  padding: 20px 40px;
+  border-radius: 16px;
+  font-size: 1.2rem;
+  font-weight: 700;
   display: flex;
-  justify-content: space-around;
+  align-items: center;
+  gap: 10px;
+}
+
+.decomp-goal-icon {
+  font-size: 1.5rem;
+}
+
+.decomp-connector {
+  width: 3px;
+  height: 25px;
+  background: repeating-linear-gradient(
+    to bottom,
+    #9ca3af 0,
+    #9ca3af 8px,
+    transparent 8px,
+    transparent 16px
+  );
+}
+
+.decomp-step-card {
+  width: 100%;
+  max-width: 350px;
+  padding: 20px 30px;
+  border-radius: 16px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: 2px solid;
+}
+
+.decomp-step-card.step-1 {
+  background: linear-gradient(135deg, #fce7f3, #fdf2f8);
+  border-color: #ec4899;
+}
+
+.decomp-step-card.step-2 {
+  background: linear-gradient(135deg, #ffedd5, #fff7ed);
+  border-color: #f97316;
+}
+
+.decomp-step-card.step-3 {
+  background: linear-gradient(135deg, #fef3c7, #fffbeb);
+  border-color: #f59e0b;
+}
+
+.decomp-step-card.step-4 {
+  background: linear-gradient(135deg, #fef9c3, #fefce8);
+  border-color: #eab308;
+}
+
+.decomp-done-card {
+  background: linear-gradient(135deg, #dcfce7, #f0fdf4);
+  border: 2px solid #22c55e;
+  padding: 18px 35px;
+  border-radius: 16px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #166534;
+}
+
+/* Planning - Service Design */
+.planning-layout {
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.planning-header {
+  margin-bottom: 30px;
+}
+
+.planning-demo-card {
+  background: white;
+  border-radius: 20px;
+  padding: 25px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+.planning-week-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 20px;
 }
 
-.stat-item {
+.week-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.week-range {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.planning-stats-row {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.plan-stat {
   text-align: center;
 }
 
-.stat-value {
+.plan-stat-val {
   display: block;
-  font-size: 1.5rem;
-  font-weight: 800;
+  font-size: 1.3rem;
+  font-weight: 700;
   color: #6366f1;
 }
 
-.stat-label {
+.plan-stat-lbl {
   font-size: 0.8rem;
   color: #6b7280;
 }
 
-/* AI Button */
+.week-bar-demo {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.week-day-tab {
+  flex: 1;
+  padding: 10px 5px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.week-day-tab.active {
+  background: #6366f1;
+  color: white;
+}
+
+.week-day-tab.today {
+  border: 2px solid #6366f1;
+}
+
+.week-day-tab.has-tasks::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
+  background: #22c55e;
+  border-radius: 50%;
+}
+
+.week-day-tab.active.has-tasks::after {
+  background: white;
+}
+
+.day-short {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.day-num {
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.day-task-count {
+  display: block;
+  font-size: 0.7rem;
+  color: #6b7280;
+}
+
+.week-day-tab.active .day-task-count {
+  color: rgba(255,255,255,0.8);
+}
+
+.day-tasks-preview {
+  margin-bottom: 20px;
+}
+
+.task-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.task-preview-item.completed {
+  opacity: 0.7;
+}
+
+.task-check {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-check.done {
+  background: #22c55e;
+  border-color: #22c55e;
+  color: white;
+  font-size: 0.8rem;
+}
+
+.task-name {
+  flex: 1;
+  text-align: left;
+  font-weight: 500;
+}
+
+.task-preview-item.completed .task-name {
+  text-decoration: line-through;
+}
+
+.task-time {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
 .ai-button {
   width: 100%;
   background: linear-gradient(135deg, #10b981, #059669);
   color: white;
   border: none;
   padding: 14px 20px;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -1287,14 +1520,13 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-bottom: 15px;
 }
 
 .ai-icon {
   font-size: 1.2rem;
 }
 
-/* Habits List */
+/* Habits */
 .habits-list {
   display: flex;
   flex-direction: column;
@@ -1358,7 +1590,6 @@ onUnmounted(() => {
   font-weight: 700;
 }
 
-/* Streak Visual */
 .streak-visual {
   background: white;
   border-radius: 16px;
@@ -1421,153 +1652,329 @@ onUnmounted(() => {
   color: #92400e;
 }
 
-/* Before/After */
-.before-after {
-  display: flex;
-  align-items: center;
-  gap: 20px;
+/* Rewards/Achievements */
+.rewards-demo-card {
   background: white;
-  padding: 20px;
-  border-radius: 16px;
+  border-radius: 20px;
+  padding: 25px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+.rewards-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 20px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.ba-column {
-  flex: 1;
-}
-
-.ba-column h4 {
-  margin: 0 0 15px;
+.rewards-title {
+  font-size: 1.2rem;
   font-weight: 700;
 }
 
-.ba-column.before h4 { color: #ef4444; }
-.ba-column.after h4 { color: #22c55e; }
-
-.ba-item {
-  padding: 8px 0;
-  font-size: 0.95rem;
-}
-
-.ba-item .bad { color: #ef4444; font-weight: 700; }
-.ba-item .medium { color: #f59e0b; font-weight: 700; }
-.ba-item .good { color: #22c55e; font-weight: 700; }
-
-.ba-arrow {
-  font-size: 2rem;
-  color: #6366f1;
-}
-
-/* Badges Grid */
-.badges-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.badge-item {
-  background: white;
-  padding: 15px;
-  border-radius: 12px;
+.xp-balance {
   display: flex;
   align-items: center;
-  gap: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  gap: 8px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  padding: 8px 15px;
+  border-radius: 20px;
 }
 
-.badge-emoji {
-  font-size: 1.5rem;
+.xp-icon {
+  font-size: 1.2rem;
 }
 
-.badge-name {
-  font-size: 0.9rem;
+.xp-amount {
+  font-weight: 700;
+  color: #92400e;
+}
+
+.reward-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  background: #f9fafb;
+}
+
+.reward-item.unlocked {
+  background: #f0fdf4;
+}
+
+.reward-item.available {
+  background: #ecfdf5;
+  border: 2px solid #22c55e;
+}
+
+.reward-item.locked {
+  opacity: 0.7;
+}
+
+.reward-icon {
+  font-size: 2rem;
+}
+
+.reward-info {
+  flex: 1;
+}
+
+.reward-name {
+  display: block;
   font-weight: 600;
 }
 
-/* Achievements Stats */
-.achievements-stats {
-  display: flex;
-  justify-content: space-around;
-  margin-bottom: 20px;
-}
-
-.achievement-stat {
-  text-align: center;
-}
-
-.stat-number {
-  display: block;
-  font-size: 2rem;
-  font-weight: 800;
-  color: #22c55e;
-}
-
-.stat-text {
+.reward-cost {
   font-size: 0.85rem;
   color: #6b7280;
 }
 
-/* Final CTA */
-.bg-cta {
+.reward-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border: none;
+  cursor: pointer;
+}
+
+.reward-btn.claimed {
+  background: #d1d5db;
+  color: #6b7280;
+}
+
+.reward-btn.ready {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
   color: white;
 }
 
-.centered {
-  text-align: center;
-  max-width: 600px;
+.reward-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 100px;
 }
 
-.cta-title {
-  font-size: 3rem;
-  font-weight: 800;
+.progress-bar {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  border-radius: 4px;
+}
+
+.progress-text {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-align: right;
+}
+
+.rewards-explain {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
   margin-bottom: 20px;
 }
 
-.cta-subtitle {
-  font-size: 1.3rem;
-  opacity: 0.9;
-  margin-bottom: 30px;
+.explain-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
-.cta-features {
+.explain-num {
+  width: 30px;
+  height: 30px;
+  background: #6366f1;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.explain-text {
+  font-size: 1rem;
+}
+
+/* Telegram Section */
+.telegram-schedule-card {
+  background: white;
+  border-radius: 16px;
+  padding: 25px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+}
+
+.schedule-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0ea5e9;
+  margin-bottom: 20px;
+}
+
+.schedule-item {
+  display: flex;
+  gap: 15px;
+  padding: 15px;
+  background: #f0f9ff;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.schedule-icon {
+  font-size: 1.5rem;
+}
+
+.schedule-content strong {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.schedule-content p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+  font-style: italic;
+}
+
+.role-transformation {
+  margin-top: 20px;
+  padding: 15px;
+  background: #e0f2fe;
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+/* Phone Mockup */
+.phone-mockup {
   display: flex;
   justify-content: center;
-  gap: 30px;
-  margin-bottom: 40px;
-  flex-wrap: wrap;
 }
 
-.cta-feature {
-  font-size: 1.1rem;
+.phone-frame {
+  width: 280px;
+  background: #1f2937;
+  border-radius: 35px;
+  padding: 10px;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+}
+
+.phone-notch {
+  width: 100px;
+  height: 25px;
+  background: #1f2937;
+  border-radius: 0 0 15px 15px;
+  margin: 0 auto 10px;
+}
+
+.phone-screen {
+  background: white;
+  border-radius: 25px;
+  overflow: hidden;
+}
+
+.tg-header {
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tg-avatar {
+  width: 40px;
+  height: 40px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+}
+
+.tg-info {
+  color: white;
+}
+
+.tg-name {
+  display: block;
+  font-weight: 700;
+}
+
+.tg-status {
+  font-size: 0.8rem;
   opacity: 0.9;
 }
 
-.cta-button-large {
-  display: inline-block;
-  background: white;
-  color: #6366f1;
-  padding: 18px 48px;
-  border-radius: 14px;
-  font-size: 1.2rem;
-  font-weight: 700;
-  text-decoration: none;
-  transition: transform 0.2s, box-shadow 0.2s;
+.tg-messages {
+  padding: 15px;
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.cta-button-large:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+.tg-msg {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
-.cta-note {
-  margin-top: 20px;
-  opacity: 0.8;
+.tg-msg.bot {
+  background: #f3f4f6;
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
 }
 
-.cta-note a {
+.tg-msg.user {
+  background: #0ea5e9;
   color: white;
-  text-decoration: underline;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+
+.tg-msg.green-btn {
+  background: #22c55e;
+}
+
+.tg-accent {
+  color: #0ea5e9;
+  font-weight: 600;
+}
+
+.tg-input {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  border-top: 1px solid #e5e7eb;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.tg-send {
+  width: 30px;
+  height: 30px;
+  background: #0ea5e9;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  font-weight: 700;
 }
 
 /* Mentor Features */
@@ -1652,18 +2059,66 @@ onUnmounted(() => {
   color: white;
 }
 
-/* Goals SVG */
-.goals-svg {
-  width: 100%;
-  max-width: 300px;
-  height: auto;
+/* Final CTA */
+.bg-cta {
+  color: white;
 }
 
-/* Steps SVG */
-.steps-svg {
-  width: 100%;
-  max-width: 280px;
-  height: auto;
+.centered {
+  text-align: center;
+  max-width: 600px;
+}
+
+.cta-title {
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 20px;
+}
+
+.cta-subtitle {
+  font-size: 1.3rem;
+  opacity: 0.9;
+  margin-bottom: 30px;
+}
+
+.cta-features {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+}
+
+.cta-feature {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.cta-button-large {
+  display: inline-block;
+  background: white;
+  color: #6366f1;
+  padding: 18px 48px;
+  border-radius: 14px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.cta-button-large:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.cta-note {
+  margin-top: 20px;
+  opacity: 0.8;
+}
+
+.cta-note a {
+  color: white;
+  text-decoration: underline;
 }
 
 /* Mobile Styles */
@@ -1695,23 +2150,17 @@ onUnmounted(() => {
     font-size: 1.8rem;
   }
 
-  .calendar-grid {
-    grid-template-columns: repeat(7, 1fr);
+  .goals-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .week-bar-demo {
     gap: 4px;
   }
 
-  .day-task {
-    font-size: 0.6rem;
-    padding: 2px;
-  }
-
-  .before-after {
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .ba-arrow {
-    transform: rotate(90deg);
+  .week-day-tab {
+    padding: 8px 3px;
   }
 
   .cta-title {
@@ -1732,6 +2181,10 @@ onUnmounted(() => {
     height: 30px;
     font-size: 0.75rem;
   }
+
+  .phone-frame {
+    width: 240px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1743,18 +2196,14 @@ onUnmounted(() => {
     font-size: 1.5rem;
   }
 
-  .planning-stats {
-    flex-direction: column;
+  .planning-stats-row {
     gap: 15px;
   }
 
-  .achievements-stats {
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .badges-grid {
-    grid-template-columns: 1fr;
+  .decomp-step-card,
+  .decomp-goal-card {
+    padding: 15px 20px;
+    font-size: 1rem;
   }
 }
 </style>
