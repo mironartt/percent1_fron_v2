@@ -168,9 +168,9 @@
                 </div>
               </div>
 
-              <div class="ai-comment">
-                <strong>AI Интервьюер:</strong> "Я вижу, что здоровье и спорт — твои главные провалы. 
-                Расскажи, почему так вышло? Что мешает заниматься собой?"
+              <div class="ai-role-label">
+                <span class="ai-role-icon">🤖</span>
+                <span class="ai-role-text">AI задаёт уточняющие вопросы и помогает увидеть реальные зоны роста</span>
               </div>
             </div>
           </div>
@@ -200,6 +200,47 @@
               </svg>
               <div class="wheel-center-label">Я</div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="element-connections">
+        <div class="connection-row">
+          <div class="connection-source low">
+            <span class="conn-icon">❤️</span>
+            <span class="conn-label">Здоровье 4/10</span>
+          </div>
+          <div class="connection-arrow">
+            <svg width="60" height="24" viewBox="0 0 60 24">
+              <defs>
+                <marker id="arrowhead1" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7" fill="#ef4444"/>
+                </marker>
+              </defs>
+              <line x1="0" y1="12" x2="50" y2="12" stroke="#ef4444" stroke-width="2" stroke-dasharray="4,2" marker-end="url(#arrowhead1)"/>
+            </svg>
+          </div>
+          <div class="connection-target">
+            <span class="conn-label">Цель: Спорт 3x/неделю</span>
+          </div>
+        </div>
+        <div class="connection-row">
+          <div class="connection-source low">
+            <span class="conn-icon">💰</span>
+            <span class="conn-label">Благосостояние 3/10</span>
+          </div>
+          <div class="connection-arrow">
+            <svg width="60" height="24" viewBox="0 0 60 24">
+              <defs>
+                <marker id="arrowhead2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7" fill="#f97316"/>
+                </marker>
+              </defs>
+              <line x1="0" y1="12" x2="50" y2="12" stroke="#f97316" stroke-width="2" stroke-dasharray="4,2" marker-end="url(#arrowhead2)"/>
+            </svg>
+          </div>
+          <div class="connection-target">
+            <span class="conn-label">Цель: Доход +50К</span>
           </div>
         </div>
       </div>
@@ -254,6 +295,28 @@
           <div class="ai-comment-block purple">
             <strong>AI Стратег:</strong> "Я вижу 3 критические зоны. Давай начнём со здоровья — 
             это фундамент для остального. Готов разбить цель на конкретные шаги?"
+          </div>
+        </div>
+      </div>
+
+      <div class="element-connections goals-to-decomp">
+        <div class="connection-row">
+          <div class="connection-source goal-source">
+            <span class="conn-icon">🎯</span>
+            <span class="conn-label">Спорт 3x/неделю</span>
+          </div>
+          <div class="connection-arrow">
+            <svg width="60" height="24" viewBox="0 0 60 24">
+              <defs>
+                <marker id="arrowhead3" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7" fill="#10b981"/>
+                </marker>
+              </defs>
+              <line x1="0" y1="12" x2="50" y2="12" stroke="#10b981" stroke-width="2" stroke-dasharray="4,2" marker-end="url(#arrowhead3)"/>
+            </svg>
+          </div>
+          <div class="connection-target decomp-target">
+            <span class="conn-label">4 шага декомпозиции</span>
           </div>
         </div>
       </div>
@@ -1330,6 +1393,118 @@ onUnmounted(() => {
   font-size: 1.1rem;
   font-weight: 700;
   color: #166534;
+}
+
+/* AI Role Label */
+.ai-role-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  border-radius: 10px;
+  margin-top: 15px;
+  border-left: 3px solid #10b981;
+}
+
+.ai-role-icon {
+  font-size: 1.2rem;
+}
+
+.ai-role-text {
+  font-size: 0.9rem;
+  color: #047857;
+  font-style: italic;
+}
+
+/* Element Connections */
+.element-connections {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 25px;
+  margin: 25px auto;
+  max-width: 500px;
+  background: rgba(255,255,255,0.7);
+  border-radius: 16px;
+  border: 2px dashed #d1d5db;
+}
+
+.connection-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  justify-content: center;
+}
+
+.connection-source {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: white;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.connection-source.low {
+  border-left: 3px solid #ef4444;
+}
+
+.connection-source.goal-source {
+  border-left: 3px solid #8b5cf6;
+}
+
+.connection-arrow {
+  flex-shrink: 0;
+}
+
+.connection-target {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-left: 3px solid #10b981;
+}
+
+.connection-target.decomp-target {
+  background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+  border-left: 3px solid #a855f7;
+}
+
+.conn-icon {
+  font-size: 1rem;
+}
+
+.conn-label {
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .element-connections {
+    padding: 15px;
+  }
+  
+  .connection-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .connection-source,
+  .connection-target {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+  
+  .connection-arrow svg {
+    width: 40px;
+  }
 }
 
 /* Planning - Service Design */
