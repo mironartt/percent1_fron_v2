@@ -35,6 +35,9 @@ const NewYearLanding = () => import('@/views/land/NewYearLanding.vue')
 const NewYearTest = () => import('@/views/land/NewYearTest.vue')
 const NewYearResults = () => import('@/views/land/NewYearResults.vue')
 
+// Landing Version 2 (Persona-driven)
+const LandingVersion2 = () => import('@/views/land/LandingVersion2.vue')
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -64,6 +67,12 @@ const router = createRouter({
       name: 'newyear-results',
       component: NewYearResults,
       meta: { title: 'Твои итоги 2025 и план на 2026 — OnePercent', public: true }
+    },
+    {
+      path: '/land/version2',
+      name: 'landing-version2',
+      component: LandingVersion2,
+      meta: { title: 'OnePercent — Путь к системному росту', public: true }
     },
     
     // Onboarding (требует авторизации)
