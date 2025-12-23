@@ -87,6 +87,7 @@
               max="365" 
               v-model="days" 
               class="days-slider"
+              aria-label="Количество дней для расчёта эффекта 1%"
             >
             <div class="slider-labels">
               <span>1 мес.</span>
