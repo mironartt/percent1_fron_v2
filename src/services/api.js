@@ -372,6 +372,9 @@ export async function login(email, password) {
  * @param {string|null} referral_code - Реферальный код (опционально)
  */
 export async function register(first_name, email, password1, password2, is_terms_accepted = true, is_privacy_accepted = true, referral_code = null) {
+  const { getTrackingData, clearTrackingData } = await import('@/utils/tracking.js')
+  const trackingData = getTrackingData()
+  
   const payload = {
     first_name,
     email,
@@ -383,9 +386,18 @@ export async function register(first_name, email, password1, password2, is_terms
   if (referral_code) {
     payload.referral_code = referral_code
   }
+  if (trackingData.utm_source) payload.utm_source = trackingData.utm_source
+  if (trackingData.utm_medium) payload.utm_medium = trackingData.utm_medium
+  if (trackingData.utm_campaign) payload.utm_campaign = trackingData.utm_campaign
+  if (trackingData.utm_term) payload.utm_term = trackingData.utm_term
+  if (trackingData.utm_content) payload.utm_content = trackingData.utm_content
+  if (trackingData.ga_client_id) payload.ga_client_id = trackingData.ga_client_id
+  if (trackingData.http_referer) payload.http_referer = trackingData.http_referer
+  
   const result = await request('POST', '/api/rest/front/registration/', payload)
   if (result.status === 'ok') {
     syncCsrfFromCookie()
+    clearTrackingData()
   }
   return result
 }
@@ -397,13 +409,26 @@ export async function register(first_name, email, password1, password2, is_terms
  * @param {string} password2 - Подтверждение пароля
  */
 export async function completeTelegramRegistration(email, password1, password2) {
-  const result = await request('POST', '/api/rest/front/registration/fill-data/', {
+  const { getTrackingData, clearTrackingData } = await import('@/utils/tracking.js')
+  const trackingData = getTrackingData()
+  
+  const payload = {
     email,
     password1,
     password2
-  })
+  }
+  if (trackingData.utm_source) payload.utm_source = trackingData.utm_source
+  if (trackingData.utm_medium) payload.utm_medium = trackingData.utm_medium
+  if (trackingData.utm_campaign) payload.utm_campaign = trackingData.utm_campaign
+  if (trackingData.utm_term) payload.utm_term = trackingData.utm_term
+  if (trackingData.utm_content) payload.utm_content = trackingData.utm_content
+  if (trackingData.ga_client_id) payload.ga_client_id = trackingData.ga_client_id
+  if (trackingData.http_referer) payload.http_referer = trackingData.http_referer
+  
+  const result = await request('POST', '/api/rest/front/registration/fill-data/', payload)
   if (result.status === 'ok') {
     syncCsrfFromCookie()
+    clearTrackingData()
   }
   return result
 }
