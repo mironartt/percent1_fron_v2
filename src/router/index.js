@@ -38,6 +38,9 @@ const NewYearResults = () => import('@/views/land/NewYearResults.vue')
 // Landing Version 2 (Persona-driven)
 const LandingVersion2 = () => import('@/views/land/LandingVersion2.vue')
 
+// Landing Version 3 (Pain-driven interactive)
+const LandingVersion3 = () => import('@/views/land/LandingVersion3.vue')
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -73,6 +76,12 @@ const router = createRouter({
       name: 'landing-version2',
       component: LandingVersion2,
       meta: { title: 'OnePercent — Путь к системному росту', public: true }
+    },
+    {
+      path: '/land/version3',
+      name: 'landing-version3',
+      component: LandingVersion3,
+      meta: { title: 'OnePercent — Решение за 90 дней', public: true }
     },
     
     // Onboarding (требует авторизации)
