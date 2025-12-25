@@ -41,6 +41,9 @@ const LandingVersion2 = () => import('@/views/land/LandingVersion2.vue')
 // Landing Version 3 (Pain-driven interactive)
 const LandingVersion3 = () => import('@/views/land/LandingVersion3.vue')
 
+// Landing Version 4 (Full product journey)
+const LandingVersion4 = () => import('@/views/land/LandingVersion4.vue')
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -82,6 +85,12 @@ const router = createRouter({
       name: 'landing-version3',
       component: LandingVersion3,
       meta: { title: 'OnePercent — Решение за 90 дней', public: true }
+    },
+    {
+      path: '/land/version4',
+      name: 'landing-version4',
+      component: LandingVersion4,
+      meta: { title: 'OnePercent — Путь пользователя в продукте', public: true }
     },
     
     // Onboarding (требует авторизации)
