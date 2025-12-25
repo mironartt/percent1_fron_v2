@@ -10,7 +10,6 @@ const app = createApp(App)
 app.use(createPinia())
 app.use(router)
 
-// Инициализируем CSRF токен при загрузке приложения
 initCsrf().then(() => {
   app.mount('#app')
 })

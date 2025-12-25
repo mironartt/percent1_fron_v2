@@ -35,6 +35,7 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite (with pro
 -   **Billing System**: Complete billing integration with Robokassa payments, supporting tariff limits for free vs. paid tiers, and controlling feature access based on effective tariff.
 -   **Policy Acceptance Modal**: Mandatory modal for users who haven't accepted Terms & Privacy Policy, blocking app usage until confirmed.
 -   **Referral System**: Complete referral program with earnings and withdrawal management, including referral link parsing, registration integration, earnings calculator, and withdrawal system.
+-   **UTM Tracking & HTTP Referer**: Marketing attribution system that captures UTM parameters (utm_source, utm_medium, utm_campaign, utm_term, utm_content, ga_client_id) and http_referer at first visit, stores in localStorage, and sends with registration request. Utility: `src/utils/tracking.js`.
 
 ### System Design Choices
 The application uses a modular structure. It emphasizes user guidance, visual feedback, and a clean interface, with the AI Mentor as a core value proposition. Backend synchronization includes immediate UI feedback, goal routing with `backendId`, race condition prevention, optimized step synchronization, and API pagination.
