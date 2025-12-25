@@ -4,6 +4,33 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OnePercent - Система управления жизнью и доходом</title>
+  
+  <script>
+    (function() {
+      var ref = document.referrer;
+      if (ref && !localStorage.getItem('_initial_referer')) {
+        try {
+          var refHost = new URL(ref).hostname;
+          var ourHost = window.location.hostname;
+          if (refHost !== ourHost && !refHost.endsWith('.' + ourHost)) {
+            localStorage.setItem('_initial_referer', ref.substring(0, 2500));
+          }
+        } catch(e) {}
+      }
+      var params = new URLSearchParams(window.location.search);
+      var utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'ga_client_id'];
+      var utmData = {};
+      utmKeys.forEach(function(key) {
+        var value = params.get(key);
+        if (value) {
+          utmData[key] = value.substring(0, key === 'ga_client_id' ? 50 : 500);
+        }
+      });
+      if (Object.keys(utmData).length > 0) {
+        localStorage.setItem('_utm_data', JSON.stringify(utmData));
+      }
+    })();
+  </script>
   <meta name="description" content="Достигайте целей через 1% улучшений каждый день. AI-ментор, трекер привычек, планирование и геймификация для системного роста.">
   <meta name="robots" content="index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1">
   <link rel="canonical" href="https://percent1.ru/">
