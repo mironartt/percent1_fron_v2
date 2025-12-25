@@ -7,16 +7,31 @@
   
   <script>
     (function() {
+      console.log('[Tracking] document.referrer:', document.referrer || '(empty)');
+      console.log('[Tracking] localStorage._initial_referer:', localStorage.getItem('_initial_referer') || '(not set)');
+      console.log('[Tracking] localStorage._utm_data:', localStorage.getItem('_utm_data') || '(not set)');
+      
       var ref = document.referrer;
       if (ref && !localStorage.getItem('_initial_referer')) {
         try {
           var refHost = new URL(ref).hostname;
           var ourHost = window.location.hostname;
+          console.log('[Tracking] refHost:', refHost, 'ourHost:', ourHost);
           if (refHost !== ourHost && !refHost.endsWith('.' + ourHost)) {
             localStorage.setItem('_initial_referer', ref.substring(0, 2500));
+            console.log('[Tracking] SAVED referer:', ref);
+          } else {
+            console.log('[Tracking] SKIPPED referer (same domain)');
           }
-        } catch(e) {}
+        } catch(e) {
+          console.log('[Tracking] ERROR parsing referer:', e);
+        }
+      } else if (!ref) {
+        console.log('[Tracking] No document.referrer available');
+      } else {
+        console.log('[Tracking] Referer already saved, skipping');
       }
+      
       var params = new URLSearchParams(window.location.search);
       var utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'ga_client_id'];
       var utmData = {};
@@ -28,6 +43,7 @@
       });
       if (Object.keys(utmData).length > 0) {
         localStorage.setItem('_utm_data', JSON.stringify(utmData));
+        console.log('[Tracking] SAVED UTM:', utmData);
       }
     })();
   </script>
