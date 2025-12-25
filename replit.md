@@ -26,6 +26,7 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite (with pro
 -   **Bidirectional Calendar ↔ Goals Block Sync**: Synchronizes step dates, completion, priority, and time estimates.
 -   **Marketing Landing Page**: Conversion-focused landing page with an interactive 1% effect slider, app preview, feature cards, and calls to action.
 -   **Landing Version 3 (/land/version3)**: Pain-driven interactive landing with 3 clickable situation cards, 90-day user journey visualization (Day 1/30/90), "How it works" section, comparison table vs courses/coaches, and CTA with Telegram bot + demo modal.
+-   **Landing Version 4 (/land/version4)**: Full product journey landing with 8 blocks (Wheel of Balance, Goals, Decomposition, Planning, Habits, Rewards, AI Mentor, Final CTA). Features unified #F5F3FF background, transition phrases between blocks, accordions for blocks 1-2, tabs with sub-tabs for AI Mentor block, and comprehensive mobile responsiveness.
 -   **Year Review 2025 (Итоги года)**: Single-page flow with test → results, including AI-generated 2026 plan with loading animation and confetti.
 -   **Achievements Page**: Improved UX with grouped XP history, filterable transactions, and AI Reward Mentor feature for personalized reward suggestions.
 -   **Settings Page**: Redesigned with profile management, Telegram bot integration, and an "Мой старт" section.
