@@ -17,7 +17,8 @@ export function parseAndSaveUTM() {
   UTM_KEYS.forEach(key => {
     const value = params.get(key)
     if (value) {
-      utmData[key] = value.substring(0, 500)
+      const maxLength = key === 'ga_client_id' ? 50 : 500
+      utmData[key] = value.substring(0, maxLength)
     }
   })
 
