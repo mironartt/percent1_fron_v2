@@ -692,7 +692,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-:root {
+.landing-v4 {
   --primary: #6366F1;
   --primary-hover: #5558E3;
   --primary-light: #E0E7FF;
@@ -739,9 +739,7 @@ onUnmounted(() => {
   --transition-fast: 150ms ease;
   --transition-base: 300ms ease;
   --transition-slow: 500ms ease;
-}
-
-.landing-v4 {
+  
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   line-height: 1.6;
   color: var(--text-primary);
