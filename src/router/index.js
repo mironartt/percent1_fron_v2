@@ -44,6 +44,9 @@ const LandingVersion3 = () => import('@/views/land/LandingVersion3.vue')
 // Landing Version 4 (Full product journey)
 const LandingVersion4 = () => import('@/views/land/LandingVersion4.vue')
 
+// Landing Version 5 (Full journey + Trust sections)
+const LandingVersion5 = () => import('@/views/land/LandingVersion5.vue')
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -91,6 +94,12 @@ const router = createRouter({
       name: 'landing-version4',
       component: LandingVersion4,
       meta: { title: 'OnePercent — Путь пользователя в продукте', public: true }
+    },
+    {
+      path: '/land/version5',
+      name: 'landing-version5',
+      component: LandingVersion5,
+      meta: { title: 'OnePercent — Полный путь с доверием', public: true }
     },
     
     // Onboarding (требует авторизации)

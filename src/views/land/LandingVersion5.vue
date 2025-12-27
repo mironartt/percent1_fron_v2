@@ -438,21 +438,220 @@
       </div>
     </section>
 
-    <footer class="footer">
+    <section class="legends-section">
+      <div class="container">
+        <h2 class="section-title">Проверено временем</h2>
+        <p class="section-subtitle">
+          Величайшие умы истории использовали системный подход к развитию задолго до нас
+        </p>
+        
+        <div class="legends-grid">
+          <div class="legend-card">
+            <div class="legend-avatar">
+              <Feather :size="32" />
+            </div>
+            <div class="legend-content">
+              <h3>Бенджамин Франклин</h3>
+              <span class="legend-role">Политик, учёный, изобретатель</span>
+              <blockquote class="legend-quote">
+                <Quote :size="16" class="quote-icon" />
+                «Маленькие удары валят большие дубы»
+              </blockquote>
+              <p class="legend-method">
+                Создал систему 13 добродетелей: каждую неделю фокусировался на одном качестве, вёл дневник самоанализа.
+              </p>
+            </div>
+          </div>
+          
+          <div class="legend-card">
+            <div class="legend-avatar">
+              <BookMarked :size="32" />
+            </div>
+            <div class="legend-content">
+              <h3>Джеймс Клир</h3>
+              <span class="legend-role">Автор «Atomic Habits»</span>
+              <blockquote class="legend-quote">
+                <Quote :size="16" class="quote-icon" />
+                «Привычки — это сложные проценты самосовершенствования»
+              </blockquote>
+              <p class="legend-method">
+                Популяризировал концепцию 1%: если каждый день улучшаться на 1%, за год станешь лучше в 37 раз.
+              </p>
+            </div>
+          </div>
+          
+          <div class="legend-card">
+            <div class="legend-avatar">
+              <TrendingUp :size="32" />
+            </div>
+            <div class="legend-content">
+              <h3>Уоррен Баффетт</h3>
+              <span class="legend-role">Инвестор, миллиардер</span>
+              <blockquote class="legend-quote">
+                <Quote :size="16" class="quote-icon" />
+                «Я просто сижу в офисе и читаю целый день»
+              </blockquote>
+              <p class="legend-method">
+                Правило 5 часов: ежедневно инвестирует минимум час в обучение и рефлексию. 80% рабочего времени — чтение.
+              </p>
+            </div>
+          </div>
+          
+          <div class="legend-card">
+            <div class="legend-avatar">
+              <PenTool :size="32" />
+            </div>
+            <div class="legend-content">
+              <h3>Леонардо да Винчи</h3>
+              <span class="legend-role">Художник, учёный, изобретатель</span>
+              <blockquote class="legend-quote">
+                <Quote :size="16" class="quote-icon" />
+                «Препятствия не могут сокрушить меня»
+              </blockquote>
+              <p class="legend-method">
+                Вёл легендарные записные книжки: 7000+ страниц наблюдений, идей и планов. Ежедневная практика.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pricing-section">
+      <div class="container">
+        <h2 class="section-title">Простая и честная стоимость</h2>
+        <p class="section-subtitle">
+          Без скрытых платежей. Отмена в любой момент.
+        </p>
+        
+        <div v-if="pricingTerms.length > 0" class="term-selector">
+          <button 
+            v-for="term in pricingTerms" 
+            :key="term.id"
+            :class="['term-btn', { active: selectedTerm?.id === term.id, hit: term.is_hit }]"
+            @click="selectTerm(term.id)"
+          >
+            <span class="term-name">{{ term.title }}</span>
+            <span v-if="term.discount > 0" class="term-discount">-{{ term.discount }}%</span>
+            <span v-if="term.is_hit" class="hit-badge">Хит</span>
+          </button>
+        </div>
+        
+        <div class="pricing-cards">
+          <template v-if="pricingTariffs.length > 0">
+            <div 
+              v-for="(tariff, index) in pricingTariffs" 
+              :key="tariff.id"
+              :class="['pricing-card', { featured: tariff.is_popular, premium: index === 2, 'is-soon': tariff.is_soon }]"
+            >
+              <div v-if="tariff.is_popular" class="popular-badge">Популярный выбор</div>
+              <div v-if="tariff.is_soon" class="soon-badge">Скоро</div>
+              <div class="pricing-header">
+                <h3>{{ tariff.title }}</h3>
+                <div class="price">
+                  <span class="amount">{{ formatPrice(getTariffPrice(tariff).price) }} ₽</span>
+                  <span class="period">{{ getTariffPrice(tariff).period }}</span>
+                </div>
+                <div v-if="getTariffSavings(tariff) > 0" class="savings">
+                  Экономия {{ formatPrice(getTariffSavings(tariff)) }} ₽
+                </div>
+              </div>
+              <p v-if="tariff.description" class="tariff-description">{{ tariff.description }}</p>
+              <ul class="pricing-features">
+                <li 
+                  v-for="item in getSortedFeatureItems(tariff)" 
+                  :key="item.id"
+                >
+                  <span class="check"><Check :size="16" /></span> {{ item.text }}
+                </li>
+              </ul>
+              <a 
+                v-if="!tariff.is_soon"
+                href="https://t.me/onepercent_bot" 
+                target="_blank"
+                :class="['btn', tariff.code === 'free' ? 'btn-outline' : (tariff.is_popular ? 'btn-white' : 'btn-premium')]"
+              >
+                {{ tariff.code === 'free' ? 'Начать бесплатно' : 'Попробовать' }}
+              </a>
+              <button v-else class="btn btn-disabled" disabled>Скоро</button>
+            </div>
+          </template>
+          
+          <template v-else>
+            <div class="pricing-card">
+              <div class="pricing-header">
+                <h3>Бесплатно</h3>
+                <div class="price">
+                  <span class="amount">0 ₽</span>
+                  <span class="period">навсегда</span>
+                </div>
+              </div>
+              <ul class="pricing-features">
+                <li><span class="check"><Check :size="16" /></span> Колесо баланса (ССП)</li>
+                <li><span class="check"><Check :size="16" /></span> Банк целей (до 3 целей)</li>
+                <li><span class="check"><Check :size="16" /></span> Трекер привычек (до 5)</li>
+                <li><span class="check"><Check :size="16" /></span> Дневник рефлексии</li>
+              </ul>
+              <a href="https://t.me/onepercent_bot" target="_blank" class="btn btn-outline">
+                Начать бесплатно
+              </a>
+            </div>
+            
+            <div class="pricing-card featured">
+              <div class="popular-badge">Популярный выбор</div>
+              <div class="pricing-header">
+                <h3>Pro</h3>
+                <div class="price">
+                  <span class="amount">599 ₽</span>
+                  <span class="period">/ месяц</span>
+                </div>
+              </div>
+              <ul class="pricing-features">
+                <li><span class="check"><Check :size="16" /></span> Всё из бесплатного</li>
+                <li><span class="check"><Check :size="16" /></span> Безлимитные цели и привычки</li>
+                <li><span class="check"><Check :size="16" /></span> AI ментор</li>
+                <li><span class="check"><Check :size="16" /></span> Приоритетная поддержка</li>
+              </ul>
+              <a href="https://t.me/onepercent_bot" target="_blank" class="btn btn-white">
+                Попробовать Pro
+              </a>
+            </div>
+          </template>
+        </div>
+        
+        <p class="pricing-note">
+          <Lightbulb :size="18" class="note-icon" /> Начни бесплатно и переходи на Pro, когда почувствуешь, что готов к следующему уровню
+        </p>
+      </div>
+    </section>
+
+    <footer class="landing-footer">
       <div class="container">
         <div class="footer-content">
-          <div class="footer-logo">
-            <strong>OnePercent</strong>
-            <p>+1% каждый день</p>
+          <div class="footer-brand">
+            <div class="logo">
+              <span class="logo-icon small">1%</span>
+              <span>OnePercent</span>
+            </div>
           </div>
           <div class="footer-links">
-            <a href="#">Политика конфиденциальности</a>
-            <a href="#">Условия использования</a>
-            <a href="#">Контакты</a>
+            <a href="https://t.me/onepercent_bot" target="_blank">Войти</a>
+            <a href="https://t.me/onepercent_bot" target="_blank">Регистрация</a>
           </div>
-          <div class="footer-copy">
-            © 2024 OnePercent. Все права защищены.
+        </div>
+        <div class="footer-legal">
+          <div class="legal-links">
+            <a href="https://percent1.ru/privacy" target="_blank" rel="noopener noreferrer">Политика конфиденциальности</a>
+            <a href="https://percent1.ru/termspolicy" target="_blank" rel="noopener noreferrer">Пользовательское соглашение</a>
+            <a href="https://percent1.ru/disclaimer" target="_blank" rel="noopener noreferrer">Отказ от ответственности</a>
           </div>
+        </div>
+        <div class="footer-bottom">
+          <div class="company-info">
+            <p>ИП Косик Дмитрий Владимирович</p>
+            <p>ИНН: 711280092908 | ОГРНИП: 321774600674346</p>
+          </div>
+          <p>&copy; 2025 OnePercent. Все права защищены.</p>
         </div>
       </div>
     </footer>
@@ -495,8 +694,66 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import WheelOfLife from '@/components/WheelOfLife.vue'
+import { useSubscriptionStore } from '@/stores/subscription'
+import { 
+  Check, 
+  Lightbulb,
+  Feather,
+  Quote,
+  BookMarked,
+  PenTool,
+  TrendingUp 
+} from 'lucide-vue-next'
+
+const subscriptionStore = useSubscriptionStore()
+
+const pricingTariffs = computed(() => subscriptionStore.tariffs)
+const pricingTerms = computed(() => subscriptionStore.terms)
+
+const selectedTermId = ref(null)
+
+const selectedTerm = computed(() => {
+  if (!pricingTerms.value.length) return null
+  if (selectedTermId.value) {
+    return pricingTerms.value.find(t => t.id === selectedTermId.value) || pricingTerms.value[0]
+  }
+  return pricingTerms.value.find(t => t.is_hit) || pricingTerms.value[0]
+})
+
+function selectTerm(termId) {
+  selectedTermId.value = termId
+}
+
+function getTariffPrice(tariff) {
+  if (!tariff || tariff.code === 'free') return { price: 0, period: 'навсегда' }
+  if (!selectedTerm.value || !tariff.terms) return { price: tariff.price, period: '/ месяц' }
+  
+  const term = tariff.terms.find(t => t.id === selectedTerm.value.id)
+  if (!term) return { price: tariff.price, period: '/ месяц' }
+  
+  return {
+    price: term.final_price,
+    period: selectedTerm.value.months === 1 ? '/ месяц' : `за ${selectedTerm.value.months} мес`
+  }
+}
+
+function getTariffSavings(tariff) {
+  if (!tariff || tariff.code === 'free' || !selectedTerm.value) return 0
+  const term = tariff.terms?.find(t => t.id === selectedTerm.value.id)
+  if (!term) return 0
+  return parseFloat(term.savings) || 0
+}
+
+function getSortedFeatureItems(tariff) {
+  if (!tariff?.feature_items?.length) return []
+  return [...tariff.feature_items].sort((a, b) => a.sort_order - b.sort_order)
+}
+
+function formatPrice(price) {
+  return Math.round(price).toLocaleString('ru-RU')
+}
 
 const socialProofCount = ref(2847)
 const showBackToTop = ref(false)
@@ -667,6 +924,7 @@ function handleScroll() {
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
+  subscriptionStore.loadTariffs(true)
 })
 
 onUnmounted(() => {
@@ -3785,6 +4043,589 @@ p {
   }
   
   .social-proof {
+    font-size: 0.875rem;
+  }
+}
+
+.section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-primary);
+}
+
+.section-subtitle {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 1.125rem;
+  margin-bottom: var(--spacing-xl);
+}
+
+.legends-section {
+  padding: var(--spacing-3xl) 0;
+  background: var(--bg-white);
+}
+
+.legends-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-lg);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.legend-card {
+  background: var(--bg-light);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  transition: all var(--transition-base);
+}
+
+.legend-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.legend-avatar {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--purple) 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.legend-content h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.legend-role {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.legend-quote {
+  display: flex;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md);
+  background: var(--bg-white);
+  border-radius: var(--radius-md);
+  margin: var(--spacing-sm) 0;
+  font-style: italic;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.legend-quote .quote-icon {
+  flex-shrink: 0;
+  color: var(--primary);
+  margin-top: 2px;
+}
+
+.legend-method {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.pricing-section {
+  padding: var(--spacing-3xl) 0;
+  background: var(--bg-light);
+}
+
+.term-selector {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xl);
+  flex-wrap: wrap;
+}
+
+.term-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--bg-white);
+  border: 2px solid var(--bg-light);
+  border-radius: var(--radius-full);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.term-btn:hover {
+  border-color: var(--primary-light);
+}
+
+.term-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.term-btn.hit {
+  position: relative;
+}
+
+.term-discount {
+  background: var(--success);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.hit-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--warning);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.tariff-description {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: 0 0 var(--spacing-sm);
+  line-height: 1.4;
+}
+
+.savings {
+  margin-top: var(--spacing-xs);
+  font-size: 0.875rem;
+  color: var(--success);
+  font-weight: 600;
+}
+
+.pricing-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-lg);
+  max-width: 1100px;
+  margin: 0 auto var(--spacing-lg);
+}
+
+.pricing-card {
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  border: 2px solid var(--bg-light);
+  display: flex;
+  flex-direction: column;
+  transition: all var(--transition-base);
+}
+
+.pricing-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.pricing-card.featured {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--purple) 100%);
+  color: white;
+  border: none;
+  position: relative;
+  transform: scale(1.05);
+}
+
+.pricing-card.featured:hover {
+  transform: scale(1.08);
+}
+
+.pricing-card.premium {
+  background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%);
+  color: white;
+  border: 2px solid var(--warning);
+}
+
+.popular-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--warning);
+  color: #1a1a2e;
+  padding: 0.25rem 1rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.soon-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text-muted);
+  color: white;
+  padding: 0.25rem 1rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pricing-card.is-soon {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.pricing-header {
+  text-align: center;
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.pricing-card.featured .pricing-header,
+.pricing-card.premium .pricing-header {
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+.pricing-header h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-sm);
+}
+
+.price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.price .amount {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.price .period {
+  font-size: 0.875rem;
+  opacity: 0.7;
+}
+
+.pricing-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--spacing-md);
+  flex: 1;
+}
+
+.pricing-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) 0;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
+.pricing-features li.disabled {
+  opacity: 0.5;
+}
+
+.pricing-features .check {
+  color: var(--success);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.pricing-card.featured .check,
+.pricing-card.premium .check {
+  color: #a7f3d0;
+}
+
+.pricing-card .btn {
+  width: 100%;
+  text-align: center;
+  padding: var(--spacing-sm);
+  font-weight: 600;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 2px solid var(--primary);
+  color: var(--primary);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  text-decoration: none;
+}
+
+.btn-outline:hover {
+  background: var(--primary-light);
+}
+
+.btn-white {
+  background: white;
+  color: var(--primary);
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  text-decoration: none;
+}
+
+.btn-white:hover {
+  background: var(--bg-light);
+}
+
+.btn-premium {
+  background: linear-gradient(135deg, var(--warning) 0%, #f59e0b 100%);
+  color: #1a1a2e;
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  text-decoration: none;
+  box-shadow: 0 4px 15px rgba(251, 191, 36, 0.25);
+}
+
+.btn-premium:hover {
+  opacity: 0.9;
+}
+
+.btn-disabled {
+  background: var(--bg-light);
+  color: var(--text-muted);
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: not-allowed;
+}
+
+.pricing-note {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-xs);
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+}
+
+.pricing-note .note-icon {
+  color: var(--warning);
+}
+
+.landing-footer {
+  background: #1a1a2e;
+  color: white;
+  padding: var(--spacing-2xl) 0 var(--spacing-md);
+}
+
+.landing-footer .footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-brand .logo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.footer-brand .logo .logo-icon {
+  background: var(--primary);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.footer-brand .logo .logo-icon.small {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.375rem;
+}
+
+.footer-brand .logo span:not(.logo-icon) {
+  color: white;
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+.landing-footer .footer-links {
+  display: flex;
+  gap: var(--spacing-lg);
+}
+
+.landing-footer .footer-links a {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  transition: color var(--transition-base);
+}
+
+.landing-footer .footer-links a:hover {
+  color: white;
+}
+
+.footer-legal {
+  padding-top: var(--spacing-md);
+  margin-top: var(--spacing-md);
+  text-align: center;
+}
+
+.legal-links {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+  margin-bottom: var(--spacing-md);
+}
+
+.legal-links a {
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  transition: color var(--transition-base);
+}
+
+.legal-links a:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.company-info {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.75rem;
+}
+
+.company-info p {
+  margin: 0.25rem 0;
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: var(--spacing-md);
+}
+
+.footer-bottom p {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.875rem;
+  margin: var(--spacing-xs) 0;
+}
+
+@media (max-width: 900px) {
+  .pricing-card.featured {
+    transform: scale(1);
+  }
+  
+  .pricing-card.featured:hover {
+    transform: translateY(-5px);
+  }
+}
+
+@media (max-width: 768px) {
+  .section-title {
+    font-size: 1.5rem;
+  }
+  
+  .section-subtitle {
+    font-size: 1rem;
+    padding: 0 var(--spacing-sm);
+  }
+  
+  .legends-section {
+    padding: var(--spacing-2xl) 0;
+  }
+  
+  .legends-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .legend-card {
+    padding: var(--spacing-lg);
+  }
+  
+  .pricing-section {
+    padding: var(--spacing-2xl) 0;
+  }
+  
+  .pricing-cards {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+  }
+  
+  .term-selector {
+    gap: var(--spacing-xs);
+  }
+  
+  .term-btn {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 0.875rem;
+  }
+  
+  .landing-footer .footer-content {
+    flex-direction: column;
+    gap: var(--spacing-md);
+    text-align: center;
+  }
+  
+  .legal-links {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .section-title {
+    font-size: 1.25rem;
+  }
+  
+  .legends-section,
+  .pricing-section {
+    padding: var(--spacing-xl) 0;
+  }
+  
+  .legend-card {
+    padding: var(--spacing-md);
+  }
+  
+  .legend-avatar {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .legend-quote {
+    padding: var(--spacing-sm);
+    font-size: 0.875rem;
+  }
+  
+  .pricing-card {
+    padding: var(--spacing-md);
+  }
+  
+  .price .amount {
+    font-size: 2rem;
+  }
+  
+  .pricing-features li {
     font-size: 0.875rem;
   }
 }
