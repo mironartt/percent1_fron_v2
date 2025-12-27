@@ -266,8 +266,8 @@
             <span class="transition-check">✓ Неделя пройдена</span>
             <span class="step-badge-inline">Шаг 5 из 5: Привычки</span>
           </div>
-          <h2>Привычки — твой автопилот</h2>
-          <p class="block-subtitle">Отмечай выполнение привычек, следи за прогрессом и получай XP за каждый день без пропусков.</p>
+          <h2>От цели до первого шага — за 30 секунд</h2>
+          <p class="block-subtitle">AI разбивает твою цель на реальные задачи с точным временем. Просто начни делать.</p>
         </div>
 
         <div class="block5-layout">
@@ -1337,6 +1337,18 @@ p {
 
 .block:nth-child(even) {
   background: var(--bg-white);
+}
+
+.block-planning,
+.block-habits {
+  padding: var(--spacing-3xl) 0;
+}
+
+.block-planning .container,
+.block-habits .container {
+  max-width: 1200px;
+  padding-left: var(--spacing-xl);
+  padding-right: var(--spacing-xl);
 }
 
 .block-content {
