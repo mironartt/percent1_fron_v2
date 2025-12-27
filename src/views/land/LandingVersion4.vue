@@ -339,11 +339,9 @@
               </div>
             </div>
 
-            <a href="#block7" class="btn btn-primary" @click.prevent="scrollTo('#block7')">Продолжить →</a>
-
             <div class="testimonial">
               <p>"Система наград — единственное, что работает для меня. Раньше я покупал вещи импульсивно и потом жалел. Теперь каждая покупка — заслуженная."</p>
-              <div class="testimonial-author">— Артём, SaaS-стартап</div>
+              <div class="testimonial-author">— Артём, основатель диджитал агентства</div>
             </div>
           </div>
         </div>
