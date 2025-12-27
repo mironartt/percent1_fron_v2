@@ -89,53 +89,24 @@
           <p>✓ Диагностика пройдена. AI определил проблемные зоны.</p>
         </div>
         <div class="block-content reverse">
-          <div class="block-visual">
-            <div class="goals-cards">
-              <div class="goal-card goal-health">
-                <div class="goal-icon">❤️</div>
-                <div class="goal-info">
-                  <div class="goal-title">Спорт 3х в неделю</div>
-                  <div class="goal-meta">Из "Здоровье 4/10"</div>
-                </div>
-              </div>
-              <div class="goal-card goal-money">
-                <div class="goal-icon">💰</div>
-                <div class="goal-info">
-                  <div class="goal-title">+30% к доходу</div>
-                  <div class="goal-meta">Из "Финансы 5/10"</div>
-                </div>
-              </div>
-              <div class="goal-card goal-family">
-                <div class="goal-icon">👨‍👩‍👧</div>
-                <div class="goal-info">
-                  <div class="goal-title">Вечер с семьёй 3х в неделю</div>
-                  <div class="goal-meta">Из "Семья 6/10"</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <div class="block-text">
-            <h2>AI превратил проблемы в цели за 90 секунд</h2>
-            <p class="block-subtitle">Вместо абстрактного "надо заняться здоровьем" — конкретная измеримая цель с планом</p>
+            <div class="step-badge">Шаг 2 из 5: Твой план</div>
+            <h2>Твой план готов. Начни с первого шага</h2>
+            <p class="block-subtitle">AI взял твои слабые зоны из диагностики и превратил в конкретные действия на ближайший месяц</p>
 
-            <div class="decomposition-example">
-              <div class="decomp-step">
-                <span class="decomp-label">Здоровье 4/10</span>
-                <span class="decomp-arrow">→</span>
-                <span class="decomp-label">Спорт 3х/неделю</span>
-              </div>
+            <div class="month-structure-card">
+              <div class="month-structure-header">Структура первого месяца</div>
               <div class="decomp-timeline">
                 <div class="timeline-item">
                   <div class="timeline-dot"></div>
                   <div class="timeline-content">
-                    <strong>Неделя 1:</strong> Выбрать спорт, купить форму
+                    <strong>Неделя 1:</strong> Подготовка и первые маленькие шаги
                   </div>
                 </div>
                 <div class="timeline-item">
                   <div class="timeline-dot"></div>
                   <div class="timeline-content">
-                    <strong>Неделя 2-4:</strong> От 2 до 3 тренировок
+                    <strong>Неделя 2-4:</strong> Закрепление привычек и рост интенсивности
                   </div>
                 </div>
               </div>
@@ -145,13 +116,43 @@
               <div class="ai-avatar">🤖</div>
               <div class="ai-message">
                 <div class="ai-name">AI Стратег</div>
-                <p>"Начнём со здоровья — это фундамент. Без энергии карьера и семья тоже пострадают."</p>
+                <p>"AI проанализировал твои результаты: Хобби 2/10, Благосостояние 4/10. Начнём с хобби — это твоя точка входа в энергию. Дальше подтянем финансы."</p>
+              </div>
+            </div>
+
+            <a href="#block3" class="btn btn-primary" @click.prevent="scrollTo('#block3')">Начать с первого шага →</a>
+            <div class="btn-meta">Бесплатно • Следующий шаг: декомпозиция</div>
+          </div>
+
+          <div class="block-visual">
+            <div class="goals-section-header">На основе твоей диагностики:</div>
+            <div class="goals-cards">
+              <div class="goal-card goal-hobby">
+                <div class="goal-icon">🎨</div>
+                <div class="goal-info">
+                  <div class="goal-title">Хобби 2 часа в неделю</div>
+                  <div class="goal-meta">Из "Хобби и Отдых 2/10"</div>
+                </div>
+              </div>
+              <div class="goal-card goal-money">
+                <div class="goal-icon">💰</div>
+                <div class="goal-info">
+                  <div class="goal-title">+30% к доходу</div>
+                  <div class="goal-meta">Из "Благосостояние 4/10"</div>
+                </div>
+              </div>
+              <div class="goal-card goal-family">
+                <div class="goal-icon">❤️</div>
+                <div class="goal-info">
+                  <div class="goal-title">Вечер с семьёй 3х в неделю</div>
+                  <div class="goal-meta">Из "Любовь, Семья, Отношения 8/10"</div>
+                </div>
               </div>
             </div>
 
             <div class="accordion">
               <button class="accordion-trigger" :class="{ active: accordions.howItWorks }" @click="toggleAccordion('howItWorks')">
-                <span>Как AI формирует цели?</span>
+                <span>Как AI выбрал именно эти цели?</span>
                 <svg class="accordion-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
                   <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                 </svg>
@@ -172,26 +173,18 @@
                   </div>
                   <div class="example-transformation">
                     <h5>Пример трансформации:</h5>
-                    <div class="transform-step">🔴 Здоровье 4/10</div>
+                    <div class="transform-step">🟡 Хобби и Отдых 2/10</div>
                     <div class="transform-arrow">↓</div>
-                    <div class="transform-step">Причина: Нет физической активности</div>
+                    <div class="transform-step">Причина: Нет времени на себя</div>
                     <div class="transform-arrow">↓</div>
-                    <div class="transform-step">Цель: Спорт 3 раза в неделю</div>
+                    <div class="transform-step">Цель: Хобби 2 часа в неделю</div>
                     <div class="transform-arrow">↓</div>
-                    <div class="transform-step">Результат: Здоровье поднимется до 7-8/10</div>
+                    <div class="transform-step">Результат: Хобби поднимется до 5-6/10</div>
                     <div class="transform-arrow">↓</div>
-                    <div class="transform-step">План: 4 недели от подготовки до привычки</div>
+                    <div class="transform-step">План: 4 недели от выбора занятия до привычки</div>
                   </div>
                 </div>
               </div>
-            </div>
-
-            <a href="#block3" class="btn btn-primary" @click.prevent="scrollTo('#block3')">Получить мой план на месяц →</a>
-            <div class="btn-meta">Бесплатно • Без регистрации</div>
-
-            <div class="testimonial">
-              <p>"AI за минуту сделал то, на что я убил бы весь вечер. И главное — цели реально выполнимые."</p>
-              <div class="testimonial-author">— Артём, SaaS-основатель</div>
             </div>
           </div>
         </div>
@@ -1410,8 +1403,32 @@ p {
 }
 
 .goal-card.goal-health { border-left-color: var(--error); }
-.goal-card.goal-money { border-left-color: var(--success); }
-.goal-card.goal-family { border-left-color: var(--pink); }
+.goal-card.goal-money { border-left-color: #f4a261; }
+.goal-card.goal-family { border-left-color: #9b5de5; }
+.goal-card.goal-hobby { border-left-color: #e9c46a; }
+
+.goals-section-header {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-sm);
+  padding-left: var(--spacing-xs);
+}
+
+.month-structure-card {
+  background: var(--bg-white);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  border: 1px solid var(--border-light);
+}
+
+.month-structure-header {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
 
 .goal-icon {
   font-size: 2rem;
