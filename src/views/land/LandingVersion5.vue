@@ -130,9 +130,7 @@
             </div>
 
             <div class="ai-mentor-quote">
-              <div class="ai-mentor-avatar">
-                <img src="https://cdn-icons-png.flaticon.com/512/4712/4712027.png" alt="AI Mentor" />
-              </div>
+              <div class="ai-avatar">🤖</div>
               <div class="ai-mentor-message">
                 <span class="ai-mentor-name">AI ментор</span>
                 <p>"Пройди диагностику — я найду твою точку роста и составлю план первых шагов. Это займёт 2 минуты."</p>
@@ -1538,16 +1536,16 @@ p {
   margin-top: var(--spacing-md);
 }
 
-.ai-mentor-quote .ai-mentor-avatar {
+.ai-mentor-quote .ai-avatar {
   flex-shrink: 0;
-  width: 56px;
-  height: 56px;
-}
-
-.ai-mentor-quote .ai-mentor-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
 }
 
 .ai-mentor-quote .ai-mentor-message {
