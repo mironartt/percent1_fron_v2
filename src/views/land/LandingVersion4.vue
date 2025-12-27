@@ -187,7 +187,7 @@
 
         <div class="ai-quote-compact">
           <span class="ai-emoji">🤖</span>
-          <p>"Я разбиваю цели на шаги по 10-30 минут. Каждый день одно действие — так ты не перегрузишься."</p>
+          <p>"Я разбиваю цели на шаги. Каждый день одно действие — так ты не перегрузишься."</p>
         </div>
 
         <div class="block3-footer">
@@ -204,9 +204,15 @@
 
     <section id="block4" class="block block-planning">
       <div class="container">
-        <div class="transition-text">
-          <p>✓ План на неделю готов. AI вписывает задачи в календарь.</p>
+        <div class="block4-header-compact">
+          <div class="header-row">
+            <span class="transition-check">✓ Шаги готовы</span>
+            <span class="step-badge-inline">Шаг 4 из 5: Расписание</span>
+          </div>
+          <h2>AI вписал задачи в твой календарь</h2>
+          <p class="block-subtitle">Шаги из декомпозиции распределены по дням. Тебе не думать когда что делать.</p>
         </div>
+
         <div class="block-content reverse">
           <div class="block-visual">
             <div class="calendar-week">
@@ -225,16 +231,13 @@
             <div class="tasks-progress">
               <div class="progress-stats">
                 <span><strong>5</strong> задач</span>
-                <span><strong>3</strong> выполнено</span>
-                <span><strong>2</strong> осталось</span>
+                <span><strong>0</strong> выполнено</span>
+                <span><strong>5</strong> осталось</span>
               </div>
             </div>
           </div>
 
           <div class="block-text">
-            <h2>AI вписал задачи в твой календарь</h2>
-            <p class="block-subtitle">AI спросил про твою загрузку и вписал задачи в свободные дни. Можешь перетащить на другой день.</p>
-
             <div class="personalization-note">
               <div class="note-icon">💡</div>
               <div class="note-text">
@@ -244,11 +247,7 @@
             </div>
 
             <a href="#block5" class="btn btn-primary" @click.prevent="scrollTo('#block5')">Начать неделю →</a>
-
-            <div class="testimonial">
-              <p>"План автоматом учёл мою загрузку. Не надо ломать голову когда что делать — AI всё распределил."</p>
-              <div class="testimonial-author">— Сергей, e-commerce предприниматель</div>
-            </div>
+            <div class="btn-meta">Бесплатно • Следующий шаг: привычки</div>
           </div>
         </div>
       </div>
@@ -1429,6 +1428,21 @@ p {
 
 .block2-header-compact .btn {
   margin-bottom: var(--spacing-xs);
+}
+
+.block4-header-compact {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto var(--spacing-xl);
+}
+
+.block4-header-compact h2 {
+  margin-bottom: var(--spacing-xs);
+  font-size: 1.75rem;
+}
+
+.block4-header-compact .block-subtitle {
+  margin-bottom: 0;
 }
 
 .goals-grid {
