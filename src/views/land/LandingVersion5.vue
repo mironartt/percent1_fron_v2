@@ -1,45 +1,74 @@
 <template>
   <div class="landing-v4">
-    <section class="hero">
+    <header class="landing-header" :class="{ scrolled: isScrolled }">
       <div class="container">
-        <div class="hero-content">
-          <div class="hero-text">
-            <div class="hero-badge">+1% каждый день</div>
-            <h1>Расти на 1% каждый день.<br>За год станешь в 37 раз лучше</h1>
-            <p class="hero-subtitle">AI-платформа для личностного роста. Диагностика, цели, привычки и награды в одной системе.</p>
-            <div class="hero-cta">
-              <a href="#block1" class="btn btn-primary btn-large" @click.prevent="scrollTo('#block1')">Начать бесплатно</a>
-              <div class="hero-meta">
-                <span>✓ Без банковской карты</span>
-                <span>✓ Диагностика за 2 минуты</span>
-              </div>
-            </div>
-            <div class="social-proof">
-              🔥 <strong>{{ socialProofCount.toLocaleString() }}</strong> человек уже растут на 1% каждый день
+        <div class="header-content">
+          <div class="logo">
+            <span class="logo-icon">1%</span>
+            <div class="logo-text">
+              <b class="logo-title">OnePercent</b>
+              <span class="tagline">+1% каждый день</span>
             </div>
           </div>
-          <div class="hero-visual">
-            <div class="app-mockup">
-              <div class="mockup-screen">
-                <div class="mockup-header">
-                  <span class="mockup-logo">OnePercent</span>
-                  <span class="mockup-badge">+1% каждый день</span>
-                </div>
-                <div class="mockup-content">
-                  <div class="stat-card">
-                    <div class="stat-number">450</div>
-                    <div class="stat-label">XP заработано</div>
-                  </div>
-                  <div class="stat-card">
-                    <div class="stat-number">14</div>
-                    <div class="stat-label">дней подряд</div>
-                  </div>
-                </div>
+          <nav class="header-nav">
+            <template v-if="isAuthenticated">
+              <router-link to="/app" class="btn btn-primary">Личный кабинет</router-link>
+            </template>
+            <template v-else>
+              <router-link to="/auth/login" class="nav-link">Войти</router-link>
+              <router-link to="/auth/register" class="btn btn-primary">Начать бесплатно</router-link>
+            </template>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="container">
+        <div class="hero-grid">
+          <div class="hero-content">
+            <h1 class="hero-title">
+              Системный рост в жизни<br>
+              <span class="highlight">через простые действия</span>
+            </h1>
+            <p class="hero-description">
+              Ты можешь стать сильнее на 1% сегодня — и это изменит всё завтра.
+              Не курс. Не марафон. А система, которая делает развитие предсказуемым.
+            </p>
+            <div class="hero-actions">
+              <router-link to="/auth/register" class="btn btn-primary btn-lg">
+                Сделать +1% уже сегодня
+              </router-link>
+            </div>
+          </div>
+          <div class="hero-image">
+            <div class="compound-chart">
+              <svg viewBox="0 0 400 300" class="chart-svg">
+                <defs>
+                  <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.3" />
+                    <stop offset="100%" style="stop-color:#6366f1;stop-opacity:0" />
+                  </linearGradient>
+                </defs>
+                <path d="M 30 270 Q 100 268, 150 260 T 250 220 T 320 120 T 370 30" 
+                      fill="none" stroke="#6366f1" stroke-width="3" class="chart-line"/>
+                <path d="M 30 270 Q 100 268, 150 260 T 250 220 T 320 120 T 370 30 L 370 270 L 30 270 Z" 
+                      fill="url(#chartGradient)" class="chart-area"/>
+                <line x1="30" y1="270" x2="370" y2="270" stroke="#e5e7eb" stroke-width="1"/>
+                <line x1="30" y1="30" x2="30" y2="270" stroke="#e5e7eb" stroke-width="1"/>
+                <text x="30" y="290" font-size="12" fill="#9ca3af">Сегодня</text>
+                <text x="340" y="290" font-size="12" fill="#9ca3af">1 год</text>
+                <text x="340" y="25" font-size="14" font-weight="600" fill="#6366f1">×37.8</text>
+              </svg>
+              <div class="chart-label">
+                <span class="chart-highlight">+1% каждый день</span>
+                <span class="chart-text">= экспоненциальный рост</span>
               </div>
             </div>
           </div>
         </div>
       </div>
+      <div class="hero-bg"></div>
     </section>
 
     <section id="block1" class="block block-wheel">
@@ -697,6 +726,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import WheelOfLife from '@/components/WheelOfLife.vue'
 import { useSubscriptionStore } from '@/stores/subscription'
+import { useAppStore } from '@/stores/app'
 import { 
   Check, 
   Lightbulb,
@@ -708,6 +738,10 @@ import {
 } from 'lucide-vue-next'
 
 const subscriptionStore = useSubscriptionStore()
+const appStore = useAppStore()
+
+const isScrolled = ref(false)
+const isAuthenticated = computed(() => appStore.isAuthenticated)
 
 const pricingTariffs = computed(() => subscriptionStore.tariffs)
 const pricingTerms = computed(() => subscriptionStore.terms)
@@ -920,6 +954,7 @@ function scrollToTop() {
 
 function handleScroll() {
   showBackToTop.value = window.pageYOffset > 500
+  isScrolled.value = window.pageYOffset > 50
 }
 
 onMounted(() => {
@@ -1077,47 +1112,204 @@ p {
   margin-top: var(--spacing-xs);
 }
 
-.hero {
-  background: linear-gradient(135deg, var(--bg-white) 0%, var(--bg-light) 100%);
-  padding: var(--spacing-2xl) 0;
-  position: relative;
-  overflow: hidden;
+.landing-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s;
+  padding: 1rem 0;
 }
 
-.hero-content {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-xl);
+.landing-header.scrolled {
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
 }
 
-.hero-badge {
-  display: inline-block;
-  padding: var(--spacing-xs) var(--spacing-md);
-  background: var(--primary-light);
-  color: var(--primary);
-  border-radius: var(--radius-full);
-  font-size: 0.875rem;
-  font-weight: 600;
-  margin-bottom: var(--spacing-md);
-}
-
-.hero-subtitle {
-  font-size: 1.25rem;
-  color: var(--text-secondary);
-  margin-bottom: var(--spacing-lg);
-}
-
-.hero-cta {
-  margin-bottom: var(--spacing-lg);
-}
-
-.hero-meta {
+.logo {
   display: flex;
-  gap: var(--spacing-md);
-  margin-top: var(--spacing-sm);
-  font-size: 0.875rem;
-  color: var(--text-muted);
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-icon {
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1rem;
+  color: white;
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.logo-title {
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: #1a1a2e;
+}
+
+.tagline {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-link {
+  color: #4b5563;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.nav-link:hover {
+  color: #6366f1;
+}
+
+.btn-lg {
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+}
+
+.hero {
+  position: relative;
+  padding: 10rem 0 6rem;
+  overflow: hidden;
+  min-height: 75vh;
+  display: flex;
+  align-items: center;
+}
+
+.hero-bg {
+  position: absolute;
+  top: 0;
+  right: -20%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+  border-radius: 0 0 0 50%;
+  z-index: -1;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.hero-content {
+  max-width: 600px;
+}
+
+.hero-image {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.compound-chart {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 20px 60px rgba(99, 102, 241, 0.15);
+  width: 100%;
+  max-width: 450px;
+}
+
+.chart-svg {
+  width: 100%;
+  height: auto;
+}
+
+.chart-line {
+  stroke-dasharray: 500;
+  stroke-dashoffset: 500;
+  animation: drawLine 2s ease-out forwards;
+}
+
+.chart-area {
+  opacity: 0;
+  animation: fadeIn 1s ease-out 1.5s forwards;
+}
+
+@keyframes drawLine {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+.chart-label {
+  text-align: center;
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.chart-highlight {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #6366f1;
+}
+
+.chart-text {
+  font-size: 0.9375rem;
+  color: #6b7280;
+}
+
+.hero-title {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+  color: #1a1a2e;
+}
+
+.highlight {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-description {
+  font-size: 1.25rem;
+  color: #4b5563;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .social-proof {
@@ -1130,41 +1322,6 @@ p {
   box-shadow: var(--shadow-sm);
   font-size: 0.9375rem;
   color: var(--text-secondary);
-}
-
-.app-mockup {
-  animation: float 6s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
-}
-
-.mockup-screen {
-  background: var(--bg-white);
-  border-radius: var(--radius-xl);
-  padding: var(--spacing-xl);
-  box-shadow: var(--shadow-xl);
-  border: 1px solid rgba(0,0,0,0.05);
-}
-
-.mockup-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-xl);
-}
-
-.mockup-logo {
-  font-weight: 700;
-  font-size: 1.25rem;
-  color: var(--primary);
-}
-
-.mockup-badge {
-  font-size: 0.75rem;
-  color: var(--text-muted);
 }
 
 .mockup-content {
@@ -1865,6 +2022,42 @@ p {
 }
 
 @media (max-width: 768px) {
+  .landing-header {
+    padding: 0.75rem 0;
+  }
+  
+  .logo-text {
+    display: none;
+  }
+  
+  .nav-link {
+    display: none;
+  }
+  
+  .hero {
+    padding: 7rem 0 4rem;
+    min-height: auto;
+  }
+  
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    text-align: center;
+  }
+  
+  .hero-content {
+    max-width: 100%;
+  }
+  
+  .hero-actions {
+    justify-content: center;
+  }
+  
+  .compound-chart {
+    max-width: 350px;
+    margin: 0 auto;
+  }
+  
   .block5-layout {
     flex-direction: column;
   }
