@@ -259,41 +259,27 @@
             <span class="step-badge-inline">Шаг 5 из 5: Привычки</span>
           </div>
           <h2>Шаги → привычки → награды</h2>
-          <p class="block-subtitle">Через месяц регулярных шагов цель становится привычкой. За каждую — XP.</p>
+          <p class="block-subtitle">Регулярные шаги становятся привычкой — делаешь на автомате, без усилий. За каждую — XP для наград.</p>
         </div>
 
-        <div class="block-content">
-          <div class="block-text">
-            <div class="ai-quote-compact">
-              <span class="ai-emoji">🤖</span>
-              <p>"14 дней подряд — цель стала привычкой! Теперь это на автомате."</p>
+        <div class="block5-layout">
+          <div class="habits-compact">
+            <div class="habit-row" v-for="habit in habits" :key="habit.title">
+              <span class="habit-icon">{{ habit.icon }}</span>
+              <span class="habit-name">{{ habit.title }}</span>
+              <span class="habit-streak">🔥 {{ habit.streak }} дн.</span>
+              <span class="habit-xp">+{{ habit.xp }} XP</span>
             </div>
-
-            <a href="#block6" class="btn btn-primary" @click.prevent="scrollTo('#block6')">Смотреть награды →</a>
-            <div class="btn-meta">2450 XP = новый гаджет или выходной</div>
+            <div class="streak-summary">🏆 Общий стрик: 14 дней подряд</div>
           </div>
 
-          <div class="block-visual">
-            <div class="habits-list">
-              <div class="habit-item" v-for="habit in habits" :key="habit.title">
-                <div class="habit-icon">{{ habit.icon }}</div>
-                <div class="habit-content">
-                  <div class="habit-title">{{ habit.title }}</div>
-                  <div class="habit-streak">🔥 {{ habit.streak }} дней подряд</div>
-                </div>
-                <div class="habit-xp">+{{ habit.xp }} XP</div>
-              </div>
+          <div class="block5-cta">
+            <div class="ai-quote-compact">
+              <span class="ai-emoji">🤖</span>
+              <p>"Цели стали привычками — теперь это на автомате!"</p>
             </div>
-            
-            <div class="streak-calendar">
-              <div class="calendar-title">Декабрь 2025</div>
-              <div class="calendar-grid">
-                <div class="cal-day" v-for="day in streakDays" :key="day.num" :class="{ completed: day.completed, today: day.today }">{{ day.num }}</div>
-              </div>
-              <div class="streak-badge">
-                🏆 14 дней стрик!
-              </div>
-            </div>
+            <a href="#block6" class="btn btn-primary" @click.prevent="scrollTo('#block6')">Смотреть награды →</a>
+            <div class="btn-meta">2450 XP = новый гаджет или выходной</div>
           </div>
         </div>
       </div>
@@ -1447,6 +1433,84 @@ p {
 
 .block5-header-compact .block-subtitle {
   margin-bottom: 0;
+}
+
+.block5-layout {
+  display: flex;
+  gap: var(--spacing-xl);
+  align-items: flex-start;
+}
+
+.habits-compact {
+  flex: 1;
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.habit-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.habit-row:last-of-type {
+  border-bottom: none;
+}
+
+.habit-icon {
+  font-size: 1.25rem;
+}
+
+.habit-name {
+  flex: 1;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.habit-streak {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.habit-xp {
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.streak-summary {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-radius: var(--radius-md);
+  text-align: center;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.block5-cta {
+  flex: 0 0 280px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+@media (max-width: 768px) {
+  .block5-layout {
+    flex-direction: column;
+  }
+  
+  .block5-cta {
+    flex: none;
+    width: 100%;
+  }
 }
 
 .goals-grid {
