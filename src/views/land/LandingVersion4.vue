@@ -67,15 +67,15 @@
             <div class="wheel-demo wheel-demo-mini">
               <div class="wheel-item-mini wheel-item-critical">
                 <span class="mini-label">Зона роста:</span>
-                <span class="mini-value score-low">Здоровье 4/10</span>
+                <span class="mini-value score-low">Хобби и Отдых 2/10</span>
               </div>
               <div class="wheel-item-mini wheel-item-warning">
                 <span class="mini-label">Требует внимания:</span>
-                <span class="mini-value score-medium">Благосостояние 5/10</span>
+                <span class="mini-value score-medium">Благосостояние 4/10</span>
               </div>
               <div class="wheel-item-mini wheel-item-success">
                 <span class="mini-label">Сильная сторона:</span>
-                <span class="mini-value score-high">Работа и карьера 8/10</span>
+                <span class="mini-value score-high">Любовь, Семья, Отношения 8/10</span>
               </div>
             </div>
           </div>
