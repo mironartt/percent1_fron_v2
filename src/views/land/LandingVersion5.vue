@@ -122,6 +122,7 @@
           <div class="block-text">
             <div class="step-badge">Шаг 1 из 5: Диагностика</div>
             <h2>Почему ты топчешься на месте, хотя стараешься?</h2>
+            <h2 class="wheel-answer">Потому что жизнь — это система. Одна сломанная часть ломает всё</h2>
 
             <div class="explanation-box">
               <p><strong>Проблема:</strong> Нет энергии из-за здоровья — страдает карьера и семья. Финансовый стресс убивает сон и мотивацию. Одна слабая сфера обрушивает остальные, как костяшки домино.</p>
@@ -1520,6 +1521,15 @@ p {
 
 .effect-description strong {
   color: var(--text-primary);
+}
+
+/* Wheel block answer */
+.wheel-answer {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--primary);
+  margin-top: -0.5rem;
+  margin-bottom: var(--spacing-lg);
 }
 
 /* Блок "Что меняется" */
