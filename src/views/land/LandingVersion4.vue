@@ -72,16 +72,6 @@
           <div class="block-visual">
             <div class="result-example-header">Пример результата</div>
             
-            <div class="wheel-chart">
-              <svg viewBox="0 0 200 200" class="wheel-svg">
-                <circle cx="100" cy="100" r="80" fill="none" class="wheel-track" stroke-width="30"/>
-                <circle cx="100" cy="100" r="80" fill="none" class="wheel-progress" stroke-width="30" 
-                        stroke-dasharray="125 502" stroke-dashoffset="0" transform="rotate(-90 100 100)"/>
-                <text x="100" y="85" text-anchor="middle" font-size="32" font-weight="700" class="wheel-score-text">6.2</text>
-                <text x="100" y="105" text-anchor="middle" font-size="11" class="wheel-label-text">из 10</text>
-              </svg>
-            </div>
-
             <div class="score-forecast">
               <div class="forecast-item">
                 <span class="forecast-label">Через месяц:</span>
@@ -90,6 +80,63 @@
               <div class="forecast-item forecast-goal">
                 <span class="forecast-label">Цель:</span>
                 <span class="forecast-value">8+ за 90 дней</span>
+              </div>
+            </div>
+
+            <div class="wheel-balance-chart">
+              <svg viewBox="0 0 300 300" class="wheel-balance-svg" role="img" aria-label="Колесо баланса жизни">
+                <circle cx="150" cy="150" r="120" fill="none" class="wheel-grid-circle" opacity="0.5"/>
+                <circle cx="150" cy="150" r="96" fill="none" class="wheel-grid-circle" opacity="0.4"/>
+                <circle cx="150" cy="150" r="72" fill="none" class="wheel-grid-circle" opacity="0.3"/>
+                <circle cx="150" cy="150" r="48" fill="none" class="wheel-grid-circle" opacity="0.2"/>
+                <circle cx="150" cy="150" r="24" fill="none" class="wheel-grid-circle" opacity="0.1"/>
+                <line x1="150" y1="30" x2="150" y2="270" class="wheel-grid-line" opacity="0.3"/>
+                <line x1="46" y1="90" x2="254" y2="210" class="wheel-grid-line" opacity="0.3"/>
+                <line x1="46" y1="210" x2="254" y2="90" class="wheel-grid-line" opacity="0.3"/>
+                <polygon 
+                  points="150,102 188,126 188,174 150,198 112,174 112,126" 
+                  class="wheel-polygon"
+                />
+                <circle cx="150" cy="102" r="5" class="wheel-dot"/>
+                <circle cx="188" cy="126" r="5" class="wheel-dot"/>
+                <circle cx="188" cy="174" r="5" class="wheel-dot"/>
+                <circle cx="150" cy="198" r="5" class="wheel-dot"/>
+                <circle cx="112" cy="174" r="5" class="wheel-dot"/>
+                <circle cx="112" cy="126" r="5" class="wheel-dot"/>
+                <text x="150" y="140" text-anchor="middle" font-size="36" font-weight="700" class="wheel-score-text">6.2</text>
+                <text x="150" y="165" text-anchor="middle" font-size="14" class="wheel-label-text">из 10</text>
+              </svg>
+              <div class="wheel-labels">
+                <div class="wheel-label-item" style="top: 0; left: 50%; transform: translateX(-50%);">
+                  <span class="label-icon">💼</span>
+                  <span class="label-text">Карьера</span>
+                  <span class="label-score score-high">8</span>
+                </div>
+                <div class="wheel-label-item" style="top: 20%; right: 0;">
+                  <span class="label-icon">📚</span>
+                  <span class="label-text">Развитие</span>
+                  <span class="label-score score-medium">6</span>
+                </div>
+                <div class="wheel-label-item" style="bottom: 20%; right: 0;">
+                  <span class="label-icon">👨‍👩‍👧</span>
+                  <span class="label-text">Отношения</span>
+                  <span class="label-score score-medium">7</span>
+                </div>
+                <div class="wheel-label-item" style="bottom: 0; left: 50%; transform: translateX(-50%);">
+                  <span class="label-icon">❤️</span>
+                  <span class="label-text">Здоровье</span>
+                  <span class="label-score score-low">4</span>
+                </div>
+                <div class="wheel-label-item" style="bottom: 20%; left: 0;">
+                  <span class="label-icon">💰</span>
+                  <span class="label-text">Финансы</span>
+                  <span class="label-score score-medium">5</span>
+                </div>
+                <div class="wheel-label-item" style="top: 20%; left: 0;">
+                  <span class="label-icon">🧘</span>
+                  <span class="label-text">Гармония</span>
+                  <span class="label-score score-medium">7</span>
+                </div>
               </div>
             </div>
             
@@ -121,11 +168,6 @@
                   <span class="score-number score-high">Карьера 8/10</span>
                 </div>
               </div>
-            </div>
-
-            <div class="next-step-hint">
-              <span class="next-icon">→</span>
-              <span>Далее: AI создаст план по приоритетам</span>
             </div>
           </div>
         </div>
@@ -1158,23 +1200,6 @@ p {
   font-size: 1rem;
 }
 
-.next-step-hint {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md);
-  background: var(--primary-light);
-  border-radius: var(--radius-md);
-  color: var(--primary);
-  font-weight: 500;
-  font-size: 0.875rem;
-  margin-top: var(--spacing-md);
-}
-
-.next-icon {
-  font-size: 1.25rem;
-}
 
 .testimonial-with-result {
   border: 1px solid var(--bg-light);
@@ -1292,6 +1317,89 @@ p {
 
 .wheel-goal-text {
   fill: var(--primary);
+}
+
+.wheel-balance-chart {
+  position: relative;
+  max-width: 340px;
+  margin: 0 auto var(--spacing-lg) auto;
+  padding: var(--spacing-xl);
+}
+
+.wheel-balance-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.wheel-grid-circle {
+  stroke: var(--bg-light);
+  stroke-width: 1;
+}
+
+.wheel-grid-line {
+  stroke: var(--bg-light);
+  stroke-width: 1;
+}
+
+.wheel-polygon {
+  fill: var(--primary-light);
+  stroke: var(--primary);
+  stroke-width: 2;
+  opacity: 0.8;
+}
+
+.wheel-dot {
+  fill: var(--primary);
+}
+
+.wheel-labels {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.wheel-label-item {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: var(--bg-white);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.label-icon {
+  font-size: 1rem;
+}
+
+.label-text {
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+}
+
+.label-score {
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.label-score.score-high {
+  color: var(--success);
+}
+
+.label-score.score-medium {
+  color: var(--warning);
+}
+
+.label-score.score-low {
+  color: var(--error);
 }
 
 .goals-cards {
@@ -2482,9 +2590,22 @@ p {
     font-size: 0.75rem;
   }
   
-  .next-step-hint {
-    font-size: 0.8125rem;
-    padding: var(--spacing-sm);
+  .wheel-balance-chart {
+    max-width: 280px;
+    padding: var(--spacing-md);
+  }
+  
+  .wheel-label-item {
+    padding: 2px 4px;
+    font-size: 0.625rem;
+  }
+  
+  .label-icon {
+    font-size: 0.75rem;
+  }
+  
+  .label-score {
+    font-size: 0.75rem;
   }
   
   .wheel-chart {
