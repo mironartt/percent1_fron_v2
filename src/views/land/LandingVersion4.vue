@@ -88,71 +88,62 @@
         <div class="transition-text">
           <p>✓ Диагностика пройдена. AI определил проблемные зоны.</p>
         </div>
-        <div class="block-content reverse">
-          <div class="block-text">
-            <div class="step-badge">Шаг 2 из 5: Твой план</div>
-            <h2>Твой план готов. Начни с первого шага</h2>
-            <p class="block-subtitle">AI ментор взял твои зоны роста из диагностики и превратил в конкретные цели с шагами на ближайший месяц</p>
+        
+        <div class="block2-centered">
+          <div class="step-badge">Шаг 2 из 5: Твой план</div>
+          <h2>Твой план готов. Начни с первого шага</h2>
+          <p class="block-subtitle">AI ментор взял твои зоны роста из диагностики и превратил в конкретные цели с шагами на ближайший месяц</p>
+          
+          <a href="#block3" class="btn btn-primary btn-large" @click.prevent="scrollTo('#block3')">Получить мой план →</a>
+          <div class="btn-meta">Бесплатно • Следующий шаг: декомпозиция на шаги</div>
+        </div>
 
-            <div class="month-structure-card">
-              <div class="month-structure-header">Структура первого месяца</div>
-              <div class="decomp-timeline">
-                <div class="timeline-item">
-                  <div class="timeline-dot"></div>
-                  <div class="timeline-content">
-                    <strong>Неделя 1:</strong> Подготовка и первые маленькие шаги
-                  </div>
-                </div>
-                <div class="timeline-item">
-                  <div class="timeline-dot"></div>
-                  <div class="timeline-content">
-                    <strong>Неделя 2-4:</strong> Закрепление привычек и рост интенсивности
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="ai-quote">
-              <div class="ai-avatar">🤖</div>
-              <div class="ai-message">
-                <div class="ai-name">AI ментор</div>
-                <p>"AI проанализировал твои результаты: Хобби 2/10, Благосостояние 4/10. Начнём с хобби — это твоя точка входа в энергию. Дальше подтянем финансы."</p>
-              </div>
-            </div>
-
-            <a href="#block3" class="btn btn-primary" @click.prevent="scrollTo('#block3')">Начать с первого шага →</a>
-            <div class="btn-meta">Бесплатно • Следующий шаг: декомпозиция</div>
+        <div class="goals-grid">
+          <div class="goals-grid-header">
+            <span class="goals-grid-title">Твои цели на месяц</span>
+            <button class="how-ai-works-link" @click="showHowAiWorksModal = true">
+              Как AI выбрал цели?
+            </button>
           </div>
-
-          <div class="block-visual">
-            <div class="goals-section-header">На основе твоей диагностики:</div>
-            <div class="goals-cards">
-              <div class="goal-card goal-hobby">
+          <div class="goals-cards-row">
+            <div class="goal-card-v2 goal-hobby">
+              <div class="goal-card-number">1</div>
+              <div class="goal-card-content">
                 <div class="goal-icon">🎨</div>
                 <div class="goal-info">
                   <div class="goal-title">Хобби 2 часа в неделю</div>
-                  <div class="goal-meta">Из "Хобби и Отдых 2/10"</div>
-                </div>
-              </div>
-              <div class="goal-card goal-money">
-                <div class="goal-icon">💰</div>
-                <div class="goal-info">
-                  <div class="goal-title">+30% к доходу</div>
-                  <div class="goal-meta">Из "Благосостояние 4/10"</div>
-                </div>
-              </div>
-              <div class="goal-card goal-family">
-                <div class="goal-icon">❤️</div>
-                <div class="goal-info">
-                  <div class="goal-title">Вечер с семьёй 3х в неделю</div>
-                  <div class="goal-meta">Из "Любовь, Семья, Отношения 8/10"</div>
+                  <div class="goal-meta">Зона роста: Хобби 2/10</div>
                 </div>
               </div>
             </div>
+            <div class="goal-card-v2 goal-money">
+              <div class="goal-card-number">2</div>
+              <div class="goal-card-content">
+                <div class="goal-icon">💰</div>
+                <div class="goal-info">
+                  <div class="goal-title">+30% к доходу</div>
+                  <div class="goal-meta">Требует внимания: Благосостояние 4/10</div>
+                </div>
+              </div>
+            </div>
+            <div class="goal-card-v2 goal-family">
+              <div class="goal-card-number">3</div>
+              <div class="goal-card-content">
+                <div class="goal-icon">❤️</div>
+                <div class="goal-info">
+                  <div class="goal-title">Вечер с семьёй 3х в неделю</div>
+                  <div class="goal-meta">Сильная сторона: Любовь 8/10</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-            <button class="how-ai-works-link" @click="showHowAiWorksModal = true">
-              Как AI выбрал именно эти цели?
-            </button>
+        <div class="ai-quote-centered">
+          <div class="ai-avatar">🤖</div>
+          <div class="ai-message">
+            <div class="ai-name">AI ментор</div>
+            <p>"Начнём с хобби — это твоя точка входа в энергию. Когда появится ресурс, подтянем финансы и укрепим семью."</p>
           </div>
         </div>
       </div>
@@ -1407,6 +1398,140 @@ p {
 .goal-card.goal-money { border-left-color: #f4a261; }
 .goal-card.goal-family { border-left-color: #9b5de5; }
 .goal-card.goal-hobby { border-left-color: #e9c46a; }
+
+.block2-centered {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto var(--spacing-2xl);
+}
+
+.block2-centered h2 {
+  margin-bottom: var(--spacing-sm);
+}
+
+.block2-centered .block-subtitle {
+  margin-bottom: var(--spacing-lg);
+}
+
+.block2-centered .btn {
+  margin-bottom: var(--spacing-xs);
+}
+
+.goals-grid {
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.goals-grid-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.goals-grid-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.goals-cards-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+}
+
+.goal-card-v2 {
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-lg);
+  background: var(--bg-light);
+  border-radius: var(--radius-lg);
+  position: relative;
+  transition: all var(--transition-base);
+}
+
+.goal-card-v2:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.goal-card-v2.goal-hobby { border-top: 4px solid #e9c46a; }
+.goal-card-v2.goal-money { border-top: 4px solid #f4a261; }
+.goal-card-v2.goal-family { border-top: 4px solid #9b5de5; }
+
+.goal-card-number {
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  width: 24px;
+  height: 24px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.goal-card-content {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+}
+
+.goal-card-v2 .goal-icon {
+  font-size: 1.5rem;
+}
+
+.goal-card-v2 .goal-title {
+  font-size: 0.9375rem;
+  margin-bottom: var(--spacing-xs);
+}
+
+.goal-card-v2 .goal-meta {
+  font-size: 0.75rem;
+}
+
+.ai-quote-centered {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  background: linear-gradient(135deg, var(--primary-light) 0%, #f0f0ff 100%);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.ai-quote-centered .ai-avatar {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.ai-quote-centered .ai-message p {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .goals-cards-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .goals-grid-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+}
 
 .goals-section-header {
   font-size: 0.875rem;
