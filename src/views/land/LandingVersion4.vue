@@ -92,7 +92,7 @@
           <div class="block-text">
             <div class="step-badge">Шаг 2 из 5: Твой план</div>
             <h2>Твой план готов. Начни с первого шага</h2>
-            <p class="block-subtitle">AI взял твои слабые зоны из диагностики и превратил в конкретные действия на ближайший месяц</p>
+            <p class="block-subtitle">AI ментор взял твои зоны роста из диагностики и превратил в конкретные цели с шагами на ближайший месяц</p>
 
             <div class="month-structure-card">
               <div class="month-structure-header">Структура первого месяца</div>
@@ -115,7 +115,7 @@
             <div class="ai-quote">
               <div class="ai-avatar">🤖</div>
               <div class="ai-message">
-                <div class="ai-name">AI Стратег</div>
+                <div class="ai-name">AI ментор</div>
                 <p>"AI проанализировал твои результаты: Хобби 2/10, Благосостояние 4/10. Начнём с хобби — это твоя точка входа в энергию. Дальше подтянем финансы."</p>
               </div>
             </div>
@@ -150,42 +150,9 @@
               </div>
             </div>
 
-            <div class="accordion">
-              <button class="accordion-trigger" :class="{ active: accordions.howItWorks }" @click="toggleAccordion('howItWorks')">
-                <span>Как AI выбрал именно эти цели?</span>
-                <svg class="accordion-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-              </button>
-              <div class="accordion-content" :class="{ active: accordions.howItWorks }">
-                <div class="accordion-inner">
-                  <h4>🎯 AI трансформирует проблемы по формуле:</h4>
-                  <div class="formula-flow">
-                    <span>Низкий балл</span>
-                    <span class="formula-arrow">→</span>
-                    <span>Анализ причин</span>
-                    <span class="formula-arrow">→</span>
-                    <span>Конкретная цель</span>
-                    <span class="formula-arrow">→</span>
-                    <span>Измеримый результат</span>
-                    <span class="formula-arrow">→</span>
-                    <span>План действий</span>
-                  </div>
-                  <div class="example-transformation">
-                    <h5>Пример трансформации:</h5>
-                    <div class="transform-step">🟡 Хобби и Отдых 2/10</div>
-                    <div class="transform-arrow">↓</div>
-                    <div class="transform-step">Причина: Нет времени на себя</div>
-                    <div class="transform-arrow">↓</div>
-                    <div class="transform-step">Цель: Хобби 2 часа в неделю</div>
-                    <div class="transform-arrow">↓</div>
-                    <div class="transform-step">Результат: Хобби поднимется до 5-6/10</div>
-                    <div class="transform-arrow">↓</div>
-                    <div class="transform-step">План: 4 недели от выбора занятия до привычки</div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <button class="how-ai-works-link" @click="showHowAiWorksModal = true">
+              Как AI выбрал именно эти цели?
+            </button>
           </div>
         </div>
       </div>
@@ -544,6 +511,39 @@
     </footer>
 
     <button class="back-to-top" v-show="showBackToTop" @click="scrollToTop">↑</button>
+
+    <div class="modal-overlay" v-if="showHowAiWorksModal" @click.self="showHowAiWorksModal = false">
+      <div class="modal-content">
+        <button class="modal-close" @click="showHowAiWorksModal = false">&times;</button>
+        <h3>Как AI выбрал именно эти цели?</h3>
+        <div class="modal-body">
+          <h4>🎯 AI трансформирует проблемы по формуле:</h4>
+          <div class="formula-flow">
+            <span>Низкий балл</span>
+            <span class="formula-arrow">→</span>
+            <span>Анализ причин</span>
+            <span class="formula-arrow">→</span>
+            <span>Конкретная цель</span>
+            <span class="formula-arrow">→</span>
+            <span>Измеримый результат</span>
+            <span class="formula-arrow">→</span>
+            <span>План действий</span>
+          </div>
+          <div class="example-transformation">
+            <h5>Пример трансформации:</h5>
+            <div class="transform-step">🟡 Хобби и Отдых 2/10</div>
+            <div class="transform-arrow">↓</div>
+            <div class="transform-step">Причина: Нет времени на себя</div>
+            <div class="transform-arrow">↓</div>
+            <div class="transform-step">Цель: Хобби 2 часа в неделю</div>
+            <div class="transform-arrow">↓</div>
+            <div class="transform-step">Результат: Хобби поднимется до 5-6/10</div>
+            <div class="transform-arrow">↓</div>
+            <div class="transform-step">План: 4 недели от выбора занятия до привычки</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -553,6 +553,7 @@ import WheelOfLife from '@/components/WheelOfLife.vue'
 
 const socialProofCount = ref(2847)
 const showBackToTop = ref(false)
+const showHowAiWorksModal = ref(false)
 
 const accordions = ref({
   howItWorks: false
@@ -2459,6 +2460,95 @@ p {
   background: var(--primary-hover);
   transform: translateY(-4px);
   box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+}
+
+.how-ai-works-link {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  padding: 0;
+  margin-top: var(--spacing-sm);
+  transition: color 0.2s ease;
+}
+
+.how-ai-works-link:hover {
+  color: var(--primary-hover);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: var(--spacing-md);
+}
+
+.modal-content {
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: var(--spacing-xl);
+  position: relative;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.modal-close {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background: var(--bg-light);
+  color: var(--text-primary);
+}
+
+.modal-content h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+  padding-right: var(--spacing-xl);
+}
+
+.modal-body h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.modal-body h5 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
 }
 
 @media (max-width: 1024px) {
