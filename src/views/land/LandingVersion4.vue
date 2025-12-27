@@ -3394,11 +3394,85 @@ p {
   }
   
   .phone-mockup {
-    max-width: 250px;
+    display: none;
   }
   
-  .phone-screen {
-    height: 500px;
+  .mobile-content-card {
+    display: block;
+  }
+  
+  .block-visual {
+    order: 1;
+  }
+  
+  .block-rewards .block-visual,
+  .block-mentor .block-visual {
+    display: block;
+    order: -1;
+  }
+  
+  .block-mentor .phone-mockup {
+    display: block;
+    max-width: 100%;
+  }
+  
+  .block-mentor .phone-frame {
+    border-radius: var(--radius-lg);
+    padding: 8px;
+  }
+  
+  .block-mentor .phone-screen {
+    height: auto;
+    min-height: 400px;
+  }
+  
+  .block-mentor .phone-screen-tall {
+    height: auto;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+  
+  .block-subtitle {
+    font-size: 0.9375rem;
+  }
+  
+  .testimonial-centered {
+    max-width: 100%;
+  }
+  
+  .wheel-balance-chart {
+    max-width: 300px;
+    padding: var(--spacing-md);
+  }
+  
+  .xp-balance {
+    padding: var(--spacing-md);
+  }
+  
+  .rewards-list {
+    gap: var(--spacing-sm);
+  }
+  
+  .reward-item {
+    padding: var(--spacing-sm);
+  }
+  
+  .tg-bubble-morning {
+    font-size: 0.75rem;
+  }
+  
+  .role-transformation {
+    padding: var(--spacing-md);
+  }
+  
+  .role-transformation ul {
+    padding-left: var(--spacing-md);
+  }
+  
+  .disclaimer {
+    font-size: 0.75rem;
   }
 }
 
@@ -3464,6 +3538,44 @@ p {
   
   .cal-day {
     font-size: 0.75rem;
+  }
+  
+  h2 {
+    font-size: 1.25rem;
+    line-height: 1.3;
+  }
+  
+  .hero-title {
+    font-size: 1.75rem;
+  }
+  
+  .block-subtitle {
+    font-size: 0.875rem;
+  }
+  
+  .tg-bubble-morning {
+    font-size: 0.6875rem;
+    padding: var(--spacing-xs);
+  }
+  
+  .block-mentor .phone-screen {
+    min-height: 350px;
+  }
+  
+  .testimonial-centered p {
+    font-size: 0.875rem;
+  }
+  
+  .transition-text p {
+    font-size: 0.875rem;
+  }
+  
+  .cta-content h2 {
+    font-size: 1.25rem;
+  }
+  
+  .social-proof {
+    font-size: 0.875rem;
   }
 }
 </style>
