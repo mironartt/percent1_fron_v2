@@ -1304,15 +1304,15 @@ p {
 }
 
 .wheel-item-mini.wheel-item-critical {
-  border-left: 3px solid var(--error);
+  border-left: 3px solid #e9c46a;
 }
 
 .wheel-item-mini.wheel-item-warning {
-  border-left: 3px solid var(--warning);
+  border-left: 3px solid #f4a261;
 }
 
 .wheel-item-mini.wheel-item-success {
-  border-left: 3px solid var(--success);
+  border-left: 3px solid #9b5de5;
 }
 
 .mini-label {
@@ -1326,15 +1326,15 @@ p {
 }
 
 .mini-value.score-low {
-  color: var(--error);
+  color: #e9c46a;
 }
 
 .mini-value.score-medium {
-  color: var(--warning);
+  color: #f4a261;
 }
 
 .mini-value.score-high {
-  color: var(--success);
+  color: #9b5de5;
 }
 
 .wheel-labels {
