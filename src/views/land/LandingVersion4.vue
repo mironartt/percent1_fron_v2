@@ -85,17 +85,16 @@
 
     <section id="block2" class="block block-goals">
       <div class="container">
-        <div class="transition-text">
-          <p>✓ Диагностика пройдена. AI определил проблемные зоны.</p>
-        </div>
-        
-        <div class="block2-centered">
-          <div class="step-badge">Шаг 2 из 5: Твой план</div>
-          <h2>Твой план готов. Начни с первого шага</h2>
-          <p class="block-subtitle">AI ментор взял твои зоны роста из диагностики и превратил в конкретные цели с шагами на ближайший месяц</p>
+        <div class="block2-header-compact">
+          <div class="header-row">
+            <span class="transition-check">✓ Диагностика пройдена</span>
+            <span class="step-badge-inline">Шаг 2 из 5: Твои цели</span>
+          </div>
+          <h2>Твои зоны роста → конкретные цели</h2>
+          <p class="block-subtitle">AI ментор взял результаты диагностики и превратил их в 3 цели на ближайший месяц</p>
           
-          <a href="#block3" class="btn btn-primary btn-large" @click.prevent="scrollTo('#block3')">Получить мой план →</a>
-          <div class="btn-meta">Бесплатно • Следующий шаг: декомпозиция на шаги</div>
+          <a href="#block3" class="btn btn-primary btn-large" @click.prevent="scrollTo('#block3')">Смотреть план →</a>
+          <div class="btn-meta">Бесплатно • Следующий шаг: декомпозиция</div>
         </div>
 
         <div class="goals-grid">
@@ -1410,6 +1409,25 @@ p {
 }
 
 .block2-centered .btn {
+  margin-bottom: var(--spacing-xs);
+}
+
+.block2-header-compact {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto var(--spacing-xl);
+}
+
+.block2-header-compact h2 {
+  margin-bottom: var(--spacing-xs);
+  font-size: 1.75rem;
+}
+
+.block2-header-compact .block-subtitle {
+  margin-bottom: var(--spacing-lg);
+}
+
+.block2-header-compact .btn {
   margin-bottom: var(--spacing-xs);
 }
 
