@@ -152,48 +152,52 @@
     <section id="block3" class="block block-decomposition">
       <div class="container">
         <div class="transition-text">
-          <p>✓ Цели сформированы. Теперь разбиваем на выполнимые шаги.</p>
+          <p>✓ План готов. Первая неделя — самая важная.</p>
         </div>
+        
+        <div class="block3-header">
+          <div class="step-badge">Шаг 3 из 5: Первая неделя</div>
+          <h2>Как не слить за первые 7 дней</h2>
+          <p class="block-subtitle">4 простых шага за 7 дней. Каждый день бот напоминает, что делать — ты не потеряешься.</p>
+        </div>
+
         <div class="block-content">
           <div class="block-text">
-            <h2>Твой план на первую неделю</h2>
-            <p class="block-subtitle">Всего 4 простых шага. Telegram-бот будет напоминать о каждом.</p>
-
-            <div class="telegram-box">
+            <div class="telegram-box telegram-box-v2">
               <div class="telegram-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                   <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM16.64 8.8L14.87 16.94C14.73 17.57 14.39 17.72 13.89 17.43L11.24 15.51L9.95 16.75C9.8 16.9 9.67 17.03 9.37 17.03L9.58 14.33L14.53 9.88C14.75 9.69 14.48 9.58 14.19 9.76L8.05 13.58L5.43 12.76C4.82 12.56 4.81 12.16 5.56 11.87L15.85 7.87C16.36 7.69 16.79 7.99 16.64 8.8Z" fill="currentColor"/>
                 </svg>
               </div>
               <div class="telegram-text">
-                <strong>Telegram-бот будет напоминать о каждом шаге</strong>
-                <p>Утром мотивирует, днём напоминает, вечером проверяет прогресс</p>
+                <strong>Telegram-бот не даст забить</strong>
+                <p>Утром мотивирует, днём напоминает, вечером проверяет прогресс. Ты не сорвёшься, даже если захочешь.</p>
               </div>
             </div>
 
-            <div class="ai-quote">
+            <div class="ai-quote ai-quote-v2">
               <div class="ai-avatar">🤖</div>
               <div class="ai-message">
                 <div class="ai-name">AI Ментор</div>
-                <p>"Первая неделя — самая важная. Здесь мы не тренируемся, а привыкаем к идее спорта."</p>
+                <p>"Первые 7 дней — самые сложные. AI помогает пройти их без срывов и перегрузок. Без фанатизма, с умом."</p>
               </div>
             </div>
 
             <a href="#block4" class="btn btn-primary" @click.prevent="scrollTo('#block4')">Смотреть расписание →</a>
-
-            <div class="testimonial">
-              <p>"Первую неделю вообще не тренировался — просто выбрал зал, купил форму. Когда понял, что это постепенное втягивание — пошло легко."</p>
-              <div class="testimonial-author">— Игорь, маркетинговое агентство</div>
-            </div>
+            <div class="btn-meta">Бесплатно • Следующий шаг: календарь</div>
           </div>
 
           <div class="block-visual">
-            <div class="steps-list">
-              <div class="step-item" v-for="(step, index) in steps" :key="index" :class="{ completed: step.completed }">
-                <div class="step-number">{{ step.completed ? '✓' : index + 1 }}</div>
-                <div class="step-content">
-                  <div class="step-title">{{ step.title }}</div>
-                  <div class="step-date">{{ step.date }}</div>
+            <div class="steps-card">
+              <div class="steps-card-header">На основе твоих целей из диагностики:</div>
+              <div class="steps-list-v2">
+                <div class="step-item-v2" v-for="(step, index) in stepsV2" :key="index" :class="[step.category, { completed: step.completed }]">
+                  <div class="step-day">{{ step.day }}</div>
+                  <div class="step-content-v2">
+                    <div class="step-title-v2">{{ step.title }}</div>
+                    <div class="step-goal">{{ step.goal }}</div>
+                  </div>
+                  <div class="step-time">{{ step.time }}</div>
                 </div>
               </div>
             </div>
@@ -201,10 +205,10 @@
             <div class="week-progress">
               <div class="progress-header">
                 <span>Неделя 1</span>
-                <span class="progress-status">1 из 4 шагов</span>
+                <span class="progress-status">0 из 5 шагов</span>
               </div>
               <div class="progress-bar">
-                <div class="progress-fill" style="width: 25%"></div>
+                <div class="progress-fill" style="width: 0%"></div>
               </div>
               <div class="week-days">
                 <div class="day-dot" v-for="(day, index) in weekDays" :key="index" :class="{ active: index === 0 }">{{ day }}</div>
@@ -573,6 +577,14 @@ const steps = ref([
   { title: 'Купить форму и абонемент', date: 'День 2 (завтра)', completed: false },
   { title: 'Первая тренировка (20 минут)', date: 'День 3', completed: false },
   { title: 'Привыкнуть к ритму', date: 'День 7', completed: true }
+])
+
+const stepsV2 = ref([
+  { day: 'День 1', title: 'Выбрать хобби на неделю', goal: 'Хобби 2/10', time: '10 мин', category: 'hobby', completed: false },
+  { day: 'День 2', title: 'Изучить способы роста дохода', goal: 'Благосостояние 4/10', time: '15 мин', category: 'money', completed: false },
+  { day: 'День 3', title: 'Первое занятие хобби', goal: 'Хобби 2/10', time: '30 мин', category: 'hobby', completed: false },
+  { day: 'День 4', title: 'Запланировать вечер с семьёй', goal: 'Любовь 8/10', time: '5 мин', category: 'family', completed: false },
+  { day: 'День 7', title: 'Оценка первой недели', goal: 'Все сферы', time: '10 мин', category: 'review', completed: false }
 ])
 
 const weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
@@ -1811,6 +1823,123 @@ p {
 .step-date {
   font-size: 0.875rem;
   color: var(--text-muted);
+}
+
+.block3-header {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto var(--spacing-2xl);
+}
+
+.block3-header h2 {
+  margin-bottom: var(--spacing-sm);
+}
+
+.steps-card {
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-md);
+}
+
+.steps-card-header {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-lg);
+  padding-left: var(--spacing-xs);
+}
+
+.steps-list-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.step-item-v2 {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--bg-light);
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--primary);
+  transition: all var(--transition-base);
+}
+
+.step-item-v2:hover {
+  background: var(--bg-white);
+  box-shadow: var(--shadow-sm);
+}
+
+.step-item-v2.hobby { border-left-color: #e9c46a; }
+.step-item-v2.money { border-left-color: #f4a261; }
+.step-item-v2.family { border-left-color: #9b5de5; }
+.step-item-v2.review { border-left-color: var(--success); }
+
+.step-day {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-light);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.step-content-v2 {
+  flex: 1;
+  min-width: 0;
+}
+
+.step-title-v2 {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  margin-bottom: 2px;
+}
+
+.step-goal {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.step-time {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: var(--bg-white);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.telegram-box-v2 {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+}
+
+.ai-quote-v2 {
+  background: linear-gradient(135deg, var(--primary-light) 0%, #f0f0ff 100%);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  margin: var(--spacing-lg) 0;
+}
+
+@media (max-width: 768px) {
+  .step-item-v2 {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+  
+  .step-day {
+    order: -1;
+  }
+  
+  .step-time {
+    margin-left: auto;
+  }
 }
 
 .telegram-box {
