@@ -1397,11 +1397,11 @@ p {
 }
 
 .block {
-  padding: calc(var(--spacing-2xl) + var(--spacing-xs)) 0;
+  padding: calc(var(--spacing-2xl) + var(--spacing-sm)) 0;
 }
 
 .block:not(:first-of-type) {
-  padding-top: calc(var(--spacing-2xl) + var(--spacing-lg) + var(--spacing-xs));
+  padding-top: calc(var(--spacing-2xl) + var(--spacing-lg) + var(--spacing-sm));
 }
 
 .block:nth-child(even) {
@@ -1411,7 +1411,7 @@ p {
 .block-planning,
 .block-habits,
 .block-goals {
-  padding: calc(var(--spacing-3xl) + var(--spacing-xl) + var(--spacing-sm)) 0;
+  padding: calc(var(--spacing-3xl) + var(--spacing-xl) + var(--spacing-md)) 0;
 }
 
 .block-planning .container,
@@ -1423,7 +1423,7 @@ p {
 
 /* Блок "Эффект 1%" */
 .effect-section {
-  padding: calc(var(--spacing-3xl) + var(--spacing-xl) + var(--spacing-sm)) 0;
+  padding: calc(var(--spacing-3xl) + var(--spacing-xl) + var(--spacing-md)) 0;
   background: var(--bg-white);
 }
 
