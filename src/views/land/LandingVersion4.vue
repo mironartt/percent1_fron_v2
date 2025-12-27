@@ -179,11 +179,16 @@
           <div class="decomp-after">
             <div class="decomp-label">Шаги на неделю</div>
             <div class="decomp-steps-mini">
-              <div class="decomp-step-mini">День 1: Выбрать хобби <span>10 мин</span></div>
-              <div class="decomp-step-mini">День 3: Первое занятие <span>30 мин</span></div>
-              <div class="decomp-step-mini">День 5: Второе занятие <span>30 мин</span></div>
+              <div class="decomp-step-mini">День 1: Выбрать что нравится — рисование, музыка, спорт? <span>10 мин</span></div>
+              <div class="decomp-step-mini">День 3: Попробовать первый раз — без перфекционизма <span>30 мин</span></div>
+              <div class="decomp-step-mini">День 5: Повторить — закрепить привычку <span>30 мин</span></div>
             </div>
           </div>
+        </div>
+
+        <div class="ai-quote-compact">
+          <span class="ai-emoji">🤖</span>
+          <p>"Я разбиваю цели на шаги по 10-30 минут. Каждый день одно действие — так ты не перегрузишься."</p>
         </div>
 
         <div class="block3-footer">
@@ -1857,12 +1862,36 @@ p {
   font-weight: 600;
 }
 
+.ai-quote-compact {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  background: linear-gradient(135deg, var(--primary-light) 0%, #e8e4ff 100%);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  max-width: 600px;
+  margin: var(--spacing-lg) auto 0;
+}
+
+.ai-quote-compact .ai-emoji {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.ai-quote-compact p {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  margin: 0;
+  font-style: italic;
+}
+
 .block3-footer {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--spacing-lg);
-  margin-top: var(--spacing-xl);
+  margin-top: var(--spacing-lg);
   flex-wrap: wrap;
 }
 
