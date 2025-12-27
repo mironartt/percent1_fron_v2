@@ -264,18 +264,13 @@
 
         <div class="block-content">
           <div class="block-text">
-            <div class="xp-earned">
-              <span class="xp-label">Сегодня заработал:</span>
-              <span class="xp-value">+45 XP</span>
-            </div>
-
             <div class="ai-quote-compact">
               <span class="ai-emoji">🤖</span>
-              <p>"14 дней подряд — это уже привычка! Добавлю микропривычки для усиления результата."</p>
+              <p>"14 дней подряд — цель стала привычкой! Теперь это на автомате."</p>
             </div>
 
             <a href="#block6" class="btn btn-primary" @click.prevent="scrollTo('#block6')">Смотреть награды →</a>
-            <div class="btn-meta">Бесплатно • Последний шаг: награды</div>
+            <div class="btn-meta">2450 XP = новый гаджет или выходной</div>
           </div>
 
           <div class="block-visual">
@@ -576,9 +571,9 @@ const calendarDays = ref([
 ])
 
 const habits = ref([
-  { icon: '🎨', title: 'Хобби 2 часа', streak: 14, xp: 20 },
-  { icon: '💧', title: 'Пить воду', streak: 21, xp: 10 },
-  { icon: '📚', title: 'Чтение 30 мин', streak: 7, xp: 15 }
+  { icon: '🎨', title: 'Хобби 2ч/неделю', streak: 14, xp: 20 },
+  { icon: '💰', title: 'Финансовый обзор', streak: 10, xp: 15 },
+  { icon: '👨‍👩‍👧', title: 'Ужин с семьёй', streak: 12, xp: 20 }
 ])
 
 const streakDays = ref(
