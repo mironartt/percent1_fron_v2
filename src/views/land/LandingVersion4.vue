@@ -258,28 +258,36 @@
             <span class="transition-check">✓ Неделя пройдена</span>
             <span class="step-badge-inline">Шаг 5 из 5: Привычки</span>
           </div>
-          <h2>Шаги → привычки → награды</h2>
-          <p class="block-subtitle">Регулярные шаги становятся привычкой — делаешь на автомате, без усилий. За каждую — XP для наград.</p>
+          <h2>Привычки — твой автопилот</h2>
+          <p class="block-subtitle">Регулярные действия становятся автоматическими. Не тратишь силу воли — просто делаешь.</p>
         </div>
 
         <div class="block5-layout">
-          <div class="habits-compact">
-            <div class="habit-row" v-for="habit in habits" :key="habit.title">
-              <span class="habit-icon">{{ habit.icon }}</span>
-              <span class="habit-name">{{ habit.title }}</span>
-              <span class="habit-streak">🔥 {{ habit.streak }} дн.</span>
-              <span class="habit-xp">+{{ habit.xp }} XP</span>
+          <div class="block5-text">
+            <div class="ai-mentor-info">
+              <div class="ai-mentor-icon">🤖</div>
+              <div class="ai-mentor-content">
+                <strong>AI Ментор подберёт привычки</strong>
+                <p>Проанализирует твои цели, паттерны поведения и рефлексии. На основе этого предложит привычки для достижения результатов.</p>
+              </div>
             </div>
-            <div class="streak-summary">🏆 Общий стрик: 14 дней подряд</div>
+
+            <a href="#block6" class="btn btn-primary" @click.prevent="scrollTo('#block6')">Смотреть награды →</a>
+            <div class="btn-meta">XP копится → обмениваешь на награды</div>
           </div>
 
-          <div class="block5-cta">
-            <div class="ai-quote-compact">
-              <span class="ai-emoji">🤖</span>
-              <p>"Цели стали привычками — теперь это на автомате!"</p>
+          <div class="habits-demo">
+            <div class="habit-card" v-for="habit in habitsDemo" :key="habit.name">
+              <div class="habit-check">
+                <input type="checkbox" :checked="habit.todayDone" disabled />
+              </div>
+              <div class="habit-icon-demo">{{ habit.icon }}</div>
+              <div class="habit-name-demo">{{ habit.name }}</div>
+              <div class="habit-weekdays">
+                <span v-for="(day, idx) in habit.days" :key="idx" class="weekday" :class="{ done: day.done, today: day.today }">{{ day.label }}</span>
+              </div>
+              <div class="habit-xp-badge">+{{ habit.xp }} XP</div>
             </div>
-            <a href="#block6" class="btn btn-primary" @click.prevent="scrollTo('#block6')">Смотреть награды →</a>
-            <div class="btn-meta">2450 XP = новый гаджет или выходной</div>
           </div>
         </div>
       </div>
@@ -560,6 +568,54 @@ const habits = ref([
   { icon: '🎨', title: 'Хобби 2ч/неделю', streak: 14, xp: 20 },
   { icon: '💰', title: 'Финансовый обзор', streak: 10, xp: 15 },
   { icon: '👨‍👩‍👧', title: 'Ужин с семьёй', streak: 12, xp: 20 }
+])
+
+const habitsDemo = ref([
+  { 
+    icon: '🎨', 
+    name: 'Хобби 2ч/неделю', 
+    xp: 20,
+    todayDone: false,
+    days: [
+      { label: 'П', done: false, today: false },
+      { label: 'В', done: true, today: false },
+      { label: 'С', done: false, today: false },
+      { label: 'Ч', done: true, today: false },
+      { label: 'П', done: false, today: false },
+      { label: 'С', done: true, today: true },
+      { label: 'В', done: false, today: false }
+    ]
+  },
+  { 
+    icon: '💰', 
+    name: 'Финансовый обзор', 
+    xp: 15,
+    todayDone: true,
+    days: [
+      { label: 'П', done: false, today: false },
+      { label: 'В', done: true, today: false },
+      { label: 'С', done: true, today: false },
+      { label: 'Ч', done: false, today: false },
+      { label: 'П', done: true, today: false },
+      { label: 'С', done: true, today: true },
+      { label: 'В', done: false, today: false }
+    ]
+  },
+  { 
+    icon: '👨‍👩‍👧', 
+    name: 'Ужин с семьёй', 
+    xp: 20,
+    todayDone: false,
+    days: [
+      { label: 'П', done: true, today: false },
+      { label: 'В', done: true, today: false },
+      { label: 'С', done: true, today: false },
+      { label: 'Ч', done: true, today: false },
+      { label: 'П', done: true, today: false },
+      { label: 'С', done: false, today: true },
+      { label: 'В', done: false, today: false }
+    ]
+  }
 ])
 
 const streakDays = ref(
@@ -1441,65 +1497,120 @@ p {
   align-items: flex-start;
 }
 
-.habits-compact {
-  flex: 1;
+.block5-text {
+  flex: 0 0 320px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.ai-mentor-info {
+  display: flex;
+  gap: var(--spacing-md);
   background: var(--bg-white);
   border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
   box-shadow: var(--shadow-sm);
+  border-left: 4px solid var(--primary);
 }
 
-.habit-row {
+.ai-mentor-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.ai-mentor-content strong {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  color: var(--text-primary);
+}
+
+.ai-mentor-content p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.habits-demo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.habit-card {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) 0;
-  border-bottom: 1px solid var(--border-light);
+  gap: var(--spacing-md);
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
 }
 
-.habit-row:last-of-type {
-  border-bottom: none;
+.habit-check input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--primary);
+  cursor: default;
 }
 
-.habit-icon {
-  font-size: 1.25rem;
+.habit-icon-demo {
+  font-size: 1.5rem;
 }
 
-.habit-name {
+.habit-name-demo {
   flex: 1;
   font-weight: 500;
   color: var(--text-primary);
 }
 
-.habit-streak {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-}
-
-.habit-xp {
-  background: var(--primary-light);
-  color: var(--primary);
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--radius-sm);
-  font-weight: 600;
-  font-size: 0.75rem;
-}
-
-.streak-summary {
-  margin-top: var(--spacing-md);
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-  border-radius: var(--radius-md);
-  text-align: center;
-  font-weight: 600;
-  color: #92400e;
-}
-
-.block5-cta {
-  flex: 0 0 280px;
+.habit-weekdays {
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
+  gap: 4px;
+}
+
+.weekday {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: #f3f4f6;
+  color: #9ca3af;
+  border: 1px solid #e5e7eb;
+}
+
+.weekday.done {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
+.weekday.today {
+  border: 2px solid var(--primary);
+  background: #ede9fe;
+  color: var(--primary);
+}
+
+.weekday.today.done {
+  background: #10b981;
+  color: white;
+  border-color: var(--primary);
+}
+
+.habit-xp-badge {
+  background: #ecfdf5;
+  color: #059669;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.875rem;
+  white-space: nowrap;
 }
 
 @media (max-width: 768px) {
@@ -1507,9 +1618,20 @@ p {
     flex-direction: column;
   }
   
-  .block5-cta {
+  .block5-text {
     flex: none;
     width: 100%;
+  }
+  
+  .habit-card {
+    flex-wrap: wrap;
+  }
+  
+  .habit-weekdays {
+    order: 10;
+    width: 100%;
+    justify-content: center;
+    margin-top: var(--spacing-sm);
   }
 }
 
