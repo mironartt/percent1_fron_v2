@@ -230,9 +230,9 @@
             
             <div class="tasks-progress">
               <div class="progress-stats">
-                <span><strong>5</strong> задач</span>
+                <span><strong>3</strong> задачи</span>
                 <span><strong>0</strong> выполнено</span>
-                <span><strong>5</strong> осталось</span>
+                <span><strong>3</strong> осталось</span>
               </div>
             </div>
           </div>
@@ -255,33 +255,29 @@
 
     <section id="block5" class="block block-habits">
       <div class="container">
-        <div class="transition-text">
-          <p>Прошёл месяц. Цель "Спорт 3х/неделю" стала привычкой. AI добавил 2 микропривычки для усиления результата.</p>
+        <div class="block5-header-compact">
+          <div class="header-row">
+            <span class="transition-check">✓ Неделя пройдена</span>
+            <span class="step-badge-inline">Шаг 5 из 5: Привычки</span>
+          </div>
+          <h2>Шаги → привычки → награды</h2>
+          <p class="block-subtitle">Через месяц регулярных шагов цель становится привычкой. За каждую — XP.</p>
         </div>
+
         <div class="block-content">
           <div class="block-text">
-            <h2>Месяц пройден — привычка сформирована</h2>
-            <p class="block-subtitle">За каждую привычку — опыт (XP). Копи XP → получай награды за прогресс.</p>
-
             <div class="xp-earned">
               <span class="xp-label">Сегодня заработал:</span>
               <span class="xp-value">+45 XP</span>
             </div>
 
-            <div class="ai-quote">
-              <div class="ai-avatar">🤖</div>
-              <div class="ai-message">
-                <div class="ai-name">AI Ментор</div>
-                <p>"14 дней подряд — спорт стал твоей привычкой! Теперь можно добавить микропривычки для усиления: утренняя зарядка и вода помогут тренировкам."</p>
-              </div>
+            <div class="ai-quote-compact">
+              <span class="ai-emoji">🤖</span>
+              <p>"14 дней подряд — это уже привычка! Добавлю микропривычки для усиления результата."</p>
             </div>
 
             <a href="#block6" class="btn btn-primary" @click.prevent="scrollTo('#block6')">Смотреть награды →</a>
-
-            <div class="testimonial">
-              <p>"Первый месяц давался тяжело — хотелось бросить раз 5. Но когда увидел серию в 14 дней на календаре, появился азарт: 'Неужели сейчас всё обнулю?' Игровая механика реально работает."</p>
-              <div class="testimonial-author">— Денис, IT-компания</div>
-            </div>
+            <div class="btn-meta">Бесплатно • Последний шаг: награды</div>
           </div>
 
           <div class="block-visual">
@@ -572,19 +568,19 @@ const stepsV2 = ref([
 const weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
 const calendarDays = ref([
-  { name: 'Пн', number: 22, task: 'Выбрать спорт', active: false },
-  { name: 'Вт', number: 23, task: 'Купить форму', active: false },
-  { name: 'Ср', number: 24, task: 'Первая тренировка', active: true },
+  { name: 'Пн', number: 22, task: 'Выбрать хобби', active: false },
+  { name: 'Вт', number: 23, task: null, active: false },
+  { name: 'Ср', number: 24, task: 'Первая проба', active: true },
   { name: 'Чт', number: 25, task: null, active: false },
-  { name: 'Пт', number: 26, task: null, active: false },
+  { name: 'Пт', number: 26, task: 'Повторить', active: false },
   { name: 'Сб', number: 27, task: null, active: false },
-  { name: 'Вс', number: 28, task: 'Привыкнуть', active: false }
+  { name: 'Вс', number: 28, task: null, active: false }
 ])
 
 const habits = ref([
-  { icon: '🏃', title: 'Утренняя зарядка', streak: 14, xp: 15 },
+  { icon: '🎨', title: 'Хобби 2 часа', streak: 14, xp: 20 },
   { icon: '💧', title: 'Пить воду', streak: 21, xp: 10 },
-  { icon: '📚', title: 'Чтение 30 мин', streak: 7, xp: 20 }
+  { icon: '📚', title: 'Чтение 30 мин', streak: 7, xp: 15 }
 ])
 
 const streakDays = ref(
@@ -1442,6 +1438,21 @@ p {
 }
 
 .block4-header-compact .block-subtitle {
+  margin-bottom: 0;
+}
+
+.block5-header-compact {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto var(--spacing-xl);
+}
+
+.block5-header-compact h2 {
+  margin-bottom: var(--spacing-xs);
+  font-size: 1.75rem;
+}
+
+.block5-header-compact .block-subtitle {
   margin-bottom: 0;
 }
 
