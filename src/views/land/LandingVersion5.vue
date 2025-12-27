@@ -164,12 +164,52 @@
       </div>
     </section>
 
-    <section id="block2" class="block block-goals">
+    <section id="block2" class="block block-decomposition">
+      <div class="container">
+        <div class="block3-header-compact">
+          <div class="header-row">
+            <span class="transition-check">✓ Диагностика пройдена</span>
+            <span class="step-badge-inline">Шаг 2 из 5: Декомпозиция</span>
+          </div>
+          <h2>От цели до первого шага — за 30 секунд</h2>
+          <p class="block-subtitle">AI разбивает твою цель на реальные задачи с точным временем. Просто начни делать.</p>
+        </div>
+
+        <div class="decomp-transformation">
+          <div class="decomp-before">
+            <div class="decomp-label">Твоя цель</div>
+            <div class="decomp-goal-card">
+              <span class="decomp-icon">🎨</span>
+              <span class="decomp-goal-text">Хобби 2 часа в неделю</span>
+            </div>
+          </div>
+          
+          <div class="decomp-arrow">
+            <div class="decomp-ai-badge">🤖 AI</div>
+            <svg class="arrow-icon" width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          
+          <div class="decomp-after">
+            <div class="decomp-label">Шаги на неделю</div>
+            <div class="decomp-steps-mini">
+              <div class="decomp-step-mini">День 1: Выбрать что нравится — рисование, музыка, спорт? <span>10 мин</span></div>
+              <div class="decomp-step-mini">День 3: Попробовать первый раз — без перфекционизма <span>30 мин</span></div>
+              <div class="decomp-step-mini">День 5: Повторить — закрепить привычку <span>30 мин</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="block3" class="block block-goals">
       <div class="container">
         <div class="block2-header-compact">
           <div class="header-row">
-            <span class="transition-check">✓ Диагностика пройдена</span>
-            <span class="step-badge-inline">Шаг 2 из 5: Твои цели</span>
+            <span class="transition-check">✓ Декомпозиция готова</span>
+            <span class="step-badge-inline">Шаг 3 из 5: Твои цели</span>
           </div>
           <h2>Твои зоны роста → конкретные цели</h2>
           <p class="block-subtitle">AI ментор взял результаты диагностики и превратил их в 3 цели на ближайший месяц</p>
@@ -224,46 +264,6 @@
             <p>"Начнём с хобби — это твоя точка входа в энергию. Когда появится ресурс, подтянем финансы и укрепим семью."</p>
           </div>
         </div>
-      </div>
-    </section>
-
-    <section id="block3" class="block block-decomposition">
-      <div class="container">
-        <div class="block3-header-compact">
-          <div class="header-row">
-            <span class="transition-check">✓ Цели есть</span>
-            <span class="step-badge-inline">Шаг 3 из 5: Декомпозиция</span>
-          </div>
-          <h2>От цели до первого шага — за 30 секунд</h2>
-          <p class="block-subtitle">AI разбивает твою цель на реальные задачи с точным временем. Просто начни делать.</p>
-        </div>
-
-        <div class="decomp-transformation">
-          <div class="decomp-before">
-            <div class="decomp-label">Твоя цель</div>
-            <div class="decomp-goal-card">
-              <span class="decomp-icon">🎨</span>
-              <span class="decomp-goal-text">Хобби 2 часа в неделю</span>
-            </div>
-          </div>
-          
-          <div class="decomp-arrow">
-            <div class="decomp-ai-badge">🤖 AI</div>
-            <svg class="arrow-icon" width="32" height="32" viewBox="0 0 24 24" fill="none">
-              <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-          
-          <div class="decomp-after">
-            <div class="decomp-label">Шаги на неделю</div>
-            <div class="decomp-steps-mini">
-              <div class="decomp-step-mini">День 1: Выбрать что нравится — рисование, музыка, спорт? <span>10 мин</span></div>
-              <div class="decomp-step-mini">День 3: Попробовать первый раз — без перфекционизма <span>30 мин</span></div>
-              <div class="decomp-step-mini">День 5: Повторить — закрепить привычку <span>30 мин</span></div>
-            </div>
-          </div>
-        </div>
-
       </div>
     </section>
 
