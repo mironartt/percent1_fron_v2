@@ -361,7 +361,6 @@
             <div class="day-schedule">
               <div class="schedule-item" v-for="item in schedule" :key="item.time">
                 <div class="schedule-time">{{ item.time }}</div>
-                <div class="schedule-title">{{ item.title }}</div>
                 <div class="schedule-example">{{ item.example }}</div>
               </div>
             </div>
@@ -639,8 +638,8 @@ const rewards = ref([
 ])
 
 const schedule = ref([
-  { time: '🌅 Утро (08:00)', title: 'Мотиватор', example: '"Привет! ☀️ Сегодня тренировка в 18:00. Готов? 💪"' },
-  { time: '🌙 Вечер (21:00)', title: 'Трекер', example: '"Время отчёта! Ты тренировался? Ел здоровую пищу? 🎯"' }
+  { time: '🌅 Утро', title: '', example: '"Привет! ☀️ Сегодня тренировка в 18:00. Готов? 💪"' },
+  { time: '🌙 Вечер', title: '', example: '"Время отчёта! Ты тренировался? Ел здоровую пищу? 🎯"' }
 ])
 
 function getScoreClass(score) {
