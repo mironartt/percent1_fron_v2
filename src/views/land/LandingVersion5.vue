@@ -182,8 +182,8 @@
             <span class="transition-check">✓ Цели есть</span>
             <span class="step-badge-inline">Шаг 3 из 5: Декомпозиция</span>
           </div>
-          <h2>AI разбил твои цели на простые шаги</h2>
-          <p class="block-subtitle">Одна большая цель пугает. 5 маленьких шагов за неделю — выполнимы.</p>
+          <h2>От цели до первого шага — за 30 секунд</h2>
+          <p class="block-subtitle">AI разбивает твою цель на реальные задачи с точным временем. Просто начни делать.</p>
         </div>
 
         <div class="decomp-transformation">
@@ -222,8 +222,8 @@
             <span class="transition-check">✓ Шаги готовы</span>
             <span class="step-badge-inline">Шаг 4 из 5: Расписание</span>
           </div>
-          <h2>AI вписал задачи в твой календарь</h2>
-          <p class="block-subtitle">Шаги из декомпозиции распределены по дням. Тебе не думать когда что делать.</p>
+          <h2>От плана к делу — без раздумий «что делать сегодня»</h2>
+          <p class="block-subtitle">AI распределил задачи по дням недели. Открой календарь и начни.</p>
         </div>
 
         <div class="block-content reverse">
@@ -266,8 +266,8 @@
             <span class="transition-check">✓ Неделя пройдена</span>
             <span class="step-badge-inline">Шаг 5 из 5: Привычки</span>
           </div>
-          <h2>От цели до первого шага — за 30 секунд</h2>
-          <p class="block-subtitle">AI разбивает твою цель на реальные задачи с точным временем. Просто начни делать.</p>
+          <h2>От хаотичных попыток к системе привычек</h2>
+          <p class="block-subtitle">AI подберёт привычки под твои цели, напомнит о выполнении и покажет реальный прогресс.</p>
         </div>
 
         <div class="block5-layout">
