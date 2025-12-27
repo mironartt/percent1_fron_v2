@@ -152,44 +152,53 @@
     <section id="block3" class="block block-decomposition">
       <div class="container">
         <div class="transition-text">
-          <p>✓ План готов. Первая неделя — самая важная.</p>
+          <p>✓ Цели есть. Теперь AI разбивает их на шаги.</p>
         </div>
         
         <div class="block3-header">
-          <div class="step-badge">Шаг 3 из 5: Первая неделя</div>
-          <h2>Как не слить за первые 7 дней</h2>
-          <p class="block-subtitle">4 простых шага за 7 дней. Каждый день бот напоминает, что делать — ты не потеряешься.</p>
+          <div class="step-badge">Шаг 3 из 5: Декомпозиция</div>
+          <h2>AI разбил твои цели на простые шаги</h2>
+          <p class="block-subtitle">Одна большая цель пугает. 5 маленьких шагов за неделю — выполнимы. AI делает декомпозицию автоматически.</p>
+        </div>
+
+        <div class="decomp-transformation">
+          <div class="decomp-before">
+            <div class="decomp-label">Твоя цель</div>
+            <div class="decomp-goal-card">
+              <span class="decomp-icon">🎨</span>
+              <span class="decomp-goal-text">Хобби 2 часа в неделю</span>
+            </div>
+          </div>
+          
+          <div class="decomp-arrow">
+            <div class="decomp-ai-badge">🤖 AI</div>
+            <svg class="arrow-icon" width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          
+          <div class="decomp-after">
+            <div class="decomp-label">Шаги на неделю</div>
+            <div class="decomp-steps-mini">
+              <div class="decomp-step-mini">День 1: Выбрать хобби <span>10 мин</span></div>
+              <div class="decomp-step-mini">День 3: Первое занятие <span>30 мин</span></div>
+              <div class="decomp-step-mini">День 5: Второе занятие <span>30 мин</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ai-quote-decomp">
+          <div class="ai-avatar">🤖</div>
+          <div class="ai-message">
+            <div class="ai-name">AI Ментор</div>
+            <p>"Я беру твою цель и разбиваю на шаги по 10-30 минут. Каждый день одно действие — так ты не перегрузишься и не сдашься на полпути."</p>
+          </div>
         </div>
 
         <div class="block-content">
-          <div class="block-text">
-            <div class="telegram-box telegram-box-v2">
-              <div class="telegram-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM16.64 8.8L14.87 16.94C14.73 17.57 14.39 17.72 13.89 17.43L11.24 15.51L9.95 16.75C9.8 16.9 9.67 17.03 9.37 17.03L9.58 14.33L14.53 9.88C14.75 9.69 14.48 9.58 14.19 9.76L8.05 13.58L5.43 12.76C4.82 12.56 4.81 12.16 5.56 11.87L15.85 7.87C16.36 7.69 16.79 7.99 16.64 8.8Z" fill="currentColor"/>
-                </svg>
-              </div>
-              <div class="telegram-text">
-                <strong>Telegram-бот не даст забить</strong>
-                <p>Утром мотивирует, днём напоминает, вечером проверяет прогресс. Ты не сорвёшься, даже если захочешь.</p>
-              </div>
-            </div>
-
-            <div class="ai-quote ai-quote-v2">
-              <div class="ai-avatar">🤖</div>
-              <div class="ai-message">
-                <div class="ai-name">AI Ментор</div>
-                <p>"Первые 7 дней — самые сложные. AI помогает пройти их без срывов и перегрузок. Без фанатизма, с умом."</p>
-              </div>
-            </div>
-
-            <a href="#block4" class="btn btn-primary" @click.prevent="scrollTo('#block4')">Смотреть расписание →</a>
-            <div class="btn-meta">Бесплатно • Следующий шаг: календарь</div>
-          </div>
-
-          <div class="block-visual">
+          <div class="block-visual block-visual-full">
             <div class="steps-card">
-              <div class="steps-card-header">На основе твоих целей из диагностики:</div>
+              <div class="steps-card-header">Твоя первая неделя — все цели:</div>
               <div class="steps-list-v2">
                 <div class="step-item-v2" v-for="(step, index) in stepsV2" :key="index" :class="[step.category, { completed: step.completed }]">
                   <div class="step-day">{{ step.day }}</div>
@@ -214,6 +223,23 @@
                 <div class="day-dot" v-for="(day, index) in weekDays" :key="index" :class="{ active: index === 0 }">{{ day }}</div>
               </div>
             </div>
+          </div>
+
+          <div class="block-text block-text-center">
+            <div class="telegram-box telegram-box-v2">
+              <div class="telegram-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM16.64 8.8L14.87 16.94C14.73 17.57 14.39 17.72 13.89 17.43L11.24 15.51L9.95 16.75C9.8 16.9 9.67 17.03 9.37 17.03L9.58 14.33L14.53 9.88C14.75 9.69 14.48 9.58 14.19 9.76L8.05 13.58L5.43 12.76C4.82 12.56 4.81 12.16 5.56 11.87L15.85 7.87C16.36 7.69 16.79 7.99 16.64 8.8Z" fill="currentColor"/>
+                </svg>
+              </div>
+              <div class="telegram-text">
+                <strong>Telegram-бот напомнит о каждом шаге</strong>
+                <p>Утром мотивирует, вечером проверяет прогресс. Ты не забудешь и не сорвёшься.</p>
+              </div>
+            </div>
+
+            <a href="#block4" class="btn btn-primary" @click.prevent="scrollTo('#block4')">Смотреть календарь →</a>
+            <div class="btn-meta">Бесплатно • Следующий шаг: расписание</div>
           </div>
         </div>
       </div>
@@ -1827,12 +1853,182 @@ p {
 
 .block3-header {
   text-align: center;
-  max-width: 600px;
-  margin: 0 auto var(--spacing-2xl);
+  max-width: 700px;
+  margin: 0 auto var(--spacing-xl);
 }
 
 .block3-header h2 {
   margin-bottom: var(--spacing-sm);
+}
+
+.decomp-transformation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-xl);
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}
+
+.decomp-before,
+.decomp-after {
+  flex: 1;
+  max-width: 280px;
+}
+
+.decomp-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.decomp-goal-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: var(--radius-lg);
+  border-left: 4px solid #e9c46a;
+}
+
+.decomp-icon {
+  font-size: 2rem;
+}
+
+.decomp-goal-text {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.decomp-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 0 var(--spacing-md);
+}
+
+.decomp-ai-badge {
+  background: var(--primary);
+  color: white;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.decomp-arrow .arrow-icon {
+  color: var(--primary);
+}
+
+.decomp-steps-mini {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.decomp-step-mini {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-light);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  border-left: 3px solid var(--success);
+}
+
+.decomp-step-mini span {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: var(--bg-white);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.ai-quote-decomp {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  background: linear-gradient(135deg, var(--primary-light) 0%, #e8e4ff 100%);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  max-width: 700px;
+  margin: 0 auto var(--spacing-2xl);
+}
+
+.ai-quote-decomp .ai-avatar {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.ai-quote-decomp .ai-message p {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.block-visual-full {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto var(--spacing-xl);
+}
+
+.block-text-center {
+  max-width: 500px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.block-text-center .telegram-box-v2 {
+  text-align: left;
+  margin-bottom: var(--spacing-lg);
+}
+
+.block-text-center .btn {
+  margin-bottom: var(--spacing-xs);
+}
+
+@media (max-width: 768px) {
+  .decomp-transformation {
+    flex-direction: column;
+    padding: var(--spacing-lg);
+    gap: var(--spacing-md);
+  }
+  
+  .decomp-before,
+  .decomp-after {
+    width: 100%;
+    max-width: none;
+  }
+  
+  .decomp-arrow {
+    flex-direction: row;
+    padding: var(--spacing-sm) 0;
+  }
+  
+  .decomp-arrow .arrow-icon {
+    transform: rotate(90deg);
+  }
+  
+  .ai-quote-decomp {
+    padding: var(--spacing-md);
+  }
+  
+  .block-visual-full {
+    max-width: 100%;
+  }
 }
 
 .steps-card {
