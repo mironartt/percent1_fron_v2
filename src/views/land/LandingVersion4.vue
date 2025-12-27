@@ -371,9 +371,10 @@
               <ul>
                 <li><strong>Первая неделя:</strong> Интервьюер (собирает данные)</li>
                 <li><strong>Первый месяц:</strong> Стратег (помогает с целями)</li>
-                <li><strong>2-3 месяц:</strong> Коуч (поддержка привычек)</li>
+                <li><strong>2-3 месяц:</strong> Коуч* (поддержка и помощь в развитии)</li>
                 <li><strong>3+ месяцев:</strong> Ментор (глубинная работа)</li>
               </ul>
+              <div class="disclaimer">*AI-ассистент не является заменой профессионального психолога, коуча или врача. При серьёзных проблемах обращайтесь к специалистам.</div>
             </div>
 
             <div class="testimonial">
@@ -2956,6 +2957,15 @@ p {
 
 .role-transformation strong {
   color: var(--text-primary);
+}
+
+.role-transformation .disclaimer {
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--border-light);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 .phone-mockup {
