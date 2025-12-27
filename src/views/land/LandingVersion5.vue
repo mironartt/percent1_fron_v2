@@ -83,16 +83,6 @@
               <p><strong>Решение:</strong> Сделай диагностику через Колесо баланса за 2 минуты и увидишь свою зону роста. На следующем шаге AI превратит его в конкретный план действий.</p>
             </div>
 
-            <a href="#block2" class="btn btn-primary" @click.prevent="scrollTo('#block2')">Пройти диагностику за 2 минуты →</a>
-            <div class="btn-meta">Бесплатно • Следующий шаг: персональный план</div>
-
-          </div>
-
-          <div class="block-visual">
-            <div class="wheel-balance-chart wheel-component">
-              <WheelOfLife :spheres="wheelSpheres" :readonly="true" />
-            </div>
-            
             <div class="wheel-demo wheel-demo-mini">
               <div class="wheel-item-mini wheel-item-critical">
                 <span class="mini-label">Зона роста:</span>
@@ -106,6 +96,13 @@
                 <span class="mini-label">Сильная сторона:</span>
                 <span class="mini-value score-high">Любовь, Семья, Отношения 8/10</span>
               </div>
+            </div>
+
+          </div>
+
+          <div class="block-visual">
+            <div class="wheel-balance-chart wheel-component">
+              <WheelOfLife :spheres="wheelSpheres" :readonly="true" />
             </div>
           </div>
         </div>
@@ -1680,7 +1677,7 @@ p {
 }
 
 .wheel-component {
-  max-width: 570px;
+  max-width: 740px;
   margin: 0 auto;
 }
 
