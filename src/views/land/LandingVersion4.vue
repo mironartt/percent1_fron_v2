@@ -58,14 +58,6 @@
             <a href="#block2" class="btn btn-primary" @click.prevent="scrollTo('#block2')">Пройти диагностику за 2 минуты →</a>
             <div class="btn-meta">Бесплатно • Следующий шаг: персональный план</div>
 
-            <div class="testimonial testimonial-with-result">
-              <p>"Диагностика показала, что игнорирую здоровье. Честно, знал это так, но не придавал сильного значения."</p>
-              <div class="testimonial-author">— Максим, основатель IT-компании</div>
-              <div class="testimonial-result">
-                <span class="result-label">Результат через месяц:</span>
-                <span class="result-value">Здоровье: с 4/10 до 6/10</span>
-              </div>
-            </div>
           </div>
 
           <div class="block-visual">
@@ -88,7 +80,7 @@
             
             <div class="wheel-demo wheel-demo-mini">
               <div class="wheel-item-mini wheel-item-critical">
-                <span class="mini-label">Критическая зона:</span>
+                <span class="mini-label">Зона роста:</span>
                 <span class="mini-value score-low">Здоровье 4/10</span>
               </div>
               <div class="wheel-item-mini wheel-item-warning">
@@ -588,16 +580,16 @@ const accordions = ref({
 })
 
 const wheelSpheres = ref([
-  { id: 'health', name: 'Здоровье и спорт', score: 4 },
-  { id: 'wealth', name: 'Благосостояние', score: 2 },
-  { id: 'hobby', name: 'Хобби и отдых', score: 5 },
+  { id: 'health', name: 'Здоровье и спорт', score: 7 },
+  { id: 'wealth', name: 'Благосостояние', score: 4 },
+  { id: 'hobby', name: 'Хобби и отдых', score: 2 },
   { id: 'friends', name: 'Дружба и окружение', score: 7 },
   { id: 'career', name: 'Работа и карьера', score: 6 },
   { id: 'love', name: 'Любовь, семья, отношения', score: 8 }
 ])
 
 const spheres = ref([
-  { name: 'Здоровье', score: 4, icon: '❤️', label: 'Критическая зона' },
+  { name: 'Здоровье', score: 4, icon: '❤️', label: 'Зона роста' },
   { name: 'Карьера', score: 8, icon: '💼', label: 'Сильная сторона' },
   { name: 'Семья', score: 6, icon: '👨‍👩‍👧', label: 'Норма' },
   { name: 'Благосостояние', score: 5, icon: '💰', label: 'Требует внимания' },
@@ -1295,7 +1287,7 @@ p {
 }
 
 .wheel-component {
-  max-width: 380px;
+  max-width: 570px;
   margin: 0 auto;
 }
 
