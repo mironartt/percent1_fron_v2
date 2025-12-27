@@ -1422,8 +1422,9 @@ p {
 }
 
 .block-planning,
-.block-habits {
-  padding: var(--spacing-3xl) 0;
+.block-habits,
+.block-goals {
+  padding: calc(var(--spacing-3xl) + var(--spacing-xl)) 0;
 }
 
 .block-planning .container,
@@ -1436,7 +1437,7 @@ p {
 /* Блок "Знакомо?" */
 .block-familiar {
   background: #1a1a2e !important;
-  padding: var(--spacing-3xl) 0;
+  padding: calc(var(--spacing-3xl) + var(--spacing-xl)) 0;
 }
 
 .familiar-title {
@@ -3755,7 +3756,7 @@ p {
 .final-cta {
   background: linear-gradient(135deg, var(--primary) 0%, var(--purple) 100%);
   color: white;
-  padding: var(--spacing-2xl) 0;
+  padding: calc(var(--spacing-3xl) + var(--spacing-xl)) 0;
   text-align: center;
 }
 
