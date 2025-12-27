@@ -32,8 +32,7 @@
               <span class="highlight">через простые действия</span>
             </h1>
             <p class="hero-description">
-              Ты можешь стать сильнее на 1% сегодня — и это изменит всё завтра.
-              Не курс. Не марафон. А система, которая делает развитие предсказуемым.
+              Система, которая делает развитие предсказуемым. Твой личный AI наставник
             </p>
             <div class="hero-actions">
               <router-link to="/auth/register" class="btn btn-primary btn-lg">
