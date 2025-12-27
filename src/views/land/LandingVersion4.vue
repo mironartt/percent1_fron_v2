@@ -46,96 +46,86 @@
       <div class="container">
         <div class="block-content">
           <div class="block-text">
-            <h2>Почему ты стоишь на месте, хотя стараешься?</h2>
+            <div class="step-badge">Шаг 1 из 3: Диагностика</div>
+            <h2>Почему ты топчешься на месте, хотя стараешься?</h2>
             <p class="block-subtitle">2 минуты честных ответов покажут, какая сфера жизни тормозит все остальные</p>
 
-            <div class="problem-solution-box">
-              <div class="problem-block">
-                <span class="ps-label">Проблема:</span>
-                <p>Ты качаешь карьеру, но нет энергии. Или наоборот — здоров, но доход не растёт. Стараешься везде, а результат не складывается.</p>
-              </div>
-              <div class="solution-block">
-                <span class="ps-label">Решение:</span>
-                <p>Колесо баланса покажет зону роста, которая тянет вниз всю систему. AI превратит это в конкретный план на неделю.</p>
-              </div>
+            <div class="explanation-box">
+              <p><strong>Знакомо?</strong> Качаешь карьеру, но нет энергии. Или здоров, но доход стоит.</p>
+              <p><strong>Проблема:</strong> одна провисающая сфера тянет вниз всю систему.</p>
+              <p>Колесо баланса за 2 минуты найдёт твоё узкое место. На следующем шаге AI превратит его в конкретный план.</p>
             </div>
 
-            <div class="ai-transform-box">
-              <div class="ai-transform-header">
-                <span class="ai-transform-icon">✨</span>
-                <span>AI превращает проблемы в конкретные цели:</span>
-              </div>
-              <div class="example-item">
-                <span class="example-from">Здоровье 4/10</span>
-                <span class="example-arrow">→</span>
-                <span class="example-to">Спорт 3х в неделю</span>
-              </div>
-              <div class="example-item">
-                <span class="example-from">Карьера 8/10</span>
-                <span class="example-arrow">→</span>
-                <span class="example-to">Повышение до Senior</span>
-              </div>
-              <div class="example-item">
-                <span class="example-from">Благосостояние 5/10</span>
-                <span class="example-arrow">→</span>
-                <span class="example-to">+30% к доходу</span>
-              </div>
-            </div>
+            <a href="#block2" class="btn btn-primary" @click.prevent="scrollTo('#block2')">Пройти диагностику за 2 минуты →</a>
+            <div class="btn-meta">Бесплатно • Следующий шаг: персональный план</div>
 
-            <a href="#block2" class="btn btn-primary" @click.prevent="scrollTo('#block2')">Найти мою зону роста за 2 минуты →</a>
-
-            <div class="testimonial">
-              <p>"Диагностика показала, что я игнорирую здоровье. Честно, знал это, но цифра 4/10 била по больному. Через месяц — уже 6/10."</p>
+            <div class="testimonial testimonial-with-result">
+              <p>"Диагностика показала, что игнорирую здоровье. Честно, знал это, но цифра 4/10 была как пощёчина."</p>
               <div class="testimonial-author">— Максим, основатель IT-компании</div>
+              <div class="testimonial-result">
+                <span class="result-label">Результат через месяц:</span>
+                <span class="result-value">Здоровье: с 4/10 до 6/10</span>
+              </div>
             </div>
           </div>
 
           <div class="block-visual">
+            <div class="result-example-header">Пример результата</div>
+            
             <div class="wheel-chart">
               <svg viewBox="0 0 200 200" class="wheel-svg">
                 <circle cx="100" cy="100" r="80" fill="none" class="wheel-track" stroke-width="30"/>
                 <circle cx="100" cy="100" r="80" fill="none" class="wheel-progress" stroke-width="30" 
                         stroke-dasharray="125 502" stroke-dashoffset="0" transform="rotate(-90 100 100)"/>
-                <text x="100" y="90" text-anchor="middle" font-size="32" font-weight="700" class="wheel-score-text">6.2</text>
-                <text x="100" y="110" text-anchor="middle" font-size="12" class="wheel-label-text">средний балл</text>
-                <text x="100" y="130" text-anchor="middle" font-size="11" class="wheel-goal-text">Цель: 8+ за 90 дней</text>
+                <text x="100" y="85" text-anchor="middle" font-size="32" font-weight="700" class="wheel-score-text">6.2</text>
+                <text x="100" y="105" text-anchor="middle" font-size="11" class="wheel-label-text">из 10</text>
               </svg>
+            </div>
+
+            <div class="score-forecast">
+              <div class="forecast-item">
+                <span class="forecast-label">Через месяц:</span>
+                <span class="forecast-value">7.8</span>
+              </div>
+              <div class="forecast-item forecast-goal">
+                <span class="forecast-label">Цель:</span>
+                <span class="forecast-value">8+ за 90 дней</span>
+              </div>
             </div>
             
             <div class="wheel-demo wheel-demo-compact">
               <div class="wheel-item wheel-item-critical">
                 <div class="wheel-label">
                   <span class="wheel-icon">❤️</span>
-                  <span>Здоровье</span>
+                  <span>Критическая зона:</span>
                 </div>
                 <div class="wheel-score">
-                  <span class="score-number score-low">4/10</span>
-                  <span class="score-badge badge-critical">Зона роста</span>
+                  <span class="score-number score-low">Здоровье 4/10</span>
                 </div>
-                <div class="wheel-action">→ Спорт 3х в неделю</div>
               </div>
               <div class="wheel-item wheel-item-warning">
                 <div class="wheel-label">
                   <span class="wheel-icon">💰</span>
-                  <span>Благосостояние</span>
+                  <span>Требует внимания:</span>
                 </div>
                 <div class="wheel-score">
-                  <span class="score-number score-medium">5/10</span>
-                  <span class="score-badge badge-warning">Требует внимания</span>
+                  <span class="score-number score-medium">Благосостояние 5/10</span>
                 </div>
-                <div class="wheel-action">→ +30% к доходу</div>
               </div>
               <div class="wheel-item wheel-item-success">
                 <div class="wheel-label">
                   <span class="wheel-icon">💼</span>
-                  <span>Карьера</span>
+                  <span>Сильная сторона:</span>
                 </div>
                 <div class="wheel-score">
-                  <span class="score-number score-high">8/10</span>
-                  <span class="score-badge badge-success">Сильная сторона</span>
+                  <span class="score-number score-high">Карьера 8/10</span>
                 </div>
-                <div class="wheel-action">→ Повышение до Senior</div>
               </div>
+            </div>
+
+            <div class="next-step-hint">
+              <span class="next-icon">→</span>
+              <span>Далее: AI создаст план по приоритетам</span>
             </div>
           </div>
         </div>
@@ -1091,65 +1081,124 @@ p {
   border: 1px solid var(--bg-light);
 }
 
-.problem-solution-box {
-  background: linear-gradient(135deg, var(--warning-light, #FEF3C7) 0%, var(--warning-lighter, #FDE68A) 100%);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
-  border-left: 4px solid var(--warning);
-}
-
-.problem-block {
+.step-badge {
+  display: inline-block;
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+  font-weight: 600;
   margin-bottom: var(--spacing-md);
 }
 
-.solution-block {
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-md);
+.explanation-box {
+  background: var(--bg-light);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
 }
 
-.ps-label {
-  display: inline-block;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: var(--spacing-xs);
-}
-
-.problem-block .ps-label {
-  color: var(--warning-dark, #B45309);
-}
-
-.solution-block .ps-label {
-  color: var(--success-dark, #047857);
-}
-
-.problem-solution-box p {
-  margin: 0;
+.explanation-box p {
+  margin: 0 0 var(--spacing-sm) 0;
   color: var(--text-primary);
   line-height: 1.6;
   font-size: 0.9375rem;
 }
 
-.ai-transform-box {
-  background: var(--bg-white);
-  border: 2px solid var(--primary-light);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
+.explanation-box p:last-child {
+  margin-bottom: 0;
 }
 
-.ai-transform-header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  font-weight: 600;
+.explanation-box strong {
   color: var(--text-primary);
+}
+
+.result-example-header {
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   margin-bottom: var(--spacing-md);
 }
 
-.ai-transform-icon {
+.score-forecast {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--bg-white);
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.forecast-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.forecast-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.forecast-value {
   font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.forecast-goal .forecast-value {
+  color: var(--primary);
+  font-size: 1rem;
+}
+
+.next-step-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--primary-light);
+  border-radius: var(--radius-md);
+  color: var(--primary);
+  font-weight: 500;
+  font-size: 0.875rem;
+  margin-top: var(--spacing-md);
+}
+
+.next-icon {
+  font-size: 1.25rem;
+}
+
+.testimonial-with-result {
+  border: 1px solid var(--bg-light);
+  padding: var(--spacing-lg);
+}
+
+.testimonial-result {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--bg-light);
+}
+
+.result-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.result-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--success);
 }
 
 .example-item {
@@ -2333,16 +2382,23 @@ p {
     grid-template-columns: 1fr;
   }
   
-  .problem-solution-box {
+  .step-badge {
+    font-size: 0.8125rem;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  
+  .explanation-box {
     padding: var(--spacing-md);
   }
   
-  .ai-transform-box {
-    padding: var(--spacing-md);
+  .score-forecast {
+    flex-direction: column;
+    gap: var(--spacing-sm);
   }
   
-  .ai-transform-header {
-    flex-wrap: wrap;
+  .forecast-item {
+    flex-direction: row;
+    gap: var(--spacing-sm);
   }
   
   .wheel-demo-compact {
@@ -2353,6 +2409,12 @@ p {
   .wheel-item-warning,
   .wheel-item-success {
     padding: var(--spacing-sm);
+  }
+  
+  .testimonial-result {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
   }
   
   .calendar-days {
@@ -2403,31 +2465,26 @@ p {
     font-size: 1rem;
   }
   
-  .problem-solution-box {
+  .step-badge {
+    font-size: 0.75rem;
+  }
+  
+  .explanation-box {
     padding: var(--spacing-sm);
     border-radius: var(--radius-md);
   }
   
-  .problem-solution-box p {
+  .explanation-box p {
     font-size: 0.875rem;
   }
   
-  .solution-block {
-    padding: var(--spacing-sm);
+  .result-example-header {
+    font-size: 0.75rem;
   }
   
-  .ai-transform-box {
-    padding: var(--spacing-sm);
-    border-radius: var(--radius-md);
-  }
-  
-  .ai-transform-header {
-    font-size: 0.875rem;
-  }
-  
-  .example-item {
-    flex-wrap: wrap;
+  .next-step-hint {
     font-size: 0.8125rem;
+    padding: var(--spacing-sm);
   }
   
   .wheel-chart {
