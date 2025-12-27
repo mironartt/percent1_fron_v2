@@ -1841,10 +1841,11 @@ p {
   display: flex;
   gap: var(--spacing-md);
   padding: var(--spacing-md);
-  background: var(--bg-light);
+  background: var(--bg-white);
   border-radius: var(--radius-md);
   margin: var(--spacing-lg) 0;
   border-left: 3px solid var(--primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .ai-avatar {
@@ -2596,10 +2597,11 @@ p {
   display: flex;
   gap: var(--spacing-sm);
   padding: var(--spacing-md);
-  background: var(--bg-light);
+  background: var(--bg-white);
   border-radius: var(--radius-md);
   border-left: 3px solid var(--primary);
   margin: var(--spacing-lg) 0;
+  box-shadow: var(--shadow-sm);
 }
 
 .note-icon {
@@ -2867,10 +2869,11 @@ p {
 }
 
 .rewards-explanation {
-  background: var(--bg-light);
+  background: var(--bg-white);
   padding: var(--spacing-lg);
   border-radius: var(--radius-lg);
   margin: var(--spacing-lg) 0;
+  box-shadow: var(--shadow-sm);
 }
 
 .rewards-explanation h4 {
@@ -3050,9 +3053,12 @@ p {
 }
 
 .testimonial {
-  padding: var(--spacing-md) 0 var(--spacing-md) var(--spacing-md);
+  padding: var(--spacing-md);
   border-left: 3px solid var(--primary);
   margin-top: var(--spacing-lg);
+  background: var(--bg-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
 }
 
 .testimonial p {
