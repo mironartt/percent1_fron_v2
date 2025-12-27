@@ -82,32 +82,40 @@
               </div>
             </div>
 
-            <div class="wheel-balance-chart wheel-pie">
+            <div class="wheel-balance-chart wheel-polar">
               <svg viewBox="0 0 400 400" class="wheel-balance-svg" role="img" aria-label="Колесо баланса жизни">
-                <circle cx="200" cy="200" r="180" fill="none" class="wheel-grid-circle" opacity="0.3"/>
-                <circle cx="200" cy="200" r="150" fill="none" class="wheel-grid-circle" opacity="0.25"/>
-                <circle cx="200" cy="200" r="120" fill="none" class="wheel-grid-circle" opacity="0.2"/>
-                <circle cx="200" cy="200" r="90" fill="none" class="wheel-grid-circle" opacity="0.15"/>
-                <circle cx="200" cy="200" r="60" fill="none" class="wheel-grid-circle" opacity="0.1"/>
-                <line x1="200" y1="20" x2="200" y2="380" class="wheel-grid-line" opacity="0.2"/>
-                <line x1="44" y1="110" x2="356" y2="290" class="wheel-grid-line" opacity="0.2"/>
-                <line x1="44" y1="290" x2="356" y2="110" class="wheel-grid-line" opacity="0.2"/>
-                <path d="M200,200 L200,20 A180,180 0 0,1 356,110 Z" class="pie-sector pie-love" style="--sector-color: #A78BFA;"/>
-                <path d="M200,200 L356,110 A180,180 0 0,1 356,290 Z" class="pie-sector pie-wealth" style="--sector-color: #EF4444;"/>
-                <path d="M200,200 L356,290 A180,180 0 0,1 200,380 Z" class="pie-sector pie-hobby" style="--sector-color: #F59E0B;"/>
-                <path d="M200,200 L200,380 A180,180 0 0,1 44,290 Z" class="pie-sector pie-friends" style="--sector-color: #FBBF24;"/>
-                <path d="M200,200 L44,290 A180,180 0 0,1 44,110 Z" class="pie-sector pie-health" style="--sector-color: #14B8A6;"/>
-                <path d="M200,200 L44,110 A180,180 0 0,1 200,20 Z" class="pie-sector pie-career" style="--sector-color: #334155;"/>
-                <circle cx="200" cy="200" r="25" fill="white"/>
-                <text x="200" y="195" text-anchor="middle" font-size="20" font-weight="700" class="wheel-score-text">6.2</text>
-                <text x="200" y="212" text-anchor="middle" font-size="9" class="wheel-label-text">из 10</text>
-                <text x="240" y="40" text-anchor="middle" font-size="9" class="pie-label pie-label-love" transform="rotate(-60, 240, 40)">ЛЮБОВЬ, СЕМЬЯ</text>
-                <text x="255" y="55" text-anchor="middle" font-size="8" class="pie-label pie-label-love" transform="rotate(-60, 255, 55)">И ОТНОШЕНИЯ</text>
-                <text x="370" y="200" text-anchor="middle" font-size="9" class="pie-label pie-label-wealth" transform="rotate(90, 370, 200)">БЛАГОСОСТОЯНИЕ</text>
-                <text x="320" y="345" text-anchor="middle" font-size="9" class="pie-label pie-label-hobby" transform="rotate(60, 320, 345)">ХОББИ И ОТДЫХ</text>
-                <text x="80" y="345" text-anchor="middle" font-size="8" class="pie-label pie-label-friends" transform="rotate(-60, 80, 345)">ДРУЖБА И ОКРУЖЕНИЕ</text>
-                <text x="30" y="200" text-anchor="middle" font-size="9" class="pie-label pie-label-health" transform="rotate(-90, 30, 200)">ЗДОРОВЬЕ И СПОРТ</text>
-                <text x="160" y="40" text-anchor="middle" font-size="9" class="pie-label pie-label-career" transform="rotate(60, 160, 40)">РАБОТА И КАРЬЕРА</text>
+                <g class="wheel-grid">
+                  <circle cx="200" cy="200" r="130" fill="none" class="wheel-grid-circle"/>
+                  <circle cx="200" cy="200" r="104" fill="none" class="wheel-grid-circle"/>
+                  <circle cx="200" cy="200" r="78" fill="none" class="wheel-grid-circle"/>
+                  <circle cx="200" cy="200" r="52" fill="none" class="wheel-grid-circle"/>
+                  <circle cx="200" cy="200" r="26" fill="none" class="wheel-grid-circle"/>
+                  <line x1="200" y1="70" x2="200" y2="330" class="wheel-grid-line"/>
+                  <line x1="87.4" y1="135" x2="312.6" y2="265" class="wheel-grid-line"/>
+                  <line x1="87.4" y1="265" x2="312.6" y2="135" class="wheel-grid-line"/>
+                </g>
+                <g class="wheel-sectors">
+                  <path d="M200,200 L200,96 A104,104 0 0,1 290.1,148 Z" fill="#A78BFA"/>
+                  <path d="M200,200 L222.5,187 A26,26 0 0,1 222.5,213 Z" fill="#EF4444"/>
+                  <path d="M200,200 L256.3,232.5 A65,65 0 0,1 200,265 Z" fill="#F59E0B"/>
+                  <path d="M200,200 L200,291 A91,91 0 0,1 121.2,245.5 Z" fill="#FBBF24"/>
+                  <path d="M200,200 L98.7,258.5 A117,117 0 0,1 98.7,141.5 Z" fill="#14B8A6"/>
+                  <path d="M200,200 L132.5,161 A78,78 0 0,1 200,122 Z" fill="#475569"/>
+                </g>
+                <g class="wheel-center">
+                  <circle cx="200" cy="200" r="22" fill="#EF4444"/>
+                  <text x="200" y="204" text-anchor="middle" font-size="12" font-weight="700" fill="white">6.2</text>
+                  <text x="200" y="215" text-anchor="middle" font-size="6" fill="white" opacity="0.85">из 10</text>
+                </g>
+                <g class="wheel-labels-outer" font-weight="600">
+                  <text x="270" y="53" fill="#7C3AED" font-size="9">ЛЮБОВЬ СЕМЬЯ</text>
+                  <text x="270" y="64" fill="#7C3AED" font-size="8">ОТНОШЕНИЯ</text>
+                  <text x="355" y="190" fill="#DC2626" font-size="9" transform="rotate(90, 355, 190)">БЛАГОСОСТОЯНИЕ</text>
+                  <text x="280" y="355" fill="#D97706" font-size="9">ХОББИ И ОТДЫХ</text>
+                  <text x="80" y="355" fill="#B45309" font-size="8">ДРУЖБА И ОКРУЖЕНИЕ</text>
+                  <text x="45" y="210" fill="#0D9488" font-size="9" transform="rotate(-90, 45, 210)">ЗДОРОВЬЕ И СПОРТ</text>
+                  <text x="130" y="53" fill="#475569" font-size="9">РАБОТА И КАРЬЕРА</text>
+                </g>
               </svg>
             </div>
             
@@ -1309,34 +1317,37 @@ p {
   fill: var(--primary);
 }
 
-.wheel-pie {
-  max-width: 380px;
-  padding: var(--spacing-md);
+.wheel-polar {
+  max-width: 420px;
+  padding: var(--spacing-sm);
 }
 
-.pie-sector {
-  fill: var(--sector-color);
-  opacity: 0.85;
+.wheel-polar .wheel-grid-circle {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+  opacity: 0.15;
+}
+
+.wheel-polar .wheel-grid-line {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+  opacity: 0.1;
+}
+
+.polar-sector {
+  opacity: 0.9;
   transition: opacity 0.2s ease;
 }
 
-.pie-sector:hover {
+.polar-sector:hover {
   opacity: 1;
 }
 
-.pie-label {
-  fill: var(--text-muted);
+.polar-label {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
-
-.pie-label-love { fill: #7C3AED; }
-.pie-label-wealth { fill: #DC2626; }
-.pie-label-hobby { fill: #D97706; }
-.pie-label-friends { fill: #B45309; }
-.pie-label-health { fill: #0D9488; }
-.pie-label-career { fill: #475569; }
 
 .wheel-demo-mini {
   display: flex;
