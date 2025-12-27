@@ -82,41 +82,8 @@
               </div>
             </div>
 
-            <div class="wheel-balance-chart wheel-polar">
-              <svg viewBox="0 0 400 400" class="wheel-balance-svg" role="img" aria-label="Колесо баланса жизни">
-                <g class="wheel-grid">
-                  <circle cx="200" cy="200" r="130" fill="none" class="wheel-grid-circle"/>
-                  <circle cx="200" cy="200" r="104" fill="none" class="wheel-grid-circle"/>
-                  <circle cx="200" cy="200" r="78" fill="none" class="wheel-grid-circle"/>
-                  <circle cx="200" cy="200" r="52" fill="none" class="wheel-grid-circle"/>
-                  <circle cx="200" cy="200" r="26" fill="none" class="wheel-grid-circle"/>
-                  <line x1="200" y1="70" x2="200" y2="330" class="wheel-grid-line"/>
-                  <line x1="87.4" y1="135" x2="312.6" y2="265" class="wheel-grid-line"/>
-                  <line x1="87.4" y1="265" x2="312.6" y2="135" class="wheel-grid-line"/>
-                </g>
-                <g class="wheel-sectors">
-                  <path d="M200,200 L200,96 A104,104 0 0,1 290.1,148 Z" fill="#A78BFA"/>
-                  <path d="M200,200 L222.5,187 A26,26 0 0,1 222.5,213 Z" fill="#EF4444"/>
-                  <path d="M200,200 L256.3,232.5 A65,65 0 0,1 200,265 Z" fill="#F59E0B"/>
-                  <path d="M200,200 L200,291 A91,91 0 0,1 121.2,245.5 Z" fill="#FBBF24"/>
-                  <path d="M200,200 L98.7,258.5 A117,117 0 0,1 98.7,141.5 Z" fill="#14B8A6"/>
-                  <path d="M200,200 L132.5,161 A78,78 0 0,1 200,122 Z" fill="#475569"/>
-                </g>
-                <g class="wheel-center">
-                  <circle cx="200" cy="200" r="22" fill="#EF4444"/>
-                  <text x="200" y="204" text-anchor="middle" font-size="12" font-weight="700" fill="white">6.2</text>
-                  <text x="200" y="215" text-anchor="middle" font-size="6" fill="white" opacity="0.85">из 10</text>
-                </g>
-                <g class="wheel-labels-outer" font-weight="600">
-                  <text x="270" y="53" fill="#7C3AED" font-size="9">ЛЮБОВЬ СЕМЬЯ</text>
-                  <text x="270" y="64" fill="#7C3AED" font-size="8">ОТНОШЕНИЯ</text>
-                  <text x="355" y="190" fill="#DC2626" font-size="9" transform="rotate(90, 355, 190)">БЛАГОСОСТОЯНИЕ</text>
-                  <text x="280" y="355" fill="#D97706" font-size="9">ХОББИ И ОТДЫХ</text>
-                  <text x="80" y="355" fill="#B45309" font-size="8">ДРУЖБА И ОКРУЖЕНИЕ</text>
-                  <text x="45" y="210" fill="#0D9488" font-size="9" transform="rotate(-90, 45, 210)">ЗДОРОВЬЕ И СПОРТ</text>
-                  <text x="130" y="53" fill="#475569" font-size="9">РАБОТА И КАРЬЕРА</text>
-                </g>
-              </svg>
+            <div class="wheel-balance-chart wheel-component">
+              <WheelOfLife :spheres="wheelSpheres" :readonly="true" />
             </div>
             
             <div class="wheel-demo wheel-demo-mini">
@@ -611,6 +578,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import WheelOfLife from '@/components/WheelOfLife.vue'
 
 const socialProofCount = ref(2847)
 const showBackToTop = ref(false)
@@ -618,6 +586,15 @@ const showBackToTop = ref(false)
 const accordions = ref({
   howItWorks: false
 })
+
+const wheelSpheres = ref([
+  { id: 'health', name: 'Здоровье и спорт', score: 4 },
+  { id: 'wealth', name: 'Благосостояние', score: 2 },
+  { id: 'hobby', name: 'Хобби и отдых', score: 5 },
+  { id: 'friends', name: 'Дружба и окружение', score: 7 },
+  { id: 'career', name: 'Работа и карьера', score: 6 },
+  { id: 'love', name: 'Любовь, семья, отношения', score: 8 }
+])
 
 const spheres = ref([
   { name: 'Здоровье', score: 4, icon: '❤️', label: 'Критическая зона' },
@@ -1317,36 +1294,19 @@ p {
   fill: var(--primary);
 }
 
-.wheel-polar {
-  max-width: 420px;
-  padding: var(--spacing-sm);
+.wheel-component {
+  max-width: 380px;
+  margin: 0 auto;
 }
 
-.wheel-polar .wheel-grid-circle {
-  stroke: var(--text-muted);
-  stroke-width: 1;
-  opacity: 0.15;
+.wheel-component :deep(.wheel-of-life) {
+  width: 100%;
 }
 
-.wheel-polar .wheel-grid-line {
-  stroke: var(--text-muted);
-  stroke-width: 1;
-  opacity: 0.1;
-}
-
-.polar-sector {
-  opacity: 0.9;
-  transition: opacity 0.2s ease;
-}
-
-.polar-sector:hover {
-  opacity: 1;
-}
-
-.polar-label {
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+.wheel-component :deep(.wheel-svg) {
+  width: 100%;
+  height: auto;
+  cursor: default;
 }
 
 .wheel-demo-mini {
