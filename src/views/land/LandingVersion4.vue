@@ -50,13 +50,22 @@
             <h2>Почему ты топчешься на месте, хотя стараешься?</h2>
             <p class="block-subtitle">2 минуты честных ответов покажут, какая сфера жизни тормозит все остальные</p>
 
-            <p class="bridge-text">Колесо баланса найдёт твоё узкое место. Дальше AI превратит его в план действий.</p>
+            <div class="explanation-box">
+              <p><strong>Знакомо?</strong> Качаешь карьеру, но нет энергии. Или здоров, но доход стоит.</p>
+              <p><strong>Проблема:</strong> одна провисающая сфера тянет вниз всю систему.</p>
+              <p>Колесо баланса за 2 минуты найдёт твоё узкое место. На следующем шаге AI превратит его в конкретный план.</p>
+            </div>
 
             <a href="#block2" class="btn btn-primary" @click.prevent="scrollTo('#block2')">Пройти диагностику за 2 минуты →</a>
             <div class="btn-meta">Бесплатно • Следующий шаг: персональный план</div>
 
-            <div class="testimonial">
+            <div class="testimonial testimonial-with-result">
               <p>"Диагностика показала, что игнорирую здоровье. Честно, знал это, но цифра 4/10 была как пощёчина."</p>
+              <div class="testimonial-author">— Максим, основатель IT-компании</div>
+              <div class="testimonial-result">
+                <span class="result-label">Результат через месяц:</span>
+                <span class="result-value">Здоровье: с 4/10 до 6/10</span>
+              </div>
             </div>
           </div>
 
@@ -68,9 +77,20 @@
                 <circle cx="100" cy="100" r="80" fill="none" class="wheel-track" stroke-width="30"/>
                 <circle cx="100" cy="100" r="80" fill="none" class="wheel-progress" stroke-width="30" 
                         stroke-dasharray="125 502" stroke-dashoffset="0" transform="rotate(-90 100 100)"/>
-                <text x="100" y="90" text-anchor="middle" font-size="32" font-weight="700" class="wheel-score-text">6.2</text>
-                <text x="100" y="115" text-anchor="middle" font-size="12" class="wheel-label-text">из 10</text>
+                <text x="100" y="85" text-anchor="middle" font-size="32" font-weight="700" class="wheel-score-text">6.2</text>
+                <text x="100" y="105" text-anchor="middle" font-size="11" class="wheel-label-text">из 10</text>
               </svg>
+            </div>
+
+            <div class="score-forecast">
+              <div class="forecast-item">
+                <span class="forecast-label">Через месяц:</span>
+                <span class="forecast-value">7.8</span>
+              </div>
+              <div class="forecast-item forecast-goal">
+                <span class="forecast-label">Цель:</span>
+                <span class="forecast-value">8+ за 90 дней</span>
+              </div>
             </div>
             
             <div class="wheel-demo wheel-demo-compact">
@@ -101,6 +121,11 @@
                   <span class="score-number score-high">Карьера 8/10</span>
                 </div>
               </div>
+            </div>
+
+            <div class="next-step-hint">
+              <span class="next-icon">→</span>
+              <span>Далее: AI создаст план по приоритетам</span>
             </div>
           </div>
         </div>
@@ -1065,13 +1090,6 @@ p {
   font-size: 0.875rem;
   font-weight: 600;
   margin-bottom: var(--spacing-md);
-}
-
-.bridge-text {
-  color: var(--text-secondary);
-  font-size: 1rem;
-  line-height: 1.6;
-  margin-bottom: var(--spacing-lg);
 }
 
 .explanation-box {
