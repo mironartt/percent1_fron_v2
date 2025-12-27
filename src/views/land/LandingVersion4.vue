@@ -46,9 +46,8 @@
       <div class="container">
         <div class="block-content">
           <div class="block-text">
-            <div class="step-badge">Шаг 1 из 3: Диагностика</div>
+            <div class="step-badge">Шаг 1 из 5: Диагностика</div>
             <h2>Почему ты топчешься на месте, хотя стараешься?</h2>
-            <p class="block-subtitle">2 минуты честных ответов покажут, какая сфера жизни тормозит все остальные</p>
 
             <div class="explanation-box">
               <p><strong>Знакомо?</strong> Качаешь карьеру, но нет энергии. Или здоров, но доход стоит.</p>
@@ -60,7 +59,7 @@
             <div class="btn-meta">Бесплатно • Следующий шаг: персональный план</div>
 
             <div class="testimonial testimonial-with-result">
-              <p>"Диагностика показала, что игнорирую здоровье. Честно, знал это, но цифра 4/10 была как пощёчина."</p>
+              <p>"Диагностика показала, что игнорирую здоровье. Честно, знал это так, но не придавал сильного значения."</p>
               <div class="testimonial-author">— Максим, основатель IT-компании</div>
               <div class="testimonial-result">
                 <span class="result-label">Результат через месяц:</span>
@@ -83,90 +82,47 @@
               </div>
             </div>
 
-            <div class="wheel-balance-chart">
-              <svg viewBox="0 0 300 300" class="wheel-balance-svg" role="img" aria-label="Колесо баланса жизни">
-                <circle cx="150" cy="150" r="120" fill="none" class="wheel-grid-circle" opacity="0.5"/>
-                <circle cx="150" cy="150" r="96" fill="none" class="wheel-grid-circle" opacity="0.4"/>
-                <circle cx="150" cy="150" r="72" fill="none" class="wheel-grid-circle" opacity="0.3"/>
-                <circle cx="150" cy="150" r="48" fill="none" class="wheel-grid-circle" opacity="0.2"/>
-                <circle cx="150" cy="150" r="24" fill="none" class="wheel-grid-circle" opacity="0.1"/>
-                <line x1="150" y1="30" x2="150" y2="270" class="wheel-grid-line" opacity="0.3"/>
-                <line x1="46" y1="90" x2="254" y2="210" class="wheel-grid-line" opacity="0.3"/>
-                <line x1="46" y1="210" x2="254" y2="90" class="wheel-grid-line" opacity="0.3"/>
-                <polygon 
-                  points="150,102 188,126 188,174 150,198 112,174 112,126" 
-                  class="wheel-polygon"
-                />
-                <circle cx="150" cy="102" r="5" class="wheel-dot"/>
-                <circle cx="188" cy="126" r="5" class="wheel-dot"/>
-                <circle cx="188" cy="174" r="5" class="wheel-dot"/>
-                <circle cx="150" cy="198" r="5" class="wheel-dot"/>
-                <circle cx="112" cy="174" r="5" class="wheel-dot"/>
-                <circle cx="112" cy="126" r="5" class="wheel-dot"/>
-                <text x="150" y="140" text-anchor="middle" font-size="36" font-weight="700" class="wheel-score-text">6.2</text>
-                <text x="150" y="165" text-anchor="middle" font-size="14" class="wheel-label-text">из 10</text>
+            <div class="wheel-balance-chart wheel-pie">
+              <svg viewBox="0 0 400 400" class="wheel-balance-svg" role="img" aria-label="Колесо баланса жизни">
+                <circle cx="200" cy="200" r="180" fill="none" class="wheel-grid-circle" opacity="0.3"/>
+                <circle cx="200" cy="200" r="150" fill="none" class="wheel-grid-circle" opacity="0.25"/>
+                <circle cx="200" cy="200" r="120" fill="none" class="wheel-grid-circle" opacity="0.2"/>
+                <circle cx="200" cy="200" r="90" fill="none" class="wheel-grid-circle" opacity="0.15"/>
+                <circle cx="200" cy="200" r="60" fill="none" class="wheel-grid-circle" opacity="0.1"/>
+                <line x1="200" y1="20" x2="200" y2="380" class="wheel-grid-line" opacity="0.2"/>
+                <line x1="44" y1="110" x2="356" y2="290" class="wheel-grid-line" opacity="0.2"/>
+                <line x1="44" y1="290" x2="356" y2="110" class="wheel-grid-line" opacity="0.2"/>
+                <path d="M200,200 L200,20 A180,180 0 0,1 356,110 Z" class="pie-sector pie-love" style="--sector-color: #A78BFA;"/>
+                <path d="M200,200 L356,110 A180,180 0 0,1 356,290 Z" class="pie-sector pie-wealth" style="--sector-color: #EF4444;"/>
+                <path d="M200,200 L356,290 A180,180 0 0,1 200,380 Z" class="pie-sector pie-hobby" style="--sector-color: #F59E0B;"/>
+                <path d="M200,200 L200,380 A180,180 0 0,1 44,290 Z" class="pie-sector pie-friends" style="--sector-color: #FBBF24;"/>
+                <path d="M200,200 L44,290 A180,180 0 0,1 44,110 Z" class="pie-sector pie-health" style="--sector-color: #14B8A6;"/>
+                <path d="M200,200 L44,110 A180,180 0 0,1 200,20 Z" class="pie-sector pie-career" style="--sector-color: #334155;"/>
+                <circle cx="200" cy="200" r="25" fill="white"/>
+                <text x="200" y="195" text-anchor="middle" font-size="20" font-weight="700" class="wheel-score-text">6.2</text>
+                <text x="200" y="212" text-anchor="middle" font-size="9" class="wheel-label-text">из 10</text>
+                <text x="240" y="40" text-anchor="middle" font-size="9" class="pie-label pie-label-love" transform="rotate(-60, 240, 40)">ЛЮБОВЬ, СЕМЬЯ</text>
+                <text x="255" y="55" text-anchor="middle" font-size="8" class="pie-label pie-label-love" transform="rotate(-60, 255, 55)">И ОТНОШЕНИЯ</text>
+                <text x="370" y="200" text-anchor="middle" font-size="9" class="pie-label pie-label-wealth" transform="rotate(90, 370, 200)">БЛАГОСОСТОЯНИЕ</text>
+                <text x="320" y="345" text-anchor="middle" font-size="9" class="pie-label pie-label-hobby" transform="rotate(60, 320, 345)">ХОББИ И ОТДЫХ</text>
+                <text x="80" y="345" text-anchor="middle" font-size="8" class="pie-label pie-label-friends" transform="rotate(-60, 80, 345)">ДРУЖБА И ОКРУЖЕНИЕ</text>
+                <text x="30" y="200" text-anchor="middle" font-size="9" class="pie-label pie-label-health" transform="rotate(-90, 30, 200)">ЗДОРОВЬЕ И СПОРТ</text>
+                <text x="160" y="40" text-anchor="middle" font-size="9" class="pie-label pie-label-career" transform="rotate(60, 160, 40)">РАБОТА И КАРЬЕРА</text>
               </svg>
-              <div class="wheel-labels">
-                <div class="wheel-label-item" style="top: 0; left: 50%; transform: translateX(-50%);">
-                  <span class="label-icon">💼</span>
-                  <span class="label-text">Карьера</span>
-                  <span class="label-score score-high">8</span>
-                </div>
-                <div class="wheel-label-item" style="top: 20%; right: 0;">
-                  <span class="label-icon">📚</span>
-                  <span class="label-text">Развитие</span>
-                  <span class="label-score score-medium">6</span>
-                </div>
-                <div class="wheel-label-item" style="bottom: 20%; right: 0;">
-                  <span class="label-icon">👨‍👩‍👧</span>
-                  <span class="label-text">Отношения</span>
-                  <span class="label-score score-medium">7</span>
-                </div>
-                <div class="wheel-label-item" style="bottom: 0; left: 50%; transform: translateX(-50%);">
-                  <span class="label-icon">❤️</span>
-                  <span class="label-text">Здоровье</span>
-                  <span class="label-score score-low">4</span>
-                </div>
-                <div class="wheel-label-item" style="bottom: 20%; left: 0;">
-                  <span class="label-icon">💰</span>
-                  <span class="label-text">Финансы</span>
-                  <span class="label-score score-medium">5</span>
-                </div>
-                <div class="wheel-label-item" style="top: 20%; left: 0;">
-                  <span class="label-icon">🧘</span>
-                  <span class="label-text">Гармония</span>
-                  <span class="label-score score-medium">7</span>
-                </div>
-              </div>
             </div>
             
-            <div class="wheel-demo wheel-demo-compact">
-              <div class="wheel-item wheel-item-critical">
-                <div class="wheel-label">
-                  <span class="wheel-icon">❤️</span>
-                  <span>Критическая зона:</span>
-                </div>
-                <div class="wheel-score">
-                  <span class="score-number score-low">Здоровье 4/10</span>
-                </div>
+            <div class="wheel-demo wheel-demo-mini">
+              <div class="wheel-item-mini wheel-item-critical">
+                <span class="mini-label">Критическая зона:</span>
+                <span class="mini-value score-low">Здоровье 4/10</span>
               </div>
-              <div class="wheel-item wheel-item-warning">
-                <div class="wheel-label">
-                  <span class="wheel-icon">💰</span>
-                  <span>Требует внимания:</span>
-                </div>
-                <div class="wheel-score">
-                  <span class="score-number score-medium">Благосостояние 5/10</span>
-                </div>
+              <div class="wheel-item-mini wheel-item-warning">
+                <span class="mini-label">Требует внимания:</span>
+                <span class="mini-value score-medium">Благосостояние 5/10</span>
               </div>
-              <div class="wheel-item wheel-item-success">
-                <div class="wheel-label">
-                  <span class="wheel-icon">💼</span>
-                  <span>Сильная сторона:</span>
-                </div>
-                <div class="wheel-score">
-                  <span class="score-number score-high">Карьера 8/10</span>
-                </div>
+              <div class="wheel-item-mini wheel-item-success">
+                <span class="mini-label">Сильная сторона:</span>
+                <span class="mini-value score-high">Работа и карьера 8/10</span>
               </div>
             </div>
           </div>
@@ -1351,6 +1307,85 @@ p {
 
 .wheel-dot {
   fill: var(--primary);
+}
+
+.wheel-pie {
+  max-width: 380px;
+  padding: var(--spacing-md);
+}
+
+.pie-sector {
+  fill: var(--sector-color);
+  opacity: 0.85;
+  transition: opacity 0.2s ease;
+}
+
+.pie-sector:hover {
+  opacity: 1;
+}
+
+.pie-label {
+  fill: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.pie-label-love { fill: #7C3AED; }
+.pie-label-wealth { fill: #DC2626; }
+.pie-label-hobby { fill: #D97706; }
+.pie-label-friends { fill: #B45309; }
+.pie-label-health { fill: #0D9488; }
+.pie-label-career { fill: #475569; }
+
+.wheel-demo-mini {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.wheel-item-mini {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--bg-white);
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+}
+
+.wheel-item-mini.wheel-item-critical {
+  border-left: 3px solid var(--error);
+}
+
+.wheel-item-mini.wheel-item-warning {
+  border-left: 3px solid var(--warning);
+}
+
+.wheel-item-mini.wheel-item-success {
+  border-left: 3px solid var(--success);
+}
+
+.mini-label {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.mini-value {
+  font-weight: 600;
+  font-size: 0.8125rem;
+}
+
+.mini-value.score-low {
+  color: var(--error);
+}
+
+.mini-value.score-medium {
+  color: var(--warning);
+}
+
+.mini-value.score-high {
+  color: var(--success);
 }
 
 .wheel-labels {
