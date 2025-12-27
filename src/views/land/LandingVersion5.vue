@@ -70,57 +70,48 @@
       <div class="hero-bg"></div>
     </section>
 
-    <!-- Блок "Знакомо?" -->
-    <section class="block block-familiar">
+    <!-- Блок "Эффект 1%" -->
+    <section class="block effect-section">
       <div class="container">
-        <h2 class="familiar-title">Знакомо?</h2>
+        <h2 class="section-title">Эффект 1%: маленькие шаги → большие результаты</h2>
+        <p class="section-subtitle">
+          Улучшая каждый день хотя бы на 1%, за год ты станешь сильнее почти в 38 раз.<br>
+          Это эффект сложных процентов, применённый к жизни.
+        </p>
         
-        <div class="familiar-cards">
-          <div class="familiar-card">
-            <div class="familiar-card-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 6v6l4 2"/>
-              </svg>
-            </div>
-            <h3 class="familiar-card-title">Не хватает дисциплины</h3>
-            <p class="familiar-card-desc">Начинаю, бросаю, снова начинаю... Сила воли заканчивается через неделю.</p>
-            <div class="familiar-card-solution">
-              <span class="solution-icon">✨</span>
-              <p>Система делает дисциплину ненужной — маленькие шаги + привычки + AI-напоминания.</p>
-            </div>
+        <div class="slider-container">
+          <input 
+            type="range" 
+            min="30" 
+            max="365" 
+            v-model="days" 
+            class="days-slider"
+          >
+          <div class="slider-labels">
+            <span>1 мес.</span>
+            <span>6 мес.</span>
+            <span>1 год</span>
           </div>
-          
-          <div class="familiar-card">
-            <div class="familiar-card-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="2" y="4" width="20" height="16" rx="2"/>
-                <path d="M7 15h0M2 9h20"/>
-              </svg>
-            </div>
-            <h3 class="familiar-card-title">Хочу расти в доходе</h3>
-            <p class="familiar-card-desc">Работаю много, но финансового роста нет. Не понимаю, что конкретно делать.</p>
-            <div class="familiar-card-solution">
-              <span class="solution-icon">✨</span>
-              <p>Сфера "Карьера/Деньги" → конкретные цели → ежедневные действия. Рост = система.</p>
-            </div>
-          </div>
-          
-          <div class="familiar-card">
-            <div class="familiar-card-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                <circle cx="12" cy="17" r="0.5"/>
-              </svg>
-            </div>
-            <h3 class="familiar-card-title">Не знаю, что делать</h3>
-            <p class="familiar-card-desc">Много идей, но непонятно с чего начать. Ступор и прокрастинация.</p>
-            <div class="familiar-card-solution">
-              <span class="solution-icon">✨</span>
-              <p>AI Mentor анализирует ситуацию и предлагает следующий шаг. Никакого ступора.</p>
-            </div>
-          </div>
+        </div>
+
+        <div class="effect-result">
+          <div class="days-display">{{ days }} дней</div>
+          <div class="multiplier">× {{ multiplier }}</div>
+        </div>
+
+        <div class="effect-description">
+          <p v-if="days <= 30">
+            <strong>Ты начнёшь управлять днём</strong>, а не плыть по потоку: меньше хаоса, больше точности.
+          </p>
+          <p v-else-if="days <= 90">
+            <strong>Система становится привычкой</strong>, нет тревоги, есть четкий план и ясность что делать и зачем.
+          </p>
+          <p v-else-if="days <= 180">
+            <strong>Новая «операционка»</strong>: уже есть большие победы и достигнутые цели как в жизни, так и в финансах.
+          </p>
+          <p v-else>
+            <strong>Качественный сдвиг</strong>: ясность, устойчивость, рост дохода и ощущение контроля над жизнью.
+          </p>
         </div>
       </div>
     </section>
@@ -851,6 +842,9 @@ const socialProofCount = ref(2847)
 const showBackToTop = ref(false)
 const showHowAiWorksModal = ref(false)
 
+const days = ref(90)
+const multiplier = computed(() => Math.pow(1.01, days.value).toFixed(2))
+
 const accordions = ref({
   howItWorks: false
 })
@@ -1433,75 +1427,99 @@ p {
   padding-right: var(--spacing-xl);
 }
 
-/* Блок "Знакомо?" */
-.block-familiar {
-  background: #1a1a2e !important;
+/* Блок "Эффект 1%" */
+.effect-section {
   padding: calc(var(--spacing-3xl) + var(--spacing-xl)) 0;
+  background: var(--bg-white);
 }
 
-.familiar-title {
-  text-align: center;
-  color: #ffffff;
-  font-size: 2rem;
+.effect-section .section-title {
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
   font-weight: 700;
-  margin-bottom: var(--spacing-2xl);
+  text-align: center;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
 }
 
-.familiar-cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-lg);
-  max-width: 1100px;
-  margin: 0 auto;
-}
-
-.familiar-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-xl);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-}
-
-.familiar-card-icon {
-  color: #818cf8;
-  margin-bottom: var(--spacing-xs);
-}
-
-.familiar-card-title {
-  color: #ffffff;
+.effect-section .section-subtitle {
+  text-align: center;
+  color: var(--text-secondary);
   font-size: 1.125rem;
-  font-weight: 600;
-  margin: 0;
+  max-width: 600px;
+  margin: 0 auto 3rem;
+  line-height: 1.6;
 }
 
-.familiar-card-desc {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.9375rem;
-  line-height: 1.5;
-  margin: 0;
+.slider-container {
+  max-width: 500px;
+  margin: 0 auto 2rem;
 }
 
-.familiar-card-solution {
+.days-slider {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: #e5e7eb;
+  outline: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.days-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+}
+
+.slider-labels {
   display: flex;
-  gap: var(--spacing-sm);
-  margin-top: auto;
-  padding-top: var(--spacing-md);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.familiar-card-solution .solution-icon {
-  flex-shrink: 0;
-  font-size: 1rem;
-}
-
-.familiar-card-solution p {
-  color: #a5b4fc;
+  justify-content: space-between;
+  margin-top: 0.5rem;
   font-size: 0.875rem;
-  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.effect-result {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.days-display {
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.multiplier {
+  font-size: 3rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.effect-description {
+  text-align: center;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  background: var(--bg-light);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.effect-description p {
   margin: 0;
+}
+
+.effect-description strong {
+  color: var(--text-primary);
 }
 
 /* Блок "Что меняется" */
