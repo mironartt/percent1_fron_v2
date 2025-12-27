@@ -212,20 +212,6 @@
           </div>
         </div>
 
-        <div class="ai-quote-compact">
-          <span class="ai-emoji">🤖</span>
-          <p>"Я разбиваю цели на шаги. Каждый день одно действие — так ты не перегрузишься."</p>
-        </div>
-
-        <div class="block3-footer">
-          <div class="telegram-inline">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM16.64 8.8L14.87 16.94C14.73 17.57 14.39 17.72 13.89 17.43L11.24 15.51L9.95 16.75C9.8 16.9 9.67 17.03 9.37 17.03L9.58 14.33L14.53 9.88C14.75 9.69 14.48 9.58 14.19 9.76L8.05 13.58L5.43 12.76C4.82 12.56 4.81 12.16 5.56 11.87L15.85 7.87C16.36 7.69 16.79 7.99 16.64 8.8Z" fill="#0088cc"/>
-            </svg>
-            <span>Telegram-бот напомнит о каждом шаге</span>
-          </div>
-          <a href="#block4" class="btn btn-primary" @click.prevent="scrollTo('#block4')">Смотреть календарь →</a>
-        </div>
       </div>
     </section>
 
@@ -255,13 +241,6 @@
               </div>
             </div>
             
-            <div class="tasks-progress">
-              <div class="progress-stats">
-                <span><strong>3</strong> задачи</span>
-                <span><strong>0</strong> выполнено</span>
-                <span><strong>3</strong> осталось</span>
-              </div>
-            </div>
           </div>
 
           <div class="block-text">
@@ -301,8 +280,6 @@
               </div>
             </div>
 
-            <a href="#block6" class="btn btn-primary" @click.prevent="scrollTo('#block6')">Смотреть награды →</a>
-            <div class="btn-meta">XP копится → обмениваешь на награды</div>
           </div>
 
           <div class="habits-demo">
