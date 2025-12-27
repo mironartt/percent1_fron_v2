@@ -93,8 +93,6 @@
           <h2>Твои зоны роста → конкретные цели</h2>
           <p class="block-subtitle">AI ментор взял результаты диагностики и превратил их в 3 цели на ближайший месяц</p>
           
-          <a href="#block3" class="btn btn-primary btn-large" @click.prevent="scrollTo('#block3')">Смотреть план →</a>
-          <div class="btn-meta">Бесплатно • Следующий шаг: декомпозиция</div>
         </div>
 
         <div class="goals-grid">
