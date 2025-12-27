@@ -748,6 +748,15 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.2;
   color: var(--text-primary);
   margin-bottom: var(--spacing-md);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+p, .block-subtitle, .transition-text, li {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
 }
 
 h1 {
@@ -3323,6 +3332,21 @@ p {
     padding: var(--spacing-2xl) 0;
   }
   
+  .hero-text,
+  .block-text,
+  .block2-header-compact,
+  .block3-header-compact,
+  .block4-header-compact,
+  .block5-header-compact,
+  .block5-text {
+    min-width: 0;
+    width: 100%;
+  }
+  
+  .header-row {
+    flex-wrap: wrap;
+  }
+  
   .hero-meta {
     flex-direction: column;
     gap: var(--spacing-xs);
@@ -3478,19 +3502,52 @@ p {
 
 @media (max-width: 480px) {
   .container {
-    padding: 0 var(--spacing-sm);
+    padding: 0 var(--spacing-xs);
   }
   
   .btn {
     width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 0.9375rem;
+  }
+  
+  h1 {
+    font-size: 1.5rem;
+    line-height: 1.25;
+  }
+  
+  h2 {
+    font-size: 1.25rem;
+    line-height: 1.3;
+  }
+  
+  .hero-title {
+    font-size: 1.5rem;
   }
   
   .hero-subtitle {
-    font-size: 1rem;
+    font-size: 0.9375rem;
   }
   
-  .step-badge {
+  .block-subtitle {
+    font-size: 0.875rem;
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .step-badge,
+  .step-badge-inline {
+    font-size: 0.6875rem;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .transition-check {
     font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .header-row {
+    gap: var(--spacing-xs);
+    justify-content: center;
   }
   
   .explanation-box {
@@ -3499,11 +3556,164 @@ p {
   }
   
   .explanation-box p {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
   }
   
   .result-example-header {
+    font-size: 0.6875rem;
+  }
+  
+  .goal-card-v2 {
+    padding: var(--spacing-sm);
+  }
+  
+  .goal-title {
+    font-size: 0.9375rem;
+  }
+  
+  .goal-meta {
     font-size: 0.75rem;
+  }
+  
+  .decomp-transformation {
+    padding: var(--spacing-sm);
+  }
+  
+  .decomp-goal-card {
+    padding: var(--spacing-sm);
+  }
+  
+  .decomp-goal-text {
+    font-size: 0.9375rem;
+  }
+  
+  .step-item-v2 {
+    padding: var(--spacing-sm);
+  }
+  
+  .step-title {
+    font-size: 0.875rem;
+  }
+  
+  .ai-mentor-info {
+    padding: var(--spacing-sm);
+  }
+  
+  .ai-mentor-content strong {
+    font-size: 0.9375rem;
+  }
+  
+  .ai-mentor-content p {
+    font-size: 0.8125rem;
+  }
+  
+  .habit-card {
+    padding: var(--spacing-xs);
+    gap: var(--spacing-xs);
+  }
+  
+  .habit-name-demo {
+    font-size: 0.875rem;
+  }
+  
+  .weekday {
+    width: 20px;
+    height: 20px;
+    font-size: 0.625rem;
+  }
+  
+  .habit-xp-badge {
+    font-size: 0.6875rem;
+    padding: 0.125rem 0.375rem;
+  }
+  
+  .xp-balance {
+    padding: var(--spacing-sm);
+  }
+  
+  .balance-value {
+    font-size: 2rem;
+  }
+  
+  .reward-item {
+    padding: var(--spacing-xs);
+    gap: var(--spacing-xs);
+  }
+  
+  .reward-title {
+    font-size: 0.875rem;
+  }
+  
+  .reward-cost {
+    font-size: 0.75rem;
+  }
+  
+  .rewards-explanation {
+    padding: var(--spacing-sm);
+  }
+  
+  .rewards-explanation h4 {
+    font-size: 0.9375rem;
+  }
+  
+  .rewards-explanation p {
+    font-size: 0.8125rem;
+  }
+  
+  .ai-quote {
+    padding: var(--spacing-sm);
+    gap: var(--spacing-sm);
+  }
+  
+  .ai-quote p {
+    font-size: 0.8125rem;
+  }
+  
+  .testimonial p {
+    font-size: 0.8125rem;
+  }
+  
+  .transition-text {
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .transition-text p {
+    font-size: 0.8125rem;
+  }
+  
+  .role-transformation {
+    padding: var(--spacing-sm);
+  }
+  
+  .role-transformation h4 {
+    font-size: 0.9375rem;
+  }
+  
+  .role-transformation li {
+    font-size: 0.8125rem;
+  }
+  
+  .disclaimer {
+    font-size: 0.6875rem;
+  }
+  
+  .tg-bubble-morning {
+    font-size: 0.6875rem;
+    padding: 0.375rem;
+    line-height: 1.4;
+  }
+  
+  .cta-content h2 {
+    font-size: 1.25rem;
+  }
+  
+  .check-item {
+    font-size: 0.875rem;
+  }
+  
+  .social-proof {
+    font-size: 0.8125rem;
   }
   
   .wheel-balance-chart {
