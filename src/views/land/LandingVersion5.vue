@@ -129,19 +129,31 @@
               <p><strong>Решение:</strong> Сделай диагностику через Колесо баланса за 2 минуты и увидишь свою зону роста. На следующем шаге AI превратит его в конкретный план действий.</p>
             </div>
 
-            <div class="wheel-demo wheel-demo-mini">
-              <div class="wheel-item-mini wheel-item-critical">
-                <span class="mini-label">Зона роста:</span>
-                <span class="mini-value score-low">Хобби и Отдых 2/10</span>
+            <div class="ai-mentor-card">
+              <div class="ai-mentor-header">
+                <div class="ai-mentor-avatar">🤖</div>
+                <div class="ai-mentor-info">
+                  <span class="ai-mentor-name">AI Ментор</span>
+                  <span class="ai-mentor-status">Готов помочь</span>
+                </div>
               </div>
-              <div class="wheel-item-mini wheel-item-warning">
-                <span class="mini-label">Требует внимания:</span>
-                <span class="mini-value score-medium">Благосостояние 4/10</span>
+              <div class="ai-mentor-benefits">
+                <div class="ai-benefit">
+                  <span class="benefit-icon">🎯</span>
+                  <span>Найдёт твою точку роста за 2 минуты</span>
+                </div>
+                <div class="ai-benefit">
+                  <span class="benefit-icon">📋</span>
+                  <span>Превратит диагностику в конкретные цели</span>
+                </div>
+                <div class="ai-benefit">
+                  <span class="benefit-icon">🚀</span>
+                  <span>Составит план первых шагов</span>
+                </div>
               </div>
-              <div class="wheel-item-mini wheel-item-success">
-                <span class="mini-label">Сильная сторона:</span>
-                <span class="mini-value score-high">Любовь, Семья, Отношения 8/10</span>
-              </div>
+              <router-link to="/auth/register" class="ai-mentor-cta">
+                Пройти диагностику с AI
+              </router-link>
             </div>
 
           </div>
@@ -1530,6 +1542,85 @@ p {
   color: var(--primary);
   margin-top: -0.5rem;
   margin-bottom: var(--spacing-lg);
+}
+
+/* AI Mentor Card in Wheel block */
+.ai-mentor-card {
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  border: 1px solid #e0e7ff;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-top: var(--spacing-md);
+}
+
+.ai-mentor-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.ai-mentor-avatar {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.ai-mentor-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-mentor-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ai-mentor-status {
+  font-size: 0.875rem;
+  color: var(--success);
+}
+
+.ai-mentor-benefits {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.ai-benefit {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+}
+
+.ai-benefit .benefit-icon {
+  font-size: 1rem;
+}
+
+.ai-mentor-cta {
+  display: block;
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  text-align: center;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.ai-mentor-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
 }
 
 /* Блок "Что меняется" */
