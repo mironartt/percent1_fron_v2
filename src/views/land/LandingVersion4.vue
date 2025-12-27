@@ -259,7 +259,7 @@
             <span class="step-badge-inline">Шаг 5 из 5: Привычки</span>
           </div>
           <h2>Привычки — твой автопилот</h2>
-          <p class="block-subtitle">Регулярные действия становятся автоматическими. Не тратишь силу воли — просто делаешь.</p>
+          <p class="block-subtitle">Отмечай выполнение привычек, следи за прогрессом и получай XP за каждый день без пропусков.</p>
         </div>
 
         <div class="block5-layout">
@@ -2973,7 +2973,7 @@ p {
   background: var(--bg-white);
   border-radius: 24px;
   overflow: hidden;
-  height: 600px;
+  height: 480px;
 }
 
 .telegram-chat {
@@ -3029,11 +3029,12 @@ p {
 
 .tg-bubble {
   display: inline-block;
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--radius-lg);
-  max-width: 80%;
+  max-width: 85%;
   text-align: left;
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
 }
 
 .tg-message.ai .tg-bubble {
