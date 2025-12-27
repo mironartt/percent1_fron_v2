@@ -61,19 +61,6 @@
           </div>
 
           <div class="block-visual">
-            <div class="result-example-header">Пример результата</div>
-            
-            <div class="score-forecast">
-              <div class="forecast-item">
-                <span class="forecast-label">Через месяц:</span>
-                <span class="forecast-value">7.8</span>
-              </div>
-              <div class="forecast-item forecast-goal">
-                <span class="forecast-label">Цель:</span>
-                <span class="forecast-value">8+ за 90 дней</span>
-              </div>
-            </div>
-
             <div class="wheel-balance-chart wheel-component">
               <WheelOfLife :spheres="wheelSpheres" :readonly="true" />
             </div>
