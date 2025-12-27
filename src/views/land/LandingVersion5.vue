@@ -575,6 +575,36 @@
       </div>
     </section>
 
+    <!-- Блок "Что меняется" -->
+    <section class="block block-benefits">
+      <div class="container">
+        <h2 class="benefits-title">Что меняется, когда системность становится привычкой</h2>
+        
+        <div class="benefits-pills">
+          <div class="benefit-pill">
+            <span class="pill-icon">🎯</span>
+            <span class="pill-text">Чёткий фокус без выгорания</span>
+          </div>
+          <div class="benefit-pill">
+            <span class="pill-icon">🌱</span>
+            <span class="pill-text">Естественная дисциплина</span>
+          </div>
+          <div class="benefit-pill">
+            <span class="pill-icon">📊</span>
+            <span class="pill-text">Понимание своих приоритетов</span>
+          </div>
+          <div class="benefit-pill">
+            <span class="pill-icon">📈</span>
+            <span class="pill-text">Рост без стресса</span>
+          </div>
+          <div class="benefit-pill">
+            <span class="pill-icon">🧘</span>
+            <span class="pill-text">Спокойная уверенность</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="pricing-section">
       <div class="container">
         <h2 class="section-title">Простая и честная стоимость</h2>
@@ -1405,7 +1435,7 @@ p {
 
 /* Блок "Знакомо?" */
 .block-familiar {
-  background: #1a1a2e;
+  background: #1a1a2e !important;
   padding: var(--spacing-3xl) 0;
 }
 
@@ -1472,6 +1502,61 @@ p {
   font-size: 0.875rem;
   line-height: 1.5;
   margin: 0;
+}
+
+/* Блок "Что меняется" */
+.block-benefits {
+  background: var(--bg-light);
+  padding: var(--spacing-3xl) 0;
+}
+
+.benefits-title {
+  text-align: center;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xl);
+}
+
+.benefits-pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--spacing-md);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.benefit-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--bg-white);
+  border: 1px solid var(--bg-light);
+  border-radius: var(--radius-full);
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.benefit-pill .pill-icon {
+  font-size: 1rem;
+}
+
+.benefit-pill .pill-text {
+  font-weight: 500;
+}
+
+@media (max-width: 600px) {
+  .benefits-pills {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .benefits-title {
+    font-size: 1.5rem;
+  }
 }
 
 @media (max-width: 900px) {
