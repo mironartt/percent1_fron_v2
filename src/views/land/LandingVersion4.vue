@@ -374,17 +374,12 @@
               </ul>
               <div class="disclaimer">*AI-ассистент не является заменой профессионального психолога, коуча или врача. При серьёзных проблемах обращайтесь к специалистам.</div>
             </div>
-
-            <div class="testimonial">
-              <p>"AI в Telegram — причина, почему не бросил после 2 месяцев. 'Ты на серии 45 дней, неужели обнулишь?' — работает лучше любого таймера."</p>
-              <div class="testimonial-author">— Сергей, e-commerce</div>
-            </div>
           </div>
 
           <div class="block-visual">
             <div class="phone-mockup">
               <div class="phone-frame">
-                <div class="phone-screen">
+                <div class="phone-screen phone-screen-tall">
                   <div class="telegram-chat">
                     <div class="tg-header">
                       <div class="tg-avatar">🤖</div>
@@ -412,6 +407,11 @@
               </div>
             </div>
           </div>
+        </div>
+
+        <div class="testimonial testimonial-centered">
+          <p>"AI в Telegram — причина, почему не бросил после 2 месяцев. 'Ты на серии 45 дней, неужели обнулишь?' — работает лучше любого таймера."</p>
+          <div class="testimonial-author">— Сергей, e-commerce</div>
         </div>
       </div>
     </section>
@@ -2975,6 +2975,16 @@ p {
   border-radius: 24px;
   overflow: hidden;
   height: 480px;
+}
+
+.phone-screen-tall {
+  height: 560px;
+}
+
+.testimonial-centered {
+  max-width: 700px;
+  margin: var(--spacing-xl) auto 0;
+  text-align: center;
 }
 
 .telegram-chat {
