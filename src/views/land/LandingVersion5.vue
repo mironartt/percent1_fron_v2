@@ -1958,7 +1958,7 @@ p {
 }
 
 .wheel-component {
-  max-width: 740px;
+  max-width: 888px;
   margin: 0 auto;
 }
 
