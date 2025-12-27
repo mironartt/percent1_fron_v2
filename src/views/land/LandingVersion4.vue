@@ -151,14 +151,13 @@
 
     <section id="block3" class="block block-decomposition">
       <div class="container">
-        <div class="transition-text">
-          <p>✓ Цели есть. Теперь AI разбивает их на шаги.</p>
-        </div>
-        
-        <div class="block3-header">
-          <div class="step-badge">Шаг 3 из 5: Декомпозиция</div>
+        <div class="block3-header-compact">
+          <div class="header-row">
+            <span class="transition-check">✓ Цели есть</span>
+            <span class="step-badge-inline">Шаг 3 из 5: Декомпозиция</span>
+          </div>
           <h2>AI разбил твои цели на простые шаги</h2>
-          <p class="block-subtitle">Одна большая цель пугает. 5 маленьких шагов за неделю — выполнимы. AI делает декомпозицию автоматически.</p>
+          <p class="block-subtitle">Одна большая цель пугает. 5 маленьких шагов за неделю — выполнимы.</p>
         </div>
 
         <div class="decomp-transformation">
@@ -187,60 +186,14 @@
           </div>
         </div>
 
-        <div class="ai-quote-decomp">
-          <div class="ai-avatar">🤖</div>
-          <div class="ai-message">
-            <div class="ai-name">AI Ментор</div>
-            <p>"Я беру твою цель и разбиваю на шаги по 10-30 минут. Каждый день одно действие — так ты не перегрузишься и не сдашься на полпути."</p>
+        <div class="block3-footer">
+          <div class="telegram-inline">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM16.64 8.8L14.87 16.94C14.73 17.57 14.39 17.72 13.89 17.43L11.24 15.51L9.95 16.75C9.8 16.9 9.67 17.03 9.37 17.03L9.58 14.33L14.53 9.88C14.75 9.69 14.48 9.58 14.19 9.76L8.05 13.58L5.43 12.76C4.82 12.56 4.81 12.16 5.56 11.87L15.85 7.87C16.36 7.69 16.79 7.99 16.64 8.8Z" fill="#0088cc"/>
+            </svg>
+            <span>Telegram-бот напомнит о каждом шаге</span>
           </div>
-        </div>
-
-        <div class="block-content">
-          <div class="block-visual block-visual-full">
-            <div class="steps-card">
-              <div class="steps-card-header">Твоя первая неделя — все цели:</div>
-              <div class="steps-list-v2">
-                <div class="step-item-v2" v-for="(step, index) in stepsV2" :key="index" :class="[step.category, { completed: step.completed }]">
-                  <div class="step-day">{{ step.day }}</div>
-                  <div class="step-content-v2">
-                    <div class="step-title-v2">{{ step.title }}</div>
-                    <div class="step-goal">{{ step.goal }}</div>
-                  </div>
-                  <div class="step-time">{{ step.time }}</div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="week-progress">
-              <div class="progress-header">
-                <span>Неделя 1</span>
-                <span class="progress-status">0 из 5 шагов</span>
-              </div>
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: 0%"></div>
-              </div>
-              <div class="week-days">
-                <div class="day-dot" v-for="(day, index) in weekDays" :key="index" :class="{ active: index === 0 }">{{ day }}</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="block-text block-text-center">
-            <div class="telegram-box telegram-box-v2">
-              <div class="telegram-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM16.64 8.8L14.87 16.94C14.73 17.57 14.39 17.72 13.89 17.43L11.24 15.51L9.95 16.75C9.8 16.9 9.67 17.03 9.37 17.03L9.58 14.33L14.53 9.88C14.75 9.69 14.48 9.58 14.19 9.76L8.05 13.58L5.43 12.76C4.82 12.56 4.81 12.16 5.56 11.87L15.85 7.87C16.36 7.69 16.79 7.99 16.64 8.8Z" fill="currentColor"/>
-                </svg>
-              </div>
-              <div class="telegram-text">
-                <strong>Telegram-бот напомнит о каждом шаге</strong>
-                <p>Утром мотивирует, вечером проверяет прогресс. Ты не забудешь и не сорвёшься.</p>
-              </div>
-            </div>
-
-            <a href="#block4" class="btn btn-primary" @click.prevent="scrollTo('#block4')">Смотреть календарь →</a>
-            <div class="btn-meta">Бесплатно • Следующий шаг: расписание</div>
-          </div>
+          <a href="#block4" class="btn btn-primary" @click.prevent="scrollTo('#block4')">Смотреть календарь →</a>
         </div>
       </div>
     </section>
@@ -1859,6 +1812,86 @@ p {
 
 .block3-header h2 {
   margin-bottom: var(--spacing-sm);
+}
+
+.block3-header-compact {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto var(--spacing-lg);
+}
+
+.block3-header-compact h2 {
+  margin-bottom: var(--spacing-xs);
+  font-size: 1.75rem;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.transition-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  background: #D1FAE5;
+  color: #059669;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.step-badge-inline {
+  display: inline-flex;
+  align-items: center;
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.block3-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-xl);
+  flex-wrap: wrap;
+}
+
+.telegram-inline {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.telegram-inline svg {
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .header-row {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  
+  .block3-footer {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  
+  .block3-header-compact h2 {
+    font-size: 1.5rem;
+  }
 }
 
 .decomp-transformation {
