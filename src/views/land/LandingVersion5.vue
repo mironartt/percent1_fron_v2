@@ -4256,38 +4256,41 @@ p {
 }
 
 .legends-section {
-  padding: var(--spacing-3xl) 0;
-  background: var(--bg-white);
+  padding: 5rem 0;
+  background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
 }
 
 .legends-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--spacing-lg);
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
   max-width: 1100px;
   margin: 0 auto;
 }
 
 .legend-card {
-  background: var(--bg-light);
-  border-radius: var(--radius-xl);
-  padding: var(--spacing-xl);
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-  transition: all var(--transition-base);
+  gap: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s;
 }
 
 .legend-card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.3);
 }
 
 .legend-avatar {
   width: 64px;
   height: 64px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--purple) 100%);
+  min-width: 64px;
   border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4295,40 +4298,41 @@ p {
 }
 
 .legend-content h3 {
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 0.25rem;
+  color: #1a1a2e;
+  margin: 0 0 0.25rem;
 }
 
 .legend-role {
-  font-size: 0.875rem;
-  color: var(--text-muted);
+  font-size: 0.8125rem;
+  color: #6b7280;
+  display: block;
+  margin-bottom: 0.75rem;
 }
 
 .legend-quote {
-  display: flex;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-md);
-  background: var(--bg-white);
-  border-radius: var(--radius-md);
-  margin: var(--spacing-sm) 0;
+  position: relative;
   font-style: italic;
-  color: var(--text-secondary);
+  color: #4b5563;
+  padding-left: 1.5rem;
+  margin: 0 0 0.75rem;
   font-size: 0.9375rem;
   line-height: 1.5;
 }
 
 .legend-quote .quote-icon {
-  flex-shrink: 0;
-  color: var(--primary);
-  margin-top: 2px;
+  position: absolute;
+  left: 0;
+  top: 2px;
+  color: #6366f1;
+  opacity: 0.6;
 }
 
 .legend-method {
   font-size: 0.875rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
+  color: #6b7280;
+  line-height: 1.6;
   margin: 0;
 }
 
@@ -4791,23 +4795,31 @@ p {
     font-size: 1.25rem;
   }
   
-  .legends-section,
+  .legends-section {
+    padding: 3rem 0;
+  }
+  
   .pricing-section {
     padding: var(--spacing-xl) 0;
   }
   
   .legend-card {
-    padding: var(--spacing-md);
+    flex-direction: column;
+    text-align: center;
+    padding: 1.5rem;
   }
   
   .legend-avatar {
-    width: 48px;
-    height: 48px;
+    margin: 0 auto;
   }
   
   .legend-quote {
-    padding: var(--spacing-sm);
-    font-size: 0.875rem;
+    padding-left: 0;
+    text-align: center;
+  }
+  
+  .legend-quote .quote-icon {
+    display: none;
   }
   
   .pricing-card {
