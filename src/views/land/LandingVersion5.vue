@@ -1958,8 +1958,11 @@ p {
 }
 
 .wheel-component {
-  max-width: 888px;
+  width: 100%;
+  max-width: 100%;
   margin: 0 auto;
+  padding: 0 var(--spacing-md);
+  box-sizing: border-box;
 }
 
 .wheel-component :deep(.wheel-of-life) {
