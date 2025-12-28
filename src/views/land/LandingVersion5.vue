@@ -2374,7 +2374,7 @@ p {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: var(--spacing-md);
 }
 
 .timeline-title {
@@ -2391,7 +2391,7 @@ p {
 
 .timeline-item {
   display: flex;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-md);
 }
 
 .timeline-step {
@@ -2402,31 +2402,31 @@ p {
 }
 
 .step-number {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
   color: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 700;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 3px 8px rgba(99, 102, 241, 0.25);
 }
 
 .step-number.ai-step {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  font-size: 1.5rem;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  font-size: 1.125rem;
+  box-shadow: 0 3px 8px rgba(16, 185, 129, 0.25);
 }
 
 .step-line {
-  width: 3px;
+  width: 2px;
   flex: 1;
-  min-height: 24px;
+  min-height: 12px;
   background: linear-gradient(180deg, var(--primary) 0%, #c4b5fd 100%);
-  margin: var(--spacing-xs) 0;
+  margin: 4px 0;
 }
 
 .step-line.last {
@@ -2437,13 +2437,13 @@ p {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
   background: var(--bg-white);
-  padding: var(--spacing-lg);
-  border-radius: var(--radius-lg);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
-  margin-bottom: var(--spacing-md);
-  border-left: 4px solid transparent;
+  margin-bottom: 6px;
+  border-left: 3px solid transparent;
   transition: all var(--transition-base);
 }
 
@@ -2462,7 +2462,7 @@ p {
 }
 
 .timeline-icon {
-  font-size: 2rem;
+  font-size: 1.5rem;
   flex-shrink: 0;
 }
 
@@ -2471,10 +2471,10 @@ p {
 }
 
 .timeline-goal {
-  font-size: 1.125rem;
+  font-size: 0.9375rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: var(--spacing-xs);
+  margin-bottom: 2px;
 }
 
 .timeline-tag {
@@ -2504,8 +2504,8 @@ p {
 }
 
 .timeline-ai .ai-mentor-message p {
-  font-size: 0.9375rem;
-  line-height: 1.6;
+  font-size: 0.875rem;
+  line-height: 1.5;
   color: var(--text-primary);
   margin: 0;
 }
