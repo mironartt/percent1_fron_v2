@@ -160,52 +160,68 @@
           
         </div>
 
-        <div class="goals-grid">
-          <div class="goals-grid-header">
-            <span class="goals-grid-title">Твои цели на месяц</span>
+        <div class="goals-timeline">
+          <div class="timeline-header">
+            <span class="timeline-title">Твои цели на месяц</span>
             <button class="how-ai-works-link" @click="showHowAiWorksModal = true">
               Как AI выбрал цели?
             </button>
           </div>
-          <div class="goals-cards-row">
-            <div class="goal-card-v2 goal-hobby">
-              <div class="goal-card-number">1</div>
-              <div class="goal-card-content">
-                <div class="goal-icon">🎨</div>
-                <div class="goal-info">
-                  <div class="goal-title">Хобби 2 часа в неделю</div>
-                  <div class="goal-meta">Зона роста: Хобби 2/10</div>
+          
+          <div class="timeline-items">
+            <div class="timeline-item">
+              <div class="timeline-step">
+                <div class="step-number">1</div>
+                <div class="step-line"></div>
+              </div>
+              <div class="timeline-card goal-hobby">
+                <div class="timeline-icon">🎨</div>
+                <div class="timeline-content">
+                  <div class="timeline-goal">Хобби 2 часа в неделю</div>
+                  <div class="timeline-tag">Зона роста</div>
                 </div>
               </div>
             </div>
-            <div class="goal-card-v2 goal-money">
-              <div class="goal-card-number">2</div>
-              <div class="goal-card-content">
-                <div class="goal-icon">💰</div>
-                <div class="goal-info">
-                  <div class="goal-title">+30% к доходу</div>
-                  <div class="goal-meta">Требует внимания: Благосостояние 4/10</div>
+            
+            <div class="timeline-item">
+              <div class="timeline-step">
+                <div class="step-number">2</div>
+                <div class="step-line"></div>
+              </div>
+              <div class="timeline-card goal-money">
+                <div class="timeline-icon">💰</div>
+                <div class="timeline-content">
+                  <div class="timeline-goal">+30% к доходу</div>
+                  <div class="timeline-tag">Требует внимания</div>
                 </div>
               </div>
             </div>
-            <div class="goal-card-v2 goal-family">
-              <div class="goal-card-number">3</div>
-              <div class="goal-card-content">
-                <div class="goal-icon">❤️</div>
-                <div class="goal-info">
-                  <div class="goal-title">Вечер с семьёй 3х в неделю</div>
-                  <div class="goal-meta">Сильная сторона: Любовь 8/10</div>
+            
+            <div class="timeline-item">
+              <div class="timeline-step">
+                <div class="step-number">3</div>
+                <div class="step-line last"></div>
+              </div>
+              <div class="timeline-card goal-family">
+                <div class="timeline-icon">❤️</div>
+                <div class="timeline-content">
+                  <div class="timeline-goal">Вечер с семьёй 3х в неделю</div>
+                  <div class="timeline-tag">Сильная сторона</div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        <div class="ai-quote-centered">
-          <div class="ai-avatar">🤖</div>
-          <div class="ai-message">
-            <div class="ai-name">AI ментор</div>
-            <p>"Начнём с хобби — это твоя точка входа в энергию. Когда появится ресурс, подтянем финансы и укрепим семью."</p>
+            
+            <div class="timeline-item timeline-ai">
+              <div class="timeline-step">
+                <div class="step-number ai-step">🤖</div>
+              </div>
+              <div class="timeline-card ai-mentor-card">
+                <div class="ai-mentor-message">
+                  <span class="ai-mentor-name">AI ментор</span>
+                  <p>"Начнём с хобби — это твоя точка входа в энергию. Когда появится ресурс, подтянем финансы и укрепим семью."</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -2349,104 +2365,145 @@ p {
   }
 }
 
-.goals-grid {
-  background: var(--bg-white);
-  border-radius: var(--radius-xl);
-  padding: var(--spacing-xl);
-  box-shadow: var(--shadow-md);
-  margin-bottom: var(--spacing-xl);
+.goals-timeline {
+  max-width: 600px;
+  margin: 0 auto;
 }
 
-.goals-grid-header {
+.timeline-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
 }
 
-.goals-grid-title {
-  font-size: 1.125rem;
+.timeline-title {
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--text-primary);
 }
 
-.goals-cards-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-md);
-}
-
-.goal-card-v2 {
+.timeline-items {
   display: flex;
   flex-direction: column;
-  padding: var(--spacing-lg);
-  background: var(--bg-light);
-  border-radius: var(--radius-lg);
-  position: relative;
-  transition: all var(--transition-base);
+  gap: 0;
 }
 
-.goal-card-v2:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
+.timeline-item {
+  display: flex;
+  gap: var(--spacing-lg);
 }
 
-.goal-card-v2.goal-hobby { border-top: 4px solid #e9c46a; }
-.goal-card-v2.goal-money { border-top: 4px solid #f4a261; }
-.goal-card-v2.goal-family { border-top: 4px solid #9b5de5; }
+.timeline-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
 
-.goal-card-number {
-  position: absolute;
-  top: var(--spacing-sm);
-  right: var(--spacing-sm);
-  width: 24px;
-  height: 24px;
-  background: var(--primary);
+.step-number {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
   color: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
+  font-size: 1.25rem;
   font-weight: 700;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
-.goal-card-content {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-sm);
-}
-
-.goal-card-v2 .goal-icon {
+.step-number.ai-step {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   font-size: 1.5rem;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
-.goal-card-v2 .goal-title {
-  font-size: 0.9375rem;
-  margin-bottom: var(--spacing-xs);
+.step-line {
+  width: 3px;
+  flex: 1;
+  min-height: 24px;
+  background: linear-gradient(180deg, var(--primary) 0%, #c4b5fd 100%);
+  margin: var(--spacing-xs) 0;
 }
 
-.goal-card-v2 .goal-meta {
-  font-size: 0.75rem;
+.step-line.last {
+  background: linear-gradient(180deg, var(--primary) 0%, #10b981 100%);
 }
 
-.ai-quote-centered {
+.timeline-card {
+  flex: 1;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--spacing-md);
-  background: linear-gradient(135deg, var(--primary-light) 0%, #f0f0ff 100%);
+  background: var(--bg-white);
   padding: var(--spacing-lg);
   border-radius: var(--radius-lg);
-  max-width: 600px;
-  margin: 0 auto;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--spacing-md);
+  border-left: 4px solid transparent;
+  transition: all var(--transition-base);
 }
 
-.ai-quote-centered .ai-avatar {
+.timeline-card:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow-md);
+}
+
+.timeline-card.goal-hobby { border-left-color: #e9c46a; }
+.timeline-card.goal-money { border-left-color: #f4a261; }
+.timeline-card.goal-family { border-left-color: #9b5de5; }
+
+.timeline-card.ai-mentor-card {
+  background: linear-gradient(135deg, var(--primary-light) 0%, #f0f0ff 100%);
+  border-left-color: #10b981;
+}
+
+.timeline-icon {
   font-size: 2rem;
   flex-shrink: 0;
 }
 
-.ai-quote-centered .ai-message p {
+.timeline-content {
+  flex: 1;
+}
+
+.timeline-goal {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.timeline-tag {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--bg-light);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.timeline-ai .timeline-card {
+  margin-bottom: 0;
+}
+
+.timeline-ai .ai-mentor-message {
+  flex: 1;
+}
+
+.timeline-ai .ai-mentor-name {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.timeline-ai .ai-mentor-message p {
   font-size: 0.9375rem;
   line-height: 1.6;
   color: var(--text-primary);
@@ -2454,14 +2511,28 @@ p {
 }
 
 @media (max-width: 768px) {
-  .goals-cards-row {
-    grid-template-columns: 1fr;
-  }
-  
-  .goals-grid-header {
+  .timeline-header {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--spacing-sm);
+  }
+  
+  .timeline-item {
+    gap: var(--spacing-md);
+  }
+  
+  .step-number {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+  
+  .timeline-card {
+    padding: var(--spacing-md);
+  }
+  
+  .timeline-goal {
+    font-size: 1rem;
   }
 }
 
