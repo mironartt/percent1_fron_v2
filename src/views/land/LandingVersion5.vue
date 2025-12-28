@@ -2947,9 +2947,9 @@ p {
 }
 
 .decomp-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: var(--spacing-sm);
@@ -3008,19 +3008,21 @@ p {
   justify-content: space-between;
   align-items: center;
   padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--bg-light);
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
   border-radius: var(--radius-md);
   font-size: 0.875rem;
   color: var(--text-primary);
-  border-left: 3px solid var(--success);
+  border-left: 3px solid #10b981;
+  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.1);
 }
 
 .decomp-step-mini span {
   font-size: 0.75rem;
-  color: var(--text-muted);
-  background: var(--bg-white);
-  padding: 2px 8px;
-  border-radius: var(--radius-sm);
+  font-weight: 600;
+  color: #059669;
+  background: white;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
 }
 
 .ai-quote-decomp {
