@@ -1,0 +1,193 @@
+{% extends "catalog/base.html" %}
+{% load static %}
+
+{% block title %}Готовые наборы «Цель + Привычки» — 30+ комбинаций • OnePercent{% endblock %}
+{% block description %}Готовые наборы для достижения целей: цель + 3-5 привычек в одном пакете. Проверенные комбинации для финансов, здоровья, карьеры и отношений.{% endblock %}
+
+{% block breadcrumbs %}
+<a href="/">Главная</a>
+<span class="separator">›</span>
+<a href="/catalog/">Каталог</a>
+<span class="separator">›</span>
+<span class="current">Готовые наборы</span>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section green">
+    <div class="hero-icon">📦</div>
+    <h1 class="hero-title">Готовые наборы</h1>
+    <p class="hero-subtitle">
+        Цель + привычки в одном пакете.<br>
+        Проверенные комбинации для максимального результата.
+    </p>
+    <form class="search-box" action="/catalog/bundles/search/" method="GET">
+        <input 
+            type="text" 
+            name="q"
+            placeholder="Найти набор..."
+            class="search-input"
+        >
+        <button type="submit" class="search-btn green">🔍</button>
+    </form>
+</section>
+
+<!-- Explanation Section -->
+<section class="explanation-section">
+    <h2 class="section-title">Что такое набор?</h2>
+    <div class="explanation-card">
+        <div class="formula">
+            <span class="formula-item">🎯 Цель</span>
+            <span class="formula-plus">+</span>
+            <span class="formula-item">⚡ 3-5 привычек</span>
+            <span class="formula-equals">=</span>
+            <span class="formula-result">📦 Набор</span>
+        </div>
+        <p class="explanation-text">
+            Мы подобрали оптимальные комбинации привычек для достижения конкретных целей. 
+            Не нужно думать, что добавить — просто активируйте набор и следуйте плану.
+        </p>
+        <div class="flow-diagram">
+            <div class="flow-step">
+                <div class="flow-box">Цель</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+                <div class="flow-box">
+                    Привычка<br>
+                    Привычка<br>
+                    Привычка
+                </div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+                <div class="flow-box result">Результат</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Filter Section -->
+<section class="filter-section">
+    <h2 class="section-title">Наборы по категориям</h2>
+    <div class="category-filter">
+        <a href="/catalog/bundles/" class="filter-btn {% if not active_category or active_category == 'all' %}active green{% endif %}">Все</a>
+        <a href="/catalog/bundles/welfare/" class="filter-btn {% if active_category == 'welfare' %}active green{% endif %}">💰 Финансы</a>
+        <a href="/catalog/bundles/health_sport/" class="filter-btn {% if active_category == 'health_sport' %}active green{% endif %}">🏃 Здоровье</a>
+        <a href="/catalog/bundles/work/" class="filter-btn {% if active_category == 'work' %}active green{% endif %}">💼 Карьера</a>
+        <a href="/catalog/bundles/family/" class="filter-btn {% if active_category == 'family' %}active green{% endif %}">❤️ Отношения</a>
+    </div>
+</section>
+
+<!-- Bundles Section -->
+<section class="bundles-section">
+    <h2 class="section-title">ТОП наборов</h2>
+    <div class="bundles-list">
+        {% for bundle in bundles %}
+        <article class="bundle-card">
+            <div class="bundle-header">
+                <span class="bundle-icon">📦</span>
+                <h3>{{ bundle.title }}</h3>
+            </div>
+            
+            <div class="bundle-goal">
+                <div class="goal-label">🎯 Цель:</div>
+                <a href="{{ bundle.goal.url }}" class="goal-link">
+                    {{ bundle.goal.title }}
+                </a>
+            </div>
+
+            <div class="bundle-habits">
+                <div class="habits-label">⚡ Привычки в наборе:</div>
+                <ul class="habits-list">
+                    {% for habit in bundle.habits %}
+                    <li>{{ habit.title }} <span class="habit-duration">({{ habit.duration }})</span></li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="bundle-meta">
+                <span class="meta-item">
+                    <span class="meta-icon">⏱</span>
+                    Срок достижения: {{ bundle.duration }}
+                </span>
+                <span class="meta-item">
+                    <span class="meta-icon">⭐</span>
+                    Сложность: {{ bundle.difficulty }}
+                </span>
+            </div>
+
+            <div class="bundle-actions">
+                <a href="{{ bundle.url }}" class="btn btn-outline green">Подробнее о наборе →</a>
+                <button class="btn btn-primary green" onclick="addBundle({{ bundle.id }})">Добавить набор</button>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- More Bundles Section -->
+<section class="more-bundles-section">
+    <h2 class="section-title">Ещё наборы</h2>
+    <div class="more-bundles-grid">
+        <a href="/catalog/bundles/sport-3months/" class="more-bundle-card">
+            <span class="more-bundle-icon">🏋️</span>
+            <h4>Спортивная форма за 3 месяца</h4>
+            <p>Цель + 5 привычек для фитнеса</p>
+        </a>
+        <a href="/catalog/bundles/reading-50/" class="more-bundle-card">
+            <span class="more-bundle-icon">📚</span>
+            <h4>Читать 50 книг в год</h4>
+            <p>Цель + 3 привычки для чтения</p>
+        </a>
+        <a href="/catalog/bundles/promotion/" class="more-bundle-card">
+            <span class="more-bundle-icon">💼</span>
+            <h4>Повышение на работе</h4>
+            <p>Цель + 4 привычки для карьеры</p>
+        </a>
+        <a href="/catalog/bundles/mindfulness/" class="more-bundle-card">
+            <span class="more-bundle-icon">🧘</span>
+            <h4>Спокойствие и осознанность</h4>
+            <p>Цель + 4 привычки для ментала</p>
+        </a>
+        <a href="/catalog/bundles/investing-start/" class="more-bundle-card">
+            <span class="more-bundle-icon">💰</span>
+            <h4>Инвестиции для начинающих</h4>
+            <p>Цель + 3 привычки для инвестиций</p>
+        </a>
+        <a href="/catalog/bundles/strong-relationship/" class="more-bundle-card">
+            <span class="more-bundle-icon">❤️</span>
+            <h4>Крепкие отношения</h4>
+            <p>Цель + 4 привычки для семьи</p>
+        </a>
+    </div>
+</section>
+
+<!-- Related Section -->
+<section class="related-section">
+    <h2 class="section-title">Связанные разделы</h2>
+    <div class="related-cards">
+        <a href="/catalog/goals/" class="related-card">
+            <div class="related-icon">🎯</div>
+            <h3>Цели</h3>
+            <p>150+ целей с пошаговыми планами</p>
+            <span class="related-link">Перейти →</span>
+        </a>
+        <a href="/catalog/habits/" class="related-card">
+            <div class="related-icon">⚡</div>
+            <h3>Привычки</h3>
+            <p>200+ привычек для ежедневного роста</p>
+            <span class="related-link">Перейти →</span>
+        </a>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function addBundle(bundleId) {
+    // Redirect to registration if not authenticated, or add bundle
+    window.location.href = '/auth/register/?bundle=' + bundleId;
+}
+</script>
+{% endblock %}

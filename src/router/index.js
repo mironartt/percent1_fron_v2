@@ -47,6 +47,12 @@ const LandingVersion4 = () => import('@/views/land/LandingVersion4.vue')
 // Landing Version 5 (Full journey + Trust sections)
 const LandingVersion5 = () => import('@/views/land/LandingVersion5.vue')
 
+// SEO Catalog Pages
+const CatalogHome = () => import('@/views/catalog/CatalogHome.vue')
+const CatalogGoals = () => import('@/views/catalog/CatalogGoals.vue')
+const CatalogHabits = () => import('@/views/catalog/CatalogHabits.vue')
+const CatalogBundles = () => import('@/views/catalog/CatalogBundles.vue')
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -64,6 +70,50 @@ const router = createRouter({
       name: 'landing-old-v1',
       component: Landing,
       meta: { title: 'OnePercent - Система управления жизнью (старый)', public: true }
+    },
+    
+    // SEO Каталог
+    {
+      path: '/catalog',
+      name: 'catalog',
+      component: CatalogHome,
+      meta: { title: 'Каталог целей и привычек — OnePercent', public: true }
+    },
+    {
+      path: '/catalog/goals',
+      name: 'catalog-goals',
+      component: CatalogGoals,
+      meta: { title: 'Каталог целей — 150+ шаблонов • OnePercent', public: true }
+    },
+    {
+      path: '/catalog/goals/:category',
+      name: 'catalog-goals-category',
+      component: CatalogGoals,
+      meta: { title: 'Цели — OnePercent', public: true }
+    },
+    {
+      path: '/catalog/goals/:category/:subcategory',
+      name: 'catalog-goals-subcategory',
+      component: CatalogGoals,
+      meta: { title: 'Цели — OnePercent', public: true }
+    },
+    {
+      path: '/catalog/habits',
+      name: 'catalog-habits',
+      component: CatalogHabits,
+      meta: { title: 'Каталог привычек — 200+ шаблонов • OnePercent', public: true }
+    },
+    {
+      path: '/catalog/habits/:category',
+      name: 'catalog-habits-category',
+      component: CatalogHabits,
+      meta: { title: 'Привычки — OnePercent', public: true }
+    },
+    {
+      path: '/catalog/bundles',
+      name: 'catalog-bundles',
+      component: CatalogBundles,
+      meta: { title: 'Готовые наборы — 30+ комбинаций • OnePercent', public: true }
     },
     
     // Year Review (Итоги года)
