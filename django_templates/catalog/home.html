@@ -1,0 +1,155 @@
+{% extends "catalog/base.html" %}
+{% load static %}
+
+{% block title %}Каталог целей и привычек — OnePercent{% endblock %}
+{% block description %}Более 500 готовых шаблонов целей и привычек для личного развития. Выберите цель, добавьте привычки и начните меняться на 1% каждый день.{% endblock %}
+
+{% block breadcrumbs %}
+<a href="/">Главная</a>
+<span class="separator">›</span>
+<span class="current">Каталог</span>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <h1 class="hero-title">Каталог целей и привычек</h1>
+    <p class="hero-subtitle">
+        Более 500 готовых шаблонов для личного развития.<br>
+        Выберите цель или привычку и начните меняться уже сегодня.
+    </p>
+    <form class="search-box" action="/catalog/search/" method="GET">
+        <input 
+            type="text" 
+            name="q"
+            placeholder="Поиск по каталогу..."
+            class="search-input"
+        >
+        <button type="submit" class="search-btn">🔍</button>
+    </form>
+</section>
+
+<!-- Sections Grid -->
+<section class="sections-grid">
+    <h2 class="section-title">Разделы каталога</h2>
+    <div class="sections-cards">
+        <a href="/catalog/goals/" class="section-card goals">
+            <div class="section-icon">🎯</div>
+            <h3>Цели</h3>
+            <p>150+ целей в 6 сферах жизни</p>
+            <span class="section-link">Смотреть цели →</span>
+        </a>
+        <a href="/catalog/habits/" class="section-card habits">
+            <div class="section-icon">⚡</div>
+            <h3>Привычки</h3>
+            <p>200+ привычек для ежедневного роста</p>
+            <span class="section-link">Смотреть привычки →</span>
+        </a>
+        <a href="/catalog/bundles/" class="section-card bundles">
+            <div class="section-icon">📦</div>
+            <h3>Готовые наборы</h3>
+            <p>30+ наборов «Цель + Привычки»</p>
+            <span class="section-link">Смотреть наборы →</span>
+        </a>
+    </div>
+</section>
+
+<!-- Popular Categories -->
+<section class="categories-section">
+    <h2 class="section-title">Популярные категории</h2>
+    <div class="categories-grid">
+        {% for category in categories %}
+        <a href="{{ category.url }}" class="category-card">
+            <div class="category-icon">{{ category.icon }}</div>
+            <h3>{{ category.title }}</h3>
+            <span class="category-count">{{ category.goals_count }} целей</span>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Popular Goals -->
+<section class="popular-goals-section">
+    <div class="section-header">
+        <h2 class="section-title">Популярные цели</h2>
+        <a href="/catalog/goals/" class="section-link">Смотреть все цели →</a>
+    </div>
+    <div class="goals-list">
+        {% for goal in popular_goals %}
+        <article class="goal-card">
+            <div class="goal-header">
+                <span class="goal-icon">🎯</span>
+                <div class="goal-content">
+                    <h3><a href="{{ goal.url }}">{{ goal.title }}</a></h3>
+                    <div class="goal-meta">
+                        <span>{{ goal.category_name }}</span>
+                        <span>•</span>
+                        <span>⏱ {{ goal.duration }}</span>
+                        <span>•</span>
+                        <span>⭐ {{ goal.difficulty }}</span>
+                    </div>
+                </div>
+            </div>
+            <p class="goal-description">{{ goal.description }}</p>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Popular Habits -->
+<section class="popular-habits-section">
+    <div class="section-header">
+        <h2 class="section-title">Популярные привычки</h2>
+        <a href="/catalog/habits/" class="section-link">Смотреть все привычки →</a>
+    </div>
+    <div class="habits-grid">
+        {% for habit in popular_habits %}
+        <article class="habit-card">
+            <div class="habit-header">
+                <span class="habit-icon">⚡</span>
+                <h3>{{ habit.title }}</h3>
+            </div>
+            <div class="habit-meta">
+                <span class="habit-category">{{ habit.category_name }}</span>
+                <span>•</span>
+                <span>⏱ {{ habit.duration }}</span>
+                <span>•</span>
+                <span class="habit-difficulty {{ habit.difficulty_class }}">{{ habit.difficulty }}</span>
+            </div>
+            <p class="habit-description">{{ habit.description }}</p>
+            <div class="habit-tags">
+                {% for tag in habit.tags %}
+                <span class="habit-tag">#{{ tag }}</span>
+                {% endfor %}
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="how-it-works-section">
+    <h2 class="section-title">Как это работает</h2>
+    <div class="steps-grid">
+        <div class="step-card">
+            <div class="step-number">1</div>
+            <h3>Выберите цель или привычку</h3>
+            <p>Найдите то, что подходит именно вам из 500+ шаблонов</p>
+        </div>
+        <div class="step-card">
+            <div class="step-number">2</div>
+            <h3>Добавьте привычки</h3>
+            <p>Система подберёт оптимальные привычки для достижения цели</p>
+        </div>
+        <div class="step-card">
+            <div class="step-number">3</div>
+            <h3>Отслеживайте прогресс</h3>
+            <p>Получайте XP, достижения и мотивацию каждый день</p>
+        </div>
+    </div>
+    <div class="cta-buttons">
+        <a href="/auth/register/" class="btn btn-primary btn-lg">Начать бесплатно</a>
+        <a href="/" class="btn btn-outline btn-lg">Узнать больше о системе</a>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Каталог целей и привычек — OnePercent{% endblock %}</title>
+    <meta name="description" content="{% block description %}Более 500 готовых шаблонов целей и привычек для личного развития.{% endblock %}">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="{% block og_title %}Каталог целей и привычек — OnePercent{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Более 500 готовых шаблонов целей и привычек для личного развития.{% endblock %}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{% block og_url %}https://percent1.ru/catalog/{% endblock %}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="{% static 'catalog/catalog.css' %}">
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Header -->
+    <header class="catalog-header" id="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="/" class="logo">
+                    <span class="logo-icon">1%</span>
+                    <div class="logo-text">
+                        <b class="logo-title">OnePercent</b>
+                        <span class="tagline">+1% каждый день</span>
+                    </div>
+                </a>
+                <nav class="header-nav">
+                    <a href="/catalog/" class="nav-link {% if active_page == 'catalog' %}active{% endif %}">Каталог</a>
+                    <a href="/catalog/goals/" class="nav-link {% if active_page == 'goals' %}active{% endif %}">Цели</a>
+                    <a href="/catalog/habits/" class="nav-link {% if active_page == 'habits' %}active{% endif %}">Привычки</a>
+                    <a href="/catalog/bundles/" class="nav-link {% if active_page == 'bundles' %}active{% endif %}">Наборы</a>
+                    <div class="nav-divider"></div>
+                    {% if user.is_authenticated %}
+                    <a href="/app/" class="btn btn-primary">Личный кабинет</a>
+                    {% else %}
+                    <a href="/auth/login/" class="nav-link login-link">Войти</a>
+                    <a href="/auth/register/" class="btn btn-primary">Начать бесплатно</a>
+                    {% endif %}
+                </nav>
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Меню">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+        <div class="mobile-menu" id="mobileMenu">
+            <a href="/catalog/" class="mobile-link" onclick="closeMobileMenu()">Каталог</a>
+            <a href="/catalog/goals/" class="mobile-link" onclick="closeMobileMenu()">Цели</a>
+            <a href="/catalog/habits/" class="mobile-link" onclick="closeMobileMenu()">Привычки</a>
+            <a href="/catalog/bundles/" class="mobile-link" onclick="closeMobileMenu()">Наборы</a>
+            <div class="mobile-divider"></div>
+            {% if user.is_authenticated %}
+            <a href="/app/" class="mobile-link primary" onclick="closeMobileMenu()">Личный кабинет</a>
+            {% else %}
+            <a href="/auth/login/" class="mobile-link" onclick="closeMobileMenu()">Войти</a>
+            <a href="/auth/register/" class="mobile-link primary" onclick="closeMobileMenu()">Начать бесплатно</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Breadcrumbs -->
+    <div class="breadcrumbs-wrapper">
+        <div class="container">
+            <nav class="breadcrumbs" aria-label="Хлебные крошки">
+                {% block breadcrumbs %}
+                <a href="/">Главная</a>
+                <span class="separator">›</span>
+                <span class="current">Каталог</span>
+                {% endblock %}
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="catalog-main">
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="catalog-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <span class="logo-icon">1%</span>
+                        <div class="logo-text">
+                            <b class="logo-title">OnePercent</b>
+                            <span class="tagline">+1% каждый день</span>
+                        </div>
+                    </div>
+                    <p class="footer-description">
+                        Система управления жизнью для достижения целей через маленькие ежедневные улучшения.
+                    </p>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Каталог</h4>
+                    <nav>
+                        <a href="/catalog/goals/">Цели</a>
+                        <a href="/catalog/habits/">Привычки</a>
+                        <a href="/catalog/bundles/">Готовые наборы</a>
+                    </nav>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Категории</h4>
+                    <nav>
+                        <a href="/catalog/goals/welfare/">Финансы</a>
+                        <a href="/catalog/goals/health_sport/">Здоровье</a>
+                        <a href="/catalog/goals/work/">Карьера</a>
+                        <a href="/catalog/goals/family/">Отношения</a>
+                        <a href="/catalog/goals/hobby/">Хобби</a>
+                        <a href="/catalog/goals/environment/">Окружение</a>
+                    </nav>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Компания</h4>
+                    <nav>
+                        <a href="/">Главная</a>
+                        <a href="/auth/register/">Начать бесплатно</a>
+                        <a href="/legal/terms/">Условия использования</a>
+                        <a href="/legal/privacy/">Политика конфиденциальности</a>
+                    </nav>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p class="copyright">© {% now "Y" %} OnePercent. Все права защищены.</p>
+                <p class="footer-contact">ИП Сагитов Р.М. • ИНН 027604119997</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Minimal JS for mobile menu -->
+    <script>
+        // Header scroll effect
+        window.addEventListener('scroll', function() {
+            const header = document.getElementById('header');
+            if (window.scrollY > 20) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
+        // Mobile menu
+        function toggleMobileMenu() {
+            document.getElementById('mobileMenu').classList.toggle('open');
+        }
+
+        function closeMobileMenu() {
+            document.getElementById('mobileMenu').classList.remove('open');
+        }
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
