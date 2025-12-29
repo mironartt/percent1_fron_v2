@@ -160,11 +160,15 @@ const isLegalPage = computed(() => {
   return route.name === 'privacy' || route.name === 'terms' || route.name === 'disclaimer'
 })
 
+const isCatalogPage = computed(() => {
+  return route.path.startsWith('/catalog')
+})
+
 const isOnboarding = computed(() => {
   return store.shouldShowOnboarding && route.path === '/app'
 })
 
-const hasSidebar = computed(() => !isAuthPage.value && !isOnboarding.value && !isLandingPage.value && !isLegalPage.value)
+const hasSidebar = computed(() => !isAuthPage.value && !isOnboarding.value && !isLandingPage.value && !isLegalPage.value && !isCatalogPage.value)
 
 const isAppPage = computed(() => {
   return route.path === '/app' || route.path.startsWith('/app/')
