@@ -50,12 +50,20 @@ const LandingVersion5 = () => import('@/views/land/LandingVersion5.vue')
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    // Публичный лендинг
+    // Публичный лендинг (новая версия)
     {
       path: '/',
       name: 'landing',
-      component: Landing,
+      component: LandingVersion5,
       meta: { title: 'OnePercent - Система управления жизнью', public: true }
+    },
+    
+    // Старый лендинг (версия 1)
+    {
+      path: '/land/old_v1',
+      name: 'landing-old-v1',
+      component: Landing,
+      meta: { title: 'OnePercent - Система управления жизнью (старый)', public: true }
     },
     
     // Year Review (Итоги года)
@@ -94,12 +102,6 @@ const router = createRouter({
       name: 'landing-version4',
       component: LandingVersion4,
       meta: { title: 'OnePercent — Путь пользователя в продукте', public: true }
-    },
-    {
-      path: '/land/version5',
-      name: 'landing-version5',
-      component: LandingVersion5,
-      meta: { title: 'OnePercent — Полный путь с доверием', public: true }
     },
     
     // Onboarding (требует авторизации)
