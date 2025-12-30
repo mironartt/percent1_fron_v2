@@ -47,6 +47,9 @@ const LandingVersion4 = () => import('@/views/land/LandingVersion4.vue')
 // Landing Version 5 (Full journey + Trust sections)
 const LandingVersion5 = () => import('@/views/land/LandingVersion5.vue')
 
+// Landing Version 6 (React-to-Vue adaptation - Bento design)
+const LandingVersion6 = () => import('@/views/land/LandingVersion6.vue')
+
 // SEO Catalog Pages
 const CatalogHome = () => import('@/views/catalog/CatalogHome.vue')
 const CatalogGoals = () => import('@/views/catalog/CatalogGoals.vue')
@@ -152,6 +155,12 @@ const router = createRouter({
       name: 'landing-version4',
       component: LandingVersion4,
       meta: { title: 'OnePercent — Путь пользователя в продукте', public: true }
+    },
+    {
+      path: '/land/version6',
+      name: 'landing-version6',
+      component: LandingVersion6,
+      meta: { title: 'OnePercent — Системный рост', public: true }
     },
     
     // Onboarding (требует авторизации)
