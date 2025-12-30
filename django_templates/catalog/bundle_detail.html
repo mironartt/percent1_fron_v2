@@ -1,0 +1,177 @@
+{% extends "catalog/base.html" %}
+{% load static %}
+
+{% block title %}{{ bundle.name }} — готовый набор цель + привычки • OnePercent{% endblock %}
+{% block description %}{{ bundle.name }}: {{ bundle.goal.name }} + {{ bundle.habits_count }} привычек для достижения результата. Готовый план действий.{% endblock %}
+{% block og_title %}{{ bundle.name }} — готовый набор • OnePercent{% endblock %}
+{% block og_description %}{{ bundle.goal.name }} + {{ bundle.habits_count }} привычек. Готовый план действий.{% endblock %}
+{% block og_url %}https://percent1.ru/catalog/bundles/{{ bundle.slug }}/{% endblock %}
+
+{% block breadcrumbs %}
+<a href="/">Главная</a>
+<span class="separator">›</span>
+<a href="/catalog/">Каталог</a>
+<span class="separator">›</span>
+<a href="/catalog/bundles/">Наборы</a>
+<span class="separator">›</span>
+<span class="current">{{ bundle.name }}</span>
+{% endblock %}
+
+{% block content %}
+<article class="bundle-detail-page">
+    <section class="hero-section green">
+        <div class="hero-icon">📦</div>
+        <h1 class="hero-title">{{ bundle.name }}</h1>
+        <p class="hero-subtitle">{{ bundle.short_description }}</p>
+        <div class="bundle-stats">
+            <div class="stat-item">
+                <span class="stat-icon">🎯</span>
+                <span class="stat-value">1 цель</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-icon">⚡</span>
+                <span class="stat-value">{{ bundle.habits_count }} привычек</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-icon">⏱</span>
+                <span class="stat-value">{{ bundle.duration_display }}</span>
+            </div>
+        </div>
+        <div class="bundle-cta">
+            <a href="/auth/register/?add_bundle={{ bundle.id }}" class="btn btn-primary green btn-lg">+ Добавить набор в свой план</a>
+        </div>
+    </section>
+
+    <section class="bundle-description-section">
+        <h2 class="section-title">О наборе</h2>
+        <div class="bundle-description">
+            {{ bundle.description|linebreaks }}
+        </div>
+    </section>
+
+    <section class="bundle-goal-section">
+        <h2 class="section-title">🎯 Цель набора</h2>
+        <div class="bundle-goal-card">
+            <div class="goal-header">
+                <span class="goal-icon">🎯</span>
+                <div class="goal-content">
+                    <h3><a href="/catalog/goals/{{ bundle.goal.category.slug }}/{{ bundle.goal.subcategory.slug }}/{{ bundle.goal.slug }}/">{{ bundle.goal.name }}</a></h3>
+                    <div class="goal-meta">
+                        <span>{{ bundle.goal.category.icon }} {{ bundle.goal.category.name }}</span>
+                        <span>{{ bundle.goal.steps_count }} шагов</span>
+                        <span class="difficulty-{{ bundle.goal.difficulty }}">{{ bundle.goal.difficulty_display }}</span>
+                        <span>{{ bundle.goal.duration_display }}</span>
+                    </div>
+                </div>
+            </div>
+            <p class="goal-description">{{ bundle.goal.short_description }}</p>
+            
+            <div class="goal-steps-preview-bundle">
+                <h4>Шаги к цели:</h4>
+                <ol class="steps-preview-list">
+                    {% for step in bundle.goal.steps.all|slice:":5" %}
+                    <li>{{ step.name }}</li>
+                    {% endfor %}
+                    {% if bundle.goal.steps_count > 5 %}
+                    <li class="more-steps">... и ещё {{ bundle.goal.steps_count|add:"-5" }} шагов</li>
+                    {% endif %}
+                </ol>
+            </div>
+            
+            <a href="/catalog/goals/{{ bundle.goal.category.slug }}/{{ bundle.goal.subcategory.slug }}/{{ bundle.goal.slug }}/" class="btn-link">Подробнее о цели →</a>
+        </div>
+    </section>
+
+    <section class="bundle-habits-section">
+        <h2 class="section-title">⚡ Привычки для достижения цели ({{ bundle.habits_count }})</h2>
+        <p class="section-desc">Эти привычки помогут достичь цели быстрее и закрепить результат:</p>
+        
+        <div class="bundle-habits-list">
+            {% for habit in bundle.habits.all %}
+            <div class="bundle-habit-card">
+                <div class="habit-number">{{ forloop.counter }}</div>
+                <div class="habit-content">
+                    <h3><a href="/catalog/habits/{{ habit.category.slug }}/{{ habit.subcategory.slug }}/{{ habit.slug }}/">{{ habit.name }}</a></h3>
+                    <p>{{ habit.short_description }}</p>
+                    <div class="habit-meta">
+                        <span>⏱ {{ habit.duration_display }}</span>
+                        <span class="difficulty-{{ habit.difficulty }}">{{ habit.difficulty_display }}</span>
+                        <span>📅 {{ habit.frequency_display }}</span>
+                    </div>
+                    {% if habit.benefit %}
+                    <p class="habit-benefit">✓ {{ habit.benefit }}</p>
+                    {% endif %}
+                </div>
+                <a href="/catalog/habits/{{ habit.category.slug }}/{{ habit.subcategory.slug }}/{{ habit.slug }}/" class="habit-link">Подробнее →</a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="bundle-strategy-section">
+        <h2 class="section-title">📋 Стратегия достижения</h2>
+        <div class="strategy-content">
+            {{ bundle.strategy|linebreaks }}
+        </div>
+        
+        {% if bundle.timeline %}
+        <div class="bundle-timeline">
+            <h3>Примерный план:</h3>
+            <div class="timeline-items">
+                {% for week, description in bundle.timeline.items %}
+                <div class="timeline-item">
+                    <span class="timeline-week">{{ week }}</span>
+                    <p>{{ description }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </section>
+
+    {% if bundle.expected_results %}
+    <section class="bundle-results-section">
+        <h2 class="section-title">🎉 Ожидаемые результаты</h2>
+        <ul class="results-list">
+            {% for result in bundle.expected_results %}
+            <li>✓ {{ result }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+
+    <section class="bundle-cta-section">
+        <div class="cta-box green">
+            <h2>Готовы начать?</h2>
+            <p>Добавьте этот набор в свой план и начните путь к цели уже сегодня</p>
+            <a href="/auth/register/?add_bundle={{ bundle.id }}" class="btn btn-primary green btn-lg">Добавить набор бесплатно</a>
+        </div>
+    </section>
+
+    {% if similar_bundles %}
+    <section class="similar-bundles-section">
+        <h2 class="section-title">Похожие наборы</h2>
+        <div class="bundles-grid">
+            {% for similar in similar_bundles %}
+            <a href="/catalog/bundles/{{ similar.slug }}/" class="bundle-card">
+                <div class="bundle-header">
+                    <span class="bundle-icon">📦</span>
+                    <div class="bundle-category">{{ similar.category.icon }} {{ similar.category.name }}</div>
+                </div>
+                <h3>{{ similar.name }}</h3>
+                <p>{{ similar.short_description }}</p>
+                <div class="bundle-meta">
+                    <span>🎯 1 цель</span>
+                    <span>⚡ {{ similar.habits_count }} привычек</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="other-bundles-section">
+        <a href="/catalog/bundles/" class="btn btn-outline green">← Все наборы</a>
+    </section>
+</article>
+{% endblock %}

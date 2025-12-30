@@ -1,0 +1,144 @@
+{% extends "catalog/base.html" %}
+{% load static %}
+
+{% block title %}{{ difficulty_display }} цели — {{ goals_count }} пошаговых планов • OnePercent{% endblock %}
+{% block description %}{{ goals_count }} {{ difficulty_adjective }} целей для достижения. {{ difficulty_description }}{% endblock %}
+{% block og_title %}{{ difficulty_display }} цели — {{ goals_count }} планов • OnePercent{% endblock %}
+{% block og_description %}{{ goals_count }} {{ difficulty_adjective }} целей для достижения.{% endblock %}
+{% block og_url %}https://percent1.ru/catalog/goals/filter/difficulty/{{ difficulty }}/{% endblock %}
+
+{% block breadcrumbs %}
+<a href="/">Главная</a>
+<span class="separator">›</span>
+<a href="/catalog/">Каталог</a>
+<span class="separator">›</span>
+<a href="/catalog/goals/">Цели</a>
+<span class="separator">›</span>
+<a href="/catalog/goals/filter/">Фильтры</a>
+<span class="separator">›</span>
+<span class="current">{{ difficulty_display }}</span>
+{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+    <div class="hero-icon">{{ difficulty_icon }}</div>
+    <h1 class="hero-title">{{ difficulty_display }} цели</h1>
+    <p class="hero-subtitle">{{ goals_count }} целей {{ difficulty_description_genitive }}.<br>{{ difficulty_tagline }}</p>
+</section>
+
+<section class="why-section">
+    <h2 class="section-title">Почему {{ difficulty_adjective_lower }} цели</h2>
+    <div class="why-content">
+        <p>{{ difficulty_why_text }}</p>
+        <ul class="why-list">
+            {% for item in difficulty_why_list %}
+            <li>• {{ item }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+
+<section class="filters-section">
+    <h2 class="section-title">Фильтры</h2>
+    <div class="filters-grid">
+        <div class="filter-group">
+            <span class="filter-label">Категория:</span>
+            <div class="filter-buttons">
+                <a href="?category=" class="filter-btn {% if not current_category %}active{% endif %}">Все</a>
+                {% for cat in categories %}
+                <a href="?category={{ cat.slug }}" class="filter-btn {% if current_category == cat.slug %}active{% endif %}">{{ cat.icon }} {{ cat.name }}</a>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">Длительность:</span>
+            <div class="filter-buttons">
+                <a href="?duration=" class="filter-btn {% if not current_duration %}active{% endif %}">Все</a>
+                <a href="?duration=1m" class="filter-btn {% if current_duration == '1m' %}active{% endif %}">До 1 мес</a>
+                <a href="?duration=1-3m" class="filter-btn {% if current_duration == '1-3m' %}active{% endif %}">1-3 мес</a>
+                <a href="?duration=3-6m" class="filter-btn {% if current_duration == '3-6m' %}active{% endif %}">3-6 мес</a>
+                <a href="?duration=6m+" class="filter-btn {% if current_duration == '6m+' %}active{% endif %}">6+ мес</a>
+            </div>
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">Сортировка:</span>
+            <div class="filter-buttons">
+                <a href="?sort=popular" class="filter-btn {% if current_sort == 'popular' or not current_sort %}active{% endif %}">Популярные</a>
+                <a href="?sort=new" class="filter-btn {% if current_sort == 'new' %}active{% endif %}">Новые</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="goals-section">
+    <h2 class="section-title">{{ difficulty_display }} цели ({{ goals_count }})</h2>
+    <div class="goals-list">
+        {% for goal in goals %}
+        <article class="goal-card-full">
+            <div class="goal-header">
+                <span class="goal-icon">🎯</span>
+                <div class="goal-content">
+                    <h3><a href="/catalog/goals/{{ goal.category.slug }}/{{ goal.subcategory.slug }}/{{ goal.slug }}/">{{ goal.name }}</a></h3>
+                    <div class="goal-meta">
+                        <span>{{ goal.category.icon }} {{ goal.category.name }} › {{ goal.subcategory.name }}</span>
+                        <span>{{ goal.steps_count }} шагов</span>
+                        <span class="difficulty-{{ goal.difficulty }}">{{ goal.difficulty_display }}</span>
+                        <span>{{ goal.duration_display }}</span>
+                    </div>
+                </div>
+                {% if goal.is_popular %}
+                <span class="popular-badge">⭐ Популярная</span>
+                {% endif %}
+            </div>
+            <p class="goal-description">{{ goal.short_description }}</p>
+            <div class="goal-tags">
+                {% for tag in goal.tags.all|slice:":4" %}
+                <a href="/catalog/goals/tags/{{ tag.slug }}/" class="goal-tag">#{{ tag.name }}</a>
+                {% endfor %}
+            </div>
+            <div class="goal-actions">
+                <a href="/catalog/goals/{{ goal.category.slug }}/{{ goal.subcategory.slug }}/{{ goal.slug }}/" class="btn-link">Подробнее →</a>
+                <a href="/auth/register/?add_goal={{ goal.id }}" class="btn btn-outline">+ Добавить цель</a>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+
+    {% if goals.has_other_pages %}
+    <nav class="pagination">
+        {% if goals.has_previous %}
+        <a href="?page={{ goals.previous_page_number }}" class="page-link">◀ Назад</a>
+        {% endif %}
+        {% for num in goals.paginator.page_range %}
+            {% if goals.number == num %}
+            <span class="page-current">{{ num }}</span>
+            {% else %}
+            <a href="?page={{ num }}" class="page-link">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if goals.has_next %}
+        <a href="?page={{ goals.next_page_number }}" class="page-link">Вперёд ▶</a>
+        {% endif %}
+    </nav>
+    {% endif %}
+</section>
+
+<section class="other-difficulties-section">
+    <h2 class="section-title">Другие уровни сложности</h2>
+    <div class="difficulty-links">
+        {% for diff in other_difficulties %}
+        <a href="/catalog/goals/filter/difficulty/{{ diff.slug }}/" class="difficulty-link-btn">{{ diff.icon }} {{ diff.display }} ({{ diff.count }})</a>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="other-filters-section">
+    <h2 class="section-title">Другие фильтры</h2>
+    <div class="filter-links">
+        <a href="/catalog/goals/filter/duration/1m/" class="filter-link-btn">⏱ До 1 месяца</a>
+        <a href="/catalog/goals/filter/duration/1-3m/" class="filter-link-btn">⏱ 1-3 месяца</a>
+        <a href="/catalog/goals/filter/duration/3-6m/" class="filter-link-btn">⏱ 3-6 месяцев</a>
+        <a href="/catalog/goals/filter/duration/6m+/" class="filter-link-btn">⏱ 6+ месяцев</a>
+    </div>
+</section>
+{% endblock %}

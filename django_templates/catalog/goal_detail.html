@@ -1,0 +1,170 @@
+{% extends "catalog/base.html" %}
+{% load static %}
+
+{% block title %}{{ goal.name }} — пошаговый план достижения • OnePercent{% endblock %}
+{% block description %}{{ goal.name }}: {{ goal.short_description }}. {{ goal.steps_count }} шагов, {{ goal.difficulty_display }}, {{ goal.duration_display }}.{% endblock %}
+{% block og_title %}{{ goal.name }} — пошаговый план • OnePercent{% endblock %}
+{% block og_description %}{{ goal.short_description }}. {{ goal.steps_count }} шагов для достижения.{% endblock %}
+{% block og_url %}https://percent1.ru/catalog/goals/{{ category.slug }}/{{ subcategory.slug }}/{{ goal.slug }}/{% endblock %}
+
+{% block breadcrumbs %}
+<a href="/">Главная</a>
+<span class="separator">›</span>
+<a href="/catalog/">Каталог</a>
+<span class="separator">›</span>
+<a href="/catalog/goals/">Цели</a>
+<span class="separator">›</span>
+<a href="/catalog/goals/{{ category.slug }}/">{{ category.name }}</a>
+<span class="separator">›</span>
+<a href="/catalog/goals/{{ category.slug }}/{{ subcategory.slug }}/">{{ subcategory.name }}</a>
+<span class="separator">›</span>
+<span class="current">{{ goal.name_short }}</span>
+{% endblock %}
+
+{% block content %}
+<article class="goal-detail-page">
+    <section class="hero-section goal-hero">
+        <div class="hero-icon">🎯</div>
+        <h1 class="hero-title">{{ goal.name }}</h1>
+        <p class="goal-category-path">
+            <a href="/catalog/goals/{{ category.slug }}/">{{ category.icon }} {{ category.name }}</a>
+            <span class="path-separator">›</span>
+            <a href="/catalog/goals/{{ category.slug }}/{{ subcategory.slug }}/">{{ subcategory.icon }} {{ subcategory.name }}</a>
+        </p>
+        <div class="goal-stats">
+            <div class="stat-item">
+                <span class="stat-value">{{ goal.steps_count }}</span>
+                <span class="stat-label">шагов</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value difficulty-{{ goal.difficulty }}">{{ goal.difficulty_display }}</span>
+                <span class="stat-label">сложность</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">{{ goal.duration_display }}</span>
+                <span class="stat-label">длительность</span>
+            </div>
+        </div>
+        <div class="goal-cta">
+            <a href="/auth/register/?add_goal={{ goal.id }}" class="btn btn-primary btn-lg">+ Добавить цель в свой план</a>
+        </div>
+    </section>
+
+    <section class="goal-description-section">
+        <h2 class="section-title">Описание</h2>
+        <div class="goal-full-description">
+            {{ goal.description|linebreaks }}
+        </div>
+    </section>
+
+    {% if goal.benefits %}
+    <section class="goal-benefits-section">
+        <h2 class="section-title">Что вы получите</h2>
+        <ul class="benefits-list">
+            {% for benefit in goal.benefits %}
+            <li>✓ {{ benefit }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+
+    <section class="goal-steps-section">
+        <h2 class="section-title">Шаги к цели ({{ goal.steps_count }})</h2>
+        <div class="steps-list">
+            {% for step in steps %}
+            <div class="step-card">
+                <div class="step-number">{{ forloop.counter }}</div>
+                <div class="step-content">
+                    <h3>
+                        <a href="/catalog/goals/steps/{{ step.slug }}/">{{ step.name }}</a>
+                    </h3>
+                    <p>{{ step.short_description }}</p>
+                    <div class="step-meta">
+                        <span>⏱ {{ step.duration_display }}</span>
+                        <span class="difficulty-{{ step.difficulty }}">{{ step.difficulty_display }}</span>
+                    </div>
+                </div>
+                <a href="/catalog/goals/steps/{{ step.slug }}/" class="step-link">Подробнее →</a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="goal-tags-section">
+        <h2 class="section-title">Теги</h2>
+        <div class="tags-cloud">
+            {% for tag in goal.tags.all %}
+            <a href="/catalog/goals/tags/{{ tag.slug }}/" class="tag-link">#{{ tag.name }}</a>
+            {% endfor %}
+        </div>
+    </section>
+
+    {% if related_habits %}
+    <section class="related-habits-section">
+        <h2 class="section-title">Связанные привычки</h2>
+        <p class="section-desc">Эти привычки помогут достичь цели быстрее:</p>
+        <div class="habits-grid compact">
+            {% for habit in related_habits %}
+            <a href="/catalog/habits/{{ habit.category.slug }}/{{ habit.subcategory.slug }}/{{ habit.slug }}/" class="habit-card-mini">
+                <div class="habit-header">
+                    <span class="habit-icon">⚡</span>
+                    <h3>{{ habit.name }}</h3>
+                </div>
+                <div class="habit-meta">
+                    <span>{{ habit.category.icon }} {{ habit.duration_display }}</span>
+                    <span class="difficulty-{{ habit.difficulty }}">{{ habit.difficulty_display }}</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if related_bundle %}
+    <section class="bundle-promo-section">
+        <div class="bundle-promo-card">
+            <div class="bundle-promo-icon">📦</div>
+            <div class="bundle-promo-content">
+                <h3>Готовый набор: {{ related_bundle.name }}</h3>
+                <p>Эта цель + {{ related_bundle.habits_count }} привычек для максимального результата</p>
+            </div>
+            <a href="/catalog/bundles/{{ related_bundle.slug }}/" class="btn btn-primary green">Смотреть набор →</a>
+        </div>
+    </section>
+    {% endif %}
+
+    {% if similar_goals %}
+    <section class="similar-goals-section">
+        <h2 class="section-title">Похожие цели</h2>
+        <div class="goals-list compact">
+            {% for similar in similar_goals %}
+            <a href="/catalog/goals/{{ similar.category.slug }}/{{ similar.subcategory.slug }}/{{ similar.slug }}/" class="goal-card-compact">
+                <span class="goal-icon">🎯</span>
+                <div class="goal-info">
+                    <h3>{{ similar.name }}</h3>
+                    <p class="goal-meta-compact">{{ similar.steps_count }} шагов • {{ similar.difficulty_display }}</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="cta-section">
+        <div class="cta-box">
+            <h2>Начните путь к цели сегодня</h2>
+            <p>Добавьте эту цель в свой план и отслеживайте прогресс каждый день</p>
+            <a href="/auth/register/?add_goal={{ goal.id }}" class="btn btn-primary btn-lg">Начать бесплатно</a>
+        </div>
+    </section>
+
+    <section class="other-categories-section">
+        <h2 class="section-title">Другие категории</h2>
+        <div class="categories-links">
+            {% for cat in other_categories %}
+            <a href="/catalog/goals/{{ cat.slug }}/" class="category-link-btn">{{ cat.icon }} {{ cat.name }}</a>
+            {% endfor %}
+        </div>
+    </section>
+</article>
+{% endblock %}

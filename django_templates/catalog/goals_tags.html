@@ -1,0 +1,103 @@
+{% extends "catalog/base.html" %}
+{% load static %}
+
+{% block title %}Теги целей — поиск по темам • OnePercent{% endblock %}
+{% block description %}{{ tags_count }} тегов для поиска целей по темам: накопления, похудение, английский, инвестиции, продуктивность. Найдите цель по ключевому слову.{% endblock %}
+{% block og_title %}Теги целей — поиск по темам • OnePercent{% endblock %}
+{% block og_description %}{{ tags_count }} тегов для поиска целей. Найдите цель по ключевому слову.{% endblock %}
+{% block og_url %}https://percent1.ru/catalog/goals/tags/{% endblock %}
+
+{% block breadcrumbs %}
+<a href="/">Главная</a>
+<span class="separator">›</span>
+<a href="/catalog/">Каталог</a>
+<span class="separator">›</span>
+<a href="/catalog/goals/">Цели</a>
+<span class="separator">›</span>
+<span class="current">Теги</span>
+{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+    <div class="hero-icon">🏷️</div>
+    <h1 class="hero-title">Теги целей</h1>
+    <p class="hero-subtitle">Найдите цели по ключевым темам.<br>{{ tags_count }} тегов для быстрого поиска нужной цели.</p>
+    <form class="search-box" action="/catalog/goals/tags/search/" method="GET">
+        <input type="text" name="q" class="search-input" placeholder="Поиск по тегам...">
+        <button type="submit" class="search-btn">🔎</button>
+    </form>
+</section>
+
+<section class="popular-tags-section">
+    <h2 class="section-title">Популярные теги</h2>
+    <div class="popular-tags-grid">
+        {% for tag in popular_tags %}
+        <a href="/catalog/goals/tags/{{ tag.slug }}/" class="popular-tag-card">
+            <h3>#{{ tag.name }}</h3>
+            <p class="tag-count">{{ tag.goals_count }} целей</p>
+            <p class="tag-desc">{{ tag.short_description }}</p>
+            <span class="card-link">Смотреть →</span>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="tags-by-category-section">
+    <h2 class="section-title">Все теги по категориям</h2>
+    
+    {% for category in categories_with_tags %}
+    <div class="category-tags-block">
+        <h3 class="category-tags-title">{{ category.icon }} {{ category.name }}</h3>
+        <div class="tags-cloud">
+            {% for tag in category.tags %}
+            <a href="/catalog/goals/tags/{{ tag.slug }}/" class="tag-link">#{{ tag.name }} ({{ tag.goals_count }})</a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</section>
+
+<section class="alphabet-index-section">
+    <h2 class="section-title">Алфавитный указатель</h2>
+    <div class="alphabet-nav">
+        {% for letter in alphabet %}
+        <a href="#letter-{{ letter }}" class="letter-link">{{ letter }}</a>
+        {% endfor %}
+    </div>
+    
+    <div class="alphabet-tags">
+        {% for letter, letter_tags in tags_by_letter.items %}
+        <div class="letter-section" id="letter-{{ letter }}">
+            <h3 class="letter-title">{{ letter }}</h3>
+            <div class="tags-cloud">
+                {% for tag in letter_tags %}
+                <a href="/catalog/goals/tags/{{ tag.slug }}/" class="tag-link">#{{ tag.name }} ({{ tag.goals_count }})</a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="related-sections">
+    <h2 class="section-title">Связанные разделы</h2>
+    <div class="related-cards">
+        <a href="/catalog/goals/" class="related-card">
+            <span class="related-icon">🎯</span>
+            <div class="related-content">
+                <h3>Все цели</h3>
+                <p>Смотреть полный каталог целей</p>
+            </div>
+            <span class="card-link">Перейти →</span>
+        </a>
+        <a href="/catalog/habits/tags/" class="related-card">
+            <span class="related-icon">🏷️</span>
+            <div class="related-content">
+                <h3>Теги привычек</h3>
+                <p>Привычки по ключевым темам</p>
+            </div>
+            <span class="card-link">Перейти →</span>
+        </a>
+    </div>
+</section>
+{% endblock %}
