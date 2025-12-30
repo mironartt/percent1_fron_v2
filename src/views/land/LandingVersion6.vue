@@ -521,7 +521,20 @@
             <p class="section-subtitle">Без скрытых платежей. Отмена в любой момент.</p>
           </div>
 
-          <div class="period-switcher">
+          <div v-if="pricingTerms.length > 0" class="term-selector">
+            <button 
+              v-for="term in pricingTerms" 
+              :key="term.id"
+              :class="['term-btn', { active: selectedTerm?.id === term.id, hit: term.is_hit }]"
+              @click="selectTerm(term.id)"
+            >
+              <span class="term-name">{{ term.title }}</span>
+              <span v-if="term.discount > 0" class="term-discount">-{{ term.discount }}%</span>
+              <span v-if="term.is_hit" class="hit-badge">Хит</span>
+            </button>
+          </div>
+          
+          <div v-else class="period-switcher">
             <button 
               v-for="p in periods" 
               :key="p.value"
@@ -538,65 +551,109 @@
           </div>
 
           <div class="pricing-cards">
-            <div class="pricing-card free">
-              <h3>Бесплатный</h3>
-              <div class="price">
-                <span class="amount">0 ₽</span>
-                <span class="period">навсегда</span>
-              </div>
-              <p class="plan-desc">Базовый функционал для начала работы над собой.</p>
-
-              <ul class="features-list">
-                <li v-for="(feature, i) in freeFeatures" :key="i">
-                  <Check class="check-icon" />
-                  <span>{{ feature }}</span>
-                </li>
-              </ul>
-
-              <button class="btn-outline">Начать бесплатно</button>
-            </div>
-
-            <div class="pricing-card pro">
-              <div class="popular-badge">Популярный выбор</div>
-              <div class="pro-content">
-                <h3>Pro</h3>
+            <template v-if="pricingTariffs.length > 0">
+              <div 
+                v-for="(tariff, index) in pricingTariffs" 
+                :key="tariff.id"
+                :class="['pricing-card', { 
+                  'free': tariff.code === 'free',
+                  'pro': tariff.is_popular, 
+                  'club': index === 2, 
+                  'is-soon': tariff.is_soon 
+                }]"
+              >
+                <div v-if="tariff.is_popular" class="popular-badge">Популярный выбор</div>
+                <div v-if="tariff.is_soon" class="soon-badge">Скоро</div>
+                <h3>{{ tariff.title }}</h3>
                 <div class="price">
-                  <span class="amount">{{ calculatePrice(990) }} ₽</span>
+                  <span class="amount">{{ formatPrice(getTariffPrice(tariff).price) }} ₽</span>
+                  <span class="period">{{ getTariffPrice(tariff).period }}</span>
+                </div>
+                <div v-if="getTariffSavings(tariff) > 0" class="savings">
+                  Экономия {{ formatPrice(getTariffSavings(tariff)) }} ₽
+                </div>
+                <p v-if="tariff.description" class="plan-desc">{{ tariff.description }}</p>
+                
+                <ul class="features-list">
+                  <li v-for="item in getSortedFeatureItems(tariff)" :key="item.id">
+                    <Check class="check-icon" />
+                    <span>{{ item.text }}</span>
+                  </li>
+                </ul>
+                
+                <a 
+                  v-if="!tariff.is_soon"
+                  href="https://t.me/onepercent_bot" 
+                  target="_blank"
+                  :class="['pricing-cta', tariff.code === 'free' ? 'btn-outline' : (tariff.is_popular ? 'btn-secondary' : 'btn-outline')]"
+                >
+                  {{ tariff.code === 'free' ? 'Начать бесплатно' : 'Попробовать' }}
+                </a>
+                <button v-else class="btn-disabled" disabled>Скоро</button>
+              </div>
+            </template>
+            
+            <template v-else>
+              <div class="pricing-card free">
+                <h3>Бесплатный</h3>
+                <div class="price">
+                  <span class="amount">0 ₽</span>
+                  <span class="period">навсегда</span>
+                </div>
+                <p class="plan-desc">Базовый функционал для начала работы над собой.</p>
+
+                <ul class="features-list">
+                  <li v-for="(feature, i) in freeFeatures" :key="i">
+                    <Check class="check-icon" />
+                    <span>{{ feature }}</span>
+                  </li>
+                </ul>
+
+                <button class="btn-outline">Начать бесплатно</button>
+              </div>
+
+              <div class="pricing-card pro">
+                <div class="popular-badge">Популярный выбор</div>
+                <div class="pro-content">
+                  <h3>Pro</h3>
+                  <div class="price">
+                    <span class="amount">{{ calculatePrice(990) }} ₽</span>
+                    <span class="period">/ месяц</span>
+                  </div>
+                  <div v-if="billingCycle > 1" class="old-price">990 ₽ / месяц</div>
+                </div>
+                <p class="plan-desc">Полный функционал с AI-помощником и голосовым чатом с ментором.</p>
+
+                <ul class="features-list">
+                  <li v-for="(feature, i) in proFeatures" :key="i">
+                    <div class="check-circle">
+                      <Check class="check-icon-sm" />
+                    </div>
+                    <span>{{ feature }}</span>
+                  </li>
+                </ul>
+
+                <button class="btn-secondary">7 дней бесплатно</button>
+              </div>
+
+              <div class="pricing-card club">
+                <h3>Клуб 1%</h3>
+                <div class="price">
+                  <span class="amount">{{ calculatePrice(2990) }} ₽</span>
                   <span class="period">/ месяц</span>
                 </div>
-                <div v-if="billingCycle > 1" class="old-price">990 ₽ / месяц</div>
+                <p class="plan-desc">Premium тариф с мастермайндами, челленджами и нетворкингом.</p>
+
+                <ul class="features-list">
+                  <li v-for="(feature, i) in clubFeatures" :key="i">
+                    <Check class="check-icon" />
+                    <span>{{ feature }}</span>
+                  </li>
+                </ul>
+
+                <button class="btn-disabled" disabled>Скоро</button>
               </div>
-              <p class="plan-desc">Полный функционал с AI-помощником и голосовым чатом с ментором.</p>
-
-              <ul class="features-list">
-                <li v-for="(feature, i) in proFeatures" :key="i">
-                  <div class="check-circle">
-                    <Check class="check-icon-sm" />
-                  </div>
-                  <span>{{ feature }}</span>
-                </li>
-              </ul>
-
-              <button class="btn-secondary">7 дней бесплатно</button>
-            </div>
-
-            <div class="pricing-card club">
-              <h3>Клуб 1%</h3>
-              <div class="price">
-                <span class="amount">{{ calculatePrice(2990) }} ₽</span>
-                <span class="period">/ месяц</span>
-              </div>
-              <p class="plan-desc">Premium тариф с мастермайндами, челленджами и нетворкингом.</p>
-
-              <ul class="features-list">
-                <li v-for="(feature, i) in clubFeatures" :key="i">
-                  <Check class="check-icon" />
-                  <span>{{ feature }}</span>
-                </li>
-              </ul>
-
-              <button class="btn-disabled" disabled>Скоро</button>
-            </div>
+            </template>
           </div>
 
           <div class="pricing-hint">
@@ -626,6 +683,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import WheelOfLife from '@/components/WheelOfLife.vue'
+import { useSubscriptionStore } from '@/stores/subscription'
 import { 
   Menu as MenuIcon, 
   X as XIcon, 
@@ -648,6 +706,8 @@ import {
   Quote,
   Lightbulb
 } from 'lucide-vue-next'
+
+const subscriptionStore = useSubscriptionStore()
 
 const isScrolled = ref(false)
 const mobileMenuOpen = ref(false)
@@ -804,12 +864,59 @@ const calculatePrice = (basePrice) => {
   return Math.round(basePrice * (1 - discount))
 }
 
+const pricingTariffs = computed(() => subscriptionStore.tariffs)
+const pricingTerms = computed(() => subscriptionStore.terms)
+
+const selectedTermId = ref(null)
+
+const selectedTerm = computed(() => {
+  if (!pricingTerms.value.length) return null
+  if (selectedTermId.value) {
+    return pricingTerms.value.find(t => t.id === selectedTermId.value) || pricingTerms.value[0]
+  }
+  return pricingTerms.value.find(t => t.is_hit) || pricingTerms.value[0]
+})
+
+function selectTerm(termId) {
+  selectedTermId.value = termId
+}
+
+function getTariffPrice(tariff) {
+  if (!tariff || tariff.code === 'free') return { price: 0, period: 'навсегда' }
+  if (!selectedTerm.value || !tariff.terms) return { price: tariff.price, period: '/ месяц' }
+  
+  const term = tariff.terms.find(t => t.id === selectedTerm.value.id)
+  if (!term) return { price: tariff.price, period: '/ месяц' }
+  
+  return {
+    price: term.final_price,
+    period: selectedTerm.value.months === 1 ? '/ месяц' : `за ${selectedTerm.value.months} мес`
+  }
+}
+
+function getTariffSavings(tariff) {
+  if (!tariff || tariff.code === 'free' || !selectedTerm.value) return 0
+  const term = tariff.terms?.find(t => t.id === selectedTerm.value.id)
+  if (!term) return 0
+  return parseFloat(term.savings) || 0
+}
+
+function getSortedFeatureItems(tariff) {
+  if (!tariff?.feature_items?.length) return []
+  return [...tariff.feature_items].sort((a, b) => a.sort_order - b.sort_order)
+}
+
+function formatPrice(price) {
+  return Math.round(price).toLocaleString('ru-RU')
+}
+
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 20
 }
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
+  subscriptionStore.loadTariffs(true)
 })
 
 onUnmounted(() => {
@@ -3114,6 +3221,132 @@ onUnmounted(() => {
   .period-hit {
     right: -2rem;
   }
+}
+
+.term-selector {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 4rem;
+}
+
+@media (min-width: 768px) {
+  .term-selector {
+    gap: 1rem;
+  }
+}
+
+.term-btn {
+  position: relative;
+  padding: 0.75rem 1.25rem;
+  border-radius: 1rem;
+  font-weight: 700;
+  transition: all 0.3s;
+  border: 2px solid #e2e8f0;
+  background: white;
+  color: #475569;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .term-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+}
+
+.term-btn:hover {
+  border-color: #c7d2fe;
+  background: #f8fafc;
+}
+
+.term-btn.active {
+  background: #6366f1;
+  border-color: #6366f1;
+  color: white;
+  box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+  transform: scale(1.05);
+}
+
+.term-btn .term-name {
+  display: block;
+}
+
+.term-btn .term-discount {
+  position: absolute;
+  top: -0.625rem;
+  right: -0.5rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  background: #10b981;
+  color: white;
+}
+
+.term-btn.active .term-discount {
+  background: white;
+  color: #6366f1;
+}
+
+.term-btn .hit-badge {
+  position: absolute;
+  top: -1.5rem;
+  right: -1.5rem;
+  background: #f59e0b;
+  color: white;
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  transform: rotate(12deg);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+@media (min-width: 768px) {
+  .term-btn .hit-badge {
+    right: -2rem;
+  }
+}
+
+.savings {
+  color: #10b981;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+.soon-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: #94a3b8;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+}
+
+.pricing-card.is-soon {
+  opacity: 0.7;
+}
+
+.pricing-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 2rem;
+  border-radius: 1rem;
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: none;
+  transition: all 0.3s;
+  cursor: pointer;
+  margin-top: auto;
 }
 
 .pricing-cards {
