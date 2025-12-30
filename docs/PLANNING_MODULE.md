@@ -13,6 +13,19 @@
 
 Страница предоставляет интерфейс для планирования шагов целей на неделю с возможностью AI-автопланирования, управления приоритетами, временем и статусами выполнения.
 
+### Используемый стек
+
+| Технология | Версия | Назначение |
+|------------|--------|------------|
+| Vue 3 | 3.x | Composition API, `<script setup>`, реактивность |
+| Pinia | 2.x | State management (useAppStore, useAITasksStore, useXpStore) |
+| Vue Router | 4.x | Навигация, query-параметры |
+| Lucide Vue Next | — | Иконки (Calendar, Check, Filter, Sparkles и др.) |
+| JavaScript ES2020+ | — | async/await, optional chaining, nullish coalescing |
+| CSS3 (Scoped) | — | Flexbox, Grid, CSS Variables, анимации |
+| WebSocket | — | AI-планирование через aiTasksStore |
+| REST API | — | Django backend (getPlannedSteps, updateGoalSteps) |
+
 ---
 
 ## 2. Архитектура компонента
