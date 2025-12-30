@@ -826,6 +826,10 @@ onUnmounted(() => {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+.landing-v6 a {
+  text-decoration: none;
+}
+
 .header {
   position: fixed;
   top: 0;
