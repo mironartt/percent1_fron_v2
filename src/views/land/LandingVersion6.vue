@@ -8,7 +8,6 @@
         </div>
 
         <nav class="nav-desktop">
-          <a href="#method" class="nav-link">Метод</a>
           <a href="#how-it-works" class="nav-link">Как это работает</a>
           <a href="#pricing" class="nav-link">Тарифы</a>
         </nav>
@@ -24,7 +23,6 @@
       </div>
 
       <div v-if="mobileMenuOpen" class="mobile-menu">
-        <a href="#method" class="mobile-link" @click="mobileMenuOpen = false">Метод</a>
         <a href="#how-it-works" class="mobile-link" @click="mobileMenuOpen = false">Как это работает</a>
         <a href="#pricing" class="mobile-link" @click="mobileMenuOpen = false">Тарифы</a>
         <div class="mobile-divider"></div>
@@ -935,6 +933,8 @@ onUnmounted(() => {
   font-weight: 900;
   transition: all 0.2s;
   box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+  border: none;
+  outline: none;
 }
 
 .btn-primary:hover {
@@ -3368,6 +3368,8 @@ onUnmounted(() => {
   color: #6366f1;
   box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
   transition: color 0.2s;
+  border: none;
+  outline: none;
 }
 
 .btn-secondary:hover {
