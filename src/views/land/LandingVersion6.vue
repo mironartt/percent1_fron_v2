@@ -276,68 +276,72 @@
                         </div>
                       </div>
 
-                      <div v-else-if="step.id === 5" class="habits-preview">
-                        <div class="habits-header">
-                          <div class="habits-icon">
+                      <div v-else-if="step.id === 5" class="habits-preview-v2">
+                        <div class="habits-header-v2">
+                          <div class="habits-icon-v2">
                             <Repeat class="icon-sm" />
                           </div>
-                          <span class="habits-title">Трекер привычек</span>
-                          <span class="habits-today">Сегодня</span>
+                          <span class="habits-title-v2">Трекер привычек</span>
+                          <div class="habits-today-v2">
+                            <span class="today-dot"></span>
+                            <span>Сегодня</span>
+                          </div>
                         </div>
-                        <div class="habits-list">
-                          <div class="habit-item">
-                            <div class="habit-icon habit-green">
-                              <Target class="icon-xs" />
-                            </div>
-                            <div class="habit-info">
-                              <span class="habit-name">Хобби 2ч/нед</span>
-                              <div class="habit-days">
-                                <span class="day done">П</span>
-                                <span class="day missed">В</span>
-                                <span class="day done">С</span>
-                                <span class="day">Ч</span>
-                                <span class="day current">П</span>
-                                <span class="day">С</span>
-                                <span class="day">В</span>
+                        <div class="habits-list-v2">
+                          <div class="habit-card-v2">
+                            <div class="habit-row">
+                              <div class="habit-icon-v2 habit-orange">
+                                <Target class="icon-xs" />
                               </div>
+                              <span class="habit-name-v2">Хобби 2ч/нед</span>
+                              <span class="habit-xp-v2">+20 XP</span>
                             </div>
-                            <span class="habit-xp">+20 XP</span>
+                            <div class="habit-days-v2">
+                              <span class="day-v2">П</span>
+                              <span class="day-v2 done">В</span>
+                              <span class="day-v2">С</span>
+                              <span class="day-v2 done">Ч</span>
+                              <span class="day-v2">П</span>
+                              <span class="day-v2 current">С</span>
+                              <span class="day-v2">В</span>
+                              <span class="day-v2 more">...</span>
+                            </div>
                           </div>
-                          <div class="habit-item">
-                            <div class="habit-icon habit-blue">
-                              <Check class="icon-xs" />
-                            </div>
-                            <div class="habit-info">
-                              <span class="habit-name">Финансы</span>
-                              <div class="habit-days">
-                                <span class="day missed">П</span>
-                                <span class="day done">В</span>
-                                <span class="day">С</span>
-                                <span class="day done">Ч</span>
-                                <span class="day current">П</span>
-                                <span class="day">С</span>
-                                <span class="day">В</span>
+                          <div class="habit-card-v2">
+                            <div class="habit-row">
+                              <div class="habit-icon-v2 habit-green-v2">
+                                <Check class="icon-xs" />
                               </div>
+                              <span class="habit-name-v2">Финансы</span>
+                              <span class="habit-xp-v2">+15 XP</span>
                             </div>
-                            <span class="habit-xp">+15 XP</span>
+                            <div class="habit-days-v2">
+                              <span class="day-v2">П</span>
+                              <span class="day-v2 done">В</span>
+                              <span class="day-v2 done">С</span>
+                              <span class="day-v2">Ч</span>
+                              <span class="day-v2 done">П</span>
+                              <span class="day-v2 current">С</span>
+                              <span class="day-v2">В</span>
+                            </div>
                           </div>
-                          <div class="habit-item">
-                            <div class="habit-icon habit-pink">
-                              <Activity class="icon-xs" />
-                            </div>
-                            <div class="habit-info">
-                              <span class="habit-name">Ужин с семьёй</span>
-                              <div class="habit-days">
-                                <span class="day done">П</span>
-                                <span class="day done">В</span>
-                                <span class="day done">С</span>
-                                <span class="day done">Ч</span>
-                                <span class="day current">П</span>
-                                <span class="day">С</span>
-                                <span class="day">В</span>
+                          <div class="habit-card-v2">
+                            <div class="habit-row">
+                              <div class="habit-icon-v2 habit-pink-v2">
+                                <Activity class="icon-xs" />
                               </div>
+                              <span class="habit-name-v2">Ужин с семьёй</span>
+                              <span class="habit-xp-v2">+20 XP</span>
                             </div>
-                            <span class="habit-xp">+20 XP</span>
+                            <div class="habit-days-v2">
+                              <span class="day-v2 done">П</span>
+                              <span class="day-v2 done">В</span>
+                              <span class="day-v2 done">С</span>
+                              <span class="day-v2 done">Ч</span>
+                              <span class="day-v2 done">П</span>
+                              <span class="day-v2 current">С</span>
+                              <span class="day-v2">В</span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -4275,5 +4279,145 @@ onUnmounted(() => {
 .footer-dark-copy {
   color: #475569;
   font-size: 0.75rem;
+}
+
+/* Habits Preview V2 */
+.habits-preview-v2 {
+  padding: 1.5rem;
+}
+
+.habits-header-v2 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.habits-icon-v2 {
+  width: 2.5rem;
+  height: 2.5rem;
+  background: #e0f2fe;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0ea5e9;
+}
+
+.habits-title-v2 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #0f172a;
+  flex: 1;
+}
+
+.habits-today-v2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #f8fafc;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.today-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  background: #10b981;
+  border-radius: 50%;
+}
+
+.habits-list-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.habit-card-v2 {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+}
+
+.habit-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.habit-icon-v2 {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.habit-icon-v2.habit-orange {
+  background: #fff7ed;
+  color: #f97316;
+}
+
+.habit-icon-v2.habit-green-v2 {
+  background: #dcfce7;
+  color: #22c55e;
+}
+
+.habit-icon-v2.habit-pink-v2 {
+  background: #fce7f3;
+  color: #ec4899;
+}
+
+.habit-name-v2 {
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.habit-xp-v2 {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #10b981;
+}
+
+.habit-days-v2 {
+  display: flex;
+  gap: 0.5rem;
+  padding-left: 3rem;
+}
+
+.day-v2 {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+.day-v2.done {
+  background: #10b981;
+  color: white;
+}
+
+.day-v2.current {
+  background: white;
+  border: 2px solid #10b981;
+  color: #10b981;
+}
+
+.day-v2.more {
+  background: transparent;
+  color: #94a3b8;
 }
 </style>
