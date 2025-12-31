@@ -710,7 +710,34 @@
             <p class="text-lg text-slate-500">Без скрытых платежей. Отмена в любой момент.</p>
           </div>
 
-          <div class="flex flex-wrap justify-center gap-3 md:gap-4 mb-16">
+          <div v-if="pricingTerms.length > 0" class="flex flex-wrap justify-center gap-3 md:gap-4 mb-16">
+            <button
+              v-for="term in pricingTerms"
+              :key="term.id"
+              @click="selectTerm(term.id)"
+              :class="[
+                'relative px-5 py-3 md:px-6 rounded-2xl font-bold transition-all duration-300 border-2 text-sm md:text-base',
+                selectedTerm?.id === term.id 
+                  ? 'bg-brand-600 border-brand-600 text-white shadow-lg shadow-brand-500/30 transform scale-105' 
+                  : 'bg-white border-slate-200 text-slate-600 hover:border-brand-200 hover:bg-slate-50'
+              ]"
+            >
+              {{ term.title }}
+              <span 
+                v-if="term.discount > 0" 
+                :class="[
+                  'absolute -top-2.5 -right-2 px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm transition-colors',
+                  selectedTerm?.id === term.id ? 'bg-white text-brand-600' : 'bg-emerald-500 text-white'
+                ]"
+              >
+                -{{ term.discount }}%
+              </span>
+              <span v-if="term.is_hit" class="absolute -top-6 -right-6 md:-right-8 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md transform rotate-12 shadow-sm">
+                ХИТ
+              </span>
+            </button>
+          </div>
+          <div v-else class="flex flex-wrap justify-center gap-3 md:gap-4 mb-16">
             <button
               v-for="p in pricingPeriods"
               :key="p.value"
@@ -739,86 +766,146 @@
           </div>
 
           <div class="grid lg:grid-cols-3 gap-6 items-start">
-            <!-- Free Plan -->
-            <div class="bg-white rounded-[32px] p-8 border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full relative group">
-              <h3 class="text-2xl font-black text-slate-900 mb-2">Бесплатный</h3>
-              <div class="flex items-baseline gap-2 mb-2">
-                <span class="text-4xl font-black text-slate-900">0 ₽</span>
-                <span class="text-sm font-medium text-slate-400">навсегда</span>
-              </div>
-              <p class="text-sm text-slate-500 mb-8 leading-relaxed">
-                Базовый функционал для начала работы над собой.
-              </p>
-
-              <ul class="space-y-4 mb-8 flex-1">
-                <li v-for="(item, i) in freePlanFeatures" :key="i" class="flex items-start gap-3">
-                  <Check class="w-5 h-5 text-emerald-500 shrink-0" />
-                  <span class="text-sm font-medium text-slate-600">{{ item }}</span>
-                </li>
-              </ul>
-
-              <button class="w-full rounded-2xl py-4 border-2 border-brand-600 text-brand-600 font-bold hover:bg-brand-50 transition">
-                Начать бесплатно
-              </button>
-            </div>
-
-            <!-- Pro Plan -->
-            <div class="bg-brand-600 rounded-[32px] p-8 border border-brand-500 shadow-2xl shadow-brand-500/30 flex flex-col h-full relative transform lg:-translate-y-4 z-10 text-white">
-              <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-900 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
-                Популярный выбор
-              </div>
-              
-              <div class="text-center mb-6 mt-2">
-                <h3 class="text-2xl font-black mb-1 opacity-90">Pro</h3>
-                <div class="flex items-center justify-center gap-1">
-                  <span class="text-5xl font-black">{{ calculatePrice(990) }} ₽</span>
-                  <span class="text-sm font-medium opacity-60">/ месяц</span>
+            <template v-if="pricingTariffs.length > 0">
+              <div 
+                v-for="(tariff, index) in pricingTariffs" 
+                :key="tariff.id"
+                :class="[
+                  'rounded-[32px] p-8 border shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full relative',
+                  tariff.is_popular 
+                    ? 'bg-brand-600 border-brand-500 shadow-2xl shadow-brand-500/30 transform lg:-translate-y-4 z-10 text-white' 
+                    : tariff.is_soon 
+                      ? 'bg-slate-700 border-slate-600 shadow-xl text-slate-200'
+                      : 'bg-white border-slate-200 group'
+                ]"
+              >
+                <div v-if="tariff.is_popular" class="absolute -top-4 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-900 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
+                  Популярный выбор
                 </div>
-                <div v-if="billingCycle > 1" class="text-xs font-medium text-brand-200 mt-1 line-through decoration-brand-400">
-                  990 ₽ / месяц
+                
+                <h3 :class="['text-2xl font-black mb-2', tariff.is_popular || tariff.is_soon ? 'text-white' : 'text-slate-900']">
+                  {{ tariff.title }}
+                </h3>
+                <div class="flex items-baseline gap-2 mb-2">
+                  <span :class="['text-4xl font-black', tariff.is_popular || tariff.is_soon ? 'text-white' : 'text-slate-900']">
+                    {{ formatPrice(getTariffPrice(tariff).price) }} ₽
+                  </span>
+                  <span :class="['text-sm font-medium', tariff.is_popular ? 'opacity-60' : tariff.is_soon ? 'text-slate-400' : 'text-slate-400']">
+                    {{ getTariffPrice(tariff).period }}
+                  </span>
                 </div>
+                <div v-if="getTariffSavings(tariff) > 0" :class="['text-xs font-medium mb-2', tariff.is_popular ? 'text-brand-200' : 'text-emerald-600']">
+                  Экономия {{ formatPrice(getTariffSavings(tariff)) }} ₽
+                </div>
+                <p v-if="tariff.description" :class="['text-sm mb-8 leading-relaxed', tariff.is_popular ? 'text-brand-100 opacity-90' : tariff.is_soon ? 'text-slate-400' : 'text-slate-500']">
+                  {{ tariff.description }}
+                </p>
+
+                <ul class="space-y-4 mb-8 flex-1">
+                  <li v-for="item in getSortedFeatureItems(tariff)" :key="item.id" class="flex items-start gap-3">
+                    <div v-if="tariff.is_popular" class="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                      <Check class="w-3 h-3 text-white" />
+                    </div>
+                    <Check v-else :class="['w-5 h-5 shrink-0', tariff.is_soon ? 'text-slate-400' : 'text-emerald-500']" />
+                    <span :class="['text-sm font-medium', tariff.is_popular ? 'text-white' : tariff.is_soon ? 'text-slate-300' : 'text-slate-600']">
+                      {{ item.text }}
+                    </span>
+                  </li>
+                </ul>
+
+                <a 
+                  v-if="!tariff.is_soon"
+                  href="https://t.me/onepercent_bot" 
+                  target="_blank"
+                  :class="[
+                    'w-full rounded-2xl py-4 font-bold transition text-center block',
+                    tariff.is_popular 
+                      ? 'bg-white text-brand-600 hover:bg-slate-50 shadow-lg' 
+                      : tariff.code === 'free' 
+                        ? 'border-2 border-brand-600 text-brand-600 hover:bg-brand-50'
+                        : 'bg-brand-600 text-white hover:bg-brand-700'
+                  ]"
+                >
+                  {{ tariff.code === 'free' ? 'Начать бесплатно' : 'Попробовать' }}
+                </a>
+                <button v-else disabled class="w-full rounded-2xl py-4 bg-slate-600 text-slate-400 cursor-not-allowed border-none">
+                  Скоро
+                </button>
+              </div>
+            </template>
+            
+            <template v-else>
+              <!-- Fallback: Static cards when no data from backend -->
+              <div class="bg-white rounded-[32px] p-8 border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full relative group">
+                <h3 class="text-2xl font-black text-slate-900 mb-2">Бесплатный</h3>
+                <div class="flex items-baseline gap-2 mb-2">
+                  <span class="text-4xl font-black text-slate-900">0 ₽</span>
+                  <span class="text-sm font-medium text-slate-400">навсегда</span>
+                </div>
+                <p class="text-sm text-slate-500 mb-8 leading-relaxed">
+                  Базовый функционал для начала работы над собой.
+                </p>
+                <ul class="space-y-4 mb-8 flex-1">
+                  <li v-for="(item, i) in freePlanFeatures" :key="i" class="flex items-start gap-3">
+                    <Check class="w-5 h-5 text-emerald-500 shrink-0" />
+                    <span class="text-sm font-medium text-slate-600">{{ item }}</span>
+                  </li>
+                </ul>
+                <button class="w-full rounded-2xl py-4 border-2 border-brand-600 text-brand-600 font-bold hover:bg-brand-50 transition">
+                  Начать бесплатно
+                </button>
               </div>
 
-              <p class="text-sm text-brand-100 mb-8 text-center leading-relaxed opacity-90">
-                Полный функционал с AI-помощником и голосовым чатом с ментором.
-              </p>
-
-              <ul class="space-y-4 mb-8 flex-1">
-                <li v-for="(item, i) in proPlanFeatures" :key="i" class="flex items-start gap-3">
-                  <div class="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                    <Check class="w-3 h-3 text-white" />
+              <div class="bg-brand-600 rounded-[32px] p-8 border border-brand-500 shadow-2xl shadow-brand-500/30 flex flex-col h-full relative transform lg:-translate-y-4 z-10 text-white">
+                <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-900 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
+                  Популярный выбор
+                </div>
+                <div class="text-center mb-6 mt-2">
+                  <h3 class="text-2xl font-black mb-1 opacity-90">Pro</h3>
+                  <div class="flex items-center justify-center gap-1">
+                    <span class="text-5xl font-black">{{ calculatePrice(990) }} ₽</span>
+                    <span class="text-sm font-medium opacity-60">/ месяц</span>
                   </div>
-                  <span class="text-sm font-medium text-white">{{ item }}</span>
-                </li>
-              </ul>
-
-              <button class="w-full rounded-2xl py-4 bg-white text-brand-600 font-bold hover:bg-slate-50 transition shadow-lg">
-                7 дней бесплатно
-              </button>
-            </div>
-
-            <!-- Club Plan -->
-            <div class="bg-slate-700 rounded-[32px] p-8 border border-slate-600 shadow-xl flex flex-col h-full relative text-slate-200">
-              <h3 class="text-2xl font-black text-white mb-2">Клуб 1%</h3>
-              <div class="flex items-baseline gap-2 mb-2">
-                <span class="text-4xl font-black text-white">{{ calculatePrice(2990) }} ₽</span>
-                <span class="text-sm font-medium text-slate-400">/ месяц</span>
+                  <div v-if="billingCycle > 1" class="text-xs font-medium text-brand-200 mt-1 line-through decoration-brand-400">
+                    990 ₽ / месяц
+                  </div>
+                </div>
+                <p class="text-sm text-brand-100 mb-8 text-center leading-relaxed opacity-90">
+                  Полный функционал с AI-помощником и голосовым чатом с ментором.
+                </p>
+                <ul class="space-y-4 mb-8 flex-1">
+                  <li v-for="(item, i) in proPlanFeatures" :key="i" class="flex items-start gap-3">
+                    <div class="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                      <Check class="w-3 h-3 text-white" />
+                    </div>
+                    <span class="text-sm font-medium text-white">{{ item }}</span>
+                  </li>
+                </ul>
+                <button class="w-full rounded-2xl py-4 bg-white text-brand-600 font-bold hover:bg-slate-50 transition shadow-lg">
+                  7 дней бесплатно
+                </button>
               </div>
-              <p class="text-sm text-slate-400 mb-8 leading-relaxed">
-                Premium тариф с мастермайндами, челленджами и нетворкингом.
-              </p>
 
-              <ul class="space-y-4 mb-8 flex-1">
-                <li v-for="(item, i) in clubPlanFeatures" :key="i" class="flex items-start gap-3">
-                  <Check class="w-5 h-5 text-slate-400 shrink-0" />
-                  <span class="text-sm font-medium text-slate-300">{{ item }}</span>
-                </li>
-              </ul>
-
-              <button disabled class="w-full rounded-2xl py-4 bg-slate-600 text-slate-400 cursor-not-allowed border-none">
-                Скоро
-              </button>
-            </div>
+              <div class="bg-slate-700 rounded-[32px] p-8 border border-slate-600 shadow-xl flex flex-col h-full relative text-slate-200">
+                <h3 class="text-2xl font-black text-white mb-2">Клуб 1%</h3>
+                <div class="flex items-baseline gap-2 mb-2">
+                  <span class="text-4xl font-black text-white">{{ calculatePrice(2990) }} ₽</span>
+                  <span class="text-sm font-medium text-slate-400">/ месяц</span>
+                </div>
+                <p class="text-sm text-slate-400 mb-8 leading-relaxed">
+                  Premium тариф с мастермайндами, челленджами и нетворкингом.
+                </p>
+                <ul class="space-y-4 mb-8 flex-1">
+                  <li v-for="(item, i) in clubPlanFeatures" :key="i" class="flex items-start gap-3">
+                    <Check class="w-5 h-5 text-slate-400 shrink-0" />
+                    <span class="text-sm font-medium text-slate-300">{{ item }}</span>
+                  </li>
+                </ul>
+                <button disabled class="w-full rounded-2xl py-4 bg-slate-600 text-slate-400 cursor-not-allowed border-none">
+                  Скоро
+                </button>
+              </div>
+            </template>
           </div>
 
           <div class="mt-16 flex items-center justify-center gap-3 text-slate-500 text-sm animate-in fade-in duration-700">
@@ -878,13 +965,54 @@ import {
   ArrowRight, Palette, Users
 } from 'lucide-vue-next'
 import WheelOfLifeMockup from '@/components/landing/WheelOfLifeMockup.vue'
+import { useSubscriptionStore } from '@/stores/subscription.js'
+
+const subscriptionStore = useSubscriptionStore()
 
 const isScrolled = ref(false)
 const mobileMenuOpen = ref(false)
 const days = ref(30)
 const billingCycle = ref(1)
+const selectedTerm = ref(null)
 
 const multiplier = computed(() => Math.pow(1.01, days.value).toFixed(2))
+
+const pricingTariffs = computed(() => subscriptionStore.tariffs)
+const pricingTerms = computed(() => subscriptionStore.terms)
+
+function selectTerm(termId) {
+  const term = pricingTerms.value.find(t => t.id === termId)
+  if (term) {
+    selectedTerm.value = term
+    billingCycle.value = term.months || 1
+  }
+}
+
+function getTariffPrice(tariff) {
+  if (!tariff || tariff.code === 'free') return { price: 0, period: 'навсегда' }
+  if (!selectedTerm.value || !tariff.terms) return { price: tariff.price, period: '/ месяц' }
+  
+  const term = tariff.terms.find(t => t.id === selectedTerm.value.id)
+  if (!term) return { price: tariff.price, period: '/ месяц' }
+  
+  return { price: term.monthly_price, period: '/ месяц' }
+}
+
+function getTariffSavings(tariff) {
+  if (!tariff || tariff.code === 'free' || !selectedTerm.value) return 0
+  const term = tariff.terms?.find(t => t.id === selectedTerm.value.id)
+  if (!term || !term.savings) return 0
+  return term.savings
+}
+
+function getSortedFeatureItems(tariff) {
+  if (!tariff?.feature_items?.length) return []
+  return [...tariff.feature_items].sort((a, b) => a.sort_order - b.sort_order)
+}
+
+function formatPrice(price) {
+  return new Intl.NumberFormat('ru-RU').format(Math.round(price))
+}
 
 const effectDescription = computed(() => {
   if (days.value <= 30) return "Ты начнешь управлять днем, а не плыть по течению: меньше хаоса, больше точности."
@@ -1073,6 +1201,15 @@ const handleScroll = () => {
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
+  
+  subscriptionStore.loadTariffs(true).then(() => {
+    if (pricingTerms.value.length > 0 && !selectedTerm.value) {
+      const defaultTerm = pricingTerms.value.find(t => t.months === 1) || pricingTerms.value[0]
+      if (defaultTerm) {
+        selectTerm(defaultTerm.id)
+      }
+    }
+  })
   
   if (!document.getElementById('tailwind-v7')) {
     const script = document.createElement('script')
