@@ -278,7 +278,7 @@
                       <div class="relative w-full z-10 flex justify-center">
                         <!-- Step 1: Wheel of Life -->
                         <div v-if="step.id === 1" class="bg-white rounded-2xl p-6 shadow-xl shadow-slate-200/50 border border-slate-100 w-full max-w-md">
-                          <WheelBalanceMockup />
+                          <WheelOfLifeMockup />
                         </div>
 
                         <!-- Step 2: AI Goals Chat -->
@@ -877,7 +877,7 @@ import {
   TrendingUp, Mic, Feather, BookOpen, PenTool, Quote, Lightbulb,
   ArrowRight, Palette, Users
 } from 'lucide-vue-next'
-import WheelBalanceMockup from '@/components/landing/WheelBalanceMockup.vue'
+import WheelOfLifeMockup from '@/components/landing/WheelOfLifeMockup.vue'
 
 const isScrolled = ref(false)
 const mobileMenuOpen = ref(false)
@@ -1130,7 +1130,6 @@ onUnmounted(() => {
 }
 
 .bento-card {
-  background: white;
   border-radius: 24px;
   padding: 2rem;
   border: 1px solid #e2e8f0;
