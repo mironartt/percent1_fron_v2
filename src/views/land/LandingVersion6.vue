@@ -346,45 +346,51 @@
                         </div>
                       </div>
 
-                      <div v-else-if="step.id === 6" class="xp-preview-v2">
-                        <div class="xp-status-bar">
+                      <div v-else-if="step.id === 6" class="xp-preview-v3">
+                        <div class="xp-status-bar-v3">
                           <Sparkles class="icon-xs" />
                           <span>Прошло 3 месяца. 2450 XP заработано.</span>
                         </div>
-                        <div class="xp-balance-card">
-                          <p class="xp-balance-label">ТВОЙ БАЛАНС</p>
-                          <p class="xp-balance-value">2450 <span>XP</span></p>
+                        <div class="xp-balance-card-v3">
+                          <p class="xp-balance-label-v3">ТВОЙ БАЛАНС</p>
+                          <p class="xp-balance-value-v3">2450 <span>XP</span></p>
                         </div>
-                        <div class="xp-mentor-tip">
-                          <div class="mentor-avatar-small">
+                        <div class="xp-mentor-tip-v3">
+                          <div class="mentor-avatar-v3">
                             <MessageCircle class="icon-xs" />
                           </div>
-                          <p><strong>AI Ментор:</strong> Максим, хватает на новую игру! Это не противоречит цели "Спорт". Отдых важен.</p>
+                          <p><span class="mentor-name">AI Ментор:</span> Максим, хватает на новую игру! Это не противоречит цели "Спорт". Отдых важен.</p>
                         </div>
-                        <div class="xp-rewards-list">
-                          <div class="reward-item received">
-                            <div class="reward-icon">🎬</div>
-                            <div class="reward-info">
-                              <span class="reward-name">Вечер кино</span>
-                              <span class="reward-cost">500 XP</span>
+                        <div class="xp-rewards-list-v3">
+                          <div class="reward-row-v3">
+                            <div class="reward-check-v3 received">
+                              <Check class="icon-xs" />
                             </div>
-                            <span class="reward-status">Получено</span>
+                            <div class="reward-info-v3">
+                              <span class="reward-name-v3">Вечер кино</span>
+                              <span class="reward-cost-v3">500 XP</span>
+                            </div>
+                            <span class="reward-status-v3">Получено</span>
                           </div>
-                          <div class="reward-item available">
-                            <div class="reward-icon">🎮</div>
-                            <div class="reward-info">
-                              <span class="reward-name">Новая игра</span>
-                              <span class="reward-cost">1500 XP</span>
+                          <div class="reward-row-v3 highlighted">
+                            <div class="reward-check-v3 available">
+                              <Zap class="icon-xs" />
                             </div>
-                            <button class="reward-btn">Доступно!</button>
+                            <div class="reward-info-v3">
+                              <span class="reward-name-v3">Новая игра</span>
+                              <span class="reward-cost-v3">1500 XP</span>
+                            </div>
+                            <button class="reward-btn-v3">Доступно!</button>
                           </div>
-                          <div class="reward-item progress">
-                            <div class="reward-icon">✈️</div>
-                            <div class="reward-info">
-                              <span class="reward-name">Поездка</span>
-                              <span class="reward-cost">5000 XP</span>
+                          <div class="reward-row-v3">
+                            <div class="reward-check-v3 pending">
+                              <Map class="icon-xs" />
                             </div>
-                            <span class="reward-percent">49%</span>
+                            <div class="reward-info-v3">
+                              <span class="reward-name-v3">Поездка</span>
+                              <span class="reward-cost-v3">5000 XP</span>
+                            </div>
+                            <span class="reward-percent-v3">49%</span>
                           </div>
                         </div>
                       </div>
@@ -4419,5 +4425,175 @@ onUnmounted(() => {
 .day-v2.more {
   background: transparent;
   color: #94a3b8;
+}
+
+/* XP Preview V3 */
+.xp-preview-v3 {
+  padding: 1.25rem;
+}
+
+.xp-status-bar-v3 {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #ecfdf5;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #10b981;
+  margin-bottom: 1rem;
+}
+
+.xp-balance-card-v3 {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-radius: 1rem;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.xp-balance-label-v3 {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 0.25rem 0;
+}
+
+.xp-balance-value-v3 {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: white;
+  margin: 0;
+  line-height: 1;
+}
+
+.xp-balance-value-v3 span {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-left: 0.25rem;
+}
+
+.xp-mentor-tip-v3 {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: #f8fafc;
+  border-radius: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #e2e8f0;
+}
+
+.mentor-avatar-v3 {
+  width: 2rem;
+  height: 2rem;
+  background: #6366f1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.xp-mentor-tip-v3 p {
+  font-size: 0.8rem;
+  color: #475569;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.xp-mentor-tip-v3 .mentor-name {
+  font-weight: 700;
+  color: #6366f1;
+}
+
+.xp-rewards-list-v3 {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.reward-row-v3 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+}
+
+.reward-row-v3.highlighted {
+  background: #eff6ff;
+  border-color: #3b82f6;
+}
+
+.reward-check-v3 {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.reward-check-v3.received {
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+.reward-check-v3.available {
+  background: #3b82f6;
+  color: white;
+}
+
+.reward-check-v3.pending {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.reward-info-v3 {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.reward-name-v3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.reward-cost-v3 {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.reward-status-v3 {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.reward-btn-v3 {
+  padding: 0.5rem 1rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.reward-percent-v3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #64748b;
 }
 </style>
