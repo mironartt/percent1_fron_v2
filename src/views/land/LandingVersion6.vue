@@ -3817,7 +3817,7 @@ onUnmounted(() => {
 /* Situations Section */
 .situations-section {
   padding: 4rem 0;
-  background: #f8fafc;
+  background: white;
 }
 
 .situations-container {
