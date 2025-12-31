@@ -990,19 +990,21 @@ function selectTerm(termId) {
 
 function getTariffPrice(tariff) {
   if (!tariff || tariff.code === 'free') return { price: 0, period: 'навсегда' }
-  if (!selectedTerm.value || !tariff.terms) return { price: tariff.price, period: '/ месяц' }
+  if (!selectedTerm.value || !tariff.terms || tariff.terms.length === 0) {
+    return { price: tariff.price || 0, period: '/ месяц' }
+  }
   
   const term = tariff.terms.find(t => t.id === selectedTerm.value.id)
-  if (!term) return { price: tariff.price, period: '/ месяц' }
+  if (!term) return { price: tariff.price || 0, period: '/ месяц' }
   
-  return { price: term.monthly_price, period: '/ месяц' }
+  return { price: term.base_price || tariff.price || 0, period: '/ месяц' }
 }
 
 function getTariffSavings(tariff) {
   if (!tariff || tariff.code === 'free' || !selectedTerm.value) return 0
   const term = tariff.terms?.find(t => t.id === selectedTerm.value.id)
-  if (!term || !term.savings) return 0
-  return term.savings
+  if (!term) return 0
+  return term.term_discount_value || 0
 }
 
 function getSortedFeatureItems(tariff) {
