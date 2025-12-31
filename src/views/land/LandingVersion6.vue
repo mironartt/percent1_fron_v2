@@ -157,7 +157,10 @@
               </div>
 
               <div class="step-visual">
-                <div class="visual-wrapper" :class="step.gradientClass">
+                <div v-if="step.id === 1" class="visual-wrapper" :class="step.gradientClass">
+                  <WheelBalanceMockup />
+                </div>
+                <div v-else class="visual-wrapper" :class="step.gradientClass">
                   <div class="visual-card">
                     <div class="browser-header">
                       <div class="dots">
@@ -171,14 +174,7 @@
                     <div class="visual-content">
                       <div class="visual-bg" :class="step.gradientClass"></div>
 
-                      <div v-if="step.id === 1" class="wheel-preview">
-                        <WheelOfLife :spheres="wheelSpheres" :readonly="true" />
-                        <div class="wheel-analysis">
-                          <span class="analysis-label">Анализ:</span> Фокус на карьере, риск выгорания. Рекомендуется подтянуть "Здоровье" и "Отдых".
-                        </div>
-                      </div>
-
-                      <div v-else-if="step.id === 2" class="chat-preview">
+                      <div v-if="step.id === 2" class="chat-preview">
                         <div class="chat-message bot">
                           <div class="chat-avatar bot-avatar">
                             <Activity class="icon-sm" />
@@ -682,7 +678,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import WheelOfLife from '@/components/WheelOfLife.vue'
+import WheelBalanceMockup from '@/components/landing/WheelBalanceMockup.vue'
 import { useSubscriptionStore } from '@/stores/subscription'
 import { 
   Menu as MenuIcon, 
@@ -723,14 +719,6 @@ const effectDescription = computed(() => {
   return "Трансформация завершена. Твоя эффективность в 38 раз выше, чем в первый день."
 })
 
-const wheelSpheres = ref([
-  { id: 1, name: 'Здоровье', score: 6.5, color: '#10b981' },
-  { id: 2, name: 'Финансы', score: 4.0, color: '#f59e0b' },
-  { id: 3, name: 'Карьера', score: 9.0, color: '#6366f1' },
-  { id: 4, name: 'Семья', score: 5.0, color: '#ec4899' },
-  { id: 5, name: 'Рост', score: 8.5, color: '#8b5cf6' },
-  { id: 6, name: 'Отдых', score: 3.0, color: '#06b6d4' }
-])
 
 const steps = [
   {
