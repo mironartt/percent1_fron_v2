@@ -937,9 +937,9 @@
 
         <div class="flex flex-col items-center text-center gap-8">
           <div class="flex flex-col md:flex-row gap-4 md:gap-8 text-xs md:text-sm font-medium text-slate-500">
-            <router-link to="/policy/privacy" class="hover:text-slate-300 transition-colors">Политика конфиденциальности</router-link>
-            <router-link to="/policy/terms" class="hover:text-slate-300 transition-colors">Пользовательское соглашение</router-link>
-            <router-link to="/policy/disclaimer" class="hover:text-slate-300 transition-colors">Отказ от ответственности</router-link>
+            <router-link to="/privacy" class="hover:text-slate-300 transition-colors">Политика конфиденциальности</router-link>
+            <router-link to="/termspolicy" class="hover:text-slate-300 transition-colors">Пользовательское соглашение</router-link>
+            <router-link to="/disclaimer" class="hover:text-slate-300 transition-colors">Отказ от ответственности</router-link>
           </div>
 
           <div class="space-y-2 text-[10px] md:text-xs text-slate-600 font-medium">
