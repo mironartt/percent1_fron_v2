@@ -815,7 +815,7 @@
 
                 <a 
                   v-if="!tariff.is_soon"
-                  href="https://t.me/onepercent_bot" 
+                  href="https://percent1.ru/auth/register" 
                   target="_blank"
                   :class="[
                     'w-full rounded-2xl py-4 font-bold transition text-center block',
