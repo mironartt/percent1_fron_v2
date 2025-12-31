@@ -3818,6 +3818,10 @@ onUnmounted(() => {
 .situations-section {
   padding: 4rem 0;
   background: white;
+  border-radius: 2rem 2rem 0 0;
+  margin-top: -1rem;
+  position: relative;
+  z-index: 1;
 }
 
 .situations-container {
