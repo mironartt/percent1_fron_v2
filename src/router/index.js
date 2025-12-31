@@ -62,10 +62,18 @@ const CatalogBundles = () => import('@/views/catalog/CatalogBundles.vue')
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    // Публичный лендинг (новая версия)
+    // Публичный лендинг (версия 7 - основная)
     {
       path: '/',
       name: 'landing',
+      component: LandingVersion7,
+      meta: { title: 'OnePercent — Системный рост в жизни', public: true }
+    },
+    
+    // Предыдущий лендинг (версия 5)
+    {
+      path: '/land/old_v5',
+      name: 'landing-old-v5',
       component: LandingVersion5,
       meta: { title: 'OnePercent - Система управления жизнью', public: true }
     },
@@ -167,9 +175,7 @@ const router = createRouter({
     },
     {
       path: '/land/version7',
-      name: 'landing-version7',
-      component: LandingVersion7,
-      meta: { title: 'OnePercent — Системный рост', public: true }
+      redirect: '/'
     },
     
     // Onboarding (требует авторизации)
