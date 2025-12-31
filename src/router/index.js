@@ -50,6 +50,9 @@ const LandingVersion5 = () => import('@/views/land/LandingVersion5.vue')
 // Landing Version 6 (React-to-Vue adaptation - Bento design)
 const LandingVersion6 = () => import('@/views/land/LandingVersion6.vue')
 
+// Landing Version 7 (React-to-Vue from archive)
+const LandingVersion7 = () => import('@/views/land/LandingVersion7.vue')
+
 // SEO Catalog Pages
 const CatalogHome = () => import('@/views/catalog/CatalogHome.vue')
 const CatalogGoals = () => import('@/views/catalog/CatalogGoals.vue')
@@ -160,6 +163,12 @@ const router = createRouter({
       path: '/land/version6',
       name: 'landing-version6',
       component: LandingVersion6,
+      meta: { title: 'OnePercent — Системный рост', public: true }
+    },
+    {
+      path: '/land/version7',
+      name: 'landing-version7',
+      component: LandingVersion7,
       meta: { title: 'OnePercent — Системный рост', public: true }
     },
     
