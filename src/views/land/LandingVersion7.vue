@@ -6,12 +6,12 @@
       isScrolled ? 'bg-white/80 backdrop-blur-md border-b border-slate-200 py-3' : 'py-6'
     ]">
       <div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
-        <div class="flex items-center gap-3">
+        <a href="https://percent1.ru/" class="flex items-center gap-3 hover:opacity-90 transition-opacity">
           <div class="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-lg shadow-brand-200">
             1%
           </div>
           <span class="font-extrabold text-xl tracking-tight text-slate-900">OnePercent</span>
-        </div>
+        </a>
 
         <nav class="hidden md:flex gap-8 font-semibold text-sm text-slate-600 items-center">
           <a href="#how-it-works" class="hover:text-brand-600 transition">Как это работает</a>
@@ -920,12 +920,12 @@
     <footer class="bg-[#0f1117] text-slate-400 py-16">
       <div class="max-w-7xl mx-auto px-6">
         <div class="flex flex-col md:flex-row justify-between items-center mb-16 gap-8">
-          <div class="flex items-center gap-3">
+          <a href="https://percent1.ru/" class="flex items-center gap-3 hover:opacity-90 transition-opacity">
             <div class="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-brand-900/20">
               1%
             </div>
             <span class="text-2xl font-bold text-white tracking-tight">OnePercent</span>
-          </div>
+          </a>
 
           <div class="flex gap-8 font-medium text-sm">
             <router-link to="/login" class="text-slate-300 hover:text-white transition-colors">Войти</router-link>
