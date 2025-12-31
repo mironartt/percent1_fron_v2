@@ -89,6 +89,32 @@
         </div>
       </section>
 
+      <section class="situations-section">
+        <div class="situations-container">
+          <h2 class="situations-title">Знакомые ситуации?</h2>
+          <div class="situations-grid">
+            <div class="situation-card">
+              <div class="situation-icon icon-purple">
+                <Link class="icon" />
+              </div>
+              <p class="situation-text">Если хочешь двигаться вперед, но не понимаешь — куда</p>
+            </div>
+            <div class="situation-card">
+              <div class="situation-icon icon-orange">
+                <CircleDot class="icon" />
+              </div>
+              <p class="situation-text">Когда целей много, а ясности мало</p>
+            </div>
+            <div class="situation-card">
+              <div class="situation-icon icon-pink">
+                <LayoutGrid class="icon" />
+              </div>
+              <p class="situation-text">Навести порядок в целях, задачах и деньгах</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="math-section">
         <div class="math-container">
           <div class="math-header">
@@ -130,7 +156,7 @@
             </div>
             <h2 class="section-title-lg">
               От хаоса к порядку <br> 
-              <span class="gradient-text">за 5 простых шагов</span>
+              <span class="gradient-text">за 6 простых шагов</span>
             </h2>
             <p class="section-subtitle">
               Мы убрали всё лишнее. Оставили только научный подход, дофаминовую подпитку и четкие алгоритмы.
@@ -250,40 +276,111 @@
                         </div>
                       </div>
 
-                      <div v-else-if="step.id === 5" class="xp-preview">
-                        <div class="xp-card">
-                          <div class="xp-glow"></div>
-                          <div class="xp-header">
-                            <div class="xp-user">
-                              <div class="xp-avatar">
-                                <img src="https://picsum.photos/seed/u/100/100" alt="avatar">
-                              </div>
-                              <div>
-                                <p class="xp-level">Level 11</p>
-                                <p class="xp-name">Максим Колесов</p>
-                              </div>
-                            </div>
-                            <Trophy class="trophy-icon" />
+                      <div v-else-if="step.id === 5" class="habits-preview">
+                        <div class="habits-header">
+                          <div class="habits-icon">
+                            <Repeat class="icon-sm" />
                           </div>
-                          
-                          <div class="xp-progress">
-                            <div class="xp-progress-labels">
-                              <span>XP Прогресс</span>
-                              <span>2,450 / 2,800</span>
+                          <span class="habits-title">Трекер привычек</span>
+                          <span class="habits-today">Сегодня</span>
+                        </div>
+                        <div class="habits-list">
+                          <div class="habit-item">
+                            <div class="habit-icon habit-green">
+                              <Target class="icon-xs" />
                             </div>
-                            <div class="xp-bar">
-                              <div class="xp-bar-fill"></div>
+                            <div class="habit-info">
+                              <span class="habit-name">Хобби 2ч/нед</span>
+                              <div class="habit-days">
+                                <span class="day done">П</span>
+                                <span class="day missed">В</span>
+                                <span class="day done">С</span>
+                                <span class="day">Ч</span>
+                                <span class="day current">П</span>
+                                <span class="day">С</span>
+                                <span class="day">В</span>
+                              </div>
                             </div>
+                            <span class="habit-xp">+20 XP</span>
                           </div>
+                          <div class="habit-item">
+                            <div class="habit-icon habit-blue">
+                              <Check class="icon-xs" />
+                            </div>
+                            <div class="habit-info">
+                              <span class="habit-name">Финансы</span>
+                              <div class="habit-days">
+                                <span class="day missed">П</span>
+                                <span class="day done">В</span>
+                                <span class="day">С</span>
+                                <span class="day done">Ч</span>
+                                <span class="day current">П</span>
+                                <span class="day">С</span>
+                                <span class="day">В</span>
+                              </div>
+                            </div>
+                            <span class="habit-xp">+15 XP</span>
+                          </div>
+                          <div class="habit-item">
+                            <div class="habit-icon habit-pink">
+                              <Activity class="icon-xs" />
+                            </div>
+                            <div class="habit-info">
+                              <span class="habit-name">Ужин с семьёй</span>
+                              <div class="habit-days">
+                                <span class="day done">П</span>
+                                <span class="day done">В</span>
+                                <span class="day done">С</span>
+                                <span class="day done">Ч</span>
+                                <span class="day current">П</span>
+                                <span class="day">С</span>
+                                <span class="day">В</span>
+                              </div>
+                            </div>
+                            <span class="habit-xp">+20 XP</span>
+                          </div>
+                        </div>
+                      </div>
 
-                          <div class="xp-achievement">
-                            <div class="achievement-icon">
-                              <Trophy class="icon-sm" />
+                      <div v-else-if="step.id === 6" class="xp-preview-v2">
+                        <div class="xp-status-bar">
+                          <Sparkles class="icon-xs" />
+                          <span>Прошло 3 месяца. 2450 XP заработано.</span>
+                        </div>
+                        <div class="xp-balance-card">
+                          <p class="xp-balance-label">ТВОЙ БАЛАНС</p>
+                          <p class="xp-balance-value">2450 <span>XP</span></p>
+                        </div>
+                        <div class="xp-mentor-tip">
+                          <div class="mentor-avatar-small">
+                            <MessageCircle class="icon-xs" />
+                          </div>
+                          <p><strong>AI Ментор:</strong> Максим, хватает на новую игру! Это не противоречит цели "Спорт". Отдых важен.</p>
+                        </div>
+                        <div class="xp-rewards-list">
+                          <div class="reward-item received">
+                            <div class="reward-icon">🎬</div>
+                            <div class="reward-info">
+                              <span class="reward-name">Вечер кино</span>
+                              <span class="reward-cost">500 XP</span>
                             </div>
-                            <div class="achievement-text">
-                              <p class="achievement-label">Достижение</p>
-                              <p class="achievement-name">Ранняя пташка (7 дней)</p>
+                            <span class="reward-status">Получено</span>
+                          </div>
+                          <div class="reward-item available">
+                            <div class="reward-icon">🎮</div>
+                            <div class="reward-info">
+                              <span class="reward-name">Новая игра</span>
+                              <span class="reward-cost">1500 XP</span>
                             </div>
+                            <button class="reward-btn">Доступно!</button>
+                          </div>
+                          <div class="reward-item progress">
+                            <div class="reward-icon">✈️</div>
+                            <div class="reward-info">
+                              <span class="reward-name">Поездка</span>
+                              <span class="reward-cost">5000 XP</span>
+                            </div>
+                            <span class="reward-percent">49%</span>
                           </div>
                         </div>
                       </div>
@@ -659,17 +756,31 @@
         </div>
       </section>
 
-      <footer class="footer">
-        <div class="footer-container">
-          <div class="footer-logo">
-            <div class="logo-icon">1%</div>
-            <span>OnePercent</span>
+      <footer class="footer-dark">
+        <div class="footer-dark-container">
+          <div class="footer-dark-top">
+            <div class="footer-dark-logo">
+              <div class="logo-icon-dark">1%</div>
+              <span>OnePercent</span>
+            </div>
+            <div class="footer-dark-auth">
+              <router-link to="/auth/login" class="footer-auth-link">Войти</router-link>
+              <router-link to="/auth/register" class="footer-auth-link">Регистрация</router-link>
+            </div>
           </div>
-          <p class="footer-copy">© 2025 OnePercent. Все права защищены.</p>
-          <div class="footer-links">
+          
+          <div class="footer-dark-links">
             <router-link to="/legal/privacy">Политика конфиденциальности</router-link>
-            <router-link to="/legal/terms">Условия использования</router-link>
+            <router-link to="/legal/terms">Пользовательское соглашение</router-link>
+            <router-link to="/legal/disclaimer">Отказ от ответственности</router-link>
           </div>
+          
+          <div class="footer-dark-company">
+            <p>ИП Косик Дмитрий Владимирович</p>
+            <p>ИНН: 711280082908 | ОГРНИП: 321774600074346</p>
+          </div>
+          
+          <p class="footer-dark-copy">© 2025 OnePercent. Все права защищены.</p>
         </div>
       </footer>
     </main>
@@ -700,7 +811,11 @@ import {
   TrendingUp,
   PenTool,
   Quote,
-  Lightbulb
+  Lightbulb,
+  Repeat,
+  Link,
+  CircleDot,
+  LayoutGrid
 } from 'lucide-vue-next'
 
 const subscriptionStore = useSubscriptionStore()
@@ -759,9 +874,18 @@ const steps = [
   },
   {
     id: 5,
+    title: "Система привычек",
+    subtitle: "Шаг 5. Ритм",
+    description: "От хаотичных попыток к системе. AI подбирает привычки под ваши цели, напоминает о выполнении и показывает реальный прогресс на наглядных дашбордах.",
+    icon: Repeat,
+    colorClass: "bg-teal",
+    gradientClass: "gradient-teal"
+  },
+  {
+    id: 6,
     title: "Геймификация и XP",
-    subtitle: "Шаг 5. Мотивация",
-    description: "Ваш мозг любит награды. За выполнение задач вы получаете XP (опыт) и уровни. Обменивайте заработанный опыт на реальные награды: отдых, покупки или развлечения.",
+    subtitle: "Шаг 6. Мотивация",
+    description: "XP = валюта для твоих желаний. Ты сам выбираешь награды и цену в XP.",
     icon: Trophy,
     colorClass: "bg-pink",
     gradientClass: "gradient-pink"
@@ -3688,5 +3812,464 @@ onUnmounted(() => {
 
 .footer-links a:hover {
   color: #6366f1;
+}
+
+/* Situations Section */
+.situations-section {
+  padding: 4rem 0;
+  background: #f8fafc;
+}
+
+.situations-container {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.situations-title {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 3rem;
+}
+
+.situations-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .situations-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.situation-card {
+  background: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s;
+}
+
+.situation-card:hover {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.situation-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.situation-icon .icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.situation-icon.icon-purple {
+  background: #ede9fe;
+  color: #8b5cf6;
+}
+
+.situation-icon.icon-orange {
+  background: #fff7ed;
+  color: #f97316;
+}
+
+.situation-icon.icon-pink {
+  background: #fce7f3;
+  color: #ec4899;
+}
+
+.situation-text {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #334155;
+  line-height: 1.5;
+}
+
+/* Teal gradient for step 5 */
+.gradient-teal {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(45, 212, 191, 0.1) 100%);
+}
+
+.bg-teal {
+  background: #14b8a6;
+}
+
+/* Habits Preview */
+.habits-preview {
+  padding: 1rem;
+}
+
+.habits-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.habits-icon {
+  width: 2rem;
+  height: 2rem;
+  background: #14b8a6;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.habits-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f172a;
+  flex: 1;
+}
+
+.habits-today {
+  font-size: 0.75rem;
+  color: #10b981;
+  font-weight: 600;
+}
+
+.habits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.habit-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+}
+
+.habit-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.habit-icon.habit-green { background: #10b981; }
+.habit-icon.habit-blue { background: #3b82f6; }
+.habit-icon.habit-pink { background: #ec4899; }
+
+.habit-info {
+  flex: 1;
+}
+
+.habit-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #0f172a;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.habit-days {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.habit-days .day {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+.habit-days .day.done {
+  background: #10b981;
+  color: white;
+}
+
+.habit-days .day.missed {
+  background: #fecaca;
+  color: #ef4444;
+}
+
+.habit-days .day.current {
+  background: #6366f1;
+  color: white;
+}
+
+.habit-xp {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #10b981;
+}
+
+.icon-xs {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+/* XP Preview V2 */
+.xp-preview-v2 {
+  padding: 1rem;
+}
+
+.xp-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #ecfdf5;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #10b981;
+  margin-bottom: 1rem;
+}
+
+.xp-balance-card {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.xp-balance-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.25rem;
+}
+
+.xp-balance-value {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: white;
+}
+
+.xp-balance-value span {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.xp-mentor-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #e2e8f0;
+}
+
+.mentor-avatar-small {
+  width: 1.75rem;
+  height: 1.75rem;
+  background: #6366f1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.xp-mentor-tip p {
+  font-size: 0.75rem;
+  color: #475569;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.xp-mentor-tip strong {
+  color: #6366f1;
+}
+
+.xp-rewards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.reward-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+}
+
+.reward-icon {
+  font-size: 1.25rem;
+}
+
+.reward-info {
+  flex: 1;
+}
+
+.reward-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #0f172a;
+  display: block;
+}
+
+.reward-cost {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+.reward-status {
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.reward-btn {
+  padding: 0.375rem 0.75rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.reward-percent {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #6366f1;
+  background: #ede9fe;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+/* Dark Footer */
+.footer-dark {
+  background: #0f172a;
+  padding: 3rem 0 2rem;
+}
+
+.footer-dark-container {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  text-align: center;
+}
+
+.footer-dark-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .footer-dark-top {
+    flex-direction: row;
+  }
+}
+
+.footer-dark-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-icon-dark {
+  width: 2.5rem;
+  height: 2.5rem;
+  background: #6366f1;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 900;
+  font-size: 0.875rem;
+}
+
+.footer-dark-logo span {
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: white;
+}
+
+.footer-dark-auth {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.footer-auth-link {
+  color: #94a3b8;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.footer-auth-link:hover {
+  color: white;
+}
+
+.footer-dark-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.footer-dark-links a {
+  color: #6366f1;
+  font-size: 0.875rem;
+  transition: color 0.2s;
+}
+
+.footer-dark-links a:hover {
+  color: #818cf8;
+}
+
+.footer-dark-company {
+  margin-bottom: 1rem;
+}
+
+.footer-dark-company p {
+  color: #64748b;
+  font-size: 0.75rem;
+  margin: 0.25rem 0;
+}
+
+.footer-dark-copy {
+  color: #475569;
+  font-size: 0.75rem;
 }
 </style>
