@@ -94,7 +94,7 @@
           <h2 class="situations-title">Знакомые ситуации?</h2>
           <div class="situations-grid">
             <div class="situation-card">
-              <div class="situation-icon icon-purple">
+              <div class="situation-icon icon-blue">
                 <Link class="icon" />
               </div>
               <p class="situation-text">Если хочешь двигаться вперед, но не понимаешь — куда</p>
@@ -3878,19 +3878,19 @@ onUnmounted(() => {
   height: 1.25rem;
 }
 
-.situation-icon.icon-purple {
-  background: #ede9fe;
-  color: #8b5cf6;
+.situation-icon.icon-blue {
+  background: #dbeafe;
+  color: #3b82f6;
 }
 
 .situation-icon.icon-orange {
-  background: #fff7ed;
+  background: #ffedd5;
   color: #f97316;
 }
 
 .situation-icon.icon-pink {
-  background: #fce7f3;
-  color: #ec4899;
+  background: #fae8ff;
+  color: #d946ef;
 }
 
 .situation-text {
