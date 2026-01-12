@@ -47,6 +47,11 @@ The application uses a modular structure. It emphasizes user guidance, visual fe
 ### Telegram Bot Integration
 A standalone Telegram bot mirrors core OnePercent functionality for improved user engagement. It uses Telegraf (Node.js), node-cron for scheduling, and OpenAI for AI (with fallback). Features include authentication, main menu, task management, habit tracking, journal, AI mentor chat, progress summary, settings, and scheduled reminders.
 
+## Documentation
+-   **Marketing Brief**: `docs/marketing-brief.md` — маркетинговое описание продукта: ЦА, сегменты, позиционирование, конкурентное сравнение, ценностное предложение.
+-   **Product Documentation**: `docs/product-documentation.md` — техническая документация продукта.
+-   **Landing Guide**: `attached_assets/onepercent-landing-complete-guide_1766675161780.md` — руководство по лендингу.
+
 ## External Dependencies
 -   **Django REST API Backend**: Provides user authentication, SSP data, goals bank, planning, onboarding, journal, habits, XP history, AI services, billing, and referral management.
 -   **Lucide Vue Next**: Icons library.
