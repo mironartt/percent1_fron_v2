@@ -47,6 +47,12 @@ const LandingVersion4 = () => import('@/views/land/LandingVersion4.vue')
 // Landing Version 5 (Full journey + Trust sections)
 const LandingVersion5 = () => import('@/views/land/LandingVersion5.vue')
 
+// Landing Version 6 (React-to-Vue adaptation - Bento design)
+const LandingVersion6 = () => import('@/views/land/LandingVersion6.vue')
+
+// Landing Version 7 (React-to-Vue from archive)
+const LandingVersion7 = () => import('@/views/land/LandingVersion7.vue')
+
 // SEO Catalog Pages
 const CatalogHome = () => import('@/views/catalog/CatalogHome.vue')
 const CatalogGoals = () => import('@/views/catalog/CatalogGoals.vue')
@@ -56,10 +62,18 @@ const CatalogBundles = () => import('@/views/catalog/CatalogBundles.vue')
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    // Публичный лендинг (новая версия)
+    // Публичный лендинг (версия 7 - основная)
     {
       path: '/',
       name: 'landing',
+      component: LandingVersion7,
+      meta: { title: 'OnePercent — Системный рост в жизни', public: true }
+    },
+    
+    // Предыдущий лендинг (версия 5)
+    {
+      path: '/land/old_v5',
+      name: 'landing-old-v5',
       component: LandingVersion5,
       meta: { title: 'OnePercent - Система управления жизнью', public: true }
     },
@@ -152,6 +166,16 @@ const router = createRouter({
       name: 'landing-version4',
       component: LandingVersion4,
       meta: { title: 'OnePercent — Путь пользователя в продукте', public: true }
+    },
+    {
+      path: '/land/version6',
+      name: 'landing-version6',
+      component: LandingVersion6,
+      meta: { title: 'OnePercent — Системный рост', public: true }
+    },
+    {
+      path: '/land/version7',
+      redirect: '/'
     },
     
     // Onboarding (требует авторизации)
