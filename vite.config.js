@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import Sitemap from 'vite-plugin-sitemap'
 import path from 'path'
 import fs from 'fs'
 
@@ -76,8 +77,77 @@ function getHmrConfig() {
 const API_BACKEND_URL = getProxyTarget()
 const hmrConfig = getHmrConfig()
 
+const SITEMAP_HOSTNAME = readLocalSetting('SITEMAP_HOSTNAME') || 'https://percent1.ru'
+
+const catalogCategories = [
+  { slug: 'welfare', subcategories: ['savings', 'investments', 'income', 'debts'] },
+  { slug: 'health_sport', subcategories: ['fitness', 'nutrition', 'sleep', 'mental'] },
+  { slug: 'work', subcategories: ['skills', 'career-growth', 'business', 'education'] },
+  { slug: 'family', subcategories: ['partner', 'children', 'parents', 'friends'] },
+  { slug: 'hobby', subcategories: ['creativity', 'music', 'languages', 'sports-hobby'] },
+  { slug: 'environment', subcategories: ['networking', 'communication', 'community', 'social-skills'] }
+]
+
+const catalogGoalsRoutes = catalogCategories.flatMap(cat => [
+  `/catalog/goals/${cat.slug}`,
+  ...cat.subcategories.map(sub => `/catalog/goals/${cat.slug}/${sub}`)
+])
+
+const catalogHabitsRoutes = catalogCategories.map(cat => `/catalog/habits/${cat.slug}`)
+
+const publicRoutes = [
+  '/land/old_v5',
+  '/land/old_v1',
+  '/land/newyear',
+  '/land/newyear/test',
+  '/land/version2',
+  '/land/version3',
+  '/land/version4',
+  '/land/version6',
+  '/catalog',
+  '/catalog/goals',
+  '/catalog/habits',
+  '/catalog/bundles',
+  ...catalogGoalsRoutes,
+  ...catalogHabitsRoutes,
+  '/auth/login',
+  '/auth/register',
+  '/auth/recovery',
+  '/privacy',
+  '/termspolicy',
+  '/disclaimer'
+]
+
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue(),
+    Sitemap({
+      hostname: SITEMAP_HOSTNAME,
+      dynamicRoutes: publicRoutes,
+      exclude: [
+        '/app/*',
+        '/onboarding',
+        '/auth/logout',
+        '/ref/*',
+        '/land/version7',
+        '/login',
+        '/register',
+        '/ssp',
+        '/goals',
+        '/goals/*',
+        '/goals-bank',
+        '/planner',
+        '/planning',
+        '/settings',
+        '/club',
+        '/billing/*'
+      ],
+      changefreq: 'weekly',
+      priority: 0.8,
+      lastmod: new Date(),
+      readable: true
+    })
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
