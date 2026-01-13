@@ -1,0 +1,154 @@
+{% extends "catalog/base.html" %}
+{% load static %}
+
+{% block title %}{{ step.name }} — шаг к цели • OnePercent{% endblock %}
+{% block description %}{{ step.name }}: {{ step.short_description }}. Подробное руководство по выполнению шага.{% endblock %}
+{% block og_title %}{{ step.name }} — шаг к цели • OnePercent{% endblock %}
+{% block og_description %}{{ step.short_description }}{% endblock %}
+{% block og_url %}https://percent1.ru/catalog/goals/steps/{{ step.slug }}/{% endblock %}
+
+{% block breadcrumbs %}
+<a href="/">Главная</a>
+<span class="separator">›</span>
+<a href="/catalog/">Каталог</a>
+<span class="separator">›</span>
+<a href="/catalog/goals/">Цели</a>
+<span class="separator">›</span>
+<a href="/catalog/goals/steps/">Шаги</a>
+<span class="separator">›</span>
+<span class="current">{{ step.name_short }}</span>
+{% endblock %}
+
+{% block content %}
+<article class="step-detail-page">
+    <section class="hero-section step-hero">
+        <div class="hero-icon">📊</div>
+        <p class="step-label">ШАГ:</p>
+        <h1 class="hero-title">{{ step.name }}</h1>
+        <p class="hero-subtitle">{{ step.subtitle }}</p>
+        <div class="step-stats">
+            <div class="stat-item">
+                <span class="stat-value">⏱ {{ step.duration_display }}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value difficulty-{{ step.difficulty }}">{{ step.difficulty_display }}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">{{ step.type_display }}</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="step-why-section">
+        <h2 class="section-title">Зачем этот шаг</h2>
+        <div class="step-why-content">
+            {{ step.why_description|linebreaks }}
+        </div>
+        {% if step.what_you_get %}
+        <div class="what-you-get">
+            <h3>Этот шаг даст вам:</h3>
+            <ul>
+                {% for item in step.what_you_get %}
+                <li>• {{ item }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </section>
+
+    <section class="step-how-section">
+        <h2 class="section-title">Как выполнить шаг</h2>
+        <div class="step-methods">
+            {% for method in step.methods %}
+            <div class="method-block">
+                <h3>{{ method.title }}</h3>
+                <ol class="method-steps">
+                    {% for sub_step in method.steps %}
+                    <li>
+                        <strong>{{ sub_step.title }}</strong>
+                        <p>{{ sub_step.description }}</p>
+                    </li>
+                    {% endfor %}
+                </ol>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    {% if step.template %}
+    <section class="step-template-section">
+        <h2 class="section-title">Шаблон для расчёта</h2>
+        <div class="template-block">
+            <pre>{{ step.template }}</pre>
+        </div>
+    </section>
+    {% endif %}
+
+    {% if step.common_mistakes %}
+    <section class="step-mistakes-section">
+        <h2 class="section-title">Частые ошибки</h2>
+        <ul class="mistakes-list">
+            {% for mistake in step.common_mistakes %}
+            <li>❌ {{ mistake }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+
+    {% if step.tips %}
+    <section class="step-tips-section">
+        <h2 class="section-title">Советы</h2>
+        <ul class="tips-list">
+            {% for tip in step.tips %}
+            <li>💡 {{ tip }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+
+    <section class="step-parent-goal-section">
+        <h2 class="section-title">🎯 Цель с этим шагом</h2>
+        <div class="parent-goal-card">
+            <div class="goal-header">
+                <span class="goal-icon">🎯</span>
+                <div class="goal-content">
+                    <h3><a href="/catalog/goals/{{ step.goal.category.slug }}/{{ step.goal.subcategory.slug }}/{{ step.goal.slug }}/">{{ step.goal.name }}</a></h3>
+                    <div class="goal-meta">
+                        <span>{{ step.goal.category.icon }} {{ step.goal.category.name }}</span>
+                        <span>{{ step.goal.steps_count }} шагов</span>
+                        <span class="difficulty-{{ step.goal.difficulty }}">{{ step.goal.difficulty_display }}</span>
+                    </div>
+                </div>
+            </div>
+            <p class="goal-description">{{ step.goal.short_description }}</p>
+            <a href="/catalog/goals/{{ step.goal.category.slug }}/{{ step.goal.subcategory.slug }}/{{ step.goal.slug }}/" class="btn-link">Подробнее о цели →</a>
+        </div>
+    </section>
+
+    {% if other_goals_with_step %}
+    <section class="other-goals-section">
+        <h2 class="section-title">Другие цели с этим шагом</h2>
+        <p class="section-desc">Этот шаг является ключевым для {{ other_goals_with_step|length }} целей:</p>
+        <div class="goals-list compact">
+            {% for goal in other_goals_with_step %}
+            <a href="/catalog/goals/{{ goal.category.slug }}/{{ goal.subcategory.slug }}/{{ goal.slug }}/" class="goal-card-compact">
+                <span class="goal-icon">🎯</span>
+                <div class="goal-info">
+                    <h3>{{ goal.name }}</h3>
+                    <p class="goal-meta-compact">{{ goal.category.icon }} {{ goal.category.name }}</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="cta-section">
+        <div class="cta-box">
+            <h2>Добавить цель с этим шагом</h2>
+            <p>Начните выполнять этот шаг в рамках полноценной цели</p>
+            <a href="/auth/register/?add_goal={{ step.goal.id }}" class="btn btn-primary btn-lg">Добавить цель</a>
+        </div>
+    </section>
+</article>
+{% endblock %}

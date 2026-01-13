@@ -28,6 +28,7 @@
     "openai": "^6.15.0",
     "pinia": "^3.0.4",
     "telegraf": "^4.16.3",
+    "vite-plugin-sitemap": "^0.8.2",
     "vue-router": "^4.6.4"
   }
 }

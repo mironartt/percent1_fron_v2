@@ -1,0 +1,177 @@
+{% extends "catalog/base.html" %}
+{% load static %}
+
+{% block title %}{{ category.name }} — {{ category.habits_count }} привычек для развития • OnePercent{% endblock %}
+{% block description %}{{ category.habits_count }} привычек в категории {{ category.name }}: {{ category.short_description }}. Пошаговые планы формирования.{% endblock %}
+{% block og_title %}{{ category.name }} — {{ category.habits_count }} привычек • OnePercent{% endblock %}
+{% block og_description %}{{ category.habits_count }} привычек для {{ category.description_genitive }}.{% endblock %}
+{% block og_url %}https://percent1.ru/catalog/habits/{{ category.slug }}/{% endblock %}
+
+{% block breadcrumbs %}
+<a href="/">Главная</a>
+<span class="separator">›</span>
+<a href="/catalog/">Каталог</a>
+<span class="separator">›</span>
+<a href="/catalog/habits/">Привычки</a>
+<span class="separator">›</span>
+<span class="current">{{ category.name }}</span>
+{% endblock %}
+
+{% block content %}
+<section class="hero-section yellow">
+    <div class="hero-icon">{{ category.icon }}</div>
+    <h1 class="hero-title">{{ category.name }}</h1>
+    <p class="hero-subtitle">{{ category.habits_count }} привычек для {{ category.description_genitive }}.<br>{{ category.tagline }}</p>
+    <form class="search-box" action="/catalog/habits/{{ category.slug }}/search/" method="GET">
+        <input type="text" name="q" class="search-input" placeholder="Поиск по категории...">
+        <button type="submit" class="search-btn orange">🔎</button>
+    </form>
+</section>
+
+<section class="subcategories-section">
+    <h2 class="section-title">Подкатегории</h2>
+    <div class="subcategories-grid">
+        {% for subcategory in subcategories %}
+        <a href="/catalog/habits/{{ category.slug }}/{{ subcategory.slug }}/" class="subcategory-card orange">
+            <div class="subcategory-icon">{{ subcategory.icon }}</div>
+            <h3>{{ subcategory.name }}</h3>
+            <p class="subcategory-count">{{ subcategory.habits_count }} привычек</p>
+            <p class="subcategory-desc">{{ subcategory.short_description }}</p>
+            <span class="card-link orange">Смотреть →</span>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="filters-section">
+    <h2 class="section-title">Фильтры</h2>
+    <div class="filters-grid">
+        <div class="filter-group">
+            <span class="filter-label">Сложность:</span>
+            <div class="filter-buttons">
+                <a href="?difficulty=" class="filter-btn {% if not current_difficulty %}active{% endif %}">Все</a>
+                <a href="?difficulty=easy" class="filter-btn {% if current_difficulty == 'easy' %}active{% endif %}">⭐ Лёгкие</a>
+                <a href="?difficulty=medium" class="filter-btn {% if current_difficulty == 'medium' %}active{% endif %}">⭐⭐ Средние</a>
+                <a href="?difficulty=hard" class="filter-btn {% if current_difficulty == 'hard' %}active{% endif %}">⭐⭐⭐ Сложные</a>
+            </div>
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">Время:</span>
+            <div class="filter-buttons">
+                <a href="?duration=" class="filter-btn {% if not current_duration %}active{% endif %}">Все</a>
+                <a href="?duration=5m" class="filter-btn {% if current_duration == '5m' %}active{% endif %}">До 5 мин</a>
+                <a href="?duration=5-15m" class="filter-btn {% if current_duration == '5-15m' %}active{% endif %}">5-15 мин</a>
+                <a href="?duration=15-30m" class="filter-btn {% if current_duration == '15-30m' %}active{% endif %}">15-30 мин</a>
+                <a href="?duration=30m+" class="filter-btn {% if current_duration == '30m+' %}active{% endif %}">30+ мин</a>
+            </div>
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">Частота:</span>
+            <div class="filter-buttons">
+                <a href="?frequency=" class="filter-btn {% if not current_frequency %}active{% endif %}">Все</a>
+                <a href="?frequency=daily" class="filter-btn {% if current_frequency == 'daily' %}active{% endif %}">Ежедневно</a>
+                <a href="?frequency=weekdays" class="filter-btn {% if current_frequency == 'weekdays' %}active{% endif %}">По будням</a>
+                <a href="?frequency=3-4" class="filter-btn {% if current_frequency == '3-4' %}active{% endif %}">3-4 раза/нед</a>
+                <a href="?frequency=weekly" class="filter-btn {% if current_frequency == 'weekly' %}active{% endif %}">Раз в неделю</a>
+            </div>
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">Сортировка:</span>
+            <div class="filter-buttons">
+                <a href="?sort=popular" class="filter-btn {% if current_sort == 'popular' or not current_sort %}active{% endif %}">Популярные</a>
+                <a href="?sort=new" class="filter-btn {% if current_sort == 'new' %}active{% endif %}">Новые</a>
+                <a href="?sort=difficulty" class="filter-btn {% if current_sort == 'difficulty' %}active{% endif %}">По сложности</a>
+                <a href="?sort=duration" class="filter-btn {% if current_sort == 'duration' %}active{% endif %}">По времени</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="habits-section">
+    <h2 class="section-title">Все привычки категории ({{ category.habits_count }})</h2>
+    <div class="habits-list">
+        {% for habit in habits %}
+        <article class="habit-card-full">
+            <div class="habit-header">
+                <span class="habit-icon">⚡</span>
+                <div class="habit-content">
+                    <h3><a href="/catalog/habits/{{ category.slug }}/{{ habit.subcategory.slug }}/{{ habit.slug }}/">{{ habit.name }}</a></h3>
+                    <div class="habit-meta">
+                        <span class="habit-subcategory orange">{{ habit.subcategory.icon }} {{ habit.subcategory.name }}</span>
+                        <span>⏱ {{ habit.duration_display }}</span>
+                        <span class="difficulty-{{ habit.difficulty }}">{{ habit.difficulty_display }}</span>
+                        <span>📅 {{ habit.frequency_display }}</span>
+                    </div>
+                </div>
+                {% if habit.is_popular %}
+                <span class="popular-badge orange">⭐ Популярная</span>
+                {% endif %}
+            </div>
+            <p class="habit-description">{{ habit.short_description }}</p>
+            <div class="habit-tags">
+                {% for tag in habit.tags.all|slice:":4" %}
+                <a href="/catalog/habits/tags/{{ tag.slug }}/" class="habit-tag">#{{ tag.name }}</a>
+                {% endfor %}
+            </div>
+            <div class="habit-actions">
+                <a href="/catalog/habits/{{ category.slug }}/{{ habit.subcategory.slug }}/{{ habit.slug }}/" class="btn-link orange">Подробнее →</a>
+                <a href="/auth/register/?add_habit={{ habit.id }}" class="btn btn-outline orange">+ Добавить привычку</a>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+
+    {% if habits.has_other_pages %}
+    <nav class="pagination">
+        {% if habits.has_previous %}
+        <a href="?page={{ habits.previous_page_number }}" class="page-link">◀ Назад</a>
+        {% endif %}
+        {% for num in habits.paginator.page_range %}
+            {% if habits.number == num %}
+            <span class="page-current">{{ num }}</span>
+            {% else %}
+            <a href="?page={{ num }}" class="page-link">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if habits.has_next %}
+        <a href="?page={{ habits.next_page_number }}" class="page-link">Вперёд ▶</a>
+        {% endif %}
+    </nav>
+    {% endif %}
+</section>
+
+<section class="tags-section">
+    <h2 class="section-title">Популярные теги в категории</h2>
+    <div class="tags-cloud">
+        {% for tag in popular_tags %}
+        <a href="/catalog/habits/tags/{{ tag.slug }}/" class="tag-link orange">#{{ tag.name }}</a>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="related-goals-section">
+    <h2 class="section-title">Цели для {{ category.name_genitive }}</h2>
+    <p class="section-desc">Ставьте цели и формируйте привычки вместе:</p>
+    <div class="goals-list compact">
+        {% for goal in related_goals %}
+        <a href="/catalog/goals/{{ goal.category.slug }}/{{ goal.subcategory.slug }}/{{ goal.slug }}/" class="goal-card-compact">
+            <span class="goal-icon">🎯</span>
+            <div class="goal-info">
+                <h3>{{ goal.name }}</h3>
+                <p class="goal-meta-compact">{{ goal.steps_count }} шагов • {{ goal.difficulty_display }}</p>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    <a href="/catalog/goals/{{ category.slug }}/" class="section-link">Все цели категории →</a>
+</section>
+
+<section class="other-categories-section">
+    <h2 class="section-title">Другие категории привычек</h2>
+    <div class="categories-links">
+        {% for cat in other_categories %}
+        <a href="/catalog/habits/{{ cat.slug }}/" class="category-link-btn orange">{{ cat.icon }} {{ cat.name }}</a>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

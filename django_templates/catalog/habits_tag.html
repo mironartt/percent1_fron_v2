@@ -1,0 +1,156 @@
+{% extends "catalog/base.html" %}
+{% load static %}
+
+{% block title %}#{{ tag.name }} — {{ tag.habits_count }} привычек • OnePercent{% endblock %}
+{% block description %}{{ tag.habits_count }} привычек с тегом #{{ tag.name }}: {{ tag.description }}{% endblock %}
+{% block og_title %}#{{ tag.name }} — {{ tag.habits_count }} привычек • OnePercent{% endblock %}
+{% block og_description %}{{ tag.habits_count }} привычек с тегом #{{ tag.name }}.{% endblock %}
+{% block og_url %}https://percent1.ru/catalog/habits/tags/{{ tag.slug }}/{% endblock %}
+
+{% block breadcrumbs %}
+<a href="/">Главная</a>
+<span class="separator">›</span>
+<a href="/catalog/">Каталог</a>
+<span class="separator">›</span>
+<a href="/catalog/habits/">Привычки</a>
+<span class="separator">›</span>
+<a href="/catalog/habits/tags/">Теги</a>
+<span class="separator">›</span>
+<span class="current">#{{ tag.name }}</span>
+{% endblock %}
+
+{% block content %}
+<section class="hero-section yellow">
+    <div class="hero-icon">🏷️</div>
+    <h1 class="hero-title">#{{ tag.name }}</h1>
+    <p class="hero-subtitle">{{ tag.habits_count }} привычек, связанных с {{ tag.description_instrumental }}.<br>{{ tag.tagline }}</p>
+</section>
+
+<section class="about-tag-section">
+    <h2 class="section-title">О теге</h2>
+    <div class="about-tag-content">
+        <p>{{ tag.full_description }}</p>
+    </div>
+</section>
+
+<section class="filters-section">
+    <h2 class="section-title">Фильтры</h2>
+    <div class="filters-grid">
+        <div class="filter-group">
+            <span class="filter-label">Категория:</span>
+            <div class="filter-buttons">
+                <a href="?category=" class="filter-btn {% if not current_category %}active{% endif %}">Все</a>
+                {% for cat in categories %}
+                <a href="?category={{ cat.slug }}" class="filter-btn {% if current_category == cat.slug %}active{% endif %}">{{ cat.icon }} {{ cat.name }}</a>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">Сложность:</span>
+            <div class="filter-buttons">
+                <a href="?difficulty=" class="filter-btn {% if not current_difficulty %}active{% endif %}">Все</a>
+                <a href="?difficulty=easy" class="filter-btn {% if current_difficulty == 'easy' %}active{% endif %}">⭐ Лёгкие</a>
+                <a href="?difficulty=medium" class="filter-btn {% if current_difficulty == 'medium' %}active{% endif %}">⭐⭐ Средние</a>
+                <a href="?difficulty=hard" class="filter-btn {% if current_difficulty == 'hard' %}active{% endif %}">⭐⭐⭐ Сложные</a>
+            </div>
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">Сортировка:</span>
+            <div class="filter-buttons">
+                <a href="?sort=popular" class="filter-btn {% if current_sort == 'popular' or not current_sort %}active{% endif %}">Популярные</a>
+                <a href="?sort=new" class="filter-btn {% if current_sort == 'new' %}active{% endif %}">Новые</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="habits-section">
+    <h2 class="section-title">Привычки с тегом #{{ tag.name }} ({{ tag.habits_count }})</h2>
+    <div class="habits-list">
+        {% for habit in habits %}
+        <article class="habit-card-full">
+            <div class="habit-header">
+                <span class="habit-icon">⚡</span>
+                <div class="habit-content">
+                    <h3><a href="/catalog/habits/{{ habit.category.slug }}/{{ habit.subcategory.slug }}/{{ habit.slug }}/">{{ habit.name }}</a></h3>
+                    <div class="habit-meta">
+                        <span class="habit-category-path orange">{{ habit.category.icon }} {{ habit.category.name }} › {{ habit.subcategory.name }}</span>
+                        <span>⏱ {{ habit.duration_display }}</span>
+                        <span class="difficulty-{{ habit.difficulty }}">{{ habit.difficulty_display }}</span>
+                        <span>📅 {{ habit.frequency_display }}</span>
+                    </div>
+                </div>
+                {% if habit.is_popular %}
+                <span class="popular-badge orange">⭐ Популярная</span>
+                {% endif %}
+            </div>
+            <p class="habit-description">{{ habit.short_description }}</p>
+            {% if habit.result %}
+            <p class="habit-result"><strong>Результат:</strong> {{ habit.result }}</p>
+            {% endif %}
+            <div class="habit-other-tags">
+                <span class="other-tags-label">Другие теги:</span>
+                {% for other_tag in habit.tags.all %}
+                {% if other_tag.slug != tag.slug %}
+                <a href="/catalog/habits/tags/{{ other_tag.slug }}/" class="habit-tag">#{{ other_tag.name }}</a>
+                {% endif %}
+                {% endfor %}
+            </div>
+            <div class="habit-actions">
+                <a href="/catalog/habits/{{ habit.category.slug }}/{{ habit.subcategory.slug }}/{{ habit.slug }}/" class="btn-link orange">Подробнее →</a>
+                <a href="/auth/register/?add_habit={{ habit.id }}" class="btn btn-outline orange">+ Добавить привычку</a>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+
+    {% if habits.has_other_pages %}
+    <nav class="pagination">
+        {% if habits.has_previous %}
+        <a href="?page={{ habits.previous_page_number }}" class="page-link">◀ Назад</a>
+        {% endif %}
+        {% for num in habits.paginator.page_range %}
+            {% if habits.number == num %}
+            <span class="page-current">{{ num }}</span>
+            {% else %}
+            <a href="?page={{ num }}" class="page-link">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if habits.has_next %}
+        <a href="?page={{ habits.next_page_number }}" class="page-link">Вперёд ▶</a>
+        {% endif %}
+    </nav>
+    {% endif %}
+</section>
+
+<section class="related-tags-section">
+    <h2 class="section-title">Связанные теги</h2>
+    <div class="tags-cloud">
+        {% for related_tag in related_tags %}
+        <a href="/catalog/habits/tags/{{ related_tag.slug }}/" class="tag-link orange">#{{ related_tag.name }} ({{ related_tag.habits_count }})</a>
+        {% endfor %}
+    </div>
+</section>
+
+{% if goals_with_tag %}
+<section class="goals-with-tag-section">
+    <h2 class="section-title">Цели с тегом #{{ tag.name }}</h2>
+    <div class="goals-list compact">
+        {% for goal in goals_with_tag %}
+        <a href="/catalog/goals/{{ goal.category.slug }}/{{ goal.subcategory.slug }}/{{ goal.slug }}/" class="goal-card-compact">
+            <span class="goal-icon">🎯</span>
+            <div class="goal-info">
+                <h3>{{ goal.name }}</h3>
+                <p class="goal-meta-compact">{{ goal.steps_count }} шагов • {{ goal.difficulty_display }}</p>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    <a href="/catalog/goals/tags/{{ tag.slug }}/" class="section-link">Все цели с этим тегом →</a>
+</section>
+{% endif %}
+
+<section class="all-tags-section">
+    <a href="/catalog/habits/tags/" class="btn btn-outline orange">← Все теги привычек</a>
+</section>
+{% endblock %}

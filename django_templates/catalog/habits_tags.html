@@ -1,0 +1,112 @@
+{% extends "catalog/base.html" %}
+{% load static %}
+
+{% block title %}Теги привычек — поиск по темам • OnePercent{% endblock %}
+{% block description %}{{ tags_count }} тегов для поиска привычек по темам: утро, медитация, спорт, чтение, продуктивность. Найдите привычку по ключевому слову.{% endblock %}
+{% block og_title %}Теги привычек — поиск по темам • OnePercent{% endblock %}
+{% block og_description %}{{ tags_count }} тегов для поиска привычек. Найдите привычку по ключевому слову.{% endblock %}
+{% block og_url %}https://percent1.ru/catalog/habits/tags/{% endblock %}
+
+{% block breadcrumbs %}
+<a href="/">Главная</a>
+<span class="separator">›</span>
+<a href="/catalog/">Каталог</a>
+<span class="separator">›</span>
+<a href="/catalog/habits/">Привычки</a>
+<span class="separator">›</span>
+<span class="current">Теги</span>
+{% endblock %}
+
+{% block content %}
+<section class="hero-section yellow">
+    <div class="hero-icon">🏷️</div>
+    <h1 class="hero-title">Теги привычек</h1>
+    <p class="hero-subtitle">Найдите привычки по ключевым темам.<br>{{ tags_count }} тегов для быстрого поиска нужной привычки.</p>
+    <form class="search-box" action="/catalog/habits/tags/search/" method="GET">
+        <input type="text" name="q" class="search-input" placeholder="Поиск по тегам...">
+        <button type="submit" class="search-btn orange">🔎</button>
+    </form>
+</section>
+
+<section class="popular-tags-section">
+    <h2 class="section-title">Популярные теги</h2>
+    <div class="popular-tags-grid">
+        {% for tag in popular_tags %}
+        <a href="/catalog/habits/tags/{{ tag.slug }}/" class="popular-tag-card orange">
+            <h3>#{{ tag.name }}</h3>
+            <p class="tag-count">{{ tag.habits_count }} привычек</p>
+            <p class="tag-desc">{{ tag.short_description }}</p>
+            <span class="card-link orange">Смотреть →</span>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="tags-by-category-section">
+    <h2 class="section-title">Все теги по категориям</h2>
+    
+    {% for category in categories_with_tags %}
+    <div class="category-tags-block">
+        <h3 class="category-tags-title">{{ category.icon }} {{ category.name }}</h3>
+        <div class="tags-cloud">
+            {% for tag in category.tags %}
+            <a href="/catalog/habits/tags/{{ tag.slug }}/" class="tag-link orange">#{{ tag.name }} ({{ tag.habits_count }})</a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</section>
+
+<section class="time-tags-section">
+    <h2 class="section-title">⏰ Теги по времени дня</h2>
+    <div class="tags-cloud">
+        {% for tag in time_tags %}
+        <a href="/catalog/habits/tags/{{ tag.slug }}/" class="tag-link orange">#{{ tag.name }} ({{ tag.habits_count }})</a>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="alphabet-index-section">
+    <h2 class="section-title">Алфавитный указатель</h2>
+    <div class="alphabet-nav">
+        {% for letter in alphabet %}
+        <a href="#letter-{{ letter }}" class="letter-link">{{ letter }}</a>
+        {% endfor %}
+    </div>
+    
+    <div class="alphabet-tags">
+        {% for letter, letter_tags in tags_by_letter.items %}
+        <div class="letter-section" id="letter-{{ letter }}">
+            <h3 class="letter-title">{{ letter }}</h3>
+            <div class="tags-cloud">
+                {% for tag in letter_tags %}
+                <a href="/catalog/habits/tags/{{ tag.slug }}/" class="tag-link orange">#{{ tag.name }} ({{ tag.habits_count }})</a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="related-sections">
+    <h2 class="section-title">Связанные разделы</h2>
+    <div class="related-cards">
+        <a href="/catalog/habits/" class="related-card orange">
+            <span class="related-icon">⚡</span>
+            <div class="related-content">
+                <h3>Все привычки</h3>
+                <p>Смотреть полный каталог привычек</p>
+            </div>
+            <span class="card-link orange">Перейти →</span>
+        </a>
+        <a href="/catalog/goals/tags/" class="related-card">
+            <span class="related-icon">🏷️</span>
+            <div class="related-content">
+                <h3>Теги целей</h3>
+                <p>Цели по ключевым темам</p>
+            </div>
+            <span class="card-link">Перейти →</span>
+        </a>
+    </div>
+</section>
+{% endblock %}

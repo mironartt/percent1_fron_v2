@@ -1,0 +1,172 @@
+{% extends "catalog/base.html" %}
+{% load static %}
+
+{% block title %}{{ habit.name }} — привычка для развития • OnePercent{% endblock %}
+{% block description %}{{ habit.name }}: {{ habit.short_description }}. {{ habit.duration_display }}, {{ habit.difficulty_display }}, {{ habit.frequency_display }}.{% endblock %}
+{% block og_title %}{{ habit.name }} — привычка • OnePercent{% endblock %}
+{% block og_description %}{{ habit.short_description }}. {{ habit.duration_display }}.{% endblock %}
+{% block og_url %}https://percent1.ru/catalog/habits/{{ category.slug }}/{{ subcategory.slug }}/{{ habit.slug }}/{% endblock %}
+
+{% block breadcrumbs %}
+<a href="/">Главная</a>
+<span class="separator">›</span>
+<a href="/catalog/">Каталог</a>
+<span class="separator">›</span>
+<a href="/catalog/habits/">Привычки</a>
+<span class="separator">›</span>
+<a href="/catalog/habits/{{ category.slug }}/">{{ category.name }}</a>
+<span class="separator">›</span>
+<a href="/catalog/habits/{{ category.slug }}/{{ subcategory.slug }}/">{{ subcategory.name }}</a>
+<span class="separator">›</span>
+<span class="current">{{ habit.name_short }}</span>
+{% endblock %}
+
+{% block content %}
+<article class="habit-detail-page">
+    <section class="hero-section yellow habit-hero">
+        <div class="hero-icon">⚡</div>
+        <h1 class="hero-title">{{ habit.name }}</h1>
+        <p class="habit-category-path">
+            <a href="/catalog/habits/{{ category.slug }}/">{{ category.icon }} {{ category.name }}</a>
+            <span class="path-separator">›</span>
+            <a href="/catalog/habits/{{ category.slug }}/{{ subcategory.slug }}/">{{ subcategory.icon }} {{ subcategory.name }}</a>
+        </p>
+        <div class="habit-stats">
+            <div class="stat-item">
+                <span class="stat-value">⏱ {{ habit.duration_display }}</span>
+                <span class="stat-label">время</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value difficulty-{{ habit.difficulty }}">{{ habit.difficulty_display }}</span>
+                <span class="stat-label">сложность</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">{{ habit.frequency_display }}</span>
+                <span class="stat-label">частота</span>
+            </div>
+        </div>
+        <div class="habit-cta">
+            <a href="/auth/register/?add_habit={{ habit.id }}" class="btn btn-primary orange btn-lg">+ Добавить привычку в свой план</a>
+        </div>
+    </section>
+
+    <section class="habit-description-section">
+        <h2 class="section-title">Описание</h2>
+        <div class="habit-full-description">
+            {{ habit.description|linebreaks }}
+        </div>
+    </section>
+
+    {% if habit.benefits %}
+    <section class="habit-benefits-section">
+        <h2 class="section-title">Преимущества</h2>
+        <ul class="benefits-list">
+            {% for benefit in habit.benefits %}
+            <li>✓ {{ benefit }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+
+    {% if habit.tips %}
+    <section class="habit-tips-section">
+        <h2 class="section-title">Советы по внедрению</h2>
+        <div class="tips-list">
+            {% for tip in habit.tips %}
+            <div class="tip-card">
+                <span class="tip-number">{{ forloop.counter }}</span>
+                <p>{{ tip }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if habit.expected_result %}
+    <section class="habit-result-section">
+        <h2 class="section-title">Ожидаемый результат</h2>
+        <div class="result-card">
+            <span class="result-icon">🎉</span>
+            <p>{{ habit.expected_result }}</p>
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="habit-tags-section">
+        <h2 class="section-title">Теги</h2>
+        <div class="tags-cloud">
+            {% for tag in habit.tags.all %}
+            <a href="/catalog/habits/tags/{{ tag.slug }}/" class="tag-link orange">#{{ tag.name }}</a>
+            {% endfor %}
+        </div>
+    </section>
+
+    {% if related_goals %}
+    <section class="related-goals-section">
+        <h2 class="section-title">Связанные цели</h2>
+        <p class="section-desc">Эта привычка поможет достичь следующих целей:</p>
+        <div class="goals-list compact">
+            {% for goal in related_goals %}
+            <a href="/catalog/goals/{{ goal.category.slug }}/{{ goal.subcategory.slug }}/{{ goal.slug }}/" class="goal-card-compact">
+                <span class="goal-icon">🎯</span>
+                <div class="goal-info">
+                    <h3>{{ goal.name }}</h3>
+                    <p class="goal-meta-compact">{{ goal.steps_count }} шагов • {{ goal.difficulty_display }}</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if related_bundle %}
+    <section class="bundle-promo-section">
+        <div class="bundle-promo-card orange">
+            <div class="bundle-promo-icon">📦</div>
+            <div class="bundle-promo-content">
+                <h3>Готовый набор: {{ related_bundle.name }}</h3>
+                <p>Эта привычка + цель и другие привычки для максимального результата</p>
+            </div>
+            <a href="/catalog/bundles/{{ related_bundle.slug }}/" class="btn btn-primary green">Смотреть набор →</a>
+        </div>
+    </section>
+    {% endif %}
+
+    {% if similar_habits %}
+    <section class="similar-habits-section">
+        <h2 class="section-title">Похожие привычки</h2>
+        <div class="habits-grid compact">
+            {% for similar in similar_habits %}
+            <a href="/catalog/habits/{{ similar.category.slug }}/{{ similar.subcategory.slug }}/{{ similar.slug }}/" class="habit-card-mini">
+                <div class="habit-header">
+                    <span class="habit-icon">⚡</span>
+                    <h3>{{ similar.name }}</h3>
+                </div>
+                <div class="habit-meta">
+                    <span>{{ similar.duration_display }}</span>
+                    <span class="difficulty-{{ similar.difficulty }}">{{ similar.difficulty_display }}</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="cta-section">
+        <div class="cta-box orange">
+            <h2>Начните формировать привычку сегодня</h2>
+            <p>Добавьте эту привычку в свой план и отслеживайте прогресс каждый день</p>
+            <a href="/auth/register/?add_habit={{ habit.id }}" class="btn btn-primary orange btn-lg">Начать бесплатно</a>
+        </div>
+    </section>
+
+    <section class="other-categories-section">
+        <h2 class="section-title">Другие категории</h2>
+        <div class="categories-links">
+            {% for cat in other_categories %}
+            <a href="/catalog/habits/{{ cat.slug }}/" class="category-link-btn orange">{{ cat.icon }} {{ cat.name }}</a>
+            {% endfor %}
+        </div>
+    </section>
+</article>
+{% endblock %}

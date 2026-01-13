@@ -1,0 +1,53 @@
+Ранее реализовали дизайн на основе макетов для основных посаточных страниц каталога. 
+Теперь нужно реализовать шаблоны постадочных страниц для всех остальных мест, приложу макеты страниц и маппинг урлов:
+```
+/catalog/                                              # Главная каталога                          - `p02_wireframes_main.md`
+│
+├── /catalog/goals/                                    # Каталог целей (главная)                   - `p02_wireframes_main.md`
+│   │
+│   ├── /catalog/goals/<категория>/                    # Страница категории                        - `p03_wireframes_goals_hierarchy.md`
+│   │   └── /catalog/goals/<категория>/<подкатегория>/ # Страница подкатегории                     - `p03_wireframes_goals_hierarchy.md`
+│   │       └── /catalog/goals/<категория>/<подкатегория>/<цель>/  # Страница цели                 - `p03_wireframes_goals_hierarchy.md`
+│   │
+│   ├── /catalog/goals/steps/<шаг>/                    # Отдельная страница шага цели              - `p07_wireframes_steps_filters.md`
+│   │
+│   ├── /catalog/goals/tags/                           # Список всех тегов целей                   - `p04_wireframes_tags_bundle.md`
+│   │   └── /catalog/goals/tags/<тег>/                 # Цели по конкретному тегу                  - `p04_wireframes_tags_bundle.md`
+│   │
+│   └── /catalog/goals/filter/                         # Фильтры целей
+│       ├── /catalog/goals/filter/difficulty/<уровень>/  # По сложности                            - `p07_wireframes_steps_filters.md`
+│       └── /catalog/goals/filter/duration/<период>/     # По длительности                         - `p07_wireframes_steps_filters.md`
+│
+├── /catalog/habits/                                   # Каталог привычек (главная)                - `p02_wireframes_main.md`
+│   │
+│   ├── /catalog/habits/<категория>/                   # Страница категории                        - `p05_wireframes_habits_hierarchy.md`
+│   │   └── /catalog/habits/<категория>/<подкатегория>/# Страница подкатегории                     - `p05_wireframes_habits_hierarchy.md`
+│   │       └── /catalog/habits/<категория>/<подкатегория>/<привычка>/  # Страница привычки        - `p05_wireframes_habits_hierarchy.md`
+│   │
+│   ├── /catalog/habits/tags/                          # Список всех тегов привычек                - `p06_wireframes_habits_tags.md`
+│   │   └── /catalog/habits/tags/<тег>/                # Привычки по конкретному тегу              - `p06_wireframes_habits_tags.md`
+│   │
+│   └── /catalog/habits/filter/                        # Фильтры привычек
+│       ├── /catalog/habits/filter/difficulty/<уровень>/  # По сложности                           - `p08_wireframes_habits_filters.md`
+│       ├── /catalog/habits/filter/duration/<время>/      # По времени выполнения                  - `p08_wireframes_habits_filters.md`
+│       └── /catalog/habits/filter/frequency/<частота>/   # По частоте                             - `p08_wireframes_habits_filters.md`
+│
+└── /catalog/bundles/                                  # Готовые наборы                             - `p02_wireframes_main.md`
+    └── /catalog/bundles/<бандл>/                      # Страница набора (цель + привычки)          - `p04_wireframes_tags_bundle.md`
+```
+
+8 файлов, 21 макет страниц:
+
+| Файл                               | Страниц | Типы                                               |
+|------------------------------------|---------|----------------------------------------------------|
+| p01_structure_final.md             | —       | Структура URL                                      |
+| p02_wireframes_main.md             | 4       | Каталог, Цели, Привычки, Наборы                    |
+| p03_wireframes_goals_hierarchy.md  | 3       | Категория → Подкатегория → Цель                    |
+| p04_wireframes_tags_bundle.md      | 3       | Теги целей (список + страница) + Бандл             |
+| p05_wireframes_habits_hierarchy.md | 3       | Категория → Подкатегория → Привычка                |
+| p06_wireframes_habits_tags.md      | 2       | Теги привычек (список + страница)                  |
+| p07_wireframes_steps_filters.md    | 3       | Шаг цели + Фильтры целей (сложность, длительность) |
+| p08_wireframes_habits_filters.md   | 3       | Фильтры привычек (сложность, время, частота)       |
+
+
+Нужно по аналогии сделать дизайны как для текущих страниц каталога, настроить все, и в конце обновить все необходимое в каталоге `django_templates/catalog`
