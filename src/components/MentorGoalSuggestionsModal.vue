@@ -314,6 +314,7 @@ async function startGeneration() {
     console.error('[MentorModal] Generation error:', error)
     errorMessage.value = error.message || 'Произошла ошибка при генерации целей'
     step.value = 'error'
+  } finally {
     isMentorActive.value = false
   }
 }
@@ -325,8 +326,6 @@ watch(() => aiTasksStore.getTaskProgress('goal_mentor_help'), (progress) => {
 }, { deep: true })
 
 function handleMentorResult(result) {
-  isMentorActive.value = false
-  
   const goals = result.goals || result.suggestions || []
   
   if (goals.length > 0) {

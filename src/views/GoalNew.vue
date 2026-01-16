@@ -229,6 +229,7 @@ async function requestMentorHelp() {
     handleMentorResult(result)
   } catch (error) {
     mentorError.value = error.message
+  } finally {
     isMentorLoading.value = false
   }
 }
@@ -240,8 +241,6 @@ watch(() => aiTasksStore.getTaskProgress('goal_mentor_help'), (progress) => {
 }, { deep: true })
 
 function handleMentorResult(result) {
-  isMentorLoading.value = false
-  
   const goals = result.goals || result.suggestions || []
   
   if (goals.length > 0) {

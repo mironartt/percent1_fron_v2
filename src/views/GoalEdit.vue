@@ -1270,6 +1270,7 @@ async function generateStepsAI() {
   } catch (error) {
     console.error('[GoalEdit] AI steps generation error:', error)
     showToast(error.message || 'Ошибка генерации', 'error')
+  } finally {
     isGeneratingSteps.value = false
   }
 }
@@ -1309,8 +1310,6 @@ function handleAIStepsResult(result) {
   } else {
     showToast('Не удалось сгенерировать шаги', 'error')
   }
-  
-  isGeneratingSteps.value = false
 }
 
 async function addInlineStep() {

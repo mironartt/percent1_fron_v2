@@ -593,6 +593,8 @@ async function generateAIAnalysis() {
     }
     aiTaskError.value = error.message
     generateFallbackAnalysis()
+  } finally {
+    isAnalyzing.value = false
   }
 }
 
@@ -632,7 +634,6 @@ function generateFallbackAnalysis() {
     }
   ]
   
-  isAnalyzing.value = false
   generateFallbackGoals()
 }
 

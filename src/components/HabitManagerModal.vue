@@ -288,6 +288,7 @@ async function generateHabitSuggestions() {
     handleAIHabitResult(result)
   } catch (error) {
     console.error('[HabitManager] AI habit generation error:', error)
+  } finally {
     isGeneratingHabits.value = false
   }
 }
@@ -307,7 +308,6 @@ function handleAIHabitResult(result) {
       description: h.description
     }))
   }
-  isGeneratingHabits.value = false
 }
 
 function addSuggestedHabit(habit) {
