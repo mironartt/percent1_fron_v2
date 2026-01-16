@@ -271,6 +271,11 @@ const appClasses = computed(() => ({
 </style>
 
 <style>
+/* Global spin animation for loaders */
+.spin {
+  animation: spin 1s linear infinite;
+}
+
 /* Global styles for mobile header spacing */
 @media (max-width: 768px) {
   .page-header h1,

@@ -3811,6 +3811,10 @@ function formatDate(dateString) {
   background: linear-gradient(135deg, #9ca3af, #6b7280);
 }
 
+.btn-ai-steps-inline .spin {
+  animation: spin 1s linear infinite;
+}
+
 @media (max-width: 768px) {
   .search-icon-btn {
     width: 32px;
