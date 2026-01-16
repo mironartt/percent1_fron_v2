@@ -414,6 +414,7 @@ watch(() => chatStore.conversationId, (newId, oldId) => {
 })
 
 onMounted(() => {
+  store.initMentorPanelState()
   checkMobile()
   window.addEventListener('resize', checkMobile)
   
