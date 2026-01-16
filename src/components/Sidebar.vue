@@ -235,15 +235,9 @@ onMounted(() => {
   if (savedTheme === 'dark') {
     isDark.value = true
     document.documentElement.classList.add('dark')
-  } else if (savedTheme === 'light') {
+  } else {
     isDark.value = false
     document.documentElement.classList.remove('dark')
-  } else {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    isDark.value = prefersDark
-    if (prefersDark) {
-      document.documentElement.classList.add('dark')
-    }
   }
   
   checkMobile()
