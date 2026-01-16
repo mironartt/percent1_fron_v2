@@ -26,7 +26,7 @@
             <BookOpen :size="32" :stroke-width="1.5" class="cta-icon" />
             <div>
               <h3 v-if="!hasTodayEntry">Заполните итоги сегодняшнего дня</h3>
-              <h3 v-else>Добавить новую запись</h3>
+              <h3 v-else>Редактировать последнюю запись</h3>
               <p>Рефлексия помогает осознанно двигаться к целям</p>
             </div>
           </div>
@@ -366,6 +366,8 @@ function openTodayEntry() {
 function onEntrySaved() {
   showEntryModal.value = false
   editingEntry.value = null
+  // Mark that today has an entry (for immediate UI update)
+  hasTodayEntryFromBackend.value = true
   // Reload entries from backend
   loadDiaryEntries(1)
 }

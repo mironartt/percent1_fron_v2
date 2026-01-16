@@ -1270,6 +1270,7 @@ async function generateStepsAI() {
   } catch (error) {
     console.error('[GoalEdit] AI steps generation error:', error)
     showToast(error.message || 'Ошибка генерации', 'error')
+  } finally {
     isGeneratingSteps.value = false
   }
 }
@@ -1309,8 +1310,6 @@ function handleAIStepsResult(result) {
   } else {
     showToast('Не удалось сгенерировать шаги', 'error')
   }
-  
-  isGeneratingSteps.value = false
 }
 
 async function addInlineStep() {
@@ -3172,6 +3171,12 @@ function handleDrop(index, event) {
     const steps = [...goalForm.value.steps]
     const [movedStep] = steps.splice(fromIndex, 1)
     steps.splice(index, 0, movedStep)
+    
+    // Update order for all steps after reordering
+    steps.forEach((step, idx) => {
+      step.order = idx + 1
+    })
+    
     goalForm.value.steps = steps
     autoSave()
   }
@@ -3277,7 +3282,8 @@ function getStepsHash() {
       timeEstimate: s.timeEstimate,
       priority: s.priority,
       scheduledDate: s.scheduledDate,
-      status: s.status
+      status: s.status,
+      order: s.order
     })))
 }
 
@@ -3803,6 +3809,10 @@ function formatDate(dateString) {
 
 .btn-ai-steps-inline.generating {
   background: linear-gradient(135deg, #9ca3af, #6b7280);
+}
+
+.btn-ai-steps-inline .spin {
+  animation: spin 1s linear infinite;
 }
 
 @media (max-width: 768px) {

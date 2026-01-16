@@ -75,7 +75,7 @@
           >
             <Loader2 v-if="saving" :size="18" :stroke-width="1.5" class="spin" />
             <Send v-else :size="18" :stroke-width="1.5" />
-            {{ saving ? 'Сохранение...' : 'Сохранить и получить ответ от AI ментора' }}
+            {{ saving ? 'Сохранение...' : 'Сохранить' }}
           </button>
         </div>
       </form>

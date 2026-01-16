@@ -1267,8 +1267,9 @@ async function startAIPlanning() {
     handleAIPlanningResult(result)
   } catch (error) {
     console.error('[Planning] AI planning error:', error)
-    aiPlannerLoading.value = false
     aiPlannerStep.value = 'intro'
+  } finally {
+    aiPlannerLoading.value = false
   }
 }
 
