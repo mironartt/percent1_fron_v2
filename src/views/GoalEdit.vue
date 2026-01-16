@@ -3172,6 +3172,12 @@ function handleDrop(index, event) {
     const steps = [...goalForm.value.steps]
     const [movedStep] = steps.splice(fromIndex, 1)
     steps.splice(index, 0, movedStep)
+    
+    // Update order for all steps after reordering
+    steps.forEach((step, idx) => {
+      step.order = idx + 1
+    })
+    
     goalForm.value.steps = steps
     autoSave()
   }
@@ -3277,7 +3283,8 @@ function getStepsHash() {
       timeEstimate: s.timeEstimate,
       priority: s.priority,
       scheduledDate: s.scheduledDate,
-      status: s.status
+      status: s.status,
+      order: s.order
     })))
 }
 
