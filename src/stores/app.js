@@ -1346,7 +1346,9 @@ export const useAppStore = defineStore('app', () => {
     lastActivity: null
   })
 
-  const mentorPanelCollapsed = ref(false)
+  const MENTOR_COLLAPSED_KEY = 'mentor_panel_collapsed'
+  const savedMentorCollapsed = localStorage.getItem(MENTOR_COLLAPSED_KEY)
+  const mentorPanelCollapsed = ref(savedMentorCollapsed !== null ? savedMentorCollapsed === 'true' : true)
   const mentorMobileOpen = ref(false)
   const mentorIsMobile = ref(false)
   const unreadMentorCount = ref(0)
@@ -1358,6 +1360,7 @@ export const useAppStore = defineStore('app', () => {
     } else {
       mentorPanelCollapsed.value = !mentorPanelCollapsed.value
     }
+    localStorage.setItem(MENTOR_COLLAPSED_KEY, mentorPanelCollapsed.value.toString())
     if (!mentorPanelCollapsed.value) {
       unreadMentorCount.value = 0
     }
