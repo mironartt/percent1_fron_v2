@@ -991,7 +991,7 @@ const formatCompletedDate = computed(() => {
 })
 
 function goToDecomposition() {
-  router.push('/app/goals')
+  router.push('/app/goals-bank')
 }
 
 function goToPlanning() {

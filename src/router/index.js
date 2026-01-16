@@ -9,7 +9,6 @@ const Register = () => import('@/views/Register.vue')
 const Recovery = () => import('@/views/Recovery.vue')
 const Dashboard = () => import('@/views/Dashboard.vue')
 const BalancedScorecard = () => import('@/views/BalancedScorecard.vue')
-const Goals = () => import('@/views/Goals.vue')
 const GoalNew = () => import('@/views/GoalNew.vue')
 const GoalEdit = () => import('@/views/GoalEdit.vue')
 const GoalsBank = () => import('@/views/GoalsBank.vue')
@@ -278,9 +277,7 @@ const router = createRouter({
     },
     {
       path: '/app/goals',
-      name: 'goals',
-      component: Goals,
-      meta: { title: 'Цели и декомпозиция', requiresAuth: true }
+      redirect: '/app/goals-bank'
     },
     {
       path: '/app/goals/new',
@@ -385,7 +382,7 @@ const router = createRouter({
     { path: '/login', redirect: '/auth/login' },
     { path: '/register', redirect: '/auth/register' },
     { path: '/ssp', redirect: '/app/ssp' },
-    { path: '/goals', redirect: '/app/goals' },
+    { path: '/goals', redirect: '/app/goals-bank' },
     { path: '/goals/new', redirect: '/app/goals/new' },
     { path: '/goals/:id', redirect: to => `/app/goals/${to.params.id}` },
     { path: '/goals-bank', redirect: '/app/goals-bank' },

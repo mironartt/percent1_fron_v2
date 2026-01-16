@@ -104,7 +104,7 @@
                   <Target :size="32" :stroke-width="1.5" />
                 </div>
                 <p>Добавьте цели для отслеживания прогресса</p>
-                <router-link to="/app/goals" class="btn btn-primary">
+                <router-link to="/app/goals-bank" class="btn btn-primary">
                   <Plus :size="18" :stroke-width="1.5" />
                   В банк целей
                 </router-link>
