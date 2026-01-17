@@ -1330,7 +1330,7 @@ export const useAppStore = defineStore('app', () => {
     lastActivity: null
   })
 
-  const mentorPanelCollapsed = ref(false)
+  const mentorPanelCollapsed = ref(true)
   const mentorMobileOpen = ref(false)
   const mentorIsMobile = ref(false)
   const unreadMentorCount = ref(0)
@@ -1375,10 +1375,7 @@ export const useAppStore = defineStore('app', () => {
 
   function enableMentorSpotlight() {
     mentorSpotlightMode.value = true
-    mentorPanelCollapsed.value = false
-    if (mentorIsMobile.value) {
-      mentorMobileOpen.value = true
-    }
+    // Do NOT force open the panel - let user open it manually
     if (DEBUG_MODE) {
       console.log('[Store] Mentor spotlight mode enabled')
     }
