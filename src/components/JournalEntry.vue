@@ -240,7 +240,6 @@ async function saveEntry() {
     }
     
     isEditing.value = false
-    emit('saved', localEntry)
     
     // Track activation task
     try {
@@ -256,7 +255,7 @@ async function saveEntry() {
       console.error('[JournalEntry] Activation tracking error:', e)
     }
     
-    // Sync with backend
+    // Sync with backend FIRST, then emit saved event
     try {
       const result = await updateDiaryEntry(backendData)
       
@@ -267,8 +266,13 @@ async function saveEntry() {
           localEntry.id = String(result.data.diary_id)
         }
       }
+      
+      // Emit saved AFTER backend confirms
+      emit('saved', localEntry)
     } catch (apiError) {
       console.error('[JournalEntry] Error syncing to backend:', apiError)
+      // Still emit saved for local-first UX, but log error
+      emit('saved', localEntry)
     }
     
     // Open mentor panel and send journal data for AI analysis

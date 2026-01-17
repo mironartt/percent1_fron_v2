@@ -680,6 +680,7 @@ export const useAppStore = defineStore('app', () => {
     finish_minitask: false,
     telegram_bot_link: '',
     has_diary_entry_today: false,
+    journal_streak: 0,
     xp_balance: 0,
     lifetime_xp: 0,
     is_terms_accepted: false,
@@ -748,6 +749,7 @@ export const useAppStore = defineStore('app', () => {
         finish_minitask: userData.finish_minitask ?? false,
         telegram_bot_link: userData.telegram_bot_link || '',
         has_diary_entry_today: userData.has_diary_entry_today ?? false,
+        journal_streak: userData.journal_streak ?? 0,
         xp_balance: userData.xp_balance ?? 0,
         lifetime_xp: userData.lifetime_xp ?? 0,
         is_terms_accepted: isTermsAccepted,
@@ -905,6 +907,7 @@ export const useAppStore = defineStore('app', () => {
       finish_minitask: false,
       telegram_bot_link: '',
       has_diary_entry_today: false,
+      journal_streak: 0,
       xp_balance: 0,
       lifetime_xp: 0,
       is_terms_accepted: false,
@@ -1255,28 +1258,9 @@ export const useAppStore = defineStore('app', () => {
     return journal.value.entries.slice(0, days)
   }
 
-  // Стрик дней (сколько дней подряд есть записи)
+  // Стрик дней дневника - данные с бэкенда (get-user-data)
   const journalStreak = computed(() => {
-    if (journal.value.entries.length === 0) return 0
-    
-    let streak = 0
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    
-    for (let i = 0; i < 365; i++) {
-      const checkDate = new Date(today)
-      checkDate.setDate(today.getDate() - i)
-      const dateStr = getLocalDateString(checkDate)
-      
-      const hasEntry = journal.value.entries.some(e => e.date === dateStr)
-      if (hasEntry) {
-        streak++
-      } else if (i > 0) {
-        break
-      }
-    }
-    
-    return streak
+    return user.value.journal_streak ?? 0
   })
 
   // ========================================
