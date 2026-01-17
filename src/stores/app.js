@@ -1263,6 +1263,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   // Стрик дней (сколько дней подряд есть записи)
+  // Строгая логика: нет записи сегодня = streak сбрасывается до 0
   const journalStreak = computed(() => {
     if (journal.value.entries.length === 0) return 0
     
@@ -1278,8 +1279,8 @@ export const useAppStore = defineStore('app', () => {
       const hasEntry = journal.value.entries.some(e => e.date === dateStr)
       if (hasEntry) {
         streak++
-      } else if (i > 0) {
-        break
+      } else {
+        break // Прерываем сразу при пропуске любого дня, включая сегодня
       }
     }
     
