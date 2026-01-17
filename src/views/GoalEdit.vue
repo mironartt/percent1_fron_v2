@@ -3454,8 +3454,15 @@ async function syncStepsToBackend(steps) {
     })
     
     console.log('[GoalEdit] Syncing', stepsData.length, 'changed steps:', stepsData.map(s => ({ step_id: s.step_id, fields: Object.keys(s).filter(k => k !== 'goal_id' && k !== 'step_id') })))
+    console.log('[GoalEdit] Full steps data being sent:', JSON.stringify(stepsData, null, 2))
     
-    await updateGoalSteps({ goals_steps_data: stepsData })
+    const result = await updateGoalSteps({ goals_steps_data: stepsData })
+    
+    console.log('[GoalEdit] Backend sync response:', result)
+    
+    if (result.status !== 'ok') {
+      console.error('[GoalEdit] Backend sync failed:', result)
+    }
     
     // Update snapshot after successful sync
     takeStepsSnapshot()
