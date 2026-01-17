@@ -724,16 +724,16 @@ function pluralize(n, one, few, many) {
 .focus-goals-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
+  grid-template-rows: auto auto;
   gap: 1.25rem;
+  align-items: start;
 }
 
 .focus-card {
   grid-row: span 2;
   display: flex;
   flex-direction: column;
-  min-height: 400px;
-  max-height: 500px;
+  align-self: stretch;
 }
 
 .focus-card .card-body {
@@ -755,7 +755,6 @@ function pluralize(n, one, few, many) {
   
   .focus-card {
     grid-row: auto;
-    min-height: auto;
     max-height: 400px;
   }
 }
