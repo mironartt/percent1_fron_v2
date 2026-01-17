@@ -860,7 +860,6 @@ export const useAppStore = defineStore('app', () => {
         xp_balance: userData.xp_balance ?? user.value.xp_balance,
         lifetime_xp: userData.lifetime_xp ?? user.value.lifetime_xp,
         has_diary_entry_today: userData.has_diary_entry_today ?? user.value.has_diary_entry_today,
-        journal_streak: userData.journal_streak ?? user.value.journal_streak,
         updated_at: new Date().toISOString()
       }
       localStorage.setItem('onepercent_user_dashboard', JSON.stringify(dataToSave))
@@ -882,7 +881,6 @@ export const useAppStore = defineStore('app', () => {
         if (data.top_goals) userDashboardData.value.top_goals = data.top_goals
         if (data.xp_balance !== undefined) user.value.xp_balance = data.xp_balance
         if (data.lifetime_xp !== undefined) user.value.lifetime_xp = data.lifetime_xp
-        if (data.journal_streak !== undefined) user.value.journal_streak = data.journal_streak
         if (DEBUG_MODE) {
           console.log('[Store] User dashboard data loaded from localStorage')
         }
