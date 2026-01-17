@@ -288,8 +288,7 @@ async function saveEntry() {
 }
 
 async function sendToMentor(entryData, isUpdate) {
-  // Open mentor panel
-  store.toggleMentorPanel(true)
+  // Note: Panel stays collapsed, messages are added for when user opens it
   
   // Build context message for the mentor
   const journalSummary = buildJournalSummary(entryData)
