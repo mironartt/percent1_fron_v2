@@ -730,6 +730,15 @@ function pluralize(n, one, few, many) {
 
 .focus-card {
   grid-row: span 2;
+  display: flex;
+  flex-direction: column;
+}
+
+.focus-card .card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .habits-widget {
@@ -839,7 +848,7 @@ function pluralize(n, one, few, many) {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  max-height: 320px;
+  flex: 1;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--border-color) transparent;
