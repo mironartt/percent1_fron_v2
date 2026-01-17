@@ -680,6 +680,7 @@ export const useAppStore = defineStore('app', () => {
     finish_minitask: false,
     telegram_bot_link: '',
     has_diary_entry_today: false,
+    journal_streak: 0,
     xp_balance: 0,
     lifetime_xp: 0,
     is_terms_accepted: false,
@@ -748,6 +749,7 @@ export const useAppStore = defineStore('app', () => {
         finish_minitask: userData.finish_minitask ?? false,
         telegram_bot_link: userData.telegram_bot_link || '',
         has_diary_entry_today: userData.has_diary_entry_today ?? false,
+        journal_streak: userData.journal_streak ?? 0,
         xp_balance: userData.xp_balance ?? 0,
         lifetime_xp: userData.lifetime_xp ?? 0,
         is_terms_accepted: isTermsAccepted,
@@ -858,6 +860,7 @@ export const useAppStore = defineStore('app', () => {
         xp_balance: userData.xp_balance ?? user.value.xp_balance,
         lifetime_xp: userData.lifetime_xp ?? user.value.lifetime_xp,
         has_diary_entry_today: userData.has_diary_entry_today ?? user.value.has_diary_entry_today,
+        journal_streak: userData.journal_streak ?? user.value.journal_streak,
         updated_at: new Date().toISOString()
       }
       localStorage.setItem('onepercent_user_dashboard', JSON.stringify(dataToSave))
@@ -879,6 +882,7 @@ export const useAppStore = defineStore('app', () => {
         if (data.top_goals) userDashboardData.value.top_goals = data.top_goals
         if (data.xp_balance !== undefined) user.value.xp_balance = data.xp_balance
         if (data.lifetime_xp !== undefined) user.value.lifetime_xp = data.lifetime_xp
+        if (data.journal_streak !== undefined) user.value.journal_streak = data.journal_streak
         if (DEBUG_MODE) {
           console.log('[Store] User dashboard data loaded from localStorage')
         }
@@ -905,6 +909,7 @@ export const useAppStore = defineStore('app', () => {
       finish_minitask: false,
       telegram_bot_link: '',
       has_diary_entry_today: false,
+      journal_streak: 0,
       xp_balance: 0,
       lifetime_xp: 0,
       is_terms_accepted: false,
@@ -1255,29 +1260,9 @@ export const useAppStore = defineStore('app', () => {
     return journal.value.entries.slice(0, days)
   }
 
-  // Стрик дней (сколько дней подряд есть записи)
-  // Строгая логика: нет записи сегодня = streak сбрасывается до 0
+  // Стрик дней дневника - данные с бэкенда (get-user-data)
   const journalStreak = computed(() => {
-    if (journal.value.entries.length === 0) return 0
-    
-    let streak = 0
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    
-    for (let i = 0; i < 365; i++) {
-      const checkDate = new Date(today)
-      checkDate.setDate(today.getDate() - i)
-      const dateStr = getLocalDateString(checkDate)
-      
-      const hasEntry = journal.value.entries.some(e => e.date === dateStr)
-      if (hasEntry) {
-        streak++
-      } else {
-        break // Прерываем сразу при пропуске любого дня, включая сегодня
-      }
-    }
-    
-    return streak
+    return user.value.journal_streak ?? 0
   })
 
   // ========================================
