@@ -917,12 +917,13 @@ const menuItems = [
 }
 
 @media (max-width: 768px) {
+  /* Hide burger menu - replaced by bottom navigation */
   .mobile-menu-btn {
-    display: flex;
+    display: none;
   }
-  
+
   .mobile-overlay {
-    display: block;
+    display: none;
   }
   
   .mobile-close-btn {

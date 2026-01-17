@@ -492,8 +492,9 @@ onUnmounted(() => {
 .mentor-mobile-btn {
   display: none;
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+  /* Position above bottom navigation */
+  bottom: calc(var(--bottom-nav-height, 56px) + env(safe-area-inset-bottom, 0px) + 16px);
+  right: 16px;
   width: 56px;
   height: 56px;
   border-radius: 50%;

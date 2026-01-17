@@ -1377,4 +1377,105 @@ function pluralize(n, one, few, many) {
 :root.dark .stat-value {
   color: var(--text-primary);
 }
+
+/* =============================================
+   MOBILE ADAPTATION STYLES
+   ============================================= */
+
+@media (max-width: 768px) {
+  .dashboard-wrapper {
+    padding-bottom: calc(var(--bottom-nav-height, 56px) + env(safe-area-inset-bottom, 0px) + 1rem);
+  }
+
+  .dashboard {
+    max-width: 100%;
+  }
+
+  .day-header {
+    padding: 1rem 0;
+    gap: 0.75rem;
+  }
+
+  .greeting-section {
+    gap: 0.75rem;
+  }
+
+  .time-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .time-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .greeting-text h1 {
+    font-size: 1.25rem;
+  }
+
+  .day-subtitle {
+    font-size: 0.8125rem;
+  }
+
+  .header-badges {
+    gap: 0.5rem;
+  }
+
+  .streak-badge {
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+  }
+
+  .card-header {
+    padding: 0.875rem 1rem;
+  }
+
+  .card-body {
+    padding: 1rem;
+  }
+
+  .focus-item {
+    padding: 0.75rem;
+    gap: 0.75rem;
+    min-height: var(--touch-target, 44px);
+  }
+
+  .focus-check {
+    width: 24px;
+    height: 24px;
+  }
+
+  .goal-item {
+    padding: 0.75rem;
+    min-height: var(--touch-target, 44px);
+  }
+
+  .evening-content,
+  .mentor-content {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+
+  .evening-icon,
+  .mentor-avatar {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (max-width: 375px) {
+  .greeting-text h1 {
+    font-size: 1.125rem;
+  }
+
+  .day-subtitle {
+    font-size: 0.75rem;
+  }
+
+  .time-icon {
+    width: 36px;
+    height: 36px;
+  }
+}
 </style>

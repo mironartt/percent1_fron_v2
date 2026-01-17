@@ -7670,5 +7670,10 @@ onUnmounted(() => {
     padding: 0.75rem 0.5rem;
     font-size: 0.875rem;
   }
+
+  /* Bottom nav padding */
+  .goals-bank-page {
+    padding-bottom: calc(var(--bottom-nav-height, 56px) + env(safe-area-inset-bottom, 0px) + 1rem);
+  }
 }
 </style>

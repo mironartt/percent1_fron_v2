@@ -25,6 +25,7 @@ const JournalHistory = () => import('@/views/JournalHistory.vue')
 const LearningCenter = () => import('@/views/LearningCenter.vue')
 const Profile = () => import('@/views/Profile.vue')
 const Habits = () => import('@/views/Habits.vue')
+const More = () => import('@/views/More.vue')
 const OnboardingAI = () => import('@/components/OnboardingAI.vue')
 const NotFound = () => import('@/views/NotFound.vue')
 const LegalPage = () => import('@/views/LegalPage.vue')
@@ -375,7 +376,13 @@ const router = createRouter({
       component: Habits,
       meta: { title: 'Привычки', requiresAuth: true }
     },
-    
+    {
+      path: '/app/more',
+      name: 'more',
+      component: More,
+      meta: { title: 'Ещё', requiresAuth: true }
+    },
+
     // Редиректы для обратной совместимости со старыми URL
     { path: '/billing/success', redirect: to => ({ path: '/app/billing/success', query: to.query }) },
     { path: '/billing/fail', redirect: to => ({ path: '/app/billing/fail', query: to.query }) },

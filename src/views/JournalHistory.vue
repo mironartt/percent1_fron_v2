@@ -793,5 +793,10 @@ function onEntrySaved() {
     flex-direction: column;
     gap: 0.5rem;
   }
+
+  /* Bottom nav padding */
+  .journal-history {
+    padding-bottom: calc(var(--bottom-nav-height, 56px) + env(safe-area-inset-bottom, 0px) + 1rem);
+  }
 }
 </style>

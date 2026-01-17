@@ -7617,5 +7617,10 @@ function formatDate(dateString) {
     width: 100%;
     justify-content: center;
   }
+
+  /* Bottom nav padding */
+  .goal-edit-page {
+    padding-bottom: calc(var(--bottom-nav-height, 56px) + env(safe-area-inset-bottom, 0px) + 1rem);
+  }
 }
 </style>

@@ -24,6 +24,7 @@
       @accepted="onPolicyAccepted" 
     />
     <MentorPanel v-if="showMentorPanel" />
+    <BottomNavigation v-if="showBottomNav" />
     <ToastNotification />
     <XPNotification />
   </div>
@@ -33,6 +34,7 @@
 import { computed, ref, watch, onMounted, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
+import BottomNavigation from './components/BottomNavigation.vue'
 import TelegramAuthModals from './components/TelegramAuthModals.vue'
 import PolicyAcceptanceModal from './components/PolicyAcceptanceModal.vue'
 import MentorPanel from './components/MentorPanel.vue'
@@ -175,6 +177,10 @@ const isAppPage = computed(() => {
 })
 
 const showMentorPanel = computed(() => {
+  return hasSidebar.value && isAppPage.value && !isOnboarding.value
+})
+
+const showBottomNav = computed(() => {
   return hasSidebar.value && isAppPage.value && !isOnboarding.value
 })
 

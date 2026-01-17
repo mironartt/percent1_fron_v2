@@ -6435,4 +6435,11 @@ onUnmounted(() => {
   background: var(--bg-tertiary);
   border-color: var(--border-color);
 }
+
+/* Mobile bottom nav padding */
+@media (max-width: 768px) {
+  .planning-page {
+    padding-bottom: calc(var(--bottom-nav-height, 56px) + env(safe-area-inset-bottom, 0px) + 1rem);
+  }
+}
 </style>
