@@ -1423,12 +1423,9 @@ export const useAppStore = defineStore('app', () => {
 
   function enableMentorSpotlight() {
     mentorSpotlightMode.value = true
-    mentorPanelCollapsed.value = false
-    if (mentorIsMobile.value) {
-      mentorMobileOpen.value = true
-    }
+    // Не открывать панель принудительно - оставить в свёрнутом состоянии по умолчанию
     if (DEBUG_MODE) {
-      console.log('[Store] Mentor spotlight mode enabled')
+      console.log('[Store] Mentor spotlight mode enabled (panel stays collapsed)')
     }
   }
 
