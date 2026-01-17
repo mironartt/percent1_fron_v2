@@ -4509,8 +4509,13 @@ function formatDate(dateString) {
   padding: 0.75rem;
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
-  transition: all 0.2s ease;
+  transition: transform var(--transition-normal), background-color var(--transition-fast), box-shadow var(--transition-normal);
   border-left: 3px solid transparent;
+}
+
+.step-card:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow-sm);
 }
 
 .step-card.priority-critical:not(.step-completed) {

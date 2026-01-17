@@ -7,10 +7,12 @@
 :root {
   --primary-color: #6366f1;
   --primary-dark: #4f46e5;
+  --primary-light: rgba(99, 102, 241, 0.1);
   --secondary-color: #8b5cf6;
   --success-color: #10b981;
   --warning-color: #f59e0b;
   --danger-color: #ef4444;
+  --info-color: #3b82f6;
   --bg-primary: #ffffff;
   --bg-secondary: #f9fafb;
   --bg-tertiary: #f3f4f6;
@@ -30,19 +32,50 @@
   --status-danger-text: #c62828;
   --status-purple-bg: #f3e8ff;
   --status-purple-text: #7c3aed;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  --radius-sm: 0.375rem;
+
+  /* Shadows - multi-layer for realistic depth */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-hover: 0 12px 24px -4px rgba(0, 0, 0, 0.12), 0 4px 8px -2px rgba(0, 0, 0, 0.08);
+
+  /* Border radius */
+  --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
-  
+  --radius-full: 9999px;
+
+  /* Life Spheres Colors */
+  --sphere-wealth: #10B981;
+  --sphere-wealth-bg: rgba(16, 185, 129, 0.1);
+  --sphere-wealth-border: rgba(16, 185, 129, 0.2);
+  --sphere-hobbies: #8B5CF6;
+  --sphere-hobbies-bg: rgba(139, 92, 246, 0.1);
+  --sphere-hobbies-border: rgba(139, 92, 246, 0.2);
+  --sphere-friendship: #F59E0B;
+  --sphere-friendship-bg: rgba(245, 158, 11, 0.1);
+  --sphere-friendship-border: rgba(245, 158, 11, 0.2);
+  --sphere-health: #EF4444;
+  --sphere-health-bg: rgba(239, 68, 68, 0.1);
+  --sphere-health-border: rgba(239, 68, 68, 0.2);
+  --sphere-career: #3B82F6;
+  --sphere-career-bg: rgba(59, 130, 246, 0.1);
+  --sphere-career-border: rgba(59, 130, 246, 0.2);
+  --sphere-love: #EC4899;
+  --sphere-love-bg: rgba(236, 72, 153, 0.1);
+  --sphere-love-border: rgba(236, 72, 153, 0.2);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 300ms ease;
+
   /* Content width */
   --content-width-narrow: 900px;
   --content-width-wide: 1200px;
-  
+
   /* Container padding */
   --container-padding: 1.5rem;
   --container-padding-mobile: 1rem;
@@ -51,19 +84,25 @@
 :root.dark {
   --primary-color: #818cf8;
   --primary-dark: #6366f1;
+  --primary-light: rgba(129, 140, 248, 0.15);
   --secondary-color: #a78bfa;
   --success-color: #34d399;
   --warning-color: #fbbf24;
   --danger-color: #f87171;
-  --bg-primary: #1f2937;
-  --bg-secondary: #111827;
-  --bg-tertiary: #374151;
-  --bg-hover: #4b5563;
-  --card-bg: #1f2937;
+  --info-color: #60a5fa;
+
+  /* Dark mode backgrounds - Material Design standard */
+  --bg-primary: #121212;
+  --bg-secondary: #1a1a1a;
+  --bg-tertiary: #242424;
+  --bg-hover: #2a2a2a;
+  --card-bg: #1e1e1e;
+  --border-color: #2e2e2e;
+
   --text-primary: #f9fafb;
   --text-secondary: #d1d5db;
   --text-tertiary: #9ca3af;
-  --border-color: #374151;
+
   --status-success-bg: rgba(52, 211, 153, 0.15);
   --status-success-text: #34d399;
   --status-info-bg: rgba(96, 165, 250, 0.15);
@@ -74,10 +113,33 @@
   --status-danger-text: #f87171;
   --status-purple-bg: rgba(167, 139, 250, 0.15);
   --status-purple-text: #a78bfa;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+
+  /* Shadows for dark mode - multi-layer */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 12px 24px -4px rgba(0, 0, 0, 0.5), 0 4px 8px -2px rgba(0, 0, 0, 0.4);
+
+  /* Life Spheres - brighter for dark mode */
+  --sphere-wealth: #34d399;
+  --sphere-wealth-bg: rgba(52, 211, 153, 0.15);
+  --sphere-wealth-border: rgba(52, 211, 153, 0.25);
+  --sphere-hobbies: #a78bfa;
+  --sphere-hobbies-bg: rgba(167, 139, 250, 0.15);
+  --sphere-hobbies-border: rgba(167, 139, 250, 0.25);
+  --sphere-friendship: #fbbf24;
+  --sphere-friendship-bg: rgba(251, 191, 36, 0.15);
+  --sphere-friendship-border: rgba(251, 191, 36, 0.25);
+  --sphere-health: #f87171;
+  --sphere-health-bg: rgba(248, 113, 113, 0.15);
+  --sphere-health-border: rgba(248, 113, 113, 0.25);
+  --sphere-career: #60a5fa;
+  --sphere-career-bg: rgba(96, 165, 250, 0.15);
+  --sphere-career-border: rgba(96, 165, 250, 0.25);
+  --sphere-love: #f472b6;
+  --sphere-love-bg: rgba(244, 114, 182, 0.15);
+  --sphere-love-border: rgba(244, 114, 182, 0.25);
 }
 
 body {
@@ -94,19 +156,19 @@ body {
   min-height: 100vh;
 }
 
-/* Typography */
+/* Typography - with negative letter-spacing for headings */
 h1, h2, h3, h4, h5, h6 {
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.2;
   margin-bottom: 0.5em;
 }
 
-h1 { font-size: 2.25rem; }
-h2 { font-size: 1.875rem; }
-h3 { font-size: 1.5rem; }
-h4 { font-size: 1.25rem; }
-h5 { font-size: 1.125rem; }
-h6 { font-size: 1rem; }
+h1 { font-size: 2.25rem; letter-spacing: -0.01em; }
+h2 { font-size: 1.875rem; letter-spacing: -0.0075em; }
+h3 { font-size: 1.5rem; letter-spacing: -0.00625em; font-weight: 600; }
+h4 { font-size: 1.25rem; letter-spacing: -0.005em; font-weight: 600; }
+h5 { font-size: 1.125rem; font-weight: 600; }
+h6 { font-size: 1rem; font-weight: 600; }
 
 p {
   margin-bottom: 1em;
@@ -143,8 +205,8 @@ p {
 .btn-primary:hover:not(:disabled) {
   background: var(--primary-dark);
   color: white;
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 .btn-secondary {
@@ -195,6 +257,13 @@ p {
   padding: 1.5rem;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-color);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.card-interactive:hover,
+.card.clickable:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
 }
 
 .card-header {
@@ -763,4 +832,214 @@ p {
 :root.dark .modal-overlay,
 :root.dark [class*="overlay"] {
   background: rgba(0, 0, 0, 0.7);
+}
+
+/* =============================================
+   SPHERE BADGE CLASSES
+   ============================================= */
+
+.sphere-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.sphere-badge.wealth,
+.sphere-badge.welfare {
+  background: var(--sphere-wealth-bg);
+  color: var(--sphere-wealth);
+  border: 1px solid var(--sphere-wealth-border);
+}
+
+.sphere-badge.hobbies,
+.sphere-badge.hobby {
+  background: var(--sphere-hobbies-bg);
+  color: var(--sphere-hobbies);
+  border: 1px solid var(--sphere-hobbies-border);
+}
+
+.sphere-badge.friendship,
+.sphere-badge.environment {
+  background: var(--sphere-friendship-bg);
+  color: var(--sphere-friendship);
+  border: 1px solid var(--sphere-friendship-border);
+}
+
+.sphere-badge.health,
+.sphere-badge.health_sport {
+  background: var(--sphere-health-bg);
+  color: var(--sphere-health);
+  border: 1px solid var(--sphere-health-border);
+}
+
+.sphere-badge.career,
+.sphere-badge.work {
+  background: var(--sphere-career-bg);
+  color: var(--sphere-career);
+  border: 1px solid var(--sphere-career-border);
+}
+
+.sphere-badge.love,
+.sphere-badge.family {
+  background: var(--sphere-love-bg);
+  color: var(--sphere-love);
+  border: 1px solid var(--sphere-love-border);
+}
+
+/* =============================================
+   SPHERE INDICATOR (LEFT BORDER)
+   ============================================= */
+
+.sphere-indicator {
+  border-left: 3px solid transparent;
+  transition: border-color var(--transition-fast);
+}
+
+.sphere-indicator.wealth,
+.sphere-indicator.welfare {
+  border-left-color: var(--sphere-wealth);
+}
+
+.sphere-indicator.hobbies,
+.sphere-indicator.hobby {
+  border-left-color: var(--sphere-hobbies);
+}
+
+.sphere-indicator.friendship,
+.sphere-indicator.environment {
+  border-left-color: var(--sphere-friendship);
+}
+
+.sphere-indicator.health,
+.sphere-indicator.health_sport {
+  border-left-color: var(--sphere-health);
+}
+
+.sphere-indicator.career,
+.sphere-indicator.work {
+  border-left-color: var(--sphere-career);
+}
+
+.sphere-indicator.love,
+.sphere-indicator.family {
+  border-left-color: var(--sphere-love);
+}
+
+/* =============================================
+   SPHERE DOT
+   ============================================= */
+
+.sphere-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sphere-dot.wealth,
+.sphere-dot.welfare {
+  background: var(--sphere-wealth);
+}
+
+.sphere-dot.hobbies,
+.sphere-dot.hobby {
+  background: var(--sphere-hobbies);
+}
+
+.sphere-dot.friendship,
+.sphere-dot.environment {
+  background: var(--sphere-friendship);
+}
+
+.sphere-dot.health,
+.sphere-dot.health_sport {
+  background: var(--sphere-health);
+}
+
+.sphere-dot.career,
+.sphere-dot.work {
+  background: var(--sphere-career);
+}
+
+.sphere-dot.love,
+.sphere-dot.family {
+  background: var(--sphere-love);
+}
+
+/* =============================================
+   TASK COMPLETION ANIMATIONS
+   ============================================= */
+
+@keyframes task-complete {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+@keyframes task-check-pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.task-just-completed {
+  animation: task-complete 0.3s ease;
+}
+
+.check-animated {
+  animation: task-check-pop 0.25s ease;
+}
+
+/* =============================================
+   CIRCULAR PROGRESS COMPONENT
+   ============================================= */
+
+.progress-circle {
+  --progress: 0;
+  --size: 48px;
+  --stroke-width: 6px;
+  --circle-color: var(--primary-color);
+  --track-color: var(--bg-tertiary);
+
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--circle-color) calc(var(--progress) * 1%),
+    var(--track-color) 0
+  );
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.progress-circle::before {
+  content: '';
+  position: absolute;
+  inset: var(--stroke-width);
+  background: var(--bg-primary);
+  border-radius: 50%;
+}
+
+.progress-circle-value {
+  position: relative;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.progress-circle.sm {
+  --size: 32px;
+  --stroke-width: 4px;
+}
+
+.progress-circle.lg {
+  --size: 64px;
+  --stroke-width: 8px;
 }

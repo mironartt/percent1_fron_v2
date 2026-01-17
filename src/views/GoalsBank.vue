@@ -2884,16 +2884,17 @@ onUnmounted(() => {
   border-radius: var(--radius-lg);
   padding: 1rem;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal), border-color var(--transition-fast);
   display: flex;
   gap: 0.875rem;
   border-left: 3px solid var(--sphere-accent, var(--border-color));
 }
 
 .goal-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
   border-color: var(--primary-color);
   border-left-color: var(--sphere-accent, var(--primary-color));
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .goal-card-visual {

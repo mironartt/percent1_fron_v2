@@ -751,6 +751,13 @@ function pluralize(n, one, few, many) {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   overflow: hidden;
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.focus-card:hover,
+.goals-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
 }
 
 .card-header {
@@ -869,7 +876,14 @@ function pluralize(n, one, few, many) {
   padding: 0.875rem;
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
-  transition: all 0.2s ease;
+  transition: all var(--transition-normal);
+  border-left: 3px solid transparent;
+}
+
+.focus-item:hover {
+  transform: translateX(4px);
+  border-left-color: var(--primary-color);
+  background: var(--bg-tertiary);
 }
 
 .focus-item.completed {
@@ -904,6 +918,14 @@ function pluralize(n, one, few, many) {
 .focus-check.checked {
   background: var(--success-color, #10b981);
   border-color: var(--success-color, #10b981);
+}
+
+.focus-check.just-checked {
+  animation: task-check-pop 0.25s ease;
+}
+
+.focus-item.just-completed {
+  animation: task-complete 0.3s ease;
 }
 
 .focus-content {
@@ -997,8 +1019,9 @@ function pluralize(n, one, few, many) {
   gap: 0.5rem;
   padding: 0.875rem 1.25rem;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--transition-fast), transform var(--transition-fast), border-color var(--transition-fast);
   border-bottom: 1px solid var(--border-color);
+  border-left: 3px solid transparent;
 }
 
 .goal-item:last-of-type {
@@ -1007,6 +1030,8 @@ function pluralize(n, one, few, many) {
 
 .goal-item:hover {
   background: var(--bg-secondary);
+  transform: translateX(4px);
+  border-left-color: var(--primary-color);
 }
 
 .goal-info {

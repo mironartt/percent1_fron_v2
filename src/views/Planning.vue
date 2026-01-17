@@ -4166,7 +4166,7 @@ onUnmounted(() => {
   background: var(--bg);
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: transform var(--transition-normal), background-color var(--transition-fast), box-shadow var(--transition-normal);
   position: relative;
   overflow: hidden;
 }
@@ -4187,6 +4187,8 @@ onUnmounted(() => {
 
 .task-card:hover {
   background: var(--hover-bg, #f3f4f6);
+  transform: translateX(4px);
+  box-shadow: var(--shadow-sm);
 }
 
 .task-card.completed {

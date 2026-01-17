@@ -439,7 +439,7 @@ const menuItems = [
   text-decoration: none;
   font-weight: 500;
   font-size: 0.9375rem;
-  transition: all 0.2s ease;
+  transition: background-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
 }
 
 .sidebar.collapsed .nav-item {
@@ -462,6 +462,7 @@ const menuItems = [
 .nav-item:hover {
   background: var(--bg-tertiary);
   color: var(--text-primary);
+  transform: translateX(4px);
 }
 
 .nav-item.active {
