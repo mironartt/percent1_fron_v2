@@ -108,8 +108,6 @@ onMounted(async () => {
     sidebarCollapsed.value = savedCollapsed === 'true'
   }
 
-  store.initMentorPanelState()
-
   // Применяем тему Telegram если запущены из TWA
   if (isInTelegram.value) {
     applyTelegramTheme()

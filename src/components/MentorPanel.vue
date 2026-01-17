@@ -400,7 +400,6 @@ watch(() => route.path, () => {
 watch(() => store.mentorPanelCollapsed, (collapsed) => {
   if (!collapsed && !isMobile.value) {
     initializeChat()
-    nextTick(() => scrollToBottom())
   }
 })
 
@@ -414,7 +413,6 @@ watch(() => chatStore.conversationId, (newId, oldId) => {
 })
 
 onMounted(() => {
-  store.initMentorPanelState()
   checkMobile()
   window.addEventListener('resize', checkMobile)
   

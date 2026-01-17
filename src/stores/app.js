@@ -718,24 +718,17 @@ export const useAppStore = defineStore('app', () => {
     if (userData) {
       const previousUserId = user.value.id
       const newUserId = userData.id || null
-      const savedUserId = localStorage.getItem('onepercent_user_id')
       
       if (previousUserId && newUserId && previousUserId !== newUserId) {
         if (DEBUG_MODE) {
           console.log('[Store] User changed, clearing localStorage:', previousUserId, '->', newUserId)
         }
         clearAllLocalStorage()
-      } else if (!previousUserId && newUserId && savedUserId && savedUserId !== newUserId) {
+      } else if (!previousUserId && newUserId) {
         if (DEBUG_MODE) {
-          console.log('[Store] Different user login, clearing localStorage:', savedUserId, '->', newUserId)
+          console.log('[Store] New login, clearing localStorage for fresh start')
         }
         clearAllLocalStorage()
-      }
-      
-      try {
-        localStorage.setItem('onepercent_user_id', newUserId)
-      } catch (e) {
-        // ignore
       }
       
       if (userData.localstorage_version) {
@@ -1354,42 +1347,17 @@ export const useAppStore = defineStore('app', () => {
     lastActivity: null
   })
 
-  const MENTOR_COLLAPSED_KEY = 'mentor_panel_collapsed'
-  const mentorPanelCollapsed = ref(true)
-  const mentorPanelInitialized = ref(false)
+  const mentorPanelCollapsed = ref(false)
   const mentorMobileOpen = ref(false)
   const mentorIsMobile = ref(false)
   const unreadMentorCount = ref(0)
   const mentorSpotlightMode = ref(false)
-
-  function initMentorPanelState() {
-    if (mentorPanelInitialized.value) return
-    try {
-      const saved = localStorage.getItem(MENTOR_COLLAPSED_KEY)
-      if (saved !== null) {
-        mentorPanelCollapsed.value = saved === 'true'
-      } else {
-        mentorPanelCollapsed.value = true
-      }
-      mentorPanelInitialized.value = true
-      if (DEBUG_MODE) {
-        console.log('[Store] Mentor panel state initialized:', mentorPanelCollapsed.value)
-      }
-    } catch (e) {
-      console.warn('[Store] Failed to read mentor panel state from localStorage:', e)
-    }
-  }
 
   function toggleMentorPanel(forceState) {
     if (typeof forceState === 'boolean') {
       mentorPanelCollapsed.value = forceState
     } else {
       mentorPanelCollapsed.value = !mentorPanelCollapsed.value
-    }
-    try {
-      localStorage.setItem(MENTOR_COLLAPSED_KEY, mentorPanelCollapsed.value.toString())
-    } catch (e) {
-      console.warn('[Store] Failed to save mentor panel state:', e)
     }
     if (!mentorPanelCollapsed.value) {
       unreadMentorCount.value = 0
@@ -1424,9 +1392,12 @@ export const useAppStore = defineStore('app', () => {
 
   function enableMentorSpotlight() {
     mentorSpotlightMode.value = true
-    // Не открывать панель принудительно - оставить в свёрнутом состоянии по умолчанию
+    mentorPanelCollapsed.value = false
+    if (mentorIsMobile.value) {
+      mentorMobileOpen.value = true
+    }
     if (DEBUG_MODE) {
-      console.log('[Store] Mentor spotlight mode enabled (panel stays collapsed)')
+      console.log('[Store] Mentor spotlight mode enabled')
     }
   }
 
@@ -3584,7 +3555,6 @@ export const useAppStore = defineStore('app', () => {
     mentorIsMobile,
     mentorSpotlightMode,
     toggleMentorPanel,
-    initMentorPanelState,
     openMentorMobile,
     closeMentorMobile,
     setMentorIsMobile,
