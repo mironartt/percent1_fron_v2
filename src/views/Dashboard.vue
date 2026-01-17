@@ -724,7 +724,7 @@ function pluralize(n, one, few, many) {
 .focus-goals-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto;
+  grid-template-rows: 1fr 1fr;
   gap: 1.25rem;
 }
 
@@ -732,6 +732,8 @@ function pluralize(n, one, few, many) {
   grid-row: span 2;
   display: flex;
   flex-direction: column;
+  min-height: 400px;
+  max-height: 500px;
 }
 
 .focus-card .card-body {
@@ -739,6 +741,7 @@ function pluralize(n, one, few, many) {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
 }
 
 .habits-widget {
@@ -752,6 +755,8 @@ function pluralize(n, one, few, many) {
   
   .focus-card {
     grid-row: auto;
+    min-height: auto;
+    max-height: 400px;
   }
 }
 
@@ -849,6 +854,7 @@ function pluralize(n, one, few, many) {
   flex-direction: column;
   gap: 0.75rem;
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--border-color) transparent;
