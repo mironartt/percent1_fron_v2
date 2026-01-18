@@ -762,13 +762,15 @@ export async function completeGoal(goalId) {
  * @returns {Promise<object>} - Созданный шаг
  */
 export async function createStep(goalId, stepData) {
-  return updateGoalSteps({
+  const payload = {
     goals_steps_data: [{
       goal_id: goalId,
       step_id: null,
       ...stepData
     }]
-  })
+  }
+  console.log('[API] createStep payload:', JSON.stringify(payload))
+  return updateGoalSteps(payload)
 }
 
 /**
