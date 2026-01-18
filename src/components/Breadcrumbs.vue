@@ -37,16 +37,18 @@ defineProps({
 <style scoped>
 .breadcrumbs {
   margin-bottom: 16px;
+  overflow-x: auto;
 }
 
 .breadcrumbs-list {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   flex-wrap: nowrap;
   gap: 4px;
   list-style: none;
   margin: 0;
   padding: 0;
+  width: max-content;
 }
 
 .breadcrumb-item {
@@ -55,6 +57,8 @@ defineProps({
   gap: 4px;
   line-height: 1;
   white-space: nowrap;
+  flex: 0 0 auto;
+  width: auto;
 }
 
 .breadcrumb-link {
