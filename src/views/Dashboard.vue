@@ -212,11 +212,19 @@
   <AddGoalModal
     v-model="showAddGoalModal"
     @created="onGoalCreated"
+    @open-mentor="openMentorModal"
   />
 
   <AddHabitModal
     v-model="showAddHabitModal"
     @created="onHabitCreated"
+    @open-mentor="openMentorModal"
+  />
+
+  <MentorGoalSuggestionsModal
+    :show="showMentorModal"
+    @close="showMentorModal = false"
+    @goals-created="onMentorGoalsCreated"
   />
 </template>
 
@@ -237,6 +245,7 @@ import FloatingActionButton from '../components/FloatingActionButton.vue'
 import QuickAddTask from '../components/QuickAddTask.vue'
 import AddGoalModal from '../components/AddGoalModal.vue'
 import AddHabitModal from '../components/AddHabitModal.vue'
+import MentorGoalSuggestionsModal from '../components/MentorGoalSuggestionsModal.vue'
 import { useActivationStore } from '@/stores/activation'
 import { useXpStore } from '@/stores/xp'
 import { useXPNotification } from '@/composables/useXPNotification.js'
@@ -272,6 +281,7 @@ const showHabitManager = ref(false)
 const showQuickTask = ref(false)
 const showAddGoalModal = ref(false)
 const showAddHabitModal = ref(false)
+const showMentorModal = ref(false)
 
 const fabMenuItems = [
   { id: 'task', label: 'Быстрая задача', icon: Zap, color: '#f59e0b' },
@@ -304,6 +314,17 @@ function onGoalCreated(goal) {
 
 function onHabitCreated(habit) {
   console.log('[Dashboard] Habit created:', habit)
+  refreshDashboardData()
+}
+
+function openMentorModal() {
+  showMentorModal.value = true
+}
+
+function onMentorGoalsCreated(goals) {
+  if (DEBUG_MODE) {
+    console.log('[Dashboard] Mentor goals created:', goals)
+  }
   refreshDashboardData()
 }
 
