@@ -201,7 +201,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onActivated } from 'vue'
 import { useAppStore } from '../stores/app'
 import * as api from '../services/api'
 import OnboardingAI from '../components/OnboardingAI.vue'
@@ -325,6 +325,15 @@ onMounted(async () => {
   
   if (store.user.finish_onboarding && !activationStore.mentorIntroCompleted && !activationStore.isAllCompleted) {
     triggerMentorSpotlight()
+  }
+})
+
+onActivated(async () => {
+  if (DEBUG_MODE) {
+    console.log('[Dashboard] onActivated - refreshing data')
+  }
+  if (store.user.finish_onboarding) {
+    await refreshDashboardData()
   }
 })
 

@@ -1154,7 +1154,13 @@ export const useAppStore = defineStore('app', () => {
   })
 
   // Проверить, есть ли запись на сегодня
+  // Приоритет: данные с бэкенда (has_diary_entry_today), затем локальные данные
   const hasTodayEntry = computed(() => {
+    // Если бэкенд говорит что есть запись - доверяем
+    if (user.value.has_diary_entry_today) {
+      return true
+    }
+    // Иначе проверяем локальные записи
     const today = getTodayDateString()
     return journal.value.entries.some(e => e.date === today)
   })
