@@ -43,7 +43,7 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite (with pro
 
 ### Reusable Components
 -   **AddGoalModal.vue**: Universal modal for adding new goals, used across GoalsBank, Dashboard, and Planning. Props: `modelValue` (Boolean for v-model). Events: `update:modelValue`, `created` (with goal data), `open-mentor`. Features: goal templates by life sphere, AI mentor helper button, optional reflection section with 2 accordion questions, sphere selection grid, optimistic UI with backend sync.
--   **QuickAddTask.vue**: Quick task creation with calendar, priority, and time estimation.
+-   **QuickAddTask.vue**: Quick task creation modal with required goal selection. Features: combobox goal selector (input+dropdown with filtering), day selector (today/tomorrow/custom date), pill-style priority buttons (Критично, Важно, В поле внимания, По возможности, Без приоритета), pill-style time estimation buttons (30 минут - 4 часа, Без оценки). Uses createStep() and scheduleStep() API for backend sync.
 -   **FloatingActionButton.vue**: FAB positioned left of AI mentor panel with dynamic positioning based on mentor panel state.
 -   **MentorGoalSuggestionsModal.vue**: AI-powered goal suggestions modal.
 
