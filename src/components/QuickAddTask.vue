@@ -26,17 +26,53 @@
               />
             </div>
             
-            <div class="form-row">
+            <div class="form-group">
+              <label>Когда</label>
+              <div class="day-selector">
+                <button 
+                  v-for="day in dayOptions" 
+                  :key="day.value"
+                  :class="['day-btn', { active: selectedDay === day.value }]"
+                  @click="selectDay(day.value)"
+                >
+                  {{ day.label }}
+                </button>
+              </div>
+              <div v-if="selectedDay === 'custom'" class="date-picker-row">
+                <input 
+                  v-model="customDate"
+                  type="date"
+                  class="date-input"
+                  :min="todayDateStr"
+                />
+              </div>
+            </div>
+            
+            <div class="form-row params-row">
               <div class="form-group half">
-                <label>Когда</label>
-                <div class="day-selector">
+                <label>Время</label>
+                <div class="time-selector">
                   <button 
-                    v-for="day in dayOptions" 
-                    :key="day.value"
-                    :class="['day-btn', { active: selectedDay === day.value }]"
-                    @click="selectedDay = day.value"
+                    v-for="time in timeOptions" 
+                    :key="time.value"
+                    :class="['time-btn', { active: selectedTime === time.value }]"
+                    @click="selectedTime = selectedTime === time.value ? '' : time.value"
                   >
-                    {{ day.label }}
+                    {{ time.label }}
+                  </button>
+                </div>
+              </div>
+              <div class="form-group half">
+                <label>Приоритет</label>
+                <div class="priority-selector">
+                  <button 
+                    v-for="p in priorityOptions" 
+                    :key="p.value"
+                    :class="['priority-btn', { active: selectedPriority === p.value }]"
+                    :style="selectedPriority === p.value ? { background: p.color + '15', borderColor: p.color, color: p.color } : {}"
+                    @click="selectedPriority = selectedPriority === p.value ? '' : p.value"
+                  >
+                    {{ p.label }}
                   </button>
                 </div>
               </div>
@@ -136,10 +172,39 @@ const isLoadingGoals = ref(false)
 const dayOptions = [
   { value: 'today', label: 'Сегодня' },
   { value: 'tomorrow', label: 'Завтра' },
-  { value: 'week', label: 'На неделе' }
+  { value: 'custom', label: 'Дата' }
 ]
 
+const timeOptions = [
+  { value: '30min', label: '30 мин' },
+  { value: '1h', label: '1 час' },
+  { value: '2h', label: '2 часа' },
+  { value: '3h', label: '3 часа' },
+  { value: '4h', label: '4 часа' }
+]
+
+const priorityOptions = [
+  { value: 'critical', label: 'Критично', color: '#ef4444' },
+  { value: 'desirable', label: 'Желательно', color: '#f59e0b' },
+  { value: 'attention', label: 'Внимание', color: '#3b82f6' },
+  { value: 'optional', label: 'Опционально', color: '#9ca3af' }
+]
+
+const showDatePicker = ref(false)
+const customDate = ref('')
+const selectedPriority = ref('')
+const selectedTime = ref('')
+
+const todayDateStr = computed(() => formatDate(new Date()))
+
 const canSave = computed(() => taskTitle.value.trim().length > 0 && selectedGoal.value)
+
+function selectDay(value) {
+  selectedDay.value = value
+  if (value === 'custom' && !customDate.value) {
+    customDate.value = todayDateStr.value
+  }
+}
 
 const filteredGoals = computed(() => {
   if (!goalSearch.value.trim()) {
@@ -208,13 +273,21 @@ function getTargetDate() {
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 1)
     return formatDate(tomorrow)
+  } else if (selectedDay.value === 'custom' && customDate.value) {
+    return customDate.value
   } else {
-    const nextMonday = new Date(today)
-    const dayOfWeek = today.getDay()
-    const daysUntilMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek
-    nextMonday.setDate(today.getDate() + daysUntilMonday)
-    return formatDate(nextMonday)
+    return formatDate(today)
   }
+}
+
+function mapPriorityToBackend(priority) {
+  const priorityMap = {
+    'critical': 'critical',
+    'desirable': 'desirable',
+    'attention': 'attention',
+    'optional': 'optional'
+  }
+  return priorityMap[priority] || null
 }
 
 function formatDate(date) {
@@ -235,14 +308,18 @@ async function save() {
     if (stepResult.status === 'ok' && stepResult.goals_steps_data?.[0]?.id) {
       const stepId = stepResult.goals_steps_data[0].id
       const targetDate = getTargetDate()
+      const priority = mapPriorityToBackend(selectedPriority.value)
+      const timeDuration = selectedTime.value || null
       
-      await scheduleStep(selectedGoal.value.id, stepId, targetDate)
+      await scheduleStep(selectedGoal.value.id, stepId, targetDate, priority, timeDuration)
       
       emit('created', {
         title: taskTitle.value.trim(),
         goalId: selectedGoal.value.id,
         goalTitle: selectedGoal.value.title,
-        date: targetDate
+        date: targetDate,
+        priority: selectedPriority.value,
+        timeEstimate: selectedTime.value
       })
       
       resetForm()
@@ -264,6 +341,10 @@ function resetForm() {
   selectedGoal.value = null
   goalSearch.value = ''
   showGoalDropdown.value = false
+  customDate.value = ''
+  selectedPriority.value = ''
+  selectedTime.value = ''
+  showDatePicker.value = false
 }
 
 function close() {
@@ -433,6 +514,85 @@ onUnmounted(() => {
   border-color: #6366f1;
   background: #eef2ff;
   color: #6366f1;
+}
+
+.date-picker-row {
+  margin-top: 12px;
+}
+
+.date-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #1f2937;
+  transition: border-color 0.2s;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #6366f1;
+}
+
+.params-row {
+  margin-top: 4px;
+}
+
+.time-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.time-btn {
+  padding: 8px 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.time-btn:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
+.time-btn.active {
+  border-color: #6366f1;
+  background: #eef2ff;
+  color: #6366f1;
+}
+
+.priority-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.priority-btn {
+  padding: 8px 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.priority-btn:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
+.priority-btn.active {
+  font-weight: 600;
 }
 
 .goal-selector {

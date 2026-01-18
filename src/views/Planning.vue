@@ -939,6 +939,11 @@
       v-model="showQuickTask"
       @created="onQuickTaskCreated"
     />
+
+    <AddGoalModal
+      v-model="showAddGoalModal"
+      @created="onGoalCreated"
+    />
   </div>
 </template>
 
@@ -948,6 +953,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import FloatingActionButton from '../components/FloatingActionButton.vue'
 import QuickAddTask from '../components/QuickAddTask.vue'
+import AddGoalModal from '../components/AddGoalModal.vue'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
 import { useAITasksStore } from '../stores/aiTasks'
 import { useXpStore } from '@/stores/xp'
@@ -1001,6 +1007,7 @@ const filterSphere = ref('')
 const filterStatus = ref('')
 const goalStatusFilter = ref('work')
 const showQuickTask = ref(false)
+const showAddGoalModal = ref(false)
 
 const fabMenuItems = [
   { id: 'task', label: 'Быстрая задача', icon: Zap, color: '#f59e0b' },
@@ -1013,13 +1020,18 @@ function handleFabSelect(itemId) {
       showQuickTask.value = true
       break
     case 'goal':
-      router.push('/app/goals-bank?add=true')
+      showAddGoalModal.value = true
       break
   }
 }
 
 function onQuickTaskCreated(task) {
   console.log('[Planning] Quick task created:', task)
+  refreshGoalsFromBackend()
+}
+
+function onGoalCreated(goal) {
+  console.log('[Planning] Goal created:', goal)
   refreshGoalsFromBackend()
 }
 const queryFilter = ref('')

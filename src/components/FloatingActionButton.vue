@@ -71,14 +71,14 @@ function handleItemClick(item) {
 <style scoped>
 .fab-container {
   position: fixed;
-  right: 24px;
+  right: 80px;
   bottom: 100px;
   z-index: 1000;
   transition: right 0.3s ease;
 }
 
 .fab-container.mentor-expanded {
-  right: 344px;
+  right: 400px;
 }
 
 @media (max-width: 768px) {

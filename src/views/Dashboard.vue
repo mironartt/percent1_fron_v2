@@ -208,6 +208,16 @@
     v-model="showQuickTask"
     @created="onQuickTaskCreated"
   />
+
+  <AddGoalModal
+    v-model="showAddGoalModal"
+    @created="onGoalCreated"
+  />
+
+  <AddHabitModal
+    v-model="showAddHabitModal"
+    @created="onHabitCreated"
+  />
 </template>
 
 <script setup>
@@ -225,6 +235,8 @@ import DailyProgressBar from '../components/DailyProgressBar.vue'
 import XpBadge from '../components/XpBadge.vue'
 import FloatingActionButton from '../components/FloatingActionButton.vue'
 import QuickAddTask from '../components/QuickAddTask.vue'
+import AddGoalModal from '../components/AddGoalModal.vue'
+import AddHabitModal from '../components/AddHabitModal.vue'
 import { useActivationStore } from '@/stores/activation'
 import { useXpStore } from '@/stores/xp'
 import { useXPNotification } from '@/composables/useXPNotification.js'
@@ -258,6 +270,8 @@ const showJournalModal = ref(false)
 const showMiniTask = ref(false)
 const showHabitManager = ref(false)
 const showQuickTask = ref(false)
+const showAddGoalModal = ref(false)
+const showAddHabitModal = ref(false)
 
 const fabMenuItems = [
   { id: 'task', label: 'Быстрая задача', icon: Zap, color: '#f59e0b' },
@@ -272,15 +286,25 @@ function handleFabSelect(itemId) {
       showQuickTask.value = true
       break
     case 'goal':
-      router.push('/app/goals-bank?add=true')
+      showAddGoalModal.value = true
       break
     case 'journal':
       showJournalModal.value = true
       break
     case 'habit':
-      showHabitManager.value = true
+      showAddHabitModal.value = true
       break
   }
+}
+
+function onGoalCreated(goal) {
+  console.log('[Dashboard] Goal created:', goal)
+  refreshDashboardData()
+}
+
+function onHabitCreated(habit) {
+  console.log('[Dashboard] Habit created:', habit)
+  refreshDashboardData()
 }
 
 function onQuickTaskCreated(task) {
