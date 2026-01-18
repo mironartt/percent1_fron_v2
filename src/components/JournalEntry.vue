@@ -144,7 +144,22 @@ const form = ref({
 const hasTodayEntry = computed(() => store.hasTodayEntry)
 const todayEntry = computed(() => store.todayJournalEntry)
 
-// Initialize form with editing entry data
+// Initialize form with today's entry data if exists (from backend diary_today)
+onMounted(() => {
+  if (todayEntry.value) {
+    form.value = {
+      whatDone: todayEntry.value.whatDone || '',
+      whatNotDone: todayEntry.value.whatNotDone || '',
+      reflection: todayEntry.value.reflection || '',
+      tomorrowPlans: todayEntry.value.tomorrowPlans || ''
+    }
+    currentEntryId.value = todayEntry.value.id
+    currentBackendId.value = todayEntry.value.backendId || null
+    isEditing.value = true
+  }
+})
+
+// Initialize form with editing entry data (from prop)
 watch(() => props.editingEntry, (entry) => {
   if (entry) {
     form.value = {
@@ -156,7 +171,8 @@ watch(() => props.editingEntry, (entry) => {
     currentEntryId.value = entry.id
     currentBackendId.value = entry.backendId || null
     isEditing.value = true
-  } else {
+  } else if (!todayEntry.value) {
+    // Only reset if no today entry exists
     currentEntryId.value = null
     currentBackendId.value = null
     isEditing.value = false
@@ -265,6 +281,20 @@ async function saveEntry() {
           localEntry.backendId = result.data.diary_id
           localEntry.id = String(result.data.diary_id)
         }
+        
+        // Update diary_today in store for future opens
+        store.setDiaryToday({
+          diary_id: result.data.diary_id,
+          what_done: form.value.whatDone,
+          what_not_done: form.value.whatNotDone,
+          reflection: form.value.reflection,
+          plans: form.value.tomorrowPlans,
+          date_created: new Date().toISOString()
+        })
+        
+        // Update backendId refs for subsequent edits
+        currentEntryId.value = String(result.data.diary_id)
+        currentBackendId.value = result.data.diary_id
       }
       
       // Emit saved AFTER backend confirms
