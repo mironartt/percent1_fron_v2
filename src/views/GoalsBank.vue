@@ -9,10 +9,11 @@
     <!-- Empty State - No goals yet -->
     <div v-else-if="showEmptyState" class="empty-state-section">
       <div class="empty-state-card card">
+        <Breadcrumbs :items="breadcrumbItems" class="empty-breadcrumbs" />
         <div class="empty-icon">
           <Target :size="48" :stroke-width="1.5" />
         </div>
-        <h1>Банк целей</h1>
+        <h2 class="empty-title">Банк целей</h2>
         <p class="subtitle">
           Здесь хранятся все ваши идеи, желания и цели для достижения
         </p>
@@ -35,7 +36,7 @@
     <!-- Summary State - After Completion -->
     <div v-else-if="showSummary" class="summary-section">
       <header class="section-header">
-        <h1>Банк целей</h1>
+        <Breadcrumbs :items="breadcrumbItems" />
       </header>
 
       <!-- Goals Content -->
@@ -673,6 +674,7 @@ import { useXpStore } from '@/stores/xp'
 import { useXPNotification } from '@/composables/useXPNotification.js'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
 import MentorGoalSuggestionsModal from '@/components/MentorGoalSuggestionsModal.vue'
+import Breadcrumbs from '@/components/Breadcrumbs.vue'
 import { 
   Lightbulb, 
   CheckCircle, 
@@ -759,6 +761,11 @@ const router = useRouter()
 const route = useRoute()
 const xpStore = useXpStore()
 const { showGoalCompletedXP, XP_AMOUNTS } = useXPNotification()
+
+const breadcrumbItems = [
+  { label: 'Главная', to: '/app' },
+  { label: 'Банк целей', to: '/app/goals-bank' }
+]
 
 const lifeSpheres = computed(() => store.lifeSpheres)
 const rawIdeas = computed(() => store.goalsBank.rawIdeas)

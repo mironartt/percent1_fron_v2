@@ -1,9 +1,9 @@
 <template>
   <div class="journal-history">
     <header class="page-header">
+      <Breadcrumbs :items="breadcrumbItems" />
       <div class="header-content">
         <div>
-          <h1>Дневник</h1>
           <p class="subtitle">История ваших записей и рефлексий</p>
         </div>
         <div class="header-stats">
@@ -168,6 +168,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { getTodayDateString } from '@/utils/dateUtils'
 import JournalEntry from '@/components/JournalEntry.vue'
+import Breadcrumbs from '@/components/Breadcrumbs.vue'
 import { 
   BookOpen, 
   Flame, 
@@ -187,6 +188,11 @@ import {
 } from 'lucide-vue-next'
 
 const store = useAppStore()
+
+const breadcrumbItems = [
+  { label: 'Главная', to: '/app' },
+  { label: 'Дневник', to: '/app/journal' }
+]
 
 const showEntryModal = ref(false)
 const expandedEntries = ref([])

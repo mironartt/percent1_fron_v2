@@ -198,6 +198,16 @@
     v-if="showHabitManager" 
     @close="showHabitManager = false" 
   />
+
+  <FloatingActionButton
+    :menu-items="fabMenuItems"
+    @select="handleFabSelect"
+  />
+
+  <QuickAddTask
+    v-model="showQuickTask"
+    @created="onQuickTaskCreated"
+  />
 </template>
 
 <script setup>
@@ -213,6 +223,8 @@ import HabitTracker from '../components/HabitTracker.vue'
 import HabitManagerModal from '../components/HabitManagerModal.vue'
 import DailyProgressBar from '../components/DailyProgressBar.vue'
 import XpBadge from '../components/XpBadge.vue'
+import FloatingActionButton from '../components/FloatingActionButton.vue'
+import QuickAddTask from '../components/QuickAddTask.vue'
 import { useActivationStore } from '@/stores/activation'
 import { useXpStore } from '@/stores/xp'
 import { useXPNotification } from '@/composables/useXPNotification.js'
@@ -230,7 +242,10 @@ import {
   Sparkles,
   Flag,
   X,
-  Settings
+  Settings,
+  Zap,
+  BookOpen,
+  Dumbbell
 } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 
@@ -242,6 +257,36 @@ const router = useRouter()
 const showJournalModal = ref(false)
 const showMiniTask = ref(false)
 const showHabitManager = ref(false)
+const showQuickTask = ref(false)
+
+const fabMenuItems = [
+  { id: 'task', label: 'Быстрая задача', icon: Zap, color: '#f59e0b' },
+  { id: 'goal', label: 'Новая цель', icon: Target, color: '#10b981' },
+  { id: 'journal', label: 'Запись в дневник', icon: BookOpen, color: '#8b5cf6' },
+  { id: 'habit', label: 'Добавить привычку', icon: Dumbbell, color: '#3b82f6' }
+]
+
+function handleFabSelect(itemId) {
+  switch (itemId) {
+    case 'task':
+      showQuickTask.value = true
+      break
+    case 'goal':
+      router.push('/app/goals-bank?add=true')
+      break
+    case 'journal':
+      showJournalModal.value = true
+      break
+    case 'habit':
+      showHabitManager.value = true
+      break
+  }
+}
+
+function onQuickTaskCreated(task) {
+  console.log('[Dashboard] Quick task created:', task)
+  refreshDashboardData()
+}
 
 activationStore.init()
 
