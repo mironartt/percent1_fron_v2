@@ -2,7 +2,6 @@
   <div class="ssp-container">
     <Breadcrumbs :items="breadcrumbs" />
     <header class="ssp-header">
-      <h1>Колесо баланса</h1>
       <p class="subtitle">Оценка и анализ сфер вашей жизни</p>
     </header>
 

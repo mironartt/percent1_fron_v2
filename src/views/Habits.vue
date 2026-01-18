@@ -4,7 +4,6 @@
     <header class="page-header">
       <div class="header-content">
         <div class="title-section">
-          <h1 class="page-title">Мои привычки</h1>
           <p class="page-subtitle">Маленькие шаги к большим изменениям</p>
         </div>
       </div>

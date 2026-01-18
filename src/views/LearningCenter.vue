@@ -3,7 +3,6 @@
     <Breadcrumbs :items="breadcrumbs" />
     <header class="page-header">
       <div>
-        <h1>Обучение</h1>
         <p class="subtitle">Изучите все возможности системы и методологию 1%</p>
       </div>
       <div class="header-progress" v-if="completedLessons > 0">
