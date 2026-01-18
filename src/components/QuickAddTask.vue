@@ -68,13 +68,18 @@
                 </div>
                 
                 <Transition name="dropdown">
-                  <div v-if="showGoalDropdown" class="goal-dropdown">
+                  <div 
+                    v-if="showGoalDropdown" 
+                    ref="goalDropdownRef"
+                    class="goal-dropdown"
+                    @scroll="handleDropdownScroll"
+                  >
                     <div v-if="isLoadingGoals" class="dropdown-loading">
                       <Loader2 :size="18" class="spin" />
                       <span>Загрузка...</span>
                     </div>
                     <div v-else-if="filteredGoals.length === 0" class="dropdown-empty">
-                      <span>Цели не найдены</span>
+                      <span>{{ goalSearchQuery.length > 0 && goalSearchQuery.length < 3 ? 'Введите минимум 3 символа для поиска' : 'Цели не найдены' }}</span>
                     </div>
                     <template v-else>
                       <button
@@ -89,6 +94,10 @@
                         <span class="goal-title">{{ goal.title }}</span>
                         <Check v-if="selectedGoal?.id === goal.id" :size="16" class="check-icon" />
                       </button>
+                      <div v-if="isLoadingMore" class="dropdown-loading-more">
+                        <Loader2 :size="16" class="spin" />
+                        <span>Загрузка...</span>
+                      </div>
                     </template>
                   </div>
                 </Transition>
@@ -201,6 +210,7 @@ const store = useAppStore()
 const taskInput = ref(null)
 const goalSelectorRef = ref(null)
 const goalInputRef = ref(null)
+const goalDropdownRef = ref(null)
 const taskTitle = ref('')
 const selectedDay = ref('today')
 const selectedGoal = ref(null)
@@ -210,6 +220,11 @@ const showGoalError = ref(false)
 const isSaving = ref(false)
 const availableGoals = ref([])
 const isLoadingGoals = ref(false)
+const isLoadingMore = ref(false)
+const currentPage = ref(1)
+const hasMoreGoals = ref(true)
+const searchDebounceTimer = ref(null)
+const PAGE_SIZE = 20
 
 const goalInputValue = computed({
   get() {
@@ -262,38 +277,94 @@ function selectDay(value) {
 }
 
 const filteredGoals = computed(() => {
-  if (!goalSearchQuery.value.trim()) {
-    return availableGoals.value.slice(0, 15)
-  }
-  const query = goalSearchQuery.value.toLowerCase()
   return availableGoals.value
-    .filter(g => g.title.toLowerCase().includes(query))
-    .slice(0, 15)
 })
 
-async function loadGoals() {
-  if (isLoadingGoals.value) return
-  isLoadingGoals.value = true
+async function loadGoals(reset = true, searchQuery = '') {
+  if (reset) {
+    if (isLoadingGoals.value) return
+    isLoadingGoals.value = true
+    currentPage.value = 1
+    hasMoreGoals.value = true
+  } else {
+    if (isLoadingMore.value || !hasMoreGoals.value) return
+    isLoadingMore.value = true
+  }
   
   try {
-    const result = await getGoals({
+    const params = {
       status_filter: 'work',
       with_steps_data: false,
-      page_size: 50
-    })
+      page_size: PAGE_SIZE,
+      page: reset ? 1 : currentPage.value
+    }
+    
+    if (searchQuery && searchQuery.trim().length >= 3) {
+      params.query_filter = searchQuery.trim()
+    }
+    
+    console.log('[QuickAddTask] Loading goals:', params)
+    
+    const result = await getGoals(params)
     
     if (result.status === 'ok' && result.goals_data) {
-      availableGoals.value = result.goals_data.map(g => ({
+      const newGoals = result.goals_data.map(g => ({
         id: g.id,
         title: g.title,
         sphereIcon: getSphereIcon(g.category)
       }))
+      
+      if (reset) {
+        availableGoals.value = newGoals
+      } else {
+        availableGoals.value = [...availableGoals.value, ...newGoals]
+      }
+      
+      hasMoreGoals.value = newGoals.length === PAGE_SIZE
+      if (!reset) {
+        currentPage.value++
+      }
+      
+      console.log('[QuickAddTask] Goals loaded:', newGoals.length, 'hasMore:', hasMoreGoals.value)
+    } else {
+      console.log('[QuickAddTask] No goals in response')
+      if (reset) {
+        availableGoals.value = []
+      }
+      hasMoreGoals.value = false
     }
   } catch (error) {
     console.error('[QuickAddTask] Failed to load goals:', error)
   } finally {
     isLoadingGoals.value = false
+    isLoadingMore.value = false
   }
+}
+
+async function loadMoreGoals() {
+  if (!hasMoreGoals.value || isLoadingMore.value) return
+  currentPage.value++
+  await loadGoals(false, goalSearchQuery.value)
+}
+
+function handleDropdownScroll(event) {
+  const el = event.target
+  const threshold = 50
+  const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold
+  
+  if (isNearBottom && !isLoadingMore.value && hasMoreGoals.value) {
+    loadMoreGoals()
+  }
+}
+
+function debouncedSearch(query) {
+  if (searchDebounceTimer.value) {
+    clearTimeout(searchDebounceTimer.value)
+  }
+  
+  searchDebounceTimer.value = setTimeout(() => {
+    loadGoals(true, query)
+  }, 300)
 }
 
 function getSphereIcon(category) {
@@ -319,6 +390,7 @@ function onGoalSearchInput() {
   if (selectedGoal.value) {
     selectedGoal.value = null
   }
+  debouncedSearch(goalSearchQuery.value)
 }
 
 function onGoalInputBlur() {
@@ -462,6 +534,9 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  if (searchDebounceTimer.value) {
+    clearTimeout(searchDebounceTimer.value)
+  }
 })
 </script>
 
@@ -699,6 +774,17 @@ onUnmounted(() => {
   padding: 24px;
   color: #9ca3af;
   font-size: 14px;
+}
+
+.dropdown-loading-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px;
+  color: #9ca3af;
+  font-size: 13px;
+  border-top: 1px solid #f3f4f6;
 }
 
 .goal-option {
