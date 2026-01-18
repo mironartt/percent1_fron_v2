@@ -490,10 +490,9 @@ async function save() {
     const stepResult = await createStep(goalId, stepData)
     
     console.log('[QuickAddTask] createStep result:', stepResult)
+    console.log('[QuickAddTask] stepResult.data:', stepResult.data)
     
-    const stepsData = stepResult.data?.goals_steps_data || stepResult.goals_steps_data
-    
-    if (stepResult.status === 'ok' && stepsData?.[0]) {
+    if (stepResult.status === 'ok') {
       emit('created', {
         title: taskTitle.value.trim(),
         goalId: goalId,

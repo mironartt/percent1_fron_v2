@@ -1,0 +1,110 @@
+Так, теперь после нажатия на "сохранить" вижу что ушел запрос с:
+```
+{"goals_steps_data":[{"goal_id":526,"step_id":null,"title":"test","description":"","dt":"2026-01-18","priority":"important","time_duration":"one"}]}
+```
+И запрос прошел успешно и шаг был успешно добавлен.
+Однако в консоли упали ошибки:
+```
+[QuickAddTask] Loading goals:
+Object { status_filter: "work", with_steps_data: false, page_size: 20, page: 1 }
+QuickAddTask.vue:307:13
+[API] POST /api/rest/front/app/goals/get/
+Object { status_filter: "work", with_steps_data: false, page_size: 20, page: 1 }
+api.js:177:13
+[API] Response:
+Object { status: "ok", data: {…} }
+api.js:198:15
+[QuickAddTask] API response:
+Object { status: "ok", data: {…} }
+QuickAddTask.vue:311:13
+[QuickAddTask] goals_data:
+Array(4) [ {…}, {…}, {…}, {…} ]
+QuickAddTask.vue:314:13
+[QuickAddTask] First goal structure:
+Object { goal_id: 526, title: "Найти ментора в своей сфере", category: "work", status: "work", score: null, why_important: null, why_give_me: null, why_about_me: null, date_created: "2026-01-18 11:55:53", date_completed: null, … }
+QuickAddTask.vue:317:15
+[QuickAddTask] Goals loaded: 4 hasMore: false QuickAddTask.vue:336:15
+[QuickAddTask] Creating step with all data:
+Object { goalId: 526, title: "test", targetDate: "2026-01-18", priority: "important", timeDuration: "one" }
+QuickAddTask.vue:473:13
+[API] createStep payload: {"goals_steps_data":[{"goal_id":526,"step_id":null,"title":"test","description":"","dt":"2026-01-18","priority":"important","time_duration":"one"}]} api.js:772:11
+[API] POST /api/rest/front/app/goals/steps/update/
+Object { goals_steps_data: (1) […] }
+api.js:177:13
+[API] Response:
+Object { status: "ok", data: {…} }
+api.js:198:15
+[QuickAddTask] createStep result:
+Object { status: "ok", data: {…} }
+QuickAddTask.vue:492:13
+[QuickAddTask] Save error: Error: Не удалось создать задачу
+    save QuickAddTask.vue:509
+    callWithErrorHandling runtime-core.esm-bundler.js:199
+    callWithAsyncErrorHandling runtime-core.esm-bundler.js:206
+    invoker runtime-dom.esm-bundler.js:730
+    addEventListener runtime-dom.esm-bundler.js:681
+    patchEvent runtime-dom.esm-bundler.js:699
+    patchProp runtime-dom.esm-bundler.js:776
+    mountElement runtime-core.esm-bundler.js:5596
+    processElement runtime-core.esm-bundler.js:5533
+    patch runtime-core.esm-bundler.js:5391
+    mountChildren runtime-core.esm-bundler.js:5655
+    mountElement runtime-core.esm-bundler.js:5578
+    processElement runtime-core.esm-bundler.js:5533
+    patch runtime-core.esm-bundler.js:5391
+    mountChildren runtime-core.esm-bundler.js:5655
+    mountElement runtime-core.esm-bundler.js:5578
+    processElement runtime-core.esm-bundler.js:5533
+    patch runtime-core.esm-bundler.js:5391
+    mountChildren runtime-core.esm-bundler.js:5655
+    mountElement runtime-core.esm-bundler.js:5578
+    processElement runtime-core.esm-bundler.js:5533
+    patch runtime-core.esm-bundler.js:5391
+    componentUpdateFn runtime-core.esm-bundler.js:6131
+    run reactivity.esm-bundler.js:237
+    runIfDirty reactivity.esm-bundler.js:275
+    callWithErrorHandling runtime-core.esm-bundler.js:199
+    flushJobs runtime-core.esm-bundler.js:408
+    promise callback*queueFlush runtime-core.esm-bundler.js:322
+    queueJob runtime-core.esm-bundler.js:317
+    scheduler runtime-core.esm-bundler.js:6173
+    trigger reactivity.esm-bundler.js:265
+    endBatch reactivity.esm-bundler.js:323
+    notify reactivity.esm-bundler.js:614
+    trigger reactivity.esm-bundler.js:588
+    set value reactivity.esm-bundler.js:1500
+    handleFabSelect Dashboard.vue:286
+    callWithErrorHandling runtime-core.esm-bundler.js:199
+    callWithAsyncErrorHandling runtime-core.esm-bundler.js:206
+    emit runtime-core.esm-bundler.js:4380
+    createSetupContext/get emit/< runtime-core.esm-bundler.js:8232
+    handleItemClick FloatingActionButton.vue:66
+    onClick FloatingActionButton.vue:18
+    callWithErrorHandling runtime-core.esm-bundler.js:199
+    callWithAsyncErrorHandling runtime-core.esm-bundler.js:206
+    invoker runtime-dom.esm-bundler.js:730
+    addEventListener runtime-dom.esm-bundler.js:681
+    patchEvent runtime-dom.esm-bundler.js:699
+    patchProp runtime-dom.esm-bundler.js:776
+    mountElement runtime-core.esm-bundler.js:5596
+    processElement runtime-core.esm-bundler.js:5533
+    patch runtime-core.esm-bundler.js:5391
+    mountChildren runtime-core.esm-bundler.js:5655
+    processFragment runtime-core.esm-bundler.js:5835
+    patch runtime-core.esm-bundler.js:5377
+    mountChildren runtime-core.esm-bundler.js:5655
+    mountElement runtime-core.esm-bundler.js:5578
+    processElement runtime-core.esm-bundler.js:5533
+QuickAddTask.vue:512:13
+[AITasks] Received: ping
+Object { timestamp: "2026-01-18T12:37:22.409854" }
+aiTasks.js:171:15
+[AITasks] Received: force_disconnect
+Object { reason: "new_connection" }
+aiTasks.js:171:15
+[AITasks] Force disconnect: new_connection aiTasks.js:245:19
+[AITasks] WebSocket closed: 4003 <empty string> aiTasks.js:75:19
+[AITasks] Force disconnected (new_connection), not reconnecting
+```
+
+Разберись и сделай чтобы все работало корректно.
