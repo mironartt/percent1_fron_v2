@@ -43,8 +43,9 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite (with pro
 
 ### Reusable Components
 -   **AddGoalModal.vue**: Universal modal for adding new goals, used across GoalsBank, Dashboard, and Planning. Props: `modelValue` (Boolean for v-model). Events: `update:modelValue`, `created` (with goal data), `open-mentor`. Features: goal templates by life sphere, AI mentor helper button, optional reflection section with 2 accordion questions, sphere selection grid, optimistic UI with backend sync.
+-   **AddHabitModal.vue**: Universal modal for creating/editing habits, used via Dashboard FAB. Props: `modelValue` (Boolean), `editingHabit` (Object, optional), `gameSettings` (Object, optional). Events: `update:modelValue`, `created`, `updated`, `deleted`, `open-mentor`. Features: AI-powered habit suggestions (5 categories: health, productivity, learning, mental health, routine), icon picker (32 icons), schedule settings (daily/weekdays/weekends/custom), XP reward/penalty configuration, localStorage caching for viewed AI results, toast notifications via useToastStore.
 -   **QuickAddTask.vue**: Quick task creation modal with required goal selection. Features: combobox goal selector (input+dropdown with filtering), day selector (today/tomorrow/custom date), pill-style priority buttons (Критично, Важно, В поле внимания, По возможности, Без приоритета), pill-style time estimation buttons (30 минут - 4 часа, Без оценки). Uses createStep() and scheduleStep() API for backend sync.
--   **FloatingActionButton.vue**: FAB positioned left of AI mentor panel with dynamic positioning based on mentor panel state.
+-   **FloatingActionButton.vue**: FAB positioned left of AI mentor panel with dynamic positioning based on mentor panel state. Dashboard integration for quick creation of tasks, goals, journal entries, and habits.
 -   **MentorGoalSuggestionsModal.vue**: AI-powered goal suggestions modal.
 
 ### System Design Choices
