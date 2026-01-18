@@ -314,8 +314,10 @@ async function loadGoals(reset = true, searchQuery = '') {
     console.log('[QuickAddTask] goals_data:', goalsData)
     
     if (result.status === 'ok' && goalsData && Array.isArray(goalsData)) {
+      console.log('[QuickAddTask] First goal structure:', goalsData[0])
+      
       const newGoals = goalsData.map(g => ({
-        id: g.id,
+        id: g.goal_id || g.id,
         title: g.title,
         sphereIcon: getSphereIcon(g.category)
       }))
