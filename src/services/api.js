@@ -833,15 +833,13 @@ export async function toggleStepComplete(goalId, stepId, isComplete) {
 export async function scheduleStep(goalId, stepId, date, priority = null, timeDuration = null) {
   const stepData = {
     goal_id: goalId,
-    step_id: stepId,
-    dt: date
+    step_id: stepId
   }
+  if (date) stepData.dt = date
   if (priority) stepData.priority = priority
   if (timeDuration) stepData.time_duration = timeDuration
   
-  return updateGoalSteps({
-    goals_steps_data: [stepData]
-  })
+  return updateGoalSteps({ goals_steps_data: [stepData] })
 }
 
 // ==================== DIARY API ====================

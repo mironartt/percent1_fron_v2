@@ -1,11 +1,11 @@
 <template>
   <div class="planning-container">
+    <Breadcrumbs :items="breadcrumbItems" />
     <header class="planning-header-full">
       <button class="nav-btn-edge" @click="prevWeek" aria-label="Предыдущая неделя">
         <ChevronLeft :size="20" />
       </button>
       <div class="header-center">
-        <h1 class="page-title">Планирование</h1>
         <span class="week-range-center">{{ weekRangeText }}</span>
       </div>
       <div class="header-right">
@@ -929,6 +929,21 @@
         </div>
       </div>
     </div>
+
+    <FloatingActionButton
+      :menu-items="fabMenuItems"
+      @select="handleFabSelect"
+    />
+
+    <QuickAddTask
+      v-model="showQuickTask"
+      @created="onQuickTaskCreated"
+    />
+
+    <AddGoalModal
+      v-model="showAddGoalModal"
+      @created="onGoalCreated"
+    />
   </div>
 </template>
 
@@ -936,6 +951,10 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import FloatingActionButton from '../components/FloatingActionButton.vue'
+import QuickAddTask from '../components/QuickAddTask.vue'
+import AddGoalModal from '../components/AddGoalModal.vue'
+import Breadcrumbs from '../components/Breadcrumbs.vue'
 import { useAITasksStore } from '../stores/aiTasks'
 import { useXpStore } from '@/stores/xp'
 import { useXPNotification } from '@/composables/useXPNotification.js'
@@ -977,11 +996,44 @@ const { showStepCompletedXP, XP_AMOUNTS } = useXPNotification()
 const priorityGoalId = ref(null)
 const aiTasksStore = useAITasksStore()
 
+const breadcrumbItems = [
+  { label: 'Главная', to: '/app' },
+  { label: 'Планирование', to: '/app/planning' }
+]
+
 const weekOffset = ref(0)
 const selectedDay = ref(null)
 const filterSphere = ref('')
 const filterStatus = ref('')
 const goalStatusFilter = ref('work')
+const showQuickTask = ref(false)
+const showAddGoalModal = ref(false)
+
+const fabMenuItems = [
+  { id: 'task', label: 'Быстрая задача', icon: Zap, color: '#f59e0b' },
+  { id: 'goal', label: 'Новая цель', icon: Target, color: '#10b981' }
+]
+
+function handleFabSelect(itemId) {
+  switch (itemId) {
+    case 'task':
+      showQuickTask.value = true
+      break
+    case 'goal':
+      showAddGoalModal.value = true
+      break
+  }
+}
+
+function onQuickTaskCreated(task) {
+  console.log('[Planning] Quick task created:', task)
+  refreshGoalsFromBackend()
+}
+
+function onGoalCreated(goal) {
+  console.log('[Planning] Goal created:', goal)
+  refreshGoalsFromBackend()
+}
 const queryFilter = ref('')
 const orderBy = ref('date_created')
 const orderDirection = ref('desc')

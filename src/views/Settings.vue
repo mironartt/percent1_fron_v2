@@ -1,8 +1,8 @@
 <template>
   <div class="settings-container">
     <header class="page-header">
+      <Breadcrumbs :items="breadcrumbItems" />
       <div>
-        <h1>Настройки</h1>
         <p class="subtitle">Управление профилем, оплатой и параметрами приложения</p>
       </div>
     </header>
@@ -332,10 +332,16 @@ import { useAppStore } from '../stores/app'
 import { useToastStore } from '../stores/toast'
 import * as api from '@/services/api.js'
 import { Bot, Sparkles, MessageCircle, VolumeX, User, CreditCard, Bell, FileText, Settings, LogOut, Send, Mail, X, Users } from 'lucide-vue-next'
+import Breadcrumbs from '@/components/Breadcrumbs.vue'
 
 const router = useRouter()
 const store = useAppStore()
 const toastStore = useToastStore()
+
+const breadcrumbItems = [
+  { label: 'Главная', to: '/app' },
+  { label: 'Настройки', to: '/app/settings' }
+]
 
 const userName = ref(store.user.first_name || '')
 const userEmail = ref('')

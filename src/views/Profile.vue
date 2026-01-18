@@ -1,7 +1,7 @@
 <template>
   <div class="profile-page">
     <header class="page-header">
-      <h1 class="page-title">Достижения</h1>
+      <Breadcrumbs :items="breadcrumbItems" />
       <p class="page-subtitle">Ваш прогресс и награды</p>
     </header>
 
@@ -229,6 +229,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useAppStore } from '../stores/app'
 import { useXpStore } from '../stores/xp'
 import RewardWishlist from '../components/RewardWishlist.vue'
+import Breadcrumbs from '@/components/Breadcrumbs.vue'
 import { 
   Sparkles, 
   Flame, 
@@ -257,6 +258,11 @@ let searchTimeout = null
 
 const appStore = useAppStore()
 const xpStore = useXpStore()
+
+const breadcrumbItems = [
+  { label: 'Главная', to: '/app' },
+  { label: 'Достижения', to: '/app/achievements' }
+]
 
 const xpBalance = computed(() => xpStore.xpBalance)
 const lifetimeEarned = computed(() => xpStore.lifetimeEarned)

@@ -9,10 +9,11 @@
     <!-- Empty State - No goals yet -->
     <div v-else-if="showEmptyState" class="empty-state-section">
       <div class="empty-state-card card">
+        <Breadcrumbs :items="breadcrumbItems" class="empty-breadcrumbs" />
         <div class="empty-icon">
           <Target :size="48" :stroke-width="1.5" />
         </div>
-        <h1>Банк целей</h1>
+        <h2 class="empty-title">Банк целей</h2>
         <p class="subtitle">
           Здесь хранятся все ваши идеи, желания и цели для достижения
         </p>
@@ -35,7 +36,7 @@
     <!-- Summary State - After Completion -->
     <div v-else-if="showSummary" class="summary-section">
       <header class="section-header">
-        <h1>Банк целей</h1>
+        <Breadcrumbs :items="breadcrumbItems" />
       </header>
 
       <!-- Goals Content -->
@@ -504,157 +505,11 @@
     </Transition>
 
     <!-- Add New Goal Modal -->
-    <Transition name="modal-fade">
-      <div v-if="showAddModal" class="modal-overlay" @click.self="closeAddModal">
-        <div class="edit-modal edit-modal-extended">
-          <div class="modal-header">
-            <h3>
-              <Plus :size="20" :stroke-width="2" class="modal-header-icon" />
-              Добавление новой цели
-            </h3>
-            <button class="modal-close" @click="closeAddModal">
-              <X :size="20" :stroke-width="2" />
-            </button>
-          </div>
-
-          <div class="modal-body">
-            <!-- Секция помощников: шаблоны и ментор -->
-            <div class="helpers-section">
-              <button class="helper-toggle" @click="toggleTemplates">
-                <Lightbulb :size="18" />
-                <span>Выбрать из шаблонов</span>
-                <ChevronDown :size="16" class="toggle-chevron" :class="{ rotated: showTemplates }" />
-              </button>
-              <button class="helper-toggle mentor-toggle" @click="openMentorModal">
-                <Bot :size="18" />
-                <span>Помощь от ментора</span>
-              </button>
-            </div>
-            
-            <!-- Секция шаблонов целей -->
-            <transition name="slide-fade">
-              <div v-if="showTemplates" class="templates-section">
-                <div class="templates-sphere-tabs">
-                  <button
-                    v-for="sphere in lifeSpheres"
-                    :key="sphere.id"
-                    class="template-sphere-tab"
-                    :class="{ active: selectedTemplateSphere === sphere.id }"
-                    :style="{ '--sphere-color': getSphereColor(sphere.id) }"
-                    :title="getSphereNameOnly(sphere.id)"
-                    @click="selectedTemplateSphere = sphere.id"
-                  >
-                    <component :is="getSphereIcon(sphere.id)" :size="16" />
-                  </button>
-                </div>
-                
-                <div class="templates-list">
-                  <button
-                    v-for="(template, idx) in filteredTemplates"
-                    :key="idx"
-                    class="template-item"
-                    @click="selectTemplate(template)"
-                  >
-                    {{ template }}
-                  </button>
-                </div>
-              </div>
-            </transition>
-
-            <div class="form-group">
-              <label class="form-label">Название цели</label>
-              <input 
-                v-model="newGoal.text"
-                type="text"
-                class="form-input"
-                placeholder="Введите название цели"
-              />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Сфера жизни</label>
-              <div class="sphere-select-grid">
-                <button
-                  v-for="sphere in lifeSpheres"
-                  :key="sphere.id"
-                  class="sphere-select-btn"
-                  :class="{ active: newGoal.sphereId === sphere.id }"
-                  :style="{ '--sphere-color': getSphereColor(sphere.id) }"
-                  @click="newGoal.sphereId = sphere.id"
-                >
-                  <component :is="getSphereIcon(sphere.id)" :size="18" :stroke-width="2" />
-                  <span>{{ getSphereNameOnly(sphere.id) }}</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Опциональная секция рефлексии (скрыта по умолчанию) -->
-            <div class="reflection-toggle-section">
-              <button class="reflection-toggle-btn" @click="showReflectionSection = !showReflectionSection">
-                <MessageSquare :size="16" />
-                <span>Добавить рефлексию</span>
-                <span class="optional-badge">опционально</span>
-                <ChevronDown :size="16" class="toggle-chevron" :class="{ rotated: showReflectionSection }" />
-              </button>
-              
-              <transition name="slide-fade">
-                <div v-if="showReflectionSection" class="reflection-content">
-                  <div class="accordion-group">
-                    <div 
-                      class="accordion-header" 
-                      :class="{ open: whyAccordion.question1Open, filled: newGoal.whyImportant?.trim() }"
-                      @click="toggleWhyQuestion(1)"
-                    >
-                      <span class="accordion-title">1. Почему для меня это важно?</span>
-                      <span v-if="newGoal.whyImportant?.trim() && !whyAccordion.question1Open" class="accordion-preview">{{ newGoal.whyImportant.slice(0, 30) }}...</span>
-                      <ChevronDown :size="16" class="accordion-chevron" :class="{ open: whyAccordion.question1Open }" />
-                    </div>
-                    <div class="accordion-content" v-show="whyAccordion.question1Open">
-                      <textarea 
-                        v-model="newGoal.whyImportant"
-                        class="form-textarea"
-                        placeholder="Опишите, почему эта цель важна для вас"
-                        rows="3"
-                      ></textarea>
-                    </div>
-                  </div>
-
-                  <div class="accordion-group">
-                    <div 
-                      class="accordion-header" 
-                      :class="{ open: whyAccordion.question2Open, filled: newGoal.why2?.trim() }"
-                      @click="toggleWhyQuestion(2)"
-                    >
-                      <span class="accordion-title">2. Как это изменит мою жизнь?</span>
-                      <span v-if="newGoal.why2?.trim() && !whyAccordion.question2Open" class="accordion-preview">{{ newGoal.why2.slice(0, 30) }}...</span>
-                      <ChevronDown :size="16" class="accordion-chevron" :class="{ open: whyAccordion.question2Open }" />
-                    </div>
-                    <div class="accordion-content" v-show="whyAccordion.question2Open">
-                      <textarea 
-                        v-model="newGoal.why2"
-                        class="form-textarea"
-                        placeholder="Опишите, как достижение этой цели изменит вашу жизнь"
-                        rows="3"
-                      ></textarea>
-                    </div>
-                  </div>
-                </div>
-              </transition>
-            </div>
-          </div>
-
-          <div class="modal-footer modal-footer-add">
-            <button class="btn btn-secondary" @click="closeAddModal">
-              Отмена
-            </button>
-            <button class="btn btn-primary" @click="saveNewGoal" :disabled="!newGoal.text.trim()">
-              <Plus :size="16" :stroke-width="2" />
-              Добавить цель
-            </button>
-          </div>
-        </div>
-      </div>
-    </Transition>
+    <AddGoalModal
+      v-model="showAddModal"
+      @created="onGoalCreated"
+      @open-mentor="openMentorModal"
+    />
 
     <!-- Mentor Goal Suggestions Modal -->
     <MentorGoalSuggestionsModal
@@ -673,6 +528,8 @@ import { useXpStore } from '@/stores/xp'
 import { useXPNotification } from '@/composables/useXPNotification.js'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
 import MentorGoalSuggestionsModal from '@/components/MentorGoalSuggestionsModal.vue'
+import AddGoalModal from '@/components/AddGoalModal.vue'
+import Breadcrumbs from '@/components/Breadcrumbs.vue'
 import { 
   Lightbulb, 
   CheckCircle, 
@@ -760,6 +617,11 @@ const route = useRoute()
 const xpStore = useXpStore()
 const { showGoalCompletedXP, XP_AMOUNTS } = useXPNotification()
 
+const breadcrumbItems = [
+  { label: 'Главная', to: '/app' },
+  { label: 'Банк целей', to: '/app/goals-bank' }
+]
+
 const lifeSpheres = computed(() => store.lifeSpheres)
 const rawIdeas = computed(() => store.goalsBank.rawIdeas)
 const keyGoals = computed(() => store.goalsBank.keyGoals)
@@ -827,107 +689,23 @@ let infiniteScrollObserver = null
 
 const showAddModal = ref(false)
 const showMentorModal = ref(false)
-const showReflectionSection = ref(false)
-const newGoal = ref({
-  text: '',
-  sphereId: '',
-  whyImportant: '',
-  why2: '',
-  status: null,
-  generatedByAI: false,
-  steps: []
-})
 
-// Accordion state for question fields
-const whyAccordion = ref({
-  question1Open: false,
-  question2Open: false
-})
 const editWhyAccordion = ref({
   question1Open: false,
   question2Open: false
 })
 
-function toggleWhyQuestion(questionNum, isEdit = false) {
-  const accordion = isEdit ? editWhyAccordion : whyAccordion
+function toggleEditWhyQuestion(questionNum) {
   if (questionNum === 1) {
-    accordion.value.question1Open = !accordion.value.question1Open
+    editWhyAccordion.value.question1Open = !editWhyAccordion.value.question1Open
   } else {
-    accordion.value.question2Open = !accordion.value.question2Open
+    editWhyAccordion.value.question2Open = !editWhyAccordion.value.question2Open
   }
 }
 
-function resetAccordion(isEdit = false) {
-  const accordion = isEdit ? editWhyAccordion : whyAccordion
-  accordion.value.question1Open = false
-  accordion.value.question2Open = false
-}
-
-// Шаблоны целей по сферам ССП
-const goalTemplates = {
-  wealth: [
-    'Создать финансовую подушку на 3 месяца',
-    'Увеличить доход на 20%',
-    'Закрыть все кредиты и долги',
-    'Начать инвестировать регулярно',
-    'Сократить ненужные расходы'
-  ],
-  hobbies: [
-    'Освоить новое творческое хобби',
-    'Создать портфолио своих работ',
-    'Участвовать в творческом конкурсе',
-    'Выделять время на отдых и хобби еженедельно',
-    'Пройти курс по дизайну/музыке/искусству'
-  ],
-  friendship: [
-    'Улучшить общение с друзьями',
-    'Завести новых друзей по интересам',
-    'Организовать регулярные встречи с друзьями',
-    'Научиться слушать и понимать других',
-    'Расширить круг общения'
-  ],
-  health: [
-    'Установить режим сна 7-8 часов',
-    'Заниматься спортом 3 раза в неделю',
-    'Пройти полное медицинское обследование',
-    'Наладить здоровое питание',
-    'Избавиться от вредной привычки'
-  ],
-  career: [
-    'Получить повышение или новую должность',
-    'Освоить новый профессиональный навык',
-    'Построить личный бренд в индустрии',
-    'Найти ментора в своей сфере',
-    'Пройти сертификацию или курс повышения квалификации'
-  ],
-  love: [
-    'Улучшить отношения с партнёром',
-    'Проводить качественное время с семьёй',
-    'Научиться выражать чувства и благодарность',
-    'Разрешить затянувшийся конфликт в отношениях',
-    'Укрепить эмоциональную связь с близкими'
-  ]
-}
-
-const showTemplates = ref(false)
-const selectedTemplateSphere = ref('')
-
-const filteredTemplates = computed(() => {
-  if (!selectedTemplateSphere.value) return []
-  return goalTemplates[selectedTemplateSphere.value] || []
-})
-
-function selectTemplate(template) {
-  newGoal.value.text = template
-  newGoal.value.sphereId = selectedTemplateSphere.value
-  showTemplates.value = false
-}
-
-function toggleTemplates() {
-  showTemplates.value = !showTemplates.value
-  if (showTemplates.value && !selectedTemplateSphere.value && lifeSpheres.value.length > 0) {
-    selectedTemplateSphere.value = lifeSpheres.value[0].id
-  }
+function resetEditAccordion() {
+  editWhyAccordion.value.question1Open = false
+  editWhyAccordion.value.question2Open = false
 }
 
 // API loading state  
@@ -1000,23 +778,17 @@ function goToPlanning() {
 }
 
 function addNewGoal() {
-  newGoal.value = {
-    text: '',
-    sphereId: '',
-    whyImportant: '',
-    why2: '',
-    status: null,
-    generatedByAI: false,
-    steps: []
-  }
-  resetAccordion(false)
-  showReflectionSection.value = false
-  showTemplates.value = false
   showAddModal.value = true
 }
 
+function onGoalCreated(goal) {
+  if (DEBUG_MODE) {
+    console.log('[GoalsBank] Goal created:', goal)
+  }
+  displayLimit.value = rawIdeas.value.length
+}
+
 function openMentorModal() {
-  showAddModal.value = false
   showMentorModal.value = true
 }
 
@@ -1025,57 +797,6 @@ function onMentorGoalsCreated(goals) {
     console.log('[GoalsBank] Mentor created goals:', goals)
   }
   showMentorModal.value = false
-}
-
-function closeAddModal() {
-  showAddModal.value = false
-  showReflectionSection.value = false
-  showTemplates.value = false
-  resetAccordion(false)
-  newGoal.value = {
-    text: '',
-    sphereId: '',
-    whyImportant: '',
-    why2: '',
-    status: null,
-    generatedByAI: false,
-    steps: []
-  }
-}
-
-async function saveNewGoal() {
-  if (!newGoal.value.text.trim()) {
-    return
-  }
-  
-  const goalData = {
-    text: newGoal.value.text.trim(),
-    sphereId: newGoal.value.sphereId,
-    whyImportant: newGoal.value.whyImportant,
-    status: newGoal.value.status,
-    threeWhys: {
-      why1: newGoal.value.whyImportant,
-      why2: newGoal.value.why2
-    },
-    generatedByAI: newGoal.value.generatedByAI,
-    steps: newGoal.value.steps || []
-  }
-  
-  // Optimistic UI: add to local state first
-  const localGoal = store.addRawIdea(goalData, { insertAtTop: true })
-  
-  closeAddModal()
-  
-  // Update displayLimit to show new goal
-  displayLimit.value = rawIdeas.value.length
-  
-  // Sync with backend (non-blocking)
-  store.createGoalOnBackend(goalData).then(result => {
-    if (result.success && result.goalId) {
-      // Update local goal with backend ID
-      store.updateRawIdea(localGoal.id, { backendId: result.goalId })
-    }
-  })
 }
 
 const completedGoalsCount = computed(() => apiTotalData.value?.completed_goals ?? allGoals.value.filter(g => g.status === 'completed' && g.source === 'goals-bank').length)
@@ -2063,7 +1784,7 @@ function openEditModal(goal) {
     sphereId: goal.sphereId,
     status: goal.status || 'raw'
   }
-  resetAccordion(true)
+  resetEditAccordion()
   showEditReflection.value = !!(editingGoal.value.whyImportant || editingGoal.value.why2)
   showEditModal.value = true
 }
@@ -2139,7 +1860,7 @@ function toggleWorkStatus() {
 function closeEditModal() {
   showEditModal.value = false
   showEditReflection.value = false
-  resetAccordion(true)
+  resetEditAccordion()
   editingGoal.value = null
   pendingWorkStatus.value = null
 }

@@ -680,6 +680,7 @@ export const useAppStore = defineStore('app', () => {
     finish_minitask: false,
     telegram_bot_link: '',
     has_diary_entry_today: false,
+    diary_today: null,
     journal_streak: 0,
     xp_balance: 0,
     lifetime_xp: 0,
@@ -749,6 +750,7 @@ export const useAppStore = defineStore('app', () => {
         finish_minitask: userData.finish_minitask ?? false,
         telegram_bot_link: userData.telegram_bot_link || '',
         has_diary_entry_today: userData.has_diary_entry_today ?? false,
+        diary_today: userData.diary_today || null,
         journal_streak: userData.journal_streak ?? 0,
         xp_balance: userData.xp_balance ?? 0,
         lifetime_xp: userData.lifetime_xp ?? 0,
@@ -860,6 +862,7 @@ export const useAppStore = defineStore('app', () => {
         xp_balance: userData.xp_balance ?? user.value.xp_balance,
         lifetime_xp: userData.lifetime_xp ?? user.value.lifetime_xp,
         has_diary_entry_today: userData.has_diary_entry_today ?? user.value.has_diary_entry_today,
+        diary_today: userData.diary_today || user.value.diary_today,
         updated_at: new Date().toISOString()
       }
       localStorage.setItem('onepercent_user_dashboard', JSON.stringify(dataToSave))
@@ -1165,11 +1168,44 @@ export const useAppStore = defineStore('app', () => {
     return journal.value.entries.some(e => e.date === today)
   })
 
-  // Получить запись на сегодня
+  // Получить запись на сегодня (приоритет: данные с бэкенда diary_today)
   const todayJournalEntry = computed(() => {
+    // Если есть данные с бэкенда - используем их
+    if (user.value.diary_today) {
+      const dt = user.value.diary_today
+      return {
+        id: String(dt.diary_id),
+        backendId: dt.diary_id,
+        date: getTodayDateString(),
+        whatDone: dt.what_done || '',
+        whatNotDone: dt.what_not_done || '',
+        reflection: dt.reflection || '',
+        tomorrowPlans: dt.plans || '',
+        createdAt: dt.date_created
+      }
+    }
+    // Иначе проверяем локальные записи
     const today = getTodayDateString()
     return journal.value.entries.find(e => e.date === today) || null
   })
+  
+  // Прямой доступ к diary_today с бэкенда
+  const diaryToday = computed(() => user.value.diary_today)
+  
+  // Обновить diary_today после сохранения записи
+  function setDiaryToday(diaryData) {
+    if (diaryData) {
+      user.value.diary_today = {
+        diary_id: diaryData.diary_id,
+        what_done: diaryData.what_done || '',
+        what_not_done: diaryData.what_not_done || '',
+        reflection: diaryData.reflection || '',
+        plans: diaryData.plans || '',
+        date_created: diaryData.date_created || new Date().toISOString()
+      }
+      user.value.has_diary_entry_today = true
+    }
+  }
 
   // Добавить запись в дневник
   function addJournalEntry(entry) {
@@ -3518,6 +3554,8 @@ export const useAppStore = defineStore('app', () => {
     journal,
     hasTodayEntry,
     todayJournalEntry,
+    diaryToday,
+    setDiaryToday,
     journalStreak,
     addJournalEntry,
     updateJournalEntry,

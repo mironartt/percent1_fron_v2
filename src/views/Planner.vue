@@ -1,8 +1,8 @@
 <template>
   <div class="planner-container">
     <header class="page-header">
+      <Breadcrumbs :items="breadcrumbItems" />
       <div>
-        <h1>Планировщик</h1>
         <p class="subtitle">
           Системное управление временем, вниманием и энергией
         </p>
@@ -377,8 +377,14 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useAppStore } from '../stores/app'
+import Breadcrumbs from '@/components/Breadcrumbs.vue'
 
 const store = useAppStore()
+
+const breadcrumbItems = [
+  { label: 'Главная', to: '/app' },
+  { label: 'Планировщик', to: '/app/planner' }
+]
 
 const activeTab = ref('day')
 const showAddTaskModal = ref(false)
