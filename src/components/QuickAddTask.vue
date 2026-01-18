@@ -307,8 +307,13 @@ async function loadGoals(reset = true, searchQuery = '') {
     
     const result = await getGoals(params)
     
-    if (result.status === 'ok' && result.goals_data) {
-      const newGoals = result.goals_data.map(g => ({
+    console.log('[QuickAddTask] API response:', result)
+    
+    const goalsData = result.data?.goals_data || result.goals_data
+    console.log('[QuickAddTask] goals_data:', goalsData)
+    
+    if (result.status === 'ok' && goalsData && Array.isArray(goalsData)) {
+      const newGoals = goalsData.map(g => ({
         id: g.id,
         title: g.title,
         sphereIcon: getSphereIcon(g.category)
