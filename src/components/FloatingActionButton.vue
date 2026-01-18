@@ -84,7 +84,8 @@ function handleItemClick(item) {
 @media (max-width: 768px) {
   .fab-container {
     right: 16px;
-    bottom: 88px; /* 16px (отступ снизу) + 56px (высота кнопки ментора) + 16px (gap) */
+    /* Над bottom nav (56px) + safe area + gap (16px) + mentor button (56px) + gap (16px) */
+    bottom: calc(var(--bottom-nav-height, 56px) + env(safe-area-inset-bottom, 0px) + 16px + 56px + 16px);
   }
   
   .fab-container.mentor-expanded {
