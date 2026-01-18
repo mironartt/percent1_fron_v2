@@ -1,8 +1,8 @@
 <template>
   <div class="learning-center">
+    <Breadcrumbs :items="breadcrumbs" />
     <header class="page-header">
       <div>
-        <h1>Обучение</h1>
         <p class="subtitle">Изучите все возможности системы и методологию 1%</p>
       </div>
       <div class="header-progress" v-if="completedLessons > 0">
@@ -98,6 +98,7 @@
 
 <script setup>
 import { ref, computed, markRaw } from 'vue'
+import Breadcrumbs from '../components/Breadcrumbs.vue'
 import { 
   BookOpen, 
   Target, 
@@ -118,6 +119,11 @@ import {
   Trophy,
   Sun
 } from 'lucide-vue-next'
+
+const breadcrumbs = [
+  { label: 'Главная', to: '/app' },
+  { label: 'Обучение' }
+]
 
 const showLessonModal = ref(false)
 const currentLesson = ref(null)

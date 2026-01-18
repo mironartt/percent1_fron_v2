@@ -1,7 +1,7 @@
 <template>
   <div class="ssp-container">
+    <Breadcrumbs :items="breadcrumbs" />
     <header class="ssp-header">
-      <h1>Колесо баланса</h1>
       <p class="subtitle">Оценка и анализ сфер вашей жизни</p>
     </header>
 
@@ -479,6 +479,7 @@ import { useAppStore } from '../stores/app'
 import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
 import { apiFetch } from '@/services/api.js'
 import WheelOfLife from '../components/WheelOfLife.vue'
+import Breadcrumbs from '../components/Breadcrumbs.vue'
 import { 
   Wallet, 
   Palette, 
@@ -505,6 +506,11 @@ import {
 
 const store = useAppStore()
 const router = useRouter()
+
+const breadcrumbs = [
+  { label: 'Главная', to: '/app' },
+  { label: 'Колесо баланса' }
+]
 
 const tabs = [
   { id: 'wheel', label: 'Колесо', icon: PieChart },

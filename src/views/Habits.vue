@@ -1,9 +1,9 @@
 <template>
   <div class="habits-page">
+    <Breadcrumbs :items="breadcrumbs" />
     <header class="page-header">
       <div class="header-content">
         <div class="title-section">
-          <h1 class="page-title">Мои привычки</h1>
           <p class="page-subtitle">Маленькие шаги к большим изменениям</p>
         </div>
       </div>
@@ -1689,6 +1689,12 @@ import {
   RefreshCw, BarChart3, Clock, ArrowLeft, Square, CheckSquare, AlertTriangle
 } from 'lucide-vue-next'
 import { apiFetch } from '@/services/api.js'
+import Breadcrumbs from '../components/Breadcrumbs.vue'
+
+const breadcrumbs = [
+  { label: 'Главная', to: '/app' },
+  { label: 'Привычки' }
+]
 
 const appStore = useAppStore()
 const xpStore = useXpStore()
