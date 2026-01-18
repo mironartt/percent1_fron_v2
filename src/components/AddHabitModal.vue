@@ -397,7 +397,7 @@ import {
 } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'
 import { useHabitsStore } from '@/stores/habits'
-import { useAiTasksStore } from '@/stores/aiTasks'
+import { useAITasksStore } from '@/stores/aiTasks'
 import { useToastStore } from '@/stores/toast'
 
 const props = defineProps({
@@ -419,7 +419,7 @@ const emit = defineEmits(['update:modelValue', 'created', 'updated', 'deleted', 
 
 const appStore = useAppStore()
 const habitsStore = useHabitsStore()
-const aiTasksStore = useAiTasksStore()
+const aiTasksStore = useAITasksStore()
 const toast = useToastStore()
 
 const HABIT_TASK_TYPE = 'habit_create_help'
