@@ -84,11 +84,18 @@ function handleItemClick(item) {
 @media (max-width: 768px) {
   .fab-container {
     right: 16px;
-    bottom: 90px;
+    bottom: 100px;
   }
   
   .fab-container.mentor-expanded {
     right: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .fab-container {
+    right: 16px;
+    bottom: 96px;
   }
 }
 

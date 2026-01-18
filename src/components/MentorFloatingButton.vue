@@ -517,6 +517,11 @@ onUnmounted(() => {
 }
 
 @media (max-width: 480px) {
+  .mentor-floating-container {
+    bottom: 24px;
+    right: 16px;
+  }
+  
   .floating-chat-panel {
     width: calc(100vw - 48px);
     right: -12px;

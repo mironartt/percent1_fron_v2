@@ -1013,18 +1013,16 @@ onUnmounted(() => {
 
 @media (max-width: 480px) {
   .quick-task-modal {
-    max-width: 100%;
-    border-radius: 20px 20px 0 0;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    max-height: 85vh;
+    max-width: calc(100% - 32px);
+    max-height: 90vh;
+    border-radius: 20px;
+    margin: auto;
   }
   
   .quick-task-overlay {
-    align-items: flex-end;
-    padding: 0;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
   }
   
   .day-selector {

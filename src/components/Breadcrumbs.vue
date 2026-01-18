@@ -50,9 +50,10 @@ defineProps({
 }
 
 .breadcrumb-item {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
+  line-height: 1;
 }
 
 .breadcrumb-link {
