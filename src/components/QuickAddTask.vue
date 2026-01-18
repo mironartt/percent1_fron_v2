@@ -25,9 +25,82 @@
                 @keydown.enter="save"
               />
             </div>
+
+            <div class="form-group">
+              <label>
+                <Target :size="14" :stroke-width="1.5" class="label-icon" />
+                Цель
+                <span class="required-badge">обязательно</span>
+              </label>
+              <div class="goal-selector" ref="goalSelectorRef">
+                <div class="goal-input-wrap">
+                  <span v-if="selectedGoal && !showGoalDropdown" class="goal-input-sphere">{{ selectedGoal.sphereIcon }}</span>
+                  <input 
+                    ref="goalInputRef"
+                    v-model="goalInputValue"
+                    type="text"
+                    placeholder="Найти или выбрать цель..."
+                    class="goal-input"
+                    :class="{ 
+                      'has-value': selectedGoal, 
+                      'error': showGoalError,
+                      'with-sphere': selectedGoal && !showGoalDropdown
+                    }"
+                    @focus="openGoalDropdown"
+                    @input="onGoalSearchInput"
+                    @blur="onGoalInputBlur"
+                  />
+                  <button 
+                    v-if="selectedGoal" 
+                    class="clear-goal-btn"
+                    @click.stop="clearGoal"
+                    type="button"
+                  >
+                    <X :size="14" :stroke-width="2" />
+                  </button>
+                  <ChevronDown 
+                    v-else
+                    :size="18" 
+                    :stroke-width="1.5" 
+                    class="dropdown-chevron"
+                    :class="{ rotated: showGoalDropdown }"
+                  />
+                </div>
+                
+                <Transition name="dropdown">
+                  <div v-if="showGoalDropdown" class="goal-dropdown">
+                    <div v-if="isLoadingGoals" class="dropdown-loading">
+                      <Loader2 :size="18" class="spin" />
+                      <span>Загрузка...</span>
+                    </div>
+                    <div v-else-if="filteredGoals.length === 0" class="dropdown-empty">
+                      <span>Цели не найдены</span>
+                    </div>
+                    <template v-else>
+                      <button
+                        v-for="goal in filteredGoals"
+                        :key="goal.id"
+                        class="goal-option"
+                        :class="{ selected: selectedGoal?.id === goal.id }"
+                        @mousedown.prevent="selectGoal(goal)"
+                        type="button"
+                      >
+                        <span class="goal-sphere" v-if="goal.sphereIcon">{{ goal.sphereIcon }}</span>
+                        <span class="goal-title">{{ goal.title }}</span>
+                        <Check v-if="selectedGoal?.id === goal.id" :size="16" class="check-icon" />
+                      </button>
+                    </template>
+                  </div>
+                </Transition>
+              </div>
+              <span v-if="showGoalError" class="error-message">Выберите цель для задачи</span>
+            </div>
             
             <div class="form-group">
-              <label>Когда</label>
+              <label>
+                <Calendar :size="14" :stroke-width="1.5" class="label-icon" />
+                Когда
+              </label>
               <div class="day-selector">
                 <button 
                   v-for="day in dayOptions" 
@@ -48,76 +121,42 @@
               </div>
             </div>
             
-            <div class="form-row params-row">
-              <div class="form-group half">
-                <label>Время</label>
-                <div class="time-selector">
-                  <button 
-                    v-for="time in timeOptions" 
-                    :key="time.value"
-                    :class="['time-btn', { active: selectedTime === time.value }]"
-                    @click="selectedTime = selectedTime === time.value ? '' : time.value"
-                  >
-                    {{ time.label }}
-                  </button>
-                </div>
-              </div>
-              <div class="form-group half">
-                <label>Приоритет</label>
-                <div class="priority-selector">
-                  <button 
-                    v-for="p in priorityOptions" 
-                    :key="p.value"
-                    :class="['priority-btn', { active: selectedPriority === p.value }]"
-                    :style="selectedPriority === p.value ? { background: p.color + '15', borderColor: p.color, color: p.color } : {}"
-                    @click="selectedPriority = selectedPriority === p.value ? '' : p.value"
-                  >
-                    {{ p.label }}
-                  </button>
-                </div>
+            <div class="form-group">
+              <label>
+                <Flag :size="14" :stroke-width="1.5" class="label-icon" />
+                Приоритет
+              </label>
+              <div class="pill-selector">
+                <button 
+                  v-for="p in priorityOptions" 
+                  :key="p.value"
+                  :class="['pill-btn', 'priority-pill', { active: selectedPriority === p.value }]"
+                  :style="selectedPriority === p.value && p.color ? { 
+                    background: p.color, 
+                    borderColor: p.color, 
+                    color: 'white' 
+                  } : {}"
+                  @click="selectedPriority = selectedPriority === p.value ? '' : p.value"
+                >
+                  {{ p.label }}
+                </button>
               </div>
             </div>
-            
+
             <div class="form-group">
-              <label>Цель (опционально)</label>
-              <div class="goal-selector">
-                <div class="goal-search-wrap">
-                  <Search :size="16" :stroke-width="1.5" class="search-icon" />
-                  <input 
-                    v-model="goalSearch"
-                    type="text"
-                    placeholder="Найти или выбрать цель..."
-                    class="goal-search"
-                    @focus="showGoalDropdown = true"
-                  />
-                  <button 
-                    v-if="selectedGoal" 
-                    class="clear-goal-btn"
-                    @click="clearGoal"
-                  >
-                    <X :size="14" :stroke-width="2" />
-                  </button>
-                </div>
-                
-                <Transition name="dropdown">
-                  <div v-if="showGoalDropdown && filteredGoals.length > 0" class="goal-dropdown">
-                    <button
-                      v-for="goal in filteredGoals"
-                      :key="goal.id"
-                      class="goal-option"
-                      :class="{ selected: selectedGoal?.id === goal.id }"
-                      @click="selectGoal(goal)"
-                    >
-                      <span class="goal-sphere" v-if="goal.sphereIcon">{{ goal.sphereIcon }}</span>
-                      <span class="goal-title">{{ goal.title }}</span>
-                    </button>
-                  </div>
-                </Transition>
-              </div>
-              
-              <div v-if="selectedGoal" class="selected-goal-badge">
-                <Target :size="14" :stroke-width="1.5" />
-                <span>{{ selectedGoal.title }}</span>
+              <label>
+                <Clock :size="14" :stroke-width="1.5" class="label-icon" />
+                Время
+              </label>
+              <div class="pill-selector">
+                <button 
+                  v-for="time in timeOptions" 
+                  :key="time.value"
+                  :class="['pill-btn', 'time-pill', { active: selectedTime === time.value }]"
+                  @click="selectedTime = selectedTime === time.value ? '' : time.value"
+                >
+                  {{ time.label }}
+                </button>
               </div>
             </div>
           </div>
@@ -132,8 +171,8 @@
               @click="save"
             >
               <Loader2 v-if="isSaving" :size="16" :stroke-width="2" class="spin" />
-              <Plus v-else :size="16" :stroke-width="2" />
-              Добавить
+              <Check v-else :size="16" :stroke-width="2" />
+              Сохранить
             </button>
           </div>
         </div>
@@ -144,7 +183,7 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { Zap, X, Search, Target, Plus, Loader2 } from 'lucide-vue-next'
+import { Zap, X, Target, Check, Loader2, ChevronDown, Calendar, Flag, Clock } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'
 import { createStep, scheduleStep, getGoals } from '@/services/api'
 
@@ -160,14 +199,29 @@ const emit = defineEmits(['update:modelValue', 'created'])
 const store = useAppStore()
 
 const taskInput = ref(null)
+const goalSelectorRef = ref(null)
+const goalInputRef = ref(null)
 const taskTitle = ref('')
 const selectedDay = ref('today')
 const selectedGoal = ref(null)
-const goalSearch = ref('')
+const goalSearchQuery = ref('')
 const showGoalDropdown = ref(false)
+const showGoalError = ref(false)
 const isSaving = ref(false)
 const availableGoals = ref([])
 const isLoadingGoals = ref(false)
+
+const goalInputValue = computed({
+  get() {
+    if (showGoalDropdown.value) {
+      return goalSearchQuery.value
+    }
+    return selectedGoal.value ? selectedGoal.value.title : ''
+  },
+  set(val) {
+    goalSearchQuery.value = val
+  }
+})
 
 const dayOptions = [
   { value: 'today', label: 'Сегодня' },
@@ -175,22 +229,23 @@ const dayOptions = [
   { value: 'custom', label: 'Дата' }
 ]
 
+const priorityOptions = [
+  { value: 'critical', label: 'Критично', color: '#ef4444' },
+  { value: 'desirable', label: 'Важно', color: '#f59e0b' },
+  { value: 'attention', label: 'В поле внимания', color: '#6366f1' },
+  { value: 'optional', label: 'По возможности', color: '#9ca3af' },
+  { value: '', label: 'Без приоритета', color: null }
+]
+
 const timeOptions = [
-  { value: '30min', label: '30 мин' },
+  { value: '30min', label: '30 минут' },
   { value: '1h', label: '1 час' },
   { value: '2h', label: '2 часа' },
   { value: '3h', label: '3 часа' },
-  { value: '4h', label: '4 часа' }
+  { value: '4h', label: '4 часа' },
+  { value: '', label: 'Без оценки' }
 ]
 
-const priorityOptions = [
-  { value: 'critical', label: 'Критично', color: '#ef4444' },
-  { value: 'desirable', label: 'Желательно', color: '#f59e0b' },
-  { value: 'attention', label: 'Внимание', color: '#3b82f6' },
-  { value: 'optional', label: 'Опционально', color: '#9ca3af' }
-]
-
-const showDatePicker = ref(false)
 const customDate = ref('')
 const selectedPriority = ref('')
 const selectedTime = ref('')
@@ -207,13 +262,13 @@ function selectDay(value) {
 }
 
 const filteredGoals = computed(() => {
-  if (!goalSearch.value.trim()) {
-    return availableGoals.value.slice(0, 10)
+  if (!goalSearchQuery.value.trim()) {
+    return availableGoals.value.slice(0, 15)
   }
-  const query = goalSearch.value.toLowerCase()
+  const query = goalSearchQuery.value.toLowerCase()
   return availableGoals.value
     .filter(g => g.title.toLowerCase().includes(query))
-    .slice(0, 10)
+    .slice(0, 15)
 })
 
 async function loadGoals() {
@@ -253,15 +308,38 @@ function getSphereIcon(category) {
   return icons[category] || '🎯'
 }
 
+function openGoalDropdown() {
+  showGoalDropdown.value = true
+  showGoalError.value = false
+  goalSearchQuery.value = ''
+}
+
+function onGoalSearchInput() {
+  showGoalDropdown.value = true
+  if (selectedGoal.value) {
+    selectedGoal.value = null
+  }
+}
+
+function onGoalInputBlur() {
+  setTimeout(() => {
+    showGoalDropdown.value = false
+  }, 150)
+}
+
 function selectGoal(goal) {
   selectedGoal.value = goal
-  goalSearch.value = ''
+  goalSearchQuery.value = ''
   showGoalDropdown.value = false
+  showGoalError.value = false
 }
 
 function clearGoal() {
   selectedGoal.value = null
-  goalSearch.value = ''
+  goalSearchQuery.value = ''
+  nextTick(() => {
+    goalInputRef.value?.focus()
+  })
 }
 
 function getTargetDate() {
@@ -290,11 +368,21 @@ function mapPriorityToBackend(priority) {
   return priorityMap[priority] || null
 }
 
+function mapTimeToBackend(time) {
+  if (!time) return null
+  return time
+}
+
 function formatDate(date) {
   return date.toISOString().split('T')[0]
 }
 
 async function save() {
+  if (!selectedGoal.value) {
+    showGoalError.value = true
+    return
+  }
+  
   if (!canSave.value || isSaving.value) return
   
   isSaving.value = true
@@ -309,7 +397,7 @@ async function save() {
       const stepId = stepResult.goals_steps_data[0].id
       const targetDate = getTargetDate()
       const priority = mapPriorityToBackend(selectedPriority.value)
-      const timeDuration = selectedTime.value || null
+      const timeDuration = mapTimeToBackend(selectedTime.value)
       
       await scheduleStep(selectedGoal.value.id, stepId, targetDate, priority, timeDuration)
       
@@ -339,12 +427,12 @@ function resetForm() {
   taskTitle.value = ''
   selectedDay.value = 'today'
   selectedGoal.value = null
-  goalSearch.value = ''
+  goalSearchQuery.value = ''
   showGoalDropdown.value = false
+  showGoalError.value = false
   customDate.value = ''
   selectedPriority.value = ''
   selectedTime.value = ''
-  showDatePicker.value = false
 }
 
 function close() {
@@ -352,7 +440,7 @@ function close() {
 }
 
 function handleClickOutside(e) {
-  if (showGoalDropdown.value && !e.target.closest('.goal-selector')) {
+  if (showGoalDropdown.value && goalSelectorRef.value && !goalSelectorRef.value.contains(e.target)) {
     showGoalDropdown.value = false
   }
 }
@@ -394,9 +482,12 @@ onUnmounted(() => {
   background: white;
   border-radius: 20px;
   width: 100%;
-  max-width: 440px;
+  max-width: 480px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
   overflow: hidden;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-header {
@@ -405,6 +496,7 @@ onUnmounted(() => {
   justify-content: space-between;
   padding: 20px 24px;
   border-bottom: 1px solid #f1f3f5;
+  flex-shrink: 0;
 }
 
 .modal-header h3 {
@@ -445,6 +537,8 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .form-group {
@@ -454,18 +548,26 @@ onUnmounted(() => {
 }
 
 .form-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 13px;
   font-weight: 500;
   color: #6b7280;
 }
 
-.form-row {
-  display: flex;
-  gap: 16px;
+.label-icon {
+  color: #9ca3af;
 }
 
-.form-group.half {
-  flex: 1;
+.required-badge {
+  font-size: 11px;
+  font-weight: 500;
+  color: #ef4444;
+  background: #fef2f2;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 4px;
 }
 
 .task-input {
@@ -485,6 +587,163 @@ onUnmounted(() => {
 
 .task-input::placeholder {
   color: #9ca3af;
+}
+
+.goal-selector {
+  position: relative;
+}
+
+.goal-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.goal-input-sphere {
+  position: absolute;
+  left: 12px;
+  font-size: 16px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.goal-input {
+  width: 100%;
+  padding: 12px 40px 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #1f2937;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.goal-input.with-sphere {
+  padding-left: 40px;
+}
+
+.goal-input:focus {
+  outline: none;
+  border-color: #6366f1;
+}
+
+.goal-input.has-value {
+  border-color: #6366f1;
+  background: #f5f3ff;
+  font-weight: 500;
+}
+
+.goal-input.error {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.goal-input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.dropdown-chevron {
+  position: absolute;
+  right: 12px;
+  color: #9ca3af;
+  pointer-events: none;
+  transition: transform 0.2s;
+}
+
+.dropdown-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.clear-goal-btn {
+  position: absolute;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: white;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.clear-goal-btn:hover {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+.goal-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.dropdown-loading,
+.dropdown-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.goal-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.goal-option:hover {
+  background: #f3f4f6;
+}
+
+.goal-option.selected {
+  background: #f5f3ff;
+}
+
+.goal-option .goal-sphere {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.goal-option .goal-title {
+  flex: 1;
+  font-size: 14px;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.goal-option .check-icon {
+  color: #6366f1;
+  flex-shrink: 0;
+}
+
+.error-message {
+  font-size: 12px;
+  color: #ef4444;
 }
 
 .day-selector {
@@ -517,7 +776,7 @@ onUnmounted(() => {
 }
 
 .date-picker-row {
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 .date-input {
@@ -535,175 +794,44 @@ onUnmounted(() => {
   border-color: #6366f1;
 }
 
-.params-row {
-  margin-top: 4px;
-}
-
-.time-selector {
+.pill-selector {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
-.time-btn {
-  padding: 8px 12px;
+.pill-btn {
+  padding: 10px 16px;
   border: 2px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 20px;
   background: white;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   color: #6b7280;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
-.time-btn:hover {
+.pill-btn:hover {
   border-color: #d1d5db;
   background: #f9fafb;
 }
 
-.time-btn.active {
+.pill-btn.active {
   border-color: #6366f1;
-  background: #eef2ff;
-  color: #6366f1;
+  background: #6366f1;
+  color: white;
 }
 
-.priority-selector {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.priority-btn {
-  padding: 8px 12px;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  background: white;
-  font-size: 12px;
-  font-weight: 500;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.priority-btn:hover {
-  border-color: #d1d5db;
-  background: #f9fafb;
-}
-
-.priority-btn.active {
+.priority-pill.active {
   font-weight: 600;
 }
 
-.goal-selector {
-  position: relative;
-}
-
-.goal-search-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.search-icon {
-  position: absolute;
-  left: 14px;
-  color: #9ca3af;
-  pointer-events: none;
-}
-
-.goal-search {
-  width: 100%;
-  padding: 12px 40px 12px 40px;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 14px;
-  color: #1f2937;
-  transition: border-color 0.2s;
-}
-
-.goal-search:focus {
-  outline: none;
+.time-pill.active {
   border-color: #6366f1;
-}
-
-.clear-goal-btn {
-  position: absolute;
-  right: 12px;
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  border: none;
-  background: #f3f4f6;
-  color: #6b7280;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.goal-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  margin-top: 4px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-  border: 1px solid #e5e7eb;
-  max-height: 200px;
-  overflow-y: auto;
-  z-index: 10;
-}
-
-.goal-option {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 12px 16px;
-  border: none;
-  background: none;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.goal-option:hover {
-  background: #f3f4f6;
-}
-
-.goal-option.selected {
-  background: #eef2ff;
-}
-
-.goal-sphere {
-  font-size: 16px;
-}
-
-.goal-option .goal-title {
-  font-size: 14px;
-  color: #1f2937;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.selected-goal-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: #eef2ff;
-  border-radius: 8px;
-  font-size: 13px;
-  color: #6366f1;
-  margin-top: 8px;
-}
-
-.selected-goal-badge svg {
-  flex-shrink: 0;
+  background: #6366f1;
+  color: white;
 }
 
 .modal-footer {
@@ -712,6 +840,7 @@ onUnmounted(() => {
   padding: 20px 24px;
   border-top: 1px solid #f1f3f5;
   background: #f9fafb;
+  flex-shrink: 0;
 }
 
 .btn {
@@ -805,6 +934,7 @@ onUnmounted(() => {
     bottom: 0;
     left: 0;
     right: 0;
+    max-height: 85vh;
   }
   
   .quick-task-overlay {
@@ -819,6 +949,11 @@ onUnmounted(() => {
   .day-btn {
     flex: 1 1 calc(33% - 6px);
     min-width: 0;
+  }
+
+  .pill-btn {
+    padding: 8px 12px;
+    font-size: 12px;
   }
 }
 </style>
