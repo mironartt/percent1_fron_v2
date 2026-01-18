@@ -45,7 +45,7 @@ import { useAppStore } from './stores/app'
 import { useAITasksStore } from './stores/aiTasks'
 import { useTelegram } from './composables/useTelegram'
 import { telegramWebAppAuth, getUserData } from './services/api'
-import { DEV_MODE, SKIP_AUTH_CHECK, DEBUG_MODE } from './config/settings'
+import { DEV_MODE, SKIP_AUTH_CHECK, SKIP_POLICY_CHECK, DEBUG_MODE } from './config/settings'
 
 const route = useRoute()
 const router = useRouter()
@@ -186,7 +186,7 @@ const showBottomNav = computed(() => {
 
 const showPolicyModal = computed(() => {
   // Пропускаем модал политик в режиме разработки
-  if (DEV_MODE && SKIP_AUTH_CHECK && DEBUG_MODE) {
+  if (SKIP_POLICY_CHECK) {
     return false
   }
   return store.isAuthenticated && store.needsPolicyAcceptance && isAppPage.value
