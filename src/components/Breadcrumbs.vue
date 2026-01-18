@@ -67,6 +67,8 @@ defineProps({
   color: #6b7280;
   text-decoration: none;
   transition: color 0.2s;
+  line-height: 1;
+  vertical-align: middle;
 }
 
 .breadcrumb-link:hover {
@@ -77,11 +79,16 @@ defineProps({
   font-size: 14px;
   font-weight: 600;
   color: #1f2937;
+  line-height: 1;
+  vertical-align: middle;
 }
 
 .breadcrumb-separator {
   color: #d1d5db;
   flex-shrink: 0;
+  vertical-align: middle;
+  display: inline-flex;
+  align-items: center;
 }
 
 @media (max-width: 640px) {
