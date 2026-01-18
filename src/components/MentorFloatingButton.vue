@@ -518,7 +518,7 @@ onUnmounted(() => {
 
 @media (max-width: 480px) {
   .mentor-floating-container {
-    bottom: 24px;
+    bottom: 16px;
     right: 16px;
   }
   
