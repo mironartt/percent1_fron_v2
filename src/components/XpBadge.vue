@@ -1,5 +1,5 @@
 <template>
-  <div class="xp-badge" :class="{ 'has-notification': showNotification }" @click="$emit('click')">
+  <div class="xp-badge" :class="{ 'has-notification': showNotification }" @click="$emit('click')" title="XP — очки опыта за выполнение шагов и ведение дневника">
     <div class="xp-icon">
       <Sparkles :size="16" :stroke-width="1.5" />
     </div>
