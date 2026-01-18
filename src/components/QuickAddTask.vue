@@ -247,18 +247,18 @@ const dayOptions = [
 
 const priorityOptions = [
   { value: 'critical', label: 'Критично', color: '#ef4444' },
-  { value: 'desirable', label: 'Важно', color: '#f59e0b' },
+  { value: 'important', label: 'Важно', color: '#f59e0b' },
   { value: 'attention', label: 'В поле внимания', color: '#6366f1' },
   { value: 'optional', label: 'По возможности', color: '#9ca3af' },
   { value: '', label: 'Без приоритета', color: null }
 ]
 
 const timeOptions = [
-  { value: '30min', label: '30 минут' },
-  { value: '1h', label: '1 час' },
-  { value: '2h', label: '2 часа' },
-  { value: '3h', label: '3 часа' },
-  { value: '4h', label: '4 часа' },
+  { value: 'half', label: '30 минут' },
+  { value: 'one', label: '1 час' },
+  { value: 'two', label: '2 часа' },
+  { value: 'three', label: '3 часа' },
+  { value: 'four', label: '4 часа' },
   { value: '', label: 'Без оценки' }
 ]
 
@@ -443,18 +443,11 @@ function getTargetDate() {
 }
 
 function mapPriorityToBackend(priority) {
-  const priorityMap = {
-    'critical': 'critical',
-    'desirable': 'desirable',
-    'attention': 'attention',
-    'optional': 'optional'
-  }
-  return priorityMap[priority] || null
+  return priority || null
 }
 
 function mapTimeToBackend(time) {
-  if (!time) return null
-  return time
+  return time || null
 }
 
 function formatDate(date) {
