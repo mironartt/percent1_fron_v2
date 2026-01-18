@@ -304,18 +304,11 @@ async function loadGoals(reset = true, searchQuery = '') {
       params.query_filter = searchQuery.trim()
     }
     
-    console.log('[QuickAddTask] Loading goals:', params)
-    
     const result = await getGoals(params)
     
-    console.log('[QuickAddTask] API response:', result)
-    
     const goalsData = result.data?.goals_data || result.goals_data
-    console.log('[QuickAddTask] goals_data:', goalsData)
     
     if (result.status === 'ok' && goalsData && Array.isArray(goalsData)) {
-      console.log('[QuickAddTask] First goal structure:', goalsData[0])
-      
       const newGoals = goalsData.map(g => ({
         id: g.goal_id || g.id,
         title: g.title,
@@ -332,10 +325,7 @@ async function loadGoals(reset = true, searchQuery = '') {
       if (!reset) {
         currentPage.value++
       }
-      
-      console.log('[QuickAddTask] Goals loaded:', newGoals.length, 'hasMore:', hasMoreGoals.value)
     } else {
-      console.log('[QuickAddTask] No goals in response')
       if (reset) {
         availableGoals.value = []
       }
@@ -470,14 +460,6 @@ async function save() {
     const priority = mapPriorityToBackend(selectedPriority.value)
     const timeDuration = mapTimeToBackend(selectedTime.value)
     
-    console.log('[QuickAddTask] Creating step with all data:', {
-      goalId,
-      title: taskTitle.value.trim(),
-      targetDate,
-      priority,
-      timeDuration
-    })
-    
     const stepData = {
       title: taskTitle.value.trim(),
       description: ''
@@ -488,9 +470,6 @@ async function save() {
     if (timeDuration) stepData.time_duration = timeDuration
     
     const stepResult = await createStep(goalId, stepData)
-    
-    console.log('[QuickAddTask] createStep result:', stepResult)
-    console.log('[QuickAddTask] stepResult.data:', stepResult.data)
     
     if (stepResult.status === 'ok') {
       emit('created', {

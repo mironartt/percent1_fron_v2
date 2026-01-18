@@ -762,15 +762,13 @@ export async function completeGoal(goalId) {
  * @returns {Promise<object>} - Созданный шаг
  */
 export async function createStep(goalId, stepData) {
-  const payload = {
+  return updateGoalSteps({
     goals_steps_data: [{
       goal_id: goalId,
       step_id: null,
       ...stepData
     }]
-  }
-  console.log('[API] createStep payload:', JSON.stringify(payload))
-  return updateGoalSteps(payload)
+  })
 }
 
 /**
@@ -841,10 +839,7 @@ export async function scheduleStep(goalId, stepId, date, priority = null, timeDu
   if (priority) stepData.priority = priority
   if (timeDuration) stepData.time_duration = timeDuration
   
-  const payload = { goals_steps_data: [stepData] }
-  console.log('[API] scheduleStep payload:', JSON.stringify(payload))
-  
-  return updateGoalSteps(payload)
+  return updateGoalSteps({ goals_steps_data: [stepData] })
 }
 
 // ==================== DIARY API ====================
