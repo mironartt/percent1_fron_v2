@@ -42,7 +42,7 @@ defineProps({
 .breadcrumbs-list {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 4px;
   list-style: none;
   margin: 0;
@@ -54,6 +54,7 @@ defineProps({
   align-items: center;
   gap: 4px;
   line-height: 1;
+  white-space: nowrap;
 }
 
 .breadcrumb-link {
