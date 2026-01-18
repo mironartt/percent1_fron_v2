@@ -300,7 +300,7 @@
               @click="handleBottomSheetRemoveFromWork"
             >
               <RotateCcw :size="20" />
-              <span>Вернуть в банк</span>
+              <span>Убрать из работы</span>
             </button>
             <button 
               v-if="isGoalCompleted(bottomSheetGoal?.id)"
@@ -380,11 +380,11 @@
             <button 
               v-if="isGoalTransferred(editingGoal.id) && !isGoalCompleted(editingGoal.id)"
               class="quick-action-btn action-remove-work"
-              title="Вернуть цель в банк"
+              title="Убрать цель из работы"
               @click="handleQuickRemoveFromWork"
             >
               <RotateCcw :size="16" />
-              <span>Вернуть в банк</span>
+              <span>Убрать из работы</span>
             </button>
             <button 
               v-if="isGoalTransferred(editingGoal.id)"
@@ -816,6 +816,7 @@ const selectedBankGoals = ref([])
 const showEditModal = ref(false)
 const editingGoal = ref(null)
 const showEditReflection = ref(false)
+const pendingWorkStatus = ref(null)
 
 const showBottomSheet = ref(false)
 const bottomSheetGoal = ref(null)
@@ -2070,12 +2071,15 @@ function openEditModal(goal) {
 function handleQuickTakeToWork() {
   if (editingGoal.value) {
     takeGoalToWork(editingGoal.value)
+    pendingWorkStatus.value = 'work'
   }
 }
 
 function handleQuickRemoveFromWork() {
   if (editingGoal.value) {
     removeFromWorkBySourceId(editingGoal.value.id)
+    pendingWorkStatus.value = null
+    closeEditModal()
   }
 }
 
@@ -2137,6 +2141,7 @@ function closeEditModal() {
   showEditReflection.value = false
   resetAccordion(true)
   editingGoal.value = null
+  pendingWorkStatus.value = null
 }
 
 async function saveGoalEdit() {
@@ -2151,6 +2156,11 @@ async function saveGoalEdit() {
       why1: editingGoal.value.whyImportant,
       why2: editingGoal.value.why2
     }
+  }
+  
+  // Если был изменён статус работы - добавляем его в обновления
+  if (pendingWorkStatus.value !== null) {
+    updates.workStatus = pendingWorkStatus.value
   }
   
   // Optimistic UI: update local state first
