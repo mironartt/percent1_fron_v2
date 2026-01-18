@@ -1178,6 +1178,12 @@ p {
   [role="button"] {
     min-height: var(--touch-target);
   }
+  
+  /* Исключение для хлебных крошек - не нужен большой touch target */
+  .breadcrumb-link,
+  .breadcrumb-current {
+    min-height: auto;
+  }
 
   /* Compact cards for mobile */
   .card {
