@@ -241,7 +241,8 @@ const goalInputValue = computed({
 const dayOptions = [
   { value: 'today', label: 'Сегодня' },
   { value: 'tomorrow', label: 'Завтра' },
-  { value: 'custom', label: 'Дата' }
+  { value: 'custom', label: 'Дата' },
+  { value: 'none', label: 'Без даты' }
 ]
 
 const priorityOptions = [
@@ -420,6 +421,10 @@ function clearGoal() {
 }
 
 function getTargetDate() {
+  if (selectedDay.value === 'none') {
+    return null
+  }
+  
   const today = new Date()
   
   if (selectedDay.value === 'today') {
@@ -465,18 +470,28 @@ async function save() {
   isSaving.value = true
   
   try {
+    console.log('[QuickAddTask] Creating step for goal:', selectedGoal.value.id)
+    
     const stepResult = await createStep(selectedGoal.value.id, {
       title: taskTitle.value.trim(),
       description: ''
     })
     
-    if (stepResult.status === 'ok' && stepResult.goals_steps_data?.[0]?.id) {
-      const stepId = stepResult.goals_steps_data[0].id
+    console.log('[QuickAddTask] createStep result:', stepResult)
+    
+    const stepsData = stepResult.data?.goals_steps_data || stepResult.goals_steps_data
+    
+    if (stepResult.status === 'ok' && stepsData?.[0]?.id) {
+      const stepId = stepsData[0].id
       const targetDate = getTargetDate()
       const priority = mapPriorityToBackend(selectedPriority.value)
       const timeDuration = mapTimeToBackend(selectedTime.value)
       
-      await scheduleStep(selectedGoal.value.id, stepId, targetDate, priority, timeDuration)
+      console.log('[QuickAddTask] Scheduling step:', { stepId, targetDate, priority, timeDuration })
+      
+      if (targetDate || priority || timeDuration) {
+        await scheduleStep(selectedGoal.value.id, stepId, targetDate, priority, timeDuration)
+      }
       
       emit('created', {
         title: taskTitle.value.trim(),
@@ -490,7 +505,7 @@ async function save() {
       resetForm()
       close()
     } else {
-      throw new Error(stepResult.error_data?.message || 'Не удалось создать задачу')
+      throw new Error(stepResult.error_data?.message || stepResult.data?.error_data?.message || 'Не удалось создать задачу')
     }
   } catch (error) {
     console.error('[QuickAddTask] Save error:', error)
