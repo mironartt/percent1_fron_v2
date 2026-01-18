@@ -472,32 +472,38 @@ async function save() {
   isSaving.value = true
   
   try {
-    console.log('[QuickAddTask] Creating step for goal:', selectedGoal.value.id)
+    const goalId = selectedGoal.value.id
+    const targetDate = getTargetDate()
+    const priority = mapPriorityToBackend(selectedPriority.value)
+    const timeDuration = mapTimeToBackend(selectedTime.value)
     
-    const stepResult = await createStep(selectedGoal.value.id, {
+    console.log('[QuickAddTask] Creating step with all data:', {
+      goalId,
+      title: taskTitle.value.trim(),
+      targetDate,
+      priority,
+      timeDuration
+    })
+    
+    const stepData = {
       title: taskTitle.value.trim(),
       description: ''
-    })
+    }
+    
+    if (targetDate) stepData.dt = targetDate
+    if (priority) stepData.priority = priority
+    if (timeDuration) stepData.time_duration = timeDuration
+    
+    const stepResult = await createStep(goalId, stepData)
     
     console.log('[QuickAddTask] createStep result:', stepResult)
     
     const stepsData = stepResult.data?.goals_steps_data || stepResult.goals_steps_data
     
-    if (stepResult.status === 'ok' && stepsData?.[0]?.id) {
-      const stepId = stepsData[0].id
-      const targetDate = getTargetDate()
-      const priority = mapPriorityToBackend(selectedPriority.value)
-      const timeDuration = mapTimeToBackend(selectedTime.value)
-      
-      console.log('[QuickAddTask] Scheduling step:', { stepId, targetDate, priority, timeDuration })
-      
-      if (targetDate || priority || timeDuration) {
-        await scheduleStep(selectedGoal.value.id, stepId, targetDate, priority, timeDuration)
-      }
-      
+    if (stepResult.status === 'ok' && stepsData?.[0]) {
       emit('created', {
         title: taskTitle.value.trim(),
-        goalId: selectedGoal.value.id,
+        goalId: goalId,
         goalTitle: selectedGoal.value.title,
         date: targetDate,
         priority: selectedPriority.value,
