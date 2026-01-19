@@ -3780,8 +3780,8 @@ onUnmounted(() => {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 1px solid var(--border-color, #e5e7eb);
-  background: var(--bg, white);
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
   color: var(--text-secondary);
   display: flex;
   align-items: center;
@@ -3792,7 +3792,7 @@ onUnmounted(() => {
 }
 
 .nav-btn-edge:hover {
-  background: var(--hover-bg, #f3f4f6);
+  background: var(--bg-hover);
   color: var(--text-primary);
 }
 
@@ -3885,8 +3885,8 @@ onUnmounted(() => {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 1px solid var(--border-color, #e5e7eb);
-  background: var(--bg, white);
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
   color: var(--text-secondary);
   display: flex;
   align-items: center;
@@ -3896,7 +3896,7 @@ onUnmounted(() => {
 }
 
 .nav-btn-wide:hover {
-  background: var(--hover-bg, #f3f4f6);
+  background: var(--bg-hover);
   color: var(--text-primary);
 }
 
