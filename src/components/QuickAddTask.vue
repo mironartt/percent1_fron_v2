@@ -105,67 +105,62 @@
               <span v-if="showGoalError" class="error-message">Выберите цель для задачи</span>
             </div>
             
-            <div class="form-group">
-              <label>
-                <Calendar :size="14" :stroke-width="1.5" class="label-icon" />
-                Когда
-              </label>
-              <div class="day-selector">
-                <button 
-                  v-for="day in dayOptions" 
-                  :key="day.value"
-                  :class="['day-btn', { active: selectedDay === day.value }]"
-                  @click="selectDay(day.value)"
-                >
-                  {{ day.label }}
-                </button>
-              </div>
-              <div v-if="selectedDay === 'custom'" class="date-picker-row">
+            <div class="compact-selectors">
+              <div class="compact-field">
+                <label>
+                  <Calendar :size="14" :stroke-width="1.5" />
+                  Когда
+                </label>
+                <div class="select-wrap">
+                  <select v-model="selectedDay" class="compact-select" @change="onDayChange">
+                    <option v-for="day in dayOptions" :key="day.value" :value="day.value">
+                      {{ day.label }}
+                    </option>
+                  </select>
+                  <ChevronDown :size="14" class="select-arrow" />
+                </div>
                 <input 
+                  v-if="selectedDay === 'custom'"
                   v-model="customDate"
                   type="date"
-                  class="date-input"
+                  class="date-input-compact"
                   :min="todayDateStr"
                 />
               </div>
-            </div>
-            
-            <div class="form-group">
-              <label>
-                <Flag :size="14" :stroke-width="1.5" class="label-icon" />
-                Приоритет
-              </label>
-              <div class="pill-selector">
-                <button 
-                  v-for="p in priorityOptions" 
-                  :key="p.value"
-                  :class="['pill-btn', 'priority-pill', { active: selectedPriority === p.value }]"
-                  :style="selectedPriority === p.value && p.color ? { 
-                    background: p.color, 
-                    borderColor: p.color, 
-                    color: 'white' 
-                  } : {}"
-                  @click="selectedPriority = selectedPriority === p.value ? '' : p.value"
-                >
-                  {{ p.label }}
-                </button>
-              </div>
-            </div>
 
-            <div class="form-group">
-              <label>
-                <Clock :size="14" :stroke-width="1.5" class="label-icon" />
-                Время
-              </label>
-              <div class="pill-selector">
-                <button 
-                  v-for="time in timeOptions" 
-                  :key="time.value"
-                  :class="['pill-btn', 'time-pill', { active: selectedTime === time.value }]"
-                  @click="selectedTime = selectedTime === time.value ? '' : time.value"
-                >
-                  {{ time.label }}
-                </button>
+              <div class="compact-field">
+                <label>
+                  <Flag :size="14" :stroke-width="1.5" />
+                  Приоритет
+                </label>
+                <div class="select-wrap">
+                  <span 
+                    v-if="selectedPriorityColor" 
+                    class="priority-dot"
+                    :style="{ background: selectedPriorityColor }"
+                  ></span>
+                  <select v-model="selectedPriority" class="compact-select" :class="{ 'with-dot': selectedPriorityColor }">
+                    <option v-for="p in priorityOptions" :key="p.value" :value="p.value">
+                      {{ p.label }}
+                    </option>
+                  </select>
+                  <ChevronDown :size="14" class="select-arrow" />
+                </div>
+              </div>
+
+              <div class="compact-field">
+                <label>
+                  <Clock :size="14" :stroke-width="1.5" />
+                  Время
+                </label>
+                <div class="select-wrap">
+                  <select v-model="selectedTime" class="compact-select">
+                    <option v-for="time in timeOptions" :key="time.value" :value="time.value">
+                      {{ time.label }}
+                    </option>
+                  </select>
+                  <ChevronDown :size="14" class="select-arrow" />
+                </div>
               </div>
             </div>
           </div>
@@ -241,26 +236,31 @@ const goalInputValue = computed({
 const dayOptions = [
   { value: 'today', label: 'Сегодня' },
   { value: 'tomorrow', label: 'Завтра' },
-  { value: 'custom', label: 'Дата' },
-  { value: 'none', label: '—' }
+  { value: 'custom', label: 'Выбрать дату' },
+  { value: 'none', label: 'Без даты' }
 ]
 
 const priorityOptions = [
-  { value: 'critical', label: 'Крит', color: '#ef4444' },
+  { value: '', label: 'Без приоритета', color: null },
+  { value: 'critical', label: 'Критично', color: '#ef4444' },
   { value: 'important', label: 'Важно', color: '#f59e0b' },
-  { value: 'attention', label: 'Внимание', color: '#6366f1' },
-  { value: 'optional', label: 'Можно', color: '#9ca3af' },
-  { value: '', label: '—', color: null }
+  { value: 'attention', label: 'В поле внимания', color: '#6366f1' },
+  { value: 'optional', label: 'По возможности', color: '#9ca3af' }
 ]
 
 const timeOptions = [
-  { value: 'half', label: '30м' },
-  { value: 'one', label: '1ч' },
-  { value: 'two', label: '2ч' },
-  { value: 'three', label: '3ч' },
-  { value: 'four', label: '4ч' },
-  { value: '', label: '—' }
+  { value: '', label: 'Без оценки' },
+  { value: 'half', label: '30 минут' },
+  { value: 'one', label: '1 час' },
+  { value: 'two', label: '2 часа' },
+  { value: 'three', label: '3 часа' },
+  { value: 'four', label: '4 часа' }
 ]
+
+const selectedPriorityColor = computed(() => {
+  const p = priorityOptions.find(opt => opt.value === selectedPriority.value)
+  return p?.color || null
+})
 
 const customDate = ref('')
 const selectedPriority = ref('')
@@ -273,6 +273,12 @@ const canSave = computed(() => taskTitle.value.trim().length > 0 && selectedGoal
 function selectDay(value) {
   selectedDay.value = value
   if (value === 'custom' && !customDate.value) {
+    customDate.value = todayDateStr.value
+  }
+}
+
+function onDayChange() {
+  if (selectedDay.value === 'custom' && !customDate.value) {
     customDate.value = todayDateStr.value
   }
 }
@@ -831,102 +837,86 @@ onUnmounted(() => {
   color: #ef4444;
 }
 
-.day-selector {
+.compact-selectors {
   display: flex;
+  gap: 12px;
+}
+
+.compact-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   gap: 6px;
 }
 
-.day-btn {
-  flex: 1;
-  padding: 8px 10px;
+.compact-field label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.select-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.compact-select {
+  width: 100%;
+  padding: 8px 28px 8px 10px;
   border: 1.5px solid #e5e7eb;
   border-radius: 8px;
   background: white;
   font-size: 12px;
   font-weight: 500;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.day-btn:hover {
-  border-color: #d1d5db;
-  background: #f9fafb;
-}
-
-.day-btn.active {
-  border-color: #6366f1;
-  background: #eef2ff;
-  color: #6366f1;
-}
-
-.date-picker-row {
-  margin-top: 8px;
-}
-
-.date-input {
-  width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e5e7eb;
-  border-radius: 10px;
-  font-size: 14px;
   color: #1f2937;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
   transition: border-color 0.2s;
 }
 
-.date-input:focus {
+.compact-select.with-dot {
+  padding-left: 24px;
+}
+
+.compact-select:focus {
   outline: none;
   border-color: #6366f1;
 }
 
-.pill-selector {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  padding-bottom: 2px;
+.select-arrow {
+  position: absolute;
+  right: 8px;
+  pointer-events: none;
+  color: #9ca3af;
 }
 
-.pill-selector::-webkit-scrollbar {
-  display: none;
+.priority-dot {
+  position: absolute;
+  left: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  z-index: 1;
 }
 
-.pill-btn {
-  padding: 6px 12px;
+.date-input-compact {
+  width: 100%;
+  padding: 8px 10px;
   border: 1.5px solid #e5e7eb;
-  border-radius: 16px;
-  background: white;
+  border-radius: 8px;
   font-size: 12px;
-  font-weight: 500;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-  flex-shrink: 0;
+  color: #1f2937;
+  margin-top: 6px;
 }
 
-.pill-btn:hover {
-  border-color: #d1d5db;
-  background: #f9fafb;
-}
-
-.pill-btn.active {
+.date-input-compact:focus {
+  outline: none;
   border-color: #6366f1;
-  background: #6366f1;
-  color: white;
-}
-
-.priority-pill.active {
-  font-weight: 600;
-}
-
-.time-pill.active {
-  border-color: #6366f1;
-  background: #6366f1;
-  color: white;
 }
 
 .modal-footer {
@@ -1034,6 +1024,14 @@ onUnmounted(() => {
     justify-content: center;
     padding: 16px;
   }
-  
+
+  .compact-selectors {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .compact-field {
+    width: 100%;
+  }
 }
 </style>
