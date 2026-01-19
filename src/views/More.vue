@@ -23,14 +23,6 @@
       <div class="nav-group">
         <h3 class="group-title">Функции</h3>
         <div class="group-items">
-          <router-link to="/app/journal" class="nav-link">
-            <div class="nav-link-icon">
-              <BookOpen :size="20" :stroke-width="1.5" />
-            </div>
-            <span class="nav-link-label">Дневник</span>
-            <ChevronRight :size="18" :stroke-width="1.5" class="nav-link-arrow" />
-          </router-link>
-
           <router-link to="/app/ssp" class="nav-link">
             <div class="nav-link-icon">
               <Target :size="20" :stroke-width="1.5" />
@@ -145,8 +137,7 @@ import {
   Moon,
   HelpCircle,
   LogOut,
-  ExternalLink,
-  BookOpen
+  ExternalLink
 } from 'lucide-vue-next'
 
 const router = useRouter()

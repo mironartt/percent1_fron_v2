@@ -83,7 +83,13 @@ function handleItemClick(item) {
 
 @media (max-width: 768px) {
   .fab-container {
-    display: none;
+    right: 16px;
+    /* Над bottom nav (56px) + safe area + gap (16px) + mentor button (56px) + gap (16px) */
+    bottom: calc(var(--bottom-nav-height, 56px) + env(safe-area-inset-bottom, 0px) + 16px + 56px + 16px);
+  }
+  
+  .fab-container.mentor-expanded {
+    right: 16px;
   }
 }
 

@@ -24,7 +24,7 @@
       @accepted="onPolicyAccepted" 
     />
     <MentorPanel v-if="showMentorPanel" />
-    <BottomNavigation v-if="showBottomNav" @fab-action="handleBottomNavFabAction" />
+    <BottomNavigation v-if="showBottomNav" />
     <ToastNotification />
     <XPNotification />
   </div>
@@ -194,13 +194,6 @@ const showPolicyModal = computed(() => {
 
 function onPolicyAccepted() {
   console.log('[App] Policy accepted by user')
-}
-
-function handleBottomNavFabAction(actionId) {
-  store.setFabAction(actionId)
-  if (route.path !== '/app') {
-    router.push('/app')
-  }
 }
 
 const appClasses = computed(() => ({
