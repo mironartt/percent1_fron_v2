@@ -22,16 +22,8 @@
       </div>
     </header>
 
-    <div class="week-stats">
+    <div class="week-stats" v-if="weeklyTotalTime">
       <div class="stat-chip">
-        <span class="stat-value">{{ weeklyTotalTasks }}</span>
-        <span class="stat-label">шагов</span>
-      </div>
-      <div class="stat-chip">
-        <span class="stat-value">{{ weeklyCompletedTasks }}</span>
-        <span class="stat-label">выполнено</span>
-      </div>
-      <div class="stat-chip" v-if="weeklyTotalTime">
         <span class="stat-value">{{ weeklyTotalTime }}</span>
         <span class="stat-label">всего</span>
       </div>
