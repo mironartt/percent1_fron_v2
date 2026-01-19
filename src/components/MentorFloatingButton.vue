@@ -516,26 +516,9 @@ onUnmounted(() => {
   transform: translateY(20px) scale(0.95);
 }
 
-@media (max-width: 480px) {
-  .mentor-floating-container {
-    bottom: 16px;
-    right: 16px;
-  }
-  
-  .floating-chat-panel {
-    width: calc(100vw - 48px);
-    right: -12px;
-  }
-  
-  .mentor-hint {
-    max-width: 200px;
-    font-size: 0.8rem;
-  }
-}
-
 @media (max-width: 768px) {
   .mentor-floating-container {
-    display: none;
+    display: none !important;
   }
 }
 </style>
