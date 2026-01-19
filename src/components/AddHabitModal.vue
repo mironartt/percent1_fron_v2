@@ -501,8 +501,8 @@ const habitIconsData = [
   { emoji: '🏊', name: 'swimmer' }
 ]
 
-const quickIcons = habitIconsData.slice(0, 8)
-const moreIcons = habitIconsData.slice(8)
+const quickIcons = habitIconsData.slice(0, 5)
+const moreIcons = habitIconsData.slice(5)
 
 const weekDaysConfig = [
   { key: 1, name: 'Понедельник', short: 'Пн' },
@@ -1156,7 +1156,6 @@ async function confirmAiHabitSelection() {
   gap: 8px;
   margin-bottom: 16px;
   flex-wrap: nowrap;
-  overflow-x: auto;
 }
 
 .icon-pick-btn {
