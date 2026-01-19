@@ -84,7 +84,18 @@
             </div>
           </div>
           
+          <div class="optional-actions description-toggle" v-if="!showDescriptionField">
+            <button 
+              class="btn-link optional-btn"
+              @click="showDescriptionField = true"
+            >
+              <Plus :size="14" :stroke-width="1.5" />
+              Добавить описание
+            </button>
+          </div>
+          
           <textarea 
+            v-if="showDescriptionField"
             v-model="formData.description"
             class="form-input description-input description-spacing"
             rows="3"
@@ -393,7 +404,8 @@ import {
   Calendar,
   ArrowLeft,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  Plus
 } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'
 import { useHabitsStore } from '@/stores/habits'
@@ -429,6 +441,7 @@ const nameInput = ref(null)
 const isSaving = ref(false)
 const showIconPicker = ref(false)
 const showPenaltyField = ref(false)
+const showDescriptionField = ref(false)
 const showSuggestionsModal = ref(false)
 const suggestionsStep = ref('intro')
 const skipHabitSuggestionsIntro = ref(false)
@@ -575,6 +588,7 @@ watch(() => props.editingHabit, (habit) => {
       reminderTime: habit.reminderTime || habit.reminder_time || ''
     }
     showPenaltyField.value = (habit.xpPenalty || habit.xp_penalty || 0) > 0
+    showDescriptionField.value = !!(habit.description)
   }
 }, { immediate: true })
 
@@ -592,6 +606,7 @@ function resetForm() {
       reminderTime: ''
     }
     showPenaltyField.value = false
+    showDescriptionField.value = false
   }
   showIconPicker.value = false
 }
@@ -600,6 +615,7 @@ function close() {
   isOpen.value = false
   showIconPicker.value = false
   showPenaltyField.value = false
+  showDescriptionField.value = false
 }
 
 function getIconEmoji(iconName) {
@@ -821,6 +837,7 @@ function selectSuggestedHabit(habit) {
     scheduleDays: habit.scheduleDays || [1, 2, 3, 4, 5, 6, 0],
     reminderTime: ''
   }
+  showDescriptionField.value = !!(habit.description)
   closeSuggestionsModal()
 }
 
@@ -1138,7 +1155,8 @@ async function confirmAiHabitSelection() {
   display: flex;
   gap: 8px;
   margin-bottom: 16px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
 }
 
 .icon-pick-btn {
