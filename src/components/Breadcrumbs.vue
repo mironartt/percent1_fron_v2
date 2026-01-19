@@ -64,7 +64,7 @@ defineProps({
 .breadcrumb-link {
   font-size: 14px;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--text-secondary);
   text-decoration: none;
   transition: color 0.2s;
   line-height: 1;
@@ -72,19 +72,19 @@ defineProps({
 }
 
 .breadcrumb-link:hover {
-  color: #6366f1;
+  color: var(--primary-color);
 }
 
 .breadcrumb-current {
   font-size: 14px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--primary-color);
   line-height: 1;
   vertical-align: middle;
 }
 
 .breadcrumb-separator {
-  color: #d1d5db;
+  color: var(--text-tertiary);
   flex-shrink: 0;
   vertical-align: middle;
   display: inline-flex;
