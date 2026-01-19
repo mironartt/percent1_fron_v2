@@ -265,16 +265,16 @@ function onHabitCreated(habit) {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  background: #4f46e5;
   border: 4px solid var(--bg-primary);
   color: white;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+  box-shadow: none;
   transition: all 0.3s ease;
-  z-index: 10;
+  z-index: 1070;
 }
 
 :root.dark .fab-button {
@@ -283,7 +283,6 @@ function onHabitCreated(habit) {
 
 .fab-button:hover {
   transform: translateX(-50%) scale(1.05);
-  box-shadow: 0 6px 24px rgba(245, 158, 11, 0.5);
 }
 
 .fab-button:active {
@@ -291,8 +290,7 @@ function onHabitCreated(habit) {
 }
 
 .fab-button.open {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+  background: #4f46e5;
 }
 
 .fab-icon {
