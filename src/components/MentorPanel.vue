@@ -1052,10 +1052,11 @@ onUnmounted(() => {
   .mentor-panel {
     max-width: 100%;
   }
-  
+}
+
+@media (max-width: 768px) {
   .mentor-mobile-btn {
-    /* Над bottom navigation (56px) + safe area + gap */
-    bottom: calc(var(--bottom-nav-height, 56px) + env(safe-area-inset-bottom, 0px) + 16px);
+    display: none !important;
   }
 }
 </style>
