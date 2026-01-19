@@ -1,13 +1,6 @@
 <template>
   <div class="habits-page">
     <Breadcrumbs :items="breadcrumbs" />
-    <header class="page-header">
-      <div class="header-content">
-        <div class="title-section">
-          <p class="page-subtitle">Маленькие шаги к большим изменениям</p>
-        </div>
-      </div>
-    </header>
 
     <div class="stats-panel">
       <button class="stat-chip clickable" @click="showStreakModal = true" title="Серия выполнений">
