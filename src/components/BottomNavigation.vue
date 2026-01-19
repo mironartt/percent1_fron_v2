@@ -1,4 +1,14 @@
 <template>
+  <Teleport to="body">
+    <Transition name="fab-overlay">
+      <div 
+        v-if="fabOpen" 
+        class="fab-overlay"
+        @click="closeFab"
+      ></div>
+    </Transition>
+  </Teleport>
+
   <nav class="bottom-nav" role="navigation" aria-label="Main navigation">
     <router-link
       v-for="item in leftNavItems"
@@ -15,14 +25,6 @@
     </router-link>
 
     <div class="fab-spacer">
-      <Transition name="fab-overlay">
-        <div 
-          v-if="fabOpen" 
-          class="fab-overlay"
-          @click="closeFab"
-        ></div>
-      </Transition>
-      
       <Transition name="fab-menu">
         <div v-if="fabOpen" class="fab-menu">
           <button
@@ -301,24 +303,6 @@ function onHabitCreated(habit) {
   transform: rotate(45deg);
 }
 
-.fab-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  z-index: 1050;
-}
-
-.fab-overlay-enter-active,
-.fab-overlay-leave-active {
-  transition: opacity 0.2s ease;
-}
-
-.fab-overlay-enter-from,
-.fab-overlay-leave-to {
-  opacity: 0;
-}
-
 .fab-menu {
   position: fixed;
   bottom: calc(var(--bottom-nav-height) + var(--safe-area-bottom) + 20px);
@@ -422,5 +406,26 @@ function onHabitCreated(habit) {
   .bottom-nav {
     display: none;
   }
+}
+</style>
+
+<style>
+.fab-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1050;
+}
+
+.fab-overlay-enter-active,
+.fab-overlay-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fab-overlay-enter-from,
+.fab-overlay-leave-to {
+  opacity: 0;
 }
 </style>
