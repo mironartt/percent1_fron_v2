@@ -242,24 +242,24 @@ const dayOptions = [
   { value: 'today', label: 'Сегодня' },
   { value: 'tomorrow', label: 'Завтра' },
   { value: 'custom', label: 'Дата' },
-  { value: 'none', label: 'Без даты' }
+  { value: 'none', label: '—' }
 ]
 
 const priorityOptions = [
-  { value: 'critical', label: 'Критично', color: '#ef4444' },
+  { value: 'critical', label: 'Крит', color: '#ef4444' },
   { value: 'important', label: 'Важно', color: '#f59e0b' },
-  { value: 'attention', label: 'В поле внимания', color: '#6366f1' },
-  { value: 'optional', label: 'По возможности', color: '#9ca3af' },
-  { value: '', label: 'Без приоритета', color: null }
+  { value: 'attention', label: 'Внимание', color: '#6366f1' },
+  { value: 'optional', label: 'Можно', color: '#9ca3af' },
+  { value: '', label: '—', color: null }
 ]
 
 const timeOptions = [
-  { value: 'half', label: '30 минут' },
-  { value: 'one', label: '1 час' },
-  { value: 'two', label: '2 часа' },
-  { value: 'three', label: '3 часа' },
-  { value: 'four', label: '4 часа' },
-  { value: '', label: 'Без оценки' }
+  { value: 'half', label: '30м' },
+  { value: 'one', label: '1ч' },
+  { value: 'two', label: '2ч' },
+  { value: 'three', label: '3ч' },
+  { value: 'four', label: '4ч' },
+  { value: '', label: '—' }
 ]
 
 const customDate = ref('')
@@ -833,20 +833,21 @@ onUnmounted(() => {
 
 .day-selector {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .day-btn {
   flex: 1;
-  padding: 10px 12px;
-  border: 2px solid #e5e7eb;
-  border-radius: 10px;
+  padding: 8px 10px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
   background: white;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: #6b7280;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .day-btn:hover {
@@ -881,21 +882,30 @@ onUnmounted(() => {
 
 .pill-selector {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 2px;
+}
+
+.pill-selector::-webkit-scrollbar {
+  display: none;
 }
 
 .pill-btn {
-  padding: 10px 16px;
-  border: 2px solid #e5e7eb;
-  border-radius: 20px;
+  padding: 6px 12px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 16px;
   background: white;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: #6b7280;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .pill-btn:hover {
@@ -1025,18 +1035,5 @@ onUnmounted(() => {
     padding: 16px;
   }
   
-  .day-selector {
-    flex-wrap: wrap;
-  }
-  
-  .day-btn {
-    flex: 1 1 calc(33% - 6px);
-    min-width: 0;
-  }
-
-  .pill-btn {
-    padding: 8px 12px;
-    font-size: 12px;
-  }
 }
 </style>
