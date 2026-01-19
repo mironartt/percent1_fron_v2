@@ -1947,16 +1947,27 @@ async function confirmAiHabitSelection() {
     grid-template-columns: 1fr;
   }
   
+  /* Кнопки предложений остаются в ряд */
   .habit-suggest-buttons {
-    flex-direction: column;
+    flex-direction: row;
+    gap: 6px;
   }
   
+  .btn-suggest-habit,
+  .btn-suggest-ai {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+  
+  /* Пресеты расписания в одну строку */
   .schedule-presets {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
   
   .preset-btn {
-    flex: 0 0 calc(50% - 4px);
+    flex: 1;
+    padding: 6px 8px;
+    font-size: 11px;
   }
 }
 </style>
