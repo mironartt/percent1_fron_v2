@@ -2142,6 +2142,10 @@ onUnmounted(() => {
   padding: 3rem;
 }
 
+.empty-state-card :deep(.breadcrumbs) {
+  text-align: left;
+}
+
 .empty-state-card .empty-icon {
   font-size: 4rem;
   margin-bottom: 1.5rem;
@@ -4774,6 +4778,10 @@ onUnmounted(() => {
 .section-header {
   margin-bottom: 2rem;
   text-align: center;
+}
+
+.section-header :deep(.breadcrumbs) {
+  text-align: left;
 }
 
 .section-header h1 {

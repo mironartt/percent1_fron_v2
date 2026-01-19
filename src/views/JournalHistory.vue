@@ -393,6 +393,10 @@ function onEntrySaved() {
   text-align: center;
 }
 
+.page-header :deep(.breadcrumbs) {
+  text-align: left;
+}
+
 .header-content {
   display: flex;
   flex-direction: column;

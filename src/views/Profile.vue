@@ -460,6 +460,10 @@ function getGroupIcon(groupType) {
   width: 100%;
 }
 
+.page-header :deep(.breadcrumbs) {
+  text-align: left;
+}
+
 .page-title {
   font-size: 1.5rem;
   font-weight: 700;
