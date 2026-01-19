@@ -165,7 +165,7 @@ function handleFabItemClick(item) {
 }
 
 function openMentor() {
-  store.mentorPanelCollapsed = false
+  store.mentorMobileOpen = true
 }
 
 function onQuickTaskCreated(task) {
