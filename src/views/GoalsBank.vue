@@ -4778,6 +4778,7 @@ onUnmounted(() => {
 .section-header {
   margin-bottom: 2rem;
   text-align: center;
+  padding-left: 1rem;
 }
 
 .section-header :deep(.breadcrumbs) {
