@@ -155,22 +155,6 @@
           </div>
         </div>
 
-        <div class="card mentor-cta">
-          <div class="mentor-content">
-            <div class="mentor-avatar">
-              <MessageCircle :size="24" :stroke-width="1.5" />
-            </div>
-            <div class="mentor-text">
-              <h4>AI Ментор</h4>
-              <p>{{ mentorHint }}</p>
-            </div>
-            <button class="btn btn-primary" @click="openMentorPanel">
-              <MessageCircle :size="16" :stroke-width="1.5" />
-              Спросить
-            </button>
-          </div>
-        </div>
-
       </div>
     </div>
   </div>
