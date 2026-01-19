@@ -84,24 +84,6 @@
             </div>
           </div>
           
-          <div class="optional-actions description-toggle" v-if="!showDescriptionField">
-            <button 
-              class="btn-link optional-btn"
-              @click="showDescriptionField = true"
-            >
-              <Plus :size="14" :stroke-width="1.5" />
-              Добавить описание
-            </button>
-          </div>
-          
-          <textarea 
-            v-if="showDescriptionField"
-            v-model="formData.description"
-            class="form-input description-input description-spacing"
-            rows="3"
-            placeholder="Зачем вам эта привычка? (опционально)"
-          />
-          
           <div class="schedule-compact">
             <div class="schedule-presets">
               <button 
@@ -138,6 +120,24 @@
               </button>
             </div>
           </div>
+          
+          <div class="optional-actions description-toggle" v-if="!showDescriptionField">
+            <button 
+              class="btn-link optional-btn"
+              @click="showDescriptionField = true"
+            >
+              <Plus :size="14" :stroke-width="1.5" />
+              Добавить описание
+            </button>
+          </div>
+          
+          <textarea 
+            v-if="showDescriptionField"
+            v-model="formData.description"
+            class="form-input description-input description-spacing"
+            rows="3"
+            placeholder="Зачем вам эта привычка? (опционально)"
+          />
           
           <div class="optional-actions" v-if="gameSettings.difficultyMode !== 'soft'">
             <button 
