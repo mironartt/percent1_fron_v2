@@ -21,6 +21,7 @@
   --text-primary: #111827;
   --text-secondary: #6b7280;
   --text-tertiary: #9ca3af;
+  --text-muted: #9ca3af;
   --border-color: #e5e7eb;
   --status-success-bg: #e8f5e9;
   --status-success-text: #2e7d32;
@@ -124,6 +125,7 @@
   --text-primary: #f9fafb;
   --text-secondary: #d1d5db;
   --text-tertiary: #9ca3af;
+  --text-muted: #9ca3af;
 
   --status-success-bg: rgba(52, 211, 153, 0.15);
   --status-success-text: #34d399;

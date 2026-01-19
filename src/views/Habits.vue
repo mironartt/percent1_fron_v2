@@ -5794,7 +5794,7 @@ onMounted(async () => {
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.875rem 1rem;
-  background: #ffffff;
+  background: var(--card-bg);
   border-radius: 12px;
   border: 1px solid var(--border-color);
   transition: all 0.2s ease;
