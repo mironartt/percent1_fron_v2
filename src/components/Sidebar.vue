@@ -138,8 +138,6 @@ import {
   Target, 
   Landmark, 
   Calendar, 
-  Zap, 
-  Gem, 
   Users, 
   Award,
   User,
@@ -295,9 +293,7 @@ const menuItems = [
   { path: '/app/habits', icon: Flame, label: 'Привычки', locked: false, showLock: false },
   { path: '/app/achievements', icon: Award, label: 'Достижения', locked: false, showLock: false },
   { path: '/app/learning', icon: GraduationCap, label: 'Обучение', locked: false, showLock: false },
-  { path: '/app/club', icon: Users, label: 'Клуб 1%', locked: false, showLock: false, external: true, href: 'https://t.me/dmkosik' },
-  { path: '/app/energy', icon: Zap, label: 'Ресурс и энергия', locked: true, showLock: false, comingSoon: true },
-  { path: '/app/principles', icon: Gem, label: 'Принципы и убеждения', locked: true, showLock: false, comingSoon: true }
+  { path: '/app/club', icon: Users, label: 'Клуб 1%', locked: false, showLock: false, external: true, href: 'https://t.me/dmkosik' }
 ]
 </script>
 
