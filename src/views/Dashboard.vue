@@ -384,6 +384,23 @@ watch(() => store.user.finish_onboarding, async (finished, oldVal) => {
   }
 })
 
+watch(() => store.pendingFabAction, (actionId) => {
+  if (!actionId) return
+  
+  switch (actionId) {
+    case 'task':
+      showQuickTask.value = true
+      break
+    case 'goal':
+      showAddGoalModal.value = true
+      break
+    case 'journal':
+      showJournalModal.value = true
+      break
+  }
+  store.clearFabAction()
+}, { immediate: true })
+
 onMounted(async () => {
   if (DEBUG_MODE) {
     console.log('[Dashboard] onMounted mentor intro check:', {

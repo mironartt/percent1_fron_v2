@@ -1377,6 +1377,16 @@ export const useAppStore = defineStore('app', () => {
   const mentorIsMobile = ref(false)
   const unreadMentorCount = ref(0)
   const mentorSpotlightMode = ref(false)
+  
+  const pendingFabAction = ref(null)
+  
+  function setFabAction(actionId) {
+    pendingFabAction.value = actionId
+  }
+  
+  function clearFabAction() {
+    pendingFabAction.value = null
+  }
 
   function toggleMentorPanel(forceState) {
     if (typeof forceState === 'boolean') {
@@ -3578,6 +3588,9 @@ export const useAppStore = defineStore('app', () => {
     unreadMentorCount,
     mentorIsMobile,
     mentorSpotlightMode,
+    pendingFabAction,
+    setFabAction,
+    clearFabAction,
     toggleMentorPanel,
     openMentorMobile,
     closeMentorMobile,
