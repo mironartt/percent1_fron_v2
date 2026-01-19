@@ -4556,10 +4556,18 @@ onMounted(async () => {
 
 .stats-panel {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.5rem;
   margin-bottom: 1rem;
   justify-content: center;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.stats-panel::-webkit-scrollbar {
+  display: none;
 }
 
 .stat-chip {
@@ -4570,6 +4578,8 @@ onMounted(async () => {
   background: var(--bg-tertiary);
   border-radius: 9999px;
   font-size: 0.875rem;
+  flex-shrink: 0;
+  white-space: nowrap;
   color: var(--text-secondary);
   border: none;
   cursor: pointer;
