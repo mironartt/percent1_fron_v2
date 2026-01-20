@@ -30,7 +30,7 @@ export const useABTestStore = defineStore('abtest', {
       }
     },
 
-    async trackEvent(eventType, metadata = {}) {
+    trackEvent(eventType, metadata = {}) {
       if (!this.sessionId) {
         this.sessionId = this.generateSessionId()
       }
@@ -41,7 +41,6 @@ export const useABTestStore = defineStore('abtest', {
         event_type: eventType,
         metadata: {
           ...metadata,
-          user_agent: navigator.userAgent,
           screen_width: window.screen.width,
           screen_height: window.screen.height,
         },
@@ -50,39 +49,34 @@ export const useABTestStore = defineStore('abtest', {
 
       this.events.push(event)
 
-      try {
-        const { trackABEvent } = await import('@/services/api.js')
-        await trackABEvent(event)
-      } catch (error) {
-        if (DEBUG_MODE) {
-          console.warn('[ABTest] Failed to track event:', error)
-        }
+      if (DEBUG_MODE) {
+        console.log('[ABTest] Event tracked:', eventType, event)
       }
     },
 
-    async trackOnboardingStarted() {
-      await this.trackEvent('onboarding_started', {
+    trackOnboardingStarted() {
+      this.trackEvent('onboarding_started', {
         variant: this.variant,
       })
     },
 
-    async trackStepCompleted(stepNumber, timeSpentMs, additionalData = {}) {
-      await this.trackEvent('step_completed', {
+    trackStepCompleted(stepNumber, timeSpentMs, additionalData = {}) {
+      this.trackEvent('step_completed', {
         step_number: stepNumber,
         time_spent_ms: timeSpentMs,
         ...additionalData,
       })
     },
 
-    async trackOnboardingCompleted(totalTimeMs) {
-      await this.trackEvent('onboarding_completed', {
+    trackOnboardingCompleted(totalTimeMs) {
+      this.trackEvent('onboarding_completed', {
         total_time_ms: totalTimeMs,
         total_steps: this.variant === 'fast' ? 3 : 5,
       })
     },
 
-    async trackOnboardingAbandoned(stepNumber, timeSpentMs) {
-      await this.trackEvent('onboarding_abandoned', {
+    trackOnboardingAbandoned(stepNumber, timeSpentMs) {
+      this.trackEvent('onboarding_abandoned', {
         step_number: stepNumber,
         time_spent_ms: timeSpentMs,
       })

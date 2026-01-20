@@ -1320,21 +1320,6 @@ export async function getReferralWithdrawals(params = {}) {
   return request('POST', '/api/rest/front/app/referral/withdrawal/get/', params)
 }
 
-// ==================== A/B TEST API ====================
-
-/**
- * Отправить событие A/B теста
- * @param {object} data - Данные события
- * @param {string} data.session_id - ID сессии
- * @param {string} data.variant - Вариант теста (fast/deep)
- * @param {string} data.event_type - Тип события
- * @param {object} data.metadata - Дополнительные данные
- * @returns {Promise<object>} - Результат
- */
-export async function trackABEvent(data) {
-  return request('POST', '/api/rest/front/ab-event/', data, { skipRateLimit: true })
-}
-
 // ==================== ALERTS/NOTIFICATIONS API ====================
 
 /**
