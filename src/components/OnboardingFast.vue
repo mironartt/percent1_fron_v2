@@ -158,16 +158,6 @@
               <p>{{ suggestedSteps.length }} действий для достижения</p>
             </div>
           </div>
-
-          <div class="summary-card">
-            <div class="summary-icon">
-              <Zap :size="24" />
-            </div>
-            <div class="summary-info">
-              <h4>XP начислены</h4>
-              <p>+50 за создание первой цели</p>
-            </div>
-          </div>
         </div>
 
         <div class="next-steps-info">
@@ -217,7 +207,6 @@ import {
   Check,
   Target,
   ListTodo,
-  Zap,
   Bot,
   Heart,
   Wallet,
@@ -244,48 +233,48 @@ const stepStartTime = ref(Date.now())
 // Step labels
 const stepLabels = ['Выбор', 'Цель', 'Готово']
 
-// Categories (6 life spheres)
+// Categories (6 life spheres) - синхронизировано с ССП
 const categories = [
   {
     id: 'health',
-    name: 'Здоровье',
-    description: 'Спорт, питание, энергия',
-    color: '#EF4444',
+    name: 'Здоровье и спорт',
+    description: 'Физическая форма, питание, энергия',
+    color: '#ef4444',
     icon: Dumbbell
   },
   {
     id: 'career',
-    name: 'Карьера',
-    description: 'Работа, доход, профессия',
-    color: '#F59E0B',
+    name: 'Работа и карьера',
+    description: 'Профессия, развитие, достижения',
+    color: '#3b82f6',
     icon: Briefcase
   },
   {
     id: 'wealth',
-    name: 'Финансы',
-    description: 'Деньги, инвестиции, накопления',
-    color: '#10B981',
+    name: 'Благосостояние',
+    description: 'Финансы, сбережения, стабильность',
+    color: '#10b981',
     icon: Wallet
   },
   {
     id: 'love',
-    name: 'Любовь',
-    description: 'Отношения, семья',
-    color: '#EC4899',
+    name: 'Любовь, семья, отношения',
+    description: 'Партнёр, близкие, гармония',
+    color: '#ec4899',
     icon: Heart
   },
   {
     id: 'friendship',
-    name: 'Окружение',
-    description: 'Друзья, связи, нетворкинг',
-    color: '#8B5CF6',
+    name: 'Дружба и окружение',
+    description: 'Друзья, социальные связи, нетворкинг',
+    color: '#8b5cf6',
     icon: Users
   },
   {
     id: 'hobbies',
-    name: 'Хобби',
-    description: 'Творчество, увлечения, отдых',
-    color: '#06B6D4',
+    name: 'Хобби и отдых',
+    description: 'Увлечения, творчество, путешествия',
+    color: '#f59e0b',
     icon: Palette
   }
 ]
@@ -858,5 +847,190 @@ onUnmounted(() => {
 .success-icon {
   text-align: center;
   margin-bottom: 1.5rem;
+}
+
+/* ==================== MOBILE STYLES ==================== */
+@media (max-width: 768px) {
+  .onboarding-overlay {
+    padding: 0;
+    align-items: flex-start;
+  }
+
+  .onboarding-container {
+    border-radius: 0;
+    padding: 1.25rem;
+    max-height: 100vh;
+    min-height: 100vh;
+    max-width: 100%;
+  }
+
+  .onboarding-container.wide {
+    max-width: 100%;
+  }
+
+  .progress-section {
+    margin-bottom: 1.5rem;
+  }
+
+  .progress-step {
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.875rem;
+  }
+
+  .progress-label {
+    font-size: 0.75rem;
+  }
+
+  .step-title {
+    font-size: 1.5rem;
+    margin-bottom: 0.375rem;
+  }
+
+  .step-subtitle {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .icon-wrapper-lg {
+    width: 4rem;
+    height: 4rem;
+    font-size: 1.25rem;
+  }
+
+  /* Category cards - mobile optimized */
+  .category-selection {
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .category-card {
+    padding: 0.875rem;
+    gap: 0.75rem;
+  }
+
+  .category-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .category-info h3 {
+    font-size: 1rem;
+  }
+
+  .category-info p {
+    font-size: 0.8rem;
+  }
+
+  /* Form - mobile optimized */
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-input,
+  .form-textarea {
+    padding: 0.75rem;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  .form-textarea {
+    min-height: 80px;
+  }
+
+  /* AI suggestions - mobile */
+  .ai-suggestions {
+    padding: 0.875rem;
+  }
+
+  .suggested-step {
+    padding: 0.5rem 0;
+    font-size: 0.8rem;
+  }
+
+  /* Completion summary - mobile */
+  .completion-summary {
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .summary-card {
+    padding: 0.875rem;
+    gap: 0.75rem;
+  }
+
+  .summary-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .summary-info h4 {
+    font-size: 0.9rem;
+  }
+
+  .summary-info p {
+    font-size: 0.8rem;
+  }
+
+  /* Next steps - mobile */
+  .next-steps-info {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .next-steps-info h3 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .next-steps-info li {
+    font-size: 0.875rem;
+    margin-bottom: 0.375rem;
+  }
+
+  /* Buttons - mobile */
+  .btn {
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem;
+  }
+
+  .btn-lg {
+    padding: 1rem 1.5rem;
+  }
+
+  .step-actions {
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+  }
+
+  .step-actions .btn-secondary {
+    width: 100%;
+  }
+
+  .step-actions .btn-primary {
+    width: 100%;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 375px) {
+  .onboarding-container {
+    padding: 1rem;
+  }
+
+  .step-title {
+    font-size: 1.25rem;
+  }
+
+  .step-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .category-info h3 {
+    font-size: 0.9rem;
+  }
+
+  .category-info p {
+    font-size: 0.75rem;
+  }
 }
 </style>
