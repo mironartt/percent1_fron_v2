@@ -826,10 +826,17 @@
     </transition>
 
     <!-- Bottom Sheet модалка редактирования шага (упрощённая) -->
-    <transition name="bottom-sheet">
-      <div v-if="showEditStepModal" class="bottom-sheet-overlay" @click.self="closeEditStepModal">
-        <div class="bottom-sheet step-bottom-sheet step-bottom-sheet-simple">
-          <div class="bottom-sheet-handle"></div>
+    <Teleport to="body">
+      <transition name="bottom-sheet">
+        <div v-if="showEditStepModal" class="bottom-sheet-overlay" @click.self="closeEditStepModal">
+          <div
+            ref="stepSheetRef"
+            class="bottom-sheet step-bottom-sheet step-bottom-sheet-simple"
+            @touchstart="handleStepSheetTouchStart"
+            @touchmove="handleStepSheetTouchMove"
+            @touchend="handleStepSheetTouchEnd"
+          >
+            <div class="bottom-sheet-handle"></div>
           
           <div class="bottom-sheet-body">
             <div class="form-group">
@@ -911,7 +918,7 @@
           </div>
           
           <div class="bottom-sheet-footer step-footer-redesigned">
-            <button 
+            <button
               class="action-btn action-delete"
               @click="confirmDeleteStep"
             >
@@ -923,9 +930,10 @@
               <span>Сохранить</span>
             </button>
           </div>
+          </div>
         </div>
-      </div>
-    </transition>
+      </transition>
+    </Teleport>
 
     <!-- Модальное окно подтверждения удаления шага -->
     <transition name="modal-fade">
@@ -1818,6 +1826,44 @@ const showEditStepModal = ref(false)
 const showTimeSelector = ref(false)
 const showDatePicker = ref(false)
 const showCommentField = ref(false)
+const stepSheetRef = ref(null)
+
+// Touch handling for step sheet swipe-to-close
+let stepSheetTouchStartY = 0
+let stepSheetTouchCurrentY = 0
+let stepSheetIsDragging = false
+
+function handleStepSheetTouchStart(e) {
+  const touch = e.touches[0]
+  stepSheetTouchStartY = touch.clientY
+  stepSheetIsDragging = true
+}
+
+function handleStepSheetTouchMove(e) {
+  if (!stepSheetIsDragging) return
+  const touch = e.touches[0]
+  stepSheetTouchCurrentY = touch.clientY
+  const deltaY = stepSheetTouchCurrentY - stepSheetTouchStartY
+
+  if (deltaY > 0 && stepSheetRef.value) {
+    stepSheetRef.value.style.transform = `translateY(${deltaY}px)`
+  }
+}
+
+function handleStepSheetTouchEnd() {
+  if (!stepSheetIsDragging) return
+  stepSheetIsDragging = false
+  const deltaY = stepSheetTouchCurrentY - stepSheetTouchStartY
+
+  if (deltaY > 100) {
+    closeEditStepModal()
+  } else if (stepSheetRef.value) {
+    stepSheetRef.value.style.transform = ''
+  }
+
+  stepSheetTouchStartY = 0
+  stepSheetTouchCurrentY = 0
+}
 
 const timeOptions = [
   { value: '30min', label: '30 минут' },
@@ -1913,6 +1959,9 @@ function openScheduleForStep() {
 }
 
 function closeEditStepModal() {
+  if (stepSheetRef.value) {
+    stepSheetRef.value.style.transform = ''
+  }
   showEditStepModal.value = false
 }
 
@@ -5181,7 +5230,7 @@ function formatDate(dateString) {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
+  z-index: 9999;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -5189,12 +5238,13 @@ function formatDate(dateString) {
 
 .bottom-sheet {
   background: var(--bg-primary, #ffffff);
-  border-radius: 1rem 1rem 0 0;
+  border-radius: 20px 20px 0 0;
   width: 100%;
   max-width: 500px;
   max-height: 85vh;
   overflow-y: auto;
   animation: slideUp 0.3s ease;
+  transition: transform 0.2s ease;
 }
 
 @keyframes slideUp {

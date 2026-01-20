@@ -353,156 +353,192 @@
       </div>
     </Transition>
 
-    <!-- Edit Goal Modal - Redesigned with Tabs -->
-    <Transition name="modal-fade">
-      <div v-if="showEditModal" class="modal-overlay" @click.self="closeEditModal">
-        <div class="edit-modal edit-modal-redesigned">
-          <div class="modal-header">
-            <h3>
-              <Edit2 :size="20" :stroke-width="2" class="modal-header-icon" />
-              Редактирование цели
-            </h3>
-            <button class="modal-close" @click="closeEditModal">
-              <X :size="20" :stroke-width="2" />
-            </button>
-          </div>
+    <!-- Edit Goal Modal - Redesigned -->
+    <Teleport to="body">
+      <Transition name="edit-modal-fade">
+        <div
+          v-if="showEditModal"
+          class="edit-modal-overlay"
+          @click.self="closeEditModal"
+        >
+          <div
+            ref="editModalRef"
+            class="edit-modal-sheet"
+            @touchstart="handleEditModalTouchStart"
+            @touchmove="handleEditModalTouchMove"
+            @touchend="handleEditModalTouchEnd"
+          >
+            <!-- Drag Handle (mobile) -->
+            <div class="edit-modal-drag-handle">
+              <div class="edit-modal-drag-bar"></div>
+            </div>
 
-          <!-- Quick Actions -->
-          <div class="quick-actions" v-if="editingGoal">
-            <button 
-              v-if="!isGoalTransferred(editingGoal.id) && !isGoalCompleted(editingGoal.id)"
-              class="quick-action-btn action-work"
-              title="Взять цель в работу"
-              @click="handleQuickTakeToWork"
-            >
-              <Play :size="16" />
-              <span>Взять в работу</span>
-            </button>
-            <button 
-              v-if="isGoalTransferred(editingGoal.id) && !isGoalCompleted(editingGoal.id)"
-              class="quick-action-btn action-remove-work"
-              title="Убрать цель из работы"
-              @click="handleQuickRemoveFromWork"
-            >
-              <RotateCcw :size="16" />
-              <span>Убрать из работы</span>
-            </button>
-            <button 
-              v-if="isGoalTransferred(editingGoal.id)"
-              class="quick-action-btn action-decompose"
-              title="Перейти к декомпозиции на шаги"
-              @click="goToDecompose(editingGoal.id)"
-            >
-              <GitBranch :size="16" />
-              <span>Шаги</span>
-            </button>
-            <button 
-              v-if="isGoalTransferred(editingGoal.id) && !isGoalCompleted(editingGoal.id)"
-              class="quick-action-btn action-complete"
-              title="Завершить цель"
-              @click="handleQuickComplete"
-            >
-              <CheckCircle :size="16" />
-              <span>Завершить</span>
-            </button>
-            <button 
-              v-if="isGoalCompleted(editingGoal.id)"
-              class="quick-action-btn action-work"
-              title="Вернуть цель в работу"
-              @click="handleQuickReturnToWork"
-            >
-              <RotateCcw :size="16" />
-              <span>Вернуть в работу</span>
-            </button>
-          </div>
+            <!-- Header -->
+            <div class="edit-modal-header">
+              <h3 class="edit-modal-title">Редактирование цели</h3>
+              <button class="edit-modal-close" @click="closeEditModal">
+                <X :size="20" />
+              </button>
+            </div>
 
-          <div class="modal-body modal-body-tabs" v-if="editingGoal">
-            <!-- Goal editing content -->
-            <div class="tab-content">
-              <div class="form-group">
-                <label class="form-label">Название цели</label>
-                <input 
+            <!-- Quick Actions - Row -->
+            <div class="edit-modal-actions" v-if="editingGoal">
+              <button
+                v-if="!isGoalTransferred(editingGoal.id) && !isGoalCompleted(editingGoal.id)"
+                class="edit-action-btn action-primary"
+                @click="handleQuickTakeToWork"
+              >
+                <Play :size="16" />
+                <span>В работу</span>
+              </button>
+              <button
+                v-if="isGoalTransferred(editingGoal.id) && !isGoalCompleted(editingGoal.id)"
+                class="edit-action-btn action-warning"
+                @click="handleQuickRemoveFromWork"
+              >
+                <RotateCcw :size="16" />
+                <span>Убрать из работы</span>
+              </button>
+              <button
+                v-if="isGoalTransferred(editingGoal.id)"
+                class="edit-action-btn action-purple"
+                @click="goToDecompose(editingGoal.id)"
+              >
+                <GitBranch :size="16" />
+                <span>Декомпозиция</span>
+              </button>
+              <button
+                v-if="isGoalTransferred(editingGoal.id) && !isGoalCompleted(editingGoal.id)"
+                class="edit-action-btn action-success"
+                @click="handleQuickComplete"
+              >
+                <CheckCircle :size="16" />
+                <span>Завершить</span>
+              </button>
+              <button
+                v-if="isGoalCompleted(editingGoal.id)"
+                class="edit-action-btn action-primary"
+                @click="handleQuickReturnToWork"
+              >
+                <RotateCcw :size="16" />
+                <span>Вернуть в работу</span>
+              </button>
+            </div>
+
+            <!-- Body -->
+            <div class="edit-modal-body" v-if="editingGoal">
+              <!-- Goal Title -->
+              <div class="edit-form-group">
+                <input
                   v-model="editingGoal.text"
                   type="text"
-                  class="form-input form-input-large"
-                  placeholder="Введите название цели"
+                  class="edit-goal-input"
+                  placeholder="Название цели"
                 />
               </div>
 
-              <div class="form-group">
-                <label class="form-label">Сфера жизни</label>
-                <div class="sphere-select-grid sphere-grid-compact">
-                  <button
-                    v-for="sphere in lifeSpheres"
-                    :key="sphere.id"
-                    class="sphere-select-btn"
-                    :class="{ active: editingGoal.sphereId === sphere.id }"
-                    :style="{ '--sphere-color': getSphereColor(sphere.id) }"
-                    @click="editingGoal.sphereId = sphere.id"
-                  >
-                    <component :is="getSphereIcon(sphere.id)" :size="18" :stroke-width="2" />
-                    <span>{{ getSphereNameOnly(sphere.id) }}</span>
-                  </button>
-                </div>
+              <!-- Sphere Selection - Collapsible -->
+              <div class="edit-sphere-section">
+                <button
+                  v-if="!showEditSphereSelector && editingGoal.sphereId"
+                  class="edit-sphere-selected"
+                  :style="{ '--sphere-color': getSphereColor(editingGoal.sphereId) }"
+                  @click="showEditSphereSelector = true"
+                >
+                  <component :is="getSphereIcon(editingGoal.sphereId)" :size="16" />
+                  <span>{{ getSphereNameOnly(editingGoal.sphereId) }}</span>
+                  <ChevronDown :size="14" class="edit-chevron" />
+                </button>
+
+                <button
+                  v-else-if="!showEditSphereSelector && !editingGoal.sphereId"
+                  class="edit-sphere-toggle"
+                  @click="showEditSphereSelector = true"
+                >
+                  <Plus :size="16" />
+                  <span>Выбрать сферу</span>
+                </button>
+
+                <Transition name="slide-down">
+                  <div v-if="showEditSphereSelector" class="edit-sphere-chips-wrapper">
+                    <div class="edit-sphere-chips">
+                      <button
+                        v-for="sphere in lifeSpheres"
+                        :key="sphere.id"
+                        class="edit-sphere-chip"
+                        :class="{ active: editingGoal.sphereId === sphere.id }"
+                        :style="{ '--sphere-color': getSphereColor(sphere.id) }"
+                        @click="selectEditSphere(sphere.id)"
+                      >
+                        <component :is="getSphereIcon(sphere.id)" :size="16" />
+                        <span>{{ getSphereNameOnly(sphere.id) }}</span>
+                      </button>
+                    </div>
+                  </div>
+                </Transition>
               </div>
 
-              <!-- Collapsible Reflection Section -->
-              <div class="reflection-toggle-section">
-                <button 
+              <!-- Divider -->
+              <div class="edit-divider"></div>
+
+              <!-- Reflection Section - Collapsible -->
+              <div class="edit-reflection-section">
+                <button
                   type="button"
-                  class="reflection-toggle-btn"
+                  class="edit-reflection-toggle"
                   @click="showEditReflection = !showEditReflection"
                 >
                   <MessageSquare :size="16" />
                   <span>{{ showEditReflection ? 'Скрыть рефлексию' : 'Добавить рефлексию' }}</span>
-                  <span class="optional-badge" v-if="!showEditReflection">опционально</span>
-                  <ChevronDown :size="16" class="toggle-chevron" :class="{ rotated: showEditReflection }" />
+                  <span class="edit-optional" v-if="!showEditReflection && !editingGoal.whyImportant && !editingGoal.why2">опционально</span>
+                  <ChevronDown :size="14" class="edit-chevron" :class="{ rotated: showEditReflection }" />
+                </button>
+
+                <Transition name="slide-fade">
+                  <div v-if="showEditReflection" class="edit-reflection-fields">
+                    <div class="edit-form-group">
+                      <label class="edit-field-label">Почему это важно?</label>
+                      <textarea
+                        v-model="editingGoal.whyImportant"
+                        class="edit-textarea"
+                        placeholder="Опишите, почему эта цель важна..."
+                        rows="2"
+                      ></textarea>
+                    </div>
+
+                    <div class="edit-form-group">
+                      <label class="edit-field-label">Как это изменит жизнь?</label>
+                      <textarea
+                        v-model="editingGoal.why2"
+                        class="edit-textarea"
+                        placeholder="Опишите ожидаемые изменения..."
+                        rows="2"
+                      ></textarea>
+                    </div>
+                  </div>
+                </Transition>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="edit-modal-footer">
+              <button class="edit-btn-delete" @click="deleteGoalFromModal" title="Удалить цель">
+                <Trash2 :size="18" />
+              </button>
+              <div class="edit-footer-actions">
+                <button class="edit-btn-cancel" @click="closeEditModal">
+                  Отмена
+                </button>
+                <button class="edit-btn-save" @click="saveGoalEdit">
+                  <Check :size="16" />
+                  Сохранить
                 </button>
               </div>
-
-              <transition name="slide-fade">
-                <div v-if="showEditReflection" class="reflection-fields">
-                  <div class="form-group">
-                    <label class="form-label">Почему это важно?</label>
-                    <textarea 
-                      v-model="editingGoal.whyImportant"
-                      class="form-textarea form-textarea-visible"
-                      placeholder="Опишите, почему эта цель важна для вас..."
-                      rows="2"
-                    ></textarea>
-                  </div>
-
-                  <div class="form-group">
-                    <label class="form-label">Как это изменит жизнь?</label>
-                    <textarea 
-                      v-model="editingGoal.why2"
-                      class="form-textarea form-textarea-visible"
-                      placeholder="Опишите ожидаемые изменения..."
-                      rows="2"
-                    ></textarea>
-                  </div>
-                </div>
-              </transition>
-            </div>
-          </div>
-
-          <div class="modal-footer modal-footer-redesigned modal-footer-with-delete">
-            <button class="btn btn-danger-ghost" @click="deleteGoalFromModal">
-              <Trash2 :size="16" />
-            </button>
-            <div class="modal-footer-actions">
-              <button class="btn btn-secondary" @click="closeEditModal">
-                Отмена
-              </button>
-              <button class="btn btn-primary" @click="saveGoalEdit">
-                <Check :size="16" :stroke-width="2" />
-                Сохранить
-              </button>
             </div>
           </div>
         </div>
-      </div>
-    </Transition>
+      </Transition>
+    </Teleport>
 
     <!-- Add New Goal Modal -->
     <AddGoalModal
@@ -678,7 +714,54 @@ const selectedBankGoals = ref([])
 const showEditModal = ref(false)
 const editingGoal = ref(null)
 const showEditReflection = ref(false)
+const showEditSphereSelector = ref(false)
 const pendingWorkStatus = ref(null)
+const editModalRef = ref(null)
+
+// Touch handling for edit modal swipe-to-close
+let editModalTouchStartY = 0
+let editModalTouchCurrentY = 0
+let editModalIsDragging = false
+
+function handleEditModalTouchStart(e) {
+  if (window.innerWidth > 640) return
+  const touch = e.touches[0]
+  editModalTouchStartY = touch.clientY
+  editModalIsDragging = true
+}
+
+function handleEditModalTouchMove(e) {
+  if (!editModalIsDragging || window.innerWidth > 640) return
+  const touch = e.touches[0]
+  editModalTouchCurrentY = touch.clientY
+  const deltaY = editModalTouchCurrentY - editModalTouchStartY
+
+  if (deltaY > 0 && editModalRef.value) {
+    editModalRef.value.style.transform = `translateY(${deltaY}px)`
+  }
+}
+
+function handleEditModalTouchEnd() {
+  if (!editModalIsDragging || window.innerWidth > 640) return
+  editModalIsDragging = false
+  const deltaY = editModalTouchCurrentY - editModalTouchStartY
+
+  if (deltaY > 100) {
+    closeEditModal()
+  } else if (editModalRef.value) {
+    editModalRef.value.style.transform = ''
+  }
+
+  editModalTouchStartY = 0
+  editModalTouchCurrentY = 0
+}
+
+function selectEditSphere(sphereId) {
+  if (editingGoal.value) {
+    editingGoal.value.sphereId = sphereId
+  }
+  showEditSphereSelector.value = false
+}
 
 const showBottomSheet = ref(false)
 const bottomSheetGoal = ref(null)
@@ -1858,8 +1941,12 @@ function toggleWorkStatus() {
 }
 
 function closeEditModal() {
+  if (editModalRef.value) {
+    editModalRef.value.style.transform = ''
+  }
   showEditModal.value = false
   showEditReflection.value = false
+  showEditSphereSelector.value = false
   resetEditAccordion()
   editingGoal.value = null
   pendingWorkStatus.value = null
@@ -7414,6 +7501,526 @@ onUnmounted(() => {
   /* Bottom nav padding */
   .goals-bank-page {
     padding-bottom: calc(var(--bottom-nav-height, 56px) + env(safe-area-inset-bottom, 0px) + 1rem);
+  }
+}
+
+/* ============================================
+   NEW EDIT MODAL STYLES - Redesigned
+   ============================================ */
+
+.edit-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+}
+
+.edit-modal-sheet {
+  background: var(--bg-primary, #ffffff);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.edit-modal-drag-handle {
+  display: none;
+  justify-content: center;
+  padding: 0.75rem 0 0.25rem;
+}
+
+.edit-modal-drag-bar {
+  width: 36px;
+  height: 4px;
+  background: var(--border-color, #d1d5db);
+  border-radius: 2px;
+}
+
+.edit-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.25rem 1rem;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+.edit-modal-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary, #1f2937);
+  margin: 0;
+}
+
+.edit-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: var(--bg-secondary, #f3f4f6);
+  border-radius: 8px;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.edit-modal-close:hover {
+  background: var(--bg-tertiary, #e5e7eb);
+  color: var(--text-primary, #1f2937);
+}
+
+/* Quick Actions - Row */
+.edit-modal-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.875rem 1.25rem;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.edit-modal-actions::-webkit-scrollbar {
+  display: none;
+}
+
+.edit-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 20px;
+  border: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.edit-action-btn.action-primary {
+  background: var(--primary, #6366f1);
+  color: white;
+}
+
+.edit-action-btn.action-primary:hover {
+  background: var(--primary-dark, #4f46e5);
+}
+
+.edit-action-btn.action-warning {
+  background: var(--warning, #f59e0b);
+  color: white;
+}
+
+.edit-action-btn.action-warning:hover {
+  background: #d97706;
+}
+
+.edit-action-btn.action-purple {
+  background: #8b5cf6;
+  color: white;
+}
+
+.edit-action-btn.action-purple:hover {
+  background: #7c3aed;
+}
+
+.edit-action-btn.action-success {
+  background: var(--success, #10b981);
+  color: white;
+}
+
+.edit-action-btn.action-success:hover {
+  background: #059669;
+}
+
+/* Modal Body */
+.edit-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.edit-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.edit-goal-input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  font-size: 1.0625rem;
+  font-weight: 500;
+  border: 1.5px solid var(--border-color, #d1d5db);
+  border-radius: 12px;
+  background: var(--bg-primary, #ffffff);
+  color: var(--text-primary, #1f2937);
+  transition: all 0.15s;
+}
+
+.edit-goal-input:focus {
+  outline: none;
+  border-color: var(--primary, #6366f1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.edit-goal-input::placeholder {
+  color: var(--text-tertiary, #9ca3af);
+  font-weight: 400;
+}
+
+/* Sphere Selection - Collapsible */
+.edit-sphere-section {
+  margin-bottom: 0.5rem;
+}
+
+.edit-sphere-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  border: 1.5px dashed var(--border-color, #d1d5db);
+  border-radius: 20px;
+  background: transparent;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.edit-sphere-toggle:hover {
+  border-color: var(--primary, #6366f1);
+  color: var(--primary, #6366f1);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.edit-sphere-selected {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  border: 1.5px solid var(--sphere-color);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--sphere-color) 10%, transparent);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--sphere-color);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.edit-sphere-selected:hover {
+  background: color-mix(in srgb, var(--sphere-color) 15%, transparent);
+}
+
+.edit-sphere-selected svg {
+  color: var(--sphere-color);
+}
+
+.edit-chevron {
+  margin-left: 0.25rem;
+  opacity: 0.7;
+  transition: transform 0.2s;
+}
+
+.edit-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.edit-sphere-chips-wrapper {
+  margin-top: 0.75rem;
+}
+
+.edit-sphere-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.edit-sphere-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  border: 1.5px solid var(--border-color, #e5e7eb);
+  border-radius: 20px;
+  background: var(--bg-primary, #ffffff);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.edit-sphere-chip:hover {
+  border-color: var(--sphere-color);
+  color: var(--sphere-color);
+  background: color-mix(in srgb, var(--sphere-color) 5%, transparent);
+}
+
+.edit-sphere-chip.active {
+  border-color: var(--sphere-color);
+  background: var(--sphere-color);
+  color: white;
+}
+
+.edit-sphere-chip.active svg {
+  color: white;
+}
+
+.edit-sphere-chip svg {
+  color: var(--sphere-color);
+  transition: color 0.15s;
+}
+
+/* Divider */
+.edit-divider {
+  height: 1px;
+  background: var(--border-color, #e5e7eb);
+  margin: 0.25rem 0;
+}
+
+/* Reflection Section */
+.edit-reflection-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.edit-reflection-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  border: none;
+  border-radius: 10px;
+  background: var(--bg-secondary, #f9fafb);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+  text-align: left;
+}
+
+.edit-reflection-toggle:hover {
+  background: var(--bg-tertiary, #f3f4f6);
+  color: var(--text-primary, #1f2937);
+}
+
+.edit-reflection-toggle svg:first-child {
+  color: var(--primary, #6366f1);
+}
+
+.edit-optional {
+  margin-left: auto;
+  margin-right: 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 400;
+  color: var(--text-tertiary, #9ca3af);
+  background: var(--bg-tertiary, #f3f4f6);
+  padding: 0.125rem 0.5rem;
+  border-radius: 10px;
+}
+
+.edit-reflection-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+.edit-field-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary, #6b7280);
+}
+
+.edit-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 0.9375rem;
+  border: 1.5px solid var(--border-color, #d1d5db);
+  border-radius: 10px;
+  background: var(--bg-primary, #ffffff);
+  color: var(--text-primary, #1f2937);
+  resize: vertical;
+  min-height: 70px;
+  font-family: inherit;
+  line-height: 1.5;
+  transition: all 0.15s;
+}
+
+.edit-textarea:focus {
+  outline: none;
+  border-color: var(--primary, #6366f1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.edit-textarea::placeholder {
+  color: var(--text-tertiary, #9ca3af);
+}
+
+/* Footer */
+.edit-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-secondary, #f9fafb);
+}
+
+.edit-btn-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  color: var(--danger, #ef4444);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.edit-btn-delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.edit-footer-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.edit-btn-cancel {
+  padding: 0.625rem 1rem;
+  border: 1px solid var(--border-color, #d1d5db);
+  border-radius: 10px;
+  background: var(--bg-primary, #ffffff);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.edit-btn-cancel:hover {
+  background: var(--bg-tertiary, #f3f4f6);
+  border-color: var(--text-tertiary, #9ca3af);
+}
+
+.edit-btn-save {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.625rem 1.25rem;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary, #6366f1);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.edit-btn-save:hover {
+  background: var(--primary-dark, #4f46e5);
+}
+
+/* Transitions */
+.edit-modal-fade-enter-active,
+.edit-modal-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.edit-modal-fade-enter-active .edit-modal-sheet,
+.edit-modal-fade-leave-active .edit-modal-sheet {
+  transition: transform 0.25s ease, opacity 0.2s ease;
+}
+
+.edit-modal-fade-enter-from,
+.edit-modal-fade-leave-to {
+  opacity: 0;
+}
+
+.edit-modal-fade-enter-from .edit-modal-sheet,
+.edit-modal-fade-leave-to .edit-modal-sheet {
+  transform: translateY(20px);
+  opacity: 0;
+}
+
+/* Mobile Styles for Edit Modal */
+@media (max-width: 640px) {
+  .edit-modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .edit-modal-sheet {
+    max-width: 100%;
+    max-height: 92vh;
+    border-radius: 20px 20px 0 0;
+    transition: transform 0.2s ease;
+  }
+
+  .edit-modal-drag-handle {
+    display: flex;
+  }
+
+  .edit-modal-header {
+    padding: 0.75rem 1rem 1rem;
+  }
+
+  .edit-modal-title {
+    font-size: 1rem;
+  }
+
+  .edit-modal-actions {
+    padding: 0.75rem 1rem;
+  }
+
+  .edit-action-btn {
+    font-size: 0.75rem;
+    padding: 0.4375rem 0.75rem;
+  }
+
+  .edit-modal-body {
+    padding: 1rem;
+  }
+
+  .edit-goal-input {
+    font-size: 1rem;
+    padding: 0.75rem;
+  }
+
+  .edit-modal-footer {
+    padding: 0.875rem 1rem;
+    padding-bottom: calc(0.875rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .edit-modal-fade-enter-from .edit-modal-sheet,
+  .edit-modal-fade-leave-to .edit-modal-sheet {
+    transform: translateY(100%);
   }
 }
 </style>

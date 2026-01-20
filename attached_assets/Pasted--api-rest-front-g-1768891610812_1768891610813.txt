@@ -1,0 +1,132 @@
+Кажется проблема не решена.
+Я тестирую это на своем дев стенде.
+И вижу, на запрос `/api/rest/front/get-user-data/` ответ:
+```
+{"status": "ok", "data": {"id": 334, "email": "safdxcvkl324@example.com", "first_name": "safdxcvkl324@example.com", "finish_onboarding": false, "finish_minitask": false, "onboarding_version": 2, "onboarding_ab_variant": "deep", "is_telegram_registration": false, "telegram_bot_link": "https://t.me/Percent_One_bot?start=user_start_b6e664d3d61e4ab695d8", "is_terms_accepted": true, "is_privacy_accepted": true, "date_policy_accepted": "2026-01-20 09:33:03", "has_diary_entry_today": false, "diary_today": null, "journal_streak": 0, "xp_balance": 0, "lifetime_xp": 0, "today_habits": {"total_count": 0, "completed_count": 0, "habits": []}, "today_tasks": {"total_count": 0, "completed_count": 0, "tasks": []}, "top_goals": {"total_incomplete_goals": 0, "goals": []}, "ai_bot_chat": {"conversation_id": 125, "unread_count": 0, "is_bot_processing": false}, "localstorage_version": "20260120062541", "is_impersonate": false}}
+```
+
+В логах браузера:
+```
+[AITasks] WebSocket closed: 1000 <empty string> aiTasks.js:75:19
+[AITasks] Reconnecting in 3000ms (attempt 1) aiTasks.js:160:17
+[Tracking] document.referrer: (empty) app:12:15
+[Tracking] localStorage._initial_referer: (not set) app:13:15
+[Tracking] localStorage._utm_data: (not set) app:14:15
+[Tracking] No document.referrer available app:32:17
+[Telegram.WebView] > postEvent web_app_set_header_color
+Object { color_key: "bg_color" }
+telegram-web-app.js:135:13
+[Telegram.WebView] > postEvent web_app_set_bottom_bar_color
+Object { color: "#ffffff" }
+telegram-web-app.js:135:13
+[Telegram.WebView] > postEvent web_app_request_theme <empty string> telegram-web-app.js:135:13
+[Telegram.WebView] > postEvent web_app_request_viewport <empty string> telegram-web-app.js:135:13
+[Telegram.WebView] > postEvent web_app_request_safe_area <empty string> telegram-web-app.js:135:13
+[Telegram.WebView] > postEvent web_app_request_content_safe_area <empty string> telegram-web-app.js:135:13
+Загрузка <script> по адресу «https://mc.yandex.ru/metrika/tag.js?id=105671462» не удалась. app:1:1
+[vite] connecting... client:733:9
+[vite] connected. client:827:12
+[Settings] Configuration loaded:
+Object { DEV_MODE: true, SKIP_AUTH_CHECK: false, SKIP_POLICY_CHECK: false, API_BASE_URL: "", WS_BASE_URL: "", MIN_REQUEST_INTERVAL: 500, DEBUG_MODE: true, FORCE_SHOW_ONBOARDING: false, FORCE_SHOW_MINITASK: false, DEMO_PLANNING_MODE: false, … }
+settings.js:52:11
+[API] Refreshing CSRF token from: https://73zb3g-77-51-149-217.ru.tuna.am/api/rest/front/csrf/ api.js:293:15
+[Router] Navigation: / → /app index.js:468:13
+[API] Refreshing CSRF token from: https://73zb3g-77-51-149-217.ru.tuna.am/api/rest/front/csrf/ api.js:293:15
+[API] CSRF token saved to memory api.js:40:13
+[API] CSRF token initialized api.js:325:17
+[Store] User dashboard data loaded from localStorage app.js:892:19
+[Router] Fetching fresh user data from API... index.js:437:15
+[API] POST /api/rest/front/get-user-data/ null api.js:177:13
+[API] CSRF token saved to memory api.js:40:13
+[API] CSRF token initialized api.js:325:17
+[Telegram.WebView] > postEvent web_app_ready <empty string> telegram-web-app.js:135:13
+[TWA] Telegram WebApp initialized
+Object { platform: "unknown", colorScheme: "light", userId: undefined }
+useTelegram.js:82:17
+[TWA] Theme applied
+Object { colorScheme: "light", bgColor: undefined }
+useTelegram.js:344:17
+<Suspense> is an experimental feature and its API will likely change. runtime-core.esm-bundler.js:7138:42
+[TWA] Theme applied
+Object { colorScheme: "light", bgColor: undefined }
+useTelegram.js:344:17
+[API] Response:
+Object { status: "ok", data: {…} }
+api.js:198:15
+[Router] User authenticated:
+Object { id: 334, email: "safdxcvkl324@example.com", name: "safdxcvkl324@example.com", finish_onboarding: false, finish_minitask: false }
+index.js:444:17
+[Store] New login, clearing localStorage for fresh start app.js:731:19
+[Store] Cleared all onepercent_* localStorage keys: 1 app.js:712:17
+[Store] User dashboard data saved to localStorage app.js:874:17
+[Store] User set:
+Object { id: 334, email: "safdxcvkl324@example.com", name: "safdxcvkl324@example.com", isAuthenticated: true, finishOnboarding: false, finishMinitask: false, telegramBotLink: "present", xpBalance: 0, todayTasks: 0, todayHabits: 0, … }
+app.js:841:17
+[Store] AI bot chat data set:
+Object { conversation_id: 125, unread_count: 0, is_bot_processing: false }
+app.js:797:21
+[XP] Synced xpBalance from user data: 0 2 xp.js:416:17
+[API] POST /api/rest/front/app/subscription/get/
+Object {  }
+api.js:177:13
+[Router] Auth status:
+Object { isAuthenticated: true, skipped: false, requiresAuth: true, guestOnly: undefined, targetRoute: "/app" }
+index.js:517:13
+[Router] Navigation allowed index.js:560:13
+[YandexMetrika] Page view tracked:
+Object { id: 105671462, path: "/app", title: "Главная" }
+index.js:574:17
+[AITasks] Connecting to: wss://73zb3g-77-51-149-217.ru.tuna.am/ws/tasks/ aiTasks.js:54:15
+[Dashboard] shouldShowOnboarding: true Dashboard.vue:473:13
+[API] POST /api/rest/front/app/ssp/get/ null api.js:177:13
+[Dashboard] onMounted mentor intro check:
+Object { finish_onboarding: false, mentorIntroCompleted: false, isAllCompleted: false }
+Dashboard.vue:318:13
+[API] Response:
+Object { status: "ok", data: {…} }
+api.js:198:15
+[Subscription] Loaded:
+Object { status: "trial", tariff: "pro", isTrial: true, isTrialExpired: false, daysRemaining: 29 }
+subscription.js:171:19
+[API] Response:
+Object { status: "ok", data: {…} }
+api.js:198:15
+[AITasks] WebSocket connected aiTasks.js:66:19
+[AITasks] Received: active_tasks
+Object { tasks: [] }
+aiTasks.js:171:15
+[API] POST /api/rest/front/app/onboard/update/
+Object { how_many_time: "30_mins", step_completed: 1 }
+api.js:177:13
+[API] Response:
+Object { status: "ok" }
+api.js:198:15
+[OnboardingAI] Saved how_many_time: 30_mins
+Object { status: "ok" }
+OnboardingAI.vue:880:15
+[API] POST /api/rest/front/app/ssp/update/
+Object { categories_reflection_data: (6) […] }
+api.js:177:13
+[API] Response:
+Object { status: "ok", data: {…} }
+api.js:198:15
+[OnboardingAI] Saved SSP data:
+Array(6) [ {…}, {…}, {…}, {…}, {…}, {…} ]
+
+Object { status: "ok", data: {…} }
+OnboardingAI.vue:902:15
+[API] POST /api/rest/front/app/onboard/update/
+Object { step_completed: 2 }
+api.js:177:13
+[API] Response:
+Object { status: "ok" }
+api.js:198:15
+[AITasks] Received: ping
+Object { timestamp: "2026-01-20T09:45:56.983997" }
+aiTasks.js:171:15
+[AITasks] Received: ping
+Object { timestamp: "2026-01-20T09:46:26.984797" }
+```
+
+
+Все ли верно и должно ли так и быть?

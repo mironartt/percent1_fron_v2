@@ -1,47 +1,121 @@
 <template>
   <Teleport to="body">
-    <Transition name="modal-fade">
+    <Transition name="modal-slide">
       <div v-if="modelValue" class="modal-overlay" @click.self="closeModal">
-        <div class="edit-modal edit-modal-extended">
+        <div
+          class="goal-modal"
+          ref="modalRef"
+          @touchstart="handleTouchStart"
+          @touchmove="handleTouchMove"
+          @touchend="handleTouchEnd"
+        >
+          <!-- Drag Handle for mobile -->
+          <div class="modal-drag-handle">
+            <div class="drag-indicator"></div>
+          </div>
+
+          <!-- Compact Header -->
           <div class="modal-header">
-            <h3>
-              <Plus :size="20" :stroke-width="2" class="modal-header-icon" />
-              Добавление новой цели
-            </h3>
-            <button class="modal-close" @click="closeModal">
-              <X :size="20" :stroke-width="2" />
+            <button class="modal-close" @click="closeModal" aria-label="Закрыть">
+              <X :size="20" />
             </button>
+            <h3>Новая цель</h3>
+            <div class="header-spacer"></div>
           </div>
 
           <div class="modal-body">
-            <div class="helpers-section">
-              <button class="helper-toggle" @click="toggleTemplates">
-                <Lightbulb :size="18" />
-                <span>Выбрать из шаблонов</span>
-                <ChevronDown :size="16" class="toggle-chevron" :class="{ rotated: showTemplates }" />
-              </button>
-              <button class="helper-toggle mentor-toggle" @click="openMentorModal">
-                <Bot :size="18" />
-                <span>Помощь от ментора</span>
-              </button>
+            <!-- Main Input - Primary Focus -->
+            <div class="main-input-section">
+              <input
+                ref="titleInput"
+                v-model="newGoal.text"
+                type="text"
+                class="goal-title-input"
+                placeholder="Чего вы хотите достичь?"
+                @keydown.enter="handleEnterKey"
+              />
             </div>
-            
-            <transition name="slide-fade">
-              <div v-if="showTemplates" class="templates-section">
-                <div class="templates-sphere-tabs">
+
+            <!-- Sphere Selection - Collapsible -->
+            <div class="sphere-section">
+              <!-- Selected sphere or toggle button -->
+              <button
+                v-if="!showSphereSelector && !newGoal.sphereId"
+                class="sphere-toggle-btn"
+                @click="showSphereSelector = true"
+              >
+                <Plus :size="16" />
+                <span>Выбрать сферу жизни</span>
+              </button>
+
+              <!-- Selected sphere chip (when sphere is chosen but selector closed) -->
+              <button
+                v-else-if="!showSphereSelector && newGoal.sphereId"
+                class="sphere-selected-btn"
+                :style="{ '--sphere-color': getSphereColor(newGoal.sphereId) }"
+                @click="showSphereSelector = true"
+              >
+                <component :is="getSphereIcon(newGoal.sphereId)" :size="16" />
+                <span>{{ getSphereNameOnly(newGoal.sphereId) }}</span>
+                <ChevronDown :size="14" class="edit-icon" />
+              </button>
+
+              <!-- Sphere chips (expanded) -->
+              <Transition name="slide-down">
+                <div v-if="showSphereSelector" class="sphere-chips-wrapper">
+                  <div class="sphere-chips">
+                    <button
+                      v-for="sphere in lifeSpheres"
+                      :key="sphere.id"
+                      class="sphere-chip"
+                      :class="{ active: newGoal.sphereId === sphere.id }"
+                      :style="{ '--sphere-color': getSphereColor(sphere.id) }"
+                      @click="selectSphere(sphere.id)"
+                    >
+                      <component :is="getSphereIcon(sphere.id)" :size="16" />
+                      <span>{{ getSphereNameOnly(sphere.id) }}</span>
+                    </button>
+                  </div>
+                </div>
+              </Transition>
+            </div>
+
+            <!-- Divider -->
+            <div class="section-divider"></div>
+
+            <!-- Help Section - Less Prominent -->
+            <div class="help-section">
+              <span class="help-label">
+                <Lightbulb :size="14" />
+                Нужна идея?
+              </span>
+              <div class="help-buttons">
+                <button class="help-btn" @click="toggleTemplates">
+                  <FileText :size="14" />
+                  <span>Шаблоны</span>
+                </button>
+                <button class="help-btn help-btn-mentor" @click="openMentorModal">
+                  <Bot :size="14" />
+                  <span>Ментор</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Templates Dropdown -->
+            <Transition name="slide-down">
+              <div v-if="showTemplates" class="templates-dropdown">
+                <div class="templates-tabs">
                   <button
                     v-for="sphere in lifeSpheres"
                     :key="sphere.id"
-                    class="template-sphere-tab"
+                    class="template-tab"
                     :class="{ active: selectedTemplateSphere === sphere.id }"
                     :style="{ '--sphere-color': getSphereColor(sphere.id) }"
-                    :title="getSphereNameOnly(sphere.id)"
                     @click="selectedTemplateSphere = sphere.id"
                   >
-                    <component :is="getSphereIcon(sphere.id)" :size="16" />
+                    <component :is="getSphereIcon(sphere.id)" :size="14" />
                   </button>
                 </div>
-                
                 <div class="templates-list">
                   <button
                     v-for="(template, idx) in filteredTemplates"
@@ -53,98 +127,49 @@
                   </button>
                 </div>
               </div>
-            </transition>
+            </Transition>
 
-            <div class="form-group">
-              <label class="form-label">Название цели</label>
-              <input 
-                ref="titleInput"
-                v-model="newGoal.text"
-                type="text"
-                class="form-input"
-                placeholder="Введите название цели"
-              />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Сфера жизни</label>
-              <div class="sphere-select-grid">
-                <button
-                  v-for="sphere in lifeSpheres"
-                  :key="sphere.id"
-                  class="sphere-select-btn"
-                  :class="{ active: newGoal.sphereId === sphere.id }"
-                  :style="{ '--sphere-color': getSphereColor(sphere.id) }"
-                  @click="newGoal.sphereId = sphere.id"
-                >
-                  <component :is="getSphereIcon(sphere.id)" :size="18" :stroke-width="2" />
-                  <span>{{ getSphereNameOnly(sphere.id) }}</span>
-                </button>
-              </div>
-            </div>
-
-            <div class="reflection-toggle-section">
-              <button class="reflection-toggle-btn" @click="showReflectionSection = !showReflectionSection">
+            <!-- Motivation Section - Single Expandable -->
+            <div class="motivation-section">
+              <button
+                class="motivation-toggle"
+                :class="{ expanded: showMotivation, filled: hasMotivation }"
+                @click="showMotivation = !showMotivation"
+              >
                 <MessageSquare :size="16" />
-                <span>Добавить рефлексию</span>
-                <span class="optional-badge">опционально</span>
-                <ChevronDown :size="16" class="toggle-chevron" :class="{ rotated: showReflectionSection }" />
+                <span>{{ showMotivation ? 'Скрыть мотивацию' : 'Добавить мотивацию' }}</span>
+                <span v-if="!showMotivation && !hasMotivation" class="optional-tag">опционально</span>
+                <span v-if="hasMotivation && !showMotivation" class="filled-indicator">
+                  <Check :size="12" />
+                </span>
+                <ChevronDown :size="16" class="toggle-icon" :class="{ rotated: showMotivation }" />
               </button>
-              
-              <transition name="slide-fade">
-                <div v-if="showReflectionSection" class="reflection-content">
-                  <div class="accordion-group">
-                    <div 
-                      class="accordion-header" 
-                      :class="{ open: whyAccordion.question1Open, filled: newGoal.whyImportant?.trim() }"
-                      @click="toggleWhyQuestion(1)"
-                    >
-                      <span class="accordion-title">1. Почему для меня это важно?</span>
-                      <span v-if="newGoal.whyImportant?.trim() && !whyAccordion.question1Open" class="accordion-preview">{{ newGoal.whyImportant.slice(0, 30) }}...</span>
-                      <ChevronDown :size="16" class="accordion-chevron" :class="{ open: whyAccordion.question1Open }" />
-                    </div>
-                    <div class="accordion-content" v-show="whyAccordion.question1Open">
-                      <textarea 
-                        v-model="newGoal.whyImportant"
-                        class="form-textarea"
-                        placeholder="Опишите, почему эта цель важна для вас"
-                        rows="3"
-                      ></textarea>
-                    </div>
-                  </div>
 
-                  <div class="accordion-group">
-                    <div 
-                      class="accordion-header" 
-                      :class="{ open: whyAccordion.question2Open, filled: newGoal.why2?.trim() }"
-                      @click="toggleWhyQuestion(2)"
-                    >
-                      <span class="accordion-title">2. Как это изменит мою жизнь?</span>
-                      <span v-if="newGoal.why2?.trim() && !whyAccordion.question2Open" class="accordion-preview">{{ newGoal.why2.slice(0, 30) }}...</span>
-                      <ChevronDown :size="16" class="accordion-chevron" :class="{ open: whyAccordion.question2Open }" />
-                    </div>
-                    <div class="accordion-content" v-show="whyAccordion.question2Open">
-                      <textarea 
-                        v-model="newGoal.why2"
-                        class="form-textarea"
-                        placeholder="Опишите, как достижение этой цели изменит вашу жизнь"
-                        rows="3"
-                      ></textarea>
-                    </div>
-                  </div>
+              <Transition name="slide-down">
+                <div v-if="showMotivation" class="motivation-content">
+                  <textarea
+                    v-model="newGoal.whyImportant"
+                    class="motivation-textarea"
+                    placeholder="Почему эта цель важна для вас? Как изменится ваша жизнь после её достижения?"
+                    rows="3"
+                  ></textarea>
                 </div>
-              </transition>
+              </Transition>
             </div>
           </div>
 
-          <div class="modal-footer modal-footer-add">
-            <button class="btn btn-secondary" @click="closeModal">
-              Отмена
-            </button>
-            <button class="btn btn-primary" @click="saveNewGoal" :disabled="!newGoal.text.trim() || isSaving">
-              <Loader2 v-if="isSaving" :size="16" :stroke-width="2" class="spin" />
-              <Plus v-else :size="16" :stroke-width="2" />
-              Добавить цель
+          <!-- Footer - Single Primary Action -->
+          <div class="modal-footer">
+            <button
+              class="btn-create"
+              :disabled="!canCreate"
+              @click="saveNewGoal"
+            >
+              <Loader2 v-if="isSaving" :size="18" class="spin" />
+              <template v-else>
+                <Plus :size="18" />
+                <span>Создать цель</span>
+              </template>
             </button>
           </div>
         </div>
@@ -156,19 +181,21 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
 import { useAppStore } from '@/stores/app'
-import { 
-  Plus, 
-  X, 
-  ChevronDown, 
-  Lightbulb, 
-  MessageSquare, 
+import {
+  Plus,
+  X,
+  ChevronDown,
+  Lightbulb,
+  MessageSquare,
   Bot,
   Loader2,
-  Wallet, 
-  Palette, 
-  Users, 
-  Heart, 
-  Briefcase, 
+  FileText,
+  Check,
+  Wallet,
+  Palette,
+  Users,
+  Heart,
+  Briefcase,
   HeartHandshake
 } from 'lucide-vue-next'
 
@@ -183,6 +210,43 @@ const emit = defineEmits(['update:modelValue', 'created', 'open-mentor'])
 
 const store = useAppStore()
 const titleInput = ref(null)
+const modalRef = ref(null)
+
+// Touch handling for swipe-to-close
+const touchStartY = ref(0)
+const touchCurrentY = ref(0)
+const isDragging = ref(false)
+
+function handleTouchStart(e) {
+  if (e.target.closest('.templates-list') || e.target.closest('.motivation-textarea')) return
+  touchStartY.value = e.touches[0].clientY
+  isDragging.value = true
+}
+
+function handleTouchMove(e) {
+  if (!isDragging.value) return
+  touchCurrentY.value = e.touches[0].clientY
+  const diff = touchCurrentY.value - touchStartY.value
+
+  if (diff > 0 && modalRef.value) {
+    modalRef.value.style.transform = `translateY(${Math.min(diff, 200)}px)`
+  }
+}
+
+function handleTouchEnd() {
+  if (!isDragging.value) return
+  const diff = touchCurrentY.value - touchStartY.value
+
+  if (diff > 100) {
+    closeModal()
+  } else if (modalRef.value) {
+    modalRef.value.style.transform = ''
+  }
+
+  isDragging.value = false
+  touchStartY.value = 0
+  touchCurrentY.value = 0
+}
 
 const sphereIcons = {
   wealth: Wallet,
@@ -261,17 +325,21 @@ const newGoal = ref({
 
 const showTemplates = ref(false)
 const selectedTemplateSphere = ref('')
-const showReflectionSection = ref(false)
+const showMotivation = ref(false)
+const showSphereSelector = ref(false)
 const isSaving = ref(false)
-
-const whyAccordion = ref({
-  question1Open: false,
-  question2Open: false
-})
 
 const filteredTemplates = computed(() => {
   if (!selectedTemplateSphere.value) return []
   return goalTemplates[selectedTemplateSphere.value] || []
+})
+
+const canCreate = computed(() => {
+  return newGoal.value.text.trim() && newGoal.value.sphereId && !isSaving.value
+})
+
+const hasMotivation = computed(() => {
+  return newGoal.value.whyImportant?.trim()
 })
 
 function getSphereIcon(sphereId) {
@@ -294,17 +362,25 @@ function toggleTemplates() {
   }
 }
 
+function selectSphere(sphereId) {
+  newGoal.value.sphereId = sphereId
+  showSphereSelector.value = false
+}
+
 function selectTemplate(template) {
   newGoal.value.text = template
   newGoal.value.sphereId = selectedTemplateSphere.value
   showTemplates.value = false
+  // Focus back to input for potential editing
+  nextTick(() => {
+    titleInput.value?.focus()
+  })
 }
 
-function toggleWhyQuestion(questionNum) {
-  if (questionNum === 1) {
-    whyAccordion.value.question1Open = !whyAccordion.value.question1Open
-  } else {
-    whyAccordion.value.question2Open = !whyAccordion.value.question2Open
+function handleEnterKey(e) {
+  if (e.shiftKey) return
+  if (canCreate.value) {
+    saveNewGoal()
   }
 }
 
@@ -318,13 +394,16 @@ function resetForm() {
     generatedByAI: false,
     steps: []
   }
-  showReflectionSection.value = false
+  showMotivation.value = false
   showTemplates.value = false
+  showSphereSelector.value = false
   selectedTemplateSphere.value = ''
-  whyAccordion.value = { question1Open: false, question2Open: false }
 }
 
 function closeModal() {
+  if (modalRef.value) {
+    modalRef.value.style.transform = ''
+  }
   resetForm()
   emit('update:modelValue', false)
 }
@@ -336,9 +415,9 @@ function openMentorModal() {
 
 async function saveNewGoal() {
   if (!newGoal.value.text.trim() || isSaving.value) return
-  
+
   isSaving.value = true
-  
+
   try {
     const goalData = {
       text: newGoal.value.text.trim(),
@@ -352,15 +431,15 @@ async function saveNewGoal() {
       generatedByAI: newGoal.value.generatedByAI,
       steps: newGoal.value.steps || []
     }
-    
+
     const localGoal = store.addRawIdea(goalData, { insertAtTop: true })
-    
+
     store.createGoalOnBackend(goalData).then(result => {
       if (result.success && result.goalId) {
         store.updateRawIdea(localGoal.id, { backendId: result.goalId })
       }
     })
-    
+
     emit('created', localGoal)
     closeModal()
   } catch (error) {
@@ -387,7 +466,7 @@ watch(() => props.modelValue, (isOpen) => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -395,40 +474,48 @@ watch(() => props.modelValue, (isOpen) => {
   padding: 1rem;
 }
 
-.edit-modal {
+.goal-modal {
   background: var(--bg-primary, #ffffff);
-  border-radius: var(--radius-lg, 16px);
-  box-shadow: var(--shadow-lg, 0 20px 60px rgba(0, 0, 0, 0.15));
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   width: 100%;
-  max-width: 520px;
+  max-width: 480px;
   max-height: 90vh;
-  overflow-y: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease;
 }
 
-.edit-modal.edit-modal-extended {
-  max-width: 600px;
+.modal-drag-handle {
+  display: none;
+  justify-content: center;
+  padding: 12px 0 4px;
 }
 
+.drag-indicator {
+  width: 36px;
+  height: 4px;
+  background: var(--border-color, #d1d5db);
+  border-radius: 2px;
+}
+
+/* Header */
 .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.25rem 1.5rem;
+  padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--border-color, #e5e7eb);
 }
 
 .modal-header h3 {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
   font-size: 1.125rem;
   font-weight: 600;
   color: var(--text-primary, #1f2937);
   margin: 0;
-}
-
-.modal-header-icon {
-  color: var(--primary-color, #6366f1);
+  text-align: center;
+  flex: 1;
 }
 
 .modal-close {
@@ -437,117 +524,295 @@ watch(() => props.modelValue, (isOpen) => {
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: 8px;
+  border-radius: 10px;
   border: none;
-  background: var(--bg-secondary, #f3f4f6);
+  background: transparent;
   color: var(--text-secondary, #6b7280);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
 }
 
 .modal-close:hover {
-  background: var(--border-color, #e5e7eb);
+  background: var(--bg-secondary, #f3f4f6);
   color: var(--text-primary, #1f2937);
 }
 
+.header-spacer {
+  width: 36px;
+}
+
+/* Body */
 .modal-body {
-  padding: 1.5rem;
-}
-
-.helpers-section {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.helper-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  padding: 1.25rem;
+  overflow-y: auto;
   flex: 1;
-  padding: 0.75rem 0.75rem;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
-  border: 1px dashed var(--primary-color, #6366f1);
-  border-radius: var(--radius-md, 10px);
-  font-size: 0.85rem;
+}
+
+/* Main Input */
+.main-input-section {
+  margin-bottom: 1.25rem;
+}
+
+.goal-title-input {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid var(--border-color, #e5e7eb);
+  border-radius: 12px;
+  background: var(--bg-primary, #ffffff);
+  font-size: 1.0625rem;
   font-weight: 500;
-  color: var(--primary-color, #6366f1);
-  cursor: pointer;
+  color: var(--text-primary, #1f2937);
   transition: all 0.2s;
 }
 
-.helper-toggle:hover {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.12));
+.goal-title-input:focus {
+  outline: none;
+  border-color: var(--primary-color, #6366f1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
-.helper-toggle .toggle-chevron {
-  margin-left: auto;
-  transition: transform 0.2s;
+.goal-title-input::placeholder {
+  color: var(--text-tertiary, #9ca3af);
+  font-weight: 400;
 }
 
-.helper-toggle .toggle-chevron.rotated {
-  transform: rotate(180deg);
+/* Sphere Section */
+.sphere-section {
+  margin-bottom: 1.25rem;
 }
 
-.mentor-toggle {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(34, 197, 94, 0.08));
-  border-color: #10b981;
+.sphere-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  border: 1.5px dashed var(--border-color, #d1d5db);
+  border-radius: 20px;
+  background: transparent;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sphere-toggle-btn:hover {
+  border-color: var(--primary-color, #6366f1);
+  color: var(--primary-color, #6366f1);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.sphere-toggle-btn .optional-tag {
+  margin-left: 0.25rem;
+}
+
+.sphere-selected-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  border: 1.5px solid var(--sphere-color);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--sphere-color) 10%, transparent);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--sphere-color);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sphere-selected-btn:hover {
+  background: color-mix(in srgb, var(--sphere-color) 15%, transparent);
+}
+
+.sphere-selected-btn svg {
+  color: var(--sphere-color);
+}
+
+.sphere-selected-btn .edit-icon {
+  margin-left: 0.25rem;
+  opacity: 0.7;
+}
+
+.sphere-chips-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sphere-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sphere-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  border: 1.5px solid var(--border-color, #e5e7eb);
+  border-radius: 20px;
+  background: var(--bg-primary, #ffffff);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sphere-chip:hover {
+  border-color: var(--sphere-color);
+  color: var(--sphere-color);
+}
+
+.sphere-chip.active {
+  border-color: var(--sphere-color);
+  background: var(--sphere-color);
+  color: white;
+}
+
+.sphere-chip.active svg {
+  color: white;
+}
+
+.sphere-chip svg {
+  color: var(--sphere-color);
+  transition: color 0.15s;
+}
+
+.sphere-clear-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.625rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 0.75rem;
+  color: var(--text-tertiary, #9ca3af);
+  cursor: pointer;
+  transition: all 0.15s;
+  align-self: flex-start;
+}
+
+.sphere-clear-btn:hover {
+  color: var(--danger, #ef4444);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Divider */
+.section-divider {
+  height: 1px;
+  background: var(--border-color, #e5e7eb);
+  margin: 0.75rem 0;
+}
+
+/* Help Section */
+.help-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.help-label {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--text-tertiary, #9ca3af);
+}
+
+.help-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.help-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  background: var(--bg-primary, #ffffff);
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.help-btn:hover {
+  border-color: var(--primary-color, #6366f1);
+  color: var(--primary-color, #6366f1);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.help-btn-mentor {
+  border-color: rgba(16, 185, 129, 0.3);
   color: #10b981;
 }
 
-.mentor-toggle:hover {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(34, 197, 94, 0.15));
+.help-btn-mentor:hover {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.05);
 }
 
-.templates-section {
-  margin-bottom: 1rem;
+/* Templates Dropdown */
+.templates-dropdown {
+  background: var(--bg-secondary, #f9fafb);
+  border-radius: 12px;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
-.templates-sphere-tabs {
+.templates-tabs {
   display: flex;
   gap: 0.375rem;
-  flex-wrap: wrap;
   margin-bottom: 0.75rem;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--border-color, #e5e7eb);
 }
 
-.template-sphere-tab {
+.template-tab {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border: 1.5px solid var(--border-color, #e5e7eb);
   border-radius: 8px;
   background: var(--bg-primary, #ffffff);
   color: var(--text-secondary, #6b7280);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
 }
 
-.template-sphere-tab:hover {
+.template-tab:hover {
   border-color: var(--sphere-color);
   color: var(--sphere-color);
 }
 
-.template-sphere-tab.active {
+.template-tab.active {
   border-color: var(--sphere-color);
-  background: color-mix(in srgb, var(--sphere-color) 15%, var(--bg-primary, #ffffff));
-  color: var(--sphere-color);
+  background: var(--sphere-color);
+  color: white;
 }
 
 .templates-list {
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
+  max-height: 180px;
+  overflow-y: auto;
 }
 
 .template-item {
-  padding: 0.75rem;
+  padding: 0.625rem 0.75rem;
   background: var(--bg-primary, #ffffff);
   border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: var(--radius-sm, 8px);
+  border-radius: 8px;
   font-size: 0.875rem;
   color: var(--text-primary, #1f2937);
   text-align: left;
@@ -557,80 +822,15 @@ watch(() => props.modelValue, (isOpen) => {
 
 .template-item:hover {
   border-color: var(--primary-color, #6366f1);
-  background: rgba(99, 102, 241, 0.05);
+  background: rgba(99, 102, 241, 0.03);
 }
 
-.form-group {
-  margin-bottom: 1rem;
+/* Motivation Section */
+.motivation-section {
+  margin-top: 0.5rem;
 }
 
-.form-label {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-secondary, #6b7280);
-  margin-bottom: 0.5rem;
-}
-
-.form-input {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: var(--radius-md, 10px);
-  background: var(--bg-primary, #ffffff);
-  font-size: 0.9375rem;
-  color: var(--text-primary, #1f2937);
-  transition: border-color 0.2s ease;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: var(--primary-color, #6366f1);
-}
-
-.sphere-select-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
-}
-
-.sphere-select-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.75rem 0.5rem;
-  border: 1.5px solid var(--border-color, #e5e7eb);
-  border-radius: var(--radius-md, 10px);
-  background: var(--bg-primary, #ffffff);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.8125rem;
-  color: var(--text-secondary, #6b7280);
-}
-
-.sphere-select-btn:hover {
-  border-color: var(--sphere-color);
-  background: color-mix(in srgb, var(--sphere-color) 5%, var(--bg-primary, #ffffff));
-}
-
-.sphere-select-btn.active {
-  border-color: var(--sphere-color);
-  background: color-mix(in srgb, var(--sphere-color) 10%, var(--bg-primary, #ffffff));
-  color: var(--sphere-color);
-}
-
-.sphere-select-btn svg {
-  color: var(--sphere-color);
-}
-
-.reflection-toggle-section {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-color, #e5e7eb);
-}
-
-.reflection-toggle-btn {
+.motivation-toggle {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -638,177 +838,124 @@ watch(() => props.modelValue, (isOpen) => {
   padding: 0.625rem 0.875rem;
   background: transparent;
   border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: var(--radius-md, 10px);
+  border-radius: 10px;
   font-size: 0.875rem;
   color: var(--text-secondary, #6b7280);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
 }
 
-.reflection-toggle-btn:hover {
+.motivation-toggle:hover {
+  border-color: var(--text-tertiary, #9ca3af);
+}
+
+.motivation-toggle.expanded {
   border-color: var(--primary-color, #6366f1);
   color: var(--primary-color, #6366f1);
+  border-radius: 10px 10px 0 0;
+  border-bottom-color: transparent;
 }
 
-.reflection-toggle-btn .toggle-chevron {
+.motivation-toggle.filled:not(.expanded) {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.optional-tag {
+  font-size: 0.6875rem;
+  padding: 0.125rem 0.375rem;
+  background: var(--bg-secondary, #f3f4f6);
+  color: var(--text-tertiary, #9ca3af);
+  border-radius: 4px;
+  margin-left: auto;
+}
+
+.filled-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: #10b981;
+  color: white;
+  border-radius: 50%;
+  margin-left: auto;
+}
+
+.toggle-icon {
   margin-left: auto;
   transition: transform 0.2s;
 }
 
-.reflection-toggle-btn .toggle-chevron.rotated {
+.toggle-icon.rotated {
   transform: rotate(180deg);
 }
 
-.optional-badge {
-  font-size: 0.7rem;
-  padding: 0.125rem 0.375rem;
-  background: var(--bg-secondary, #f3f4f6);
-  color: var(--text-secondary, #6b7280);
-  border-radius: 4px;
-}
-
-.reflection-content {
-  margin-top: 0.75rem;
+.motivation-content {
   padding: 0.75rem;
   background: var(--bg-secondary, #f9fafb);
-  border-radius: var(--radius-md, 10px);
-}
-
-.accordion-group {
-  margin-bottom: 0.5rem;
-}
-
-.accordion-group:last-child {
-  margin-bottom: 0;
-}
-
-.accordion-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  background: var(--bg-primary, #ffffff);
-  border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: var(--radius-sm, 8px);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.accordion-header:hover {
-  background: var(--bg-secondary, #f9fafb);
-}
-
-.accordion-header.open {
-  border-radius: var(--radius-sm, 8px) var(--radius-sm, 8px) 0 0;
-  border-bottom-color: transparent;
-}
-
-.accordion-header.filled:not(.open) {
-  border-color: var(--success, #10b981);
-  background: rgba(16, 185, 129, 0.05);
-}
-
-.accordion-title {
-  flex: 1;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-primary, #1f2937);
-}
-
-.accordion-preview {
-  font-size: 0.75rem;
-  color: var(--text-secondary, #9ca3af);
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.accordion-chevron {
-  color: var(--text-secondary, #9ca3af);
-  transition: transform 0.2s;
-}
-
-.accordion-chevron.open {
-  transform: rotate(180deg);
-}
-
-.accordion-content {
-  padding: 0.75rem;
-  background: var(--bg-primary, #ffffff);
-  border: 1px solid var(--border-color, #e5e7eb);
+  border: 1px solid var(--primary-color, #6366f1);
   border-top: none;
-  border-radius: 0 0 var(--radius-sm, 8px) var(--radius-sm, 8px);
+  border-radius: 0 0 10px 10px;
 }
 
-.form-textarea {
+.motivation-textarea {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem;
   border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: var(--radius-md, 10px);
+  border-radius: 8px;
   background: var(--bg-primary, #ffffff);
   font-size: 0.9375rem;
   color: var(--text-primary, #1f2937);
   font-family: inherit;
-  resize: vertical;
+  resize: none;
   min-height: 80px;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.15s;
 }
 
-.form-textarea:focus {
+.motivation-textarea:focus {
   outline: none;
   border-color: var(--primary-color, #6366f1);
 }
 
+.motivation-textarea::placeholder {
+  color: var(--text-tertiary, #9ca3af);
+}
+
+/* Footer */
 .modal-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
+  padding: 1rem 1.25rem;
   border-top: 1px solid var(--border-color, #e5e7eb);
   background: var(--bg-secondary, #f9fafb);
 }
 
-.modal-footer-add {
-  justify-content: flex-end;
-  gap: 0.75rem;
-}
-
-.btn {
-  display: inline-flex;
+.btn-create {
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
-  border-radius: var(--radius-md, 10px);
-  font-size: 0.9375rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-}
-
-.btn-secondary {
-  background: var(--bg-primary, #ffffff);
-  color: var(--text-secondary, #6b7280);
-  border: 1px solid var(--border-color, #e5e7eb);
-}
-
-.btn-secondary:hover {
-  background: var(--bg-secondary, #f3f4f6);
-  border-color: var(--border-color, #d1d5db);
-}
-
-.btn-primary {
+  width: 100%;
+  padding: 0.875rem 1.5rem;
   background: var(--primary-color, #6366f1);
   color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
 }
 
-.btn-primary:hover:not(:disabled) {
+.btn-create:hover:not(:disabled) {
   background: var(--primary-dark, #4f46e5);
+  transform: translateY(-1px);
 }
 
-.btn-primary:disabled {
+.btn-create:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-create:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -822,67 +969,118 @@ watch(() => props.modelValue, (isOpen) => {
   to { transform: rotate(360deg); }
 }
 
-.modal-fade-enter-active,
-.modal-fade-leave-active {
-  transition: opacity 0.2s ease;
+/* Animations */
+.modal-slide-enter-active,
+.modal-slide-leave-active {
+  transition: opacity 0.25s ease;
 }
 
-.modal-fade-enter-active .edit-modal,
-.modal-fade-leave-active .edit-modal {
-  transition: transform 0.25s ease, opacity 0.2s ease;
+.modal-slide-enter-active .goal-modal,
+.modal-slide-leave-active .goal-modal {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
 }
 
-.modal-fade-enter-from,
-.modal-fade-leave-to {
+.modal-slide-enter-from,
+.modal-slide-leave-to {
   opacity: 0;
 }
 
-.modal-fade-enter-from .edit-modal,
-.modal-fade-leave-to .edit-modal {
-  transform: scale(0.95) translateY(10px);
+.modal-slide-enter-from .goal-modal {
+  transform: translateY(20px) scale(0.98);
   opacity: 0;
 }
 
-.slide-fade-enter-active,
-.slide-fade-leave-active {
-  transition: all 0.25s ease;
+.modal-slide-leave-to .goal-modal {
+  transform: translateY(20px) scale(0.98);
+  opacity: 0;
 }
 
-.slide-fade-enter-from,
-.slide-fade-leave-to {
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
   opacity: 0;
   max-height: 0;
-  transform: translateY(-8px);
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-bottom: 0;
 }
 
-.slide-fade-enter-to,
-.slide-fade-leave-from {
+.slide-down-enter-to,
+.slide-down-leave-from {
   opacity: 1;
-  max-height: 400px;
+  max-height: 300px;
 }
 
+/* Mobile Styles */
 @media (max-width: 480px) {
   .modal-overlay {
     padding: 0;
     align-items: flex-end;
   }
-  
-  .edit-modal {
+
+  .goal-modal {
     max-width: 100%;
     border-radius: 20px 20px 0 0;
     max-height: 95vh;
   }
-  
-  .helpers-section {
+
+  .modal-drag-handle {
+    display: flex;
+  }
+
+  .modal-header {
+    padding-top: 0.5rem;
+  }
+
+  .sphere-chips {
+    gap: 0.375rem;
+  }
+
+  .sphere-chip {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .help-section {
     flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
-  
-  .helper-toggle span {
-    font-size: 0.8rem;
+
+  .help-buttons {
+    width: 100%;
   }
-  
-  .sphere-select-grid {
-    grid-template-columns: repeat(2, 1fr);
+
+  .help-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  /* Slide up animation for mobile */
+  .modal-slide-enter-from .goal-modal {
+    transform: translateY(100%);
+  }
+
+  .modal-slide-leave-to .goal-modal {
+    transform: translateY(100%);
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .goal-modal {
+    background: var(--bg-primary, #1f2937);
+  }
+
+  .goal-title-input,
+  .motivation-textarea,
+  .template-item {
+    background: var(--bg-secondary, #374151);
   }
 }
 </style>
