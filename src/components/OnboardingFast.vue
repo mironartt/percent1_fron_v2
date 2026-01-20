@@ -119,11 +119,12 @@
           </button>
           <button
             class="btn btn-primary"
-            @click="nextStep"
-            :disabled="!isGoalValid"
+            @click="createGoalAndNext"
+            :disabled="!isGoalValid || isCreatingGoal"
           >
-            Создать цель
-            <ArrowRight :size="18" />
+            <span v-if="isCreatingGoal">Создаём...</span>
+            <span v-else>Создать цель</span>
+            <ArrowRight v-if="!isCreatingGoal" :size="18" />
           </button>
         </div>
       </div>
@@ -228,6 +229,8 @@ const goalData = ref({
   description: ''
 })
 const isSaving = ref(false)
+const isCreatingGoal = ref(false)
+const createdGoalId = ref(null)
 const stepStartTime = ref(Date.now())
 
 // Step labels
@@ -361,11 +364,12 @@ const prevStep = () => {
   stepStartTime.value = Date.now()
 }
 
-const finishOnboarding = async () => {
-  isSaving.value = true
+// Создать цель на бэкенде и перейти к следующему шагу
+const createGoalAndNext = async () => {
+  isCreatingGoal.value = true
 
   try {
-    // 1. Создать цель на бэкенде
+    // Создать цель на бэкенде
     const newGoal = {
       title: goalData.value.title,
       text: goalData.value.title,
@@ -378,21 +382,44 @@ const finishOnboarding = async () => {
     const result = await store.createGoalOnBackend(newGoal)
     
     if (result.success) {
+      createdGoalId.value = result.goalId
       store.addGoal({
         ...newGoal,
         backendId: result.goalId
       })
     }
 
-    // 2. Завершить онбординг на бэкенде
+    // Track step completion
+    const timeSpent = Date.now() - stepStartTime.value
+    abStore.trackStepCompleted(currentStep.value, timeSpent, {
+      category: selectedCategory.value,
+      goal_title: goalData.value.title,
+      goal_created: result.success
+    })
+
+    // Перейти к шагу 3
+    currentStep.value++
+    stepStartTime.value = Date.now()
+  } catch (error) {
+    console.error('Failed to create goal:', error)
+  } finally {
+    isCreatingGoal.value = false
+  }
+}
+
+const finishOnboarding = async () => {
+  isSaving.value = true
+
+  try {
+    // Завершить онбординг на бэкенде (цель уже создана на шаге 2)
     await store.completeOnboardingWithBackend({})
     store.setUserFinishOnboarding(true)
 
-    // 3. Track completion
+    // Track completion
     const totalTime = Date.now() - abStore.startTime
-    await abStore.trackOnboardingCompleted(totalTime)
+    abStore.trackOnboardingCompleted(totalTime)
 
-    // 4. Redirect to app
+    // Redirect to app
     router.push('/app')
   } catch (error) {
     console.error('Failed to complete onboarding:', error)
