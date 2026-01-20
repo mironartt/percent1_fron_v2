@@ -1411,9 +1411,7 @@ export const api = {
   getReferralWithdrawals,
   // Alerts/Notifications API
   getAlertSettings,
-  updateAlertSettings,
-  // A/B Test API
-  trackABEvent
+  updateAlertSettings
 }
 
 export default api
