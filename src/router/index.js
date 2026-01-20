@@ -423,7 +423,9 @@ async function checkUserAuth() {
         email: 'dev@example.com', 
         first_name: 'Dev User',
         finish_onboarding: true,
-        finish_minitask: true
+        finish_minitask: true,
+        onboarding_version: 2,
+        onboarding_ab_variant: 'deep'
       },
       skipped: true
     }
