@@ -26,7 +26,7 @@ const LearningCenter = () => import('@/views/LearningCenter.vue')
 const Profile = () => import('@/views/Profile.vue')
 const Habits = () => import('@/views/Habits.vue')
 const More = () => import('@/views/More.vue')
-const OnboardingAI = () => import('@/components/OnboardingAI.vue')
+const OnboardingRouter = () => import('@/components/OnboardingRouter.vue')
 const NotFound = () => import('@/views/NotFound.vue')
 const LegalPage = () => import('@/views/LegalPage.vue')
 
@@ -182,7 +182,7 @@ const router = createRouter({
     {
       path: '/onboarding',
       name: 'onboarding',
-      component: OnboardingAI,
+      component: OnboardingRouter,
       meta: { title: 'Онбординг', requiresAuth: true }
     },
     
@@ -423,7 +423,9 @@ async function checkUserAuth() {
         email: 'dev@example.com', 
         first_name: 'Dev User',
         finish_onboarding: true,
-        finish_minitask: true
+        finish_minitask: true,
+        onboarding_version: 2,
+        onboarding_ab_variant: 'deep'
       },
       skipped: true
     }

@@ -756,7 +756,9 @@ export const useAppStore = defineStore('app', () => {
         lifetime_xp: userData.lifetime_xp ?? 0,
         is_terms_accepted: isTermsAccepted,
         is_privacy_accepted: isPrivacyAccepted,
-        is_impersonate: userData.is_impersonate ?? false
+        is_impersonate: userData.is_impersonate ?? false,
+        onboarding_version: userData.onboarding_version ?? 1,
+        onboarding_ab_variant: userData.onboarding_ab_variant || null
       }
       
       needsPolicyAcceptance.value = SKIP_POLICY_CHECK ? false : (!isTermsAccepted || !isPrivacyAccepted)
@@ -847,7 +849,9 @@ export const useAppStore = defineStore('app', () => {
           xpBalance: user.value.xp_balance,
           todayTasks: userDashboardData.value.today_tasks.total_count,
           todayHabits: userDashboardData.value.today_habits.total_count,
-          topGoals: userDashboardData.value.top_goals.goals.length
+          topGoals: userDashboardData.value.top_goals.goals.length,
+          onboardingVersion: user.value.onboarding_version,
+          onboardingAbVariant: user.value.onboarding_ab_variant
         })
       }
     }

@@ -1,5 +1,5 @@
 <template>
-  <OnboardingAI v-if="shouldShowOnboarding" />
+  <OnboardingRouter v-if="shouldShowOnboarding" />
 
   <!-- MiniTask disabled - decision to remove this feature
   <MiniTaskWelcome 
@@ -194,7 +194,7 @@
 import { ref, computed, watch, onMounted, onActivated } from 'vue'
 import { useAppStore } from '../stores/app'
 import * as api from '../services/api'
-import OnboardingAI from '../components/OnboardingAI.vue'
+import OnboardingRouter from '../components/OnboardingRouter.vue'
 import MiniTaskWelcome from '../components/MiniTaskWelcome.vue'
 import MiniTask from '../components/MiniTask.vue'
 import JournalEntry from '../components/JournalEntry.vue'
