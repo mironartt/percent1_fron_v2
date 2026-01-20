@@ -509,7 +509,12 @@ router.beforeEach(async (to, from, next) => {
     const { useSubscriptionStore } = await import('@/stores/subscription.js')
     const subscriptionStore = useSubscriptionStore()
     if (!subscriptionStore.subscription) {
-      subscriptionStore.loadSubscription()
+      // Non-blocking: don't let subscription errors block navigation
+      subscriptionStore.loadSubscription().catch(err => {
+        if (DEBUG_MODE) {
+          console.warn('[Router] Failed to load subscription:', err)
+        }
+      })
     }
   }
   

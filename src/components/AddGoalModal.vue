@@ -158,8 +158,15 @@
             </div>
           </div>
 
-          <!-- Footer - Single Primary Action -->
+          <!-- Footer - Option + Primary Action -->
           <div class="modal-footer">
+            <label class="decomposition-checkbox">
+              <input
+                type="checkbox"
+                v-model="goToDecomposition"
+              />
+              <span class="checkbox-label">Перейти к декомпозиции</span>
+            </label>
             <button
               class="btn-create"
               :disabled="!canCreate"
@@ -180,6 +187,7 @@
 
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import {
   Plus,
@@ -208,9 +216,19 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'created', 'open-mentor'])
 
+const router = useRouter()
 const store = useAppStore()
 const titleInput = ref(null)
 const modalRef = ref(null)
+
+// Checkbox "Перейти к декомпозиции" — сохраняется в localStorage
+const goToDecomposition = ref(
+  localStorage.getItem('goal_goto_decomposition') !== 'false'
+)
+
+watch(goToDecomposition, (val) => {
+  localStorage.setItem('goal_goto_decomposition', String(val))
+})
 
 // Touch handling for swipe-to-close
 const touchStartY = ref(0)
@@ -434,9 +452,17 @@ async function saveNewGoal() {
 
     const localGoal = store.addRawIdea(goalData, { insertAtTop: true })
 
+    // Сохраняем на бэкенд и получаем backendId
+    const shouldNavigate = goToDecomposition.value
+
     store.createGoalOnBackend(goalData).then(result => {
       if (result.success && result.goalId) {
         store.updateRawIdea(localGoal.id, { backendId: result.goalId })
+
+        // Переход к декомпозиции, если включён checkbox
+        if (shouldNavigate) {
+          router.push(`/app/goals/${result.goalId}`)
+        }
       }
     })
 
@@ -927,6 +953,29 @@ watch(() => props.modelValue, (isOpen) => {
   padding: 1rem 1.25rem;
   border-top: 1px solid var(--border-color, #e5e7eb);
   background: var(--bg-secondary, #f9fafb);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.decomposition-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.decomposition-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-color, #6366f1);
+  cursor: pointer;
+}
+
+.decomposition-checkbox .checkbox-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6b7280);
 }
 
 .btn-create {
