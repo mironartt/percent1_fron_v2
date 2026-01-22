@@ -61,12 +61,12 @@
         </div>
         <div class="card-body">
           <div class="subscription-status">
-            <div class="status-badge trial">Пробный период</div>
-            <p class="status-text">Осталось 7 дней бесплатного доступа</p>
+            <div :class="['status-badge', subscriptionStatusBadge.class]">{{ subscriptionStatusBadge.text }}</div>
+            <p class="status-text">{{ subscriptionStatusText }}</p>
           </div>
 
           <button class="btn btn-lg subscribe-btn" @click="goToSubscription">
-            Оформить подписку
+            {{ subscriptionButtonText }}
           </button>
         </div>
       </div>
@@ -330,6 +330,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useToastStore } from '../stores/toast'
+import { useSubscriptionStore } from '@/stores/subscription'
 import * as api from '@/services/api.js'
 import { Bot, Sparkles, MessageCircle, VolumeX, User, CreditCard, Bell, FileText, Settings, LogOut, Send, Mail, X, Users } from 'lucide-vue-next'
 import Breadcrumbs from '@/components/Breadcrumbs.vue'
@@ -337,6 +338,7 @@ import Breadcrumbs from '@/components/Breadcrumbs.vue'
 const router = useRouter()
 const store = useAppStore()
 const toastStore = useToastStore()
+const subscriptionStore = useSubscriptionStore()
 
 const breadcrumbItems = [
   { label: 'Главная', to: '/app' },
@@ -386,11 +388,38 @@ const hasOnboardingData = computed(() => {
 const mentorMode = ref(store.mentor.mode || 'on_request')
 const mentorMessagesCount = computed(() => store.mentor.messages?.length || 0)
 
+// Subscription computed
+const subscriptionStatusBadge = computed(() => {
+  if (subscriptionStore.isTrial) return { class: 'trial', text: 'Пробный период' }
+  if (subscriptionStore.isTrialExpired) return { class: 'expired', text: 'Триал истёк' }
+  if (subscriptionStore.isPaid) return { class: 'active', text: 'Активна' }
+  return { class: 'free', text: 'Бесплатный' }
+})
+
+const subscriptionStatusText = computed(() => {
+  if (subscriptionStore.isTrial) {
+    return `Осталось ${subscriptionStore.daysRemaining} дней бесплатного доступа`
+  }
+  if (subscriptionStore.isTrialExpired) {
+    return 'Оформите подписку для доступа к Premium функциям'
+  }
+  if (subscriptionStore.isPaid) {
+    return `Подписка активна ещё ${subscriptionStore.daysRemaining} дней`
+  }
+  return 'Оформите подписку для доступа к Premium функциям'
+})
+
+const subscriptionButtonText = computed(() => {
+  if (subscriptionStore.isPaid) return 'Управление подпиской'
+  return 'Оформить подписку'
+})
+
 onMounted(async () => {
   await loadUserData()
   await Promise.all([
     loadOnboardingData(),
-    loadReferralStats()
+    loadReferralStats(),
+    subscriptionStore.loadSubscription()
   ])
 })
 
@@ -610,6 +639,21 @@ function handleLogout() {
 .status-badge.trial {
   background: rgba(99, 102, 241, 0.1);
   color: var(--primary-color);
+}
+
+.status-badge.active {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.status-badge.expired {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.status-badge.free {
+  background: rgba(107, 114, 128, 0.1);
+  color: #6b7280;
 }
 
 .status-text {
