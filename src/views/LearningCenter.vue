@@ -1600,6 +1600,10 @@ function markLessonComplete() {
   .page-header {
     padding-left: 3.5rem;
   }
+  
+  .learning-center {
+    padding-bottom: 100px;
+  }
 }
 
 @media (max-width: 640px) {
