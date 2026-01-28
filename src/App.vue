@@ -27,17 +27,19 @@
     <BottomNavigation v-if="showBottomNav" />
     <ToastNotification />
     <XPNotification />
+    <WelcomeVideoModal ref="welcomeVideoModal" />
   </div>
 </template>
 
 <script setup>
-import { computed, ref, watch, onMounted, watchEffect } from 'vue'
+import { computed, ref, watch, onMounted, watchEffect, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
 import BottomNavigation from './components/BottomNavigation.vue'
 import TelegramAuthModals from './components/TelegramAuthModals.vue'
 import PolicyAcceptanceModal from './components/PolicyAcceptanceModal.vue'
 import MentorPanel from './components/MentorPanel.vue'
+import WelcomeVideoModal from './components/WelcomeVideoModal.vue'
 import ToastNotification from './components/ToastNotification.vue'
 import XPNotification from './components/XPNotification.vue'
 import ImpersonateBanner from './components/ImpersonateBanner.vue'
@@ -52,6 +54,7 @@ const router = useRouter()
 const store = useAppStore()
 const aiTasksStore = useAITasksStore()
 const sidebarCollapsed = ref(false)
+const welcomeVideoModal = ref(null)
 
 // Telegram Mini Apps интеграция
 const {
@@ -121,6 +124,11 @@ onMounted(async () => {
   // WebSocket подключается только на страницах /app/
   if (store.isAuthenticated && route.path.startsWith('/app')) {
     aiTasksStore.connect()
+    
+    // Показываем приветственное видео при первом визите
+    nextTick(() => {
+      welcomeVideoModal.value?.show()
+    })
   }
 })
 
@@ -143,6 +151,13 @@ watch([() => store.isAuthenticated, () => route.path], ([isAuth, path], [wasAuth
     if (aiTasksStore.isConnected) {
       aiTasksStore.disconnect()
     }
+  }
+  
+  // Show welcome video when user enters /app for the first time
+  if (isAuth && isAppRoute && (!wasAuth || !wasAppRoute)) {
+    nextTick(() => {
+      welcomeVideoModal.value?.show()
+    })
   }
 })
 
