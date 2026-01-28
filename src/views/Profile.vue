@@ -2,7 +2,6 @@
   <div class="profile-page">
     <header class="page-header">
       <Breadcrumbs :items="breadcrumbItems" />
-      <p class="page-subtitle">Ваш прогресс и награды</p>
     </header>
 
     <div class="progress-card section-card">
