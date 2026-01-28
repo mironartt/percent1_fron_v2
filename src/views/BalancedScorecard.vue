@@ -1,9 +1,6 @@
 <template>
   <div class="ssp-container">
     <Breadcrumbs :items="breadcrumbs" />
-    <header class="ssp-header">
-      <p class="subtitle">Оценка и анализ сфер вашей жизни</p>
-    </header>
 
     <div class="ssp-tabs">
       <button 
@@ -2104,6 +2101,7 @@ watch(activeTab, async (newTab) => {
 
   .ssp-container {
     padding: 1rem;
+    padding-bottom: 100px;
   }
 
   .stats-row {
