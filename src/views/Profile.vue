@@ -662,8 +662,9 @@ function getGroupIcon(groupType) {
 
 @media (max-width: 768px) {
   .page-header {
-    padding-left: 3.5rem;
-    padding-right: 3.5rem;
+    padding-left: 0;
+    padding-right: 0;
+    text-align: left;
   }
 
   .desktop-only {
