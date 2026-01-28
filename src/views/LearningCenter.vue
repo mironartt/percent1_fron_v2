@@ -18,27 +18,27 @@
       <span>Раздел дорабатывается</span>
     </div>
 
-    <div class="intro-video-section">
-      <div class="intro-video-header">
-        <Play :size="20" :stroke-width="1.5" />
-        <h2>Ознакомительное видео</h2>
-      </div>
-      <p class="intro-video-description">
-        Посмотрите видео, чтобы узнать как эффективно использовать сервис и достигать своих целей на 1% каждый день.
-      </p>
-      <div class="intro-video-container">
-        <iframe
-          src="https://rutube.ru/play/embed/f5edee9e1b0de1103bcda9862e62fd96"
-          frameborder="0"
-          allow="clipboard-write; autoplay"
-          webkitAllowFullScreen
-          mozallowfullscreen
-          allowfullscreen
-        ></iframe>
-      </div>
-    </div>
-
     <div class="lessons-grid">
+      <div 
+        class="lesson-card video-card"
+        @click="showVideoModal = true"
+      >
+        <div class="lesson-icon video-icon">
+          <Play :size="24" :stroke-width="1.5" />
+        </div>
+        <div class="lesson-content">
+          <h3>Ознакомительное видео</h3>
+          <p>Узнайте как эффективно использовать сервис</p>
+          <div class="lesson-meta">
+            <span class="duration">
+              <Clock :size="14" :stroke-width="1.5" />
+              5 мин
+            </span>
+          </div>
+        </div>
+        <ChevronRight :size="20" :stroke-width="1.5" class="arrow" />
+      </div>
+      
       <div 
         v-for="lesson in lessons" 
         :key="lesson.id"
@@ -113,6 +113,46 @@
         </div>
       </Transition>
     </Teleport>
+
+    <Teleport to="body">
+      <Transition name="modal">
+        <div 
+          v-if="showVideoModal" 
+          class="modal-overlay" 
+          @click.self="showVideoModal = false"
+        >
+          <div class="video-modal">
+            <button class="modal-close" @click="showVideoModal = false">
+              <X :size="20" :stroke-width="1.5" />
+            </button>
+            
+            <div class="video-modal-header">
+              <Play :size="24" :stroke-width="1.5" />
+              <h2>Ознакомительное видео</h2>
+            </div>
+            
+            <div class="video-modal-content">
+              <div class="video-container">
+                <iframe
+                  src="https://rutube.ru/play/embed/f5edee9e1b0de1103bcda9862e62fd96"
+                  frameborder="0"
+                  allow="clipboard-write; autoplay"
+                  webkitAllowFullScreen
+                  mozallowfullscreen
+                  allowfullscreen
+                ></iframe>
+              </div>
+            </div>
+            
+            <div class="video-modal-footer">
+              <button class="btn btn-secondary" @click="showVideoModal = false">
+                Закрыть
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -147,6 +187,7 @@ const breadcrumbs = [
 ]
 
 const showLessonModal = ref(false)
+const showVideoModal = ref(false)
 const currentLesson = ref(null)
 const completedLessonIds = ref(JSON.parse(localStorage.getItem('completed-lessons') || '[]'))
 
@@ -1585,35 +1626,44 @@ function markLessonComplete() {
   }
 }
 
-.intro-video-section {
-  background: var(--bg-secondary);
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 32px;
+.video-card {
+  cursor: pointer;
 }
 
-.intro-video-header {
+.video-icon {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+}
+
+.video-modal {
+  background: var(--bg-primary);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow: hidden;
+  position: relative;
+}
+
+.video-modal-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 12px;
-  color: var(--primary-color);
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
 }
 
-.intro-video-header h2 {
+.video-modal-header h2 {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--text-primary);
 }
 
-.intro-video-description {
-  color: var(--text-secondary);
-  margin: 0 0 20px;
-  line-height: 1.5;
+.video-modal-content {
+  padding: 24px;
 }
 
-.intro-video-container {
+.video-container {
   position: relative;
   width: 100%;
   padding-bottom: 56.25%;
@@ -1622,7 +1672,7 @@ function markLessonComplete() {
   overflow: hidden;
 }
 
-.intro-video-container iframe {
+.video-container iframe {
   position: absolute;
   top: 0;
   left: 0;
@@ -1630,14 +1680,25 @@ function markLessonComplete() {
   height: 100%;
 }
 
-@media (max-width: 768px) {
-  .intro-video-section {
-    padding: 16px;
-    margin-bottom: 24px;
-  }
+.video-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+}
 
-  .intro-video-header h2 {
-    font-size: 1.1rem;
+@media (max-width: 768px) {
+  .video-modal {
+    width: 95%;
+    max-height: 85vh;
+  }
+  
+  .video-modal-header {
+    padding: 16px;
+  }
+  
+  .video-modal-content {
+    padding: 16px;
   }
 }
 </style>
