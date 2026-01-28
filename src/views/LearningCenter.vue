@@ -2,9 +2,6 @@
   <div class="learning-center">
     <Breadcrumbs :items="breadcrumbs" />
     <header class="page-header">
-      <div>
-        <p class="subtitle">Изучите все возможности системы и методологию 1%</p>
-      </div>
       <div class="header-progress" v-if="completedLessons > 0">
         <div class="progress-badge">
           <Award :size="16" :stroke-width="1.5" />
