@@ -18,6 +18,26 @@
       <span>Раздел дорабатывается</span>
     </div>
 
+    <div class="intro-video-section">
+      <div class="intro-video-header">
+        <Play :size="20" :stroke-width="1.5" />
+        <h2>Ознакомительное видео</h2>
+      </div>
+      <p class="intro-video-description">
+        Посмотрите видео, чтобы узнать как эффективно использовать сервис и достигать своих целей на 1% каждый день.
+      </p>
+      <div class="intro-video-container">
+        <iframe
+          src="https://rutube.ru/play/embed/f5edee9e1b0de1103bcda9862e62fd96"
+          frameborder="0"
+          allow="clipboard-write; autoplay"
+          webkitAllowFullScreen
+          mozallowfullscreen
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
+
     <div class="lessons-grid">
       <div 
         v-for="lesson in lessons" 
@@ -117,7 +137,8 @@ import {
   Construction,
   Flame,
   Trophy,
-  Sun
+  Sun,
+  Play
 } from 'lucide-vue-next'
 
 const breadcrumbs = [
@@ -1561,6 +1582,62 @@ function markLessonComplete() {
   
   .lesson-modal {
     max-height: 90vh;
+  }
+}
+
+.intro-video-section {
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.intro-video-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: var(--primary-color);
+}
+
+.intro-video-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.intro-video-description {
+  color: var(--text-secondary);
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.intro-video-container {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.intro-video-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 768px) {
+  .intro-video-section {
+    padding: 16px;
+    margin-bottom: 24px;
+  }
+
+  .intro-video-header h2 {
+    font-size: 1.1rem;
   }
 }
 </style>
