@@ -32,7 +32,7 @@
           <div class="lesson-meta">
             <span class="duration">
               <Clock :size="14" :stroke-width="1.5" />
-              5 мин
+              15 мин
             </span>
           </div>
         </div>
