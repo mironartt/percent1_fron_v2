@@ -269,7 +269,18 @@ const showTrialBanner = computed(() => {
   if (isOnboarding.value) return false
   
   const state = subscriptionStore.subscriptionState
-  return ['trial_normal', 'trial_warning', 'trial_danger', 'freemium'].includes(state)
+  
+  // Trial баннер показывается везде на /app/*
+  if (['trial_normal', 'trial_warning', 'trial_danger'].includes(state)) {
+    return true
+  }
+  
+  // Freemium баннер показывается только на Dashboard (/app)
+  if (state === 'freemium' && route.path === '/app') {
+    return true
+  }
+  
+  return false
 })
 
 const appClasses = computed(() => ({
