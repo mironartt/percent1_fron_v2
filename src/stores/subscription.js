@@ -9,7 +9,8 @@ import {
   getPromocode,
   calculatePayment as apiCalculatePayment,
   createPayment as apiCreatePayment,
-  getPaymentHistory as apiGetPaymentHistory
+  getPaymentHistory as apiGetPaymentHistory,
+  markModalShown as apiMarkModalShown
 } from '@/services/billing.js'
 
 export const useSubscriptionStore = defineStore('subscription', () => {

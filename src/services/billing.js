@@ -44,3 +44,9 @@ export async function getPaymentDetails(paymentId) {
     payment_id: paymentId
   })
 }
+
+export async function markModalShown(modalType) {
+  return request('POST', '/api/rest/front/app/subscription/modal-shown/', {
+    modal_type: modalType
+  })
+}
