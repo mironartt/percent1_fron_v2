@@ -3,6 +3,7 @@
     <ImpersonateBanner />
     <Sidebar v-if="hasSidebar" @collapse-change="onCollapseChange" />
     <main class="main-content">
+      <TrialBanner v-if="showTrialBanner" />
       <router-view v-slot="{ Component, route }">
         <Suspense>
           <template #default>
@@ -28,6 +29,12 @@
     <ToastNotification />
     <XPNotification />
     <WelcomeVideoModal ref="welcomeVideoModal" />
+    <SubscriptionExpiredModal
+      v-model="showSubscriptionExpiredModal"
+      :type="subscriptionExpiredType"
+      @continue-free="onSubscriptionModalClosed"
+      @upgrade="onSubscriptionModalClosed"
+    />
   </div>
 </template>
 
@@ -43,8 +50,11 @@ import WelcomeVideoModal from './components/WelcomeVideoModal.vue'
 import ToastNotification from './components/ToastNotification.vue'
 import XPNotification from './components/XPNotification.vue'
 import ImpersonateBanner from './components/ImpersonateBanner.vue'
+import TrialBanner from './components/subscription/TrialBanner.vue'
+import SubscriptionExpiredModal from './components/subscription/SubscriptionExpiredModal.vue'
 import { useAppStore } from './stores/app'
 import { useAITasksStore } from './stores/aiTasks'
+import { useSubscriptionStore } from './stores/subscription'
 import { useTelegram } from './composables/useTelegram'
 import { telegramWebAppAuth, getUserData } from './services/api'
 import { DEV_MODE, SKIP_AUTH_CHECK, SKIP_POLICY_CHECK, DEBUG_MODE } from './config/settings'
@@ -53,8 +63,11 @@ const route = useRoute()
 const router = useRouter()
 const store = useAppStore()
 const aiTasksStore = useAITasksStore()
+const subscriptionStore = useSubscriptionStore()
 const sidebarCollapsed = ref(false)
 const welcomeVideoModal = ref(null)
+const showSubscriptionExpiredModal = ref(false)
+const subscriptionExpiredType = ref('trial_expired')
 
 // Telegram Mini Apps интеграция
 const {
@@ -159,7 +172,30 @@ watch([() => store.isAuthenticated, () => route.path], ([isAuth, path], [wasAuth
       welcomeVideoModal.value?.show()
     })
   }
+  
+  // Check subscription modals when entering app
+  if (isAuth && isAppRoute) {
+    nextTick(() => {
+      checkSubscriptionModals()
+    })
+  }
 })
+
+// Watch subscription state for modal display
+watch(
+  () => [subscriptionStore.shouldShowTrialExpiredModal, subscriptionStore.shouldShowPaidExpiredModal],
+  ([showTrial, showPaid]) => {
+    if (store.isAuthenticated && isAppPage.value) {
+      if (showTrial && !showSubscriptionExpiredModal.value) {
+        subscriptionExpiredType.value = 'trial_expired'
+        showSubscriptionExpiredModal.value = true
+      } else if (showPaid && !showSubscriptionExpiredModal.value) {
+        subscriptionExpiredType.value = 'paid_expired'
+        showSubscriptionExpiredModal.value = true
+      }
+    }
+  }
+)
 
 function onCollapseChange(collapsed) {
   sidebarCollapsed.value = collapsed
@@ -210,6 +246,42 @@ const showPolicyModal = computed(() => {
 function onPolicyAccepted() {
   console.log('[App] Policy accepted by user')
 }
+
+function onSubscriptionModalClosed() {
+  showSubscriptionExpiredModal.value = false
+}
+
+function checkSubscriptionModals() {
+  if (!store.isAuthenticated) return
+  
+  if (subscriptionStore.shouldShowTrialExpiredModal) {
+    subscriptionExpiredType.value = 'trial_expired'
+    showSubscriptionExpiredModal.value = true
+  } else if (subscriptionStore.shouldShowPaidExpiredModal) {
+    subscriptionExpiredType.value = 'paid_expired'
+    showSubscriptionExpiredModal.value = true
+  }
+}
+
+const showTrialBanner = computed(() => {
+  if (!store.isAuthenticated) return false
+  if (!isAppPage.value) return false
+  if (isOnboarding.value) return false
+  
+  const state = subscriptionStore.subscriptionState
+  
+  // Trial баннер показывается везде на /app/*
+  if (['trial_normal', 'trial_warning', 'trial_danger'].includes(state)) {
+    return true
+  }
+  
+  // Freemium баннер показывается только на Dashboard (/app)
+  if (state === 'freemium' && route.path === '/app') {
+    return true
+  }
+  
+  return false
+})
 
 const appClasses = computed(() => ({
   'has-sidebar': hasSidebar.value,
