@@ -47,6 +47,41 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     return subscription.value?.is_paid === true
   })
 
+  const isPaidExpired = computed(() => {
+    return subscription.value?.is_paid_expired === true
+  })
+
+  const shouldShowTrialExpiredModal = computed(() => {
+    return subscription.value?.should_show_trial_expired_modal === true
+  })
+
+  const shouldShowPaidExpiredModal = computed(() => {
+    return subscription.value?.should_show_paid_expired_modal === true
+  })
+
+  const subscriptionState = computed(() => {
+    // Платный тариф активен — ничего не показываем
+    if (isPaid.value) return 'paid'
+
+    // Платная подписка истекла — показать модалку (если не показывали)
+    if (isPaidExpired.value) return 'paid_expired'
+
+    // Trial истёк — показать модалку (если не показывали)
+    if (isTrialExpired.value) return 'trial_expired'
+
+    // Trial активен — показать баннер
+    if (isTrial.value) {
+      if (daysRemaining.value <= 1) return 'trial_danger'
+      if (daysRemaining.value <= 3) return 'trial_warning'
+      return 'trial_normal'
+    }
+
+    // Freemium — ненавязчивый баннер
+    if (isFree.value) return 'freemium'
+
+    return 'unknown'
+  })
+
   const daysRemaining = computed(() => {
     return subscription.value?.days_remaining || 0
   })
@@ -358,6 +393,45 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     return terms.value.find(t => t.is_hit) || terms.value[0] || null
   }
 
+  function setShouldShowTrialExpiredModal(value) {
+    if (subscription.value) {
+      subscription.value.should_show_trial_expired_modal = value
+    }
+  }
+
+  function setShouldShowPaidExpiredModal(value) {
+    if (subscription.value) {
+      subscription.value.should_show_paid_expired_modal = value
+    }
+  }
+
+  async function markModalAsShown(modalType) {
+    try {
+      const result = await apiMarkModalShown(modalType)
+      
+      if (result.status === 'ok') {
+        if (modalType === 'trial_expired') {
+          setShouldShowTrialExpiredModal(false)
+        } else if (modalType === 'paid_expired') {
+          setShouldShowPaidExpiredModal(false)
+        }
+        
+        if (DEBUG_MODE) {
+          console.log('[Subscription] Modal marked as shown:', modalType)
+        }
+        
+        return { success: true }
+      }
+      
+      return { success: false, error: result.error_message || 'Ошибка' }
+    } catch (error) {
+      if (DEBUG_MODE) {
+        console.error('[Subscription] Mark modal shown error:', error)
+      }
+      return { success: false, error: 'Ошибка при отметке модалки' }
+    }
+  }
+
   function reset() {
     subscription.value = null
     tariffs.value = []
@@ -382,12 +456,16 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     isTrial,
     isTrialExpired,
     isPaid,
+    isPaidExpired,
     daysRemaining,
     canUpgrade,
     canProlong,
     isFree,
     isBasic,
     isPro,
+    shouldShowTrialExpiredModal,
+    shouldShowPaidExpiredModal,
+    subscriptionState,
 
     hasFeature,
     hasAIAccess,
@@ -408,6 +486,9 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     getTariffById,
     getTermById,
     getHitTerm,
+    setShouldShowTrialExpiredModal,
+    setShouldShowPaidExpiredModal,
+    markModalAsShown,
     reset
   }
 })
