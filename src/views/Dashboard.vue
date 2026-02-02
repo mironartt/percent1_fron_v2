@@ -37,6 +37,29 @@
 
       <DailyProgressBar class="progress-section" />
 
+      <!-- Telegram Connection Banner -->
+      <div v-if="showTelegramBanner" class="telegram-banner">
+        <div class="telegram-banner-icon">
+          <Send :size="20" :stroke-width="1.5" />
+        </div>
+        <div class="telegram-banner-content">
+          <h4>Подключите Telegram</h4>
+          <p>Утренний план дня, напоминания и обратная связь от ментора</p>
+        </div>
+        <a
+          :href="store.user.telegram_bot_link"
+          target="_blank"
+          class="telegram-banner-btn"
+          @click="onTelegramBannerClick"
+        >
+          <Send :size="16" :stroke-width="1.5" />
+          Подключить
+        </a>
+        <button class="telegram-banner-close" @click="dismissTelegramBanner" title="Скрыть">
+          <X :size="16" :stroke-width="1.5" />
+        </button>
+      </div>
+
       <div class="day-content">
         <div class="focus-goals-grid">
           <div class="card focus-card">
@@ -208,11 +231,11 @@ import { useActivationStore } from '@/stores/activation'
 import { useXpStore } from '@/stores/xp'
 import { useXPNotification } from '@/composables/useXPNotification.js'
 import { DEBUG_MODE } from '@/config/settings.js'
-import { 
+import {
   Sun,
   Sunset,
   Moon,
-  Target, 
+  Target,
   Crosshair,
   Check,
   Plus,
@@ -221,7 +244,8 @@ import {
   Sparkles,
   Flag,
   X,
-  Settings
+  Settings,
+  Send
 } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 
@@ -345,6 +369,50 @@ const averageScore = computed(() => store.averageScore)
 const journalStreak = computed(() => store.journalStreak)
 const hasTodayEntry = computed(() => store.hasTodayEntry)
 const showPlanReview = computed(() => store.showPlanReview)
+
+// Telegram Banner Logic
+const TELEGRAM_BANNER_STORAGE_KEY = 'tg_banner_dismissed'
+const TELEGRAM_BANNER_DISMISSED_AT_KEY = 'tg_banner_dismissed_at'
+const TELEGRAM_BANNER_SHOW_AGAIN_DAYS = 7
+
+const showTelegramBanner = computed(() => {
+  // 1. Должна быть ссылка на бота
+  if (!store.user.telegram_bot_link) return false
+
+  // 2. Онбординг должен быть завершён
+  if (!store.user.finish_onboarding) return false
+
+  // 3. Проверяем, не скрыт ли баннер пользователем
+  const dismissed = localStorage.getItem(TELEGRAM_BANNER_STORAGE_KEY)
+  if (!dismissed) return true
+
+  // 4. Если скрыт — проверяем, прошло ли достаточно дней
+  const dismissedAt = localStorage.getItem(TELEGRAM_BANNER_DISMISSED_AT_KEY)
+  if (dismissedAt) {
+    const daysPassed = (Date.now() - Number(dismissedAt)) / (1000 * 60 * 60 * 24)
+    if (daysPassed >= TELEGRAM_BANNER_SHOW_AGAIN_DAYS) {
+      // Сбрасываем флаг, чтобы показать снова
+      localStorage.removeItem(TELEGRAM_BANNER_STORAGE_KEY)
+      localStorage.removeItem(TELEGRAM_BANNER_DISMISSED_AT_KEY)
+      return true
+    }
+  }
+
+  return false
+})
+
+function dismissTelegramBanner() {
+  localStorage.setItem(TELEGRAM_BANNER_STORAGE_KEY, 'true')
+  localStorage.setItem(TELEGRAM_BANNER_DISMISSED_AT_KEY, String(Date.now()))
+}
+
+function onTelegramBannerClick() {
+  // Отмечаем, что пользователь кликнул — скрываем баннер
+  dismissTelegramBanner()
+  if (DEBUG_MODE) {
+    console.log('[Dashboard] Telegram banner clicked, link:', store.user.telegram_bot_link)
+  }
+}
 
 // Данные из API get-user-data (с защитными проверками)
 const defaultTodayTasks = { total_count: 0, completed_count: 0, tasks: [] }
@@ -1490,6 +1558,122 @@ function pluralize(n, one, few, many) {
   .time-icon {
     width: 36px;
     height: 36px;
+  }
+}
+
+/* Telegram Banner Styles */
+.telegram-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  background: linear-gradient(135deg, rgba(0, 136, 204, 0.08), rgba(0, 170, 255, 0.08));
+  border: 1px solid rgba(0, 136, 204, 0.15);
+  border-radius: var(--radius-lg);
+  position: relative;
+}
+
+.telegram-banner-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0088cc, #00aaff);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.telegram-banner-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.telegram-banner-content h4 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+  color: var(--text-primary);
+}
+
+.telegram-banner-content p {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.telegram-banner-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: linear-gradient(135deg, #0088cc, #00aaff);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.telegram-banner-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
+}
+
+.telegram-banner-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  transition: all 0.2s ease;
+}
+
+.telegram-banner-close:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-secondary);
+}
+
+:root.dark .telegram-banner-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 600px) {
+  .telegram-banner {
+    flex-wrap: wrap;
+    padding: 1rem;
+    padding-right: 2.5rem;
+  }
+
+  .telegram-banner-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .telegram-banner-content {
+    flex: 1;
+    min-width: calc(100% - 56px);
+  }
+
+  .telegram-banner-btn {
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.5rem;
   }
 }
 </style>
