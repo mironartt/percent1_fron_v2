@@ -105,7 +105,7 @@
                 :class="{ completed: task.completed }"
                 @click.stop="toggleTaskComplete(task)"
               >
-                <Check v-if="task.completed" :size="16" />
+                <Check v-if="task.completed" :size="12" />
               </button>
               <div class="task-info">
                 <span class="task-title">{{ task.stepTitle }}</span>
@@ -152,7 +152,7 @@
               :class="{ completed: task.completed }"
               @click.stop="toggleOverdueTaskComplete(task)"
             >
-              <Check v-if="task.completed" :size="16" />
+              <Check v-if="task.completed" :size="12" />
             </button>
             <div class="task-info">
               <span class="task-title">{{ task.stepTitle }}</span>
@@ -302,7 +302,7 @@
                 @click.stop="quickToggleStepComplete(goal, step)"
                 :title="step.completed ? 'Отменить выполнение' : 'Выполнить'"
               >
-                <Check v-if="step.completed" :size="14" />
+                <Check v-if="step.completed" :size="12" />
               </button>
               <div class="step-content">
                 <span class="step-title" :class="{ completed: step.completed }">{{ step.title }}</span>
@@ -1736,6 +1736,46 @@ const weeklyStepsData = ref([])
 const weeklyStepsLoading = ref(false)
 const localUpdateTrigger = ref(0)
 
+// ===== MOCK DATA FOR UI PREVIEW =====
+const USE_MOCK_DATA = false // Переключить на true для локального просмотра UI без бэкенда
+
+function generateMockData(weekDaysArray) {
+  const today = formatDateLocal(new Date())
+  const tomorrow = formatDateLocal(new Date(Date.now() + 86400000))
+
+  const mockTasks = [
+    // Сегодня
+    { date: today, goal_id: 1, goal_title: 'Увеличить доход на 20%', goal_category: 'welfare', step_id: 101, step_title: 'Изучить курс по инвестициям', step_priority: 'critical', step_time_duration: 'one', step_is_complete: false },
+    { date: today, goal_id: 1, goal_title: 'Увеличить доход на 20%', goal_category: 'welfare', step_id: 102, step_title: 'Составить бюджет на месяц', step_priority: 'important', step_time_duration: 'half', step_is_complete: false },
+    { date: today, goal_id: 2, goal_title: 'Пробежать марафон', goal_category: 'health_sport', step_id: 201, step_title: 'Утренняя пробежка 5 км', step_priority: 'attention', step_time_duration: 'one', step_is_complete: true },
+    { date: today, goal_id: 3, goal_title: 'Входящие', goal_category: 'inbox', step_id: 301, step_title: 'Позвонить маме', step_priority: null, step_time_duration: null, step_is_complete: false },
+    // Завтра
+    { date: tomorrow, goal_id: 1, goal_title: 'Увеличить доход на 20%', goal_category: 'welfare', step_id: 103, step_title: 'Открыть брокерский счёт', step_priority: 'important', step_time_duration: 'two', step_is_complete: false },
+    { date: tomorrow, goal_id: 2, goal_title: 'Пробежать марафон', goal_category: 'health_sport', step_id: 202, step_title: 'Интервальная тренировка', step_priority: 'critical', step_time_duration: 'one', step_is_complete: false },
+    { date: tomorrow, goal_id: 4, goal_title: 'Выучить английский', goal_category: 'work', step_id: 401, step_title: 'Урок на Duolingo', step_priority: 'optional', step_time_duration: 'half', step_is_complete: false },
+  ]
+
+  // Группируем по дням
+  return weekDaysArray.map(day => ({
+    date: day.date,
+    steps_data: mockTasks
+      .filter(t => t.date === day.date)
+      .map(t => ({
+        goal_id: t.goal_id,
+        goal_title: t.goal_title,
+        goal_category: t.goal_category,
+        step_id: t.step_id,
+        step_title: t.step_title,
+        step_priority: t.step_priority,
+        step_time_duration: t.step_time_duration,
+        step_is_complete: t.step_is_complete,
+        step_dt: t.date,
+        step_order: t.step_id
+      }))
+  }))
+}
+// ===== END MOCK DATA =====
+
 // Computed для задач выбранного дня - обеспечивает реактивность таймлайна
 const selectedDayTasks = computed(() => {
   // Явные зависимости для реактивности
@@ -1795,8 +1835,13 @@ async function loadWeeklySteps() {
     }
   } catch (error) {
     console.error('[Planning] Error loading weekly steps:', error)
-    // При ошибке сети - пустые данные, не демо
-    weeklyStepsData.value = weekDays.value.map(day => ({ date: day.date, steps_data: [] }))
+    // При ошибке сети - показываем моковые данные если включено
+    if (USE_MOCK_DATA) {
+      console.log('[Planning] Using MOCK DATA for UI preview')
+      weeklyStepsData.value = generateMockData(weekDays.value)
+    } else {
+      weeklyStepsData.value = weekDays.value.map(day => ({ date: day.date, steps_data: [] }))
+    }
     overdueStepsData.value = []
     totalOverdueSteps.value = 0
   } finally {
@@ -1963,7 +2008,61 @@ function formatTimeShort(time) {
   return labels[time] || time
 }
 
-const workingGoals = computed(() => store.goals || [])
+// Моковые цели для UI preview
+const mockGoals = [
+  {
+    id: 1,
+    backendId: 1,
+    title: 'Увеличить доход на 20%',
+    text: 'Увеличить доход на 20%',
+    sphereId: 'wealth',
+    status: 'active',
+    totalStepsData: { total_steps: 5, complete_steps: 1 },
+    steps: [
+      { id: 101, backendId: 101, title: 'Изучить курс по инвестициям', completed: false, priority: 'critical', timeEstimate: '1h', date: formatDateLocal(new Date()) },
+      { id: 102, backendId: 102, title: 'Составить бюджет на месяц', completed: false, priority: 'important', timeEstimate: '30min', date: formatDateLocal(new Date()) },
+      { id: 103, backendId: 103, title: 'Открыть брокерский счёт', completed: false, priority: 'important', timeEstimate: '2h', date: formatDateLocal(new Date(Date.now() + 86400000)) },
+      { id: 104, backendId: 104, title: 'Найти подработку', completed: false, priority: 'attention', timeEstimate: '', date: null },
+      { id: 105, backendId: 105, title: 'Провести аудит расходов', completed: true, priority: '', timeEstimate: '1h', date: null },
+    ]
+  },
+  {
+    id: 2,
+    backendId: 2,
+    title: 'Пробежать марафон',
+    text: 'Пробежать марафон',
+    sphereId: 'health',
+    status: 'active',
+    totalStepsData: { total_steps: 4, complete_steps: 1 },
+    steps: [
+      { id: 201, backendId: 201, title: 'Утренняя пробежка 5 км', completed: true, priority: 'attention', timeEstimate: '1h', date: formatDateLocal(new Date()) },
+      { id: 202, backendId: 202, title: 'Интервальная тренировка', completed: false, priority: 'critical', timeEstimate: '1h', date: formatDateLocal(new Date(Date.now() + 86400000)) },
+      { id: 203, backendId: 203, title: 'Длительный забег 15 км', completed: false, priority: 'important', timeEstimate: '2h', date: null },
+      { id: 204, backendId: 204, title: 'Участие в забеге 10 км', completed: false, priority: '', timeEstimate: '3h', date: null },
+    ]
+  },
+  {
+    id: 4,
+    backendId: 4,
+    title: 'Выучить английский до B2',
+    text: 'Выучить английский до B2',
+    sphereId: 'career',
+    status: 'active',
+    totalStepsData: { total_steps: 3, complete_steps: 0 },
+    steps: [
+      { id: 401, backendId: 401, title: 'Урок на Duolingo', completed: false, priority: 'optional', timeEstimate: '30min', date: formatDateLocal(new Date(Date.now() + 86400000)) },
+      { id: 402, backendId: 402, title: 'Посмотреть сериал на английском', completed: false, priority: '', timeEstimate: '1h', date: null },
+      { id: 403, backendId: 403, title: 'Занятие с репетитором', completed: false, priority: 'attention', timeEstimate: '1h', date: null },
+    ]
+  }
+]
+
+const workingGoals = computed(() => {
+  if (USE_MOCK_DATA && (!store.goals || store.goals.length === 0)) {
+    return mockGoals
+  }
+  return store.goals || []
+})
 const lifeSpheres = computed(() => store.lifeSpheres)
 
 const goalsWithSteps = computed(() => {
@@ -4025,20 +4124,22 @@ onUnmounted(() => {
 .day-content {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
+  border-radius: 12px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .day-header-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
 }
 
 .day-title {
-  font-size: 1.125rem;
+  font-size: 0.9375rem;
   font-weight: 600;
   margin: 0;
   color: var(--text-primary);
@@ -4048,30 +4149,31 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
 }
 
 .tasks-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.375rem;
 }
 
 .task-group {
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 0.25rem;
 }
 
 .group-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.375rem 0.75rem;
-  background: var(--bg-secondary, #f8fafc);
-  border-radius: 8px;
-  margin-bottom: 0.25rem;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  background: transparent;
+  border-radius: 6px;
+  margin-bottom: 0.125rem;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
 }
 
 .group-header.clickable {
@@ -4094,9 +4196,9 @@ onUnmounted(() => {
 }
 
 .group-title {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4110,17 +4212,17 @@ onUnmounted(() => {
 }
 
 .group-count {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  color: var(--text-tertiary, #9ca3af);
   font-weight: 500;
 }
 
 .group-time {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
+  gap: 0.125rem;
+  font-size: 0.6875rem;
+  color: var(--text-tertiary, #9ca3af);
 }
 
 .group-meta {
@@ -4130,7 +4232,7 @@ onUnmounted(() => {
 .group-tasks {
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 0.125rem;
 }
 
 .task-group.collapsed .group-header {
@@ -4159,22 +4261,22 @@ onUnmounted(() => {
 .task-card {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
   padding-left: 0;
   background: var(--bg);
-  border-radius: 12px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: transform var(--transition-normal), background-color var(--transition-fast), box-shadow var(--transition-normal);
+  transition: background-color 0.15s ease;
   position: relative;
   overflow: hidden;
 }
 
 .priority-stripe {
-  width: 4px;
+  width: 3px;
   min-height: 100%;
   align-self: stretch;
-  border-radius: 4px 0 0 4px;
+  border-radius: 3px 0 0 3px;
   flex-shrink: 0;
 }
 
@@ -4185,9 +4287,7 @@ onUnmounted(() => {
 .priority-stripe.priority-none { background: #c7d2fe; }
 
 .task-card:hover {
-  background: var(--hover-bg, #f3f4f6);
-  transform: translateX(4px);
-  box-shadow: var(--shadow-sm);
+  background: var(--hover-bg, #f8fafc);
 }
 
 .task-card.completed {
@@ -4201,17 +4301,17 @@ onUnmounted(() => {
 }
 
 .task-checkbox {
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  border: 2px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   background: transparent;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: all 0.2s;
+  transition: all 0.15s;
 }
 
 .task-checkbox:hover {
@@ -4231,53 +4331,57 @@ onUnmounted(() => {
 
 .task-title {
   display: block;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.3;
 }
-
 
 .task-goal {
   display: block;
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
+  font-size: 0.75rem;
+  color: var(--text-tertiary, #9ca3af);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
 .task-meta {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
   flex-shrink: 0;
 }
 
 .time-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  font-size: 0.75rem;
-  padding: 0.125rem 0.5rem;
+  gap: 0.125rem;
+  font-size: 0.6875rem;
+  padding: 0.0625rem 0.375rem;
   background: var(--bg-secondary, #f3f4f6);
-  border-radius: 10px;
+  border-radius: 6px;
   color: var(--text-secondary);
 }
 
 .time-badge svg {
-  opacity: 0.7;
+  opacity: 0.6;
+  width: 10px;
+  height: 10px;
 }
 
 .priority-icon-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.875rem;
-  min-width: 24px;
-  height: 24px;
-  border-radius: 6px;
+  font-size: 0.75rem;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 4px;
   background: transparent;
 }
 
@@ -4816,13 +4920,13 @@ onUnmounted(() => {
 .goals-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .goal-card {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: 10px;
   overflow: hidden;
 }
 
@@ -4830,12 +4934,12 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
+  padding: 0.625rem 0.75rem;
   cursor: pointer;
 }
 
 .goal-header:hover {
-  background: var(--hover-bg, #f3f4f6);
+  background: var(--hover-bg, #f8fafc);
 }
 
 .goal-main {
@@ -4845,14 +4949,14 @@ onUnmounted(() => {
 
 .goal-sphere-badge {
   display: inline-block;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  margin-bottom: 0.25rem;
+  font-size: 0.6875rem;
+  color: var(--text-tertiary, #9ca3af);
+  margin-bottom: 0.125rem;
 }
 
 .goal-title {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--text-primary);
   white-space: nowrap;
@@ -4863,15 +4967,15 @@ onUnmounted(() => {
 .goal-meta {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
   flex-shrink: 0;
 }
 
 .steps-badge {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
+  font-size: 0.6875rem;
+  padding: 0.125rem 0.375rem;
   background: var(--bg);
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--text-secondary);
 }
 
@@ -4887,8 +4991,8 @@ onUnmounted(() => {
 .steps-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.5rem;
-  padding: 0 1rem 1rem;
+  gap: 0.375rem;
+  padding: 0 0.75rem 0.75rem;
 }
 
 @media (min-width: 480px) {
@@ -5009,30 +5113,30 @@ onUnmounted(() => {
 .step-card {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.625rem;
+  gap: 0.375rem;
+  padding: 0.375rem 0.5rem;
   background: var(--bg);
-  border-radius: 10px;
+  border-radius: 8px;
   border: 1px solid var(--border-color, #e5e7eb);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.15s;
   overflow: hidden;
-  min-height: 44px;
+  min-height: 36px;
   position: relative;
 }
 
 .step-checkbox {
   flex-shrink: 0;
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  border: 2px solid var(--border-color, #d1d5db);
+  border: 1.5px solid var(--border-color, #d1d5db);
   background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
   color: white;
 }
 
@@ -5056,12 +5160,12 @@ onUnmounted(() => {
   right: 0;
   top: 0;
   bottom: 0;
-  width: 4px;
-  border-radius: 0 10px 10px 0;
+  width: 3px;
+  border-radius: 0 8px 8px 0;
 }
 
 .step-card:hover {
-  background: var(--hover-bg, #f3f4f6);
+  background: var(--hover-bg, #f8fafc);
 }
 
 .step-card.scheduled {
@@ -5097,18 +5201,19 @@ onUnmounted(() => {
 
 .step-title {
   display: block;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.3;
 }
 
 .step-badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.375rem;
-  margin-top: 0.25rem;
+  gap: 0.25rem;
+  margin-top: 0.125rem;
   align-items: center;
 }
 
@@ -6194,13 +6299,12 @@ onUnmounted(() => {
   }
   
   .step-card {
-    min-height: 48px;
+    min-height: 40px;
     -webkit-tap-highlight-color: transparent;
   }
-  
+
   .step-card:active {
-    transform: scale(0.98);
-    background: var(--hover-bg, #f3f4f6);
+    background: var(--hover-bg, #f8fafc);
   }
   
 }
