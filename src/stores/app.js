@@ -952,6 +952,8 @@ export const useAppStore = defineStore('app', () => {
           finishOnboarding: user.value.finish_onboarding,
           finishMinitask: user.value.finish_minitask,
           telegramBotLink: user.value.telegram_bot_link ? 'present' : 'none',
+          hasActiveTelegramBot: user.value.has_active_telegram_bot,
+          telegramUsername: user.value.telegram_username,
           xpBalance: user.value.xp_balance,
           todayTasks: userDashboardData.value.today_tasks.total_count,
           todayHabits: userDashboardData.value.today_habits.total_count,
