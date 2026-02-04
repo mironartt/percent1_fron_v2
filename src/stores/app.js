@@ -679,6 +679,8 @@ export const useAppStore = defineStore('app', () => {
     finish_onboarding: false,
     finish_minitask: false,
     telegram_bot_link: '',
+    has_active_telegram_bot: false,
+    telegram_username: null,
     has_diary_entry_today: false,
     diary_today: null,
     journal_streak: 0,
@@ -687,6 +689,103 @@ export const useAppStore = defineStore('app', () => {
     is_terms_accepted: false,
     is_privacy_accepted: false
   })
+  
+  // Frontend Settings (хранятся в БД, кэшируются в localStorage)
+  const frontendSettings = ref({})
+  
+  // Загрузить frontend settings из кэша при старте
+  function loadFrontendSettingsFromCache() {
+    try {
+      const cached = localStorage.getItem('frontend_settings_cache')
+      if (cached) {
+        frontendSettings.value = JSON.parse(cached)
+      }
+    } catch (e) {
+      console.warn('[Store] Failed to load frontend settings cache:', e)
+    }
+  }
+  
+  // Установить frontend settings (из get-user-data или API)
+  function setFrontendSettings(settings) {
+    if (settings && typeof settings === 'object') {
+      frontendSettings.value = settings
+      try {
+        localStorage.setItem('frontend_settings_cache', JSON.stringify(settings))
+      } catch (e) {
+        console.warn('[Store] Failed to cache frontend settings:', e)
+      }
+    }
+  }
+  
+  // Обновить frontend settings (partial update с merge)
+  async function updateFrontendSettings(updates) {
+    // Оптимистичное обновление
+    const newSettings = { ...frontendSettings.value }
+    Object.keys(updates).forEach(key => {
+      if (updates[key] === null) {
+        delete newSettings[key]
+      } else {
+        newSettings[key] = updates[key]
+      }
+    })
+    frontendSettings.value = newSettings
+    
+    try {
+      localStorage.setItem('frontend_settings_cache', JSON.stringify(newSettings))
+    } catch (e) {
+      console.warn('[Store] Failed to cache frontend settings:', e)
+    }
+    
+    // Отправить на сервер
+    try {
+      const { updateFrontendSettings: apiUpdate } = await import('@/services/frontendSettings.js')
+      const serverSettings = await apiUpdate(updates)
+      if (serverSettings) {
+        frontendSettings.value = serverSettings
+        localStorage.setItem('frontend_settings_cache', JSON.stringify(serverSettings))
+      }
+    } catch (e) {
+      console.error('[Store] Failed to update frontend settings on server:', e)
+    }
+    
+    return frontendSettings.value
+  }
+  
+  // Getters для конкретных настроек
+  const currentTheme = computed(() => frontendSettings.value.theme || 'light')
+  const isWelcomeVideoWatched = computed(() => frontendSettings.value.welcome_video_watched === true)
+  const welcomeVideoRemindAfter = computed(() => frontendSettings.value.welcome_video_remind_after || null)
+  
+  // Проверить, нужно ли показывать welcome video modal
+  const shouldShowWelcomeVideo = computed(() => {
+    if (isWelcomeVideoWatched.value) return false
+    
+    const remindAfter = welcomeVideoRemindAfter.value
+    if (remindAfter) {
+      const remindDate = new Date(remindAfter)
+      if (Date.now() < remindDate.getTime()) {
+        return false
+      }
+    }
+    
+    return true
+  })
+  
+  // Методы для welcome video
+  async function markWelcomeVideoWatched() {
+    await updateFrontendSettings({ welcome_video_watched: true, welcome_video_remind_after: null })
+  }
+  
+  async function postponeWelcomeVideo(days = 7) {
+    const remindDate = new Date()
+    remindDate.setDate(remindDate.getDate() + days)
+    await updateFrontendSettings({ welcome_video_remind_after: remindDate.toISOString() })
+  }
+  
+  // Методы для темы
+  async function setTheme(theme) {
+    await updateFrontendSettings({ theme })
+  }
   
   const userLoading = ref(false)
   const needsPolicyAcceptance = ref(false)
@@ -749,6 +848,8 @@ export const useAppStore = defineStore('app', () => {
         finish_onboarding: userData.finish_onboarding ?? false,
         finish_minitask: userData.finish_minitask ?? false,
         telegram_bot_link: userData.telegram_bot_link || '',
+        has_active_telegram_bot: userData.has_active_telegram_bot ?? false,
+        telegram_username: userData.telegram_username || null,
         has_diary_entry_today: userData.has_diary_entry_today ?? false,
         diary_today: userData.diary_today || null,
         journal_streak: userData.journal_streak ?? 0,
@@ -759,6 +860,11 @@ export const useAppStore = defineStore('app', () => {
         is_impersonate: userData.is_impersonate ?? false,
         onboarding_version: userData.onboarding_version ?? 1,
         onboarding_ab_variant: userData.onboarding_ab_variant || null
+      }
+      
+      // Обновить frontend settings если присутствуют
+      if (userData.frontend_settings) {
+        setFrontendSettings(userData.frontend_settings)
       }
       
       needsPolicyAcceptance.value = SKIP_POLICY_CHECK ? false : (!isTermsAccepted || !isPrivacyAccepted)
@@ -3739,6 +3845,19 @@ export const useAppStore = defineStore('app', () => {
     removeGoalFromWorkOnBackend,
     getCategoryTitle,
     getPriorityTitle,
-    getTimeTitle
+    getTimeTitle,
+    
+    // Frontend Settings (настройки UI в БД)
+    frontendSettings,
+    loadFrontendSettingsFromCache,
+    setFrontendSettings,
+    updateFrontendSettings,
+    currentTheme,
+    isWelcomeVideoWatched,
+    welcomeVideoRemindAfter,
+    shouldShowWelcomeVideo,
+    markWelcomeVideoWatched,
+    postponeWelcomeVideo,
+    setTheme
   }
 })
