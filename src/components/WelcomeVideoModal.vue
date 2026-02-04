@@ -1,9 +1,9 @@
 <template>
   <Teleport to="body">
     <Transition name="modal-fade">
-      <div v-if="isOpen" class="welcome-modal-overlay" @click.self="handleClose">
+      <div v-if="isOpen" class="welcome-modal-overlay" @click.self="handlePostpone">
         <div class="welcome-modal" :class="{ 'video-mode': showVideo }">
-          <button class="close-btn" @click="handleClose">
+          <button class="close-btn" @click="handlePostpone">
             <X :size="20" />
           </button>
 
@@ -20,7 +20,7 @@
                 <Play :size="18" />
                 Посмотреть видео
               </button>
-              <button class="btn btn-secondary" @click="handleClose">
+              <button class="btn btn-secondary" @click="handlePostpone">
                 Посмотрю позже
               </button>
             </div>
@@ -55,8 +55,10 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { X, Play } from 'lucide-vue-next'
+import { useAppStore } from '@/stores/app'
 
-const STORAGE_KEY = 'welcomeVideoSeen'
+const store = useAppStore()
+
 const VIDEO_ID = 'f5edee9e1b0de1103bcda9862e62fd96'
 
 const isOpen = ref(false)
@@ -64,33 +66,24 @@ const showVideo = ref(false)
 
 const embedUrl = computed(() => `https://rutube.ru/play/embed/${VIDEO_ID}`)
 
-function checkShouldShow() {
-  const seen = localStorage.getItem(STORAGE_KEY)
-  return !seen
-}
-
 function show() {
-  if (checkShouldShow()) {
+  if (store.shouldShowWelcomeVideo) {
     isOpen.value = true
   }
 }
 
-function markAsSeen() {
-  localStorage.setItem(STORAGE_KEY, 'true')
-}
-
-function watchVideo() {
+async function watchVideo() {
   showVideo.value = true
+  await store.markWelcomeVideoWatched()
 }
 
 function finishWatching() {
-  markAsSeen()
   isOpen.value = false
   showVideo.value = false
 }
 
-function handleClose() {
-  markAsSeen()
+async function handlePostpone() {
+  await store.postponeWelcomeVideo(7)
   isOpen.value = false
   showVideo.value = false
 }
