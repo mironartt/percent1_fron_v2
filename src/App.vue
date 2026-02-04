@@ -121,8 +121,7 @@ async function handleTelegramAuth() {
 }
 
 onMounted(async () => {
-  // Загружаем frontend settings из кэша для быстрого старта
-  store.loadFrontendSettingsFromCache()
+  // Frontend settings уже загружены из кэша при инициализации store
   
   const savedCollapsed = localStorage.getItem('sidebar-collapsed')
   if (savedCollapsed !== null) {

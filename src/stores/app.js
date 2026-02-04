@@ -3614,6 +3614,7 @@ export const useAppStore = defineStore('app', () => {
   // Load data on init
   loadFromLocalStorage()
   loadUserDataFromLocalStorage()
+  loadFrontendSettingsFromCache()  // Загружаем frontend settings из кэша при инициализации store
 
   return {
     // User & Auth

@@ -272,6 +272,19 @@ watch(() => route.path, () => {
   }
 })
 
+// Реактивное применение темы при изменении в store (синхронизация между устройствами)
+watch(() => store.currentTheme, (newTheme) => {
+  if (newTheme === 'dark') {
+    isDark.value = true
+    document.documentElement.classList.add('dark')
+  } else if (newTheme === 'light') {
+    isDark.value = false
+    document.documentElement.classList.remove('dark')
+  }
+  // Синхронизируем localStorage
+  localStorage.setItem('theme', newTheme)
+})
+
 function toggleCollapse() {
   isCollapsed.value = !isCollapsed.value
   localStorage.setItem('sidebar-collapsed', isCollapsed.value.toString())
