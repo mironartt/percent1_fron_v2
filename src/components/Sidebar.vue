@@ -229,18 +229,29 @@ onMounted(() => {
     emit('collapse-change', isCollapsed.value)
   }
   
-  const savedTheme = localStorage.getItem('theme')
-  if (savedTheme === 'dark') {
+  // Тема: приоритет — store (БД), fallback — localStorage, затем system preference
+  const storeTheme = store.currentTheme
+  if (storeTheme === 'dark') {
     isDark.value = true
     document.documentElement.classList.add('dark')
-  } else if (savedTheme === 'light') {
+  } else if (storeTheme === 'light') {
     isDark.value = false
     document.documentElement.classList.remove('dark')
   } else {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    isDark.value = prefersDark
-    if (prefersDark) {
+    // Fallback на localStorage или system preference
+    const savedTheme = localStorage.getItem('theme')
+    if (savedTheme === 'dark') {
+      isDark.value = true
       document.documentElement.classList.add('dark')
+    } else if (savedTheme === 'light') {
+      isDark.value = false
+      document.documentElement.classList.remove('dark')
+    } else {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      isDark.value = prefersDark
+      if (prefersDark) {
+        document.documentElement.classList.add('dark')
+      }
     }
   }
   
@@ -267,15 +278,21 @@ function toggleCollapse() {
   emit('collapse-change', isCollapsed.value)
 }
 
-function toggleTheme() {
+async function toggleTheme() {
   isDark.value = !isDark.value
+  const newTheme = isDark.value ? 'dark' : 'light'
+  
   if (isDark.value) {
     document.documentElement.classList.add('dark')
-    localStorage.setItem('theme', 'dark')
   } else {
     document.documentElement.classList.remove('dark')
-    localStorage.setItem('theme', 'light')
   }
+  
+  // Сохраняем в localStorage для быстрого старта
+  localStorage.setItem('theme', newTheme)
+  
+  // Сохраняем в БД через store
+  await store.setTheme(newTheme)
 }
 
 const hasAccess = computed(() => {

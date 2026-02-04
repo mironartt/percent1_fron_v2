@@ -158,15 +158,21 @@ onMounted(() => {
   isDark.value = document.documentElement.classList.contains('dark')
 })
 
-function toggleTheme() {
+async function toggleTheme() {
   isDark.value = !isDark.value
+  const newTheme = isDark.value ? 'dark' : 'light'
+  
   if (isDark.value) {
     document.documentElement.classList.add('dark')
-    localStorage.setItem('theme', 'dark')
   } else {
     document.documentElement.classList.remove('dark')
-    localStorage.setItem('theme', 'light')
   }
+  
+  // Сохраняем в localStorage для быстрого старта
+  localStorage.setItem('theme', newTheme)
+  
+  // Сохраняем в БД через store
+  await store.setTheme(newTheme)
 }
 
 async function handleLogout() {
