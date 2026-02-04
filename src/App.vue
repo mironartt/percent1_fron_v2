@@ -121,6 +121,8 @@ async function handleTelegramAuth() {
 }
 
 onMounted(async () => {
+  // Frontend settings уже загружены из кэша при инициализации store
+  
   const savedCollapsed = localStorage.getItem('sidebar-collapsed')
   if (savedCollapsed !== null) {
     sidebarCollapsed.value = savedCollapsed === 'true'

@@ -55,6 +55,12 @@ The frontend is built with Vue 3 (Composition API, script setup), Vite (with pro
 ### System Design Choices
 The application uses a modular structure. It emphasizes user guidance, visual feedback, and a clean interface, with the AI Mentor as a core value proposition. Backend synchronization includes immediate UI feedback, goal routing with `backendId`, race condition prevention, optimized step synchronization, and API pagination.
 
+### Frontend Settings Storage
+System for persisting frontend UI settings in the database with localStorage caching for fast startup. API: `POST /api/rest/front/app/frontend-settings/get/` and `/update/`. Settings also included in `/api/rest/front/get-user-data/` response as `frontend_settings` field. Service: `src/services/frontendSettings.js`. Store methods: `frontendSettings`, `updateFrontendSettings()`, `setFrontendSettings()`, `loadFrontendSettingsFromCache()`. Currently used for:
+- **theme**: 'light' | 'dark' — user's preferred color theme (synced across devices)
+- **welcome_video_watched**: boolean — user has watched the welcome video
+- **welcome_video_remind_after**: ISO date string — when to remind about welcome video (7 days after "Watch Later")
+
 ### Telegram Bot Integration
 A standalone Telegram bot mirrors core OnePercent functionality for improved user engagement. It uses Telegraf (Node.js), node-cron for scheduling, and OpenAI for AI (with fallback). Features include authentication, main menu, task management, habit tracking, journal, AI mentor chat, progress summary, settings, and scheduled reminders.
 

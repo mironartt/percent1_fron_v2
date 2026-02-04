@@ -377,7 +377,8 @@ const TELEGRAM_BANNER_SHOW_AGAIN_DAYS = 7
 
 const showTelegramBanner = computed(() => {
   // 1. Если Telegram бот уже подключен — не показываем баннер
-  if (store.user.has_active_telegram_bot) return false
+  // Проверяем как boolean и как строку (на случай если бэк вернёт строку)
+  if (store.user.has_active_telegram_bot === true || store.user.has_active_telegram_bot === 'true') return false
 
   // 2. Должна быть ссылка на бота
   if (!store.user.telegram_bot_link) return false
