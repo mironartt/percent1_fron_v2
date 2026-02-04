@@ -376,17 +376,20 @@ const TELEGRAM_BANNER_DISMISSED_AT_KEY = 'tg_banner_dismissed_at'
 const TELEGRAM_BANNER_SHOW_AGAIN_DAYS = 7
 
 const showTelegramBanner = computed(() => {
-  // 1. Должна быть ссылка на бота
+  // 1. Если Telegram бот уже подключен — не показываем баннер
+  if (store.user.has_active_telegram_bot) return false
+
+  // 2. Должна быть ссылка на бота
   if (!store.user.telegram_bot_link) return false
 
-  // 2. Онбординг должен быть завершён
+  // 3. Онбординг должен быть завершён
   if (!store.user.finish_onboarding) return false
 
-  // 3. Проверяем, не скрыт ли баннер пользователем
+  // 4. Проверяем, не скрыт ли баннер пользователем
   const dismissed = localStorage.getItem(TELEGRAM_BANNER_STORAGE_KEY)
   if (!dismissed) return true
 
-  // 4. Если скрыт — проверяем, прошло ли достаточно дней
+  // 5. Если скрыт — проверяем, прошло ли достаточно дней
   const dismissedAt = localStorage.getItem(TELEGRAM_BANNER_DISMISSED_AT_KEY)
   if (dismissedAt) {
     const daysPassed = (Date.now() - Number(dismissedAt)) / (1000 * 60 * 60 * 24)
