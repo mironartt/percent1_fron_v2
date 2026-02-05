@@ -5739,8 +5739,8 @@ function formatDate(dateString) {
   padding: 0.625rem 1.25rem;
 }
 
-/* Delete Confirm Modal */
-.delete-confirm-overlay {
+/* Delete Confirm Modal - комбинированный селектор для большей специфичности */
+.modal-overlay.delete-confirm-overlay {
   z-index: 10000;
 }
 
