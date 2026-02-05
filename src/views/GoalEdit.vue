@@ -5741,7 +5741,7 @@ function formatDate(dateString) {
 
 /* Delete Confirm Modal */
 .delete-confirm-overlay {
-  z-index: 1100;
+  z-index: 10000;
 }
 
 .delete-confirm-modal {
