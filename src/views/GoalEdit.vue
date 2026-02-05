@@ -936,26 +936,28 @@
     </Teleport>
 
     <!-- Модальное окно подтверждения удаления шага -->
-    <transition name="modal-fade">
-      <div v-if="showDeleteStepConfirm" class="modal-overlay delete-confirm-overlay" @click.self="cancelDeleteStep">
-        <div class="delete-confirm-modal">
-          <div class="delete-confirm-icon">
-            <Trash2 :size="28" />
-          </div>
-          <h3>Удалить шаг?</h3>
-          <p>Шаг "{{ editStepForm.title || 'Без названия' }}" будет удалён. Это действие нельзя отменить.</p>
-          <div class="delete-confirm-actions">
-            <button class="btn btn-secondary" @click="cancelDeleteStep">
-              Отмена
-            </button>
-            <button class="btn btn-danger" @click="executeDeleteStep">
-              <Trash2 :size="16" />
-              Удалить
-            </button>
+    <Teleport to="body">
+      <transition name="modal-fade">
+        <div v-if="showDeleteStepConfirm" class="modal-overlay delete-confirm-overlay" @click.self="cancelDeleteStep">
+          <div class="delete-confirm-modal">
+            <div class="delete-confirm-icon">
+              <Trash2 :size="28" />
+            </div>
+            <h3>Удалить шаг?</h3>
+            <p>Шаг "{{ editStepForm.title || 'Без названия' }}" будет удалён. Это действие нельзя отменить.</p>
+            <div class="delete-confirm-actions">
+              <button class="btn btn-secondary" @click="cancelDeleteStep">
+                Отмена
+              </button>
+              <button class="btn btn-danger" @click="executeDeleteStep">
+                <Trash2 :size="16" />
+                Удалить
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </transition>
+      </transition>
+    </Teleport>
   </div>
 </template>
 
