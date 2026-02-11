@@ -46,23 +46,23 @@
 
     <main>
       <!-- Hero Section -->
-      <section class="relative pt-40 pb-20 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-brand-50 via-slate-50 to-slate-50 overflow-hidden">
+      <section class="relative pt-28 lg:pt-32 pb-12 lg:pb-16 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-brand-50 via-slate-50 to-slate-50 overflow-hidden">
         <div class="max-w-7xl mx-auto px-6 text-center relative z-10">
-          <div class="inline-block px-4 py-1.5 bg-brand-100 text-brand-700 rounded-full text-xs font-bold uppercase tracking-wider mb-8 border border-brand-200">
+          <div class="inline-block px-4 py-1.5 bg-brand-100 text-brand-700 rounded-full text-xs font-bold uppercase tracking-wider mb-6 border border-brand-200">
             Личный AI наставник
           </div>
-          
-          <h1 class="text-5xl md:text-7xl font-black mb-8 leading-[1.1] text-slate-900">
+
+          <h1 class="text-4xl md:text-5xl lg:text-6xl font-black mb-6 leading-[1.1] text-slate-900">
             Системный рост в жизни <br />
-            <span class="text-gradient text-6xl md:text-8xl">через простые действия</span>
+            <span class="text-gradient text-4xl md:text-5xl lg:text-6xl">через простые действия</span>
           </h1>
-          
-          <p class="text-slate-500 text-lg md:text-xl max-w-2xl mx-auto mb-12 leading-relaxed">
+
+          <p class="text-slate-500 text-base md:text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
             Система, которая делает развитие предсказуемым. <br class="hidden md:block"/>
             Стань сильнее в 38 раз за один год.
           </p>
           
-          <div class="flex flex-col md:flex-row items-center justify-center gap-6 mb-24">
+          <div class="flex flex-col md:flex-row items-center justify-center gap-6">
             <router-link 
               to="/register" 
               class="w-full md:w-auto bg-brand-600 text-white px-10 py-5 rounded-2xl font-black text-lg hover:scale-105 transition duration-300 shadow-2xl shadow-brand-300"
@@ -79,8 +79,8 @@
             </div>
           </div>
 
-          <!-- Calculator -->
-          <div id="method" class="max-w-xl mx-auto bg-white rounded-[32px] p-8 md:p-12 shadow-2xl shadow-slate-200/40 border border-slate-100 text-left">
+          <!-- Calculator (hidden for now) -->
+          <div v-if="false" id="method" class="max-w-xl mx-auto bg-white rounded-[32px] p-8 md:p-12 shadow-2xl shadow-slate-200/40 border border-slate-100 text-left">
             <div class="flex justify-between items-start mb-10">
               <div>
                 <h3 class="font-black text-3xl mb-2 text-slate-900">Эффект 1%</h3>
@@ -114,7 +114,7 @@
       </section>
 
       <!-- ProblemSolution Section -->
-      <section class="py-16 md:py-24 bg-white relative z-20 -mt-8 md:-mt-16 rounded-t-[2.5rem] md:rounded-t-[4rem] shadow-[0_-20px_40px_-15px_rgba(0,0,0,0.05)]">
+      <section class="py-12 md:py-20 bg-white relative z-20 rounded-t-[2.5rem] md:rounded-t-[4rem] shadow-[0_-20px_40px_-15px_rgba(0,0,0,0.05)]">
         <div class="max-w-7xl mx-auto px-6">
           <div class="text-center mb-12">
             <h2 class="text-2xl md:text-3xl font-bold text-slate-900">
@@ -146,8 +146,8 @@
         </div>
       </section>
 
-      <!-- Math Section -->
-      <section class="py-24 bg-white">
+      <!-- Math Section (hidden for now) -->
+      <section v-if="false" class="py-24 bg-white">
         <div class="max-w-5xl mx-auto px-6">
           <div class="text-center mb-16">
             <h2 class="text-3xl md:text-4xl font-black text-slate-900 mb-6">Математика успеха</h2>
@@ -184,14 +184,14 @@
       </section>
 
       <!-- Features Section -->
-      <section class="py-24 bg-slate-50 overflow-hidden" id="how-it-works">
+      <section class="py-16 md:py-20 bg-slate-50 overflow-hidden" id="how-it-works">
         <div class="max-w-7xl mx-auto px-6">
-          <div class="text-center mb-24 max-w-3xl mx-auto">
+          <div class="text-center mb-16 max-w-3xl mx-auto">
             <div class="inline-flex items-center gap-2 px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-bold uppercase tracking-wider mb-6 shadow-sm text-brand-600">
               <Sparkles class="w-3 h-3" />
               <span>Как это работает</span>
             </div>
-            <h2 class="text-4xl md:text-5xl font-black text-slate-900 mb-6 leading-tight">
+            <h2 class="text-3xl md:text-4xl font-black text-slate-900 mb-6 leading-tight">
               От хаоса к порядку <br/> <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-purple-600">за 6 простых шагов</span>
             </h2>
             <p class="text-lg text-slate-500 leading-relaxed">
@@ -199,7 +199,7 @@
             </p>
           </div>
 
-          <div class="space-y-32">
+          <div class="space-y-20 md:space-y-24">
             <div 
               v-for="(step, index) in featureSteps" 
               :key="step.id" 
@@ -210,7 +210,7 @@
                 <div class="inline-block px-4 py-1.5 rounded-lg bg-slate-100 text-slate-500 font-bold text-sm">
                   {{ step.subtitle }}
                 </div>
-                <h3 class="text-3xl md:text-4xl font-bold text-slate-900">
+                <h3 class="text-2xl md:text-3xl font-bold text-slate-900">
                   {{ step.title }}
                 </h3>
                 
@@ -259,7 +259,7 @@
               <!-- Visual Section -->
               <div class="flex-1 w-full">
                 <div :class="['relative rounded-3xl p-1 ring-1 ring-slate-900/5 shadow-2xl', `bg-gradient-to-br ${step.gradient}`]">
-                  <div class="bg-white/80 backdrop-blur-sm rounded-[20px] overflow-hidden border border-white/50 min-h-[400px] md:min-h-[500px] flex flex-col">
+                  <div class="bg-white/80 backdrop-blur-sm rounded-[20px] overflow-hidden border border-white/50 min-h-[320px] md:min-h-[400px] flex flex-col">
                     
                     <div class="h-10 bg-slate-50 border-b border-slate-100 flex items-center px-4 gap-2">
                       <div class="flex gap-1.5">
@@ -468,7 +468,7 @@
       </section>
 
       <!-- AI Mentor Section -->
-      <section class="py-24 bg-white overflow-hidden relative">
+      <section class="py-16 md:py-20 bg-white overflow-hidden relative">
         <div class="absolute top-1/2 right-0 -translate-y-1/2 w-[600px] h-[600px] bg-brand-50/50 rounded-full blur-3xl -z-10 pointer-events-none opacity-60"></div>
 
         <div class="max-w-7xl mx-auto px-6">
@@ -489,8 +489,8 @@
                 <span>Всегда рядом</span>
               </div>
 
-              <h2 class="text-4xl md:text-5xl font-black text-slate-900 mb-6 leading-[1.1]">
-                Персональный коуч <br/> на связи 
+              <h2 class="text-3xl md:text-4xl font-black text-slate-900 mb-6 leading-[1.1]">
+                Персональный коуч <br/> на связи
                 <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-purple-600 ml-3">24/7</span>
               </h2>
               
@@ -603,14 +603,14 @@
       </section>
 
       <!-- Final CTA Section -->
-      <section class="py-20 md:py-28 bg-gradient-to-br from-brand-600 to-purple-700 relative overflow-hidden text-white">
+      <section class="py-16 md:py-20 bg-gradient-to-br from-brand-600 to-purple-700 relative overflow-hidden text-white">
         <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
           <div class="absolute top-1/2 left-1/4 w-[500px] h-[500px] bg-brand-500 rounded-full mix-blend-overlay filter blur-[128px] opacity-30 animate-pulse"></div>
           <div class="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-500 rounded-full mix-blend-overlay filter blur-[128px] opacity-30"></div>
         </div>
 
         <div class="max-w-5xl mx-auto px-6 relative z-10">
-          <h2 class="text-3xl md:text-5xl font-black text-center mb-12 md:mb-16 leading-tight drop-shadow-sm">
+          <h2 class="text-3xl md:text-4xl font-black text-center mb-10 md:mb-12 leading-tight drop-shadow-sm">
             Ты прошёл путь <br class="md:hidden"/> от диагностики до результата
           </h2>
 
@@ -656,10 +656,10 @@
       </section>
 
       <!-- Testimonials Section -->
-      <section class="py-24 bg-white border-t border-slate-100">
+      <section class="py-16 md:py-20 bg-white border-t border-slate-100">
         <div class="max-w-7xl mx-auto px-6">
-          <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-5xl font-black text-slate-900 mb-6">Проверено временем</h2>
+          <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-black text-slate-900 mb-6">Проверено временем</h2>
             <p class="text-lg text-slate-500 max-w-2xl mx-auto">
               Величайшие умы истории использовали системный подход к развитию задолго до нас
             </p>
@@ -698,7 +698,7 @@
       </section>
 
       <!-- Pricing Section -->
-      <section class="py-24 bg-slate-50 relative overflow-hidden" id="pricing">
+      <section class="py-16 md:py-20 bg-slate-50 relative overflow-hidden" id="pricing">
         <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
           <div class="absolute top-1/2 left-0 w-96 h-96 bg-brand-200 rounded-full mix-blend-multiply filter blur-[128px] opacity-40"></div>
           <div class="absolute bottom-0 right-0 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-[128px] opacity-40"></div>
@@ -706,7 +706,7 @@
 
         <div class="max-w-7xl mx-auto px-6 relative z-10">
           <div class="text-center mb-12">
-            <h2 class="text-3xl md:text-5xl font-black text-slate-900 mb-4">Простая и честная стоимость</h2>
+            <h2 class="text-3xl md:text-4xl font-black text-slate-900 mb-4">Простая и честная стоимость</h2>
             <p class="text-lg text-slate-500">Без скрытых платежей. Отмена в любой момент.</p>
           </div>
 
