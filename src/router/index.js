@@ -398,6 +398,14 @@ const router = createRouter({
     { path: '/settings', redirect: '/app/settings' },
     { path: '/club', redirect: '/app/club' },
     
+    // Demo — интерактивная демка нового онбординга (без бэкенда)
+    {
+      path: '/demo',
+      name: 'onboarding-demo',
+      component: () => import('@/views/OnboardingDemo.vue'),
+      meta: { title: 'Демо онбординга v2', public: true }
+    },
+
     // 404 - страница не найдена
     {
       path: '/:pathMatch(.*)*',
