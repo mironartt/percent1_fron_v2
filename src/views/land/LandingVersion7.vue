@@ -46,15 +46,15 @@
 
     <main>
       <!-- Hero Section -->
-      <section class="relative pt-28 lg:pt-32 pb-12 lg:pb-16 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-brand-50 via-slate-50 to-slate-50 overflow-hidden">
-        <div class="max-w-7xl mx-auto px-6 text-center relative z-10">
+      <section class="relative min-h-screen flex flex-col justify-center pb-12 lg:pb-16 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-brand-50 via-slate-50 to-slate-50 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-6 text-center relative z-10 pt-24">
           <div class="inline-block px-4 py-1.5 bg-brand-100 text-brand-700 rounded-full text-xs font-bold uppercase tracking-wider mb-6 border border-brand-200">
             Личный AI наставник
           </div>
 
           <h1 class="text-4xl md:text-5xl lg:text-6xl font-black mb-6 leading-[1.1] text-slate-900">
-            Системный рост в жизни <br />
-            <span class="text-gradient text-4xl md:text-5xl lg:text-6xl">через простые действия</span>
+            Система для развития навыка <br />достижения целей <br />
+            <span class="text-gradient text-4xl md:text-5xl lg:text-6xl">через ежедневное улучшение на 1%</span>
           </h1>
 
           <p class="text-slate-500 text-base md:text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
@@ -71,8 +71,8 @@
             </router-link>
             <div class="flex items-center gap-3 text-slate-400 text-sm font-medium">
               <div class="flex -space-x-2">
-                <div v-for="i in 3" :key="i" class="w-8 h-8 rounded-full bg-slate-200 border-2 border-white overflow-hidden">
-                  <img :src="`https://picsum.photos/seed/${i + 45}/100/100`" alt="User" class="w-full h-full object-cover" />
+                <div v-for="(avatar, i) in userAvatars" :key="i" class="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-slate-100">
+                  <img :src="avatar" alt="User" class="w-full h-full object-cover" />
                 </div>
               </div>
               <span>2,847+ человек уже растут</span>
@@ -114,8 +114,8 @@
       </section>
 
       <!-- ProblemSolution Section -->
-      <section class="py-12 md:py-20 bg-white relative z-20 rounded-t-[2.5rem] md:rounded-t-[4rem] shadow-[0_-20px_40px_-15px_rgba(0,0,0,0.05)]">
-        <div class="max-w-7xl mx-auto px-6">
+      <section class="py-12 md:py-20 min-h-[60vh] flex flex-col justify-center bg-white relative z-20 rounded-t-[2.5rem] md:rounded-t-[4rem] shadow-[0_-20px_40px_-15px_rgba(0,0,0,0.05)]">
+        <div class="max-w-7xl mx-auto px-6 w-full">
           <div class="text-center mb-12">
             <h2 class="text-2xl md:text-3xl font-bold text-slate-900">
               Знакомые ситуации?
@@ -965,10 +965,14 @@ import {
   ArrowRight, Palette, Users
 } from 'lucide-vue-next'
 import WheelOfLifeMockup from '@/components/landing/WheelOfLifeMockup.vue'
+import avatarUser1 from '@/assets/avatars/user1.jpg'
+import avatarUser2 from '@/assets/avatars/user2.jpg'
+import avatarUser3 from '@/assets/avatars/user3.jpg'
 import { useSubscriptionStore } from '@/stores/subscription.js'
 
 const subscriptionStore = useSubscriptionStore()
 
+const userAvatars = [avatarUser1, avatarUser2, avatarUser3]
 const isScrolled = ref(false)
 const mobileMenuOpen = ref(false)
 const days = ref(30)
