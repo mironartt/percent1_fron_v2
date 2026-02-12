@@ -53,13 +53,13 @@
           </div>
 
           <h1 class="text-4xl md:text-5xl lg:text-6xl font-black mb-6 leading-[1.1] text-slate-900">
-            Система для развития навыка <br />достижения целей <br />
-            <span class="text-gradient text-4xl md:text-5xl lg:text-6xl">через ежедневное улучшение на 1%</span>
+            Система для развития навыка <br /><span class="text-gradient">достижения целей</span>
           </h1>
 
           <p class="text-slate-500 text-base md:text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
-            Система, которая делает развитие предсказуемым. <br class="hidden md:block"/>
-            Стань сильнее в 38 раз за один год.
+            Стань сильнее в 38 раз за один год. <br class="hidden md:block"/>
+            Улучшайся всего на 1% каждый день — маленькие шаги складываются <br class="hidden md:block"/>
+            в сложный процент и превращают микро-действия в большой результат.
           </p>
           
           <div class="flex flex-col md:flex-row items-center justify-center gap-6">
