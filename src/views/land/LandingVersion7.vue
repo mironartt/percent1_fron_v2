@@ -184,9 +184,9 @@
       </section>
 
       <!-- Features Section -->
-      <section class="py-16 md:py-20 bg-slate-50 overflow-hidden" id="how-it-works">
+      <section class="py-32 md:py-44 bg-slate-50 overflow-hidden" id="how-it-works">
         <div class="max-w-7xl mx-auto px-6">
-          <div class="text-center mb-16 max-w-3xl mx-auto">
+          <div class="text-center mb-24 md:mb-32 max-w-3xl mx-auto">
             <div class="inline-flex items-center gap-2 px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-bold uppercase tracking-wider mb-6 shadow-sm text-brand-600">
               <Sparkles class="w-3 h-3" />
               <span>Как это работает</span>
@@ -199,7 +199,7 @@
             </p>
           </div>
 
-          <div class="space-y-20 md:space-y-24">
+          <div class="space-y-40 md:space-y-52">
             <div 
               v-for="(step, index) in featureSteps" 
               :key="step.id" 
@@ -672,8 +672,11 @@
               class="bg-white rounded-[32px] p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col sm:flex-row gap-6 items-start group"
             >
               <div class="shrink-0">
-                <div class="w-16 h-16 rounded-full bg-brand-500 flex items-center justify-center shadow-lg shadow-brand-200 group-hover:scale-110 transition-transform duration-300">
-                  <component :is="person.icon" class="w-8 h-8 text-white" :stroke-width="1.5" />
+                <div class="w-20 h-20 rounded-2xl overflow-hidden shadow-lg shadow-brand-200 group-hover:scale-110 transition-transform duration-300 ring-2 ring-brand-100">
+                  <img v-if="person.image" :src="person.image" :alt="person.name" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
+                  <div v-else class="w-full h-full bg-gradient-to-br from-brand-600 to-purple-600 flex items-center justify-center text-white font-black text-xl">
+                    {{ person.initials }}
+                  </div>
                 </div>
               </div>
 
@@ -961,13 +964,16 @@ import { ref, computed, onMounted, onUnmounted, markRaw } from 'vue'
 import { 
   Compass, Target, LayoutDashboard, Activity, CheckSquare, Calendar, 
   Repeat, Trophy, Sparkles, MessageCircle, Check, Zap, Map, 
-  TrendingUp, Mic, Feather, BookOpen, PenTool, Quote, Lightbulb,
+  TrendingUp, Mic, Quote, Lightbulb,
   ArrowRight, Palette, Users
 } from 'lucide-vue-next'
 import WheelOfLifeMockup from '@/components/landing/WheelOfLifeMockup.vue'
 import avatarUser1 from '@/assets/avatars/user1.jpg'
 import avatarUser2 from '@/assets/avatars/user2.jpg'
 import avatarUser3 from '@/assets/avatars/user3.jpg'
+import imgFranklin from '@/assets/testimonials/franklin.jpg'
+import imgBuffett from '@/assets/testimonials/buffett.jpg'
+import imgDaVinci from '@/assets/testimonials/davinci.png'
 import { useSubscriptionStore } from '@/stores/subscription.js'
 
 const subscriptionStore = useSubscriptionStore()
@@ -1132,28 +1138,29 @@ const testimonials = [
     role: "Политик, учёный, изобретатель",
     quote: "Маленькие удары валят большие дубы",
     description: "Создал систему 13 добродетелей: каждую неделю фокусировался на одном качестве, вёл дневник самоанализа.",
-    icon: markRaw(Feather)
+    image: imgFranklin
   },
   {
     name: "Джеймс Клир",
     role: "Автор «Atomic Habits»",
     quote: "Привычки — это сложные проценты самосовершенствования",
     description: "Популяризировал концепцию 1%: если каждый день улучшаться на 1%, за год станешь лучше в 37 раз.",
-    icon: markRaw(BookOpen)
+    image: null,
+    initials: 'JC'
   },
   {
     name: "Уоррен Баффетт",
     role: "Инвестор, миллиардер",
     quote: "Я просто сижу в офисе и читаю целый день",
     description: "Правило 5 часов: ежедневно инвестирует минимум час в обучение и рефлексию. 80% рабочего времени — чтение.",
-    icon: markRaw(TrendingUp)
+    image: imgBuffett
   },
   {
     name: "Леонардо да Винчи",
     role: "Художник, учёный, изобретатель",
     quote: "Препятствия не могут сокрушить меня",
     description: "Вёл легендарные записные книжки: 7000+ страниц наблюдений, идей и планов. Ежедневная практика.",
-    icon: markRaw(PenTool)
+    image: imgDaVinci
   }
 ]
 

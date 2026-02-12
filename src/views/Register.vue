@@ -502,6 +502,7 @@ function closeSuccess() {
   min-height: 100vh;
   background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 1rem;
@@ -942,13 +943,9 @@ function closeSuccess() {
 }
 
 .auth-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  width: 100%;
   padding: 1rem;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(10px);
+  margin-top: auto;
 }
 
 .footer-legal {
