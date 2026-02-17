@@ -389,6 +389,11 @@ watch(() => chatStore.isBotTyping, (isTyping) => {
 
 watch(isMobileOpen, (newValue) => {
   document.body.style.overflow = newValue ? 'hidden' : ''
+  // Инициализируем чат при открытии мобильной панели
+  // (покрывает открытие через BottomNavigation FAB, где toggleMobile не вызывается)
+  if (newValue) {
+    initializeChat()
+  }
 })
 
 watch(() => route.path, () => {
