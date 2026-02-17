@@ -406,7 +406,9 @@ watch(() => store.mentorPanelCollapsed, (collapsed) => {
 watch(() => chatStore.conversationId, (newId, oldId) => {
   if (newId && newId !== oldId) {
     isInitialized.value = false
-    if (!store.mentorPanelCollapsed && !isMobile.value) {
+    // Desktop: панель не свёрнута → инициализируем
+    // Mobile: панель открыта → инициализируем (fix для Telegram Mini App)
+    if ((!isMobile.value && !store.mentorPanelCollapsed) || (isMobile.value && isMobileOpen.value)) {
       initializeChat()
     }
   }
