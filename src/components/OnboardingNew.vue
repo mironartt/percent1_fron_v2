@@ -1,8 +1,9 @@
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { sphereScenarios, sphereOrder, motivationOptions } from '@/data/sphereScenarios.js'
+import { DEBUG_MODE } from '@/config/settings.js'
 import {
   Rocket, Sparkles, Compass, Target, Bot, TrendingUp, BookOpen,
   RefreshCw, ClipboardList, Scale,
@@ -23,7 +24,21 @@ const scenarioIndex = ref(0)
 const answers = ref({})
 const isSaving = ref(false)
 
-// ── Sphere → Backend mapping ───────────────────────
+// ── Backend integration state ────────────────────
+const isLoadingQuestions = ref(true)
+const backendQuestions = ref(null) // null = не загружено/ошибка, [] = загружено
+const interviewAnswersMap = ref({}) // { questionId: { question_id, selected_option_id, free_text } }
+
+// ── Backend → Frontend category mapping ──────────
+const BACKEND_TO_SPHERE = {
+  work: 'career',
+  health_sport: 'health',
+  welfare: 'wealth',
+  family: 'love',
+  environment: 'friendship',
+  hobby: 'hobbies'
+}
+
 const SPHERE_TO_BACKEND = {
   career: 'work',
   health: 'health_sport',
@@ -33,14 +48,102 @@ const SPHERE_TO_BACKEND = {
   hobbies: 'hobby'
 }
 
-// ── Computed ──────────────────────────────────────
-const currentSphereId = computed(() => sphereOrder[scenarioIndex.value])
-const currentSphere = computed(() => sphereScenarios[currentSphereId.value])
+// ── Load questions from backend on mount ─────────
+onMounted(async () => {
+  try {
+    await store.loadInterviewQuestions()
+    if (store.interviewData.loaded && store.interviewData.questions.length > 0) {
+      backendQuestions.value = store.interviewData.questions
+      if (DEBUG_MODE) {
+        console.log('[Onboarding] Backend questions loaded:', backendQuestions.value.length)
+      }
+    }
+  } catch (e) {
+    if (DEBUG_MODE) {
+      console.error('[Onboarding] Failed to load questions, using fallback:', e)
+    }
+  } finally {
+    isLoadingQuestions.value = false
+  }
+})
+
+// ── Whether we use backend data ──────────────────
+const useBackend = computed(() => backendQuestions.value !== null && backendQuestions.value.length > 0)
+
+// ── Dynamic data: backend or fallback ────────────
+
+// Motivation question (category === null)
+const motivationQuestion = computed(() => {
+  if (!useBackend.value) return null
+  return backendQuestions.value.find(q => q.category === null || q.category === '')
+})
+
+const dynamicMotivationOptions = computed(() => {
+  if (motivationQuestion.value && motivationQuestion.value.answer_options?.length > 0) {
+    return motivationQuestion.value.answer_options.map((opt, idx) => ({
+      id: opt.id || `opt_${idx}`,
+      label: opt.text,
+      icon: null,
+      _optionId: opt.id
+    }))
+  }
+  return motivationOptions
+})
+
+// Sphere order and scenarios from backend
+const dynamicSphereOrder = computed(() => {
+  if (!useBackend.value) return sphereOrder
+  const order = []
+  for (const q of backendQuestions.value) {
+    if (q.category && BACKEND_TO_SPHERE[q.category]) {
+      order.push(BACKEND_TO_SPHERE[q.category])
+    }
+  }
+  return order.length === 6 ? order : sphereOrder
+})
+
+const dynamicSphereScenarios = computed(() => {
+  if (!useBackend.value) return sphereScenarios
+
+  const result = {}
+  for (const q of backendQuestions.value) {
+    if (!q.category || !BACKEND_TO_SPHERE[q.category]) continue
+    const sphereId = BACKEND_TO_SPHERE[q.category]
+    const fallback = sphereScenarios[sphereId] || {}
+
+    result[sphereId] = {
+      id: sphereId,
+      name: q.title || fallback.name || sphereId,
+      icon: fallback.icon || '',
+      color: fallback.color || '#6366f1',
+      emoji: fallback.emoji || '',
+      _questionId: q.id,
+      scenarios: (q.answer_options || []).map(opt => ({
+        label: opt.text,
+        score: opt.weight || 0,
+        _optionId: opt.id
+      }))
+    }
+  }
+
+  // Заполняем пропущенные сферы из хардкода
+  for (const id of sphereOrder) {
+    if (!result[id]) {
+      result[id] = sphereScenarios[id]
+    }
+  }
+
+  return result
+})
+
+// ── Computed (using dynamic data) ────────────────
+const currentSphereId = computed(() => dynamicSphereOrder.value[scenarioIndex.value])
+const currentSphere = computed(() => dynamicSphereScenarios.value[currentSphereId.value])
 const allSpheresAnswered = computed(() => Object.keys(answers.value).length === 6)
 
 const sphereResults = computed(() => {
-  return sphereOrder.map(id => ({
-    ...sphereScenarios[id],
+  return dynamicSphereOrder.value.map(id => ({
+    ...dynamicSphereScenarios.value[id],
     score: answers.value[id]?.score || 0,
     context: answers.value[id]?.context || ''
   }))
@@ -69,49 +172,79 @@ function goToMotivation() {
 // ── Methods ──────────────────────────────────────
 function selectMotivation(option) {
   selectedMotivation.value = option
+
+  // Сохраняем ответ мотивации в interviewAnswersMap (если бэкенд)
+  if (useBackend.value && motivationQuestion.value && option._optionId) {
+    interviewAnswersMap.value[motivationQuestion.value.id] = {
+      question_id: motivationQuestion.value.id,
+      selected_option_id: option._optionId,
+      free_text: null
+    }
+  }
+
   setTimeout(() => {
     currentScreen.value = 'scenarios'
-    // Save motivation to backend (non-blocking)
-    saveMotivation()
+    // В fallback-режиме сохраняем мотивацию отдельным запросом
+    if (!useBackend.value) {
+      saveMotivationFallback()
+    }
   }, 300)
 }
 
-async function saveMotivation() {
+async function saveMotivationFallback() {
   try {
     await store.saveOnboardingToBackend({
       reason_joined: selectedMotivation.value.label,
       step_completed: 1
     })
   } catch (e) {
-    console.error('[Onboarding] Failed to save motivation:', e)
+    if (DEBUG_MODE) {
+      console.error('[Onboarding] Failed to save motivation (fallback):', e)
+    }
   }
 }
 
 function selectScenario(scenario) {
-  answers.value[currentSphereId.value] = {
+  const sphereId = currentSphereId.value
+  answers.value[sphereId] = {
     score: scenario.score,
     context: scenario.label
+  }
+
+  // Сохраняем ответ в interviewAnswersMap (если бэкенд)
+  const sphereData = dynamicSphereScenarios.value[sphereId]
+  if (useBackend.value && sphereData?._questionId && scenario._optionId) {
+    interviewAnswersMap.value[sphereData._questionId] = {
+      question_id: sphereData._questionId,
+      selected_option_id: scenario._optionId,
+      free_text: null
+    }
   }
 
   if (scenarioIndex.value < 5) {
     scenarioIndex.value++
   } else {
     currentScreen.value = 'result'
-    // Save sphere scores to backend (non-blocking)
-    saveSphereScores()
+    // В backend-режиме всё отправляется при нажатии "Начать"
+    // В fallback-режиме сохраняем SSP отдельно
+    if (!useBackend.value) {
+      saveSphereScoresFallback()
+    }
   }
 }
 
-async function saveSphereScores() {
+async function saveSphereScoresFallback() {
   try {
-    const categoriesData = sphereOrder.map(id => ({
+    const categoriesData = dynamicSphereOrder.value.map(id => ({
       category: SPHERE_TO_BACKEND[id],
       rating: answers.value[id].score
     }))
     await store.saveSSPToBackend(categoriesData, { createNew: true })
     await store.saveOnboardingToBackend({ step_completed: 2 })
   } catch (e) {
-    console.error('[Onboarding] Failed to save sphere scores:', e)
+    if (DEBUG_MODE) {
+      console.error('[Onboarding] Failed to save sphere scores (fallback):', e)
+    }
   }
 }
 
@@ -120,15 +253,50 @@ async function finishOnboarding() {
   isSaving.value = true
 
   try {
-    await store.completeOnboardingWithBackend({})
-    store.setUserFinishOnboarding(true)
-    router.push('/app')
+    if (useBackend.value) {
+      // === Backend mode: один атомарный запрос ===
+      const answersArray = Object.values(interviewAnswersMap.value)
+
+      if (DEBUG_MODE) {
+        console.log('[Onboarding] Submitting interview answers:', answersArray)
+      }
+
+      const result = await store.submitInterviewToBackend(answersArray)
+
+      if (result.success) {
+        store.setUserFinishOnboarding(true)
+        router.push('/app')
+      } else {
+        // Если submit не прошёл — фоллбэк на старую логику
+        if (DEBUG_MODE) {
+          console.warn('[Onboarding] Interview submit failed, falling back to legacy flow')
+        }
+        await finishOnboardingFallback()
+      }
+    } else {
+      // === Fallback mode: 3 отдельных запроса (как раньше) ===
+      await finishOnboardingFallback()
+    }
   } catch (e) {
-    console.error('[Onboarding] Failed to complete onboarding:', e)
-    // Fallback: set locally and redirect anyway
+    if (DEBUG_MODE) {
+      console.error('[Onboarding] Failed to complete onboarding:', e)
+    }
+    // Последний fallback: просто редиректим
     store.setUserFinishOnboarding(true)
     router.push('/app')
   }
+}
+
+async function finishOnboardingFallback() {
+  try {
+    await store.completeOnboardingWithBackend({})
+  } catch (e) {
+    if (DEBUG_MODE) {
+      console.error('[Onboarding] Fallback complete failed:', e)
+    }
+  }
+  store.setUserFinishOnboarding(true)
+  router.push('/app')
 }
 
 // ── Wheel drawing ──────────────────────────────────
@@ -217,7 +385,7 @@ watch(() => currentScreen.value, (screen) => {
         <p class="screen-subtitle">Сервис, который помогает расти в 6 сферах жизни: карьера, здоровье, финансы, отношения, окружение, хобби</p>
 
         <div class="welcome-spheres">
-          <span class="welcome-sphere" v-for="s in sphereOrder" :key="s" :style="{ borderColor: sphereScenarios[s].color, color: sphereScenarios[s].color }">
+          <span class="welcome-sphere" v-for="s in dynamicSphereOrder" :key="s" :style="{ borderColor: dynamicSphereScenarios[s].color, color: dynamicSphereScenarios[s].color }">
             <component :is="SPHERE_ICONS[s]" :size="22" :stroke-width="1.5" />
           </span>
         </div>
@@ -278,13 +446,13 @@ watch(() => currentScreen.value, (screen) => {
 
         <div class="options-list">
           <button
-            v-for="opt in motivationOptions"
+            v-for="opt in dynamicMotivationOptions"
             :key="opt.id"
             class="option-card"
             :class="{ selected: selectedMotivation?.id === opt.id }"
             @click="selectMotivation(opt)"
           >
-            <span class="option-icon"><component :is="MOTIVATION_ICONS[opt.id]" :size="20" :stroke-width="1.5" /></span>
+            <span v-if="MOTIVATION_ICONS[opt.id]" class="option-icon"><component :is="MOTIVATION_ICONS[opt.id]" :size="20" :stroke-width="1.5" /></span>
             <span class="option-label">{{ opt.label }}</span>
           </button>
         </div>
@@ -313,11 +481,11 @@ watch(() => currentScreen.value, (screen) => {
         <!-- Mini sphere progress dots -->
         <div class="mini-spheres">
           <div
-            v-for="(id, i) in sphereOrder"
+            v-for="(id, i) in dynamicSphereOrder"
             :key="id"
             class="mini-sphere-dot"
             :class="{ active: i === scenarioIndex, done: answers[id] }"
-            :style="{ backgroundColor: answers[id] ? sphereScenarios[id].color : 'transparent', borderColor: sphereScenarios[id].color, color: answers[id] ? '#fff' : sphereScenarios[id].color }"
+            :style="{ backgroundColor: answers[id] ? dynamicSphereScenarios[id].color : 'transparent', borderColor: dynamicSphereScenarios[id].color, color: answers[id] ? '#fff' : dynamicSphereScenarios[id].color }"
           >
             <component :is="SPHERE_ICONS[id]" :size="16" :stroke-width="1.5" />
           </div>
