@@ -523,6 +523,23 @@ export async function updateOnboardingData(data) {
 }
 
 /**
+ * Получить вопросы интервью-онбординга
+ * @returns {Promise<object>} - Вопросы с вариантами ответов
+ */
+export async function getInterviewQuestions() {
+  return request('POST', '/api/rest/front/app/onboard/interview/get/', {})
+}
+
+/**
+ * Отправить ответы на интервью-онбординг
+ * @param {Array} answers - Массив ответов [{question_id, selected_option_id, free_text}]
+ * @returns {Promise<object>} - Результат с SSP данными
+ */
+export async function submitInterviewAnswers(answers) {
+  return request('POST', '/api/rest/front/app/onboard/interview/submit/', { answers })
+}
+
+/**
  * Проверка статуса авторизации
  * Возвращает данные пользователя если авторизован, иначе null
  */

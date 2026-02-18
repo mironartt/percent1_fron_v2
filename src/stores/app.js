@@ -22,7 +22,9 @@ import {
   updateStep as apiUpdateStep,
   deleteStep as apiDeleteStep,
   toggleStepComplete as apiToggleStepComplete,
-  scheduleStep as apiScheduleStep
+  scheduleStep as apiScheduleStep,
+  getInterviewQuestions,
+  submitInterviewAnswers
 } from '@/services/api.js'
 import { useToastStore } from '@/stores/toast'
 
@@ -1189,6 +1191,15 @@ export const useAppStore = defineStore('app', () => {
     }
   })
 
+  // Interview data (интервью-онбординг v3)
+  const interviewData = ref({
+    loaded: false,
+    loading: false,
+    questions: [],
+    already_completed: false,
+    previous_answers: []
+  })
+
   // Mini Task data (расширенная структура для синхронизации с бэкендом)
   const miniTask = ref({
     completed: false,
@@ -2279,6 +2290,70 @@ export const useAppStore = defineStore('app', () => {
       ...data,
       is_complete: true
     })
+  }
+
+  // === Interview onboarding (v3) methods ===
+
+  async function loadInterviewQuestions() {
+    if (interviewData.value.loading) return
+    interviewData.value.loading = true
+
+    try {
+      const result = await getInterviewQuestions()
+
+      if (result.status === 'ok' && result.data) {
+        interviewData.value.questions = result.data.questions || []
+        interviewData.value.already_completed = result.data.already_completed || false
+        interviewData.value.previous_answers = result.data.previous_answers || []
+        interviewData.value.loaded = true
+
+        if (DEBUG_MODE) {
+          console.log('[Store] Interview questions loaded:', interviewData.value.questions.length, 'questions')
+        }
+      } else {
+        if (DEBUG_MODE) {
+          console.warn('[Store] Failed to load interview questions:', result)
+        }
+      }
+    } catch (error) {
+      if (DEBUG_MODE) {
+        console.error('[Store] Error loading interview questions:', error)
+      }
+    } finally {
+      interviewData.value.loading = false
+    }
+  }
+
+  async function submitInterviewToBackend(answers) {
+    if (DEBUG_MODE) {
+      console.log('[Store] Submitting interview answers:', answers)
+    }
+
+    try {
+      const result = await submitInterviewAnswers(answers)
+
+      if (result.status === 'ok') {
+        user.value.finish_onboarding = true
+        onboarding.value.completed = true
+        interviewData.value.already_completed = true
+
+        if (DEBUG_MODE) {
+          console.log('[Store] Interview submitted successfully:', result.data)
+        }
+
+        return { success: true, data: result.data }
+      } else {
+        if (DEBUG_MODE) {
+          console.warn('[Store] Failed to submit interview:', result)
+        }
+        return { success: false, error: result.error_code }
+      }
+    } catch (error) {
+      if (DEBUG_MODE) {
+        console.error('[Store] Error submitting interview:', error)
+      }
+      return { success: false, error: 'network_error' }
+    }
   }
 
   const shouldShowOnboarding = computed(() => {
@@ -3637,6 +3712,7 @@ export const useAppStore = defineStore('app', () => {
     
     // Core data
     onboarding,
+    interviewData,
     miniTask,
     payment,
     lifeSpheres,
@@ -3753,7 +3829,11 @@ export const useAppStore = defineStore('app', () => {
     saveOnboardingToBackend,
     updateOnboardingStep,
     completeOnboardingWithBackend,
-    
+
+    // Interview onboarding (v3) methods
+    loadInterviewQuestions,
+    submitInterviewToBackend,
+
     // Mini-task backend methods
     loadMiniTaskFromBackend,
     saveMiniTaskToBackend,
