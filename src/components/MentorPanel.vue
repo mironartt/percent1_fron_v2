@@ -1052,6 +1052,7 @@ onUnmounted(() => {
   
   .mentor-panel.mobile-open {
     transform: translateX(0);
+    bottom: calc(var(--bottom-nav-height, 56px) + var(--safe-area-bottom, 0px));
   }
 }
 
