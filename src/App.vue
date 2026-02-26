@@ -24,7 +24,6 @@
       :show="showPolicyModal" 
       @accepted="onPolicyAccepted" 
     />
-    <MentorPanel v-if="showMentorPanel" />
     <BottomNavigation v-if="showBottomNav" />
     <ToastNotification />
     <XPNotification />
@@ -45,7 +44,6 @@ import Sidebar from './components/Sidebar.vue'
 import BottomNavigation from './components/BottomNavigation.vue'
 import TelegramAuthModals from './components/TelegramAuthModals.vue'
 import PolicyAcceptanceModal from './components/PolicyAcceptanceModal.vue'
-import MentorPanel from './components/MentorPanel.vue'
 import WelcomeVideoModal from './components/WelcomeVideoModal.vue'
 import ToastNotification from './components/ToastNotification.vue'
 import XPNotification from './components/XPNotification.vue'
@@ -229,8 +227,8 @@ const isAppPage = computed(() => {
   return route.path === '/app' || route.path.startsWith('/app/')
 })
 
-const showMentorPanel = computed(() => {
-  return hasSidebar.value && isAppPage.value && !isOnboarding.value
+const isChatRoute = computed(() => {
+  return route.path === '/app' && route.name === 'chat'
 })
 
 const showBottomNav = computed(() => {
@@ -288,8 +286,7 @@ const showTrialBanner = computed(() => {
 const appClasses = computed(() => ({
   'has-sidebar': hasSidebar.value,
   'sidebar-collapsed': hasSidebar.value && sidebarCollapsed.value,
-  'has-mentor-panel': showMentorPanel.value,
-  'mentor-collapsed': showMentorPanel.value && store.mentorPanelCollapsed
+  'is-chat-route': isChatRoute.value
 }))
 </script>
 
@@ -316,15 +313,12 @@ const appClasses = computed(() => ({
   margin-left: 72px;
 }
 
-@media (min-width: 1024px) {
-  #app.has-mentor-panel .main-content {
-    margin-right: 460px;
-    transition: margin-left 0.3s ease, margin-right 0.3s ease;
-  }
-  
-  #app.has-mentor-panel.mentor-collapsed .main-content {
-    margin-right: 56px;
-  }
+#app.is-chat-route .main-content {
+  padding: 0 1rem;
+}
+
+#app.is-chat-route.has-sidebar .main-content {
+  padding: 0 2rem;
 }
 
 @media (max-width: 768px) {

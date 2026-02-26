@@ -55,11 +55,11 @@
           <span class="nav-label">{{ item.label }}</span>
         </router-link>
 
-        <div 
+        <div
           v-else
           class="nav-item disabled"
           :class="{ 'has-lock': item.showLock }"
-          :title="isCollapsed ? item.label : (item.showLock ? lockTooltip : '')"
+          :title="isCollapsed ? item.label : (item.showLock ? getLockTooltip(item) : '')"
         >
           <component :is="item.icon" class="icon" :size="20" :stroke-width="1.5" />
           <span class="nav-label">{{ item.label }}</span>
@@ -133,12 +133,13 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
-import { 
-  BarChart3, 
-  Target, 
-  Landmark, 
-  Calendar, 
-  Users, 
+import {
+  BarChart3,
+  MessageCircle,
+  Target,
+  Landmark,
+  Calendar,
+  Users,
   Award,
   User,
   Settings,
@@ -312,19 +313,32 @@ const hasAccess = computed(() => {
   return store.payment.completed
 })
 
-const lockTooltip = 'Для доступа в систему необходима подписка'
+const menuItems = computed(() => {
+  const stage = store.tutorialStage
+  const items = [
+    { path: '/app', icon: MessageCircle, label: 'Главная', minStage: 0 },
+    { path: '/app/goals-bank', icon: Landmark, label: 'Банк целей', minStage: 1 },
+    { path: '/app/planning', icon: Calendar, label: 'Планирование', minStage: 2 },
+    { path: '/app/habits', icon: Flame, label: 'Привычки', minStage: 3 },
+    { path: '/app/ssp', icon: Target, label: 'Колесо баланса', minStage: 4 },
+    { path: '/app/achievements', icon: Award, label: 'Достижения', minStage: 5 },
+    { path: '/app/journal', icon: BookOpen, label: 'Дневник', minStage: 6 },
+    { path: '/app/learning', icon: GraduationCap, label: 'Обучение', minStage: 6 },
+    { path: '/app/club', icon: Users, label: 'Клуб 1%', minStage: 6, external: true, href: 'https://t.me/dmkosik' }
+  ]
+  return items.map(item => ({
+    ...item,
+    locked: stage < item.minStage,
+    showLock: stage < item.minStage
+  }))
+})
 
-const menuItems = [
-  { path: '/app', icon: BarChart3, label: 'Главная', locked: false, showLock: false },
-  { path: '/app/ssp', icon: Target, label: 'Колесо баланса', locked: false, showLock: false },
-  { path: '/app/goals-bank', icon: Landmark, label: 'Банк целей', locked: false, showLock: false },
-  { path: '/app/planning', icon: Calendar, label: 'Планирование', locked: false, showLock: false },
-  { path: '/app/journal', icon: BookOpen, label: 'Дневник', locked: false, showLock: false },
-  { path: '/app/habits', icon: Flame, label: 'Привычки', locked: false, showLock: false },
-  { path: '/app/achievements', icon: Award, label: 'Достижения', locked: false, showLock: false },
-  { path: '/app/learning', icon: GraduationCap, label: 'Обучение', locked: false, showLock: false },
-  { path: '/app/club', icon: Users, label: 'Клуб 1%', locked: false, showLock: false, external: true, href: 'https://t.me/dmkosik' }
-]
+function getLockTooltip(item) {
+  if (store.tutorialStage < item.minStage) {
+    return 'Этот раздел откроется по мере обучения'
+  }
+  return 'Для доступа в систему необходима подписка'
+}
 </script>
 
 <style scoped>

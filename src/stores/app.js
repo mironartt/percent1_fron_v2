@@ -928,9 +928,16 @@ export const useAppStore = defineStore('app', () => {
       })
       
       // Синхронизировать XP store с актуальным балансом из get-user-data
-      import('@/stores/xp.js').then(({ useXpStore }) => {
+      import('@/stores/xp.js').then(async ({ useXpStore }) => {
         const xpStore = useXpStore()
         xpStore.syncFromUserData(userData)
+        // Preload rewards for tutorial stage check
+        try {
+          await xpStore.fetchRewards()
+          _tutorialHasRewards.value = xpStore.rewards.length > 0
+        } catch (e) {
+          // Don't block tutorial if rewards fail to load
+        }
       }).catch(err => {
         console.error('[Store] Failed to sync XP store:', err)
       })
@@ -1501,6 +1508,18 @@ export const useAppStore = defineStore('app', () => {
   const unreadMentorCount = ref(0)
   const mentorSpotlightMode = ref(false)
 
+  // Dashboard collapsed state (mini-dashboard above chat)
+  const dashboardCollapsed = ref(localStorage.getItem('dashboard-collapsed') !== 'false')
+
+  function toggleDashboardCollapsed(forceState) {
+    if (typeof forceState === 'boolean') {
+      dashboardCollapsed.value = forceState
+    } else {
+      dashboardCollapsed.value = !dashboardCollapsed.value
+    }
+    localStorage.setItem('dashboard-collapsed', dashboardCollapsed.value.toString())
+  }
+
   function toggleMentorPanel(forceState) {
     if (typeof forceState === 'boolean') {
       mentorPanelCollapsed.value = forceState
@@ -1949,20 +1968,68 @@ export const useAppStore = defineStore('app', () => {
     if (!isSSPCompleted.value) {
       return 1
     }
-    
+
     // Stage 2: ССП заполнена, но нет целей
     if (!hasGoals.value) {
       return 2
     }
-    
+
     // Stage 3: Есть цели, но нет задач на неделю
     if (!hasWeeklyTasks.value) {
       return 3
     }
-    
+
     // Stage 4: Всё настроено
     return 4
   })
+
+  // ========================================
+  // TUTORIAL STAGE (Progressive Feature Disclosure)
+  // ========================================
+
+  const tutorialSkipped = computed(() => {
+    return frontendSettings.value.tutorial_skipped === true
+  })
+
+  // null = not loaded yet (don't block), false = no rewards, true = has rewards
+  const _tutorialHasRewards = ref(null)
+
+  const tutorialStage = computed(() => {
+    // Если tutorial пропущен или онбординг не завершён — всё открыто
+    if (tutorialSkipped.value) return 6
+    if (!user.value?.finish_onboarding) return 6
+
+    // Stage 0: нет целей
+    if (goals.value.length === 0) return 0
+
+    // Stage 1: есть цели, но ни у одной нет шагов
+    const hasAnySteps = goals.value.some(g => g.steps && g.steps.length > 0)
+    if (!hasAnySteps) return 1
+
+    // Stage 2: есть шаги, но нет запланированных задач
+    if (!hasWeeklyTasks.value) return 2
+
+    // Stage 3: есть план, но нет привычек
+    const habitsCount = userDashboardData.value?.today_habits?.total_count ?? habits.value.length
+    if (habitsCount === 0) return 3
+
+    // Stage 4: есть привычки, но колесо баланса не заполнено
+    if (!isSSPCompleted.value) return 4
+
+    // Stage 5: колесо баланса заполнено, но нет наград
+    if (_tutorialHasRewards.value === false) return 5
+
+    // Stage 6: всё освоено (или rewards ещё не загружены — не блокируем)
+    return 6
+  })
+
+  function syncTutorialRewards(hasRewards) {
+    _tutorialHasRewards.value = hasRewards
+  }
+
+  async function skipTutorial() {
+    await updateFrontendSettings({ tutorial_skipped: true })
+  }
 
   // Actions
   function updateSphere(sphereId, updates) {
@@ -3738,6 +3805,12 @@ export const useAppStore = defineStore('app', () => {
     isSSPCompleted,
     hasGoals,
     hasWeeklyTasks,
+
+    // Tutorial (Progressive Feature Disclosure)
+    tutorialStage,
+    tutorialSkipped,
+    skipTutorial,
+    syncTutorialRewards,
     
     // Journal
     journal,
@@ -3760,6 +3833,10 @@ export const useAppStore = defineStore('app', () => {
     firstStepsTotal,
     allFirstStepsCompleted,
     
+    // Dashboard (mini-dashboard above chat)
+    dashboardCollapsed,
+    toggleDashboardCollapsed,
+
     // Mentor (ИИ-наставник)
     mentor,
     mentorPanelCollapsed,

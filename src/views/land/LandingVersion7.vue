@@ -146,6 +146,145 @@
         </div>
       </section>
 
+      <!-- Values Section: Ядро системы -->
+      <section class="py-16 md:py-24 bg-slate-50 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-6">
+          <!-- Section Header -->
+          <div class="text-center mb-14 max-w-3xl mx-auto">
+            <div class="inline-flex items-center gap-2 px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-bold uppercase tracking-wider mb-6 shadow-sm text-brand-600">
+              <Brain class="w-3 h-3" />
+              <span>Ядро системы</span>
+            </div>
+            <h2 class="text-3xl md:text-4xl font-black text-slate-900 mb-6 leading-tight">
+              Не просто бот. <br />
+              <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-purple-600">Лучший в мире наставник</span>, <br class="hidden md:block" />который знает тебя лично.
+            </h2>
+            <p class="text-lg text-slate-500 leading-relaxed">
+              Обучен на методиках мировых экспертов. Адаптирован под ваши цели, привычки и паттерны.
+            </p>
+          </div>
+
+          <!-- Hero Card (full width) -->
+          <div class="mb-6">
+            <div class="relative rounded-[24px] bg-gradient-to-br from-brand-600 to-purple-600 p-8 md:p-10 text-white shadow-xl shadow-brand-500/20 overflow-hidden group hover:-translate-y-1 transition-transform duration-300">
+              <div class="absolute top-0 right-0 w-72 h-72 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3 blur-2xl"></div>
+              <div class="relative z-10">
+                <div class="flex items-start gap-5 mb-6">
+                  <div class="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center flex-shrink-0">
+                    <GraduationCap class="w-7 h-7 text-white" :stroke-width="2" />
+                  </div>
+                  <div>
+                    <h3 class="text-xl md:text-2xl font-bold mb-2">{{ valueCards[0].title }}</h3>
+                    <p class="text-brand-100 leading-relaxed text-base">{{ valueCards[0].description }}</p>
+                  </div>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <span
+                    v-for="badge in valueCards[0].badges"
+                    :key="badge"
+                    class="px-3 py-1 bg-white/15 rounded-full text-xs font-bold text-white/90 backdrop-blur-sm"
+                  >
+                    {{ badge }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2x2 Grid -->
+          <div class="grid md:grid-cols-2 gap-6">
+            <!-- Card 2: Personalization -->
+            <div class="rounded-[24px] bg-white border border-slate-200 p-8 shadow-lg shadow-slate-200/40 hover:-translate-y-1 transition-transform duration-300 group">
+              <div class="w-14 h-14 rounded-2xl bg-purple-100 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Fingerprint class="w-7 h-7 text-purple-600" :stroke-width="2" />
+              </div>
+              <h3 class="text-xl font-bold text-slate-900 mb-3">{{ valueCards[1].title }}</h3>
+              <p class="text-slate-500 leading-relaxed mb-5">{{ valueCards[1].description }}</p>
+              <div class="flex gap-4 text-sm">
+                <div class="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-xl">
+                  <div class="w-2 h-2 rounded-full bg-purple-400"></div>
+                  <span class="font-medium text-slate-600">127 рефлексий</span>
+                </div>
+                <div class="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-xl">
+                  <div class="w-2 h-2 rounded-full bg-brand-400"></div>
+                  <span class="font-medium text-slate-600">12 паттернов</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 3: Conversational tasks -->
+            <div class="rounded-[24px] bg-white border border-slate-200 p-8 shadow-lg shadow-slate-200/40 hover:-translate-y-1 transition-transform duration-300 group">
+              <div class="w-14 h-14 rounded-2xl bg-green-100 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <MessageSquarePlus class="w-7 h-7 text-green-600" :stroke-width="2" />
+              </div>
+              <h3 class="text-xl font-bold text-slate-900 mb-3">{{ valueCards[2].title }}</h3>
+              <p class="text-slate-500 leading-relaxed mb-5">{{ valueCards[2].description }}</p>
+              <div class="bg-slate-50 rounded-2xl p-4 space-y-3 text-sm">
+                <div class="flex items-start gap-2">
+                  <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span class="text-[10px] font-bold text-slate-500">Ты</span>
+                  </div>
+                  <p class="text-slate-600 bg-white rounded-xl px-3 py-2 border border-slate-100">Хочу начать медитировать</p>
+                </div>
+                <div class="flex items-start gap-2">
+                  <div class="w-6 h-6 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Zap class="w-3 h-3 text-brand-600" />
+                  </div>
+                  <p class="text-slate-600 bg-brand-50 rounded-xl px-3 py-2 border border-brand-100">Создал привычку: Медитация 5 мин, пн-пт, утро. <span class="font-bold text-brand-600">+15 XP</span></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 4: Planning -->
+            <div class="rounded-[24px] bg-white border border-slate-200 p-8 shadow-lg shadow-slate-200/40 hover:-translate-y-1 transition-transform duration-300 group">
+              <div class="w-14 h-14 rounded-2xl bg-amber-100 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <CalendarCheck class="w-7 h-7 text-amber-600" :stroke-width="2" />
+              </div>
+              <h3 class="text-xl font-bold text-slate-900 mb-3">{{ valueCards[3].title }}</h3>
+              <p class="text-slate-500 leading-relaxed mb-5">{{ valueCards[3].description }}</p>
+              <div class="space-y-2 text-sm">
+                <div class="flex items-center gap-3 px-3 py-2 bg-slate-50 rounded-xl">
+                  <div class="w-1.5 h-1.5 rounded-full bg-green-400"></div>
+                  <span class="text-slate-500">Пн</span>
+                  <span class="font-medium text-slate-700">Бег 30 мин</span>
+                  <span class="ml-auto text-xs text-green-600 font-bold">Готово</span>
+                </div>
+                <div class="flex items-center gap-3 px-3 py-2 bg-brand-50 rounded-xl border border-brand-100">
+                  <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div>
+                  <span class="text-slate-500">Вт</span>
+                  <span class="font-medium text-slate-700">Финансовый обзор</span>
+                  <span class="ml-auto text-xs text-brand-600 font-bold">Сегодня</span>
+                </div>
+                <div class="flex items-center gap-3 px-3 py-2 bg-slate-50 rounded-xl">
+                  <div class="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                  <span class="text-slate-500">Ср</span>
+                  <span class="font-medium text-slate-700">Чтение 20 стр</span>
+                  <span class="ml-auto text-xs text-slate-400 font-medium">Завтра</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 5: Voice chat -->
+            <div class="rounded-[24px] bg-white border border-slate-200 p-8 shadow-lg shadow-slate-200/40 hover:-translate-y-1 transition-transform duration-300 group">
+              <div class="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Mic class="w-7 h-7 text-blue-600" :stroke-width="2" />
+              </div>
+              <h3 class="text-xl font-bold text-slate-900 mb-3">{{ valueCards[4].title }}</h3>
+              <p class="text-slate-500 leading-relaxed mb-5">{{ valueCards[4].description }}</p>
+              <div class="bg-slate-50 rounded-2xl p-4 flex items-center gap-4">
+                <div class="w-10 h-10 rounded-full bg-brand-600 flex items-center justify-center shadow-lg shadow-brand-200">
+                  <Mic class="w-5 h-5 text-white" />
+                </div>
+                <div class="flex-1 flex items-center gap-1">
+                  <div v-for="(bar, i) in voiceWaveBars" :key="i" class="flex-1 rounded-full bg-brand-300" :style="{ height: bar.height + 'px', opacity: bar.opacity }"></div>
+                </div>
+                <span class="text-xs font-bold text-slate-400">1:24</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Math Section (hidden for now) -->
       <section v-if="false" class="py-24 bg-white">
         <div class="max-w-5xl mx-auto px-6">
@@ -961,11 +1100,12 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, markRaw } from 'vue'
-import { 
-  Compass, Target, LayoutDashboard, Activity, CheckSquare, Calendar, 
-  Repeat, Trophy, Sparkles, MessageCircle, Check, Zap, Map, 
+import {
+  Compass, Target, LayoutDashboard, Activity, CheckSquare, Calendar,
+  Repeat, Trophy, Sparkles, MessageCircle, Check, Zap, Map,
   TrendingUp, Mic, Quote, Lightbulb,
-  ArrowRight, Palette, Users
+  ArrowRight, Palette, Users,
+  Brain, GraduationCap, Fingerprint, MessageSquarePlus, CalendarCheck
 } from 'lucide-vue-next'
 import WheelOfLifeMockup from '@/components/landing/WheelOfLifeMockup.vue'
 import avatarUser1 from '@/assets/avatars/user1.jpg'
@@ -1122,6 +1262,49 @@ const mentorRoles = [
   { title: 'Стратег', period: 'Первый месяц', description: 'Помогает оцифровать цели, составить реалистичный план и найти время в календаре.', icon: markRaw(Map), active: false },
   { title: 'Коуч 1%', period: '2+ месяц', description: 'Поддерживает дисциплину, анализирует срывы и помогает вернуться в строй без чувства вины.', icon: markRaw(Zap), active: true }
 ]
+
+const valueCards = [
+  {
+    title: 'Обучен на лучших методиках мира',
+    description: 'CBT, мотивационное интервью, SMART, Atomic Habits, Ikigai — ментор применяет проверенные научные техники, адаптируя их под вашу ситуацию.',
+    icon: markRaw(GraduationCap),
+    badges: ['CBT', 'SMART', 'Atomic Habits', 'Ikigai', 'ACT', 'Мотивационное интервью'],
+    highlighted: true
+  },
+  {
+    title: 'Знает тебя лучше, чем ты сам',
+    description: 'Анализирует рефлексии, паттерны срывов, историю целей и привычек. Каждый совет — не шаблон, а ответ на основе твоих данных.',
+    icon: markRaw(Fingerprint),
+    badges: null,
+    highlighted: false
+  },
+  {
+    title: 'Ставь задачи и привычки через диалог',
+    description: 'Не нужно заполнять формы. Просто скажи: «Хочу бегать 3 раза в неделю» — ментор создаст привычку, подберёт расписание и будет отслеживать прогресс.',
+    icon: markRaw(MessageSquarePlus),
+    badges: null,
+    highlighted: false
+  },
+  {
+    title: 'Планирование через ментора',
+    description: 'Ментор управляет расписанием: распределяет задачи по дням, учитывает приоритеты и загрузку, напоминает о просроченном.',
+    icon: markRaw(CalendarCheck),
+    badges: null,
+    highlighted: false
+  },
+  {
+    title: 'Голосовой чат с ментором',
+    description: 'Общайся голосом как с настоящим коучем — ментор слушает, задаёт уточняющие вопросы и помогает разобраться в себе.',
+    icon: markRaw(Mic),
+    badges: null,
+    highlighted: false
+  }
+]
+
+const voiceWaveBars = Array.from({ length: 20 }, () => ({
+  height: Math.random() * 20 + 4,
+  opacity: 0.4 + Math.random() * 0.6
+}))
 
 const ctaItems = [
   "Увидел свои проблемные зоны",
