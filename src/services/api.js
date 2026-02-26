@@ -539,6 +539,58 @@ export async function submitInterviewAnswers(answers) {
   return request('POST', '/api/rest/front/app/onboard/interview/submit/', { answers })
 }
 
+// === Итерационное AI интервью-тестирование ===
+
+/**
+ * Начать сессию итерационного AI интервью
+ * @param {string} sessionType - Тип сессии (default: 'post_onboarding')
+ * @returns {Promise<object>} - Данные сессии (session_id, status)
+ */
+export async function startInterviewSession(sessionType = 'post_onboarding') {
+  return request('POST', '/api/rest/front/app/interview/session/start/', { session_type: sessionType })
+}
+
+/**
+ * Получить информацию о сессии интервью
+ * @param {number|null} sessionId - ID сессии (null = последняя активная)
+ * @returns {Promise<object>} - Данные сессии
+ */
+export async function getInterviewSession(sessionId = null) {
+  const data = sessionId ? { session_id: sessionId } : {}
+  return request('POST', '/api/rest/front/app/interview/session/get/', data)
+}
+
+/**
+ * Получить текущую итерацию интервью (вопросы)
+ * @param {number} sessionId - ID сессии
+ * @returns {Promise<object>} - Итерация с вопросами
+ */
+export async function getInterviewIteration(sessionId) {
+  return request('POST', '/api/rest/front/app/interview/iteration/get/', { session_id: sessionId })
+}
+
+/**
+ * Отправить ответы на итерацию интервью
+ * @param {number} sessionId - ID сессии
+ * @param {Array} answers - Массив ответов [{question_id, selected_option_id, free_text}]
+ * @returns {Promise<object>} - Результат (next_iteration или completed)
+ */
+export async function submitInterviewIteration(sessionId, answers) {
+  return request('POST', '/api/rest/front/app/interview/iteration/submit/', { session_id: sessionId, answers })
+}
+
+/**
+ * Создать цели из рекомендаций AI интервью
+ * @param {number} sessionId - ID сессии
+ * @param {Array|null} goalIndexes - Индексы выбранных целей (null = все)
+ * @returns {Promise<object>} - {created_goals_count, created_steps_count, goal_ids}
+ */
+export async function createInterviewGoals(sessionId, goalIndexes = null) {
+  const data = { session_id: sessionId }
+  if (goalIndexes !== null) data.goal_indexes = goalIndexes
+  return request('POST', '/api/rest/front/app/interview/goals/create/', data)
+}
+
 /**
  * Проверка статуса авторизации
  * Возвращает данные пользователя если авторизован, иначе null

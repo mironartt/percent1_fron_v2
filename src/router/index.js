@@ -25,6 +25,7 @@ const JournalHistory = () => import('@/views/JournalHistory.vue')
 const LearningCenter = () => import('@/views/LearningCenter.vue')
 const Profile = () => import('@/views/Profile.vue')
 const Habits = () => import('@/views/Habits.vue')
+const InterviewTesting = () => import('@/views/InterviewTesting.vue')
 const More = () => import('@/views/More.vue')
 const OnboardingRouter = () => import('@/components/OnboardingRouter.vue')
 const NotFound = () => import('@/views/NotFound.vue')
@@ -375,6 +376,12 @@ const router = createRouter({
       name: 'habits',
       component: Habits,
       meta: { title: 'Привычки', requiresAuth: true }
+    },
+    {
+      path: '/app/interview',
+      name: 'interview',
+      component: InterviewTesting,
+      meta: { title: 'AI Интервью', requiresAuth: true }
     },
     {
       path: '/app/more',

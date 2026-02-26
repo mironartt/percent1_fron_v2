@@ -60,6 +60,20 @@
         </button>
       </div>
 
+      <!-- Interview Banner -->
+      <div v-if="hasActiveInterview" class="interview-banner">
+        <div class="interview-banner-icon">
+          <Brain :size="20" :stroke-width="1.5" />
+        </div>
+        <div class="interview-banner-content">
+          <h4>Продолжить AI интервью</h4>
+          <p>Вы начали интервью-тестирование. Продолжите, чтобы получить персональные инсайты.</p>
+        </div>
+        <router-link to="/app/interview" class="interview-banner-btn">
+          Продолжить
+        </router-link>
+      </div>
+
       <div class="day-content">
         <div class="focus-goals-grid">
           <div class="card focus-card">
@@ -245,7 +259,8 @@ import {
   Flag,
   X,
   Settings,
-  Send
+  Send,
+  Brain
 } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 
@@ -258,6 +273,7 @@ const showJournalModal = ref(false)
 const showMiniTask = ref(false)
 const showHabitManager = ref(false)
 const showMentorModal = ref(false)
+const hasActiveInterview = ref(false)
 
 function openMentorModal() {
   showMentorModal.value = true
@@ -337,6 +353,18 @@ watch(() => store.user.finish_onboarding, async (finished, oldVal) => {
   }
 })
 
+async function checkActiveInterview() {
+  try {
+    const result = await api.getInterviewSession()
+    if (result.status === 'ok' && result.data &&
+        (result.data.status === 'in_progress' || result.data.status === 'analyzing')) {
+      hasActiveInterview.value = true
+    }
+  } catch (e) {
+    // Нет сессии или ошибка — не показываем баннер
+  }
+}
+
 onMounted(async () => {
   if (DEBUG_MODE) {
     console.log('[Dashboard] onMounted mentor intro check:', {
@@ -345,11 +373,12 @@ onMounted(async () => {
       isAllCompleted: activationStore.isAllCompleted
     })
   }
-  
+
   if (store.user.finish_onboarding) {
     await refreshDashboardData()
+    checkActiveInterview()
   }
-  
+
   if (store.user.finish_onboarding && !activationStore.mentorIntroCompleted && !activationStore.isAllCompleted) {
     triggerMentorSpotlight()
   }
@@ -1675,6 +1704,94 @@ function pluralize(n, one, few, many) {
   }
 
   .telegram-banner-btn {
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+}
+
+/* Interview Banner */
+.interview-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: var(--radius-lg);
+}
+
+.interview-banner-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.interview-banner-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.interview-banner-content h4 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+  color: var(--text-primary);
+}
+
+.interview-banner-content p {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.interview-banner-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.interview-banner-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+@media (max-width: 600px) {
+  .interview-banner {
+    flex-wrap: wrap;
+    padding: 1rem;
+  }
+
+  .interview-banner-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .interview-banner-content {
+    flex: 1;
+    min-width: calc(100% - 56px);
+  }
+
+  .interview-banner-btn {
     width: 100%;
     justify-content: center;
     margin-top: 0.5rem;
