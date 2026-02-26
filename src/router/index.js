@@ -8,6 +8,7 @@ const Login = () => import('@/views/Login.vue')
 const Register = () => import('@/views/Register.vue')
 const Recovery = () => import('@/views/Recovery.vue')
 const Dashboard = () => import('@/views/Dashboard.vue')
+const ChatView = () => import('@/views/ChatView.vue')
 const BalancedScorecard = () => import('@/views/BalancedScorecard.vue')
 const GoalNew = () => import('@/views/GoalNew.vue')
 const GoalEdit = () => import('@/views/GoalEdit.vue')
@@ -267,8 +268,8 @@ const router = createRouter({
     // App routes (защищённые)
     {
       path: '/app',
-      name: 'dashboard',
-      component: Dashboard,
+      name: 'chat',
+      component: ChatView,
       meta: { title: 'Главная', requiresAuth: true }
     },
     {
@@ -547,9 +548,9 @@ router.beforeEach(async (to, from, next) => {
     if (DEBUG_MODE) {
       console.log('[Router] Authenticated user on guest-only route, redirecting to /app')
     }
-    return next({ name: 'dashboard' })
+    return next({ name: 'chat' })
   }
-  
+
   if (to.meta.requiresAuth && !isAuthenticated) {
     if (DEBUG_MODE) {
       console.log('[Router] Unauthenticated user on protected route, redirecting to login')
@@ -566,16 +567,36 @@ router.beforeEach(async (to, from, next) => {
   // Only applies if: user finished onboarding but not mini-task
   if (to.meta.requiresAuth && isAuthenticated) {
     const shouldBlockForMiniTask = store.shouldShowMiniTask
-    const allowedDuringMiniTask = ['dashboard', 'settings', 'logout']
-    
+    const allowedDuringMiniTask = ['chat', 'settings', 'logout']
+
     if (shouldBlockForMiniTask && !allowedDuringMiniTask.includes(to.name)) {
       if (DEBUG_MODE) {
-        console.log('[Router] Blocking navigation during mini-task, redirecting to dashboard')
+        console.log('[Router] Blocking navigation during mini-task, redirecting to chat')
       }
-      return next({ name: 'dashboard' })
+      return next({ name: 'chat' })
     }
   }
-  
+
+  // Tutorial progressive disclosure navigation blocking
+  if (to.meta.requiresAuth && isAuthenticated) {
+    const tutorialStage = store.tutorialStage
+    const routeStageMap = {
+      'goals-bank': 1, 'goal-new': 1, 'goal-edit': 1,
+      'planning': 2, 'planner': 2,
+      'habits': 3,
+      'ssp': 4,
+      'achievements': 5,
+      'journal': 6, 'learning': 6
+    }
+    const requiredStage = routeStageMap[to.name]
+    if (requiredStage !== undefined && tutorialStage < requiredStage) {
+      if (DEBUG_MODE) {
+        console.log(`[Router] Tutorial blocking: ${to.name} requires stage ${requiredStage}, user at stage ${tutorialStage}`)
+      }
+      return next({ name: 'chat' })
+    }
+  }
+
   if (DEBUG_MODE) {
     console.log('[Router] Navigation allowed')
   }

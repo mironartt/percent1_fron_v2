@@ -96,7 +96,7 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
-import { Home, Target, Calendar, Menu, Plus, Zap, BookOpen, Dumbbell, MessageCircle } from 'lucide-vue-next'
+import { Target, Calendar, Menu, Plus, Zap, BookOpen, Dumbbell, MessageCircle } from 'lucide-vue-next'
 import QuickAddTask from './QuickAddTask.vue'
 import AddGoalModal from './AddGoalModal.vue'
 import AddHabitModal from './AddHabitModal.vue'
@@ -106,23 +106,38 @@ const route = useRoute()
 const router = useRouter()
 const store = useAppStore()
 
-const leftNavItems = [
-  { path: '/app', icon: Home, label: 'Главная' },
-  { path: '/app/goals-bank', icon: Target, label: 'Цели' }
-]
+const leftNavItems = computed(() => {
+  const stage = store.tutorialStage
+  const items = [
+    { path: '/app', icon: MessageCircle, label: 'Главная' }
+  ]
+  if (stage >= 1) {
+    items.push({ path: '/app/goals-bank', icon: Target, label: 'Цели' })
+  }
+  return items
+})
 
-const rightNavItems = [
-  { path: '/app/planning', icon: Calendar, label: 'План' },
-  { path: '/app/more', icon: Menu, label: 'Ещё' }
-]
+const rightNavItems = computed(() => {
+  const stage = store.tutorialStage
+  const items = []
+  if (stage >= 2) {
+    items.push({ path: '/app/planning', icon: Calendar, label: 'План' })
+  }
+  items.push({ path: '/app/more', icon: Menu, label: 'Ещё' })
+  return items
+})
 
-const fabMenuItems = [
-  { id: 'task', label: 'Быстрая задача', icon: Zap, color: '#f59e0b' },
-  { id: 'goal', label: 'Новая цель', icon: Target, color: '#10b981' },
-  { id: 'journal', label: 'Запись в дневник', icon: BookOpen, color: '#8b5cf6' },
-  { id: 'habit', label: 'Добавить привычку', icon: Dumbbell, color: '#3b82f6' },
-  { id: 'mentor', label: 'AI ментор', icon: MessageCircle, color: '#ec4899' }
-]
+const fabMenuItems = computed(() => {
+  const stage = store.tutorialStage
+  const allItems = [
+    { id: 'task', label: 'Быстрая задача', icon: Zap, color: '#f59e0b', minStage: 2 },
+    { id: 'goal', label: 'Новая цель', icon: Target, color: '#10b981', minStage: 0 },
+    { id: 'journal', label: 'Запись в дневник', icon: BookOpen, color: '#8b5cf6', minStage: 6 },
+    { id: 'habit', label: 'Добавить привычку', icon: Dumbbell, color: '#3b82f6', minStage: 3 },
+    { id: 'mentor', label: 'AI ментор', icon: MessageCircle, color: '#ec4899', minStage: 0 }
+  ]
+  return allItems.filter(item => stage >= item.minStage)
+})
 
 const fabOpen = ref(false)
 const showQuickTask = ref(false)
@@ -159,13 +174,9 @@ function handleFabItemClick(item) {
       showAddHabitModal.value = true
       break
     case 'mentor':
-      openMentor()
+      router.push('/app')
       break
   }
-}
-
-function openMentor() {
-  store.mentorMobileOpen = true
 }
 
 function onQuickTaskCreated(task) {
