@@ -46,7 +46,7 @@
                 v-for="prompt in quickPrompts"
                 :key="prompt.id"
                 class="quick-prompt-btn"
-                @click="sendQuickPrompt(prompt.text)"
+                @click="sendQuickPrompt(prompt.action ? prompt : prompt.text)"
                 :disabled="!canSendMessage"
               >
                 <component :is="prompt.icon" :size="14" :stroke-width="1.5" />
@@ -130,7 +130,7 @@
 
 <script setup>
 import { ref, computed, nextTick, watch, onMounted, onUnmounted, markRaw } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { useChatStore } from '@/stores/chat'
 import { useXpStore } from '@/stores/xp'
@@ -152,10 +152,12 @@ import {
   Flame,
   SkipForward,
   Award,
-  Compass
+  Compass,
+  ClipboardList
 } from 'lucide-vue-next'
 
 const route = useRoute()
+const router = useRouter()
 const store = useAppStore()
 const chatStore = useChatStore()
 const xpStore = useXpStore()
@@ -259,10 +261,14 @@ const quickPrompts = computed(() => {
   }
 
   if (stage === 1) {
-    return [
+    const prompts = [
       { id: 't1-1', icon: markRaw(Target), label: 'Разбить цель на шаги', text: 'Помоги разбить мою цель на конкретные шаги' },
       { id: 't1-2', icon: markRaw(Lightbulb), label: 'Зачем нужны шаги?', text: 'Объясни зачем разбивать цели на шаги и как это правильно делать' }
     ]
+    if (!store.interviewCompleted) {
+      prompts.push({ id: 't1-interview', icon: markRaw(ClipboardList), label: 'Пройти интервью', action: 'interview' })
+    }
+    return prompts
   }
 
   if (stage === 2) {
@@ -273,10 +279,14 @@ const quickPrompts = computed(() => {
   }
 
   if (stage === 3) {
-    return [
+    const prompts = [
       { id: 't3-1', icon: markRaw(Flame), label: 'Создать привычку', text: 'Помоги создать мою первую ежедневную привычку' },
       { id: 't3-2', icon: markRaw(Lightbulb), label: 'Зачем привычки?', text: 'Почему привычки важны для достижения целей и как работает XP-система?' }
     ]
+    if (!store.interviewCompleted) {
+      prompts.push({ id: 't3-interview', icon: markRaw(ClipboardList), label: 'Пройти интервью', action: 'interview' })
+    }
+    return prompts
   }
 
   if (stage === 4) {
@@ -360,7 +370,12 @@ function closeUpgradeModal() {
   showUpgradeModal.value = false
 }
 
-function sendQuickPrompt(text) {
+function sendQuickPrompt(prompt) {
+  if (typeof prompt === 'object' && prompt.action === 'interview') {
+    router.push('/app/interview?source=chat')
+    return
+  }
+  const text = typeof prompt === 'string' ? prompt : prompt.text
   inputText.value = text
   handleSendMessage()
 }

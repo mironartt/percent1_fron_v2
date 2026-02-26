@@ -27,6 +27,7 @@ const LearningCenter = () => import('@/views/LearningCenter.vue')
 const Profile = () => import('@/views/Profile.vue')
 const Habits = () => import('@/views/Habits.vue')
 const More = () => import('@/views/More.vue')
+const InterviewTesting = () => import('@/views/InterviewTesting.vue')
 const OnboardingRouter = () => import('@/components/OnboardingRouter.vue')
 const NotFound = () => import('@/views/NotFound.vue')
 const LegalPage = () => import('@/views/LegalPage.vue')
@@ -276,6 +277,12 @@ const router = createRouter({
       name: 'ssp',
       component: BalancedScorecard,
       meta: { title: 'Сбалансированная система показателей', requiresAuth: true }
+    },
+    {
+      path: '/app/interview',
+      name: 'interview',
+      component: InterviewTesting,
+      meta: { title: 'Интервью', requiresAuth: true }
     },
     {
       path: '/app/goals',

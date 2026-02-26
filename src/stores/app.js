@@ -2031,6 +2031,15 @@ export const useAppStore = defineStore('app', () => {
     await updateFrontendSettings({ tutorial_skipped: true })
   }
 
+  // Interview completed flag
+  const interviewCompleted = computed(() => {
+    return frontendSettings.value.interview_completed === true
+  })
+
+  async function markInterviewCompleted() {
+    await updateFrontendSettings({ interview_completed: true })
+  }
+
   // Actions
   function updateSphere(sphereId, updates) {
     const sphere = lifeSpheres.value.find(s => s.id === sphereId)
@@ -3811,7 +3820,11 @@ export const useAppStore = defineStore('app', () => {
     tutorialSkipped,
     skipTutorial,
     syncTutorialRewards,
-    
+
+    // Interview
+    interviewCompleted,
+    markInterviewCompleted,
+
     // Journal
     journal,
     hasTodayEntry,

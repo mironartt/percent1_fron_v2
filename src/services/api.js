@@ -539,6 +539,55 @@ export async function submitInterviewAnswers(answers) {
   return request('POST', '/api/rest/front/app/onboard/interview/submit/', { answers })
 }
 
+// === Deep Interview (AI Interview Testing) ===
+
+/**
+ * Начать сессию глубокого интервью (запускает AI task для подбора вопросов)
+ * @returns {Promise<object>} - { session_id, status, task_id }
+ */
+export async function startInterviewSession() {
+  return request('POST', '/api/rest/front/app/interview/session/start/', {})
+}
+
+/**
+ * Получить информацию о сессии интервью (или последней активной)
+ * @param {number|null} sessionId - ID сессии (null = последняя)
+ * @returns {Promise<object>} - Данные сессии с итерациями и статусом
+ */
+export async function getInterviewSession(sessionId = null) {
+  return request('POST', '/api/rest/front/app/interview/session/get/',
+    sessionId ? { session_id: sessionId } : {})
+}
+
+/**
+ * Получить текущую итерацию с вопросами
+ * @param {number} sessionId - ID сессии
+ * @returns {Promise<object>} - Итерация с вопросами и вариантами ответов
+ */
+export async function getInterviewIteration(sessionId) {
+  return request('POST', '/api/rest/front/app/interview/iteration/get/', { session_id: sessionId })
+}
+
+/**
+ * Отправить ответы на текущую итерацию
+ * @param {number} sessionId - ID сессии
+ * @param {Array} answers - [{question_id, selected_option_id, free_text}]
+ * @returns {Promise<object>} - { session_completed, analyzing, next_iteration }
+ */
+export async function submitInterviewIteration(sessionId, answers) {
+  return request('POST', '/api/rest/front/app/interview/iteration/submit/', { session_id: sessionId, answers })
+}
+
+/**
+ * Создать цели из рекомендаций AI по результатам интервью
+ * @param {number} sessionId - ID сессии
+ * @param {Array<number>} goalIndexes - 0-based индексы выбранных целей
+ * @returns {Promise<object>} - { goals_created, steps_created }
+ */
+export async function createInterviewGoals(sessionId, goalIndexes) {
+  return request('POST', '/api/rest/front/app/interview/goals/create/', { session_id: sessionId, goal_indexes: goalIndexes })
+}
+
 /**
  * Проверка статуса авторизации
  * Возвращает данные пользователя если авторизован, иначе null
