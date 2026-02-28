@@ -279,6 +279,12 @@ const router = createRouter({
       meta: { title: 'Сбалансированная система показателей', requiresAuth: true }
     },
     {
+      path: '/app/interview',
+      name: 'interview',
+      component: InterviewTesting,
+      meta: { title: 'Интервью', requiresAuth: true }
+    },
+    {
       path: '/app/goals',
       redirect: '/app/goals-bank'
     },
@@ -377,12 +383,6 @@ const router = createRouter({
       name: 'habits',
       component: Habits,
       meta: { title: 'Привычки', requiresAuth: true }
-    },
-    {
-      path: '/app/interview',
-      name: 'interview',
-      component: InterviewTesting,
-      meta: { title: 'AI Интервью', requiresAuth: true }
     },
     {
       path: '/app/more',

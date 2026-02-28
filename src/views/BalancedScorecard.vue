@@ -276,7 +276,7 @@
               <Bot :size="20" />
               <div class="mode-info">
                 <span class="mode-title">С AI-ментором</span>
-                <span class="mode-desc">Диалог по каждой сфере</span>
+                <span class="mode-desc">AI подберёт вопросы и оценит сферы</span>
               </div>
               <div class="time-warning">
                 <Clock :size="12" />
@@ -678,9 +678,8 @@ function startManualReassessment() {
 }
 
 function startAIReassessment() {
-  reassessmentMode.value = 'ai'
-  resetAIState()
-  startAISphereDialog()
+  closeReassessment()
+  router.push('/app/interview?source=ssp')
 }
 
 function resetAIState() {
