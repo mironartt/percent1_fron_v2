@@ -1,6 +1,6 @@
 <template>
   <div class="chat-view">
-    <CollapsibleDashboard />
+    <CollapsibleDashboard v-if="!isOnboardingMode" />
 
     <div class="chat-area">
       <div class="chat-header">
@@ -16,9 +16,13 @@
             </span>
           </div>
         </div>
+        <button v-if="isOnboardingMode" @click="handleSkipOnboarding" class="skip-onboarding-btn" :disabled="skippingOnboarding">
+          <Loader2 v-if="skippingOnboarding" :size="14" :stroke-width="1.5" class="spin" />
+          Пропустить
+        </button>
       </div>
 
-      <div v-if="store.tutorialStage < 6 && !store.tutorialSkipped" class="tutorial-banner">
+      <div v-if="!isOnboardingMode && store.tutorialStage < 6 && !store.tutorialSkipped" class="tutorial-banner">
         <span class="tutorial-progress">
           <span class="tutorial-step">{{ tutorialStepLabel }}</span>
           <span class="tutorial-dots">
@@ -85,6 +89,19 @@
                 <span class="typing-dot"></span>
               </div>
             </div>
+
+            <!-- Quick Replies -->
+            <div v-if="quickReplies.length > 0" class="quick-replies">
+              <button
+                v-for="(reply, index) in quickReplies"
+                :key="index"
+                class="quick-reply-chip"
+                @click="sendQuickReply(reply)"
+                :disabled="!canSendMessage"
+              >
+                {{ reply }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -136,6 +153,8 @@ import { useChatStore } from '@/stores/chat'
 import { useXpStore } from '@/stores/xp'
 import { useSubscriptionStore } from '@/stores/subscription'
 import { useToastStore } from '@/stores/toast'
+import { checkAuth, skipOnboarding } from '@/services/api.js'
+import { useConfetti } from '@/composables/useConfetti'
 import CollapsibleDashboard from '@/components/CollapsibleDashboard.vue'
 import UpgradeModal from '@/components/UpgradeModal.vue'
 import {
@@ -164,15 +183,30 @@ const xpStore = useXpStore()
 const subscriptionStore = useSubscriptionStore()
 const toastStore = useToastStore()
 
+const { celebrateBig: fireConfetti } = useConfetti()
+
 const inputText = ref('')
 const showUpgradeModal = ref(false)
 const chatContainer = ref(null)
 const inputRef = ref(null)
 const isInitialized = ref(false)
+const skippingOnboarding = ref(false)
+
+// Onboarding mode: new user without finished onboarding
+const isOnboardingMode = computed(() => store.shouldShowOnboarding)
 
 const messages = computed(() => chatStore.messages)
 const hasMessages = computed(() => chatStore.messages.length > 0)
 const canSendMessage = computed(() => chatStore.canSendMessage && !chatStore.forceDisconnected)
+
+const quickReplies = computed(() => {
+  if (!hasMessages.value || chatStore.isBotTyping || chatStore.isBotProcessing) return []
+  const lastMsg = messages.value[messages.value.length - 1]
+  if (!lastMsg || lastMsg.message_type !== 'bot') return []
+  const replies = lastMsg.bot_metadata?.quick_replies
+  if (!Array.isArray(replies) || replies.length === 0) return []
+  return replies
+})
 
 const connectionStatusClass = computed(() => {
   if (chatStore.forceDisconnected) return 'offline'
@@ -229,6 +263,7 @@ const tutorialStepLabel = computed(() => {
 })
 
 const welcomeTitle = computed(() => {
+  if (isOnboardingMode.value) return 'Добро пожаловать!'
   if (store.tutorialStage === 0) return 'Давай настроим систему'
   if (store.tutorialStage === 1) return 'Отлично, цель создана!'
   if (store.tutorialStage === 2) return 'Шаги готовы, время планировать'
@@ -239,6 +274,7 @@ const welcomeTitle = computed(() => {
 })
 
 const welcomeText = computed(() => {
+  if (isOnboardingMode.value) return 'Я ваш персональный AI-ментор. Помогу разобраться в целях, подскажу следующие шаги и отвечу на вопросы.'
   if (store.tutorialStage === 0) return 'Я Саша, твой AI-наставник. Начнём с главного — поставим первую цель. Можешь написать мне прямо здесь или выбрать подсказку ниже.'
   if (store.tutorialStage === 1) return 'Теперь разобьём цель на конкретные шаги. Большая цель становится реальной, когда есть план.'
   if (store.tutorialStage === 2) return 'Шаги есть — теперь запланируем их на неделю. Без расписания задачи остаются намерениями.'
@@ -249,6 +285,15 @@ const welcomeText = computed(() => {
 })
 
 const quickPrompts = computed(() => {
+  // Onboarding mode: simplified prompts for new users
+  if (isOnboardingMode.value) {
+    return [
+      { id: 'ob-1', icon: markRaw(Compass), label: 'С чего начать?', text: 'С чего мне начать? Расскажи что это за сервис и как он поможет мне.' },
+      { id: 'ob-2', icon: markRaw(Target), label: 'У меня есть цель', text: 'У меня есть конкретная цель, которую я хочу достичь.' },
+      { id: 'ob-3', icon: markRaw(BookOpen), label: 'О методе 1%', text: 'Расскажи подробнее о методе ежедневного улучшения на 1%' }
+    ]
+  }
+
   const stage = store.tutorialStage
 
   // Tutorial-specific prompts
@@ -380,8 +425,41 @@ function sendQuickPrompt(prompt) {
   handleSendMessage()
 }
 
+function sendQuickReply(text) {
+  inputText.value = text
+  handleSendMessage()
+}
+
 async function handleSkipTutorial() {
   await store.skipTutorial()
+}
+
+async function handleSkipOnboarding() {
+  if (skippingOnboarding.value) return
+  skippingOnboarding.value = true
+  try {
+    const result = await skipOnboarding()
+    if (result.status === 'ok') {
+      await store.skipTutorial()
+      await completeOnboardingTransition()
+    }
+  } catch (e) {
+    toastStore.error('Ошибка при пропуске онбординга')
+  } finally {
+    skippingOnboarding.value = false
+  }
+}
+
+async function completeOnboardingTransition() {
+  // Refresh user data to get finish_onboarding = true
+  const userData = await checkAuth()
+  if (userData) {
+    store.setUser(userData)
+  }
+
+  // Celebration
+  fireConfetti()
+  toastStore.success('Добро пожаловать в OnePercent!')
 }
 
 function scrollToBottom() {
@@ -437,6 +515,14 @@ watch(() => chatStore.messages.length, async (newLen, oldLen) => {
     if (lastMsg?.message_type === 'bot') {
       await store.loadGoalsFromBackend()
     }
+  }
+})
+
+// Watch for onboarding_completed WebSocket event
+watch(() => chatStore.onboardingCompleted, async (completed) => {
+  if (completed && isOnboardingMode.value) {
+    chatStore.onboardingCompleted = false
+    await completeOnboardingTransition()
   }
 })
 
@@ -838,6 +924,32 @@ onUnmounted(() => {
   transform: none;
 }
 
+.skip-onboarding-btn {
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.skip-onboarding-btn:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+.skip-onboarding-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .tutorial-banner {
   display: flex;
   align-items: center;
@@ -895,6 +1007,43 @@ onUnmounted(() => {
   background: var(--bg-secondary);
   color: var(--text-primary);
   border-color: var(--text-secondary);
+}
+
+.quick-replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 0 4px 36px;
+}
+
+.quick-reply-chip {
+  padding: 8px 16px;
+  background: var(--bg-primary);
+  border: 1px solid var(--primary-color);
+  border-radius: 20px;
+  font-size: 0.875rem;
+  color: var(--primary-color);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  line-height: 1.4;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.quick-reply-chip:hover:not(:disabled) {
+  background: var(--primary-light);
+  border-color: var(--primary-dark);
+  color: var(--primary-dark);
+}
+
+.quick-reply-chip:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.quick-reply-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 @media (max-width: 768px) {

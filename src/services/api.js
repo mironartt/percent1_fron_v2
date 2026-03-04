@@ -539,6 +539,14 @@ export async function submitInterviewAnswers(answers) {
   return request('POST', '/api/rest/front/app/onboard/interview/submit/', { answers })
 }
 
+/**
+ * Пропустить Chat-First онбординг (v4)
+ * @returns {Promise<object>} - {status: 'ok', data: {finish_onboarding: true}}
+ */
+export async function skipOnboarding() {
+  return request('POST', '/api/rest/front/app/onboard/skip/', {})
+}
+
 // === Deep Interview (AI Interview Testing) ===
 
 /**

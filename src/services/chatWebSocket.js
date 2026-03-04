@@ -191,6 +191,13 @@ class ChatWebSocket {
         this.emit('force_disconnect', data.data)
         break
 
+      case 'onboarding_completed':
+        if (DEBUG_MODE) {
+          console.log('[ChatWS] Onboarding completed:', data.data)
+        }
+        this.emit('onboarding_completed', data.data)
+        break
+
       case 'error':
         if (DEBUG_MODE) {
           console.error('[ChatWS] Server error:', data.data)

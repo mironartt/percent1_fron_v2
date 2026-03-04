@@ -265,7 +265,7 @@ async function finishOnboarding() {
 
       if (result.success) {
         store.setUserFinishOnboarding(true)
-        router.push('/app')
+        router.push('/app/interview')
       } else {
         // Если submit не прошёл — фоллбэк на старую логику
         if (DEBUG_MODE) {
@@ -283,7 +283,7 @@ async function finishOnboarding() {
     }
     // Последний fallback: просто редиректим
     store.setUserFinishOnboarding(true)
-    router.push('/app')
+    router.push('/app/interview')
   }
 }
 
@@ -296,7 +296,7 @@ async function finishOnboardingFallback() {
     }
   }
   store.setUserFinishOnboarding(true)
-  router.push('/app')
+  router.push('/app/interview')
 }
 
 // ── Wheel drawing ──────────────────────────────────
