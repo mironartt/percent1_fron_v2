@@ -562,6 +562,19 @@ router.beforeEach(async (to, from, next) => {
     })
   }
   
+  // Chat-First onboarding navigation blocking
+  // During onboarding, only chat and interview are accessible
+  if (to.meta.requiresAuth && isAuthenticated) {
+    const shouldShowOnboarding = store.shouldShowOnboarding
+    const allowedDuringOnboarding = ['chat', 'interview']
+    if (shouldShowOnboarding && !allowedDuringOnboarding.includes(to.name)) {
+      if (DEBUG_MODE) {
+        console.log('[Router] Blocking navigation during onboarding, redirecting to chat')
+      }
+      return next({ name: 'chat' })
+    }
+  }
+
   // Mini-task navigation blocking
   // Block navigation to any route except settings until mini-task is complete
   // Only applies if: user finished onboarding but not mini-task

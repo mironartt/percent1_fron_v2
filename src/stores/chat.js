@@ -35,6 +35,8 @@ export const useChatStore = defineStore('chat', () => {
     hasMore: false
   })
 
+  const onboardingCompleted = ref(false)
+
   const isConnected = computed(() => connectionStatus.value === 'connected')
   const canSendMessage = computed(() => !isBotProcessing.value && !isLoading.value)
 
@@ -246,6 +248,7 @@ export const useChatStore = defineStore('chat', () => {
     chatWebSocket.on('bot_typing', handleBotTyping)
     chatWebSocket.on('force_disconnect', handleForceDisconnect)
     chatWebSocket.on('server_error', handleServerError)
+    chatWebSocket.on('onboarding_completed', handleOnboardingCompleted)
 
     if (DEBUG_MODE) {
       console.log('[ChatStore] WebSocket listeners attached')
@@ -295,6 +298,13 @@ export const useChatStore = defineStore('chat', () => {
     if (data && data.error_code === 'bot_is_processing') {
       isBotProcessing.value = true
     }
+  }
+
+  function handleOnboardingCompleted(data) {
+    if (DEBUG_MODE) {
+      console.log('[ChatStore] Onboarding completed event:', data)
+    }
+    onboardingCompleted.value = true
   }
 
   function connectWebSocket() {
@@ -351,6 +361,7 @@ export const useChatStore = defineStore('chat', () => {
       totalItems: 0,
       hasMore: false
     }
+    onboardingCompleted.value = false
     disconnectWebSocket()
   }
 
@@ -380,6 +391,7 @@ export const useChatStore = defineStore('chat', () => {
     disconnectWebSocket,
     resetForceDisconnect,
     reconnectAfterForceDisconnect,
+    onboardingCompleted,
     clearMessages,
     $reset
   }
