@@ -758,7 +758,7 @@ function pluralize(n, one, few, many) {
 .time-icon {
   width: 56px;
   height: 56px;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -944,7 +944,7 @@ function pluralize(n, one, few, many) {
   width: 64px;
   height: 64px;
   margin: 0 auto 1rem;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
   display: flex;
   align-items: center;
@@ -1610,7 +1610,7 @@ function pluralize(n, one, few, many) {
 .telegram-banner-icon {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: linear-gradient(135deg, #0088cc, #00aaff);
   color: white;
   display: flex;
@@ -1725,7 +1725,7 @@ function pluralize(n, one, few, many) {
 .interview-banner-icon {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
   color: white;
   display: flex;

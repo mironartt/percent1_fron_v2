@@ -84,12 +84,17 @@
     @open-mentor="openMentor"
   />
 
-  <JournalEntry
-    v-if="showJournalModal"
-    v-model="showJournalModal"
-    :is-modal="true"
-    @close="showJournalModal = false"
-  />
+  <Teleport to="body">
+    <div
+      v-if="showJournalModal"
+      class="journal-modal-overlay"
+      @click.self="showJournalModal = false"
+    >
+      <div class="journal-modal-wrap">
+        <JournalEntry @saved="showJournalModal = false" />
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
@@ -111,7 +116,8 @@ const leftNavItems = computed(() => {
   const items = [
     { path: '/app', icon: MessageCircle, label: 'Главная' }
   ]
-  if (stage >= 1) {
+  // Цели появляется слева только с stage 2, когда справа добавляется План — симметрия 2+FAB+2
+  if (stage >= 2) {
     items.push({ path: '/app/goals-bank', icon: Target, label: 'Цели' })
   }
   return items
@@ -120,6 +126,10 @@ const leftNavItems = computed(() => {
 const rightNavItems = computed(() => {
   const stage = store.tutorialStage
   const items = []
+  // Stage 1: Цели справа, чтобы сохранить симметрию 1+FAB+2 → FAB по центру
+  if (stage === 1) {
+    items.push({ path: '/app/goals-bank', icon: Target, label: 'Цели' })
+  }
   if (stage >= 2) {
     items.push({ path: '/app/planning', icon: Calendar, label: 'План' })
   }
@@ -189,6 +199,10 @@ function onGoalCreated(goal) {
 
 function onHabitCreated(habit) {
   showAddHabitModal.value = false
+}
+
+function openMentor() {
+  router.push('/app')
 }
 </script>
 
@@ -278,7 +292,7 @@ function onHabitCreated(habit) {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #4f46e5;
+  background: var(--primary-color, #4f46e5);
   border: 4px solid var(--bg-primary);
   color: white;
   cursor: pointer;
@@ -303,7 +317,7 @@ function onHabitCreated(habit) {
 }
 
 .fab-button.open {
-  background: #4f46e5;
+  background: var(--primary-color, #4f46e5);
 }
 
 .fab-icon {
@@ -421,6 +435,25 @@ function onHabitCreated(habit) {
 </style>
 
 <style>
+.journal-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.journal-modal-wrap {
+  width: 100%;
+  max-width: 560px;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  border-radius: 16px;
+}
+
 .fab-overlay {
   position: fixed;
   inset: 0;

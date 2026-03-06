@@ -70,9 +70,11 @@
     </nav>
 
     <div class="sidebar-footer">
-      <router-link to="/app/settings" class="settings-link" :title="isCollapsed ? 'Профиль' : ''">
+      <router-link to="/app/settings" class="settings-link" :title="isCollapsed ? (store.user?.first_name || 'Профиль') : ''">
         <Settings class="icon" :size="20" :stroke-width="1.5" />
-        <span class="nav-label">Профиль</span>
+        <span class="nav-label">
+          <span class="footer-name">{{ store.user?.first_name || 'Профиль' }}</span>
+        </span>
       </router-link>
     </div>
   </aside>
@@ -468,6 +470,11 @@ function getLockTooltip(item) {
   flex: 1;
   padding: 1.5rem 0;
   overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-item {
@@ -503,6 +510,10 @@ function getLockTooltip(item) {
   background: var(--bg-tertiary);
   color: var(--text-primary);
   transform: translateX(4px);
+}
+
+.nav-item.active:hover {
+  transform: none;
 }
 
 .nav-item.active {
@@ -649,6 +660,11 @@ function getLockTooltip(item) {
 
 .settings-link:hover,
 .logout-link:hover {
+  color: var(--text-primary);
+}
+
+.footer-name {
+  font-weight: 500;
   color: var(--text-primary);
 }
 

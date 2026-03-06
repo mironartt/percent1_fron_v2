@@ -1,11 +1,6 @@
 <template>
   <div class="settings-container">
-    <header class="page-header">
-      <Breadcrumbs :items="breadcrumbItems" />
-      <div>
-        <p class="subtitle">Управление профилем, оплатой и параметрами приложения</p>
-      </div>
-    </header>
+    <Breadcrumbs :items="breadcrumbItems" />
 
     <div class="settings-grid">
       <div class="card">
@@ -196,66 +191,6 @@
       <div class="card">
         <div class="card-header">
           <h3 class="card-title">
-            <FileText :size="18" :stroke-width="1.5" class="card-icon" />
-            Мой старт (онбординг)
-          </h3>
-        </div>
-        <div class="card-body">
-          <div v-if="hasOnboardingData" class="onboarding-data">
-            <div class="onboarding-section" v-if="onboardingData.whyHere">
-              <h4>Почему я пришёл в Систему 1%</h4>
-              <p>{{ onboardingData.whyHere }}</p>
-            </div>
-
-            <div class="onboarding-section" v-if="onboardingData.whatToChange">
-              <h4>Что хочу изменить</h4>
-              <p>{{ onboardingData.whatToChange }}</p>
-            </div>
-
-            <div class="onboarding-section" v-if="onboardingData.growthVsComfort">
-              <h4>Зона роста vs Зона комфорта</h4>
-              <p>{{ onboardingData.growthVsComfort }}</p>
-            </div>
-
-            <div class="onboarding-journey" v-if="onboardingData.pointA || onboardingData.pointB">
-              <div class="journey-point" v-if="onboardingData.pointA">
-                <strong>Точка А (где был):</strong>
-                <p>{{ onboardingData.pointA }}</p>
-              </div>
-              <div class="journey-arrow" v-if="onboardingData.pointA && onboardingData.pointB">→</div>
-              <div class="journey-point" v-if="onboardingData.pointB">
-                <strong>Точка Б (куда иду):</strong>
-                <p>{{ onboardingData.pointB }}</p>
-              </div>
-            </div>
-
-            <div class="onboarding-section" v-if="onboardingData.whyImportant">
-              <h4>Почему это важно</h4>
-              <p>{{ onboardingData.whyImportant }}</p>
-            </div>
-
-            <div class="onboarding-meta" v-if="onboardingData.completedAt">
-              <small>Пройден: {{ formatDate(onboardingData.completedAt) }}</small>
-            </div>
-
-            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
-              <button class="btn btn-secondary" @click="resetOnboarding">
-                Пройти заново
-              </button>
-            </div>
-          </div>
-          <div v-else class="empty-onboarding">
-            <p>Данные онбординга не найдены</p>
-            <button class="btn btn-primary btn-sm" @click="resetOnboarding" style="margin-top: 0.5rem;">
-              Пройти онбординг
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title">
             <Settings :size="18" :stroke-width="1.5" class="card-icon" />
             Дополнительно
           </h3>
@@ -332,7 +267,7 @@ import { useAppStore } from '../stores/app'
 import { useToastStore } from '../stores/toast'
 import { useSubscriptionStore } from '@/stores/subscription'
 import * as api from '@/services/api.js'
-import { Bot, Sparkles, MessageCircle, VolumeX, User, CreditCard, Bell, FileText, Settings, LogOut, Send, Mail, X, Users } from 'lucide-vue-next'
+import { Bot, Sparkles, MessageCircle, VolumeX, User, CreditCard, Bell, FileText, Settings, LogOut, Send, Mail, X, Users, ArrowRight } from 'lucide-vue-next'
 import Breadcrumbs from '@/components/Breadcrumbs.vue'
 
 const router = useRouter()
@@ -587,15 +522,6 @@ function handleLogout() {
   padding: var(--container-padding);
 }
 
-.page-header {
-  margin-bottom: 2rem;
-  text-align: center;
-}
-
-.page-header h1 {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
-}
 
 .subtitle {
   color: var(--text-secondary);
@@ -642,18 +568,18 @@ function handleLogout() {
 }
 
 .status-badge.active {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+  background: var(--status-success-bg, rgba(16, 185, 129, 0.1));
+  color: var(--success-color);
 }
 
 .status-badge.expired {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  background: var(--status-danger-bg, rgba(239, 68, 68, 0.1));
+  color: var(--danger-color, #ef4444);
 }
 
 .status-badge.free {
-  background: rgba(107, 114, 128, 0.1);
-  color: #6b7280;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
 }
 
 .status-text {
@@ -797,7 +723,7 @@ function handleLogout() {
   bottom: 0;
   background-color: var(--bg-tertiary);
   transition: 0.3s;
-  border-radius: 24px;
+  border-radius: 100px;
 }
 
 .toggle-slider:before {
@@ -807,7 +733,7 @@ function handleLogout() {
   width: 18px;
   left: 3px;
   bottom: 3px;
-  background-color: white;
+  background-color: var(--bg-primary);
   transition: 0.3s;
   border-radius: 50%;
 }
@@ -837,68 +763,6 @@ function handleLogout() {
 
 .subscribe-btn:hover {
   background: #4bb899;
-}
-
-.onboarding-data {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.onboarding-section h4 {
-  font-size: 1rem;
-  margin-bottom: 0.5rem;
-  color: var(--primary-color);
-}
-
-.onboarding-section p {
-  margin: 0;
-  line-height: 1.6;
-  color: var(--text-secondary);
-  white-space: pre-wrap;
-}
-
-.onboarding-journey {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 1.5rem;
-  align-items: center;
-  padding: 1.5rem;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-}
-
-.journey-point strong {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: var(--text-primary);
-}
-
-.journey-point p {
-  margin: 0;
-  line-height: 1.6;
-  color: var(--text-secondary);
-}
-
-.journey-arrow {
-  font-size: 2rem;
-  color: var(--primary-color);
-}
-
-.onboarding-meta {
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.onboarding-meta small {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-}
-
-.empty-onboarding {
-  text-align: center;
-  padding: 2rem;
-  color: var(--text-secondary);
 }
 
 .form-select {
@@ -941,10 +805,6 @@ function handleLogout() {
 }
 
 @media (max-width: 768px) {
-  .page-header {
-    padding-left: 3.5rem;
-    padding-right: 3.5rem;
-  }
 
   .price-options {
     grid-template-columns: 1fr;
@@ -956,15 +816,6 @@ function handleLogout() {
     gap: 1rem;
   }
 
-  .onboarding-journey {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .journey-arrow {
-    transform: rotate(90deg);
-    justify-self: center;
-  }
 }
 
 /* Dark theme overrides */

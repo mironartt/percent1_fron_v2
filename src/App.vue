@@ -315,10 +315,18 @@ const appClasses = computed(() => ({
 
 #app.is-chat-route .main-content {
   padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
 }
 
 #app.is-chat-route.has-sidebar .main-content {
   padding: 0 2rem;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
 }
 
 @media (max-width: 768px) {
@@ -327,6 +335,12 @@ const appClasses = computed(() => ({
     margin-left: 0;
     padding: 1rem;
     overflow-x: hidden;
+  }
+
+  #app.is-chat-route .main-content,
+  #app.is-chat-route.has-sidebar .main-content {
+    padding: 0;
+    height: calc(100dvh - var(--bottom-nav-height, 56px) - var(--safe-area-bottom, 0px));
   }
 }
 
@@ -363,6 +377,15 @@ const appClasses = computed(() => ({
 /* Global spin animation for loaders */
 .spin {
   animation: spin 1s linear infinite;
+}
+
+/* Chat route: page-wrapper grows to fill remaining space after TrialBanner */
+#app.is-chat-route .page-wrapper {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* Global styles for mobile header spacing */

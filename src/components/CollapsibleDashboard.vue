@@ -234,7 +234,8 @@ async function toggleHabit(habit) {
   display: flex;
   align-items: center;
   gap: 16px;
-  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
 }
 
@@ -249,6 +250,10 @@ async function toggleHabit(habit) {
 
 .metric-text {
   font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 180px;
 }
 
 .xp-metric {
@@ -431,7 +436,7 @@ async function toggleHabit(habit) {
 .expand-enter-active,
 .expand-leave-active {
   transition: all 0.3s ease;
-  max-height: 400px;
+  max-height: 700px;
 }
 
 .expand-enter-from,
@@ -445,7 +450,8 @@ async function toggleHabit(habit) {
     gap: 10px;
   }
 
-  .metric:first-child {
+  /* На мобильном скрываем XP — он наименее важен в свёрнутой строке */
+  .xp-metric {
     display: none;
   }
 }

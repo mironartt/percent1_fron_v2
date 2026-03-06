@@ -36,7 +36,17 @@
     <!-- Summary State - After Completion -->
     <div v-else-if="showSummary" class="summary-section">
       <header class="section-header">
-        <Breadcrumbs :items="breadcrumbItems" />
+        <div class="section-header-row">
+          <Breadcrumbs :items="breadcrumbItems" />
+          <div class="header-actions">
+            <button class="btn btn-secondary btn-sm" @click="goToPlanning">
+              <Calendar :size="16" :stroke-width="2" /><span>Запланировать</span>
+            </button>
+            <button class="btn btn-primary btn-sm" @click="addNewGoal">
+              <Plus :size="16" :stroke-width="2" /><span>Добавить цель</span>
+            </button>
+          </div>
+        </div>
       </header>
 
       <!-- Goals Content -->
@@ -77,6 +87,8 @@
             </transition>
           </div>
 
+          <div class="filter-sep"></div>
+
           <!-- Status Dropdown (mobile-friendly) -->
           <div class="status-dropdown-wrapper">
             <button 
@@ -114,6 +126,8 @@
             </transition>
           </div>
 
+          <div class="filter-sep" style="margin-left: auto;"></div>
+
           <!-- Search -->
           <div class="search-expandable" :class="{ expanded: showSearchInput }">
             <button 
@@ -141,9 +155,14 @@
             </div>
           </div>
 
+          <!-- Filter loading spinner -->
+          <transition name="fade">
+            <Loader2 v-if="isLoadingGoals" :size="16" class="filter-spinner" />
+          </transition>
+
           <!-- Reset Filters Button -->
           <transition name="fade">
-            <button 
+            <button
               v-if="hasActiveFilters"
               class="reset-filters-btn"
               @click="clearFilters"
@@ -153,6 +172,22 @@
               <span class="reset-text">Сбросить</span>
             </button>
           </transition>
+        </div>
+
+        <!-- Active filter chips -->
+        <div v-if="hasActiveFilters" class="active-filters-row">
+          <span v-if="filterSphere" class="active-filter-chip" @click="selectSphere('')">
+            {{ getSphereNameOnly(filterSphere) }}
+            <X :size="12" />
+          </span>
+          <span v-if="filterStatus" class="active-filter-chip" @click="selectStatus('')">
+            {{ getStatusLabel(filterStatus) }}
+            <X :size="12" />
+          </span>
+          <span v-if="searchQuery" class="active-filter-chip" @click="closeSearch">
+            "{{ searchQuery }}"
+            <X :size="12" />
+          </span>
         </div>
 
         <!-- Empty state when filters return no results -->
@@ -167,10 +202,10 @@
 
         <!-- Goals Grid -->
         <div v-else class="goals-grid">
-          <div 
-            v-for="goal in paginatedGoals" 
-            :key="goal.id" 
-            class="goal-card" 
+          <div
+            v-for="goal in paginatedGoals"
+            :key="goal.id"
+            class="goal-card"
             :style="{ '--sphere-accent': getSphereColor(goal.sphereId) }"
             @click="goToDecompose(goal.id)"
             @contextmenu.prevent="openBottomSheet(goal)"
@@ -178,42 +213,34 @@
             @touchend="cancelLongPress"
             @touchmove="cancelLongPress"
           >
-            <div class="goal-card-visual">
-              <div class="goal-sphere-icon-wrapper" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
-                <component :is="getSphereIconComponent(goal.sphereId)" :size="24" />
-              </div>
-              <span v-if="goal.emoji" class="goal-emoji">{{ goal.emoji }}</span>
-            </div>
-            <div class="goal-card-content">
-              <div class="goal-card-header">
-                <h3 class="goal-title">{{ goal.text }}</h3>
-                <button 
-                  class="btn-settings-card" 
-                  @click.stop="openEditModal(goal)" 
-                  title="Настройки цели"
-                >
-                  <Settings :size="18" />
-                </button>
-              </div>
-              <div class="goal-card-footer">
-                <span class="sphere-chip" :style="{ '--sphere-color': getSphereColor(goal.sphereId) }">
-                  {{ getSphereNameOnly(goal.sphereId) }}
-                </span>
-                <span v-if="goal.generatedByAI" class="ai-badge" title="Создано с помощью ИИ">
-                  <Bot :size="12" />
-                </span>
-                <span v-if="getStatusText(goal)" class="status-chip" :class="getStatusClass(goal)">
-                  {{ getStatusText(goal) }}
-                </span>
-                <span v-if="getStepsProgress(goal)" class="steps-progress">
-                  <ListChecks :size="14" />
-                  {{ getStepsProgress(goal).completed }}/{{ getStepsProgress(goal).total }}
-                </span>
-              </div>
-            </div>
+            <span class="sphere-icon-col" :style="{ color: getSphereColor(goal.sphereId) }">
+              <component :is="getSphereIconComponent(goal.sphereId)" :size="18" />
+            </span>
+            <span class="goal-title">{{ goal.text }}</span>
+            <span v-if="getStepsProgress(goal)" class="steps-progress">
+              <ListChecks :size="12" />
+              {{ getStepsProgress(goal).completed }}/{{ getStepsProgress(goal).total }}
+            </span>
+            <span v-if="goal.generatedByAI" class="ai-badge" title="Создано с помощью ИИ">
+              <Bot :size="11" />
+            </span>
+            <button
+              class="btn-settings-card"
+              @click.stop="openEditModal(goal)"
+              title="Настройки цели"
+            >
+              <Settings :size="15" />
+            </button>
           </div>
         </div>
         
+        <!-- Goals count -->
+        <div class="goals-count-row" v-if="totalGoalsCount > 0">
+          <span class="goals-count-text">
+            {{ paginatedGoals.length }} из {{ totalGoalsCount }} {{ totalGoalsCount === 1 ? 'цели' : totalGoalsCount < 5 ? 'цели' : 'целей' }}
+          </span>
+        </div>
+
         <!-- Pagination -->
         <div v-if="totalPages > 1" class="pagination-bar">
           <button 
@@ -243,19 +270,6 @@
         </div>
       </div>
 
-      <div class="summary-actions desktop-only">
-        <button class="btn btn-secondary" @click="goToPlanning">
-          <Calendar :size="16" :stroke-width="2" /> Запланировать задачу
-        </button>
-        <button class="btn btn-primary" @click="addNewGoal">
-          <Plus :size="16" :stroke-width="2" /> Добавить новую цель
-        </button>
-      </div>
-
-      <!-- FAB Button for mobile -->
-      <button class="fab-button mobile-only" @click="addNewGoal">
-        <Plus :size="24" />
-      </button>
     </div>
 
     <!-- Bottom Sheet for goal actions -->
@@ -562,7 +576,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useXpStore } from '@/stores/xp'
 import { useXPNotification } from '@/composables/useXPNotification.js'
-import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
+import { DEBUG_MODE, SKIP_AUTH_CHECK, DEV_MODE } from '@/config/settings.js'
 import MentorGoalSuggestionsModal from '@/components/MentorGoalSuggestionsModal.vue'
 import AddGoalModal from '@/components/AddGoalModal.vue'
 import Breadcrumbs from '@/components/Breadcrumbs.vue'
@@ -1690,22 +1704,26 @@ async function completeGoalsBankHandler() {
     
     // Create goals on backend in parallel
     const createPromises = goalsToCreate.map(async (goal) => {
-      const result = await store.createGoalOnBackend({
-        text: goal.text,
-        sphereId: goal.sphereId,
-        whyImportant: goal.whyImportant || goal.threeWhys?.why1 || '',
-        status: goal.status,
-        threeWhys: goal.threeWhys
-      })
-      
-      if (result.success && result.goalId) {
-        // Update local goal with backend ID
-        store.updateRawIdea(goal.id, { backendId: result.goalId })
-        return { localId: goal.id, backendId: result.goalId }
+      try {
+        const result = await store.createGoalOnBackend({
+          text: goal.text,
+          sphereId: goal.sphereId,
+          whyImportant: goal.whyImportant || goal.threeWhys?.why1 || '',
+          status: goal.status,
+          threeWhys: goal.threeWhys
+        })
+
+        if (result.success && result.goalId) {
+          // Update local goal with backend ID
+          store.updateRawIdea(goal.id, { backendId: result.goalId })
+          return { localId: goal.id, backendId: result.goalId }
+        }
+      } catch (err) {
+        console.error('[GoalsBank] Failed to create goal on backend:', goal.text, err)
       }
       return null
     })
-    
+
     await Promise.all(createPromises)
   }
   
@@ -2101,12 +2119,36 @@ async function loadGoals() {
   }
 }
 
+function injectMockGoals() {
+  const now = new Date()
+  const d = (daysAgo) => new Date(now - daysAgo * 86400000).toISOString()
+  store.goalsBank.rawIdeas = [
+    { id: 'mock1', backendId: 1, text: 'Увеличить доход до 300 000 руб/мес', sphereId: 'wealth', workStatus: 'work', whyImportant: 'Финансовая независимость и уверенность в завтрашнем дне', why2: 'Смогу помогать семье и путешествовать без ограничений', dateCreated: d(45) },
+    { id: 'mock2', backendId: 2, text: 'Запустить свой онлайн-курс по дизайну', sphereId: 'career', workStatus: 'work', whyImportant: 'Монетизировать накопленные знания', why2: 'Создать пассивный источник дохода и стать экспертом', dateCreated: d(30) },
+    { id: 'mock3', backendId: 3, text: 'Пробежать полумарафон', sphereId: 'health', workStatus: 'work', whyImportant: 'Повысить выносливость и физическую форму', why2: 'Докажу себе что могу достигать сложных целей', dateCreated: d(20) },
+    { id: 'mock4', backendId: 4, text: 'Выучить разговорный английский до уровня B2', sphereId: 'career', workStatus: 'idea', whyImportant: 'Открыть возможности для работы с иностранными клиентами', why2: 'Расширить профессиональный горизонт', dateCreated: d(60) },
+    { id: 'mock5', backendId: 5, text: 'Съездить в путешествие в Японию', sphereId: 'hobbies', workStatus: 'idea', whyImportant: 'Новые впечатления и культурный опыт', why2: 'Давняя мечта, откладывать больше нельзя', dateCreated: d(90) },
+    { id: 'mock6', backendId: 6, text: 'Наладить режим сна 7-8 часов', sphereId: 'health', workStatus: 'complete', whyImportant: 'Улучшить концентрацию и продуктивность', why2: 'Без нормального сна невозможно работать эффективно', dateCreated: d(120), dateCompleted: d(10) },
+    { id: 'mock7', backendId: 7, text: 'Уделять больше времени родителям', sphereId: 'love', workStatus: 'work', whyImportant: 'Укрепить семейные связи', why2: 'Не хочу потом жалеть об упущенном времени', dateCreated: d(15) },
+    { id: 'mock8', backendId: 8, text: 'Собрать подушку безопасности на 6 месяцев', sphereId: 'wealth', workStatus: 'complete', whyImportant: 'Финансовая стабильность и спокойствие', why2: 'Любой кризис будет не страшен', dateCreated: d(180), dateCompleted: d(25) },
+    { id: 'mock9', backendId: 9, text: 'Расширить круг общения — 5 новых знакомств в месяц', sphereId: 'friendship', workStatus: 'idea', whyImportant: 'Новые связи открывают новые возможности', why2: 'Окружение = судьба', dateCreated: d(7) },
+    { id: 'mock10', backendId: 10, text: 'Освоить медитацию — 10 минут каждый день', sphereId: 'health', workStatus: 'idea', whyImportant: 'Снизить уровень стресса', why2: 'Ментальное здоровье важнее всего', dateCreated: d(5) },
+    { id: 'mock11', backendId: 11, text: 'Написать и опубликовать книгу', sphereId: 'hobbies', workStatus: 'work', whyImportant: 'Творческая реализация', why2: 'Оставить след, которым можно гордиться', dateCreated: d(50) },
+    { id: 'mock12', backendId: 12, text: 'Купить квартиру без ипотеки', sphereId: 'wealth', workStatus: 'idea', whyImportant: 'Собственное жильё — основа стабильности', why2: 'Не зависеть от аренды и банков', dateCreated: d(200) },
+  ]
+  loadAttempted.value = true
+}
+
 onMounted(async () => {
   // Load filters from URL
   loadFiltersFromUrl()
-  
-  // Load goals from backend (non-blocking)
-  loadGoals()
+
+  // Load goals from backend (non-blocking) or inject mock data in DEV_MODE
+  if (DEV_MODE) {
+    injectMockGoals()
+  } else {
+    loadGoals()
+  }
   
   // Handle edit query parameter
   const editId = route.query.edit
@@ -2308,13 +2350,28 @@ onUnmounted(() => {
   color: var(--text-secondary);
 }
 
+/* Goals Content Wrapper */
+.goals-content {
+  padding: 0 1rem;
+}
+
 /* Unified Filter Bar */
 .filter-bar-unified {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0 1rem;
+  gap: 0.5rem;
+  padding: 0.5rem;
   margin-bottom: 1rem;
+  background: var(--bg-primary, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 10px;
+}
+
+.filter-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--border-color, #e5e7eb);
+  flex-shrink: 0;
 }
 
 /* Sphere Dropdown */
@@ -2326,10 +2383,10 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.875rem;
-  background: var(--bg-secondary, #f3f4f6);
-  border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-secondary, #6b7280);
@@ -2339,12 +2396,13 @@ onUnmounted(() => {
 }
 
 .sphere-dropdown-btn:hover {
-  background: var(--bg-hover, #e5e7eb);
+  background: var(--bg-secondary, #f3f4f6);
+  border-color: var(--border-color, #e5e7eb);
 }
 
 .sphere-dropdown-btn.active {
-  background: rgba(99, 102, 241, 0.1);
-  border-color: var(--primary-color, #6366f1);
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.25);
   color: var(--primary-color, #6366f1);
 }
 
@@ -2410,10 +2468,10 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.875rem;
-  background: var(--bg-secondary, #f3f4f6);
-  border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-secondary, #6b7280);
@@ -2423,12 +2481,13 @@ onUnmounted(() => {
 }
 
 .status-dropdown-btn:hover {
-  background: var(--bg-hover, #e5e7eb);
+  background: var(--bg-secondary, #f3f4f6);
+  border-color: var(--border-color, #e5e7eb);
 }
 
 .status-dropdown-btn.active {
-  background: rgba(99, 102, 241, 0.1);
-  border-color: var(--primary-color, #6366f1);
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.25);
   color: var(--primary-color, #6366f1);
 }
 
@@ -2541,19 +2600,21 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  background: var(--bg-primary);
-  color: var(--text-secondary);
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-secondary, #6b7280);
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .search-toggle-btn:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
+  background: var(--bg-secondary, #f3f4f6);
+  border-color: var(--border-color, #e5e7eb);
+  color: var(--text-primary, #374151);
 }
 
 .search-expandable.expanded .search-input-wrapper {
@@ -2692,56 +2753,85 @@ onUnmounted(() => {
   opacity: 0.8;
 }
 
+.filter-spinner {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.active-filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem 0;
+}
+
+.active-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  color: var(--primary-color);
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.active-filter-chip:hover {
+  background: color-mix(in srgb, var(--primary-color) 18%, transparent);
+}
+
+.goals-count-row {
+  padding: 0.25rem 1rem 0.5rem;
+}
+
+.goals-count-text {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
 /* Goals Grid */
 .goals-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1rem;
-  padding: 0 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-bottom: 1rem;
 }
 
 .goal-card {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 1rem;
-  cursor: pointer;
-  transition: transform var(--transition-normal), box-shadow var(--transition-normal), border-color var(--transition-fast);
-  display: flex;
-  gap: 0.875rem;
   border-left: 3px solid var(--sphere-accent, var(--border-color));
+  border-radius: var(--radius-md);
+  padding: 0.625rem 0.75rem;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, background 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  overflow: hidden;
 }
 
 .goal-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-hover);
-  border-color: var(--primary-color);
-  border-left-color: var(--sphere-accent, var(--primary-color));
+  background: var(--bg-secondary);
+  box-shadow: var(--shadow-sm);
 }
 
-.goal-card-visual {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.375rem;
-}
-
-.goal-sphere-icon-wrapper {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--sphere-color) 12%, transparent);
-  color: var(--sphere-color);
+.sphere-icon-col {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.goal-card:hover .goal-sphere-icon-wrapper {
-  background: color-mix(in srgb, var(--sphere-color) 20%, transparent);
-  transform: scale(1.05);
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
 }
 
 .goal-emoji {
@@ -2754,24 +2844,17 @@ onUnmounted(() => {
   min-width: 0;
 }
 
-.goal-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
 .goal-title {
-  font-size: 1rem;
+  font-size: 0.9375rem;
   font-weight: 500;
   color: var(--text-primary);
   margin: 0;
   line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .btn-arrow {
@@ -2820,19 +2903,11 @@ onUnmounted(() => {
   opacity: 1;
 }
 
-.goal-card-footer {
+.goal-card-meta {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.sphere-chip {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 1rem;
-  background: color-mix(in srgb, var(--sphere-color) 15%, transparent);
-  color: var(--sphere-color);
+  gap: 0.375rem;
+  flex-shrink: 0;
 }
 
 .status-chip {
@@ -2871,10 +2946,9 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.25rem;
   font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 1rem;
-  background: var(--bg-tertiary);
   color: var(--text-secondary);
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .ai-badge {
@@ -3724,8 +3798,8 @@ onUnmounted(() => {
 }
 
 .btn-icon-success:hover {
-  background: #10b981;
-  border-color: #10b981;
+  background: var(--success-color);
+  border-color: var(--success-color);
   color: white;
   transform: scale(1.05);
 }
@@ -3879,7 +3953,7 @@ onUnmounted(() => {
 }
 
 .btn-success {
-  background: #10b981;
+  background: var(--success-color);
   color: white;
   border: none;
 }
@@ -3923,7 +3997,7 @@ onUnmounted(() => {
 }
 
 .complete-goal-btn {
-  background: #10b981;
+  background: var(--success-color);
   color: white;
   border: none;
   padding: 0.375rem 0.75rem;
@@ -4775,10 +4849,6 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
-  .goals-grid {
-    grid-template-columns: 1fr;
-  }
-  
   .filter-chips {
     padding: 0 0.75rem;
   }
@@ -4830,12 +4900,29 @@ onUnmounted(() => {
     display: none;
   }
   
-  .summary-actions.desktop-only {
-    display: none !important;
+  .header-actions .btn span {
+    display: none;
   }
-  
-  .fab-button.mobile-only {
-    display: flex !important;
+
+  .header-actions .btn {
+    padding: 0.5rem;
+    min-width: 36px;
+    min-height: 36px;
+    justify-content: center;
+  }
+
+  .goal-card {
+    padding: 0.5rem 0.625rem;
+    gap: 0.5rem;
+  }
+
+  .goal-title {
+    font-size: 0.875rem;
+  }
+
+
+  .goal-card-meta {
+    gap: 0.25rem;
   }
   
   /* Full-screen modal on mobile */
@@ -4862,10 +4949,30 @@ onUnmounted(() => {
   }
 }
 
+@media (max-width: 480px) {
+  .header-actions {
+    gap: 0.375rem;
+  }
+}
+
 .section-header {
-  margin-bottom: 2rem;
-  text-align: center;
-  padding-left: 1rem;
+  margin-bottom: 1rem;
+  padding: 0 1rem;
+}
+
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 .section-header :deep(.breadcrumbs) {
@@ -5967,6 +6074,11 @@ onUnmounted(() => {
 
   .goals-bank-container {
     padding: 1rem;
+    padding-bottom: calc(var(--bottom-nav-height, 56px) + 5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .goals-content {
+    padding: 0;
   }
   
   .progress-bar {
@@ -6434,7 +6546,7 @@ onUnmounted(() => {
 }
 
 .quick-action-btn.action-complete {
-  background: var(--success, #10b981);
+  background: var(--success, var(--success-color));
   color: white;
 }
 
@@ -6623,8 +6735,8 @@ onUnmounted(() => {
 
 .btn-validation-new.btn-confirm.active {
   background: var(--success-light, rgba(16, 185, 129, 0.1));
-  border-color: var(--success, #10b981);
-  color: var(--success, #10b981);
+  border-color: var(--success, var(--success-color));
+  color: var(--success, var(--success-color));
 }
 
 .btn-validation-new.btn-reject.active {
@@ -7158,8 +7270,8 @@ onUnmounted(() => {
 
 .mentor-toggle {
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(34, 197, 94, 0.08));
-  border-color: #10b981;
-  color: #10b981;
+  border-color: var(--success-color);
+  color: var(--success-color);
 }
 
 .mentor-toggle:hover {
@@ -7637,7 +7749,7 @@ onUnmounted(() => {
 }
 
 .edit-action-btn.action-success {
-  background: var(--success, #10b981);
+  background: var(--success, var(--success-color));
   color: white;
 }
 

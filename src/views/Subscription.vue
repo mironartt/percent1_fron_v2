@@ -1,5 +1,7 @@
 <template>
   <div class="subscription-container">
+    <Breadcrumbs :items="breadcrumbs" />
+
     <header class="page-header centered">
       <h1>Выберите тариф</h1>
       <p class="subtitle">Выберите план, который подходит именно вам</p>
@@ -189,9 +191,15 @@ import { useRouter } from 'vue-router'
 import { Check, Clock, Shield, Receipt, Tag, AlertCircle } from 'lucide-vue-next'
 import { useSubscriptionStore } from '@/stores/subscription'
 import PaymentModal from '@/components/PaymentModal.vue'
+import Breadcrumbs from '@/components/Breadcrumbs.vue'
 
 const router = useRouter()
 const subscriptionStore = useSubscriptionStore()
+
+const breadcrumbs = [
+  { label: 'Главная', to: '/app' },
+  { label: 'Подписка' }
+]
 
 const promocodeInput = ref('')
 const promocodeLoading = ref(false)

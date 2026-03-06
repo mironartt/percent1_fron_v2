@@ -1,8 +1,6 @@
 <template>
   <div class="profile-page">
-    <header class="page-header">
-      <Breadcrumbs :items="breadcrumbItems" />
-    </header>
+    <Breadcrumbs :items="breadcrumbItems" />
 
     <div class="progress-card section-card">
       <div class="progress-card-header">
@@ -453,15 +451,6 @@ function getGroupIcon(groupType) {
   box-sizing: border-box;
 }
 
-.page-header {
-  text-align: center;
-  margin-bottom: 1rem;
-  width: 100%;
-}
-
-.page-header :deep(.breadcrumbs) {
-  text-align: left;
-}
 
 .page-title {
   font-size: 1.5rem;
@@ -661,11 +650,6 @@ function getGroupIcon(groupType) {
 }
 
 @media (max-width: 768px) {
-  .page-header {
-    padding-left: 0;
-    padding-right: 0;
-    text-align: left;
-  }
 
   .desktop-only {
     display: none !important;
@@ -974,7 +958,7 @@ function getGroupIcon(groupType) {
 }
 
 .day-spent {
-  color: #ef4444;
+  color: var(--danger-color, #ef4444);
 }
 
 .day-content {
@@ -1036,7 +1020,7 @@ function getGroupIcon(groupType) {
 
 .history-icon.penalty {
   background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  color: var(--danger-color, #ef4444);
 }
 
 .history-icon.journal {
@@ -1055,8 +1039,8 @@ function getGroupIcon(groupType) {
 }
 
 .history-icon.reward {
-  background: rgba(168, 85, 247, 0.1);
-  color: #a855f7;
+  background: var(--status-purple-bg, rgba(168, 85, 247, 0.1));
+  color: var(--status-purple-text, #a855f7);
 }
 
 .history-icon.achievement {
@@ -1082,7 +1066,7 @@ function getGroupIcon(groupType) {
 }
 
 .group-amount.negative {
-  color: #ef4444;
+  color: var(--danger-color, #ef4444);
 }
 
 .group-items {
@@ -1115,7 +1099,7 @@ function getGroupIcon(groupType) {
 }
 
 .detail-amount.negative {
-  color: #ef4444;
+  color: var(--danger-color, #ef4444);
 }
 
 .pagination {

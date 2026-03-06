@@ -1,25 +1,28 @@
 <template>
   <div class="planning-container">
-    <Breadcrumbs :items="breadcrumbItems" />
-    <header class="planning-header-full">
+    <div class="section-header-row">
+      <Breadcrumbs :items="breadcrumbItems" />
+      <button class="ai-planner-btn" @click="openAIPlannerModal">
+        <Sparkles :size="15" />
+        <span>AI планирование</span>
+      </button>
+    </div>
+
+    <header class="week-nav-row">
       <button class="nav-btn-edge" @click="prevWeek" aria-label="Предыдущая неделя">
         <ChevronLeft :size="20" />
       </button>
-      <div class="header-center">
-        <span class="week-range-center">{{ weekRangeText }}</span>
-      </div>
-      <div class="header-right">
-        <button class="nav-btn-edge" @click="nextWeek" aria-label="Следующая неделя">
-          <ChevronRight :size="20" />
-        </button>
-        <button 
-          v-if="!isCurrentWeek" 
-          class="today-btn-inline"
-          @click="goToCurrentWeek"
-        >
-          Сегодня
-        </button>
-      </div>
+      <span class="week-range-center">{{ weekRangeText }}</span>
+      <button class="nav-btn-edge" @click="nextWeek" aria-label="Следующая неделя">
+        <ChevronRight :size="20" />
+      </button>
+      <button
+        v-if="!isCurrentWeek"
+        class="today-btn-inline"
+        @click="goToCurrentWeek"
+      >
+        Сегодня
+      </button>
     </header>
 
     <div class="week-stats" v-if="weeklyTotalTime">
@@ -30,11 +33,11 @@
     </div>
 
     <div class="week-bar">
-      <button 
-        v-for="day in weekDays" 
+      <button
+        v-for="day in weekDays"
         :key="day.date"
         class="day-tab"
-        :class="{ 
+        :class="{
           active: selectedDay === day.date,
           today: isToday(day.date),
           'has-tasks': getTasksForDay(day.date).length > 0,
@@ -44,19 +47,64 @@
       >
         <span class="day-name">{{ day.shortName }}</span>
         <span class="day-num">{{ day.dayNum }}</span>
-        <span v-if="getTasksForDay(day.date).length > 0" class="task-count">
-          {{ getTasksForDay(day.date).length }}
-        </span>
+        <div class="day-dots">
+          <template v-if="getTasksForDay(day.date).length > 0">
+            <span
+              v-for="(task, i) in getTasksForDay(day.date).slice(0, 3)"
+              :key="i"
+              class="day-dot"
+              :class="{ done: task.completed }"
+            ></span>
+          </template>
+        </div>
       </button>
     </div>
 
-    <div class="day-content" v-if="selectedDay">
+    <!-- Mobile tabs -->
+    <div class="mobile-tabs mobile-only">
+      <button
+        class="mobile-tab"
+        :class="{ active: mobileTab === 'tasks' }"
+        @click="mobileTab = 'tasks'"
+      >
+        Задачи дня
+        <span v-if="selectedDayTasks.length > 0" class="mobile-tab-badge">{{ selectedDayTasks.length }}</span>
+      </button>
+      <button
+        class="mobile-tab"
+        :class="{ active: mobileTab === 'goals' }"
+        @click="mobileTab = 'goals'"
+      >
+        Цели и шаги
+      </button>
+    </div>
+
+    <!-- Full-width empty state when no goals exist yet -->
+    <div v-if="goalsWithSteps.length === 0" class="planning-empty-full">
+      <Target :size="40" class="empty-icon" />
+      <h3>Нет целей для планирования</h3>
+      <p>Добавьте цели в банк целей и разбейте их на шаги</p>
+      <button class="btn btn-primary" @click="goToGoalsBank">
+        Перейти в банк целей
+      </button>
+    </div>
+
+    <div v-else class="planning-two-panel">
+    <div class="day-content" v-if="selectedDay" :class="{ 'mobile-hidden': mobileTab === 'goals' }">
       <div class="day-header-info">
         <h2 class="day-title">{{ selectedDayTitle }}</h2>
-        <span v-if="getTotalTimeForDay(selectedDay)" class="day-time">
-          <Clock :size="14" />
-          {{ getTotalTimeForDay(selectedDay) }}
-        </span>
+        <div class="day-header-right">
+          <span v-if="getTotalTimeForDay(selectedDay)" class="day-time">
+            <Clock :size="14" />
+            {{ getTotalTimeForDay(selectedDay) }}
+          </span>
+          <div v-if="selectedDayProgress.total > 0" class="day-progress">
+            <div class="day-progress-bar">
+              <div class="day-progress-fill" :style="{ width: selectedDayProgress.pct + '%' }"></div>
+            </div>
+            <span class="day-progress-text">{{ selectedDayProgress.done }}/{{ selectedDayProgress.total }}</span>
+          </div>
+        </div>
       </div>
 
       <div class="tasks-list" v-if="selectedDayTasks.length > 0">
@@ -168,14 +216,15 @@
       <div v-else-if="selectedDayTasks.length === 0" class="empty-day">
         <Calendar :size="48" class="empty-icon" />
         <p>Нет задач на этот день</p>
-        <span class="empty-hint">Добавьте шаги из целей ниже</span>
+        <span class="empty-hint desktop-only">← Выберите шаг из целей и нажмите «+ {{ selectedDayShortLabel }}»</span>
+        <span class="empty-hint mobile-only">Перейдите на вкладку «Цели и шаги»</span>
       </div>
     </div>
 
-    <div class="section-divider">
-      <span>Цели и шаги</span>
+    <div class="goals-panel" :class="{ 'mobile-hidden': mobileTab === 'tasks' }">
+    <div class="goals-panel-header">
+      <span class="goals-panel-title">Цели и шаги</span>
     </div>
-
     <div class="filters-row compact unified">
       <!-- Поиск по названию (сворачиваемый) -->
       <div class="search-filter" :class="{ expanded: searchExpanded || queryFilter }">
@@ -223,10 +272,9 @@
         <span class="desktop-only">Сбросить</span>
       </button>
       
-      <!-- AI Planning button -->
-      <button class="ai-planner-btn filters-ai-btn" @click="openAIPlannerModal">
+      <!-- AI Planning button (mobile only — desktop version is in header) -->
+      <button class="ai-planner-btn filters-ai-btn mobile-only" @click="openAIPlannerModal">
         <Sparkles :size="16" />
-        <span class="ai-btn-text desktop-only">AI планирование</span>
       </button>
       
       <span class="results-count" v-if="totalGoalsItems > 0">
@@ -404,22 +452,14 @@
       </div>
     </div>
 
-    <div v-else-if="goalsWithSteps.length === 0" class="empty-state">
-      <Target :size="48" class="empty-icon" />
-      <h3>Нет целей для планирования</h3>
-      <p>Добавьте цели в банк целей и декомпозируйте их на шаги</p>
-      <button class="btn btn-primary" @click="goToGoalsBank">
-        Перейти в банк целей
-      </button>
+    <div v-if="!filteredGoalsWithSteps.length && hasActiveFilters" class="empty-state empty-state-compact">
+      <Filter :size="28" class="empty-icon" />
+      <p>Нет целей по фильтрам</p>
+      <button class="btn btn-outline btn-small" @click="clearFilters">Сбросить</button>
     </div>
 
-    <div v-else class="empty-state">
-      <Filter :size="48" class="empty-icon" />
-      <p>Нет целей по выбранным фильтрам</p>
-      <button class="btn btn-outline" @click="clearFilters">
-        Сбросить фильтры
-      </button>
-    </div>
+    </div><!-- /goals-panel -->
+    </div><!-- /planning-two-panel (v-else) -->
 
     <!-- AI Planner Modal -->
     <div class="ai-planner-overlay" v-if="showAIPlannerModal" @click="closeAIPlannerModal">
@@ -1698,9 +1738,16 @@ const selectedDayTitle = computed(() => {
   const day = weekDays.value.find(d => d.date === selectedDay.value)
   if (!day) return ''
   const date = new Date(selectedDay.value)
-  const monthNames = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 
+  const monthNames = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
                       'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
   return `${day.label}, ${day.dayNum} ${monthNames[date.getMonth()]}`
+})
+
+const selectedDayShortLabel = computed(() => {
+  if (!selectedDay.value) return ''
+  const day = weekDays.value.find(d => d.date === selectedDay.value)
+  if (!day) return ''
+  return `${day.shortName} ${day.dayNum}`
 })
 
 function prevWeek() {
@@ -1781,9 +1828,21 @@ const selectedDayTasks = computed(() => {
   // Явные зависимости для реактивности
   void localUpdateTrigger.value
   void weeklyStepsData.value
-  
+
   if (!selectedDay.value) return []
   return getTasksForDay(selectedDay.value)
+})
+
+// Mobile tab switcher
+const mobileTab = ref('tasks')
+
+// Day progress for header bar
+const selectedDayProgress = computed(() => {
+  const tasks = selectedDayTasks.value
+  const total = tasks.length
+  const done = tasks.filter(t => t.completed).length
+  const pct = total > 0 ? Math.round(done / total * 100) : 0
+  return { done, total, pct }
 })
 
 const selectedDayGroupedTasks = computed(() => {
@@ -3803,23 +3862,20 @@ onUnmounted(() => {
   text-align: center;
 }
 
-.planning-header-full {
+.section-header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1rem;
-  gap: 0.5rem;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
 }
 
-.header-center {
-  flex: 1;
-  text-align: center;
-}
-
-.header-right {
+.week-nav-row {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .nav-btn-edge {
@@ -3843,7 +3899,8 @@ onUnmounted(() => {
 }
 
 .week-range-center {
-  display: block;
+  flex: 1;
+  text-align: center;
   font-weight: 500;
   color: var(--text-primary);
   font-size: 0.9375rem;
@@ -3886,7 +3943,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, var(--success-color), var(--success-color));
   border: none;
   border-radius: 8px;
   color: white;
@@ -3950,7 +4007,7 @@ onUnmounted(() => {
   display: block;
   margin: 0.5rem auto 0;
   padding: 0.375rem 0.75rem;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--primary, #6366f1);
   background: transparent;
   color: var(--primary, #6366f1);
@@ -4061,7 +4118,7 @@ onUnmounted(() => {
   min-width: 44px;
   padding: 0.5rem 0.25rem;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--card-bg);
   cursor: pointer;
   display: flex;
@@ -4124,7 +4181,7 @@ onUnmounted(() => {
 .day-content {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 0.75rem;
   margin-bottom: 1rem;
 }
@@ -4319,8 +4376,8 @@ onUnmounted(() => {
 }
 
 .task-checkbox.completed {
-  background: var(--success-color, #10b981);
-  border-color: var(--success-color, #10b981);
+  background: var(--success-color, var(--success-color));
+  border-color: var(--success-color, var(--success-color));
   color: white;
 }
 
@@ -4427,7 +4484,247 @@ onUnmounted(() => {
   color: var(--text-muted, #9ca3af);
 }
 
+/* ── Full-width empty state (no goals yet) ── */
+.planning-empty-full {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 4rem 2rem;
+  text-align: center;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+}
+
+.planning-empty-full .empty-icon {
+  color: var(--text-tertiary);
+}
+
+.planning-empty-full h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.planning-empty-full p {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* ── Compact empty state inside panel ── */
+.empty-state-compact {
+  padding: 2rem 1rem;
+  gap: 0.5rem;
+}
+
+.empty-state-compact .empty-icon {
+  color: var(--text-tertiary);
+}
+
+.empty-state-compact p {
+  font-size: 0.875rem;
+}
+
+/* ── Two-panel layout ── */
+.planning-two-panel {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .planning-two-panel {
+    grid-template-columns: 1fr 380px;
+    gap: 1.25rem;
+  }
+
+  .planning-container {
+    max-width: 1100px;
+  }
+
+  /* Day panel стicks while scrolling goals */
+  .day-content {
+    position: sticky;
+    top: 1.5rem;
+  }
+
+  /* Goals panel scrolls independently */
+  .goals-panel {
+    max-height: calc(100vh - 260px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+  }
+}
+
+/* ── Goals panel ── */
+.goals-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.goals-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  padding: 0 0.25rem;
+}
+
+.goals-panel-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── Day progress bar ── */
+.day-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.day-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.day-progress-bar {
+  width: 80px;
+  height: 5px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.day-progress-fill {
+  height: 100%;
+  background: var(--primary-color);
+  border-radius: var(--radius-full);
+  transition: width 0.4s ease;
+}
+
+.day-progress-text {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ── Week bar dots ── */
+.day-dots {
+  display: flex;
+  gap: 3px;
+  min-height: 6px;
+  align-items: center;
+  justify-content: center;
+}
+
+.day-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--border-color);
+  transition: background 0.2s;
+}
+
+.day-dot.done {
+  background: var(--success-color);
+}
+
+.day-tab.active .day-dot {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.day-tab.active .day-dot.done {
+  background: white;
+}
+
+/* ── Mobile tabs ── */
+.mobile-tabs {
+  display: none;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-lg);
+  padding: 3px;
+  gap: 3px;
+  margin-bottom: 1rem;
+}
+
+.mobile-tab {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: transparent;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.mobile-tab.active {
+  background: var(--card-bg);
+  color: var(--text-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-tab-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--primary-color);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── AI button in header ── */
+.header-ai-btn {
+  font-size: 0.8125rem !important;
+  padding: 0.4rem 0.875rem !important;
+}
+
+/* ── Mobile visibility helpers ── */
+.mobile-only { display: none; }
+.desktop-only { display: initial; }
+
+@media (max-width: 768px) {
+  .mobile-only { display: initial; }
+  .desktop-only { display: none !important; }
+
+  .mobile-tabs {
+    display: flex;
+  }
+
+  .mobile-hidden {
+    display: none !important;
+  }
+}
+
+/* ── Section divider (hidden in two-panel, kept for legacy) ── */
 .section-divider {
+  display: none;
+}
+
+/* keep old rule commented out in case needed elsewhere */
+.section-divider-legacy {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -4570,7 +4867,7 @@ onUnmounted(() => {
   min-width: 180px;
   background: var(--card-bg, white);
   border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   z-index: 100;
   overflow: hidden;
@@ -4847,7 +5144,7 @@ onUnmounted(() => {
   padding: 0.5rem 0.875rem;
   border-radius: 8px;
   border: none;
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, var(--success-color), var(--success-color));
   color: white;
   font-size: 0.8125rem;
   font-weight: 500;
@@ -5010,7 +5307,7 @@ onUnmounted(() => {
   padding: 2rem 1rem;
   text-align: center;
   background: var(--bg);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   border: 2px dashed var(--border-color, #e5e7eb);
 }
 
@@ -5146,8 +5443,8 @@ onUnmounted(() => {
 }
 
 .step-checkbox.completed {
-  background: var(--success-color, #10b981);
-  border-color: var(--success-color, #10b981);
+  background: var(--success-color, var(--success-color));
+  border-color: var(--success-color, var(--success-color));
 }
 
 .step-title.completed {
@@ -5335,9 +5632,9 @@ onUnmounted(() => {
 }
 
 .needs-decomposition-banner {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border: 1px solid #f59e0b;
-  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(245, 158, 11, 0.14) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: var(--radius-lg);
   padding: 1rem;
   margin-bottom: 1rem;
 }
@@ -5350,18 +5647,18 @@ onUnmounted(() => {
 }
 
 .banner-icon {
-  color: #d97706;
+  color: var(--warning-color);
   flex-shrink: 0;
 }
 
 .banner-title {
   font-weight: 600;
-  color: #92400e;
+  color: var(--text-primary);
   font-size: 0.9375rem;
 }
 
 .banner-text {
-  color: #a16207;
+  color: var(--text-secondary);
   font-size: 0.8125rem;
   margin: 0 0 0.75rem;
 }
@@ -5429,7 +5726,7 @@ onUnmounted(() => {
 
 .btn {
   padding: 0.75rem 1.5rem;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
@@ -5493,9 +5790,10 @@ onUnmounted(() => {
 .ai-planner-modal {
   width: 100%;
   max-width: 480px;
+  max-height: calc(100dvh - 2rem);
   background: var(--card-bg, #fff);
-  border-radius: 16px;
-  overflow: hidden;
+  border-radius: var(--radius-xl);
+  overflow-y: auto;
   animation: modalSlideUp 0.25s ease;
 }
 
@@ -5525,7 +5823,7 @@ onUnmounted(() => {
 }
 
 .ai-modal-icon {
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .ai-modal-header h3 {
@@ -5574,7 +5872,7 @@ onUnmounted(() => {
 }
 
 .ai-intro-icon svg {
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .ai-intro-title {
@@ -5611,7 +5909,7 @@ onUnmounted(() => {
 
 .ai-feature-item svg {
   flex-shrink: 0;
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .ai-feature-item span {
@@ -5622,7 +5920,7 @@ onUnmounted(() => {
 .ai-start-btn {
   width: 100%;
   padding: 0.875rem 1.25rem !important;
-  background: #10b981 !important;
+  background: var(--success-color) !important;
   border: none !important;
   color: white !important;
   font-size: 1rem !important;
@@ -5638,7 +5936,7 @@ onUnmounted(() => {
 }
 
 .ai-start-btn:hover {
-  background: #059669 !important;
+  background: var(--success-color) !important;
 }
 
 .dont-show-label {
@@ -5654,7 +5952,7 @@ onUnmounted(() => {
 .dont-show-label input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  accent-color: #10b981;
+  accent-color: var(--success-color);
 }
 
 .ai-option-toggle {
@@ -5673,7 +5971,7 @@ onUnmounted(() => {
 .toggle-label input[type="checkbox"] {
   width: 18px;
   height: 18px;
-  accent-color: #10b981;
+  accent-color: var(--success-color);
 }
 
 .toggle-text {
@@ -5714,13 +6012,13 @@ onUnmounted(() => {
 }
 
 .ai-modal-actions .ai-btn {
-  background: #10b981;
+  background: var(--success-color);
   border: none;
   color: white;
 }
 
 .ai-modal-actions .ai-btn:hover {
-  background: #059669;
+  background: var(--success-color);
 }
 
 .ai-modal-actions .ai-btn:disabled {
@@ -5737,7 +6035,7 @@ onUnmounted(() => {
   width: 48px;
   height: 48px;
   border: 3px solid var(--bg-secondary, #f3f4f6);
-  border-top-color: #10b981;
+  border-top-color: var(--success-color);
   border-radius: 50%;
   margin: 0 auto 1rem;
   animation: spin 0.8s linear infinite;
@@ -5771,7 +6069,7 @@ onUnmounted(() => {
 .ai-result-summary h4 {
   margin: 0 0 0.25rem;
   font-size: 1.125rem;
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .ai-result-summary p {
@@ -5784,7 +6082,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  max-height: 280px;
+  max-height: min(280px, 40vh);
   overflow-y: auto;
 }
 
@@ -5855,7 +6153,7 @@ onUnmounted(() => {
 }
 
 .ai-task-preview.selected .ai-task-checkbox {
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .ai-task-preview:not(.selected) .ai-task-checkbox {
@@ -5906,7 +6204,7 @@ onUnmounted(() => {
 .ai-result-title {
   margin: 0 0 0.25rem;
   font-size: 1.125rem;
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .ai-result-subtitle {
@@ -5917,7 +6215,7 @@ onUnmounted(() => {
 
 .ai-more-tasks {
   font-size: 0.75rem;
-  color: #10b981;
+  color: var(--success-color);
   font-weight: 500;
 }
 
@@ -5937,7 +6235,7 @@ onUnmounted(() => {
   max-width: 500px;
   max-height: 80vh;
   background: var(--card-bg);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   padding: 1rem 1rem 1.5rem;
   overflow-y: auto;
 }
@@ -6099,7 +6397,7 @@ onUnmounted(() => {
 
 .chip {
   padding: 0.375rem 0.75rem;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--border-color, #e5e7eb);
   background: var(--bg);
   color: var(--text-primary);
@@ -6147,7 +6445,7 @@ onUnmounted(() => {
   padding: 1rem;
   border: none;
   background: transparent;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   color: var(--text-primary);
   font-size: 1rem;
   cursor: pointer;
@@ -6229,7 +6527,7 @@ onUnmounted(() => {
   gap: 0.5rem;
   padding: 0.75rem;
   background: var(--bg);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   margin-bottom: 1rem;
   color: var(--text-muted);
 }
@@ -6352,6 +6650,29 @@ onUnmounted(() => {
   }
 }
 
+@media (max-width: 640px) {
+  .section-header-row {
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+  }
+
+  .ai-planner-btn span {
+    display: none;
+  }
+
+  .ai-planner-btn {
+    padding: 0.5rem 0.625rem;
+  }
+
+  .week-nav-row {
+    gap: 0.375rem;
+  }
+
+  .week-range-center {
+    font-size: 0.875rem;
+  }
+}
+
 /* Dark theme overrides */
 :root.dark .step-card {
   background: var(--card-bg);
@@ -6466,7 +6787,7 @@ onUnmounted(() => {
 
 .date-picker-popup {
   background: var(--bg-primary, white);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   padding: 1.25rem;
   width: calc(100% - 2rem);
   max-width: 320px;
@@ -6512,7 +6833,7 @@ onUnmounted(() => {
   width: 100%;
   padding: 0.875rem 1rem;
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   font-size: 1rem;
   background: var(--bg-secondary, #f8fafc);
   color: var(--text-primary);

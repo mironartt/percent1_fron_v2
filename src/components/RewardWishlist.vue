@@ -29,7 +29,9 @@
     </div>
 
     <div v-else-if="rewards.length === 0" class="empty-state">
-      <div class="empty-icon">🎁</div>
+      <div class="empty-state-icon">
+        <Gift :size="40" :stroke-width="1.5" />
+      </div>
       <p>Добавьте награды, которые хотите получить за свои достижения</p>
       <button class="btn btn-primary btn-sm" @click="showAddModal = true">
         Добавить награду
@@ -824,9 +826,16 @@ async function confirmAiRewardSelection() {
   padding: 2rem 1rem;
 }
 
-.empty-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+.empty-state-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
 }
 
 .empty-state p {
@@ -1002,7 +1011,10 @@ async function confirmAiRewardSelection() {
   border-radius: 16px;
   width: 100%;
   max-width: 400px;
+  max-height: calc(100dvh - 2rem);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-header {
@@ -1011,6 +1023,7 @@ async function confirmAiRewardSelection() {
   justify-content: space-between;
   padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .modal-header h3 {
@@ -1029,6 +1042,8 @@ async function confirmAiRewardSelection() {
 
 .modal-content {
   padding: 1.25rem;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .form-group {
@@ -1083,6 +1098,7 @@ async function confirmAiRewardSelection() {
   gap: 0.75rem;
   padding: 1rem 1.25rem;
   border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .spacer {

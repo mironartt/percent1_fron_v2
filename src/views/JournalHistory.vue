@@ -1,23 +1,12 @@
 <template>
   <div class="journal-history">
-    <header class="page-header">
+    <div class="section-header-row">
       <Breadcrumbs :items="breadcrumbItems" />
-      <div class="header-content">
-        <div>
-          <p class="subtitle">История ваших записей и рефлексий</p>
-        </div>
-        <div class="header-stats">
-          <div class="stat-badge" v-if="journalStreak > 0">
-            <Flame :size="18" :stroke-width="1.5" />
-            <span>{{ journalStreak }} {{ pluralize(journalStreak, 'день', 'дня', 'дней') }} подряд</span>
-          </div>
-          <div class="stat-badge secondary">
-            <BookOpen :size="18" :stroke-width="1.5" />
-            <span>{{ totalEntries }} {{ pluralize(totalEntries, 'запись', 'записи', 'записей') }}</span>
-          </div>
-        </div>
-      </div>
-    </header>
+      <button class="btn btn-primary btn-sm" @click="openTodayEntry">
+        <Plus :size="16" :stroke-width="2" />
+        <span>Написать</span>
+      </button>
+    </div>
 
     <div class="content-layout">
       <div class="main-content">
@@ -36,15 +25,31 @@
           </button>
         </div>
 
-        <div class="search-bar">
-          <Search :size="18" :stroke-width="1.5" class="search-icon" />
-          <input 
-            v-model="searchQuery"
-            @input="handleSearch"
-            type="text"
-            placeholder="Поиск по записям (мин. 3 символа)..."
-            class="search-input"
-          />
+        <div class="search-stats-row">
+          <div class="stats-bar">
+            <div class="stat-chip" v-if="journalStreak > 0">
+              <Flame :size="14" :stroke-width="1.5" class="stat-chip-icon streak-icon" />
+              <span class="stat-value">{{ journalStreak }}</span>
+              <span class="stat-label">{{ pluralize(journalStreak, 'день', 'дня', 'дней') }} подряд</span>
+            </div>
+            <div class="stat-bar-sep" v-if="journalStreak > 0"></div>
+            <div class="stat-chip">
+              <BookOpen :size="14" :stroke-width="1.5" class="stat-chip-icon entries-icon" />
+              <span class="stat-value">{{ totalEntries }}</span>
+              <span class="stat-label">{{ pluralize(totalEntries, 'запись', 'записи', 'записей') }}</span>
+            </div>
+          </div>
+
+          <div class="search-bar">
+            <Search :size="18" :stroke-width="1.5" class="search-icon" />
+            <input
+              v-model="searchQuery"
+              @input="handleSearch"
+              type="text"
+              placeholder="Поиск по записям (мин. 3 символа)..."
+              class="search-input"
+            />
+          </div>
         </div>
 
         <div v-if="isLoading && journalEntries.length === 0" class="loading-state">
@@ -184,7 +189,8 @@ import {
   Trash2,
   Edit2,
   Loader2,
-  Search
+  Search,
+  Plus
 } from 'lucide-vue-next'
 
 const store = useAppStore()
@@ -388,56 +394,74 @@ function onEntrySaved() {
   box-sizing: border-box;
 }
 
-.page-header {
-  padding: 2rem 0;
-  text-align: center;
-}
-
-.page-header :deep(.breadcrumbs) {
-  text-align: left;
-}
-
-.header-content {
+.section-header-row {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
 }
 
-.page-header h1 {
-  font-size: 1.75rem;
-  margin: 0 0 0.25rem 0;
-}
-
-.subtitle {
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.header-stats {
+.search-stats-row {
   display: flex;
+  align-items: center;
   gap: 0.75rem;
+  margin-bottom: 1.5rem;
 }
 
-.stat-badge {
+.stats-bar {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.15));
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--warning-color);
+  gap: 0.25rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0.375rem;
+  flex-shrink: 0;
 }
 
-.stat-badge.secondary {
-  background: var(--bg-tertiary);
+.search-stats-row .search-bar {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.stat-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.35rem 0.625rem;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  background: transparent;
+  cursor: default;
+}
+
+.stat-chip-icon {
+  flex-shrink: 0;
+}
+
+.streak-icon {
+  color: #ef4444;
+}
+
+.entries-icon {
+  color: var(--primary-color);
+}
+
+.stat-value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.stat-label {
   color: var(--text-secondary);
 }
 
-.stat-badge svg {
+.stat-bar-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--border-color);
   flex-shrink: 0;
+  margin: 0 0.125rem;
 }
 
 .today-cta {
@@ -799,9 +823,21 @@ function onEntrySaved() {
     text-align: left;
   }
   
-  .header-stats {
-    flex-direction: column;
-    gap: 0.5rem;
+  .section-header-row .btn span {
+    display: none;
+  }
+
+  .section-header-row .btn {
+    padding: 0.375rem 0.5rem;
+  }
+
+  .stat-chip .stat-label {
+    display: none;
+  }
+
+  .stat-chip {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.5rem;
   }
 
   /* Bottom nav padding */

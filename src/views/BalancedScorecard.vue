@@ -3,8 +3,8 @@
     <Breadcrumbs :items="breadcrumbs" />
 
     <div class="ssp-tabs">
-      <button 
-        v-for="tab in tabs" 
+      <button
+        v-for="tab in tabs"
         :key="tab.id"
         class="tab-btn"
         :class="{ active: activeTab === tab.id }"
@@ -13,63 +13,52 @@
         <component :is="tab.icon" :size="18" />
         {{ tab.label }}
       </button>
+      <button class="btn btn-primary reassess-tab-btn" @click="openReassessment">
+        <RefreshCcw :size="16" />
+        Переоценить
+      </button>
     </div>
 
     <div class="tab-content">
-      <div v-if="activeTab === 'wheel'" class="wheel-tab">
-        <div class="stats-row">
-          <div class="stat-card">
-            <div class="stat-icon" style="color: var(--primary-color)">
-              <TrendingUp :size="20" />
-            </div>
-            <div class="stat-info">
-              <div class="stat-value">{{ averageScore.toFixed(1) }}</div>
-              <div class="stat-label">Средний балл</div>
-            </div>
-          </div>
-
-          <div class="stat-card" v-if="strongestSphere">
-            <div class="stat-icon" :style="{ color: getSphereColor(strongestSphere.id) }">
-              <component :is="getSphereIcon(strongestSphere.id)" :size="20" />
-            </div>
-            <div class="stat-info">
-              <div class="stat-value-text">{{ strongestSphere.name }}</div>
-              <div class="stat-label">Сильная</div>
-            </div>
-          </div>
-
-          <div class="stat-card" v-if="weakestSphere">
-            <div class="stat-icon" :style="{ color: getSphereColor(weakestSphere.id) }">
-              <component :is="getSphereIcon(weakestSphere.id)" :size="20" />
-            </div>
-            <div class="stat-info">
-              <div class="stat-value-text">{{ weakestSphere.name }}</div>
-              <div class="stat-label">Зона роста</div>
-            </div>
-          </div>
-        </div>
-
+      <div v-if="activeTab === 'overview'" class="overview-tab">
         <div class="wheel-card card">
+          <div class="stats-bar">
+            <div class="stat-chip">
+              <TrendingUp :size="14" class="stat-chip-icon" style="color: var(--primary-color)" />
+              <span class="stat-chip-value">{{ averageScore.toFixed(1) }}</span>
+              <span class="stat-chip-label">Средний балл</span>
+            </div>
+            <template v-if="strongestSphere">
+              <div class="stat-bar-sep"></div>
+              <div class="stat-chip">
+                <component :is="getSphereIcon(strongestSphere.id)" :size="14" class="stat-chip-icon" :style="{ color: getSphereColor(strongestSphere.id) }" />
+                <span class="stat-chip-value">{{ strongestSphere.name }}</span>
+                <span class="stat-chip-label">Сильная</span>
+              </div>
+            </template>
+            <template v-if="weakestSphere">
+              <div class="stat-bar-sep"></div>
+              <div class="stat-chip">
+                <component :is="getSphereIcon(weakestSphere.id)" :size="14" class="stat-chip-icon" :style="{ color: getSphereColor(weakestSphere.id) }" />
+                <span class="stat-chip-value">{{ weakestSphere.name }}</span>
+                <span class="stat-chip-label">Зона роста</span>
+              </div>
+            </template>
+          </div>
+
           <div class="wheel-visualization">
-            <WheelOfLife 
-              :spheres="lifeSpheres" 
+            <WheelOfLife
+              :spheres="lifeSpheres"
               :readonly="true"
             />
+            <p class="last-assessment" v-if="lastAssessmentDate">
+              Последняя оценка: {{ formatDate(lastAssessmentDate) }}
+            </p>
           </div>
-          <p class="last-assessment" v-if="lastAssessmentDate">
-            Последняя оценка: {{ formatDate(lastAssessmentDate) }}
-          </p>
         </div>
 
-        <div class="wheel-actions">
-          <button class="btn btn-primary btn-lg" @click="openReassessment">
-            <RefreshCcw :size="18" />
-            Переоценить
-          </button>
-        </div>
-      </div>
-
-      <div v-if="activeTab === 'reflection'" class="reflection-tab">
+        <!-- Рефлексия прямо под колесом -->
+        <div class="section-title">Рефлексия по сферам</div>
         <div class="reflection-accordion">
           <div 
             v-for="sphere in lifeSpheres" 
@@ -98,20 +87,12 @@
             <div class="accordion-content" v-show="expandedSpheres.includes(sphere.id)">
               <div v-if="editingSphereId === sphere.id" class="edit-form">
                 <div class="form-group">
-                  <label>Почему такой балл?</label>
-                  <textarea v-model="editingReflection.why" rows="2" placeholder="Ваш ответ..."></textarea>
+                  <label>Как сейчас обстоят дела?</label>
+                  <textarea v-model="editingReflection.why" rows="2" placeholder="Опишите текущую ситуацию..."></textarea>
                 </div>
                 <div class="form-group">
-                  <label>Что нужно для 10?</label>
-                  <textarea v-model="editingReflection.ten" rows="2" placeholder="Идеальное состояние..."></textarea>
-                </div>
-                <div class="form-group">
-                  <label>Что мешает?</label>
-                  <textarea v-model="editingReflection.prevents" rows="2" placeholder="Препятствия..."></textarea>
-                </div>
-                <div class="form-group">
-                  <label>Желаемое состояние</label>
-                  <textarea v-model="editingReflection.desired" rows="2" placeholder="Как хотите..."></textarea>
+                  <label>Что хочется изменить?</label>
+                  <textarea v-model="editingReflection.desired" rows="2" placeholder="Желаемое состояние..."></textarea>
                 </div>
                 <div class="edit-actions">
                   <button class="btn btn-secondary btn-sm" @click="cancelEditReflection">
@@ -126,19 +107,11 @@
               <div v-else class="reflection-view">
                 <div v-if="hasReflectionContent(sphere)" class="reflection-answers">
                   <div class="answer-item" v-if="sphere.reflection?.why">
-                    <div class="answer-label">Почему такой балл?</div>
+                    <div class="answer-label">Как сейчас</div>
                     <div class="answer-text">{{ sphere.reflection.why }}</div>
                   </div>
-                  <div class="answer-item" v-if="sphere.reflection?.ten">
-                    <div class="answer-label">Что нужно для 10?</div>
-                    <div class="answer-text">{{ sphere.reflection.ten }}</div>
-                  </div>
-                  <div class="answer-item" v-if="sphere.reflection?.prevents">
-                    <div class="answer-label">Что мешает?</div>
-                    <div class="answer-text">{{ sphere.reflection.prevents }}</div>
-                  </div>
                   <div class="answer-item" v-if="sphere.reflection?.desired">
-                    <div class="answer-label">Желаемое состояние</div>
+                    <div class="answer-label">Хочется изменить</div>
                     <div class="answer-text">{{ sphere.reflection.desired }}</div>
                   </div>
                 </div>
@@ -179,16 +152,42 @@
         <div v-else class="history-content">
           <div class="history-chart card">
             <h3>Динамика среднего балла</h3>
-            <div class="mini-chart">
-              <div 
-                v-for="(entry, index) in sspChartData" 
-                :key="index"
-                class="chart-bar"
-                :style="{ height: `${entry.average * 10}%` }"
-                :title="`${formatDate(entry.date)}: ${entry.average.toFixed(1)}`"
-              >
-                <span class="bar-value">{{ entry.average.toFixed(1) }}</span>
-              </div>
+            <div class="line-chart-wrap">
+              <svg class="line-chart" viewBox="0 0 400 140" preserveAspectRatio="none">
+                <!-- Grid lines -->
+                <line v-for="y in [0,2,4,6,8,10]" :key="y"
+                  x1="32" :y1="110 - y * 10" x2="390" :y2="110 - y * 10"
+                  stroke="var(--border-color)" stroke-width="0.5" />
+                <!-- Y labels -->
+                <text v-for="y in [0,5,10]" :key="'l'+y"
+                  x="26" :y="114 - y * 10"
+                  font-size="9" fill="var(--text-secondary)" text-anchor="end">{{ y }}</text>
+                <!-- Area fill -->
+                <path v-if="sspChartData.length >= 2"
+                  :d="lineChartAreaPath"
+                  fill="var(--primary-color)" opacity="0.08" />
+                <!-- Line -->
+                <polyline v-if="sspChartData.length >= 2"
+                  :points="lineChartPoints"
+                  fill="none" stroke="var(--primary-color)" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round" />
+                <!-- Dots + labels -->
+                <g v-for="(entry, i) in sspChartData" :key="i">
+                  <circle
+                    :cx="lineChartX(i)" :cy="lineChartY(entry.average)"
+                    r="4" fill="var(--primary-color)" />
+                  <text
+                    :x="lineChartX(i)" :y="lineChartY(entry.average) - 8"
+                    font-size="9" fill="var(--primary-color)" text-anchor="middle" font-weight="600">
+                    {{ entry.average.toFixed(1) }}
+                  </text>
+                  <text
+                    :x="lineChartX(i)" y="128"
+                    font-size="8" fill="var(--text-secondary)" text-anchor="middle">
+                    {{ formatDate(entry.date) }}
+                  </text>
+                </g>
+              </svg>
             </div>
           </div>
 
@@ -224,12 +223,13 @@
                 <span class="history-average">{{ entry.average.toFixed(1) }}</span>
               </div>
               <div class="history-spheres">
-                <span 
-                  v-for="sphere in entry.spheres" 
+                <span
+                  v-for="sphere in entry.spheres"
                   :key="sphere.id"
                   class="sphere-badge"
                   :style="{ backgroundColor: getSphereColor(store.getCategoryFrontendId(sphere.id)) + '20', color: getSphereColor(store.getCategoryFrontendId(sphere.id)) }"
                 >
+                  <component :is="getSphereIcon(store.getCategoryFrontendId(sphere.id))" :size="11" />
                   {{ sphere.score }}
                 </span>
               </div>
@@ -287,7 +287,10 @@
         </div>
         
         <div v-if="reassessmentMode === 'manual'" class="sheet-content">
-          <div 
+          <div class="preview-wheel-wrap">
+            <WheelOfLife :spheres="previewSpheres" :readonly="true" />
+          </div>
+          <div
             v-for="sphere in lifeSpheres" 
             :key="sphere.id"
             class="reassess-card"
@@ -510,12 +513,11 @@ const breadcrumbs = [
 ]
 
 const tabs = [
-  { id: 'wheel', label: 'Колесо', icon: PieChart },
-  { id: 'reflection', label: 'Рефлексия', icon: FileText },
+  { id: 'overview', label: 'Обзор', icon: PieChart },
   { id: 'history', label: 'История', icon: History }
 ]
 
-const activeTab = ref('wheel')
+const activeTab = ref('overview')
 
 const sphereIcons = {
   wealth: Wallet,
@@ -586,6 +588,44 @@ const weakestSphere = computed(() => {
   return lifeSpheres.value.reduce((min, s) => 
     (!min || (s.score || 0) < (min.score || 0)) ? s : min
   , null)
+})
+
+// Live preview: текущие слайдеры → колесо в модале
+const previewSpheres = computed(() =>
+  lifeSpheres.value.map(s => ({ ...s, score: reassessScores[s.id] ?? s.score }))
+)
+
+// SVG line chart helpers
+const CHART_PAD_L = 32
+const CHART_PAD_R = 10
+const CHART_PAD_T = 14
+const CHART_PAD_B = 30
+const CHART_W = 400
+const CHART_H = 140
+
+function lineChartX(i) {
+  const n = sspChartData.value.length
+  if (n <= 1) return CHART_W / 2
+  return CHART_PAD_L + (i / (n - 1)) * (CHART_W - CHART_PAD_L - CHART_PAD_R)
+}
+
+function lineChartY(val) {
+  return CHART_H - CHART_PAD_B - (val / 10) * (CHART_H - CHART_PAD_T - CHART_PAD_B)
+}
+
+const lineChartPoints = computed(() =>
+  sspChartData.value.map((e, i) => `${lineChartX(i)},${lineChartY(e.average)}`).join(' ')
+)
+
+const lineChartAreaPath = computed(() => {
+  const pts = sspChartData.value
+  if (pts.length < 2) return ''
+  const first = `${lineChartX(0)},${lineChartY(pts[0].average)}`
+  const last = `${lineChartX(pts.length - 1)},${lineChartY(pts[pts.length - 1].average)}`
+  const bottom = CHART_H - CHART_PAD_B
+  return `M${lineChartX(0)},${bottom} L${first} ` +
+    pts.slice(1).map((e, i) => `L${lineChartX(i + 1)},${lineChartY(e.average)}`).join(' ') +
+    ` L${lineChartX(pts.length - 1)},${bottom} Z`
 })
 
 const expandedSpheres = ref([])
@@ -918,9 +958,7 @@ onMounted(async () => {
   }
   await store.loadSSPFromBackend()
   
-  if (activeTab.value === 'history') {
-    await store.loadSSPHistoryFromBackend()
-  }
+  // history is loaded lazily on tab switch
 })
 
 watch(activeTab, async (newTab) => {
@@ -961,6 +999,7 @@ watch(activeTab, async (newTab) => {
 
 .ssp-tabs {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
   background: var(--bg-secondary);
   padding: 0.25rem;
@@ -995,45 +1034,44 @@ watch(activeTab, async (newTab) => {
   color: var(--text-primary);
 }
 
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-}
-
-.stat-card {
+.reassess-tab-btn {
+  flex: none;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.8125rem;
+  white-space: nowrap;
   border-radius: var(--radius-md);
 }
 
-.stat-icon {
+.wheel-card {
+  padding: 1.25rem 1.5rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.stats-bar {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, currentColor 10%, transparent);
+  width: 100%;
+  margin-bottom: 1.25rem;
 }
 
-.stat-info {
+.stat-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.625rem 0.75rem;
   flex: 1;
   min-width: 0;
+  background: transparent;
 }
 
-.stat-value {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-primary);
+.stat-chip-icon {
+  flex-shrink: 0;
 }
 
-.stat-value-text {
+.stat-chip-value {
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -1042,24 +1080,39 @@ watch(activeTab, async (newTab) => {
   text-overflow: ellipsis;
 }
 
-.stat-label {
+.stat-chip-label {
   font-size: 0.75rem;
   color: var(--text-secondary);
+  white-space: nowrap;
 }
 
-.wheel-card {
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
+.stat-bar-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--border-color);
+  flex-shrink: 0;
 }
 
 .wheel-visualization {
-  max-width: 600px;
+  max-width: 700px;
   margin: 0 auto;
 }
 
 @media (max-width: 768px) {
   .wheel-visualization {
-    max-width: 320px;
+    max-width: 100%;
+  }
+
+  .reassess-tab-btn span {
+    display: none;
+  }
+
+  .reassess-tab-btn {
+    padding: 0.5rem 0.625rem;
+  }
+
+  .preview-wheel-wrap {
+    max-width: 180px;
   }
 }
 
@@ -1070,15 +1123,31 @@ watch(activeTab, async (newTab) => {
   margin: 1rem 0 0;
 }
 
-.wheel-actions {
-  display: flex;
-  justify-content: center;
+.section-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 1.5rem 0 0.75rem;
 }
 
-.wheel-actions .btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+/* Live preview wheel in manual reassess modal */
+.preview-wheel-wrap {
+  max-width: 240px;
+  margin: 0 auto 1rem;
+}
+
+/* SVG line chart */
+.line-chart-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.line-chart {
+  width: 100%;
+  height: 140px;
+  display: block;
 }
 
 .reflection-accordion {
@@ -1090,23 +1159,23 @@ watch(activeTab, async (newTab) => {
 .accordion-item {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
+  border-left: 3px solid var(--sphere-color);
   border-radius: var(--radius-md);
   overflow: hidden;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .accordion-item.expanded {
-  border-color: var(--sphere-color);
-  box-shadow: 0 0 0 1px var(--sphere-color);
+  box-shadow: var(--shadow-sm);
 }
 
 .accordion-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem;
+  padding: 0.75rem 0.875rem;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.15s ease;
 }
 
 .accordion-header:hover {
@@ -1116,38 +1185,51 @@ watch(activeTab, async (newTab) => {
 .accordion-left {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.625rem;
+  min-width: 0;
 }
 
 .sphere-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, currentColor 10%, transparent);
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  color: var(--sphere-color);
 }
 
 .sphere-info {
   display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-width: 0;
 }
 
 .sphere-name {
+  font-size: 0.9375rem;
   font-weight: 500;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sphere-score {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--sphere-color);
+  background: color-mix(in srgb, var(--sphere-color) 10%, transparent);
+  padding: 0.1rem 0.4rem;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .chevron {
   color: var(--text-muted);
   transition: transform 0.2s ease;
+  flex-shrink: 0;
 }
 
 .chevron.rotated {
@@ -1155,7 +1237,7 @@ watch(activeTab, async (newTab) => {
 }
 
 .accordion-content {
-  padding: 0 1rem 1rem;
+  padding: 0 0.875rem 0.875rem;
   border-top: 1px solid var(--border-color);
 }
 
@@ -1377,8 +1459,8 @@ watch(activeTab, async (newTab) => {
 }
 
 .trend-up {
-  color: #10b981;
-  background: color-mix(in srgb, #10b981 10%, transparent);
+  color: var(--success-color);
+  background: color-mix(in srgb, var(--success-color) 10%, transparent);
 }
 
 .trend-down {
@@ -1454,9 +1536,12 @@ watch(activeTab, async (newTab) => {
 }
 
 .sphere-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 0.8rem;
   font-weight: 600;
-  padding: 0.25rem 0.5rem;
+  padding: 0.25rem 0.625rem;
   border-radius: var(--radius-sm);
 }
 
@@ -1481,7 +1566,7 @@ watch(activeTab, async (newTab) => {
   animation: modalFadeIn 0.25s ease;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-xl);
 }
 
 .reassess-modal.ai-mode {
@@ -1600,7 +1685,7 @@ watch(activeTab, async (newTab) => {
 }
 
 .mode-btn.ai svg {
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .mode-info {
@@ -1765,7 +1850,7 @@ watch(activeTab, async (newTab) => {
 
 .progress-fill {
   height: 100%;
-  background: #10b981;
+  background: var(--success-color);
   transition: width 0.3s ease;
 }
 
@@ -1836,7 +1921,7 @@ watch(activeTab, async (newTab) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #10b981;
+  background: var(--success-color);
   color: white;
   border-radius: 50%;
   flex-shrink: 0;
@@ -1856,7 +1941,7 @@ watch(activeTab, async (newTab) => {
 }
 
 .ai-message.user .message-content {
-  background: #10b981;
+  background: var(--success-color);
   color: white;
 }
 
@@ -1908,7 +1993,7 @@ watch(activeTab, async (newTab) => {
 .score-display {
   font-size: 2rem;
   font-weight: 700;
-  color: #10b981;
+  color: var(--success-color);
   margin: 0.5rem 0 1rem 0;
 }
 
@@ -1949,7 +2034,7 @@ watch(activeTab, async (newTab) => {
 
 .ai-input-area textarea:focus {
   outline: none;
-  border-color: #10b981;
+  border-color: var(--success-color);
 }
 
 .btn-icon {
@@ -1967,7 +2052,7 @@ watch(activeTab, async (newTab) => {
 .score-actions .btn-primary,
 .ai-results .btn-primary,
 .ai-reassess-content .btn-primary {
-  background: #10b981;
+  background: var(--success-color);
 }
 
 .ai-input-area .btn-primary:hover,
@@ -1975,7 +2060,7 @@ watch(activeTab, async (newTab) => {
 .score-actions .btn-primary:hover,
 .ai-results .btn-primary:hover,
 .ai-reassess-content .btn-primary:hover {
-  background: #059669;
+  background: var(--success-color);
 }
 
 .ai-results {
@@ -2010,7 +2095,7 @@ watch(activeTab, async (newTab) => {
 
 .result-score {
   font-weight: 700;
-  color: #10b981;
+  color: var(--success-color);
 }
 
 
@@ -2103,12 +2188,18 @@ watch(activeTab, async (newTab) => {
     padding-bottom: 100px;
   }
 
-  .stats-row {
-    grid-template-columns: 1fr;
+  .stat-chip {
+    padding: 0.3rem 0.5rem;
+    gap: 0.25rem;
   }
 
-  .stat-card {
-    padding: 0.75rem;
+  .stat-chip-value {
+    display: none;
+  }
+
+  .stat-chip-label {
+    display: block;
+    font-size: 0.75rem;
   }
 
   .tab-btn {

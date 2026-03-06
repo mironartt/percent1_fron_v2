@@ -1,140 +1,292 @@
 <template>
   <div class="chat-view">
-    <CollapsibleDashboard v-if="!isOnboardingMode" />
 
-    <div class="chat-area">
-      <div class="chat-header">
-        <div class="header-left">
-          <div class="mentor-avatar">
-            <Bot :size="20" :stroke-width="1.5" />
+    <!-- TOP BAR: единое меню с XP/стриками + задачи/привычки -->
+    <div
+      v-if="!isOnboardingMode && (hasAnyStats || (!hasMessages && !chatStore.isLoading && hasDailyContent))"
+      class="top-bar"
+      @click.stop
+    >
+      <div class="top-menu">
+        <!-- Stats pills -->
+        <router-link v-if="xpStore.xpBalance > 0" to="/app/achievements" class="home-stat">
+          <Award :size="14" :stroke-width="1.5" class="home-stat-icon xp" />
+          <span class="home-stat-value">{{ xpStore.xpBalance }}</span>
+        </router-link>
+        <router-link v-if="store.habitStreak > 0" to="/app/habits" class="home-stat">
+          <Flame :size="14" :stroke-width="1.5" class="home-stat-icon streak" />
+          <span class="home-stat-value">{{ store.habitStreak }}</span>
+        </router-link>
+        <router-link v-if="store.journalStreak > 0" to="/app/journal" class="home-stat">
+          <BookOpen :size="14" :stroke-width="1.5" class="home-stat-icon journal" />
+          <span class="home-stat-value">{{ store.journalStreak }}</span>
+        </router-link>
+
+        <!-- Divider between stats and daily strips -->
+        <div
+          v-if="hasAnyStats && !hasMessages && !chatStore.isLoading && hasDailyContent"
+          class="top-menu-divider"
+        ></div>
+
+        <!-- Daily strip items (only on empty screen) -->
+        <template v-if="!hasMessages && !chatStore.isLoading && hasDailyContent">
+      <!-- Tasks -->
+      <div v-if="emptyStateFocusTasks.length > 0" class="strip-item-wrap">
+        <button
+          class="strip-item"
+          :class="{ active: activeDropdown === 'tasks' }"
+          @click.stop="toggleDropdown('tasks')"
+        >
+          <CheckCircle2 :size="14" :stroke-width="1.5" />
+          <span class="strip-label">{{ emptyStateTasksCompleted }}/{{ emptyStateTasksTotal }} задач</span>
+          <div class="strip-progress-bar">
+            <div
+              class="strip-progress-fill tasks"
+              :style="{ width: (emptyStateTasksTotal ? emptyStateTasksCompleted / emptyStateTasksTotal * 100 : 0) + '%' }"
+            ></div>
           </div>
-          <div class="mentor-info">
-            <h3>AI Ментор</h3>
-            <span class="mentor-status">
-              <span :class="['status-dot', connectionStatusClass]"></span>
-              {{ connectionStatusText }}
-            </span>
+          <ChevronDown :size="13" :stroke-width="2" class="strip-chevron" :class="{ rotated: activeDropdown === 'tasks' }" />
+        </button>
+        <Transition name="dropdown">
+          <div v-if="activeDropdown === 'tasks'" class="strip-dropdown" @click.stop>
+            <div class="dropdown-list">
+              <label
+                v-for="task in emptyStateFocusTasks"
+                :key="task.id"
+                class="dropdown-task-row"
+                :class="{ completed: task.completed }"
+              >
+                <input
+                  type="checkbox"
+                  :checked="task.completed"
+                  @change="toggleEmptyStateTask(task)"
+                  class="dropdown-task-check"
+                />
+                <span class="dropdown-task-text">{{ task.title }}</span>
+                <span v-if="task.sphere" class="dropdown-task-sphere">{{ task.sphere }}</span>
+              </label>
+            </div>
+            <router-link to="/app/planning" class="dropdown-nav-link" @click="activeDropdown = null">
+              Перейти в планирование
+              <ChevronDown :size="13" :stroke-width="2" style="transform: rotate(-90deg)" />
+            </router-link>
           </div>
-        </div>
+        </Transition>
+      </div>
+
+      <!-- Habits -->
+      <div v-if="emptyStateTodayHabits.length > 0" class="strip-item-wrap">
+        <button
+          class="strip-item"
+          :class="{ active: activeDropdown === 'habits' }"
+          @click.stop="toggleDropdown('habits')"
+        >
+          <Flame :size="14" :stroke-width="1.5" />
+          <span class="strip-label">{{ emptyStateHabitsCompleted }}/{{ emptyStateTodayHabits.length }} привычек</span>
+          <div class="strip-progress-bar">
+            <div
+              class="strip-progress-fill habits"
+              :style="{ width: (emptyStateTodayHabits.length ? emptyStateHabitsCompleted / emptyStateTodayHabits.length * 100 : 0) + '%' }"
+            ></div>
+          </div>
+          <ChevronDown :size="13" :stroke-width="2" class="strip-chevron" :class="{ rotated: activeDropdown === 'habits' }" />
+        </button>
+        <Transition name="dropdown">
+          <div v-if="activeDropdown === 'habits'" class="strip-dropdown" @click.stop>
+            <div class="dropdown-list">
+              <label
+                v-for="habit in emptyStateTodayHabits"
+                :key="habit.habit_id"
+                class="dropdown-task-row"
+                :class="{ completed: habit.is_complete }"
+              >
+                <input
+                  type="checkbox"
+                  :checked="habit.is_complete"
+                  @change="toggleEmptyStateHabit(habit)"
+                  class="dropdown-task-check"
+                />
+                <span class="dropdown-task-text">{{ habit.title }}</span>
+              </label>
+            </div>
+            <router-link to="/app/habits" class="dropdown-nav-link" @click="activeDropdown = null">
+              Перейти в привычки
+              <ChevronDown :size="13" :stroke-width="2" style="transform: rotate(-90deg)" />
+            </router-link>
+          </div>
+        </Transition>
+      </div>
+        </template>
+      </div><!-- /.top-menu -->
+    </div><!-- /.top-bar -->
+
+    <!-- ПУСТОЙ ЭКРАН: Claude-like центрированный layout -->
+    <div v-if="!hasMessages && !chatStore.isLoading" class="empty-state">
+      <!-- Верхняя полоска с кнопкой пропуска -->
+      <div v-if="isOnboardingMode || (store.tutorialStage < 6 && !store.tutorialSkipped)" class="empty-top-bar">
         <button v-if="isOnboardingMode" @click="handleSkipOnboarding" class="skip-onboarding-btn" :disabled="skippingOnboarding">
           <Loader2 v-if="skippingOnboarding" :size="14" :stroke-width="1.5" class="spin" />
           Пропустить
         </button>
-      </div>
-
-      <div v-if="!isOnboardingMode && store.tutorialStage < 6 && !store.tutorialSkipped" class="tutorial-banner">
-        <span class="tutorial-progress">
+        <div v-else class="tutorial-progress">
           <span class="tutorial-step">{{ tutorialStepLabel }}</span>
-          <span class="tutorial-dots">
-            <span v-for="i in 6" :key="i" :class="['dot', { active: i <= store.tutorialStage + 1 }]"></span>
-          </span>
-        </span>
-        <button @click="handleSkipTutorial" class="tutorial-skip-btn">Пропустить</button>
-      </div>
-
-      <div class="chat-container" ref="chatContainer" @scroll="handleScroll">
-        <div class="chat-content">
-          <div v-if="chatStore.isLoadingMore" class="loading-more">
-            <Loader2 :size="20" :stroke-width="1.5" class="spin" />
-            <span>Загрузка сообщений...</span>
-          </div>
-
-          <div v-if="!hasMessages && !chatStore.isLoading" class="welcome-message">
-            <div class="welcome-icon">
-              <Sparkles :size="40" :stroke-width="1.5" />
-            </div>
-            <h4>{{ welcomeTitle }}</h4>
-            <p>{{ welcomeText }}</p>
-            <div class="quick-prompts">
-              <button
-                v-for="prompt in quickPrompts"
-                :key="prompt.id"
-                class="quick-prompt-btn"
-                @click="sendQuickPrompt(prompt.action ? prompt : prompt.text)"
-                :disabled="!canSendMessage"
-              >
-                <component :is="prompt.icon" :size="14" :stroke-width="1.5" />
-                {{ prompt.label }}
-              </button>
-            </div>
-          </div>
-
-          <div v-else-if="chatStore.isLoading" class="loading-container">
-            <Loader2 :size="32" :stroke-width="1.5" class="spin" />
-            <span>Загрузка чата...</span>
-          </div>
-
-          <div v-else class="messages-list">
-            <div
-              v-for="msg in messages"
-              :key="msg.message_id"
-              :class="['message', msg.message_type === 'bot' ? 'assistant' : 'user']"
-            >
-              <div v-if="msg.message_type === 'bot'" class="message-avatar">
-                <Bot :size="16" :stroke-width="1.5" />
-              </div>
-              <div class="message-bubble">
-                <div v-html="formatMessage(msg.content)"></div>
-                <span class="message-time">{{ formatTime(msg.date_created) }}</span>
-              </div>
-            </div>
-
-            <div v-if="chatStore.isBotTyping" class="message assistant">
-              <div class="message-avatar">
-                <Bot :size="16" :stroke-width="1.5" />
-              </div>
-              <div class="message-bubble typing">
-                <span class="typing-dot"></span>
-                <span class="typing-dot"></span>
-                <span class="typing-dot"></span>
-              </div>
-            </div>
-
-            <!-- Quick Replies -->
-            <div v-if="quickReplies.length > 0" class="quick-replies">
-              <button
-                v-for="(reply, index) in quickReplies"
-                :key="index"
-                class="quick-reply-chip"
-                @click="sendQuickReply(reply)"
-                :disabled="!canSendMessage"
-              >
-                {{ reply }}
-              </button>
-            </div>
-          </div>
+          <button @click="handleSkipTutorial" class="tutorial-skip-btn">Пропустить</button>
         </div>
       </div>
 
-      <div v-if="chatStore.forceDisconnected" class="force-disconnect-banner">
-        <AlertCircle :size="16" :stroke-width="1.5" />
-        <span>Чат открыт в другой вкладке</span>
-        <button @click="reconnectChat" class="reconnect-btn">Подключиться</button>
-      </div>
+      <!-- Центрированный контент -->
+      <div class="empty-center">
+        <h1 class="greeting-title">{{ greetingWord }}, {{ userName }}</h1>
 
-      <form class="input-container" @submit.prevent="handleSendMessage">
-        <div class="input-wrapper">
-          <textarea
-            v-model="inputText"
-            placeholder="Напишите сообщение..."
-            :disabled="!canSendMessage"
-            ref="inputRef"
-            rows="3"
-            @keydown.enter.exact.prevent="handleSendMessage"
-            @keydown.enter.shift.exact="() => {}"
-            @input="autoResize"
-          ></textarea>
-          <button
-            type="submit"
-            class="send-btn"
-            :disabled="!inputText.trim() || !canSendMessage"
-          >
-            <Send v-if="!chatStore.isBotProcessing" :size="18" :stroke-width="1.5" />
-            <Loader2 v-else :size="18" :stroke-width="1.5" class="spin" />
+        <form @submit.prevent="handleSendMessage" class="empty-form">
+          <div class="empty-input-wrapper">
+            <textarea
+              v-model="inputText"
+              placeholder="Напишите сообщение..."
+              :disabled="!canSendMessage"
+              ref="inputRef"
+              rows="3"
+              @keydown.enter.exact.prevent="handleSendMessage"
+              @keydown.enter.shift.exact="() => {}"
+              @input="autoResize"
+            ></textarea>
+            <button type="submit" class="empty-send-btn" :disabled="!inputText.trim() || !canSendMessage">
+              <Send v-if="!chatStore.isBotProcessing" :size="18" :stroke-width="1.5" />
+              <Loader2 v-else :size="18" :stroke-width="1.5" class="spin" />
+            </button>
+          </div>
+
+          <div class="empty-chips">
+            <button
+              v-for="prompt in quickPrompts"
+              :key="prompt.id"
+              type="button"
+              class="prompt-chip"
+              @click="sendQuickPrompt(prompt.action ? prompt : prompt.text)"
+              :disabled="!canSendMessage"
+            >
+              <component :is="prompt.icon" :size="14" :stroke-width="1.5" />
+              {{ prompt.label }}
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+
+    <!-- АКТИВНЫЙ ЧАТ: есть сообщения или идёт загрузка -->
+    <template v-else>
+      <CollapsibleDashboard v-if="!isOnboardingMode" />
+
+      <div class="chat-area">
+        <div class="chat-header">
+          <div class="header-left">
+            <div class="mentor-avatar">
+              <Bot :size="20" :stroke-width="1.5" />
+            </div>
+            <div class="mentor-info">
+              <h3>AI Ментор</h3>
+              <span class="mentor-status">
+                <span :class="['status-dot', connectionStatusClass]"></span>
+                {{ connectionStatusText }}
+              </span>
+            </div>
+          </div>
+          <button v-if="isOnboardingMode" @click="handleSkipOnboarding" class="skip-onboarding-btn" :disabled="skippingOnboarding">
+            <Loader2 v-if="skippingOnboarding" :size="14" :stroke-width="1.5" class="spin" />
+            Пропустить
           </button>
         </div>
-      </form>
-    </div>
+
+        <div v-if="!isOnboardingMode && store.tutorialStage < 6 && !store.tutorialSkipped" class="tutorial-banner">
+          <span class="tutorial-progress">
+            <span class="tutorial-step">{{ tutorialStepLabel }}</span>
+            <span class="tutorial-dots">
+              <span v-for="i in 6" :key="i" :class="['dot', { active: i <= store.tutorialStage + 1 }]"></span>
+            </span>
+          </span>
+          <button @click="handleSkipTutorial" class="tutorial-skip-btn">Пропустить</button>
+        </div>
+
+        <div class="chat-container" ref="chatContainer" @scroll="handleScroll">
+          <div class="chat-content">
+            <div v-if="chatStore.isLoadingMore" class="loading-more">
+              <Loader2 :size="20" :stroke-width="1.5" class="spin" />
+              <span>Загрузка сообщений...</span>
+            </div>
+
+            <div v-if="chatStore.isLoading" class="loading-container">
+              <Loader2 :size="32" :stroke-width="1.5" class="spin" />
+              <span>Загрузка чата...</span>
+            </div>
+
+            <div v-else class="messages-list">
+              <div
+                v-for="msg in messages"
+                :key="msg.message_id"
+                :class="['message', msg.message_type === 'bot' ? 'assistant' : 'user']"
+              >
+                <div v-if="msg.message_type === 'bot'" class="message-avatar">
+                  <Bot :size="16" :stroke-width="1.5" />
+                </div>
+                <div class="message-bubble">
+                  <div v-html="formatMessage(msg.content)"></div>
+                  <span class="message-time">{{ formatTime(msg.date_created) }}</span>
+                </div>
+              </div>
+
+              <div v-if="chatStore.isBotTyping" class="message assistant">
+                <div class="message-avatar">
+                  <Bot :size="16" :stroke-width="1.5" />
+                </div>
+                <div class="message-bubble typing">
+                  <span class="typing-dot"></span>
+                  <span class="typing-dot"></span>
+                  <span class="typing-dot"></span>
+                </div>
+              </div>
+
+              <div v-if="quickReplies.length > 0" class="quick-replies">
+                <button
+                  v-for="(reply, index) in quickReplies"
+                  :key="index"
+                  class="quick-reply-chip"
+                  @click="sendQuickReply(reply)"
+                  :disabled="!canSendMessage"
+                >
+                  {{ reply }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="chatStore.forceDisconnected" class="force-disconnect-banner">
+          <AlertCircle :size="16" :stroke-width="1.5" />
+          <span>Чат открыт в другой вкладке</span>
+          <button @click="reconnectChat" class="reconnect-btn">Подключиться</button>
+        </div>
+
+        <form class="input-container" @submit.prevent="handleSendMessage">
+          <div class="input-wrapper">
+            <textarea
+              v-model="inputText"
+              placeholder="Напишите сообщение..."
+              :disabled="!canSendMessage"
+              ref="inputRef"
+              rows="1"
+              @keydown.enter.exact.prevent="handleSendMessage"
+              @keydown.enter.shift.exact="() => {}"
+              @input="autoResize"
+            ></textarea>
+            <button type="submit" class="send-btn" :disabled="!inputText.trim() || !canSendMessage">
+              <Send v-if="!chatStore.isBotProcessing" :size="18" :stroke-width="1.5" />
+              <Loader2 v-else :size="18" :stroke-width="1.5" class="spin" />
+            </button>
+          </div>
+        </form>
+      </div>
+    </template>
 
     <UpgradeModal
       v-if="showUpgradeModal"
@@ -153,7 +305,9 @@ import { useChatStore } from '@/stores/chat'
 import { useXpStore } from '@/stores/xp'
 import { useSubscriptionStore } from '@/stores/subscription'
 import { useToastStore } from '@/stores/toast'
-import { checkAuth, skipOnboarding } from '@/services/api.js'
+import { checkAuth, skipOnboarding, updateGoalSteps } from '@/services/api.js'
+import { DEV_MODE } from '@/config/settings'
+import { markHabitCompleted } from '@/services/habitsApi'
 import { useConfetti } from '@/composables/useConfetti'
 import CollapsibleDashboard from '@/components/CollapsibleDashboard.vue'
 import UpgradeModal from '@/components/UpgradeModal.vue'
@@ -172,7 +326,10 @@ import {
   SkipForward,
   Award,
   Compass,
-  ClipboardList
+  ClipboardList,
+  CheckCircle2,
+  Circle,
+  ChevronDown
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -191,9 +348,70 @@ const chatContainer = ref(null)
 const inputRef = ref(null)
 const isInitialized = ref(false)
 const skippingOnboarding = ref(false)
+const activeDropdown = ref(null)
+
+function toggleDropdown(name) {
+  activeDropdown.value = activeDropdown.value === name ? null : name
+}
+
+function closeDropdowns() {
+  activeDropdown.value = null
+}
 
 // Onboarding mode: new user without finished onboarding
 const isOnboardingMode = computed(() => store.shouldShowOnboarding)
+
+const greetingWord = computed(() => {
+  const h = new Date().getHours()
+  if (h >= 6 && h < 12) return 'Доброе утро'
+  if (h >= 12 && h < 18) return 'Добрый день'
+  if (h >= 18 && h < 23) return 'Добрый вечер'
+  return 'Доброй ночи'
+})
+
+const userName = computed(() => store.user?.first_name || '')
+
+// Daily overview data (shown in empty state below chips)
+const dashboardData = computed(() => store.userDashboardData || {})
+
+const emptyStateFocusTasks = computed(() => {
+  if (store.tutorialStage < 2) return []
+  const tasks = dashboardData.value.today_tasks?.tasks || []
+  return tasks.map(task => ({
+    id: task.step_id,
+    title: task.step_title,
+    completed: task.is_complete,
+    sphere: task.goal_title,
+    goalId: task.goal_id
+  }))
+})
+
+const emptyStateTasksCompleted = computed(() => dashboardData.value.today_tasks?.completed_count || 0)
+const emptyStateTasksTotal = computed(() => dashboardData.value.today_tasks?.total_count || 0)
+
+const emptyStateTodayHabits = computed(() => {
+  if (store.tutorialStage < 3) return []
+  const habits = dashboardData.value.today_habits?.habits || []
+  return habits.slice(0, 8)
+})
+
+const emptyStateHabitsCompleted = computed(() =>
+  emptyStateTodayHabits.value.filter(h => h.is_complete).length
+)
+
+const hasDailyContent = computed(() =>
+  emptyStateFocusTasks.value.length > 0 || emptyStateTodayHabits.value.length > 0
+)
+
+const hasAnyStats = computed(() =>
+  xpStore.xpBalance > 0 || store.habitStreak > 0 || store.journalStreak > 0
+)
+
+function pluralDays(n) {
+  if (n % 10 === 1 && n % 100 !== 11) return 'день'
+  if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) return 'дня'
+  return 'дней'
+}
 
 const messages = computed(() => chatStore.messages)
 const hasMessages = computed(() => chatStore.messages.length > 0)
@@ -430,6 +648,61 @@ function sendQuickReply(text) {
   handleSendMessage()
 }
 
+async function toggleEmptyStateTask(task) {
+  const tasksArray = store.userDashboardData?.today_tasks?.tasks
+  const apiTask = tasksArray?.find(t => t.step_id === task.id)
+  const newCompleted = !task.completed
+  if (apiTask) {
+    apiTask.is_complete = newCompleted
+    if (newCompleted) {
+      store.userDashboardData.today_tasks.completed_count++
+    } else {
+      store.userDashboardData.today_tasks.completed_count--
+    }
+  }
+  try {
+    await updateGoalSteps({
+      goals_steps_data: [{ goal_id: task.goalId, step_id: task.id, is_complete: newCompleted }]
+    })
+  } catch {
+    if (apiTask) {
+      apiTask.is_complete = !newCompleted
+      if (newCompleted) {
+        store.userDashboardData.today_tasks.completed_count--
+      } else {
+        store.userDashboardData.today_tasks.completed_count++
+      }
+    }
+  }
+}
+
+async function toggleEmptyStateHabit(habit) {
+  const habitsArray = store.userDashboardData?.today_habits?.habits
+  const apiHabit = habitsArray?.find(h => h.habit_id === habit.habit_id)
+  const newCompleted = !habit.is_complete
+  if (apiHabit) {
+    apiHabit.is_complete = newCompleted
+    if (newCompleted) {
+      store.userDashboardData.today_habits.completed_count++
+    } else {
+      store.userDashboardData.today_habits.completed_count--
+    }
+  }
+  try {
+    const today = new Date().toISOString().split('T')[0]
+    await markHabitCompleted(habit.habit_id, today)
+  } catch {
+    if (apiHabit) {
+      apiHabit.is_complete = !newCompleted
+      if (newCompleted) {
+        store.userDashboardData.today_habits.completed_count--
+      } else {
+        store.userDashboardData.today_habits.completed_count++
+      }
+    }
+  }
+}
+
 async function handleSkipTutorial() {
   await store.skipTutorial()
 }
@@ -487,7 +760,7 @@ function reconnectChat() {
 function autoResize() {
   if (!inputRef.value) return
   inputRef.value.style.height = 'auto'
-  const minHeight = 3 * 1.5 * 14 // 3 rows * line-height 1.5 * font-size 14px
+  const minHeight = 3 * 1.6 * 16 // 3 rows * line-height 1.6 * font-size 16px (empty-input uses 1rem=16px)
   inputRef.value.style.height = Math.max(minHeight, Math.min(inputRef.value.scrollHeight, 160)) + 'px'
 }
 
@@ -547,10 +820,59 @@ watch(() => store.tutorialStage, (newStage, oldStage) => {
 
 onMounted(() => {
   initializeChat()
+  document.addEventListener('click', closeDropdowns)
+
+  // DEV: mock XP and streaks for preview
+  if (DEV_MODE) {
+    xpStore.xpBalance = 420
+    xpStore.todayXP = 35
+    const injectJournalStreak = () => {
+      if (store.user) {
+        store.user.journal_streak = 5
+      } else {
+        setTimeout(injectJournalStreak, 300)
+      }
+    }
+    injectJournalStreak()
+  }
+
+  // DEV: inject mock daily data to preview empty-state cards
+  if (DEV_MODE && !store.userDashboardData?.today_tasks?.tasks?.length) {
+    store.frontendSettings.tutorial_skipped = true
+    store.userDashboardData = {
+      today_tasks: {
+        total_count: 5,
+        completed_count: 1,
+        tasks: [
+          { step_id: 1, step_title: 'Написать отчёт за квартал', is_complete: false, goal_title: 'Карьера', goal_id: 1 },
+          { step_id: 2, step_title: 'Прочитать 20 страниц книги', is_complete: true, goal_title: 'Знания', goal_id: 2 },
+          { step_id: 3, step_title: 'Спортзал — силовая тренировка', is_complete: false, goal_title: 'Здоровье', goal_id: 3 },
+          { step_id: 4, step_title: 'Позвонить клиенту', is_complete: false, goal_title: 'Карьера', goal_id: 1 },
+          { step_id: 5, step_title: 'Медитация 10 минут', is_complete: false, goal_title: 'Здоровье', goal_id: 3 }
+        ]
+      },
+      today_habits: {
+        total_count: 4,
+        completed_count: 1,
+        habits: [
+          { habit_id: 1, title: 'Вода 2л', is_complete: true },
+          { habit_id: 2, title: 'Пробежка', is_complete: false },
+          { habit_id: 3, title: 'Чтение', is_complete: false },
+          { habit_id: 4, title: 'Без соцсетей до 10:00', is_complete: false }
+        ]
+      },
+      top_goals: { total_incomplete_goals: 3, goals: [] }
+    }
+    // DEV: mock XP and streaks
+    xpStore.xpBalance = 420
+    xpStore.todayXP = 35
+    if (store.user) store.user.journal_streak = 5
+  }
 })
 
 onUnmounted(() => {
   chatStore.disconnectWebSocket()
+  document.removeEventListener('click', closeDropdowns)
 })
 </script>
 
@@ -558,7 +880,8 @@ onUnmounted(() => {
 .chat-view {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 4rem);
+  flex: 1;
+  min-height: 0;
   max-width: 800px;
   margin: 0 auto;
   width: 100%;
@@ -844,6 +1167,12 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
+:root.dark .force-disconnect-banner {
+  background: rgba(245, 158, 11, 0.12);
+  border-top-color: rgba(245, 158, 11, 0.25);
+  color: #fbbf24;
+}
+
 .reconnect-btn {
   margin-left: auto;
   padding: 4px 12px;
@@ -1048,7 +1377,7 @@ onUnmounted(() => {
 
 @media (max-width: 768px) {
   .chat-view {
-    height: calc(100vh - calc(var(--bottom-nav-height, 56px) + var(--safe-area-bottom, 0px)));
+    height: auto;
     max-width: 100%;
   }
 
@@ -1068,4 +1397,451 @@ onUnmounted(() => {
     font-size: 0.75rem;
   }
 }
+
+/* ─── Top bar (XP + стрики + задачи/привычки в одну строку) ─── */
+
+.top-bar {
+  flex-shrink: 0;
+  padding: 1.5rem 1rem 0.5rem;
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.top-menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  overflow: visible;
+  width: 100%;
+  max-width: 680px;
+}
+
+.top-menu-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-color);
+  flex-shrink: 0;
+}
+
+/* ─── Пустой экран (Claude-like) ─── */
+
+.empty-state {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  padding-bottom: 18vh;
+  position: relative;
+}
+
+.empty-top-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 12px 0;
+}
+
+.mentor-avatar-sm {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.empty-center {
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.greeting-title {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.empty-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.empty-input-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 14px 14px 14px 18px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.empty-input-wrapper:focus-within {
+  border-color: var(--primary-color);
+  box-shadow: 0 2px 20px rgba(99, 102, 241, 0.1);
+}
+
+.empty-input-wrapper textarea {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 1rem;
+  resize: none;
+  outline: none;
+  line-height: 1.6;
+  max-height: 160px;
+  overflow-y: auto;
+  font-family: inherit;
+}
+
+.empty-input-wrapper textarea::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.empty-send-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--primary-color);
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.empty-send-btn:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: scale(1.05);
+}
+
+.empty-send-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.empty-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.prompt-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.prompt-chip:hover:not(:disabled) {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.prompt-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.strip-item-wrap {
+  position: static;
+  flex: 1;
+  min-width: 0;
+}
+
+.strip-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: color 0.2s;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-family: inherit;
+}
+
+.strip-item:hover,
+.strip-item.active {
+  color: var(--text-primary);
+}
+
+.strip-label {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.strip-progress-bar {
+  flex: 1;
+  height: 3px;
+  background: var(--bg-secondary);
+  border-radius: 2px;
+  overflow: hidden;
+  min-width: 20px;
+}
+
+.strip-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.strip-progress-fill.tasks {
+  background: var(--primary-color);
+}
+
+.strip-progress-fill.habits {
+  background: #f59e0b;
+}
+
+.strip-chevron {
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+  color: var(--text-secondary);
+}
+
+.strip-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+/* Dropdown */
+.strip-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.dropdown-list {
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.dropdown-task-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  min-height: 40px;
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  transition: background 0.15s;
+  user-select: none;
+}
+
+.dropdown-task-row:hover {
+  background: var(--bg-secondary);
+}
+
+.dropdown-task-row.completed .dropdown-task-text {
+  text-decoration: line-through;
+  color: var(--text-tertiary, var(--text-secondary));
+}
+
+.dropdown-task-check {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  accent-color: var(--primary-color);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.dropdown-task-text {
+  flex: 1;
+  min-width: 0;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.dropdown-task-sphere {
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  padding: 2px 7px;
+  background: var(--bg-secondary);
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-weight: 400;
+}
+
+.dropdown-nav-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.dropdown-nav-link:hover {
+  background: rgba(99, 102, 241, 0.05);
+}
+
+/* Dropdown transition */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+@media (max-width: 768px) {
+  .top-bar {
+    padding-top: 4px;
+  }
+
+  .top-menu {
+    width: 100%;
+  }
+
+  .top-menu .strip-item-wrap {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .top-menu .strip-item {
+    padding: 8px 10px;
+    font-size: 0.8125rem;
+    gap: 6px;
+  }
+
+  .top-menu .strip-progress-bar {
+    display: none;
+  }
+
+  .empty-state {
+    padding-top: 1rem;
+    padding-bottom: 12vh;
+  }
+
+  .greeting-title {
+    font-size: 1.5rem;
+  }
+
+  .empty-center {
+    gap: 1.5rem;
+  }
+
+  .empty-chips {
+    gap: 6px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    justify-content: flex-start;
+    padding-bottom: 2px;
+  }
+
+  .empty-chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .prompt-chip {
+    font-size: 0.8125rem;
+    padding: 7px 12px;
+    flex-shrink: 0;
+  }
+
+  .strip-item {
+    padding: 9px 12px;
+    font-size: 0.8125rem;
+  }
+
+  /* Dropdown on mobile: stretch to full chat width */
+  .strip-item-wrap {
+    position: static;
+  }
+
+  .strip-dropdown {
+    left: 0;
+    right: 0;
+  }
+}
+
+/* ─── Home stats (XP + streaks) ─── */
+
+.home-stat {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 100px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.home-stat:hover {
+  opacity: 0.7;
+}
+
+.home-stat-icon.xp { color: var(--warning-color); }
+.home-stat-icon.streak { color: var(--danger-color, #ef4444); }
+.home-stat-icon.journal { color: var(--primary-color); }
 </style>

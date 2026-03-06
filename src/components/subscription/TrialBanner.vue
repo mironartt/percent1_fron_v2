@@ -1,12 +1,12 @@
 <template>
   <div v-if="shouldShow" :class="['trial-banner', bannerClass]">
-    <div class="banner-content">
+    <div v-if="bannerType !== 'freemium'" class="banner-content">
       <component :is="bannerIcon" :size="20" class="banner-icon" />
       <span class="banner-text">{{ bannerText }}</span>
     </div>
     <router-link to="/app/subscription" class="banner-btn">
       {{ buttonText }}
-      <ArrowRight :size="16" />
+      <ArrowRight :size="14" />
     </router-link>
   </div>
 </template>
@@ -116,9 +116,9 @@ const buttonText = computed(() => {
 .trial-banner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  gap: 1rem;
+  justify-content: flex-end;
+  padding: 0.5rem 1rem;
+  gap: 0.75rem;
   flex-wrap: wrap;
 }
 
@@ -185,25 +185,33 @@ const buttonText = computed(() => {
 }
 
 .banner-neutral {
-  background: var(--bg-secondary, #f3f4f6);
-  color: var(--text-secondary, #6b7280);
+  background: transparent;
+  padding: 0.25rem 1rem;
 }
 
 .banner-neutral .banner-btn {
-  background: var(--primary-color, #6366f1);
-  color: white;
+  background: transparent;
+  color: var(--text-secondary, #6b7280);
+  border: none;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+
+.banner-neutral .banner-btn:hover {
+  color: var(--primary-color, #6366f1);
+  opacity: 1;
 }
 
 @media (max-width: 480px) {
   .trial-banner {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
+    justify-content: flex-end;
+    padding: 0.375rem 0.75rem;
+    gap: 0.5rem;
   }
-  
-  .banner-btn {
-    width: 100%;
-    justify-content: center;
+
+  .banner-text {
+    font-size: 0.8125rem;
   }
 }
 </style>

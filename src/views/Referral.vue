@@ -1,5 +1,7 @@
 <template>
   <div class="referral-container">
+    <Breadcrumbs :items="breadcrumbs" />
+
     <header class="page-header centered">
       <h1>Реферальная программа</h1>
       <p class="subtitle">Приглашайте друзей и зарабатывайте вместе</p>
@@ -418,8 +420,14 @@ import {
   Users, UserCheck, Coins, Link, Copy, HelpCircle, 
   History, Wallet, Calculator, Loader2, CheckCircle 
 } from 'lucide-vue-next'
+import Breadcrumbs from '@/components/Breadcrumbs.vue'
 
 const router = useRouter()
+
+const breadcrumbs = [
+  { label: 'Главная', to: '/app' },
+  { label: 'Реферальная программа' }
+]
 const store = useAppStore()
 
 // Состояние загрузки
@@ -753,7 +761,7 @@ onMounted(() => {
 }
 
 .stat-card {
-  background: white;
+  background: var(--bg-primary);
   border-radius: var(--radius-lg);
   padding: 1.25rem;
   text-align: center;
@@ -779,12 +787,12 @@ onMounted(() => {
 
 .stat-icon.paid {
   background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .stat-icon.earned {
   background: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
+  color: var(--warning-color);
 }
 
 .stat-icon.balance {
@@ -805,7 +813,7 @@ onMounted(() => {
 }
 
 .card {
-  background: white;
+  background: var(--bg-primary);
   border-radius: var(--radius-lg);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   margin-bottom: 1.5rem;
@@ -945,7 +953,7 @@ onMounted(() => {
 
 .reward-value {
   font-weight: 700;
-  color: #10b981;
+  color: var(--success-color);
 }
 
 /* Steps */
@@ -1024,7 +1032,7 @@ onMounted(() => {
 
 .referral-bonus {
   font-weight: 600;
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .pending-text {
@@ -1041,12 +1049,12 @@ onMounted(() => {
 
 .status-paid {
   background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .status-pending {
   background: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
+  color: var(--warning-color);
 }
 
 /* Empty state */
@@ -1081,7 +1089,7 @@ onMounted(() => {
   width: 36px;
   height: 36px;
   border: 1px solid var(--border-color);
-  background: white;
+  background: var(--bg-primary);
   border-radius: var(--radius-md);
   cursor: pointer;
   font-size: 1rem;
@@ -1141,7 +1149,7 @@ onMounted(() => {
 }
 
 .pending-value {
-  color: #f59e0b;
+  color: var(--warning-color);
   font-weight: 600;
 }
 
@@ -1164,7 +1172,7 @@ onMounted(() => {
 
 .withdrawal-warning {
   font-size: 0.875rem;
-  color: #f59e0b;
+  color: var(--warning-color);
   margin-top: 1rem;
   margin-bottom: 0;
 }
@@ -1229,22 +1237,22 @@ onMounted(() => {
 
 .status-pending {
   background: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
+  color: var(--warning-color);
 }
 
 .status-approved {
   background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  color: var(--info-color, #3b82f6);
 }
 
 .status-rejected {
   background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  color: var(--danger-color, #ef4444);
 }
 
 .status-completed {
   background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .admin-comment {
@@ -1307,7 +1315,7 @@ onMounted(() => {
 }
 
 .amount-income {
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .amount-withdrawal {
@@ -1330,7 +1338,7 @@ onMounted(() => {
 }
 
 .modal {
-  background: white;
+  background: var(--bg-primary);
   border-radius: var(--radius-lg);
   max-width: 440px;
   width: 100%;
@@ -1457,14 +1465,14 @@ onMounted(() => {
 }
 
 .withdrawal-error {
-  color: #ef4444;
+  color: var(--danger-color, #ef4444);
   font-size: 0.875rem;
   margin: 0;
 }
 
 /* Success modal */
 .success-icon {
-  color: #10b981;
+  color: var(--success-color);
   margin-bottom: 1rem;
 }
 

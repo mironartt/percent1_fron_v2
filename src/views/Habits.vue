@@ -1,33 +1,47 @@
 <template>
   <div class="habits-page">
-    <Breadcrumbs :items="breadcrumbs" />
+    <div class="section-header-row">
+      <Breadcrumbs :items="breadcrumbs" />
+      <button class="btn btn-primary btn-sm" @click="openAddModal">
+        <Plus :size="16" :stroke-width="2" />
+        <span>Создать привычку</span>
+      </button>
+    </div>
 
     <div class="stats-panel">
       <button class="stat-chip clickable" @click="showStreakModal = true" title="Серия выполнений">
-        <span class="stat-value">{{ habitStreak }}</span> {{ pluralizeDays(habitStreak) }} подряд
+        <Flame :size="14" :stroke-width="1.5" class="stat-chip-icon streak-icon" />
+        <span class="stat-value">{{ habitStreak }}</span>
+        <span class="stat-label">{{ pluralizeDays(habitStreak) }} подряд</span>
       </button>
       <button class="stat-chip clickable" @click="showTodayModal = true" title="Сегодня">
-        <span class="stat-value">{{ todayCompleted }}/{{ todayTotal }}</span> сегодня
+        <CheckCircle :size="14" :stroke-width="1.5" class="stat-chip-icon today-icon" />
+        <span class="stat-value">{{ todayCompleted }}/{{ todayTotal }}</span>
+        <span class="stat-label">сегодня</span>
       </button>
       <button class="stat-chip clickable" @click="showXpModal = true" title="XP за неделю">
-        <span class="stat-value">{{ weekXpFromHabits }}</span> XP
+        <Zap :size="14" :stroke-width="1.5" class="stat-chip-icon xp-icon" />
+        <span class="stat-value">{{ weekXpFromHabits }}</span>
+        <span class="stat-label">XP</span>
       </button>
-      <button 
-        v-if="showAmnestyButton" 
-        class="stat-chip clickable amnesty-chip" 
-        :class="{ 
+      <button
+        v-if="showAmnestyButton"
+        class="stat-chip clickable amnesty-chip"
+        :class="{
           'has-missed': missedDaysForAmnesty.length > 0 && amnestiesRemaining > 0,
           'depleted': amnestiesRemaining === 0
         }"
-        @click="openAmnestyModal" 
+        @click="openAmnestyModal"
         title="Амнистия"
       >
-        <span class="stat-value">{{ amnestiesRemaining }}/{{ maxAmnesties }}</span> амнистия
+        <Shield :size="14" :stroke-width="1.5" class="stat-chip-icon" />
+        <span class="stat-value">{{ amnestiesRemaining }}/{{ maxAmnesties }}</span>
+        <span class="stat-label">амнистия</span>
         <span v-if="missedDaysForAmnesty.length > 0 && amnestiesRemaining > 0" class="count-badge">{{ missedDaysForAmnesty.length }}</span>
       </button>
       <button class="stat-chip clickable settings-chip" @click="showSettingsModal = true" title="Настройки">
-        <Settings :size="14" :stroke-width="1.5" />
-        {{ difficultyLabel }}
+        <Settings :size="14" :stroke-width="1.5" class="stat-chip-icon" />
+        <span class="stat-label">{{ difficultyLabel }}</span>
       </button>
     </div>
 
@@ -362,7 +376,9 @@
       </div>
 
       <div v-else-if="allHabits.length === 0 && deletedHabits.length === 0" class="empty-state">
-        <div class="empty-icon">🔥</div>
+        <div class="empty-state-icon">
+          <Flame :size="40" :stroke-width="1.5" />
+        </div>
         <h3>Начните формировать привычки</h3>
         <p>Добавьте регулярные действия, которые хотите закрепить в своей жизни</p>
         <button class="btn btn-primary" @click="openAddModal">
@@ -3472,28 +3488,24 @@ onMounted(async () => {
   padding: var(--container-padding);
 }
 
-.page-header {
-  margin-bottom: 1.5rem;
-  text-align: center;
-}
-
-.header-content {
+.section-header-row {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: space-between;
   gap: 1rem;
-}
-
-.title-section {
-  text-align: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
 }
 
 .stats-panel {
   display: flex;
-  flex-wrap: nowrap;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.375rem;
   margin-bottom: 1rem;
-  justify-content: center;
+  padding: 0.375rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -3507,21 +3519,22 @@ onMounted(async () => {
 .stat-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.375rem 0.75rem;
-  background: var(--bg-tertiary);
-  border-radius: 9999px;
-  font-size: 0.875rem;
+  gap: 0.3rem;
+  padding: 0.4rem 0.625rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 0.8125rem;
   flex-shrink: 0;
   white-space: nowrap;
   color: var(--text-secondary);
-  border: none;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .stat-chip:hover {
-  background: var(--bg-hover);
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
   color: var(--text-primary);
 }
 
@@ -3530,20 +3543,29 @@ onMounted(async () => {
   color: var(--text-primary);
 }
 
+.stat-chip .stat-label {
+  color: var(--text-secondary);
+}
+
+.stat-chip-icon {
+  flex-shrink: 0;
+}
+
+.streak-icon { color: #ef4444; }
+.today-icon  { color: var(--success-color); }
+.xp-icon     { color: var(--warning-color); }
+
 .stat-chip.amnesty-chip.has-missed {
-  background: rgba(236, 72, 153, 0.1);
+  background: rgba(236, 72, 153, 0.08);
+  border-color: rgba(236, 72, 153, 0.2);
   color: var(--text-primary);
 }
 
 .stat-chip.amnesty-chip.depleted {
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
-.stat-chip.settings-chip {
-  gap: 0.25rem;
-}
-
-.stat-chip.settings-chip svg {
+.stat-chip.settings-chip .stat-chip-icon {
   color: var(--text-tertiary);
 }
 
@@ -4570,7 +4592,7 @@ onMounted(async () => {
 }
 
 .habit-day-cell-small.status-completed {
-  background: #10b981;
+  background: var(--success-color);
 }
 
 .habit-day-cell-small.status-missed {
@@ -4608,7 +4630,7 @@ onMounted(async () => {
 }
 
 .habit-day-cell.status-completed {
-  background: #10b981;
+  background: var(--success-color);
   color: white;
 }
 
@@ -4732,13 +4754,15 @@ onMounted(async () => {
   gap: 0.5rem;
   padding: 0.875rem 1rem;
   background: var(--card-bg);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border-color);
   transition: all 0.2s ease;
 }
 
 .habit-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-color: var(--primary-color);
+  background: var(--bg-secondary);
 }
 
 .habit-card:hover .habit-schedule-inline {
@@ -5557,9 +5581,16 @@ onMounted(async () => {
   padding: 3rem 1rem;
 }
 
-.empty-icon {
-  font-size: 4rem;
-  margin-bottom: 1rem;
+.empty-state-icon {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+  color: var(--primary-color);
+  margin: 0 auto 1rem;
 }
 
 .empty-state h3 {
@@ -5680,7 +5711,7 @@ onMounted(async () => {
 }
 
 .ai-mentor-modal .modal-header.ai-header h3 .ai-icon {
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .ai-intro-section {
@@ -5695,7 +5726,7 @@ onMounted(async () => {
   width: 80px;
   height: 80px;
   margin: 0 auto 1.5rem;
-  background: linear-gradient(135deg, #10b981, #22c55e);
+  background: linear-gradient(135deg, var(--success-color), #22c55e);
   border-radius: 50%;
   color: #fff;
 }
@@ -5733,7 +5764,7 @@ onMounted(async () => {
 }
 
 .ai-feature-item svg {
-  color: #10b981;
+  color: var(--success-color);
   flex-shrink: 0;
 }
 
@@ -5745,7 +5776,7 @@ onMounted(async () => {
   width: 100%;
   padding: 1rem 2rem;
   font-size: 1rem;
-  background: #10b981;
+  background: var(--success-color);
   color: #fff;
   border: none;
   border-radius: 10px;
@@ -5755,7 +5786,7 @@ onMounted(async () => {
 }
 
 .btn-ai-action:hover {
-  background: #059669;
+  background: var(--success-color);
 }
 
 .ai-skip-intro-label {
@@ -5772,7 +5803,7 @@ onMounted(async () => {
 .ai-skip-intro-label input {
   width: 16px;
   height: 16px;
-  accent-color: #10b981;
+  accent-color: var(--success-color);
 }
 
 .ai-loading-section {
@@ -5784,7 +5815,7 @@ onMounted(async () => {
   width: 48px;
   height: 48px;
   border: 3px solid var(--bg-secondary, #f3f4f6);
-  border-top-color: #10b981;
+  border-top-color: var(--success-color);
   border-radius: 50%;
   margin: 0 auto 1.5rem;
   animation: spin 0.8s linear infinite;
@@ -5844,7 +5875,7 @@ onMounted(async () => {
 }
 
 .ai-suggestion-card.selected {
-  border-color: #10b981;
+  border-color: var(--success-color);
   background: rgba(16, 185, 129, 0.08);
 }
 
@@ -5854,7 +5885,7 @@ onMounted(async () => {
 }
 
 .ai-suggestion-card.selected .ai-suggestion-checkbox {
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .ai-suggestion-content {
@@ -5890,7 +5921,7 @@ onMounted(async () => {
 }
 
 .ai-suggestion-reason svg {
-  color: #10b981;
+  color: var(--success-color);
   flex-shrink: 0;
   margin-top: 2px;
 }
@@ -5932,7 +5963,7 @@ onMounted(async () => {
   gap: 0.25rem;
   font-size: 0.75rem;
   padding: 0.3rem 0.5rem;
-  color: #10b981;
+  color: var(--success-color);
   font-weight: 600;
   background: rgba(16, 185, 129, 0.1);
   border-radius: 6px;
@@ -6069,7 +6100,7 @@ onMounted(async () => {
 .ai-schedule-toggle input {
   width: 18px;
   height: 18px;
-  accent-color: #10b981;
+  accent-color: var(--success-color);
 }
 
 .ai-selection-actions {
@@ -6093,7 +6124,7 @@ onMounted(async () => {
   width: 80px;
   height: 80px;
   margin: 0 auto 1.5rem;
-  background: linear-gradient(135deg, #10b981, #22c55e);
+  background: linear-gradient(135deg, var(--success-color), #22c55e);
   border-radius: 50%;
   color: #fff;
 }
@@ -6130,7 +6161,7 @@ onMounted(async () => {
 }
 
 .ai-created-icon {
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .ai-error-section {
@@ -6207,9 +6238,9 @@ onMounted(async () => {
   flex: 1;
   padding: 0.6rem 1rem;
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(5, 150, 105, 0.12));
-  border: 1px dashed #10b981;
+  border: 1px dashed var(--success-color);
   border-radius: 8px;
-  color: #10b981;
+  color: var(--success-color);
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
@@ -7714,13 +7745,26 @@ onMounted(async () => {
     display: none;
   }
   
+  .section-header-row .btn span {
+    display: none;
+  }
+
+  .section-header-row .btn {
+    padding: 0.375rem 0.5rem;
+  }
+
   .stats-panel {
     justify-content: flex-start;
+    gap: 0.25rem;
   }
-  
+
   .stat-chip {
-    font-size: 0.8rem;
-    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+    padding: 0.35rem 0.5rem;
+  }
+
+  .stat-chip .stat-label {
+    display: none;
   }
   
   .amnesty-day-card {

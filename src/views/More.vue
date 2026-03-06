@@ -343,7 +343,7 @@ async function handleLogout() {
   width: 44px;
   height: 24px;
   background: var(--bg-tertiary);
-  border-radius: 12px;
+  border-radius: 100px;
   position: relative;
   transition: background 0.2s ease;
 }
@@ -355,7 +355,7 @@ async function handleLogout() {
 .toggle-thumb {
   width: 20px;
   height: 20px;
-  background: white;
+  background: var(--bg-primary);
   border-radius: 50%;
   position: absolute;
   top: 2px;

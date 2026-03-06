@@ -3750,7 +3750,7 @@ function formatDate(dateString) {
   flex: 1;
   padding: 0.5rem 2rem 0.5rem 0.75rem;
   border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 0.8125rem;
   background: var(--bg);
   color: var(--text-primary);
@@ -3842,7 +3842,7 @@ function formatDate(dateString) {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, var(--success-color), var(--success-color));
   color: #fff;
   border: none;
   border-radius: var(--radius-md);
@@ -4689,11 +4689,11 @@ function formatDate(dateString) {
 }
 
 .step-checkbox-btn.checked {
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .step-checkbox-btn.checked:hover {
-  color: #059669;
+  color: var(--success-color);
 }
 
 /* Inline добавление шага (как в Remente) */
@@ -4754,7 +4754,7 @@ function formatDate(dateString) {
   border: none;
   background: var(--primary, #6366f1);
   color: white;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   flex-shrink: 0;
   transition: all 0.15s ease;
@@ -5051,7 +5051,7 @@ function formatDate(dateString) {
   background: transparent;
   color: var(--text-secondary, #9ca3af);
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   opacity: 0;
   transition: all 0.15s;
 }
@@ -5101,7 +5101,7 @@ function formatDate(dateString) {
   gap: 0.5rem;
   width: 100%;
   padding: 0.875rem 1rem;
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, var(--success-color), var(--success-color));
   border: none;
   border-radius: 12px;
   font-size: 0.95rem;
@@ -5294,7 +5294,7 @@ function formatDate(dateString) {
 }
 
 .quick-action-btn.active {
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .quick-action-btn.danger {
@@ -5431,7 +5431,7 @@ function formatDate(dateString) {
   background: transparent;
   color: var(--text-secondary, #9ca3af);
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   transition: all 0.15s;
   flex-shrink: 0;
 }
@@ -5442,7 +5442,7 @@ function formatDate(dateString) {
 }
 
 .checklist-checkbox.checked {
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .checklist-input {
@@ -5475,7 +5475,7 @@ function formatDate(dateString) {
   background: transparent;
   color: var(--text-secondary, #9ca3af);
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   opacity: 0.5;
   transition: all 0.15s;
   flex-shrink: 0;
@@ -5606,7 +5606,7 @@ function formatDate(dateString) {
   margin-top: 0.5rem;
   padding: 0.5rem;
   background: var(--bg-secondary, #f9fafb);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 .param-inputs-row {
@@ -5632,7 +5632,7 @@ function formatDate(dateString) {
   padding: 0.5rem 1rem;
   min-height: 44px;
   border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--bg-primary, #fff);
   font-size: 0.875rem;
   cursor: pointer;
@@ -6422,12 +6422,12 @@ function formatDate(dateString) {
 }
 
 .quick-actions-goal .quick-action-btn.action-complete {
-  background: var(--success, #10b981);
+  background: var(--success, var(--success-color));
   color: white;
 }
 
 .quick-actions-goal .quick-action-btn.action-complete:hover {
-  background: #059669;
+  background: var(--success-color);
 }
 
 .modal-tabs {
@@ -6594,12 +6594,12 @@ function formatDate(dateString) {
 }
 
 .btn-validation-new.btn-confirm {
-  color: var(--success, #10b981);
+  color: var(--success, var(--success-color));
 }
 
 .btn-validation-new.btn-confirm.active {
   background: rgba(16, 185, 129, 0.1);
-  border-color: var(--success, #10b981);
+  border-color: var(--success, var(--success-color));
 }
 
 .btn-validation-new.btn-reject {
@@ -6621,14 +6621,14 @@ function formatDate(dateString) {
   flex: 1;
   height: 8px;
   background: var(--bg-tertiary, #e5e7eb);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
 .progress-bar-container .progress-bar-fill {
   height: 100%;
   background: var(--primary, #6366f1);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   transition: width 0.3s ease;
 }
 
@@ -6673,7 +6673,7 @@ function formatDate(dateString) {
   color: #ef4444;
   border: none;
   padding: 0.5rem;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: background 0.2s;
 }
@@ -7058,13 +7058,13 @@ function formatDate(dateString) {
 .btn-true-goal {
   background: rgba(16, 185, 129, 0.1);
   border: 1px solid rgba(16, 185, 129, 0.3);
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .btn-true-goal:hover,
 .btn-true-goal.active {
-  background: #10b981;
-  border-color: #10b981;
+  background: var(--success-color);
+  border-color: var(--success-color);
   color: white;
 }
 
@@ -7252,17 +7252,17 @@ function formatDate(dateString) {
   align-items: center;
   justify-content: center;
   padding: 0.5rem;
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
-  color: #6b7280;
+  color: var(--text-secondary);
 }
 
 .notes-search-toggle-btn:hover {
-  background: #e5e7eb;
-  color: #374151;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .notes-search-input-wrapper {
@@ -7270,8 +7270,8 @@ function formatDate(dateString) {
   display: flex;
   align-items: center;
   width: 100%;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   padding: 0.5rem 0.75rem;
   gap: 0.5rem;
@@ -7279,13 +7279,13 @@ function formatDate(dateString) {
 }
 
 .notes-search-input-wrapper:focus-within {
-  border-color: #4f46e5;
+  border-color: var(--primary-dark);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  box-shadow: 0 0 0 3px var(--primary-light);
 }
 
 .notes-search-input-wrapper .search-icon {
-  color: #9ca3af;
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 
@@ -7295,11 +7295,11 @@ function formatDate(dateString) {
   outline: none;
   font-size: 0.875rem;
   background: transparent;
-  color: #1f2937;
+  color: var(--text-primary);
 }
 
 .notes-search-input-wrapper input::placeholder {
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .notes-search-close-btn {
@@ -7310,15 +7310,15 @@ function formatDate(dateString) {
   background: transparent;
   border: none;
   cursor: pointer;
-  color: #9ca3af;
-  border-radius: 4px;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
   transition: all 0.2s;
   flex-shrink: 0;
 }
 
 .notes-search-close-btn:hover {
-  background: #f3f4f6;
-  color: #ef4444;
+  background: var(--bg-tertiary);
+  color: var(--danger-color);
 }
 
 /* === Loading State === */
@@ -7329,7 +7329,7 @@ function formatDate(dateString) {
   justify-content: center;
   padding: 2rem 1rem;
   gap: 0.75rem;
-  color: #6b7280;
+  color: var(--text-secondary);
 }
 
 .notes-loading span {
@@ -7340,8 +7340,8 @@ function formatDate(dateString) {
 .loading-spinner-small {
   width: 32px;
   height: 32px;
-  border: 3px solid #e5e7eb;
-  border-top-color: #4f46e5;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary-dark);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -7356,20 +7356,20 @@ function formatDate(dateString) {
 .journal-entry {
   position: relative;
   padding: 0.875rem;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
   transition: all 0.2s;
 }
 
 .journal-entry:hover {
-  border-color: #d1d5db;
+  border-color: var(--text-muted);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .journal-entry.editing {
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  border-color: var(--primary-dark);
+  box-shadow: 0 0 0 3px var(--primary-light);
 }
 
 .entry-header {
@@ -7381,7 +7381,7 @@ function formatDate(dateString) {
 
 .entry-date {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
@@ -7406,29 +7406,29 @@ function formatDate(dateString) {
   padding: 0;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all 0.2s;
-  color: #6b7280;
+  color: var(--text-secondary);
 }
 
 .entry-edit:hover {
-  background: #eff6ff;
-  border-color: #bfdbfe;
-  color: #3b82f6;
+  background: var(--primary-light);
+  border-color: var(--primary-light);
+  color: var(--primary-color);
 }
 
 .entry-delete:hover {
-  background: #fef2f2;
-  border-color: #fecaca;
-  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--danger-color);
 }
 
 .entry-text {
   margin: 0;
   font-size: 0.875rem;
   line-height: 1.5;
-  color: #1f2937;
+  color: var(--text-primary);
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -7444,42 +7444,44 @@ function formatDate(dateString) {
   width: 100%;
   min-height: 80px;
   padding: 0.75rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   font-size: 0.875rem;
   font-family: inherit;
   line-height: 1.5;
   resize: vertical;
   transition: all 0.2s;
-  background: #f9fafb;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .entry-edit-input:focus {
   outline: none;
-  border-color: #4f46e5;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  border-color: var(--primary-dark);
+  background: var(--bg-primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
 }
 
 .entry-edit-mode textarea {
   width: 100%;
   min-height: 80px;
   padding: 0.75rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   font-size: 0.875rem;
   font-family: inherit;
   line-height: 1.5;
   resize: vertical;
   transition: all 0.2s;
-  background: #f9fafb;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .entry-edit-mode textarea:focus {
   outline: none;
-  border-color: #4f46e5;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  border-color: var(--primary-dark);
+  background: var(--bg-primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
 }
 
 .entry-edit-actions {
@@ -7490,20 +7492,20 @@ function formatDate(dateString) {
 
 .btn-cancel-edit {
   padding: 0.5rem 1rem;
-  background: #ffffff;
-  border: 1px solid #d1d5db;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-cancel-edit:hover:not(:disabled) {
-  background: #f9fafb;
-  border-color: #9ca3af;
-  color: #374151;
+  background: var(--bg-secondary);
+  border-color: var(--text-muted);
+  color: var(--text-primary);
 }
 
 .btn-cancel-edit:disabled {
@@ -7516,20 +7518,20 @@ function formatDate(dateString) {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: #4f46e5;
-  border: 1px solid #4f46e5;
+  background: var(--primary-dark);
+  border: 1px solid var(--primary-dark);
   border-radius: 6px;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #ffffff;
+  color: white;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-save-edit:hover:not(:disabled) {
-  background: #4338ca;
-  border-color: #4338ca;
-  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  box-shadow: 0 2px 4px var(--primary-light);
 }
 
 .btn-save-edit:disabled {
@@ -7545,7 +7547,7 @@ function formatDate(dateString) {
   gap: 0.375rem;
   margin-top: 1rem;
   padding: 0.75rem 0;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--border-color);
 }
 
 .pagination-btn {
@@ -7555,45 +7557,45 @@ function formatDate(dateString) {
   min-width: 32px;
   height: 32px;
   padding: 0 0.5rem;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .pagination-btn:hover:not(:disabled):not(.ellipsis) {
-  background: #f3f4f6;
-  border-color: #d1d5db;
-  color: #1f2937;
+  background: var(--bg-tertiary);
+  border-color: var(--text-muted);
+  color: var(--text-primary);
 }
 
 .pagination-btn.active {
-  background: #4f46e5;
-  border-color: #4f46e5;
-  color: #ffffff;
+  background: var(--primary-dark);
+  border-color: var(--primary-dark);
+  color: white;
   font-weight: 600;
 }
 
 .pagination-btn.active:hover {
-  background: #4338ca;
-  border-color: #4338ca;
+  background: var(--primary-color);
+  border-color: var(--primary-color);
 }
 
 .pagination-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .pagination-btn.ellipsis {
   border: none;
   background: transparent;
   cursor: default;
-  color: #9ca3af;
+  color: var(--text-muted);
   pointer-events: none;
 }
 
@@ -7610,8 +7612,8 @@ function formatDate(dateString) {
   min-width: 20px;
   height: 20px;
   padding: 0 0.375rem;
-  background: #4f46e5;
-  color: #ffffff;
+  background: var(--primary-dark);
+  color: white;
   font-size: 0.75rem;
   font-weight: 600;
   border-radius: 10px;
@@ -7622,20 +7624,20 @@ function formatDate(dateString) {
 .btn-clear-search {
   margin-top: 0.75rem;
   padding: 0.5rem 1rem;
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-clear-search:hover {
-  background: #e5e7eb;
-  border-color: #9ca3af;
-  color: #1f2937;
+  background: var(--bg-hover);
+  border-color: var(--text-muted);
+  color: var(--text-primary);
 }
 
 /* === Responsive Adjustments for Notes === */
