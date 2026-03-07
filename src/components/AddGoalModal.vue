@@ -36,70 +36,56 @@
               />
             </div>
 
-            <!-- Sphere Selection - Collapsible -->
-            <div class="sphere-section">
-              <!-- Selected sphere or toggle button -->
+            <!-- Quick Actions Row -->
+            <div class="quick-actions-row">
               <button
-                v-if="!showSphereSelector && !newGoal.sphereId"
-                class="sphere-toggle-btn"
-                @click="showSphereSelector = true"
+                v-if="!newGoal.sphereId"
+                class="action-btn"
+                :class="{ active: showSphereSelector }"
+                @click="toggleSphereSelector"
               >
-                <Plus :size="16" />
-                <span>Выбрать сферу жизни</span>
+                <Plus :size="14" />
+                <span>Сфера жизни</span>
+                <ChevronDown :size="14" class="toggle-chevron" :class="{ rotated: showSphereSelector }" />
               </button>
-
-              <!-- Selected sphere chip (when sphere is chosen but selector closed) -->
               <button
-                v-else-if="!showSphereSelector && newGoal.sphereId"
-                class="sphere-selected-btn"
+                v-else
+                class="action-btn action-btn-selected"
                 :style="{ '--sphere-color': getSphereColor(newGoal.sphereId) }"
-                @click="showSphereSelector = true"
+                @click="toggleSphereSelector"
               >
-                <component :is="getSphereIcon(newGoal.sphereId)" :size="16" />
+                <component :is="getSphereIcon(newGoal.sphereId)" :size="14" />
                 <span>{{ getSphereNameOnly(newGoal.sphereId) }}</span>
-                <ChevronDown :size="14" class="edit-icon" />
+                <ChevronDown :size="14" class="toggle-chevron" :class="{ rotated: showSphereSelector }" />
               </button>
 
-              <!-- Sphere chips (expanded) -->
-              <Transition name="slide-down">
-                <div v-if="showSphereSelector" class="sphere-chips-wrapper">
-                  <div class="sphere-chips">
-                    <button
-                      v-for="sphere in lifeSpheres"
-                      :key="sphere.id"
-                      class="sphere-chip"
-                      :class="{ active: newGoal.sphereId === sphere.id }"
-                      :style="{ '--sphere-color': getSphereColor(sphere.id) }"
-                      @click="selectSphere(sphere.id)"
-                    >
-                      <component :is="getSphereIcon(sphere.id)" :size="16" />
-                      <span>{{ getSphereNameOnly(sphere.id) }}</span>
-                    </button>
-                  </div>
-                </div>
-              </Transition>
+              <button class="action-btn" :class="{ active: showTemplates }" @click="toggleTemplates">
+                <FileText :size="14" />
+                <span>Шаблоны</span>
+              </button>
+              <button class="action-btn action-btn-mentor" @click="openMentorModal">
+                <Bot :size="14" />
+                <span>Ментор</span>
+              </button>
             </div>
 
-            <!-- Divider -->
-            <div class="section-divider"></div>
-
-            <!-- Help Section - Less Prominent -->
-            <div class="help-section">
-              <span class="help-label">
-                <Lightbulb :size="14" />
-                Нужна идея?
-              </span>
-              <div class="help-buttons">
-                <button class="help-btn" @click="toggleTemplates">
-                  <FileText :size="14" />
-                  <span>Шаблоны</span>
-                </button>
-                <button class="help-btn help-btn-mentor" @click="openMentorModal">
-                  <Bot :size="14" />
-                  <span>Ментор</span>
+            <!-- Sphere Dropdown (inline) -->
+            <Transition name="slide-down">
+              <div v-if="showSphereSelector" class="sphere-dropdown">
+                <button
+                  v-for="sphere in lifeSpheres"
+                  :key="sphere.id"
+                  class="sphere-dropdown-item"
+                  :class="{ active: newGoal.sphereId === sphere.id }"
+                  :style="{ '--sphere-color': getSphereColor(sphere.id) }"
+                  @click="selectSphere(sphere.id)"
+                >
+                  <span class="sphere-indicator" :style="{ background: getSphereColor(sphere.id) }"></span>
+                  <component :is="getSphereIcon(sphere.id)" :size="16" />
+                  <span>{{ getSphereNameOnly(sphere.id) }}</span>
                 </button>
               </div>
-            </div>
+            </Transition>
 
             <!-- Templates Dropdown -->
             <Transition name="slide-down">
@@ -158,17 +144,10 @@
             </div>
           </div>
 
-          <!-- Footer - Option + Primary Action -->
+          <!-- Footer -->
           <div class="modal-footer">
-            <label class="decomposition-checkbox">
-              <input
-                type="checkbox"
-                v-model="goToDecomposition"
-              />
-              <span class="checkbox-label">Перейти к декомпозиции</span>
-            </label>
             <button
-              class="btn-create"
+              class="btn btn-primary btn-lg btn-create"
               :disabled="!canCreate"
               @click="saveNewGoal"
             >
@@ -222,13 +201,7 @@ const titleInput = ref(null)
 const modalRef = ref(null)
 
 // Checkbox "Перейти к декомпозиции" — сохраняется в localStorage
-const goToDecomposition = ref(
-  localStorage.getItem('goal_goto_decomposition') !== 'false'
-)
-
-watch(goToDecomposition, (val) => {
-  localStorage.setItem('goal_goto_decomposition', String(val))
-})
+const goToDecomposition = ref(true)
 
 // Touch handling for swipe-to-close
 const touchStartY = ref(0)
@@ -373,10 +346,20 @@ function getSphereNameOnly(sphereId) {
   return sphere?.name || sphereId
 }
 
+function toggleSphereSelector() {
+  showSphereSelector.value = !showSphereSelector.value
+  if (showSphereSelector.value) {
+    showTemplates.value = false
+  }
+}
+
 function toggleTemplates() {
   showTemplates.value = !showTemplates.value
-  if (showTemplates.value && !selectedTemplateSphere.value && lifeSpheres.value.length > 0) {
-    selectedTemplateSphere.value = lifeSpheres.value[0].id
+  if (showTemplates.value) {
+    showSphereSelector.value = false
+    if (!selectedTemplateSphere.value && lifeSpheres.value.length > 0) {
+      selectedTemplateSphere.value = lifeSpheres.value[0].id
+    }
   }
 }
 
@@ -602,193 +585,132 @@ watch(() => props.modelValue, (isOpen) => {
   font-weight: 400;
 }
 
-/* Sphere Section */
-.sphere-section {
-  margin-bottom: 1.25rem;
-}
-
-.sphere-toggle-btn {
-  display: inline-flex;
+/* Quick Actions Row */
+.quick-actions-row {
+  display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.875rem;
-  border: 1.5px dashed var(--border-color, #d1d5db);
-  border-radius: 20px;
-  background: transparent;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--text-secondary, #6b7280);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.sphere-toggle-btn:hover {
-  border-color: var(--primary-color, #6366f1);
-  color: var(--primary-color, #6366f1);
-  background: rgba(99, 102, 241, 0.05);
-}
-
-.sphere-toggle-btn .optional-tag {
-  margin-left: 0.25rem;
-}
-
-.sphere-selected-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.875rem;
-  border: 1.5px solid var(--sphere-color);
-  border-radius: 20px;
-  background: color-mix(in srgb, var(--sphere-color) 10%, transparent);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--sphere-color);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.sphere-selected-btn:hover {
-  background: color-mix(in srgb, var(--sphere-color) 15%, transparent);
-}
-
-.sphere-selected-btn svg {
-  color: var(--sphere-color);
-}
-
-.sphere-selected-btn .edit-icon {
-  margin-left: 0.25rem;
-  opacity: 0.7;
-}
-
-.sphere-chips-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.sphere-chips {
-  display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.sphere-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.875rem;
-  border: 1.5px solid var(--border-color, #e5e7eb);
-  border-radius: 20px;
-  background: var(--bg-primary, #ffffff);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--text-secondary, #6b7280);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.sphere-chip:hover {
-  border-color: var(--sphere-color);
-  color: var(--sphere-color);
-}
-
-.sphere-chip.active {
-  border-color: var(--sphere-color);
-  background: var(--sphere-color);
-  color: white;
-}
-
-.sphere-chip.active svg {
-  color: white;
-}
-
-.sphere-chip svg {
-  color: var(--sphere-color);
-  transition: color 0.15s;
-}
-
-.sphere-clear-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.375rem 0.625rem;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  font-size: 0.75rem;
-  color: var(--text-tertiary, #9ca3af);
-  cursor: pointer;
-  transition: all 0.15s;
-  align-self: flex-start;
-}
-
-.sphere-clear-btn:hover {
-  color: var(--danger, #ef4444);
-  background: rgba(239, 68, 68, 0.1);
-}
-
-/* Divider */
-.section-divider {
-  height: 1px;
-  background: var(--border-color, #e5e7eb);
-  margin: 0.75rem 0;
-}
-
-/* Help Section */
-.help-section {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   margin-bottom: 0.75rem;
 }
 
-.help-label {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.8125rem;
-  color: var(--text-tertiary, #9ca3af);
-}
-
-.help-buttons {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.help-btn {
+/* Unified action buttons */
+.action-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
   padding: 0.4rem 0.75rem;
-  border: 1px solid var(--border-color, #e5e7eb);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  background: var(--bg-primary, #ffffff);
+  background: var(--bg-primary);
   font-size: 0.8125rem;
-  color: var(--text-secondary, #6b7280);
+  font-weight: 500;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s;
 }
 
-.help-btn:hover {
-  border-color: var(--primary-color, #6366f1);
-  color: var(--primary-color, #6366f1);
-  background: rgba(99, 102, 241, 0.05);
+.action-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color) 5%, transparent);
 }
 
-.help-btn-mentor {
-  border-color: rgba(16, 185, 129, 0.3);
-  color: #10b981;
+.action-btn.active {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
-.help-btn-mentor:hover {
-  border-color: #10b981;
-  background: rgba(16, 185, 129, 0.05);
+.action-btn-selected {
+  border-color: var(--sphere-color);
+  color: var(--sphere-color);
+  background: color-mix(in srgb, var(--sphere-color) 8%, transparent);
+}
+
+.action-btn-selected:hover {
+  background: color-mix(in srgb, var(--sphere-color) 12%, transparent);
+}
+
+.action-btn-selected svg {
+  color: var(--sphere-color);
+}
+
+.action-btn-mentor {
+  border-color: color-mix(in srgb, var(--success-color) 30%, transparent);
+  color: var(--success-color);
+}
+
+.action-btn-mentor:hover {
+  border-color: var(--success-color);
+  background: color-mix(in srgb, var(--success-color) 5%, transparent);
+}
+
+.toggle-chevron {
+  transition: transform 0.2s;
+  opacity: 0.6;
+}
+
+.toggle-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+/* Sphere dropdown (inline) */
+.sphere-dropdown {
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0.375rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.sphere-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary, #1f2937);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+}
+
+.sphere-dropdown-item:hover {
+  background: var(--bg-secondary, #f3f4f6);
+}
+
+.sphere-dropdown-item.active {
+  color: var(--sphere-color);
+  background: color-mix(in srgb, var(--sphere-color) 8%, transparent);
+}
+
+.sphere-dropdown-item svg {
+  color: var(--text-tertiary, #9ca3af);
+  flex-shrink: 0;
+}
+
+.sphere-dropdown-item.active svg {
+  color: var(--sphere-color);
+}
+
+.sphere-indicator {
+  width: 3px;
+  height: 20px;
+  border-radius: 2px;
+  flex-shrink: 0;
 }
 
 /* Templates Dropdown */
 .templates-dropdown {
-  background: var(--bg-secondary, #f9fafb);
-  border-radius: 12px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
   padding: 0.75rem;
   margin-bottom: 0.75rem;
 }
@@ -863,28 +785,28 @@ watch(() => props.modelValue, (isOpen) => {
   width: 100%;
   padding: 0.625rem 0.875rem;
   background: transparent;
-  border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
   font-size: 0.875rem;
-  color: var(--text-secondary, #6b7280);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .motivation-toggle:hover {
-  border-color: var(--text-tertiary, #9ca3af);
+  border-color: var(--text-tertiary);
 }
 
 .motivation-toggle.expanded {
-  border-color: var(--primary-color, #6366f1);
-  color: var(--primary-color, #6366f1);
-  border-radius: 10px 10px 0 0;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  border-radius: 12px 12px 0 0;
   border-bottom-color: transparent;
 }
 
 .motivation-toggle.filled:not(.expanded) {
-  border-color: #10b981;
-  background: rgba(16, 185, 129, 0.05);
+  border-color: var(--success-color);
+  background: color-mix(in srgb, var(--success-color) 5%, transparent);
 }
 
 .optional-tag {
@@ -902,7 +824,7 @@ watch(() => props.modelValue, (isOpen) => {
   justify-content: center;
   width: 18px;
   height: 18px;
-  background: #10b981;
+  background: var(--success-color);
   color: white;
   border-radius: 50%;
   margin-left: auto;
@@ -919,10 +841,10 @@ watch(() => props.modelValue, (isOpen) => {
 
 .motivation-content {
   padding: 0.75rem;
-  background: var(--bg-secondary, #f9fafb);
-  border: 1px solid var(--primary-color, #6366f1);
+  background: var(--bg-secondary);
+  border: 1px solid var(--primary-color);
   border-top: none;
-  border-radius: 0 0 10px 10px;
+  border-radius: 0 0 12px 12px;
 }
 
 .motivation-textarea {
@@ -958,55 +880,8 @@ watch(() => props.modelValue, (isOpen) => {
   gap: 0.75rem;
 }
 
-.decomposition-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  user-select: none;
-}
-
-.decomposition-checkbox input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--primary-color, #6366f1);
-  cursor: pointer;
-}
-
-.decomposition-checkbox .checkbox-label {
-  font-size: 0.875rem;
-  color: var(--text-secondary, #6b7280);
-}
-
 .btn-create {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
   width: 100%;
-  padding: 0.875rem 1.5rem;
-  background: var(--primary-color, #6366f1);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.btn-create:hover:not(:disabled) {
-  background: var(--primary-dark, #4f46e5);
-  transform: translateY(-1px);
-}
-
-.btn-create:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.btn-create:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .spin {
@@ -1086,28 +961,8 @@ watch(() => props.modelValue, (isOpen) => {
     padding-top: 0.5rem;
   }
 
-  .sphere-chips {
+  .quick-actions-row {
     gap: 0.375rem;
-  }
-
-  .sphere-chip {
-    padding: 0.4rem 0.75rem;
-    font-size: 0.75rem;
-  }
-
-  .help-section {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-
-  .help-buttons {
-    width: 100%;
-  }
-
-  .help-btn {
-    flex: 1;
-    justify-content: center;
   }
 
   /* Slide up animation for mobile */

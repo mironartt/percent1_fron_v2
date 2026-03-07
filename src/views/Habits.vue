@@ -5631,28 +5631,6 @@ onMounted(async () => {
   font-size: 0.95rem;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.65rem 1.25rem;
-  border: none;
-  border-radius: 10px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-primary {
-  background: var(--primary-color);
-  color: white;
-}
-
-.btn-primary:hover {
-  filter: brightness(1.1);
-}
-
 .btn-secondary {
   background: var(--bg-secondary);
   color: var(--text-primary);
@@ -5661,16 +5639,6 @@ onMounted(async () => {
 .btn-danger {
   background: var(--danger-color);
   color: white;
-}
-
-.btn-sm {
-  padding: 0.4rem 0.75rem;
-  font-size: 0.85rem;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .modal-overlay {

@@ -37,28 +37,59 @@
         <Breadcrumbs :items="breadcrumbItems" />
       </div>
 
-      <!-- Compact Sticky Header -->
+      <!-- Compact Header -->
       <header class="goal-header-compact">
         <div class="header-row">
           <button class="btn-back" @click="goBack" title="Назад">
             <ArrowLeft :size="20" />
           </button>
-          <div class="header-title-section">
-            <h1 class="header-goal-title">{{ goalForm.title || 'Без названия' }}</h1>
-            <span class="header-sphere-badge" :style="{ '--sphere-color': getSphereColor(goalForm.sphereId) }">
-              {{ getSphereNameOnly(goalForm.sphereId) }}
-            </span>
+          <h1 class="header-goal-title">{{ goalForm.title || 'Без названия' }}</h1>
+          <span class="header-sphere-chip" :style="{ '--sphere-color': getSphereColor(goalForm.sphereId) }">
+            {{ getSphereNameOnly(goalForm.sphereId) }}
+          </span>
+          <div class="header-actions-group desktop-only">
+            <div class="header-actions-sep"></div>
+            <button class="header-action-btn" :class="{ active: showMiniJournal }" @click="toggleMiniJournal">
+              <BookOpen :size="14" />
+              <span>Заметки</span>
+            </button>
+            <button class="header-ai-btn" @click="openAIConfirmModal">
+              <Sparkles :size="14" />
+              <span>AI шаги</span>
+            </button>
           </div>
         </div>
-        <div class="header-progress">
-          <div class="progress-bar-wrapper">
-            <div class="progress-bar-track">
-              <div class="progress-bar-fill" :style="{ width: completionProgress + '%' }"></div>
-            </div>
-            <span class="progress-text-inline">{{ displayCompletedSteps }}/{{ displayTotalSteps }}</span>
+        <div v-if="displayTotalSteps > 0" class="header-progress-thin">
+          <div class="progress-track-thin">
+            <div class="progress-fill-thin" :style="{ width: completionProgress + '%' }"></div>
           </div>
+          <span class="progress-count">{{ displayCompletedSteps }}/{{ displayTotalSteps }}</span>
         </div>
       </header>
+
+      <!-- Mobile Stats Bar -->
+      <div class="mobile-stats-bar mobile-only">
+        <div class="msb-item" v-if="displayTotalSteps > 0">
+          <CheckCircle2 :size="14" :stroke-width="1.5" />
+          <span class="msb-value">{{ displayCompletedSteps }}</span>
+          <span class="msb-label">/{{ displayTotalSteps }}</span>
+          <div class="msb-progress">
+            <div class="msb-progress-fill" :style="{ width: completionProgress + '%' }"></div>
+          </div>
+        </div>
+
+        <div class="msb-divider" v-if="displayTotalSteps > 0"></div>
+
+        <button class="msb-action" :class="{ active: showMiniJournal }" @click="toggleMiniJournal">
+          <BookOpen :size="14" />
+        </button>
+
+        <div class="msb-spacer"></div>
+
+        <button class="msb-ai-btn" @click="openAIConfirmModal">
+          <Sparkles :size="14" />
+        </button>
+      </div>
 
       <!-- Collapsible Reflection Block -->
       <div class="goal-reflection-block" v-if="hasReflection">
@@ -85,12 +116,13 @@
       </div>
 
       <div class="main-content">
-        <div class="card card-no-header">
-          <!-- Combined Search + Filter Bar -->
-          <div class="search-filter-bar">
+        <div class="steps-divider"></div>
+
+          <!-- Filter bar: only when 10+ steps -->
+          <div v-if="totalStepsCount >= 10" class="search-filter-bar">
             <div class="search-expandable" :class="{ expanded: showSearchInput }">
-              <button 
-                v-if="!showSearchInput" 
+              <button
+                v-if="!showSearchInput"
                 class="search-icon-btn"
                 @click="toggleSearch"
                 title="Поиск"
@@ -99,7 +131,7 @@
               </button>
               <div v-else class="search-input-wrapper">
                 <Search :size="16" class="search-icon" />
-                <input 
+                <input
                   ref="searchInputRef"
                   v-model="searchQuery"
                   type="text"
@@ -112,24 +144,12 @@
                 </button>
               </div>
             </div>
-            
+
             <select v-model="filterStatus" class="step-filter-select">
               <option value="">Все</option>
               <option value="pending">Активные</option>
               <option value="completed">Готовые</option>
             </select>
-
-            <button 
-              class="btn-ai-steps-inline"
-              :class="{ generating: isGeneratingSteps }"
-              :disabled="isGeneratingSteps"
-              @click="openAIConfirmModal"
-              title="ИИ сгенерирует 3-7 шагов для достижения цели"
-            >
-              <Loader2 v-if="isGeneratingSteps" :size="16" class="spin" />
-              <Sparkles v-else :size="16" />
-              <span class="btn-ai-label">{{ isGeneratingSteps ? (aiStepsProgress.text || 'Генерация...') : 'Помощь от ментора' }}</span>
-            </button>
           </div>
 
           <!-- Подсказка о drag/drop -->
@@ -137,13 +157,9 @@
             Перетаскивание шагов отключено при активных фильтрах
           </div>
 
-          <!-- Empty state когда нет шагов -->
+          <!-- Empty state -->
           <div v-if="totalStepsCount === 0 && newSteps.length === 0" class="steps-empty-state">
-            <div class="empty-icon-circle">
-              <Target :size="32" />
-            </div>
-            <h3>Добавьте шаги декомпозиции</h3>
-            <p>Разбейте цель на конкретные действия,<br>чтобы начать планирование</p>
+            <p class="empty-phrase">Цель без шагов —<br>это просто мечта</p>
             <div class="empty-state-actions">
               <button class="btn btn-primary" @click="openAddStepModal">
                 <Plus :size="16" />
@@ -179,53 +195,34 @@
               @drop="isDragEnabled && handleDrop(getOriginalIndex(step), $event)"
               @click="openEditStepModal(step, getOriginalIndex(step))"
             >
-              <!-- Левая колонка: drag-handle -->
-              <div class="step-actions-column">
-                <div 
-                  class="step-drag-handle" 
-                  :class="{ disabled: !isDragEnabled }"
-                  :title="isDragEnabled ? 'Перетащите для изменения порядка' : 'Перетаскивание отключено (активны фильтры или сортировка)'"
-                >
-                  <GripVertical :size="16" />
-                </div>
-              </div>
-
-              <span class="step-number-badge">{{ getOriginalIndex(step) + 1 }}</span>
-              
-              <div class="step-main">
-                <span class="step-title" :class="{ 'completed-text': step.completed }">
-                  {{ step.title || `Шаг ${getOriginalIndex(step) + 1}` }}
-                </span>
-                <!-- Мета-строка: приоритет, время, дата -->
-                <div class="step-meta" v-if="step.priority || step.timeEstimate || step.scheduledDate">
-                  <span v-if="step.priority" class="step-meta-item priority-indicator" :class="'priority-' + step.priority">
-                    <span class="priority-dot"></span>
-                    {{ getPriorityLabel(step.priority) }}
-                  </span>
-                  <span v-if="step.timeEstimate" class="step-meta-item">
-                    <Clock :size="12" />
-                    {{ formatTimeEstimate(step.timeEstimate) }}
-                  </span>
-                  <span v-if="step.scheduledDate" class="step-meta-item">
-                    <Calendar :size="12" />
-                    {{ formatScheduledDate(step.scheduledDate) }}
-                  </span>
-                </div>
-              </div>
-              
-              <!-- Шеврон - индикатор кликабельности -->
-              <ChevronRight :size="18" class="step-chevron" />
-              
-              <!-- Чекбокс справа для быстрого выполнения -->
-              <button 
+              <!-- Чекбокс слева -->
+              <button
                 class="step-checkbox-btn"
                 :class="{ checked: step.completed }"
                 @click.stop="toggleStepComplete(step, getOriginalIndex(step))"
                 :title="step.completed ? 'Отметить как невыполненный' : 'Отметить как выполненный'"
               >
-                <CheckCircle v-if="step.completed" :size="22" />
-                <Circle v-else :size="22" />
+                <CheckCircle v-if="step.completed" :size="20" />
+                <Circle v-else :size="20" />
               </button>
+
+              <!-- Название и мета -->
+              <div class="step-main">
+                <span class="step-title" :class="{ completed: step.completed }">{{ step.title }}</span>
+                <span v-if="step.comment" class="step-comment-preview">{{ step.comment }}</span>
+              </div>
+
+              <!-- Мета справа -->
+              <div class="step-inline-meta">
+                <span v-if="step.estimated_time" class="meta-tag">
+                  <Clock :size="12" />
+                  {{ formatTimeEstimate(step.estimated_time) }}
+                </span>
+                <span v-if="step.priority && step.priority !== 'normal' && !step.completed" class="meta-tag priority-tag" :class="'priority-' + step.priority">
+                  <span class="priority-dot"></span>
+                </span>
+                <ChevronRight :size="16" class="step-chevron" />
+              </div>
             </div>
             
             <!-- Кнопка загрузить ещё (локальная пагинация) -->
@@ -354,19 +351,11 @@
           </div>
 
         </div>
-      </div>
-      
-      <!-- Блок заметок -->
-      <div class="mini-journal-section">
-        <button class="mini-journal-toggle" @click="toggleMiniJournal">
-          <BookOpen :size="18" />
-          <span>Заметки</span>
-          <span v-if="notesCountBadge" class="journal-count">{{ notesCountBadge }}</span>
-          <ChevronDown :size="16" class="toggle-icon" :class="{ rotated: showMiniJournal }" />
-        </button>
 
-        <transition name="slide">
-          <div v-if="showMiniJournal" class="mini-journal-content">
+
+      <!-- Блок заметок (expandable) -->
+      <div v-if="showMiniJournal" class="mini-journal-section">
+          <div class="mini-journal-content">
 
             <!-- Поиск -->
             <div v-if="totalNotesCount > 5" class="notes-search-bar">
@@ -531,16 +520,6 @@
             </div>
 
           </div>
-        </transition>
-      </div>
-
-      <!-- Кнопка "Запланировать шаги" -->
-      <div class="plan-steps-section">
-        <button class="plan-steps-btn" @click="goToPlanning">
-          <Calendar :size="18" />
-          <span>Запланировать</span>
-          <span v-if="totalStepsFromBackendCount > 0" class="unscheduled-count">{{ totalStepsFromBackendCount }}</span>
-        </button>
       </div>
 
     </div>
@@ -983,7 +962,7 @@ import {
   CheckCircle, XCircle, Check, Filter, Settings, Clock, Calendar, Circle,
   FileText, Lightbulb, Shield, BarChart2, Play, Pause, GitBranch,
   BookOpen, ChevronDown, ChevronRight, ChevronLeft, Send, MessageSquare, Wand2, Loader2, Sparkles,
-  RotateCcw
+  RotateCcw, Coins
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -1458,15 +1437,6 @@ const displayCompletedSteps = computed(() => {
   // Fallback на локальный подсчёт
   return completedStepsCount.value
 })
-
-function goToPlanning() {
-  const goalId = goal.value?.backendId || goal.value?.id
-  if (goalId) {
-    router.push({ path: '/app/planning', query: { first_goal_id: goalId } })
-  } else {
-    router.push('/app/planning')
-  }
-}
 
 // ========================================
 // ЗАМЕТКИ — Методы
@@ -3693,6 +3663,254 @@ function formatDate(dateString) {
   margin-top: 2px;
 }
 
+/* Sphere chip in header */
+.header-sphere-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--sphere-color, var(--primary-color));
+  background: color-mix(in srgb, var(--sphere-color, var(--primary-color)) 10%, transparent);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Header actions group (desktop) */
+.header-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.header-actions-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--border-color);
+  margin: 0 0.375rem;
+}
+
+.header-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: 10px;
+  border: none;
+  background: none;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.header-action-btn:hover {
+  background: var(--bg-secondary, #f9fafb);
+  color: var(--text-primary);
+}
+
+.header-action-btn.active {
+  background: color-mix(in srgb, var(--primary-color) 8%, transparent);
+  color: var(--primary-color);
+}
+
+.header-ai-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: 10px;
+  border: none;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--success-color, #10b981);
+  background: color-mix(in srgb, var(--success-color, #10b981) 8%, transparent);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.header-ai-btn:hover {
+  background: color-mix(in srgb, var(--success-color, #10b981) 15%, transparent);
+}
+
+/* Mobile Stats Bar */
+.mobile-stats-bar {
+  display: flex;
+  align-items: center;
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 0.3rem;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.msb-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.4rem 0.625rem;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.msb-value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.msb-label {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.msb-progress {
+  width: 40px;
+  height: 4px;
+  background: var(--bg-tertiary, #f3f4f6);
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.msb-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--primary-color, #6366f1);
+  transition: width 0.4s;
+}
+
+.msb-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-color);
+  flex-shrink: 0;
+}
+
+.msb-spacer {
+  flex: 1;
+  min-width: 0.5rem;
+}
+
+.msb-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem;
+  border-radius: 10px;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.msb-action:hover {
+  background: var(--bg-secondary, #f9fafb);
+  color: var(--text-primary);
+}
+
+.msb-action.active {
+  background: color-mix(in srgb, var(--primary-color) 8%, transparent);
+  color: var(--primary-color);
+}
+
+.msb-ai-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem;
+  border-radius: 10px;
+  border: none;
+  color: var(--success-color, #10b981);
+  background: color-mix(in srgb, var(--success-color, #10b981) 8%, transparent);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.msb-ai-btn:hover {
+  background: color-mix(in srgb, var(--success-color, #10b981) 15%, transparent);
+}
+
+/* Responsive visibility */
+.desktop-only { display: flex; }
+.mobile-only { display: none; }
+
+@media (max-width: 640px) {
+  .desktop-only { display: none !important; }
+  .mobile-only { display: flex !important; }
+  .steps-divider { display: none; }
+}
+
+/* Thin progress bar */
+.header-progress-thin {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.progress-track-thin {
+  flex: 1;
+  height: 3px;
+  background: var(--border-color);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill-thin {
+  height: 100%;
+  background: var(--primary-color, #6366f1);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.progress-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Steps divider */
+.steps-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin-bottom: 0.75rem;
+}
+
+/* Empty state */
+.empty-phrase {
+  font-size: 1rem;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.steps-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+}
+
+.empty-state-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 .btn-settings {
   display: flex;
   align-items: center;
@@ -3754,17 +3972,19 @@ function formatDate(dateString) {
   gap: 0.5rem;
   padding: 0;
   margin-bottom: 0.75rem;
+  min-width: 0;
 }
 
 .search-filter-bar .search-input-wrapper {
-  flex-shrink: 0;
+  flex-shrink: 1;
   width: 140px;
-  min-width: 100px;
+  min-width: 0;
 }
 
 /* Step filter select (native select in search bar) */
 .step-filter-select {
   flex: 1;
+  min-width: 0;
   padding: 0.5rem 2rem 0.5rem 0.75rem;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
@@ -3902,10 +4122,13 @@ function formatDate(dateString) {
   }
   
   .btn-ai-steps-inline {
-    padding: 0.4rem 0.75rem;
-    font-size: 0.75rem;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    justify-content: center;
+    border-radius: var(--radius-md);
   }
-  
+
   .btn-ai-steps-inline .btn-ai-label {
     display: none;
   }
@@ -4580,18 +4803,18 @@ function formatDate(dateString) {
 
 .step-card {
   display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  background: var(--bg-secondary);
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.5rem;
+  background: transparent;
   border-radius: var(--radius-md);
-  transition: transform var(--transition-normal), background-color var(--transition-fast), box-shadow var(--transition-normal);
+  transition: background-color 0.15s;
   border-left: 3px solid transparent;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
 }
 
 .step-card:hover {
-  transform: translateX(4px);
-  box-shadow: var(--shadow-sm);
+  background: var(--hover-bg, #f3f4f6);
 }
 
 .step-card.priority-critical:not(.step-completed) {
@@ -4617,12 +4840,6 @@ function formatDate(dateString) {
 /* Расширенный вид карточки */
 .step-card-expanded {
   align-items: center;
-  padding: 0.625rem 0.75rem;
-}
-
-.step-card-expanded .step-main {
-  flex: 1;
-  min-width: 0;
 }
 
 .step-meta {
@@ -4671,34 +4888,20 @@ function formatDate(dateString) {
   background: currentColor;
 }
 
-/* Шеврон - индикатор кликабельности */
-.step-chevron {
-  color: var(--text-muted, #9ca3af);
-  flex-shrink: 0;
-  opacity: 0.6;
-  transition: opacity 0.2s, transform 0.2s;
-}
-
-.step-card-clickable:hover .step-chevron {
-  opacity: 1;
-  transform: translateX(2px);
-}
-
-/* Чекбокс справа */
+/* Чекбокс */
 .step-checkbox-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   border: none;
   background: transparent;
-  color: var(--text-secondary, #6b7280);
+  color: var(--text-muted);
   cursor: pointer;
   border-radius: 50%;
   flex-shrink: 0;
-  transition: all 0.2s;
-  margin-left: auto;
+  transition: all 0.15s;
 }
 
 .step-checkbox-btn:hover {
@@ -4928,9 +5131,11 @@ function formatDate(dateString) {
 
 /* Мини-журнал */
 .mini-journal-section {
-  margin-top: 1.5rem;
-  border-top: 1px solid var(--border-color, #e5e7eb);
-  padding-top: 1rem;
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
 }
 
 .mini-journal-toggle {
@@ -5104,52 +5309,6 @@ function formatDate(dateString) {
 .journal-empty p {
   margin: 0;
   font-size: 0.9rem;
-}
-
-/* Кнопка "Запланировать шаги" */
-.plan-steps-section {
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-}
-
-.plan-steps-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.875rem 1rem;
-  background: var(--success-color);
-  border: none;
-  border-radius: var(--radius-lg);
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: var(--shadow-sm);
-}
-
-.plan-steps-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.plan-steps-btn:active {
-  transform: translateY(0);
-}
-
-.unscheduled-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 6px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 11px;
-  font-size: 0.8rem;
-  font-weight: 600;
 }
 
 /* Блок рефлексии (свёрнут по умолчанию) */
@@ -5926,8 +6085,8 @@ function formatDate(dateString) {
 }
 
 .step-card.step-completed {
-  background: rgba(16, 185, 129, 0.08);
-  border-left-color: var(--success-color);
+  opacity: 0.6;
+  border-left-color: transparent;
 }
 
 .step-checkbox-wrapper {
@@ -6136,23 +6295,60 @@ function formatDate(dateString) {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.125rem;
   min-width: 0;
 }
 
 .step-title {
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   color: var(--text-primary);
-  line-height: 1.4;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.step-title.completed {
+  text-decoration: line-through;
+  color: var(--text-muted);
 }
 
 .step-comment-preview {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
+  font-size: 0.75rem;
+  color: var(--text-muted);
   line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Inline meta (right side of step row) */
+.step-inline-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.meta-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.step-chevron {
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.step-card:hover .step-chevron {
+  opacity: 0.5;
 }
 
 .step-card-clickable {

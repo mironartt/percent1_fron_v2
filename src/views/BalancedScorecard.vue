@@ -1,6 +1,12 @@
 <template>
   <div class="ssp-container">
-    <Breadcrumbs :items="breadcrumbs" />
+    <div class="section-header-row">
+      <Breadcrumbs :items="breadcrumbs" />
+      <button class="btn btn-primary btn-sm" @click="openReassessment">
+        <RefreshCcw :size="16" :stroke-width="2" />
+        <span>Переоценить</span>
+      </button>
+    </div>
 
     <div class="ssp-tabs">
       <button
@@ -12,10 +18,6 @@
       >
         <component :is="tab.icon" :size="18" />
         {{ tab.label }}
-      </button>
-      <button class="btn btn-primary reassess-tab-btn" @click="openReassessment">
-        <RefreshCcw :size="16" />
-        Переоценить
       </button>
     </div>
 
@@ -979,6 +981,14 @@ watch(activeTab, async (newTab) => {
   padding-bottom: 100px;
 }
 
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
 .ssp-header {
   text-align: center;
   margin-bottom: 1.5rem;
@@ -1000,10 +1010,11 @@ watch(activeTab, async (newTab) => {
 .ssp-tabs {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: var(--bg-secondary);
-  padding: 0.25rem;
-  border-radius: var(--radius-lg);
+  gap: 0.375rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  padding: 0.375rem;
+  border-radius: 12px;
   margin-bottom: 1.5rem;
 }
 
@@ -1013,11 +1024,11 @@ watch(activeTab, async (newTab) => {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border: none;
+  padding: 0.625rem 1rem;
+  border: 1px solid transparent;
   background: transparent;
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
+  border-radius: 8px;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--text-secondary);
   cursor: pointer;
@@ -1025,25 +1036,16 @@ watch(activeTab, async (newTab) => {
 }
 
 .tab-btn.active {
-  background: var(--bg-primary);
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
   color: var(--primary-color);
-  box-shadow: var(--shadow-sm);
 }
 
 .tab-btn:hover:not(.active) {
+  background: var(--bg-secondary);
   color: var(--text-primary);
 }
 
-.reassess-tab-btn {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.875rem;
-  font-size: 0.8125rem;
-  white-space: nowrap;
-  border-radius: var(--radius-md);
-}
 
 .wheel-card {
   padding: 1.25rem 1.5rem 1.5rem;
@@ -1103,12 +1105,12 @@ watch(activeTab, async (newTab) => {
     max-width: 100%;
   }
 
-  .reassess-tab-btn span {
+  .section-header-row .btn span {
     display: none;
   }
 
-  .reassess-tab-btn {
-    padding: 0.5rem 0.625rem;
+  .section-header-row .btn {
+    padding: 0.375rem 0.5rem;
   }
 
   .preview-wheel-wrap {

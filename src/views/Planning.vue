@@ -2,22 +2,11 @@
   <div class="planning-container">
     <div class="section-header-row">
       <Breadcrumbs :items="breadcrumbItems" />
-      <button class="ai-planner-btn" @click="openAIPlannerModal">
-        <Sparkles :size="15" />
-        <span>AI планирование</span>
-      </button>
     </div>
 
-    <header class="week-nav-row">
-      <button class="nav-btn-edge" @click="prevWeek" aria-label="Предыдущая неделя">
-        <ChevronLeft :size="20" />
-      </button>
+    <header class="week-nav-row" v-if="!isCurrentWeek">
       <span class="week-range-center">{{ weekRangeText }}</span>
-      <button class="nav-btn-edge" @click="nextWeek" aria-label="Следующая неделя">
-        <ChevronRight :size="20" />
-      </button>
       <button
-        v-if="!isCurrentWeek"
         class="today-btn-inline"
         @click="goToCurrentWeek"
       >
@@ -25,59 +14,89 @@
       </button>
     </header>
 
-    <div class="week-stats" v-if="weeklyTotalTime">
-      <div class="stat-chip">
-        <span class="stat-value">{{ weeklyTotalTime }}</span>
-        <span class="stat-label">всего</span>
+    <div class="week-strip">
+      <button class="week-strip-nav" @click="prevWeek" aria-label="Предыдущая неделя">
+        <ChevronLeft :size="18" />
+      </button>
+      <div class="week-strip-days">
+        <button
+          v-for="day in weekDays"
+          :key="day.date"
+          class="day-tab"
+          :class="{
+            active: selectedDay === day.date,
+            today: isToday(day.date),
+            'has-tasks': getTasksForDay(day.date).length > 0,
+            weekend: day.isWeekend
+          }"
+          @click="selectDay(day.date)"
+        >
+          <span class="day-name">{{ day.shortName }}</span>
+          <span class="day-num">{{ day.dayNum }}</span>
+          <div class="day-dots">
+            <template v-if="getTasksForDay(day.date).length > 0">
+              <span
+                v-for="(task, i) in getTasksForDay(day.date).slice(0, 3)"
+                :key="i"
+                class="day-dot"
+                :class="{ done: task.completed }"
+              ></span>
+            </template>
+          </div>
+        </button>
       </div>
+      <button class="week-strip-nav" @click="nextWeek" aria-label="Следующая неделя">
+        <ChevronRight :size="18" />
+      </button>
     </div>
 
-    <div class="week-bar">
-      <button
-        v-for="day in weekDays"
-        :key="day.date"
-        class="day-tab"
-        :class="{
-          active: selectedDay === day.date,
-          today: isToday(day.date),
-          'has-tasks': getTasksForDay(day.date).length > 0,
-          weekend: day.isWeekend
-        }"
-        @click="selectDay(day.date)"
-      >
-        <span class="day-name">{{ day.shortName }}</span>
-        <span class="day-num">{{ day.dayNum }}</span>
-        <div class="day-dots">
-          <template v-if="getTasksForDay(day.date).length > 0">
-            <span
-              v-for="(task, i) in getTasksForDay(day.date).slice(0, 3)"
-              :key="i"
-              class="day-dot"
-              :class="{ done: task.completed }"
-            ></span>
-          </template>
+    <!-- Stats bar -->
+    <div class="planning-stats-bar">
+      <div class="stats-bar-item" v-if="selectedDayProgress.total > 0">
+        <CheckCircle :size="14" :stroke-width="1.5" class="stats-bar-icon tasks-icon" />
+        <span class="stats-bar-value">{{ selectedDayProgress.done }}</span>
+        <span class="stats-bar-label">/{{ selectedDayProgress.total }} задач</span>
+        <div class="stats-bar-progress">
+          <div class="stats-bar-progress-fill tasks" :style="{ width: selectedDayProgress.pct + '%' }"></div>
         </div>
+      </div>
+
+      <div class="stats-bar-divider" v-if="selectedDayProgress.total > 0 && getTotalTimeForDay(selectedDay)"></div>
+
+      <div class="stats-bar-item" v-if="getTotalTimeForDay(selectedDay)">
+        <Clock :size="14" :stroke-width="1.5" class="stats-bar-icon" />
+        <span class="stats-bar-value">{{ getTotalTimeForDay(selectedDay) }}</span>
+        <span class="stats-bar-label hide-mobile">на день</span>
+      </div>
+
+      <div class="stats-bar-divider" v-if="weeklyTotalTime && (selectedDayProgress.total > 0 || getTotalTimeForDay(selectedDay))"></div>
+
+      <div class="stats-bar-item" v-if="weeklyTotalTime">
+        <Calendar :size="14" :stroke-width="1.5" class="stats-bar-icon" />
+        <span class="stats-bar-value">{{ weeklyTotalTime }}</span>
+        <span class="stats-bar-label hide-mobile">неделя</span>
+      </div>
+
+      <div class="stats-bar-spacer"></div>
+
+      <button
+        class="stats-bar-badge warning"
+        v-if="goalsWithoutStepsTotal > 0"
+        @click="scrollToGoalsWithoutSteps"
+      >
+        <AlertCircle :size="13" :stroke-width="2" />
+        {{ goalsWithoutStepsTotal }}
+      </button>
+
+      <div class="stats-bar-divider" v-if="goalsWithoutStepsTotal > 0"></div>
+
+      <button class="stats-bar-ai-btn" @click="openAIPlannerModal">
+        <Sparkles :size="14" :stroke-width="2" />
+        <span class="ai-btn-label">AI план</span>
       </button>
     </div>
 
-    <!-- Mobile tabs -->
-    <div class="mobile-tabs mobile-only">
-      <button
-        class="mobile-tab"
-        :class="{ active: mobileTab === 'tasks' }"
-        @click="mobileTab = 'tasks'"
-      >
-        Задачи дня
-        <span v-if="selectedDayTasks.length > 0" class="mobile-tab-badge">{{ selectedDayTasks.length }}</span>
-      </button>
-      <button
-        class="mobile-tab"
-        :class="{ active: mobileTab === 'goals' }"
-        @click="mobileTab = 'goals'"
-      >
-        Цели и шаги
-      </button>
-    </div>
+    <!-- Mobile tabs removed — single column layout, both panels always visible -->
 
     <!-- Full-width empty state when no goals exist yet -->
     <div v-if="goalsWithSteps.length === 0" class="planning-empty-full">
@@ -90,21 +109,9 @@
     </div>
 
     <div v-else class="planning-two-panel">
-    <div class="day-content" v-if="selectedDay" :class="{ 'mobile-hidden': mobileTab === 'goals' }">
+    <div class="day-content" v-if="selectedDay">
       <div class="day-header-info">
         <h2 class="day-title">{{ selectedDayTitle }}</h2>
-        <div class="day-header-right">
-          <span v-if="getTotalTimeForDay(selectedDay)" class="day-time">
-            <Clock :size="14" />
-            {{ getTotalTimeForDay(selectedDay) }}
-          </span>
-          <div v-if="selectedDayProgress.total > 0" class="day-progress">
-            <div class="day-progress-bar">
-              <div class="day-progress-fill" :style="{ width: selectedDayProgress.pct + '%' }"></div>
-            </div>
-            <span class="day-progress-text">{{ selectedDayProgress.done }}/{{ selectedDayProgress.total }}</span>
-          </div>
-        </div>
       </div>
 
       <div class="tasks-list" v-if="selectedDayTasks.length > 0">
@@ -221,182 +228,306 @@
       </div>
     </div>
 
-    <div class="goals-panel" :class="{ 'mobile-hidden': mobileTab === 'tasks' }">
-    <div class="goals-panel-header">
-      <span class="goals-panel-title">Цели и шаги</span>
-    </div>
-    <div class="filters-row compact unified">
-      <!-- Поиск по названию (сворачиваемый) -->
-      <div class="search-filter" :class="{ expanded: searchExpanded || queryFilter }">
-        <button 
-          v-if="!searchExpanded && !queryFilter" 
-          class="search-toggle" 
-          @click="searchExpanded = true"
-          title="Поиск"
-        >
-          <Search :size="16" />
-        </button>
-        <template v-else>
-          <Search :size="14" class="search-icon" />
-          <input 
-            type="text" 
-            v-model="queryFilter" 
-            placeholder="Поиск целей..." 
-            class="search-input"
-            @blur="searchExpanded = false"
-          />
-          <button v-if="queryFilter" class="clear-search" @click="queryFilter = ''; searchExpanded = false">
-            <X :size="14" />
-          </button>
-        </template>
-      </div>
-      
-      <!-- Фильтр по запланированности шагов (dropdown) -->
-      <select 
-        v-model="filterStatus" 
-        class="filter-dropdown"
+    <div class="goals-panel">
+
+    <!-- Filter strip -->
+    <div class="goals-filter-strip">
+      <button
+        class="gf-item"
+        :class="{ active: searchExpanded || queryFilter }"
+        @click="searchExpanded = !searchExpanded"
       >
-        <option value="">Все шаги</option>
-        <option value="unscheduled">Незапл.</option>
-        <option value="scheduled">Запл.</option>
-      </select>
-      
-      <!-- Кнопка сброса фильтров -->
-      <button 
-        v-if="hasActiveFilters" 
-        class="reset-filters-btn" 
+        <Search :size="14" :stroke-width="1.5" />
+      </button>
+      <template v-if="searchExpanded || queryFilter">
+        <input
+          type="text"
+          v-model="queryFilter"
+          placeholder="Поиск целей..."
+          class="gf-search-input"
+          @blur="!queryFilter && (searchExpanded = false)"
+          ref="goalsSearchInput"
+        />
+        <button v-if="queryFilter" class="gf-item" @click="queryFilter = ''; searchExpanded = false">
+          <X :size="14" />
+        </button>
+      </template>
+      <div class="gf-divider"></div>
+      <button
+        class="gf-item"
+        @click="cycleFilterStatus"
+      >
+        {{ filterStatus === '' ? 'Все шаги' : filterStatus === 'unscheduled' ? 'Незапл.' : 'Запл.' }}
+        <ChevronDown :size="13" :stroke-width="2" />
+      </button>
+      <button
+        v-if="hasActiveFilters"
+        class="gf-item gf-reset"
         @click="resetAllFilters"
-        title="Сбросить все фильтры"
       >
         <X :size="14" />
-        <span class="desktop-only">Сбросить</span>
       </button>
-      
-      <!-- AI Planning button (mobile only — desktop version is in header) -->
-      <button class="ai-planner-btn filters-ai-btn mobile-only" @click="openAIPlannerModal">
-        <Sparkles :size="16" />
-      </button>
-      
-      <span class="results-count" v-if="totalGoalsItems > 0">
-        Найдено: {{ totalGoalsItems }} {{ totalGoalsItems === 1 ? 'цель' : 'целей' }}
-      </span>
-    </div>
-
-    <!-- Баннер: цели без шагов -->
-    <div class="needs-decomposition-banner" v-if="goalsWithoutStepsTotal > 0">
-      <div class="banner-header">
-        <AlertCircle :size="20" class="banner-icon" />
-        <span class="banner-title">{{ goalsWithoutStepsTotal }} {{ goalsWithoutStepsTotal === 1 ? 'цель требует' : 'целей требуют' }} декомпозиции</span>
-      </div>
-      <p class="banner-text">Чтобы планировать, разбейте цели на конкретные шаги</p>
-      <div class="banner-goals">
-        <div 
-          v-for="goal in goalsWithoutSteps.slice(0, 3)" 
-          :key="goal.id" 
-          class="banner-goal-item"
-          @click="goToDecomposition(goal)"
-        >
-          <span class="goal-sphere-mini">{{ getSphereIcon(goal.sphereId || goal.category) }}</span>
-          <span class="goal-title-mini">{{ goal.text || goal.title }}</span>
-          <ChevronRight :size="16" class="go-icon" />
-        </div>
-      </div>
-      <button 
-        v-if="goalsWithoutStepsTotal > 3" 
-        class="btn btn-outline btn-small"
+      <div class="gf-spacer"></div>
+      <button
+        ref="goalsWithoutStepsRef"
+        class="gf-badge warning"
+        v-if="goalsWithoutStepsTotal > 0"
         @click="goToGoalsBank"
       >
-        Показать все ({{ goalsWithoutStepsTotal }})
+        <AlertCircle :size="13" :stroke-width="2" />
+        {{ goalsWithoutStepsTotal }} без шагов
       </button>
     </div>
 
-    <div class="goals-list" v-if="filteredGoalsWithSteps.length > 0">
-      <div 
-        v-for="goal in paginatedGoals" 
-        :key="goal.id" 
-        class="goal-card"
-        :class="{ expanded: expandedGoals[goal.id] }"
+    <!-- Goals accordion card -->
+    <div class="goals-accordion" v-if="filteredGoalsWithSteps.length > 0">
+      <div
+        v-for="goal in paginatedGoals"
+        :key="goal.id"
+        class="ga-goal"
       >
-        <div class="goal-header" @click="toggleGoal(goal.id)">
-          <div class="goal-main">
-            <span class="goal-sphere-badge">{{ getSphereName(goal.sphereId) }}</span>
-            <h3 class="goal-title">{{ goal.text || goal.title }}</h3>
-          </div>
-          <div class="goal-meta">
-            <span class="steps-badge">
-              {{ goal.totalStepsData?.complete_steps || 0 }}/{{ goal.totalStepsData?.total_steps || goal.steps?.length || 0 }}
-            </span>
-            <ChevronDown :size="20" class="expand-icon" :class="{ expanded: expandedGoals[goal.id] }" />
-          </div>
+        <div class="ga-goal-header" @click="toggleGoal(goal.id)">
+          <span class="ga-sphere" :style="{ color: getSphereColor(goal.sphereId || goal.category) }">
+            <component :is="getSphereIconComponent(goal.sphereId || goal.category)" :size="16" />
+          </span>
+          <span class="ga-goal-title">{{ goal.text || goal.title }}</span>
+          <span class="ga-meta">
+            {{ goal.totalStepsData?.complete_steps || 0 }}/{{ goal.totalStepsData?.total_steps || goal.steps?.length || 0 }}
+          </span>
+          <ChevronDown :size="18" class="ga-chevron" :class="{ open: expandedGoals[goal.id] }" />
         </div>
-        
-        <div class="steps-grid" v-show="expandedGoals[goal.id]">
-          <!-- Если есть шаги -->
+
+        <div class="ga-steps" v-show="expandedGoals[goal.id]">
+          <!-- Steps list -->
           <template v-if="goal.steps && goal.steps.length > 0">
-            <div 
-              v-for="step in getFilteredSteps(goal)" 
+            <template
+              v-for="step in getFilteredSteps(goal)"
               :key="step.id"
-              class="step-card"
-              :class="{ 
-                scheduled: isStepScheduled(goal.id, step.id),
-                completed: step.completed,
-                ['priority-' + getScheduledPriority(goal.id, step.id)]: isStepScheduled(goal.id, step.id)
-              }"
-              @click="openStepActions(goal, step)"
             >
-              <button 
-                class="step-checkbox"
-                :class="{ completed: step.completed }"
-                @click.stop="quickToggleStepComplete(goal, step)"
-                :title="step.completed ? 'Отменить выполнение' : 'Выполнить'"
+              <div
+                class="ga-step"
+                :class="{
+                  scheduled: isStepScheduled(goal.id, step.id),
+                  completed: step.completed,
+                  'inline-active': inlineExpandedStepId === step.id
+                }"
+                @click="openStepActions(goal, step)"
               >
-                <Check v-if="step.completed" :size="12" />
-              </button>
-              <div class="step-content">
-                <span class="step-title" :class="{ completed: step.completed }">{{ step.title }}</span>
-                <div class="step-badges" v-if="isStepScheduled(goal.id, step.id)">
-                  <span class="date-badge">
-                    <Calendar :size="11" />
-                    {{ formatStepDate(goal.id, step.id) }}
-                  </span>
-                  <span class="time-badge" :class="{ empty: !getScheduledTime(goal.id, step.id) }">
-                    <Clock :size="11" />
-                    {{ getScheduledTime(goal.id, step.id) ? formatTimeShort(getScheduledTime(goal.id, step.id)) : '—' }}
-                  </span>
-                </div>
+                <button
+                  class="ga-step-check"
+                  :class="{ completed: step.completed }"
+                  @click.stop="quickToggleStepComplete(goal, step)"
+                >
+                  <Check v-if="step.completed" :size="10" />
+                </button>
+                <span class="ga-step-name" :class="{ completed: step.completed }">{{ step.title }}</span>
+                <span v-if="isStepScheduled(goal.id, step.id)" class="ga-step-badge date">
+                  <Calendar :size="11" />
+                  {{ formatStepDate(goal.id, step.id) }}
+                </span>
+                <span v-if="isStepScheduled(goal.id, step.id)" class="ga-step-badge time" :class="{ empty: !getScheduledTime(goal.id, step.id) }">
+                  <Clock :size="11" />
+                  {{ getScheduledTime(goal.id, step.id) ? formatTimeShort(getScheduledTime(goal.id, step.id)) : '—' }}
+                </span>
               </div>
-              <div class="priority-stripe" :class="'priority-' + (getScheduledPriority(goal.id, step.id) || 'none')"></div>
-            </div>
+
+              <!-- Desktop inline expand -->
+              <div
+                v-if="inlineExpandedStepId === step.id"
+                class="ig-expand"
+                @click.stop
+              >
+                <!-- Scheduled step -->
+                <template v-if="isStepScheduled(goal.id, step.id)">
+                  <div class="ig-expand-row">
+                    <div class="ig-expand-col">
+                      <div class="ig-label">
+                        <Calendar :size="12" />
+                        День
+                      </div>
+                      <div class="ig-chips">
+                        <button
+                          v-for="day in next7Days"
+                          :key="day.date"
+                          class="ig-chip"
+                          :class="{
+                            active: getScheduledStepDate === day.date,
+                            today: isToday(day.date)
+                          }"
+                          @click="rescheduleStep(day.date)"
+                        >
+                          {{ day.shortName }} {{ day.dayNum }}
+                        </button>
+                        <button
+                          class="ig-chip calendar-chip"
+                          :class="{ 'has-custom-date': getScheduledStepDate && !isDateInNext7Days(getScheduledStepDate) }"
+                          @click="openDatePicker('stepScheduled')"
+                        >
+                          <CalendarDays :size="14" />
+                          <span v-if="getScheduledStepDate && !isDateInNext7Days(getScheduledStepDate)" class="custom-date-label">
+                            {{ formatCustomDate(getScheduledStepDate) }}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="ig-expand-col">
+                      <div class="ig-label">
+                        <Flag :size="12" />
+                        Приоритет
+                      </div>
+                      <div class="ig-chips">
+                        <button
+                          v-for="priority in priorities"
+                          :key="priority.value"
+                          class="ig-chip"
+                          :class="{
+                            active: getScheduledStepPriority === priority.value,
+                            ['priority-' + priority.value]: true
+                          }"
+                          @click="updateStepPriority(priority.value)"
+                        >
+                          {{ priority.label }}
+                        </button>
+                      </div>
+                    </div>
+                    <div class="ig-expand-col">
+                      <div class="ig-label">
+                        <Clock :size="12" />
+                        Время
+                      </div>
+                      <div class="ig-chips">
+                        <button
+                          v-for="time in timeOptions"
+                          :key="time.value"
+                          class="ig-chip"
+                          :class="{ active: getScheduledStepTime === time.value }"
+                          @click="updateStepTime(time.value)"
+                        >
+                          {{ time.label }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="ig-expand-actions">
+                    <button class="ig-btn ghost" @click="removeInlineStepFromSchedule">
+                      <Trash2 :size="14" />
+                      Убрать
+                    </button>
+                    <button class="ig-btn primary" @click="saveInlineStepChanges">
+                      <Check :size="14" />
+                      Сохранить
+                    </button>
+                  </div>
+                </template>
+
+                <!-- Unscheduled step -->
+                <template v-else>
+                  <div class="ig-expand-row">
+                    <div class="ig-expand-col">
+                      <div class="ig-label">
+                        <Calendar :size="12" />
+                        День
+                      </div>
+                      <div class="ig-chips">
+                        <button
+                          v-for="day in next7Days"
+                          :key="day.date"
+                          class="ig-chip"
+                          :class="{
+                            active: newStepDay === day.date,
+                            today: isToday(day.date)
+                          }"
+                          @click="newStepDay = day.date"
+                        >
+                          {{ day.shortName }} {{ day.dayNum }}
+                        </button>
+                        <button
+                          class="ig-chip calendar-chip"
+                          :class="{ 'has-custom-date': newStepDay && !isDateInNext7Days(newStepDay) }"
+                          @click="openDatePicker('stepNew')"
+                        >
+                          <CalendarDays :size="14" />
+                          <span v-if="newStepDay && !isDateInNext7Days(newStepDay)" class="custom-date-label">
+                            {{ formatCustomDate(newStepDay) }}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="ig-expand-col">
+                      <div class="ig-label">
+                        <Flag :size="12" />
+                        Приоритет
+                      </div>
+                      <div class="ig-chips">
+                        <button
+                          v-for="priority in priorities"
+                          :key="priority.value"
+                          class="ig-chip"
+                          :class="{
+                            active: newStepPriority === priority.value,
+                            ['priority-' + priority.value]: true
+                          }"
+                          @click="newStepPriority = priority.value"
+                        >
+                          {{ priority.label }}
+                        </button>
+                      </div>
+                    </div>
+                    <div class="ig-expand-col">
+                      <div class="ig-label">
+                        <Clock :size="12" />
+                        Время
+                      </div>
+                      <div class="ig-chips">
+                        <button
+                          v-for="time in timeOptions"
+                          :key="time.value"
+                          class="ig-chip"
+                          :class="{ active: newStepTime === time.value }"
+                          @click="newStepTime = time.value"
+                        >
+                          {{ time.label }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="ig-expand-actions">
+                    <button
+                      class="ig-btn primary"
+                      :disabled="!newStepDay"
+                      @click="scheduleNewStep"
+                    >
+                      <Calendar :size="14" />
+                      Запланировать
+                    </button>
+                  </div>
+                </template>
+              </div>
+            </template>
           </template>
-          
-          <!-- Если нет шагов -->
-          <div v-else class="no-steps-state">
-            <ListTodo :size="32" class="no-steps-icon" />
-            <p class="no-steps-text">У этой цели пока нет шагов</p>
-            <p class="no-steps-hint">Разбейте цель на конкретные шаги для планирования</p>
-            <button class="btn btn-primary" @click="goToGoalDetails(goal)">
-              <Plus :size="16" />
-              Добавить шаги
-            </button>
-          </div>
-          
-          <!-- Пагинация шагов -->
+
+          <!-- No steps — compact -->
+          <button v-else class="ga-add-steps" @click="goToGoalDetails(goal)">
+            <Plus :size="14" />
+            Добавить шаги
+          </button>
+
+          <!-- Steps pagination -->
           <div v-if="goal.steps?.length > 0 && getStepsTotalPages(goal) > 1" class="steps-pagination">
             <div v-if="stepsLoading[goal.backendId || goal.id]" class="steps-loading">
               Загрузка...
             </div>
             <template v-else>
-              <button 
+              <button
                 class="steps-page-btn"
                 :disabled="getStepsCurrentPage(goal) <= 1"
                 @click.stop="goToStepsPage(goal, getStepsCurrentPage(goal) - 1)"
               >
                 <ChevronLeft :size="16" />
               </button>
-              
               <div class="steps-pages">
-                <button 
-                  v-for="page in getStepsPaginationPages(goal)" 
+                <button
+                  v-for="page in getStepsPaginationPages(goal)"
                   :key="page"
                   class="steps-page-num"
                   :class="{ active: page === getStepsCurrentPage(goal), dots: page === '...' }"
@@ -406,8 +537,7 @@
                   {{ page }}
                 </button>
               </div>
-              
-              <button 
+              <button
                 class="steps-page-btn"
                 :disabled="getStepsCurrentPage(goal) >= getStepsTotalPages(goal)"
                 @click.stop="goToStepsPage(goal, getStepsCurrentPage(goal) + 1)"
@@ -418,40 +548,28 @@
           </div>
         </div>
       </div>
-
-      <!-- Пагинация -->
-      <div v-if="totalPages > 1" class="pagination-container">
-        <button 
-          class="pagination-btn"
-          :disabled="currentPage <= 1"
-          @click="goToPage(currentPage - 1)"
-        >
-          <ChevronLeft :size="18" />
-        </button>
-        
-        <div class="pagination-pages">
-          <button 
-            v-for="page in paginationPages" 
-            :key="page"
-            class="pagination-page"
-            :class="{ active: page === currentPage, dots: page === '...' }"
-            :disabled="page === '...'"
-            @click="page !== '...' && goToPage(page)"
-          >
-            {{ page }}
-          </button>
-        </div>
-        
-        <button 
-          class="pagination-btn"
-          :disabled="currentPage >= totalPages"
-          @click="goToPage(currentPage + 1)"
-        >
-          <ChevronRight :size="18" />
-        </button>
-      </div>
     </div>
 
+    <!-- Goals pagination -->
+    <div v-if="totalPages > 1" class="pagination-container">
+      <button class="pagination-btn" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">
+        <ChevronLeft :size="18" />
+      </button>
+      <div class="pagination-pages">
+        <button
+          v-for="page in paginationPages" :key="page"
+          class="pagination-page"
+          :class="{ active: page === currentPage, dots: page === '...' }"
+          :disabled="page === '...'"
+          @click="page !== '...' && goToPage(page)"
+        >{{ page }}</button>
+      </div>
+      <button class="pagination-btn" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">
+        <ChevronRight :size="18" />
+      </button>
+    </div>
+
+    <!-- Empty filters state -->
     <div v-if="!filteredGoalsWithSteps.length && hasActiveFilters" class="empty-state empty-state-compact">
       <Filter :size="28" class="empty-icon" />
       <p>Нет целей по фильтрам</p>
@@ -683,22 +801,37 @@
         </template>
 
         <template v-else-if="bottomSheetMode === 'step'">
-          <h3 class="sheet-title">{{ selectedStep?.title }}</h3>
-          <p class="sheet-subtitle">{{ selectedGoal?.text || selectedGoal?.title }}</p>
-          
-          <!-- Запланированный шаг: показываем inline-действия -->
+          <!-- Variant 1: Improved header with complete button -->
+          <div class="sheet-step-header">
+            <button
+              class="sheet-complete-circle"
+              :class="{ done: selectedStep?.completed }"
+              @click="quickToggleStepComplete(selectedGoal, selectedStep)"
+            >
+              <Check v-if="selectedStep?.completed" :size="14" />
+            </button>
+            <div class="sheet-step-header-text">
+              <h3 class="sheet-title" style="margin: 0 0 0.125rem;">{{ selectedStep?.title }}</h3>
+              <p class="sheet-subtitle" style="margin: 0; display: flex; align-items: center; gap: 0.375rem;">
+                <component :is="getSphereIconComponent(selectedGoal?.sphereId || selectedGoal?.category)" :size="14" :style="{ color: getSphereColor(selectedGoal?.sphereId || selectedGoal?.category) }" />
+                {{ selectedGoal?.text || selectedGoal?.title }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Запланированный шаг -->
           <template v-if="isSelectedStepScheduled">
-            <div class="inline-options-section">
-              <div class="option-label">
-                <Calendar :size="16" />
-                <span>День</span>
+            <div class="sheet-section-compact">
+              <div class="sheet-section-label">
+                <Calendar :size="14" />
+                День
               </div>
-              <div class="option-chips days-row">
-                <button 
-                  v-for="day in next7Days" 
+              <div class="days-scroll-row">
+                <button
+                  v-for="day in next7Days"
                   :key="day.date"
                   class="chip day-chip"
-                  :class="{ 
+                  :class="{
                     active: getScheduledStepDate === day.date,
                     today: isToday(day.date)
                   }"
@@ -706,11 +839,10 @@
                 >
                   {{ day.shortName }} {{ day.dayNum }}
                 </button>
-                <button 
+                <button
                   class="chip calendar-chip"
                   :class="{ 'has-custom-date': getScheduledStepDate && !isDateInNext7Days(getScheduledStepDate) }"
                   @click="openDatePicker('stepScheduled')"
-                  :title="getScheduledStepDate && !isDateInNext7Days(getScheduledStepDate) ? formatCustomDate(getScheduledStepDate) : 'Выбрать дату'"
                 >
                   <CalendarDays :size="16" />
                   <span v-if="getScheduledStepDate && !isDateInNext7Days(getScheduledStepDate)" class="custom-date-label">
@@ -719,83 +851,87 @@
                 </button>
               </div>
             </div>
-            
-            <div class="inline-options-section">
-              <div class="option-label">
-                <Flag :size="16" />
-                <span>Приоритет</span>
-              </div>
-              <div class="option-chips">
-                <button 
-                  v-for="priority in priorities" 
-                  :key="priority.value"
-                  class="chip"
-                  :class="{ 
-                    active: getScheduledStepPriority === priority.value,
-                    ['priority-' + priority.value]: true
-                  }"
-                  @click="updateStepPriority(priority.value)"
-                >
-                  {{ priority.label }}
+
+            <!-- Priority & Time dropdowns -->
+            <div class="sheet-dropdowns-row">
+              <div class="sheet-dropdown" :class="{ open: sheetPriorityOpen }">
+                <button class="sheet-dropdown-trigger" @click="sheetPriorityOpen = !sheetPriorityOpen; sheetTimeOpen = false">
+                  <Flag :size="14" />
+                  <span class="sdt-label">{{ getPriorityLabel(getScheduledStepPriority) || 'Приоритет' }}</span>
+                  <ChevronDown :size="14" class="sdt-chevron" />
                 </button>
+                <div class="sheet-dropdown-body" v-show="sheetPriorityOpen">
+                  <button
+                    v-for="priority in priorities"
+                    :key="priority.value"
+                    class="sdd-option"
+                    :class="{
+                      active: getScheduledStepPriority === priority.value,
+                      ['priority-' + priority.value]: true
+                    }"
+                    @click="updateStepPriority(priority.value); sheetPriorityOpen = false"
+                  >
+                    {{ priority.label }}
+                  </button>
+                </div>
               </div>
-            </div>
-            
-            <div class="inline-options-section">
-              <div class="option-label">
-                <Clock :size="16" />
-                <span>Время</span>
-              </div>
-              <div class="option-chips">
-                <button 
-                  v-for="time in timeOptions" 
-                  :key="time.value"
-                  class="chip"
-                  :class="{ active: getScheduledStepTime === time.value }"
-                  @click="updateStepTime(time.value)"
-                >
-                  {{ time.label }}
+
+              <div class="sheet-dropdown" :class="{ open: sheetTimeOpen }">
+                <button class="sheet-dropdown-trigger" @click="sheetTimeOpen = !sheetTimeOpen; sheetPriorityOpen = false">
+                  <Clock :size="14" />
+                  <span class="sdt-label">{{ formatTimeLabel(getScheduledStepTime) || 'Время' }}</span>
+                  <ChevronDown :size="14" class="sdt-chevron" />
                 </button>
+                <div class="sheet-dropdown-body" v-show="sheetTimeOpen">
+                  <button
+                    v-for="time in timeOptions"
+                    :key="time.value"
+                    class="sdd-option"
+                    :class="{ active: getScheduledStepTime === time.value }"
+                    @click="updateStepTime(time.value); sheetTimeOpen = false"
+                  >
+                    {{ time.label }}
+                  </button>
+                </div>
               </div>
             </div>
-            
-            <div class="sheet-actions-row">
-              <button class="sheet-action danger" @click="removeStepFromSchedule">
-                <Trash2 :size="20" />
-                <span>Убрать из плана</span>
-              </button>
-              <button class="sheet-action primary" @click="saveStepChangesAndClose">
-                <Check :size="20" />
-                <span>Сохранить</span>
+
+            <div class="sheet-save-footer">
+              <button class="sheet-save-btn" @click="saveStepChangesAndClose">
+                <Check :size="18" />
+                Сохранить
               </button>
             </div>
+            <button class="sheet-remove-link" @click="removeStepFromSchedule">
+              <Trash2 :size="14" />
+              Убрать из плана
+            </button>
           </template>
-          
-          <!-- Незапланированный шаг: показываем все опции -->
+
+          <!-- Незапланированный шаг -->
           <template v-else>
-            <div class="inline-options-section">
-              <div class="option-label">
-                <Calendar :size="16" />
-                <span>День</span>
+            <div class="sheet-section-compact">
+              <div class="sheet-section-label">
+                <Calendar :size="14" />
+                Выберите день
               </div>
-              <div class="option-chips days-row">
-                <button 
-                  v-for="day in next7Days" 
+              <div class="days-scroll-row">
+                <button
+                  v-for="day in next7Days"
                   :key="day.date"
                   class="chip day-chip"
-                  :class="{ 
-                    active: newStepDay === day.date, 
-                    today: isToday(day.date) 
+                  :class="{
+                    active: newStepDay === day.date,
+                    today: isToday(day.date)
                   }"
                   @click="newStepDay = day.date"
                 >
                   {{ day.shortName }} {{ day.dayNum }}
                 </button>
-                <button 
+                <button
                   class="chip calendar-chip"
                   :class="{ 'has-custom-date': newStepDay && !isDateInNext7Days(newStepDay) }"
                   @click="openDatePicker('stepNew')"
-                  :title="newStepDay && !isDateInNext7Days(newStepDay) ? formatCustomDate(newStepDay) : 'Выбрать дату'"
                 >
                   <CalendarDays :size="16" />
                   <span v-if="newStepDay && !isDateInNext7Days(newStepDay)" class="custom-date-label">
@@ -804,54 +940,60 @@
                 </button>
               </div>
             </div>
-            
-            <div class="inline-options-section">
-              <div class="option-label">
-                <Flag :size="16" />
-                <span>Приоритет</span>
-              </div>
-              <div class="option-chips">
-                <button 
-                  v-for="priority in priorities" 
-                  :key="priority.value"
-                  class="chip"
-                  :class="{ 
-                    active: newStepPriority === priority.value,
-                    ['priority-' + priority.value]: true
-                  }"
-                  @click="newStepPriority = priority.value"
-                >
-                  {{ priority.label }}
+
+            <!-- Priority & Time dropdowns -->
+            <div class="sheet-dropdowns-row">
+              <div class="sheet-dropdown" :class="{ open: sheetPriorityOpen }">
+                <button class="sheet-dropdown-trigger" @click="sheetPriorityOpen = !sheetPriorityOpen; sheetTimeOpen = false">
+                  <Flag :size="14" />
+                  <span class="sdt-label">{{ getPriorityLabel(newStepPriority) || 'Приоритет' }}</span>
+                  <ChevronDown :size="14" class="sdt-chevron" />
                 </button>
+                <div class="sheet-dropdown-body" v-show="sheetPriorityOpen">
+                  <button
+                    v-for="priority in priorities"
+                    :key="priority.value"
+                    class="sdd-option"
+                    :class="{
+                      active: newStepPriority === priority.value,
+                      ['priority-' + priority.value]: true
+                    }"
+                    @click="newStepPriority = priority.value; sheetPriorityOpen = false"
+                  >
+                    {{ priority.label }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="sheet-dropdown" :class="{ open: sheetTimeOpen }">
+                <button class="sheet-dropdown-trigger" @click="sheetTimeOpen = !sheetTimeOpen; sheetPriorityOpen = false">
+                  <Clock :size="14" />
+                  <span class="sdt-label">{{ formatTimeLabel(newStepTime) || 'Время' }}</span>
+                  <ChevronDown :size="14" class="sdt-chevron" />
+                </button>
+                <div class="sheet-dropdown-body" v-show="sheetTimeOpen">
+                  <button
+                    v-for="time in timeOptions"
+                    :key="time.value"
+                    class="sdd-option"
+                    :class="{ active: newStepTime === time.value }"
+                    @click="newStepTime = time.value; sheetTimeOpen = false"
+                  >
+                    {{ time.label }}
+                  </button>
+                </div>
               </div>
             </div>
-            
-            <div class="inline-options-section">
-              <div class="option-label">
-                <Clock :size="16" />
-                <span>Время</span>
-              </div>
-              <div class="option-chips">
-                <button 
-                  v-for="time in timeOptions" 
-                  :key="time.value"
-                  class="chip"
-                  :class="{ active: newStepTime === time.value }"
-                  @click="newStepTime = time.value"
-                >
-                  {{ time.label }}
-                </button>
-              </div>
-            </div>
-            
-            <div class="sheet-actions" style="margin-top: 0.75rem;">
-              <button 
-                class="sheet-action primary"
+
+            <div class="sheet-save-footer">
+              <button
+                class="sheet-save-btn"
+                :class="{ disabled: !newStepDay }"
                 :disabled="!newStepDay"
                 @click="scheduleNewStep"
               >
-                <CheckCircle :size="20" />
-                <span>Запланировать</span>
+                <Calendar :size="18" />
+                Запланировать
               </button>
             </div>
           </template>
@@ -997,7 +1139,14 @@ import {
   Square,
   CheckSquare,
   BarChart3,
-  CalendarDays
+  CalendarDays,
+  Wallet,
+  Palette,
+  Users,
+  Heart,
+  Briefcase,
+  HeartHandshake,
+  Lightbulb
 } from 'lucide-vue-next'
 
 const store = useAppStore()
@@ -1030,6 +1179,14 @@ const showGoalStatusDropdown = ref(false)
 const showSortDropdown = ref(false)
 const addStepSearch = ref('')
 const searchExpanded = ref(false)
+const goalsSearchInput = ref(null)
+
+function cycleFilterStatus() {
+  const cycle = ['', 'unscheduled', 'scheduled']
+  const idx = cycle.indexOf(filterStatus.value)
+  filterStatus.value = cycle[(idx + 1) % cycle.length]
+}
+
 const goalsDisplayLimit = ref(10)
 const currentPage = ref(1)
 const expandedGoals = ref({})
@@ -1583,6 +1740,13 @@ const selectedTask = ref(null)
 const selectedGoal = ref(null)
 const selectedStep = ref(null)
 
+// Desktop inline expand for step actions
+const inlineExpandedStepId = ref(null)
+
+// Mobile bottom sheet dropdown state
+const sheetPriorityOpen = ref(false)
+const sheetTimeOpen = ref(false)
+
 // Буфер для отложенных изменений (сохраняем только по кнопке "Сохранить")
 const pendingTaskChanges = ref({})
 const originalTaskState = ref(null)
@@ -1835,6 +1999,13 @@ const selectedDayTasks = computed(() => {
 
 // Mobile tab switcher
 const mobileTab = ref('tasks')
+const goalsWithoutStepsRef = ref(null)
+
+function scrollToGoalsWithoutSteps() {
+  if (goalsWithoutStepsRef.value) {
+    goalsWithoutStepsRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+}
 
 // Day progress for header bar
 const selectedDayProgress = computed(() => {
@@ -2712,9 +2883,34 @@ function goToGoalDetails(goal) {
   router.push(`/app/goals/${goalId}`)
 }
 
+const sphereIconComponents = {
+  wealth: Wallet,
+  hobbies: Palette,
+  friendship: Users,
+  health: Heart,
+  career: Briefcase,
+  love: HeartHandshake
+}
+
+const sphereColors = {
+  wealth: '#e63946',
+  hobbies: '#f4a261',
+  friendship: '#e9c46a',
+  health: '#2a9d8f',
+  career: '#264653',
+  love: '#9b5de5'
+}
+
+function getSphereIconComponent(sphereId) {
+  return sphereIconComponents[sphereId] || Lightbulb
+}
+
+function getSphereColor(sphereId) {
+  return sphereColors[sphereId] || '#6366f1'
+}
+
 function getSphereIcon(sphereId) {
-  const sphere = lifeSpheres.value.find(s => s.id === sphereId)
-  return sphere?.icon || '🎯'
+  return sphereIconComponents[sphereId] || Lightbulb
 }
 
 function handleTouchStart(task, event) {
@@ -2758,7 +2954,7 @@ function openStepActions(goal, step) {
   newStepDay.value = null
   newStepPriority.value = ''
   newStepTime.value = ''
-  
+
   // Сохраняем оригинальное состояние для возможности отмены (для запланированных шагов)
   if (isStepScheduled(goal.id, step.id, step)) {
     originalStepState.value = {
@@ -2771,9 +2967,40 @@ function openStepActions(goal, step) {
   }
   // Сбрасываем буфер изменений
   pendingStepChanges.value = {}
-  
-  bottomSheetMode.value = 'step'
-  showBottomSheet.value = true
+
+  // Reset dropdown states
+  sheetPriorityOpen.value = false
+  sheetTimeOpen.value = false
+
+  // Desktop: inline expand; Mobile: bottom sheet
+  if (window.innerWidth >= 768) {
+    inlineExpandedStepId.value = inlineExpandedStepId.value === step.id ? null : step.id
+  } else {
+    inlineExpandedStepId.value = null
+    bottomSheetMode.value = 'step'
+    showBottomSheet.value = true
+  }
+}
+
+function closeInlineExpand() {
+  if (selectedStep.value && originalStepState.value && Object.keys(pendingStepChanges.value).length > 0) {
+    loadWeeklySteps()
+  }
+  inlineExpandedStepId.value = null
+  pendingStepChanges.value = {}
+  originalStepState.value = null
+  selectedGoal.value = null
+  selectedStep.value = null
+}
+
+async function saveInlineStepChanges() {
+  await saveStepChangesAndClose()
+  inlineExpandedStepId.value = null
+}
+
+async function removeInlineStepFromSchedule() {
+  await removeStepFromSchedule()
+  inlineExpandedStepId.value = null
 }
 
 function openRescheduleSheet() {
@@ -3237,6 +3464,7 @@ function closeBottomSheet() {
   originalStepState.value = null
   
   showBottomSheet.value = false
+  inlineExpandedStepId.value = null
   selectedTask.value = null
   selectedGoal.value = null
   selectedStep.value = null
@@ -3875,39 +4103,17 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.nav-btn-edge {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 1px solid var(--border-color);
-  background: var(--card-bg);
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.nav-btn-edge:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
+  margin-bottom: 0.75rem;
 }
 
 .week-range-center {
-  flex: 1;
-  text-align: center;
   font-weight: 500;
-  color: var(--text-primary);
-  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
 }
 
 .today-btn-inline {
-  padding: 0.5rem 0.875rem;
+  padding: 0.375rem 0.75rem;
   border-radius: 20px;
   border: none;
   background: var(--primary, #6366f1);
@@ -3923,6 +4129,52 @@ onUnmounted(() => {
   background: var(--primary-dark, #4f46e5);
 }
 
+/* ── Week strip (single white bar with arrows + days) ── */
+.week-strip {
+  display: flex;
+  align-items: center;
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 14px;
+  padding: 0.25rem;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.week-strip-nav {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary, #9ca3af);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.week-strip-nav:hover {
+  background: var(--bg-secondary, #f9fafb);
+  color: var(--text-primary);
+}
+
+.week-strip-days {
+  display: flex;
+  flex: 1;
+  gap: 0.25rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.week-strip-days::-webkit-scrollbar {
+  display: none;
+}
+
 .page-title {
   font-size: 1.5rem;
   font-weight: 700;
@@ -3936,26 +4188,6 @@ onUnmounted(() => {
   justify-content: center;
   gap: 1rem;
   flex-wrap: wrap;
-}
-
-.ai-planner-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, var(--success-color), var(--success-color));
-  border: none;
-  border-radius: 8px;
-  color: white;
-  font-weight: 600;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.ai-planner-btn:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
 }
 
 .ai-btn-text {
@@ -4098,39 +4330,28 @@ onUnmounted(() => {
   color: var(--text-secondary);
 }
 
-.week-bar {
-  display: flex;
-  gap: 0.25rem;
-  margin-bottom: 1rem;
-  overflow-x: auto;
-  padding-bottom: 0.25rem;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-.week-bar::-webkit-scrollbar {
-  display: none;
-}
+/* .week-bar removed — replaced by .week-strip-days */
 
 .day-tab {
   flex: 1;
   min-width: 44px;
   padding: 0.5rem 0.25rem;
   border: none;
-  border-radius: var(--radius-lg);
-  background: var(--card-bg);
+  border-radius: 10px;
+  background: transparent;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.25rem;
-  transition: all 0.2s;
+  transition: all 0.15s;
   position: relative;
+  font-family: inherit;
+  color: var(--text-primary);
 }
 
 .day-tab:hover {
-  background: var(--hover-bg, #f3f4f6);
+  background: var(--bg-secondary, #f9fafb);
 }
 
 .day-tab.active {
@@ -4139,7 +4360,7 @@ onUnmounted(() => {
 }
 
 .day-tab.today:not(.active) {
-  border: 2px solid var(--primary, #6366f1);
+  background: var(--bg-tertiary, #f3f4f6);
 }
 
 .day-tab.weekend {
@@ -4176,6 +4397,133 @@ onUnmounted(() => {
 .day-tab.active .task-count {
   background: white;
   color: var(--primary, #6366f1);
+}
+
+/* ══════════════════════════════════════
+   PLANNING STATS BAR
+   ══════════════════════════════════════ */
+.planning-stats-bar {
+  display: flex;
+  align-items: center;
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 0.25rem 0.375rem;
+  gap: 0;
+  margin-bottom: 1rem;
+  overflow: visible;
+}
+
+.stats-bar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.4rem 0.625rem;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  cursor: default;
+}
+
+.stats-bar-item:hover {
+  background: var(--bg-secondary, #f9fafb);
+  color: var(--text-primary);
+}
+
+.stats-bar-icon {
+  flex-shrink: 0;
+}
+
+.stats-bar-value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.stats-bar-label {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.stats-bar-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-color);
+  flex-shrink: 0;
+  margin: 0 0.125rem;
+}
+
+.stats-bar-progress {
+  width: 80px;
+  height: 4px;
+  background: var(--bg-tertiary, #f3f4f6);
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.stats-bar-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.stats-bar-progress-fill.tasks {
+  background: var(--primary-color, #6366f1);
+}
+
+.stats-bar-spacer {
+  flex: 1;
+  min-width: 0.5rem;
+}
+
+.stats-bar-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+  font-family: inherit;
+}
+
+.stats-bar-badge.warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: #b45309;
+}
+
+.stats-bar-badge.warning:hover {
+  background: rgba(245, 158, 11, 0.2);
+}
+
+.stats-bar-ai-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.625rem;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--success-color, #10b981);
+  background: color-mix(in srgb, var(--success-color, #10b981) 8%, transparent);
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.stats-bar-ai-btn:hover {
+  background: color-mix(in srgb, var(--success-color, #10b981) 15%, transparent);
+}
+
+.hide-mobile {
+  /* shown by default, hidden on mobile */
 }
 
 .day-content {
@@ -4531,35 +4879,16 @@ onUnmounted(() => {
 
 /* ── Two-panel layout ── */
 .planning-two-panel {
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
-  align-items: start;
 }
 
 @media (min-width: 900px) {
   .planning-two-panel {
-    grid-template-columns: 1fr 380px;
     gap: 1.25rem;
   }
 
-  .planning-container {
-    max-width: 1100px;
-  }
-
-  /* Day panel стicks while scrolling goals */
-  .day-content {
-    position: sticky;
-    top: 1.5rem;
-  }
-
-  /* Goals panel scrolls independently */
-  .goals-panel {
-    max-height: calc(100vh - 260px);
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-color) transparent;
-  }
 }
 
 /* ── Goals panel ── */
@@ -4567,6 +4896,329 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
 }
+
+/* ══════════════════════════════════════
+   VARIANT C — Filter strip + Accordion
+   ══════════════════════════════════════ */
+
+/* Filter strip */
+.goals-filter-strip {
+  display: flex;
+  align-items: center;
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 14px;
+  padding: 0.25rem 0.375rem;
+  margin-bottom: 0.75rem;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.goals-filter-strip::-webkit-scrollbar { display: none; }
+
+.gf-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.4rem 0.625rem;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+  background: none;
+  font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.gf-item:hover { background: var(--bg-secondary, #f9fafb); color: var(--text-primary); }
+.gf-item.active { background: var(--bg-tertiary, #f3f4f6); color: var(--text-primary); }
+.gf-item.gf-reset { color: var(--danger, #ef4444); }
+.gf-item.gf-reset:hover { background: rgba(239, 68, 68, 0.08); }
+
+.gf-search-input {
+  border: none;
+  outline: none;
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  background: transparent;
+  padding: 0.4rem 0.25rem;
+  min-width: 100px;
+  max-width: 160px;
+  font-family: inherit;
+}
+.gf-search-input::placeholder { color: var(--text-tertiary, #9ca3af); }
+
+.gf-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-color, #e5e7eb);
+  flex-shrink: 0;
+  margin: 0 0.125rem;
+}
+
+.gf-spacer { flex: 1; min-width: 0.5rem; }
+
+.gf-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.gf-badge.warning { background: rgba(245, 158, 11, 0.1); color: #b45309; }
+.gf-badge.warning:hover { background: rgba(245, 158, 11, 0.2); }
+
+/* Goals accordion */
+.goals-accordion {
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ga-goal + .ga-goal {
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.ga-goal-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.ga-goal-header:hover { background: var(--bg-secondary, #f9fafb); }
+
+.ga-sphere { font-size: 0.875rem; flex-shrink: 0; }
+
+.ga-goal-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ga-meta {
+  font-size: 0.6875rem;
+  color: var(--text-secondary, #6b7280);
+  flex-shrink: 0;
+}
+
+.ga-chevron {
+  color: var(--text-tertiary, #9ca3af);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.ga-chevron.open { transform: rotate(180deg); }
+
+/* Steps inside accordion */
+.ga-steps {
+  padding: 0 0.75rem 0.75rem;
+}
+
+.ga-step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s;
+  font-size: 0.8125rem;
+}
+.ga-step + .ga-step { margin-top: 0.25rem; }
+.ga-step:hover { background: var(--bg-secondary, #f9fafb); }
+.ga-step.scheduled { background: var(--primary-light, rgba(99,102,241,0.08)); }
+.ga-step.completed { opacity: 0.5; }
+
+.ga-step-check {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-color, #d1d5db);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: white;
+  padding: 0;
+}
+.ga-step-check:hover { border-color: var(--primary, #6366f1); }
+.ga-step-check.completed { background: var(--success-color, #10b981); border-color: var(--success-color, #10b981); }
+
+.ga-step-name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-primary);
+}
+.ga-step-name.completed { text-decoration: line-through; color: var(--text-tertiary, #9ca3af); }
+
+.ga-step-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.6875rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ga-step-badge.date { background: var(--primary, #6366f1); color: white; }
+.ga-step-badge.time { background: var(--bg-tertiary, #f3f4f6); color: var(--text-secondary); }
+.ga-step-badge.time.empty { color: var(--text-tertiary, #9ca3af); }
+
+/* Step inline-active highlight */
+.ga-step.inline-active {
+  background: var(--primary-light, rgba(99,102,241,0.08));
+  border-radius: 8px 8px 0 0;
+}
+
+/* ── Inline expand panel (desktop Variant 3) ── */
+.ig-expand {
+  background: var(--bg-secondary, #f9fafb);
+  border-top: 1px solid var(--border-color, #e5e7eb);
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  padding: 0.75rem;
+  margin-bottom: 0.25rem;
+  border-radius: 0 0 8px 8px;
+  animation: igSlideDown 0.15s ease;
+}
+@keyframes igSlideDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ig-expand-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.ig-expand-col {}
+
+.ig-label {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-tertiary, #9ca3af);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.375rem;
+}
+
+.ig-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.ig-chip {
+  padding: 0.25rem 0.5rem;
+  border-radius: 20px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-primary, #fff);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.ig-chip:hover { border-color: var(--primary, #6366f1); background: var(--primary-light, rgba(99,102,241,0.08)); }
+.ig-chip.active { background: var(--primary, #6366f1); border-color: var(--primary, #6366f1); color: white; }
+.ig-chip.today { border-color: var(--primary, #6366f1); color: var(--primary, #6366f1); }
+.ig-chip.today.active { color: white; }
+
+/* Priority colors for inline chips */
+.ig-chip.active.priority-critical { background: var(--danger-color, #ef4444); border-color: var(--danger-color, #ef4444); }
+.ig-chip.active.priority-desirable { background: var(--warning-color, #f59e0b); border-color: var(--warning-color, #f59e0b); }
+.ig-chip.active.priority-attention { background: var(--info-color, #3b82f6); border-color: var(--info-color, #3b82f6); }
+.ig-chip.active.priority-optional { background: var(--text-tertiary, #9ca3af); border-color: var(--text-tertiary, #9ca3af); }
+
+.ig-chip.calendar-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.ig-chip.calendar-chip.has-custom-date {
+  background: var(--primary-light, rgba(99,102,241,0.08));
+  border-color: var(--primary, #6366f1);
+  color: var(--primary, #6366f1);
+}
+
+.ig-expand-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.625rem;
+  justify-content: flex-end;
+}
+
+.ig-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+  font-family: inherit;
+  min-height: 30px;
+}
+.ig-btn.primary { background: var(--primary, #6366f1); color: white; }
+.ig-btn.primary:hover { background: var(--primary-dark, #4f46e5); }
+.ig-btn.primary:disabled { background: var(--border-color, #e5e7eb); color: var(--text-tertiary); cursor: not-allowed; }
+.ig-btn.ghost { background: transparent; color: var(--danger-color, #ef4444); }
+.ig-btn.ghost:hover { background: rgba(239,68,68,0.06); }
+
+/* Hide inline expand on mobile - use bottom sheet instead */
+@media (max-width: 767px) {
+  .ig-expand { display: none; }
+  .ga-step.inline-active { background: var(--primary-light, rgba(99,102,241,0.08)); border-radius: 8px; }
+}
+
+/* Add steps button */
+.ga-add-steps {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.625rem;
+  font-size: 0.8125rem;
+  color: var(--primary, #6366f1);
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  border-radius: 8px;
+  transition: background 0.12s;
+}
+.ga-add-steps:hover { background: var(--primary-light, rgba(99,102,241,0.08)); }
 
 .goals-panel-header {
   display: flex;
@@ -5631,76 +6283,51 @@ onUnmounted(() => {
   cursor: default;
 }
 
-.needs-decomposition-banner {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(245, 158, 11, 0.14) 100%);
-  border: 1px solid rgba(245, 158, 11, 0.35);
-  border-radius: var(--radius-lg);
-  padding: 1rem;
-  margin-bottom: 1rem;
-}
-
-.banner-header {
+/* ── Compact decomposition banner ── */
+.needs-decomposition-compact {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.banner-icon {
-  color: var(--warning-color);
-  flex-shrink: 0;
-}
-
-.banner-title {
-  font-weight: 600;
-  color: var(--text-primary);
-  font-size: 0.9375rem;
-}
-
-.banner-text {
-  color: var(--text-secondary);
+  padding: 0.5rem 0.75rem;
+  background: rgba(245, 158, 11, 0.06);
+  border-left: 3px solid var(--warning-color, #f59e0b);
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 0.75rem;
   font-size: 0.8125rem;
-  margin: 0 0 0.75rem;
 }
 
-.banner-goals {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.banner-goal-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 0.75rem;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.banner-goal-item:hover {
-  background: rgba(255, 255, 255, 0.9);
-}
-
-.goal-sphere-mini {
-  font-size: 1rem;
+.decomp-icon {
+  color: var(--warning-color, #f59e0b);
   flex-shrink: 0;
 }
 
-.goal-title-mini {
-  flex: 1;
-  font-size: 0.875rem;
-  color: #78350f;
+.decomp-text {
+  color: var(--text-secondary, #6b7280);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.go-icon {
-  color: #d97706;
-  flex-shrink: 0;
+.decomp-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--primary, #6366f1);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.decomp-link:hover {
+  background: rgba(99, 102, 241, 0.08);
 }
 
 .btn-small {
@@ -5722,24 +6349,6 @@ onUnmounted(() => {
 
 .empty-state p {
   margin: 0 0 1.5rem;
-}
-
-.btn {
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--radius-lg);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-}
-
-.btn-primary {
-  background: var(--primary, #6366f1);
-  color: white;
-}
-
-.btn-primary:hover {
-  opacity: 0.9;
 }
 
 .btn-outline {
@@ -6438,6 +7047,248 @@ onUnmounted(() => {
   border-color: var(--text-muted, #9ca3af);
 }
 
+/* ── Improved step bottom sheet (Variant 1) ── */
+.sheet-step-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.sheet-complete-circle {
+  width: 28px !important;
+  height: 28px !important;
+  max-width: 28px;
+  max-height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 50% !important;
+  border: 2px solid var(--border-color, #d1d5db);
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  flex-grow: 0;
+  align-self: flex-start;
+  margin-top: 2px;
+  color: transparent;
+  padding: 0 !important;
+  box-sizing: border-box;
+}
+.sheet-complete-circle:hover { border-color: var(--success-color, #22c55e); }
+.sheet-complete-circle.done {
+  background: var(--success-color, #22c55e);
+  border-color: var(--success-color, #22c55e);
+  color: white;
+}
+
+.sheet-step-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.sheet-section-compact {
+  padding: 0.625rem 0;
+  border-bottom: 1px solid var(--bg-tertiary, #f3f4f6);
+}
+
+.sheet-section-label {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-tertiary, #9ca3af);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.5rem;
+}
+
+.days-scroll-row {
+  display: flex;
+  gap: 0.375rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+}
+.days-scroll-row::-webkit-scrollbar { display: none; }
+.days-scroll-row .chip.day-chip {
+  min-width: 52px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.sheet-inline-row {
+  display: flex;
+  gap: 1rem;
+  padding: 0.625rem 0;
+  border-bottom: 1px solid var(--bg-tertiary, #f3f4f6);
+}
+
+.sheet-inline-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.chips-row-compact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.chip-sm {
+  padding: 0.25rem 0.625rem;
+  border-radius: 20px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg, #fff);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.chip-sm:hover { border-color: var(--primary, #6366f1); background: var(--primary-light, rgba(99,102,241,0.08)); }
+.chip-sm.active { background: var(--primary, #6366f1); border-color: var(--primary, #6366f1); color: white; }
+.chip-sm.active.priority-critical { background: var(--danger, #ef4444); border-color: var(--danger, #ef4444); }
+.chip-sm.active.priority-desirable { background: var(--warning, #f59e0b); border-color: var(--warning, #f59e0b); }
+.chip-sm.active.priority-attention { background: var(--info, #3b82f6); border-color: var(--info, #3b82f6); }
+.chip-sm.active.priority-optional { background: var(--text-muted, #9ca3af); border-color: var(--text-muted, #9ca3af); }
+
+.sheet-save-footer {
+  padding-top: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.sheet-save-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+  font-family: inherit;
+  min-height: 44px;
+  background: var(--primary, #6366f1);
+  color: white;
+}
+.sheet-save-btn:hover { background: var(--primary-dark, #4f46e5); }
+.sheet-save-btn.disabled, .sheet-save-btn:disabled {
+  background: var(--border-color, #e5e7eb);
+  color: var(--text-tertiary, #9ca3af);
+  cursor: not-allowed;
+}
+
+.sheet-remove-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-tertiary, #9ca3af);
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  transition: color 0.15s;
+  margin-top: 0.25rem;
+  width: 100%;
+}
+.sheet-remove-link:hover { color: var(--danger, #ef4444); }
+
+/* ── Sheet dropdowns (mobile compact) ── */
+.sheet-dropdowns-row {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.625rem 0;
+  border-bottom: 1px solid var(--bg-tertiary, #f3f4f6);
+}
+
+.sheet-dropdown {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.sheet-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-primary, #fff);
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sheet-dropdown-trigger:hover,
+.sheet-dropdown.open .sheet-dropdown-trigger {
+  border-color: var(--primary, #6366f1);
+  background: var(--primary-light, rgba(99,102,241,0.05));
+}
+
+.sdt-label {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sdt-chevron {
+  color: var(--text-tertiary, #9ca3af);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.sheet-dropdown.open .sdt-chevron { transform: rotate(180deg); }
+
+.sheet-dropdown-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  padding: 0.5rem 0 0;
+  animation: dropdownFade 0.15s ease;
+}
+@keyframes dropdownFade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.sdd-option {
+  padding: 0.3rem 0.625rem;
+  border-radius: 20px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-primary, #fff);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.sdd-option:hover { border-color: var(--primary, #6366f1); background: var(--primary-light, rgba(99,102,241,0.08)); }
+.sdd-option.active { background: var(--primary, #6366f1); border-color: var(--primary, #6366f1); color: white; }
+.sdd-option.active.priority-critical { background: var(--danger, #ef4444); border-color: var(--danger, #ef4444); }
+.sdd-option.active.priority-desirable { background: var(--warning, #f59e0b); border-color: var(--warning, #f59e0b); }
+.sdd-option.active.priority-attention { background: var(--info, #3b82f6); border-color: var(--info, #3b82f6); }
+.sdd-option.active.priority-optional { background: var(--text-muted, #9ca3af); border-color: var(--text-muted, #9ca3af); }
+
 .sheet-action {
   display: flex;
   align-items: center;
@@ -6622,10 +7473,10 @@ onUnmounted(() => {
     font-size: 1.75rem;
   }
   
-  .week-bar {
-    gap: 0.5rem;
+  .week-strip-days {
+    gap: 0.375rem;
   }
-  
+
   .day-tab {
     min-width: 60px;
     padding: 0.75rem 0.5rem;
@@ -6656,12 +7507,12 @@ onUnmounted(() => {
     gap: 0.5rem;
   }
 
-  .ai-planner-btn span {
+  .section-header-row .btn span {
     display: none;
   }
 
-  .ai-planner-btn {
-    padding: 0.5rem 0.625rem;
+  .section-header-row .btn {
+    padding: 0.375rem 0.5rem;
   }
 
   .week-nav-row {
@@ -6669,8 +7520,37 @@ onUnmounted(() => {
   }
 
   .week-range-center {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
   }
+
+  .week-strip {
+    padding: 0.1875rem;
+  }
+
+  .week-strip-nav {
+    width: 30px;
+    height: 30px;
+  }
+
+  .day-tab {
+    min-width: 38px;
+    padding: 0.375rem 0.125rem;
+  }
+
+  .planning-stats-bar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    height: 40px;
+    padding: 0.25rem 0.375rem;
+  }
+  .planning-stats-bar::-webkit-scrollbar { display: none; }
+
+  .stats-bar-progress { width: 50px; }
+
+  .hide-mobile { display: none; }
+
+  .ai-btn-label { display: none; }
 }
 
 /* Dark theme overrides */
@@ -6688,8 +7568,13 @@ onUnmounted(() => {
 }
 
 :root.dark .day-tab {
-  background: var(--bg-tertiary);
+  background: transparent;
   color: var(--text-secondary);
+}
+
+:root.dark .week-strip {
+  background: var(--bg-primary);
+  border-color: var(--border-color);
 }
 
 :root.dark .day-tab.active {

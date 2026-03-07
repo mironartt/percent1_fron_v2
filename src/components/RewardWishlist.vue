@@ -10,16 +10,6 @@
           <Plus :size="14" :stroke-width="2" />
           <span>Добавить награду</span>
         </button>
-        <button 
-          class="btn-header-action btn-ai"
-          :class="{ generating: isAiGenerating }"
-          :disabled="isAiGenerating"
-          @click="openAiSuggestionsModal"
-        >
-          <Loader2 v-if="isAiGenerating" :size="14" class="spin" />
-          <Sparkles v-else :size="14" :stroke-width="2" />
-          <span>{{ isAiGenerating ? 'Генерация...' : 'Помощь от ментора' }}</span>
-        </button>
       </div>
     </div>
 
@@ -154,38 +144,81 @@
       <div v-if="showAddModal" class="modal-overlay" @click.self="closeModal">
         <div class="modal-container modal-sm">
           <div class="modal-header">
-            <h3>{{ editingReward ? 'Редактировать награду' : 'Новая награда' }}</h3>
+            <button
+              class="header-icon-btn"
+              :class="{ active: activeSection === 'icon' }"
+              @click="toggleSection('icon')"
+            >
+              {{ formData.icon }}
+            </button>
+            <input
+              ref="rewardNameInput"
+              v-model="formData.name"
+              type="text"
+              class="header-name-input"
+              :placeholder="editingReward ? 'Редактировать награду' : 'Новая награда'"
+              @keydown.enter="formData.name.trim() && formData.cost && saveReward()"
+            />
             <button class="btn-close" @click="closeModal">
               <X :size="20" :stroke-width="1.5" />
             </button>
           </div>
-          <div class="modal-content">
-            <div class="form-group">
-              <label>Иконка</label>
-              <div class="icon-grid">
-                <button 
-                  v-for="icon in availableIcons" 
+
+          <div class="modal-body">
+            <div v-if="activeSection === 'icon'" class="expand-section">
+              <div class="icon-grid-full">
+                <button
+                  v-for="icon in availableIcons"
                   :key="icon"
                   class="icon-option"
                   :class="{ selected: formData.icon === icon }"
-                  @click="formData.icon = icon"
+                  @click="formData.icon = icon; activeSection = null"
                 >
                   {{ icon }}
                 </button>
               </div>
             </div>
-            <div class="form-group">
-              <label>Название</label>
-              <input 
-                v-model="formData.name"
-                type="text"
-                class="form-input"
-                placeholder="Например: Поход в кино"
-              />
+
+            <div class="action-bar">
+              <button
+                v-if="editingReward"
+                class="action-chip action-chip-danger"
+                @click="deleteReward"
+                :disabled="rewardsLoading"
+                title="Удалить"
+              >
+                <Trash2 :size="14" :stroke-width="1.5" />
+              </button>
+              <button
+                class="action-chip"
+                :class="{ active: activeSection === 'cost' }"
+                @click="toggleSection('cost')"
+              >
+                <Coins :size="14" :stroke-width="1.5" />
+                {{ formData.cost }} XP
+              </button>
+              <button
+                class="action-chip"
+                :class="{ active: activeSection === 'more' }"
+                @click="toggleSection('more')"
+              >
+                <Plus :size="14" :stroke-width="1.5" />
+                Описание
+              </button>
+              <div class="action-bar-spacer"></div>
+              <button
+                class="btn-create"
+                @click="saveReward"
+                :disabled="!formData.name.trim() || !formData.cost || rewardsLoading"
+              >
+                <Loader2 v-if="rewardsLoading" :size="16" :stroke-width="2" class="spin" />
+                {{ editingReward ? 'Сохранить' : 'Добавить' }}
+              </button>
             </div>
-            <div class="form-group">
-              <label>Стоимость (XP)</label>
-              <input 
+
+            <div v-if="activeSection === 'cost'" class="expand-section">
+              <label class="expand-label">Стоимость (XP)</label>
+              <input
                 v-model.number="formData.cost"
                 type="number"
                 min="10"
@@ -193,29 +226,23 @@
                 class="form-input"
               />
             </div>
-            <div class="form-group">
-              <label>Описание (необязательно)</label>
-              <textarea 
+
+            <div v-if="activeSection === 'more'" class="expand-section">
+              <textarea
                 v-model="formData.description"
                 class="form-input"
                 rows="2"
                 placeholder="Чем эта награда особенная?"
               />
             </div>
-          </div>
-          <div class="modal-footer">
-            <button v-if="editingReward" class="btn btn-danger" @click="deleteReward" :disabled="rewardsLoading">
-              Удалить
-            </button>
-            <div class="spacer"></div>
-            <button class="btn btn-secondary" @click="closeModal">Отмена</button>
-            <button 
-              class="btn btn-primary" 
-              @click="saveReward"
-              :disabled="!formData.name || !formData.cost || rewardsLoading"
-            >
-              {{ editingReward ? 'Сохранить' : 'Добавить' }}
-            </button>
+
+            <div v-if="!editingReward" class="suggest-row">
+              <span class="suggest-label">Нужна идея?</span>
+              <button class="suggest-link-btn" @click="openAiSuggestionsModal">
+                <Sparkles :size="12" :stroke-width="1.5" />
+                Ментор
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -382,12 +409,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useXpStore } from '../stores/xp'
 import { useToastStore } from '../stores/toast'
 import { useAppStore } from '../stores/app'
 import { useAITasksStore } from '../stores/aiTasks'
-import { Gift, Plus, Pencil, Check, X, ChevronDown, Loader2, Sparkles, Target, TrendingUp, Coins, CheckCircle, AlertTriangle } from 'lucide-vue-next'
+import { Gift, Plus, Pencil, Check, X, ChevronDown, Loader2, Sparkles, Target, TrendingUp, Coins, CheckCircle, AlertTriangle, Trash2 } from 'lucide-vue-next'
 
 const xpStore = useXpStore()
 const toast = useToastStore()
@@ -395,6 +422,7 @@ const appStore = useAppStore()
 const aiTasksStore = useAITasksStore()
 
 const showAddModal = ref(false)
+const rewardNameInput = ref(null)
 const rewardsExpanded = ref(false)
 const editingReward = ref(null)
 const claimingReward = ref(null)
@@ -422,6 +450,11 @@ const availableIcons = [
   '🎁', '☕', '🎬', '📚', '🍽️', '🏖️', '🎮', '🛍️',
   '💆', '🎧', '🍰', '🌴', '🎪', '🎨', '🎵', '✈️'
 ]
+const activeSection = ref(null)
+
+function toggleSection(section) {
+  activeSection.value = activeSection.value === section ? null : section
+}
 
 const xpBalance = computed(() => xpStore.xpBalance)
 const rewards = computed(() => xpStore.rewards)
@@ -481,6 +514,7 @@ function editReward(reward) {
 function closeModal() {
   showAddModal.value = false
   editingReward.value = null
+  activeSection.value = null
   formData.value = {
     name: '',
     cost: 100,
@@ -488,6 +522,14 @@ function closeModal() {
     description: ''
   }
 }
+
+watch(showAddModal, (isOpen) => {
+  if (isOpen) {
+    nextTick(() => {
+      rewardNameInput.value?.focus()
+    })
+  }
+})
 
 async function saveReward() {
   if (editingReward.value) {
@@ -760,7 +802,7 @@ async function confirmAiRewardSelection() {
   padding: 0.375rem 0.75rem;
   font-size: 0.8125rem;
   font-weight: 500;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -768,24 +810,24 @@ async function confirmAiRewardSelection() {
 }
 
 .btn-header-action.btn-add {
-  background: var(--primary-color, #6366f1);
+  background: var(--primary-color);
   color: white;
-  border-color: var(--primary-color, #6366f1);
+  border-color: var(--primary-color);
 }
 
 .btn-header-action.btn-add:hover {
-  background: #4f46e5;
-  border-color: #4f46e5;
+  background: var(--primary-dark);
+  border-color: var(--primary-dark);
 }
 
 .btn-header-action.btn-ai {
-  background: #d1fae5;
-  color: #059669;
-  border-color: #10b981;
+  background: color-mix(in srgb, var(--success-color) 15%, transparent);
+  color: var(--success-color);
+  border-color: var(--success-color);
 }
 
 .btn-header-action.btn-ai:hover:not(:disabled) {
-  background: #a7f3d0;
+  background: color-mix(in srgb, var(--success-color) 25%, transparent);
 }
 
 .btn-header-action.btn-ai:disabled {
@@ -794,9 +836,9 @@ async function confirmAiRewardSelection() {
 }
 
 .btn-header-action.btn-ai.generating {
-  background: rgba(107, 114, 128, 0.1);
-  color: #6b7280;
-  border-color: #9ca3af;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border-color: var(--border-color);
 }
 
 .btn-header-action .spin {
@@ -864,7 +906,7 @@ async function confirmAiRewardSelection() {
 }
 
 .section-label.available {
-  color: #22c55e;
+  color: var(--success-color);
 }
 
 .section-label.upcoming {
@@ -949,47 +991,17 @@ async function confirmAiRewardSelection() {
 }
 
 .check-icon {
-  color: #22c55e;
-}
-
-.btn {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-sm {
-  padding: 0.4rem 0.75rem;
-  font-size: 0.85rem;
-}
-
-.btn-primary {
-  background: var(--primary-color);
-  color: white;
-}
-
-.btn-secondary {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  color: var(--success-color);
 }
 
 .btn-success {
-  background: #22c55e;
+  background: var(--success-color);
   color: white;
 }
 
 .btn-danger {
-  background: #ef4444;
+  background: var(--danger-color);
   color: white;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .modal-overlay {
@@ -1020,15 +1032,52 @@ async function confirmAiRewardSelection() {
 .modal-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.25rem;
+  gap: 12px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
 }
 
-.modal-header h3 {
-  font-size: 1.1rem;
-  margin: 0;
+.header-icon-btn {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.header-icon-btn:hover {
+  border-color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color) 5%, transparent);
+}
+
+.header-icon-btn.active {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.header-name-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 1.125rem;
+  font-weight: 600;
+  background: transparent;
+  color: var(--text-primary);
+  padding: 0;
+  min-width: 0;
+}
+
+.header-name-input::placeholder {
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .btn-close {
@@ -1040,22 +1089,133 @@ async function confirmAiRewardSelection() {
   border-radius: 6px;
 }
 
+.modal-body {
+  padding: 16px 20px;
+}
+
 .modal-content {
   padding: 1.25rem;
   overflow-y: auto;
   flex: 1;
 }
 
-.form-group {
-  margin-bottom: 1rem;
+.action-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
 }
 
-.form-group label {
-  display: block;
-  font-size: 0.85rem;
+.action-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  font-size: 0.8125rem;
   font-weight: 500;
-  margin-bottom: 0.5rem;
   color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.action-chip:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color) 5%, transparent);
+}
+
+.action-chip.active {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.action-chip-danger {
+  color: var(--text-muted);
+}
+
+.action-chip-danger:hover {
+  border-color: var(--danger-color);
+  color: var(--danger-color);
+  background: color-mix(in srgb, var(--danger-color) 5%, transparent);
+}
+
+.action-bar-spacer {
+  flex: 1;
+}
+
+.btn-create {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  border-radius: var(--radius-md);
+  border: none;
+  background: var(--primary-color);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-create:hover:not(:disabled) {
+  background: var(--primary-dark);
+}
+
+.btn-create:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.expand-section {
+  padding: 10px;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+.expand-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--text-secondary);
+}
+
+.icon-grid-full {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+}
+
+.icon-option {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: var(--bg-primary);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.icon-option:hover {
+  border-color: color-mix(in srgb, var(--primary-color) 40%, transparent);
+  transform: scale(1.1);
+}
+
+.icon-option.selected {
+  border-color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color) 8%, transparent);
 }
 
 .form-input {
@@ -1066,43 +1226,44 @@ async function confirmAiRewardSelection() {
   font-size: 0.95rem;
   background: var(--bg-secondary);
   color: var(--text-primary);
+  font-family: inherit;
 }
 
-.icon-grid {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 0.25rem;
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
 }
 
-.icon-option {
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: none;
-  border-radius: 8px;
-  font-size: 1.25rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.icon-option:hover {
-  background: var(--bg-tertiary, rgba(0,0,0,0.05));
-}
-
-.icon-option.selected {
-  background: var(--primary-color);
-}
-
-.modal-footer {
+.suggest-row {
   display: flex;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
   border-top: 1px solid var(--border-color);
-  flex-shrink: 0;
 }
 
-.spacer {
-  flex: 1;
+.suggest-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.suggest-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--primary-color);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: opacity 0.2s;
+}
+
+.suggest-link-btn:hover {
+  opacity: 0.7;
 }
 
 .claim-modal .claim-content {
@@ -1124,7 +1285,7 @@ async function confirmAiRewardSelection() {
 .claim-cost {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #ef4444;
+  color: var(--danger-color);
   margin-bottom: 0.25rem;
 }
 
@@ -1194,7 +1355,7 @@ async function confirmAiRewardSelection() {
 }
 
 .compact-reward.available {
-  border-color: #22c55e;
+  border-color: var(--success-color);
   background: rgba(34, 197, 94, 0.08);
 }
 
@@ -1246,12 +1407,12 @@ async function confirmAiRewardSelection() {
 
 .compact-ready {
   font-size: 0.8rem;
-  color: #22c55e;
+  color: var(--success-color);
   font-weight: 500;
 }
 
 .compact-check {
-  color: #22c55e;
+  color: var(--success-color);
   flex-shrink: 0;
 }
 
@@ -1310,7 +1471,7 @@ async function confirmAiRewardSelection() {
   align-items: center;
   gap: 0.35rem;
   padding: 0.5rem 0.75rem;
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: var(--success-color);
   border: none;
   border-radius: 8px;
   font-size: 0.85rem;
@@ -1335,7 +1496,7 @@ async function confirmAiRewardSelection() {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: var(--success-color);
   border: none;
   color: white;
 }
@@ -1361,7 +1522,7 @@ async function confirmAiRewardSelection() {
 }
 
 .ai-header-icon {
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .ai-header-title h3 {
@@ -1384,7 +1545,7 @@ async function confirmAiRewardSelection() {
 }
 
 .ai-intro-icon svg {
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .ai-intro-section h4 {
@@ -1418,7 +1579,7 @@ async function confirmAiRewardSelection() {
 }
 
 .ai-feature svg {
-  color: #10b981;
+  color: var(--success-color);
   flex-shrink: 0;
 }
 
@@ -1429,7 +1590,7 @@ async function confirmAiRewardSelection() {
   gap: 0.5rem;
   width: 100%;
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: var(--success-color);
   border: none;
   border-radius: 10px;
   color: white;
@@ -1471,7 +1632,7 @@ async function confirmAiRewardSelection() {
 }
 
 .ai-spinner {
-  color: #10b981;
+  color: var(--success-color);
   margin-bottom: 1rem;
 }
 
@@ -1511,11 +1672,11 @@ async function confirmAiRewardSelection() {
 }
 
 .ai-reward-card:hover {
-  border-color: #10b981;
+  border-color: var(--success-color);
 }
 
 .ai-reward-card.selected {
-  border-color: #10b981;
+  border-color: var(--success-color);
   background: rgba(16, 185, 129, 0.08);
 }
 
@@ -1543,7 +1704,7 @@ async function confirmAiRewardSelection() {
 
 .ai-reward-cost {
   font-size: 0.85rem;
-  color: #10b981;
+  color: var(--success-color);
   font-weight: 500;
 }
 
@@ -1559,8 +1720,8 @@ async function confirmAiRewardSelection() {
 }
 
 .ai-reward-card.selected .ai-reward-checkbox {
-  background: #10b981;
-  border-color: #10b981;
+  background: var(--success-color);
+  border-color: var(--success-color);
   color: white;
 }
 
@@ -1582,7 +1743,7 @@ async function confirmAiRewardSelection() {
 }
 
 .ai-success-icon svg {
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .ai-confirmation-section h4 {
@@ -1617,7 +1778,7 @@ async function confirmAiRewardSelection() {
 
 .ai-created-cost {
   margin-left: auto;
-  color: #10b981;
+  color: var(--success-color);
   font-weight: 500;
   font-size: 0.85rem;
 }

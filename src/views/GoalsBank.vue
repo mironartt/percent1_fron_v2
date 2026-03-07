@@ -35,46 +35,40 @@
 
     <!-- Summary State - After Completion -->
     <div v-else-if="showSummary" class="summary-section">
-      <header class="section-header">
-        <div class="section-header-row">
-          <Breadcrumbs :items="breadcrumbItems" />
-          <div class="header-actions">
-            <button class="btn btn-secondary btn-sm" @click="goToPlanning">
-              <Calendar :size="16" :stroke-width="2" /><span>Запланировать</span>
-            </button>
-            <button class="btn btn-primary btn-sm" @click="addNewGoal">
-              <Plus :size="16" :stroke-width="2" /><span>Добавить цель</span>
-            </button>
-          </div>
+      <div class="section-header-row">
+        <Breadcrumbs :items="breadcrumbItems" />
+        <div class="header-actions">
+          <button class="btn btn-primary btn-sm" @click="addNewGoal">
+            <Plus :size="16" :stroke-width="2" /><span>Добавить цель</span>
+          </button>
         </div>
-      </header>
+      </div>
 
       <!-- Goals Content -->
       <div class="goals-content" v-if="rawIdeas.length > 0 || hasActiveFilters">
-        <!-- Filter Bar: Dropdown + Status Tabs -->
-        <div class="filter-bar-unified">
+        <!-- Stats Bar: filters + actions -->
+        <div class="stats-bar">
           <!-- Sphere Dropdown -->
           <div class="sphere-dropdown-wrapper">
-            <button 
-              class="sphere-dropdown-btn"
+            <button
+              class="stats-action-btn"
               :class="{ active: filterSphere !== '' }"
               @click="toggleSphereDropdown"
             >
-              <Filter :size="16" />
-              <span>{{ filterSphere ? getSphereNameOnly(filterSphere) : 'Все сферы' }}</span>
-              <ChevronDown :size="14" :class="{ rotated: showSphereDropdown }" />
+              <Filter :size="14" />
+              <ChevronDown :size="12" :class="{ rotated: showSphereDropdown }" />
             </button>
             <transition name="dropdown-fade">
               <div v-if="showSphereDropdown" class="sphere-dropdown-menu">
-                <button 
+                <button
                   class="sphere-dropdown-item"
                   :class="{ active: filterSphere === '' }"
                   @click="selectSphere('')"
                 >
                   Все сферы
                 </button>
-                <button 
-                  v-for="sphere in lifeSpheres" 
+                <button
+                  v-for="sphere in lifeSpheres"
                   :key="sphere.id"
                   class="sphere-dropdown-item"
                   :class="{ active: filterSphere === sphere.id }"
@@ -87,60 +81,19 @@
             </transition>
           </div>
 
-          <div class="filter-sep"></div>
-
-          <!-- Status Dropdown (mobile-friendly) -->
-          <div class="status-dropdown-wrapper">
-            <button 
-              class="status-dropdown-btn"
-              :class="{ active: filterStatus !== '' }"
-              @click="toggleStatusDropdown"
-            >
-              <span>{{ getStatusLabel(filterStatus) }}</span>
-              <ChevronDown :size="14" :class="{ rotated: showStatusDropdown }" />
-            </button>
-            <transition name="dropdown-fade">
-              <div v-if="showStatusDropdown" class="status-dropdown-menu">
-                <button 
-                  class="status-dropdown-item"
-                  :class="{ active: filterStatus === '' }"
-                  @click="selectStatus('')"
-                >
-                  Все
-                </button>
-                <button 
-                  class="status-dropdown-item"
-                  :class="{ active: filterStatus === 'work' }"
-                  @click="selectStatus('work')"
-                >
-                  В работе
-                </button>
-                <button 
-                  class="status-dropdown-item"
-                  :class="{ active: filterStatus === 'complete' }"
-                  @click="selectStatus('complete')"
-                >
-                  Завершены
-                </button>
-              </div>
-            </transition>
-          </div>
-
-          <div class="filter-sep" style="margin-left: auto;"></div>
-
           <!-- Search -->
           <div class="search-expandable" :class="{ expanded: showSearchInput }">
-            <button 
-              v-if="!showSearchInput" 
-              class="search-toggle-btn"
+            <button
+              v-if="!showSearchInput"
+              class="stats-action-btn"
               @click="toggleSearch"
               title="Поиск"
             >
-              <Search :size="18" :stroke-width="2" />
+              <Search :size="14" />
             </button>
             <div v-else class="search-input-wrapper">
-              <Search :size="16" :stroke-width="2" class="search-icon" />
-              <input 
+              <Search :size="14" class="search-icon" />
+              <input
                 ref="searchInputRef"
                 v-model="searchQuery"
                 type="text"
@@ -155,23 +108,18 @@
             </div>
           </div>
 
-          <!-- Filter loading spinner -->
+          <!-- Loading spinner -->
           <transition name="fade">
-            <Loader2 v-if="isLoadingGoals" :size="16" class="filter-spinner" />
+            <Loader2 v-if="isLoadingGoals" :size="14" class="filter-spinner" />
           </transition>
 
-          <!-- Reset Filters Button -->
-          <transition name="fade">
-            <button
-              v-if="hasActiveFilters"
-              class="reset-filters-btn"
-              @click="clearFilters"
-              title="Сбросить все фильтры"
-            >
-              <RotateCcw :size="14" />
-              <span class="reset-text">Сбросить</span>
-            </button>
-          </transition>
+          <div class="stats-bar-spacer"></div>
+
+          <!-- AI Action -->
+          <button class="stats-ai-btn" @click="openMentorModal">
+            <Sparkles :size="14" />
+            <span class="ai-btn-label">AI цель</span>
+          </button>
         </div>
 
         <!-- Active filter chips -->
@@ -180,14 +128,13 @@
             {{ getSphereNameOnly(filterSphere) }}
             <X :size="12" />
           </span>
-          <span v-if="filterStatus" class="active-filter-chip" @click="selectStatus('')">
-            {{ getStatusLabel(filterStatus) }}
-            <X :size="12" />
-          </span>
           <span v-if="searchQuery" class="active-filter-chip" @click="closeSearch">
             "{{ searchQuery }}"
             <X :size="12" />
           </span>
+          <button class="reset-filters-btn" @click="clearFilters" title="Сбросить все фильтры">
+            <RotateCcw :size="12" />
+          </button>
         </div>
 
         <!-- Empty state when filters return no results -->
@@ -200,58 +147,90 @@
           </button>
         </div>
 
-        <!-- Goals Grid -->
-        <div v-else class="goals-grid">
-          <div
-            v-for="goal in paginatedGoals"
-            :key="goal.id"
-            class="goal-card"
-            :style="{ '--sphere-accent': getSphereColor(goal.sphereId) }"
-            @click="goToDecompose(goal.id)"
-            @contextmenu.prevent="openBottomSheet(goal)"
-            @touchstart="startLongPress(goal)"
-            @touchend="cancelLongPress"
-            @touchmove="cancelLongPress"
-          >
-            <span class="sphere-icon-col" :style="{ color: getSphereColor(goal.sphereId) }">
-              <component :is="getSphereIconComponent(goal.sphereId)" :size="18" />
-            </span>
-            <span class="goal-title">{{ goal.text }}</span>
-            <span v-if="getStepsProgress(goal)" class="steps-progress">
-              <ListChecks :size="12" />
-              {{ getStepsProgress(goal).completed }}/{{ getStepsProgress(goal).total }}
-            </span>
-            <span v-if="goal.generatedByAI" class="ai-badge" title="Создано с помощью ИИ">
-              <Bot :size="11" />
-            </span>
-            <button
-              class="btn-settings-card"
-              @click.stop="openEditModal(goal)"
-              title="Настройки цели"
-            >
-              <Settings :size="15" />
+        <!-- Goals Sections -->
+        <div v-else class="goals-sections">
+
+          <!-- Section: В работе -->
+          <div v-if="goalsInWork.length > 0" class="goals-section">
+            <div class="section-label">В работе ({{ goalsInWork.length }})</div>
+            <div class="goals-list">
+              <div
+                v-for="goal in goalsInWork"
+                :key="goal.id"
+                class="goal-row"
+                :style="{ '--sphere-accent': getSphereColor(goal.sphereId) }"
+                @click="goToDecompose(goal.id)"
+              >
+                <span class="sphere-icon-col" :style="{ color: getSphereColor(goal.sphereId) }">
+                  <component :is="getSphereIconComponent(goal.sphereId)" :size="18" />
+                </span>
+                <span class="goal-title">{{ goal.text }}</span>
+                <span v-if="getStepsProgress(goal)" class="steps-progress">
+                  {{ getStepsProgress(goal).completed }}/{{ getStepsProgress(goal).total }}
+                </span>
+                <ChevronRight :size="16" class="row-chevron" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: Остальные -->
+          <div v-if="goalsAvailable.length > 0" class="goals-section">
+            <div class="section-label">Остальные ({{ goalsAvailable.length }})</div>
+            <div class="goals-list">
+              <div
+                v-for="goal in goalsAvailable"
+                :key="goal.id"
+                class="goal-row"
+                :style="{ '--sphere-accent': getSphereColor(goal.sphereId) }"
+                @click="goToDecompose(goal.id)"
+              >
+                <span class="sphere-icon-col" :style="{ color: getSphereColor(goal.sphereId) }">
+                  <component :is="getSphereIconComponent(goal.sphereId)" :size="18" />
+                </span>
+                <span class="goal-title">{{ goal.text }}</span>
+                <span v-if="getStepsProgress(goal)" class="steps-progress">
+                  {{ getStepsProgress(goal).completed }}/{{ getStepsProgress(goal).total }}
+                </span>
+                <ChevronRight :size="16" class="row-chevron" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: Завершены -->
+          <div v-if="goalsCompleted.length > 0" class="goals-section">
+            <button class="section-label section-label-toggle" @click="showCompletedSection = !showCompletedSection">
+              <span>Завершены ({{ goalsCompleted.length }})</span>
+              <ChevronDown :size="14" :class="{ rotated: showCompletedSection }" />
             </button>
+            <div v-if="showCompletedSection" class="goals-list">
+              <div
+                v-for="goal in goalsCompleted"
+                :key="goal.id"
+                class="goal-row goal-row-completed"
+                :style="{ '--sphere-accent': getSphereColor(goal.sphereId) }"
+                @click="goToDecompose(goal.id)"
+              >
+                <span class="sphere-icon-col" :style="{ color: getSphereColor(goal.sphereId) }">
+                  <component :is="getSphereIconComponent(goal.sphereId)" :size="18" />
+                </span>
+                <span class="goal-title">{{ goal.text }}</span>
+              </div>
+            </div>
           </div>
         </div>
-        
-        <!-- Goals count -->
-        <div class="goals-count-row" v-if="totalGoalsCount > 0">
-          <span class="goals-count-text">
-            {{ paginatedGoals.length }} из {{ totalGoalsCount }} {{ totalGoalsCount === 1 ? 'цели' : totalGoalsCount < 5 ? 'цели' : 'целей' }}
-          </span>
-        </div>
+
 
         <!-- Pagination -->
         <div v-if="totalPages > 1" class="pagination-bar">
-          <button 
+          <button
             class="pagination-btn"
             :disabled="currentPageLocal === 1"
             @click="goToPage(currentPageLocal - 1)"
           >
             <ChevronLeft :size="18" />
           </button>
-          <button 
-            v-for="page in visiblePages" 
+          <button
+            v-for="page in visiblePages"
             :key="page"
             class="pagination-btn"
             :class="{ active: page === currentPageLocal, ellipsis: page === '...' }"
@@ -260,7 +239,7 @@
           >
             {{ page }}
           </button>
-          <button 
+          <button
             class="pagination-btn"
             :disabled="currentPageLocal === totalPages"
             @click="goToPage(currentPageLocal + 1)"
@@ -367,192 +346,6 @@
       </div>
     </Transition>
 
-    <!-- Edit Goal Modal - Redesigned -->
-    <Teleport to="body">
-      <Transition name="edit-modal-fade">
-        <div
-          v-if="showEditModal"
-          class="edit-modal-overlay"
-          @click.self="closeEditModal"
-        >
-          <div
-            ref="editModalRef"
-            class="edit-modal-sheet"
-            @touchstart="handleEditModalTouchStart"
-            @touchmove="handleEditModalTouchMove"
-            @touchend="handleEditModalTouchEnd"
-          >
-            <!-- Drag Handle (mobile) -->
-            <div class="edit-modal-drag-handle">
-              <div class="edit-modal-drag-bar"></div>
-            </div>
-
-            <!-- Header -->
-            <div class="edit-modal-header">
-              <h3 class="edit-modal-title">Редактирование цели</h3>
-              <button class="edit-modal-close" @click="closeEditModal">
-                <X :size="20" />
-              </button>
-            </div>
-
-            <!-- Quick Actions - Row -->
-            <div class="edit-modal-actions" v-if="editingGoal">
-              <button
-                v-if="!isGoalTransferred(editingGoal.id) && !isGoalCompleted(editingGoal.id)"
-                class="edit-action-btn action-primary"
-                @click="handleQuickTakeToWork"
-              >
-                <Play :size="16" />
-                <span>В работу</span>
-              </button>
-              <button
-                v-if="isGoalTransferred(editingGoal.id) && !isGoalCompleted(editingGoal.id)"
-                class="edit-action-btn action-warning"
-                @click="handleQuickRemoveFromWork"
-              >
-                <RotateCcw :size="16" />
-                <span>Убрать из работы</span>
-              </button>
-              <button
-                v-if="isGoalTransferred(editingGoal.id)"
-                class="edit-action-btn action-purple"
-                @click="goToDecompose(editingGoal.id)"
-              >
-                <GitBranch :size="16" />
-                <span>Декомпозиция</span>
-              </button>
-              <button
-                v-if="isGoalTransferred(editingGoal.id) && !isGoalCompleted(editingGoal.id)"
-                class="edit-action-btn action-success"
-                @click="handleQuickComplete"
-              >
-                <CheckCircle :size="16" />
-                <span>Завершить</span>
-              </button>
-              <button
-                v-if="isGoalCompleted(editingGoal.id)"
-                class="edit-action-btn action-primary"
-                @click="handleQuickReturnToWork"
-              >
-                <RotateCcw :size="16" />
-                <span>Вернуть в работу</span>
-              </button>
-            </div>
-
-            <!-- Body -->
-            <div class="edit-modal-body" v-if="editingGoal">
-              <!-- Goal Title -->
-              <div class="edit-form-group">
-                <input
-                  v-model="editingGoal.text"
-                  type="text"
-                  class="edit-goal-input"
-                  placeholder="Название цели"
-                />
-              </div>
-
-              <!-- Sphere Selection - Collapsible -->
-              <div class="edit-sphere-section">
-                <button
-                  v-if="!showEditSphereSelector && editingGoal.sphereId"
-                  class="edit-sphere-selected"
-                  :style="{ '--sphere-color': getSphereColor(editingGoal.sphereId) }"
-                  @click="showEditSphereSelector = true"
-                >
-                  <component :is="getSphereIcon(editingGoal.sphereId)" :size="16" />
-                  <span>{{ getSphereNameOnly(editingGoal.sphereId) }}</span>
-                  <ChevronDown :size="14" class="edit-chevron" />
-                </button>
-
-                <button
-                  v-else-if="!showEditSphereSelector && !editingGoal.sphereId"
-                  class="edit-sphere-toggle"
-                  @click="showEditSphereSelector = true"
-                >
-                  <Plus :size="16" />
-                  <span>Выбрать сферу</span>
-                </button>
-
-                <Transition name="slide-down">
-                  <div v-if="showEditSphereSelector" class="edit-sphere-chips-wrapper">
-                    <div class="edit-sphere-chips">
-                      <button
-                        v-for="sphere in lifeSpheres"
-                        :key="sphere.id"
-                        class="edit-sphere-chip"
-                        :class="{ active: editingGoal.sphereId === sphere.id }"
-                        :style="{ '--sphere-color': getSphereColor(sphere.id) }"
-                        @click="selectEditSphere(sphere.id)"
-                      >
-                        <component :is="getSphereIcon(sphere.id)" :size="16" />
-                        <span>{{ getSphereNameOnly(sphere.id) }}</span>
-                      </button>
-                    </div>
-                  </div>
-                </Transition>
-              </div>
-
-              <!-- Divider -->
-              <div class="edit-divider"></div>
-
-              <!-- Reflection Section - Collapsible -->
-              <div class="edit-reflection-section">
-                <button
-                  type="button"
-                  class="edit-reflection-toggle"
-                  @click="showEditReflection = !showEditReflection"
-                >
-                  <MessageSquare :size="16" />
-                  <span>{{ showEditReflection ? 'Скрыть рефлексию' : 'Добавить рефлексию' }}</span>
-                  <span class="edit-optional" v-if="!showEditReflection && !editingGoal.whyImportant && !editingGoal.why2">опционально</span>
-                  <ChevronDown :size="14" class="edit-chevron" :class="{ rotated: showEditReflection }" />
-                </button>
-
-                <Transition name="slide-fade">
-                  <div v-if="showEditReflection" class="edit-reflection-fields">
-                    <div class="edit-form-group">
-                      <label class="edit-field-label">Почему это важно?</label>
-                      <textarea
-                        v-model="editingGoal.whyImportant"
-                        class="edit-textarea"
-                        placeholder="Опишите, почему эта цель важна..."
-                        rows="2"
-                      ></textarea>
-                    </div>
-
-                    <div class="edit-form-group">
-                      <label class="edit-field-label">Как это изменит жизнь?</label>
-                      <textarea
-                        v-model="editingGoal.why2"
-                        class="edit-textarea"
-                        placeholder="Опишите ожидаемые изменения..."
-                        rows="2"
-                      ></textarea>
-                    </div>
-                  </div>
-                </Transition>
-              </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="edit-modal-footer">
-              <button class="edit-btn-delete" @click="deleteGoalFromModal" title="Удалить цель">
-                <Trash2 :size="18" />
-              </button>
-              <div class="edit-footer-actions">
-                <button class="edit-btn-cancel" @click="closeEditModal">
-                  Отмена
-                </button>
-                <button class="edit-btn-save" @click="saveGoalEdit">
-                  <Check :size="16" />
-                  Сохранить
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
 
     <!-- Add New Goal Modal -->
     <AddGoalModal
@@ -581,9 +374,8 @@ import MentorGoalSuggestionsModal from '@/components/MentorGoalSuggestionsModal.
 import AddGoalModal from '@/components/AddGoalModal.vue'
 import Breadcrumbs from '@/components/Breadcrumbs.vue'
 import { 
-  Lightbulb, 
-  CheckCircle, 
-  XCircle, 
+  Lightbulb,
+  XCircle,
   PlayCircle,
   Wallet, 
   Palette, 
@@ -612,23 +404,13 @@ import {
   ListChecks,
   Edit2,
   ExternalLink,
-  Calendar,
   Search,
   GitBranch,
   ChevronUp,
   BookOpen,
-  HelpCircle,
   Filter,
-  MoreVertical,
   Play,
-  Pause,
-  FileText,
-  Settings,
-  MessageSquare,
-  Wand2,
-  Bot,
-  Loader2,
-  Info
+  Loader2
 } from 'lucide-vue-next'
 
 const sphereIcons = {
@@ -725,57 +507,6 @@ function onSearchBlur() {
 }
 const selectedBankGoals = ref([])
 
-const showEditModal = ref(false)
-const editingGoal = ref(null)
-const showEditReflection = ref(false)
-const showEditSphereSelector = ref(false)
-const pendingWorkStatus = ref(null)
-const editModalRef = ref(null)
-
-// Touch handling for edit modal swipe-to-close
-let editModalTouchStartY = 0
-let editModalTouchCurrentY = 0
-let editModalIsDragging = false
-
-function handleEditModalTouchStart(e) {
-  if (window.innerWidth > 640) return
-  const touch = e.touches[0]
-  editModalTouchStartY = touch.clientY
-  editModalIsDragging = true
-}
-
-function handleEditModalTouchMove(e) {
-  if (!editModalIsDragging || window.innerWidth > 640) return
-  const touch = e.touches[0]
-  editModalTouchCurrentY = touch.clientY
-  const deltaY = editModalTouchCurrentY - editModalTouchStartY
-
-  if (deltaY > 0 && editModalRef.value) {
-    editModalRef.value.style.transform = `translateY(${deltaY}px)`
-  }
-}
-
-function handleEditModalTouchEnd() {
-  if (!editModalIsDragging || window.innerWidth > 640) return
-  editModalIsDragging = false
-  const deltaY = editModalTouchCurrentY - editModalTouchStartY
-
-  if (deltaY > 100) {
-    closeEditModal()
-  } else if (editModalRef.value) {
-    editModalRef.value.style.transform = ''
-  }
-
-  editModalTouchStartY = 0
-  editModalTouchCurrentY = 0
-}
-
-function selectEditSphere(sphereId) {
-  if (editingGoal.value) {
-    editingGoal.value.sphereId = sphereId
-  }
-  showEditSphereSelector.value = false
-}
 
 const showBottomSheet = ref(false)
 const bottomSheetGoal = ref(null)
@@ -787,23 +518,6 @@ let infiniteScrollObserver = null
 const showAddModal = ref(false)
 const showMentorModal = ref(false)
 
-const editWhyAccordion = ref({
-  question1Open: false,
-  question2Open: false
-})
-
-function toggleEditWhyQuestion(questionNum) {
-  if (questionNum === 1) {
-    editWhyAccordion.value.question1Open = !editWhyAccordion.value.question1Open
-  } else {
-    editWhyAccordion.value.question2Open = !editWhyAccordion.value.question2Open
-  }
-}
-
-function resetEditAccordion() {
-  editWhyAccordion.value.question1Open = false
-  editWhyAccordion.value.question2Open = false
-}
 
 // API loading state  
 const loadAttempted = ref(false)
@@ -868,10 +582,6 @@ const formatCompletedDate = computed(() => {
 
 function goToDecomposition() {
   router.push('/app/goals-bank')
-}
-
-function goToPlanning() {
-  router.push('/app/planning')
 }
 
 function addNewGoal() {
@@ -1044,7 +754,7 @@ function cancelLongPress() {
 
 function handleBottomSheetEdit() {
   if (bottomSheetGoal.value) {
-    openEditModal(bottomSheetGoal.value)
+    goToDecompose(bottomSheetGoal.value.id)
   }
   closeBottomSheet()
 }
@@ -1158,6 +868,20 @@ const totalPages = computed(() => {
 
 const paginatedGoals = computed(() => {
   return filteredGoals.value
+})
+
+const showCompletedSection = ref(false)
+
+const goalsInWork = computed(() => {
+  return paginatedGoals.value.filter(g => isGoalTransferred(g.id) && !isGoalCompleted(g.id))
+})
+
+const goalsCompleted = computed(() => {
+  return paginatedGoals.value.filter(g => isGoalCompleted(g.id))
+})
+
+const goalsAvailable = computed(() => {
+  return paginatedGoals.value.filter(g => !isGoalTransferred(g.id) && !isGoalCompleted(g.id))
 })
 
 const visiblePages = computed(() => {
@@ -1876,142 +1600,32 @@ function getGoalStatusEmoji(status) {
   return labels[status] || '📝'
 }
 
-function openEditModal(goal) {
-  editingGoal.value = {
-    id: goal.id,
-    text: goal.text,
-    whyImportant: goal.whyImportant || goal.threeWhys?.why1 || '',
-    why2: goal.threeWhys?.why2 || '',
-    sphereId: goal.sphereId,
-    status: goal.status || 'raw'
-  }
-  resetEditAccordion()
-  showEditReflection.value = !!(editingGoal.value.whyImportant || editingGoal.value.why2)
-  showEditModal.value = true
+
+function quickTakeToWork(goal) {
+  takeGoalToWork(goal)
 }
 
-function handleQuickTakeToWork() {
-  if (editingGoal.value) {
-    takeGoalToWork(editingGoal.value)
-    pendingWorkStatus.value = 'work'
-  }
+function quickCompleteGoal(goal) {
+  completeGoalFromBank(goal)
 }
 
-function handleQuickRemoveFromWork() {
-  if (editingGoal.value) {
-    removeFromWorkBySourceId(editingGoal.value.id)
-    pendingWorkStatus.value = null
-    closeEditModal()
-  }
-}
-
-function handleQuickComplete() {
-  if (editingGoal.value) {
-    completeGoalFromBank(editingGoal.value)
-    closeEditModal()
-  }
-}
-
-async function handleQuickReturnToWork() {
-  if (!editingGoal.value) return
-  
-  const goal = editingGoal.value
+async function quickReturnToWork(goal) {
   const backendId = goal.backendId || goal.id
-  
   try {
     const { updateGoals } = await import('@/services/api.js')
-    const result = await updateGoals({
+    await updateGoals({
       goals_data: [{
         goal_id: parseInt(backendId, 10),
         work_status: 'work'
       }]
     })
-    
-    if (result.status === 'ok' || result.status === 'success') {
-      // Обновляем статус в store
-      const transferredGoal = store.goals.find(g => 
-        (g.sourceId === goal.id || g.backendId === backendId) && 
-        g.source === 'goals-bank'
-      )
-      if (transferredGoal) {
-        store.updateGoal(transferredGoal.id, { status: 'active' })
-      }
-      
-      console.log('[GoalsBank] Цель возвращена в работу:', backendId)
-      closeEditModal()
-    } else {
-      throw new Error(result.error_data?.message || 'Ошибка сервера')
-    }
-  } catch (error) {
-    console.error('Failed to return goal to work:', error)
-    alert('Ошибка при изменении статуса: ' + error.message)
-  }
-}
-
-function toggleWorkStatus() {
-  if (!editingGoal.value) return
-  
-  if (isGoalTransferred(editingGoal.value.id)) {
-    removeFromWorkBySourceId(editingGoal.value.id)
-  } else {
-    takeGoalToWork(editingGoal.value)
-  }
-}
-
-function closeEditModal() {
-  if (editModalRef.value) {
-    editModalRef.value.style.transform = ''
-  }
-  showEditModal.value = false
-  showEditReflection.value = false
-  showEditSphereSelector.value = false
-  resetEditAccordion()
-  editingGoal.value = null
-  pendingWorkStatus.value = null
-}
-
-async function saveGoalEdit() {
-  if (!editingGoal.value) return
-  
-  const updates = {
-    text: editingGoal.value.text,
-    whyImportant: editingGoal.value.whyImportant,
-    sphereId: editingGoal.value.sphereId,
-    status: editingGoal.value.status,
-    threeWhys: {
-      why1: editingGoal.value.whyImportant,
-      why2: editingGoal.value.why2
-    }
-  }
-  
-  // Если был изменён статус работы - добавляем его в обновления
-  if (pendingWorkStatus.value !== null) {
-    updates.workStatus = pendingWorkStatus.value
-  }
-  
-  // Optimistic UI: update local state first
-  store.updateRawIdea(editingGoal.value.id, updates)
-  
-  const goalId = editingGoal.value.id
-  const backendId = rawIdeas.value.find(g => g.id === goalId)?.backendId
-  
-  closeEditModal()
-  
-  // Sync with backend (non-blocking)
-  if (backendId) {
-    store.updateGoalOnBackend(backendId, updates)
-  }
-}
-
-function removeGoalFromWork() {
-  if (!editingGoal.value) return
-  
-  if (confirm('Убрать эту цель из работы?')) {
-    const transferredGoal = store.goals.find(g => g.sourceId === editingGoal.value.id && g.source === 'goals-bank')
+    const transferredGoal = store.goals.find(g => g.sourceId === goal.id && g.source === 'goals-bank')
     if (transferredGoal) {
-      store.deleteGoal(transferredGoal.id)
+      store.updateGoal(transferredGoal.id, { status: 'active' })
     }
-    closeEditModal()
+    await store.loadGoalsBank({ page: 1 })
+  } catch (e) {
+    console.error('[GoalsBank] quickReturnToWork error:', e)
   }
 }
 
@@ -2051,47 +1665,6 @@ function goToDecompose(goalId) {
   }
 }
 
-async function deleteGoalFromModal() {
-  if (!editingGoal.value) return
-  
-  if (confirm('Удалить эту цель из банка?')) {
-    const goalId = editingGoal.value.id
-    const backendId = rawIdeas.value.find(g => g.id === goalId)?.backendId
-    
-    // Optimistic UI: delete from local state first
-    store.deleteRawIdea(goalId)
-    closeEditModal()
-    
-    // Sync with backend (non-blocking)
-    if (backendId) {
-      store.deleteGoalOnBackend(backendId)
-    }
-  }
-}
-
-function goToFullEdit(goalId) {
-  const transferredGoal = store.goals.find(g => g.sourceId === goalId && g.source === 'goals-bank')
-  if (!transferredGoal) {
-    console.warn('[GoalsBank] Cannot edit: transferred goal not found for', goalId)
-    return
-  }
-  
-  // Use backendId if available, otherwise use id directly (id may already be local-{id} format)
-  const navigateId = transferredGoal.backendId || transferredGoal.id
-  
-  // Dev mode: allow navigation without backendId
-  if (DEBUG_MODE && SKIP_AUTH_CHECK) {
-    router.push(`/app/goals/${navigateId}`)
-    return
-  }
-  
-  // Production: require backendId
-  if (transferredGoal.backendId) {
-    router.push(`/app/goals/${transferredGoal.backendId}`)
-  } else {
-    console.warn('[GoalsBank] Cannot edit: no backendId for transferred goal', goalId)
-  }
-}
 
 // Loading state for API
 const isLoadingGoals = ref(false)
@@ -2148,15 +1721,6 @@ onMounted(async () => {
     injectMockGoals()
   } else {
     loadGoals()
-  }
-  
-  // Handle edit query parameter
-  const editId = route.query.edit
-  if (editId) {
-    const goalToEdit = store.goalsBank.rawIdeas.find(i => i.id === editId)
-    if (goalToEdit) {
-      openEditModal(goalToEdit)
-    }
   }
   
   // Setup Infinite Scroll Observer
@@ -2352,26 +1916,6 @@ onUnmounted(() => {
 
 /* Goals Content Wrapper */
 .goals-content {
-  padding: 0 1rem;
-}
-
-/* Unified Filter Bar */
-.filter-bar-unified {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  margin-bottom: 1rem;
-  background: var(--bg-primary, #ffffff);
-  border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: 10px;
-}
-
-.filter-sep {
-  width: 1px;
-  height: 20px;
-  background: var(--border-color, #e5e7eb);
-  flex-shrink: 0;
 }
 
 /* Sphere Dropdown */
@@ -2379,46 +1923,15 @@ onUnmounted(() => {
   position: relative;
 }
 
-.sphere-dropdown-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.75rem;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 7px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-secondary, #6b7280);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s;
-}
-
-.sphere-dropdown-btn:hover {
-  background: var(--bg-secondary, #f3f4f6);
-  border-color: var(--border-color, #e5e7eb);
-}
-
-.sphere-dropdown-btn.active {
-  background: rgba(99, 102, 241, 0.08);
-  border-color: rgba(99, 102, 241, 0.25);
-  color: var(--primary-color, #6366f1);
-}
-
-.sphere-dropdown-btn svg.rotated {
-  transform: rotate(180deg);
-}
-
 .sphere-dropdown-menu {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
   min-width: 200px;
-  background: var(--bg-primary, white);
-  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
   z-index: 100;
   max-height: 300px;
   overflow-y: auto;
@@ -2433,19 +1946,19 @@ onUnmounted(() => {
   background: none;
   border: none;
   font-size: 0.875rem;
-  color: var(--text-primary, #374151);
+  color: var(--text-primary);
   cursor: pointer;
   text-align: left;
   transition: background 0.15s;
 }
 
 .sphere-dropdown-item:hover {
-  background: var(--bg-secondary, #f3f4f6);
+  background: var(--bg-secondary);
 }
 
 .sphere-dropdown-item.active {
-  background: rgba(99, 102, 241, 0.1);
-  color: var(--primary-color, #6366f1);
+  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  color: var(--primary-color);
 }
 
 .dropdown-fade-enter-active,
@@ -2465,30 +1978,31 @@ onUnmounted(() => {
 }
 
 .status-dropdown-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.75rem;
+  gap: 0.3rem;
+  padding: 0.4rem 0.625rem;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 7px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-secondary, #6b7280);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.2s;
 }
 
 .status-dropdown-btn:hover {
-  background: var(--bg-secondary, #f3f4f6);
-  border-color: var(--border-color, #e5e7eb);
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
 }
 
 .status-dropdown-btn.active {
-  background: rgba(99, 102, 241, 0.08);
-  border-color: rgba(99, 102, 241, 0.25);
-  color: var(--primary-color, #6366f1);
+  background: color-mix(in srgb, var(--primary-color) 8%, transparent);
+  border-color: color-mix(in srgb, var(--primary-color) 25%, transparent);
+  color: var(--primary-color);
 }
 
 .status-dropdown-btn svg.rotated {
@@ -2500,10 +2014,10 @@ onUnmounted(() => {
   top: calc(100% + 4px);
   left: 0;
   min-width: 140px;
-  background: var(--bg-primary, white);
-  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
   z-index: 100;
 }
 
@@ -2516,19 +2030,19 @@ onUnmounted(() => {
   background: none;
   border: none;
   font-size: 0.875rem;
-  color: var(--text-primary, #374151);
+  color: var(--text-primary);
   cursor: pointer;
   text-align: left;
   transition: background 0.15s;
 }
 
 .status-dropdown-item:hover {
-  background: var(--bg-secondary, #f3f4f6);
+  background: var(--bg-secondary);
 }
 
 .status-dropdown-item.active {
-  background: rgba(99, 102, 241, 0.1);
-  color: var(--primary-color, #6366f1);
+  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  color: var(--primary-color);
 }
 
 /* Pagination */
@@ -2596,27 +2110,6 @@ onUnmounted(() => {
   align-items: center;
 }
 
-.search-toggle-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid transparent;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--text-secondary, #6b7280);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.search-toggle-btn:hover {
-  background: var(--bg-secondary, #f3f4f6);
-  border-color: var(--border-color, #e5e7eb);
-  color: var(--text-primary, #374151);
-}
-
 .search-expandable.expanded .search-input-wrapper {
   position: relative;
   display: flex;
@@ -2658,16 +2151,15 @@ onUnmounted(() => {
 
 /* Reset Filters Button */
 .reset-filters-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.75rem;
+  gap: 0.3rem;
+  padding: 0.4rem 0.625rem;
   background: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  border-radius: 8px;
   color: var(--text-secondary);
   font-size: 0.8125rem;
-  font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
@@ -2789,67 +2281,186 @@ onUnmounted(() => {
   background: color-mix(in srgb, var(--primary-color) 18%, transparent);
 }
 
-.goals-count-row {
-  padding: 0.25rem 1rem 0.5rem;
+/* Goals Sections */
+.goals-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-bottom: 0.5rem;
 }
 
-.goals-count-text {
+.goals-section {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Stats Bar */
+.stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3rem;
+  margin-bottom: 1rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+}
+
+.stats-bar-spacer {
+  flex: 1;
+  min-width: 0.5rem;
+}
+
+.stats-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.4rem 0.625rem;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
   font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.stats-action-btn:hover {
+  background: var(--bg-secondary, #f9fafb);
+  color: var(--text-primary);
+}
+
+.stats-action-btn.active {
+  background: var(--bg-tertiary, #f3f4f6);
+  color: var(--primary-color);
+}
+
+.stats-action-btn svg.rotated {
+  transform: rotate(180deg);
+}
+
+.stats-ai-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.4rem 0.625rem;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--success-color, #10b981);
+  background: color-mix(in srgb, var(--success-color, #10b981) 8%, transparent);
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.stats-ai-btn:hover {
+  background: color-mix(in srgb, var(--success-color, #10b981) 15%, transparent);
+}
+
+@media (max-width: 640px) {
+  .stats-bar {
+    gap: 0.25rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .stats-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .stats-action-btn {
+    padding: 0.4rem;
+  }
+
+  .stats-ai-btn {
+    padding: 0.3rem;
+  }
+
+  .ai-btn-label {
+    display: none;
+  }
+}
+
+.section-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0 0.25rem 0.5rem;
+}
+
+.section-label-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.section-label-toggle:hover {
   color: var(--text-secondary);
 }
 
-/* Goals Grid */
-.goals-grid {
+.section-label-toggle .rotated {
+  transform: rotate(180deg);
+}
+
+.goals-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding-bottom: 1rem;
 }
 
-.goal-card {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-left: 3px solid var(--sphere-accent, var(--border-color));
-  border-radius: var(--radius-md);
-  padding: 0.625rem 0.75rem;
-  cursor: pointer;
-  transition: box-shadow 0.2s ease, background 0.15s ease;
+/* Goal Row — dense flat style */
+.goal-row {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  overflow: hidden;
+  gap: 0.5rem;
+  padding: 0.5rem 0.5rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
+  border-left: 3px solid var(--sphere-accent, transparent);
 }
 
-.goal-card:hover {
-  background: var(--bg-secondary);
-  box-shadow: var(--shadow-sm);
+.goal-row:last-child {
+  border-bottom: none;
+}
+
+.goal-row:hover {
+  background: var(--hover-bg, #f3f4f6);
+}
+
+.goal-row-completed {
+  opacity: 0.5;
+}
+
+.goal-row-completed .goal-title {
+  text-decoration: line-through;
 }
 
 .sphere-icon-col {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
 }
 
-.goal-emoji {
-  font-size: 1.25rem;
-  line-height: 1;
-}
-
-.goal-card-content {
-  flex: 1;
-  min-width: 0;
-}
-
 .goal-title {
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-primary);
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.35;
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -2857,109 +2468,25 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
-.btn-arrow {
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-}
-
-.btn-arrow:hover {
-  background: var(--primary-color);
-  color: white;
-}
-
-.btn-settings-card {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.6;
-  transition: all 0.2s;
-}
-
-.btn-settings-card:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  opacity: 1;
-}
-
-.goal-card:hover .btn-settings-card {
-  opacity: 1;
-}
-
-.goal-card-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  flex-shrink: 0;
-}
-
-.status-chip {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 1rem;
-}
-
-.status-chip.in-work {
-  background: var(--status-success-bg);
-  color: var(--status-success-text);
-}
-
-.status-chip.completed {
-  background: var(--status-info-bg);
-  color: var(--status-info-text);
-}
-
-.status-chip.raw {
-  background: var(--status-warning-bg);
-  color: var(--status-warning-text);
-}
-
-.status-chip.rejected {
-  background: var(--status-danger-bg);
-  color: var(--status-danger-text);
-}
-
-.status-chip.available {
-  background: var(--status-purple-bg);
-  color: var(--status-purple-text);
-}
-
 .steps-progress {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
+  gap: 0.2rem;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
   flex-shrink: 0;
   white-space: nowrap;
 }
 
-.ai-badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #8b5cf6, #6366f1);
-  color: white;
+.row-chevron {
+  color: var(--text-muted);
+  opacity: 0;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.goal-row:hover .row-chevron {
+  opacity: 0.5;
 }
 
 /* Input with AI button */
@@ -4364,11 +3891,6 @@ onUnmounted(() => {
   gap: 0.375rem;
 }
 
-.btn-sm {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-}
-
 /* Ideas Helper */
 .ideas-helper {
   margin-bottom: 1.5rem;
@@ -4911,42 +4433,15 @@ onUnmounted(() => {
     justify-content: center;
   }
 
-  .goal-card {
-    padding: 0.5rem 0.625rem;
-    gap: 0.5rem;
+  .goal-row {
+    padding: 0.5rem 0.375rem;
+    gap: 0.375rem;
   }
 
-  .goal-title {
-    font-size: 0.875rem;
+  .row-chevron {
+    display: none;
   }
 
-
-  .goal-card-meta {
-    gap: 0.25rem;
-  }
-  
-  /* Full-screen modal on mobile */
-  .edit-modal {
-    max-width: 100%;
-    max-height: 100%;
-    height: 100%;
-    border-radius: 0;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .edit-modal .modal-body {
-    flex: 1;
-    overflow-y: auto;
-  }
-  
-  .edit-modal .modal-footer {
-    position: sticky;
-    bottom: 0;
-    background: var(--bg-primary);
-    border-top: 1px solid var(--border-color);
-    padding: 1rem;
-  }
 }
 
 @media (max-width: 480px) {
@@ -4955,17 +4450,12 @@ onUnmounted(() => {
   }
 }
 
-.section-header {
-  margin-bottom: 1rem;
-  padding: 0 1rem;
-}
-
 .section-header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
 }
 
 .header-actions {
@@ -6050,10 +5540,6 @@ onUnmounted(() => {
   border-color: var(--danger-color);
 }
 
-.btn-sm {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.8rem;
-}
 
 .btn-icon.delete:hover {
   background: rgba(239, 68, 68, 0.1);
@@ -6463,1104 +5949,14 @@ onUnmounted(() => {
   justify-content: center;
 }
 
-/* Edit Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-}
 
-.edit-modal {
-  background: var(--bg-primary);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  width: 100%;
-  max-width: 520px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
 
-.edit-modal.edit-modal-extended {
-  max-width: 600px;
-}
 
-.edit-modal.edit-modal-redesigned {
-  max-width: 520px;
-  width: 95%;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-}
 
-.quick-actions {
-  display: flex;
-  gap: 0.5rem;
-  padding: 0 1.25rem;
-  margin-top: 0.75rem;
-  margin-bottom: 0.75rem;
-  flex-wrap: wrap;
-}
 
-.quick-action-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.875rem;
-  border-radius: 20px;
-  border: none;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
 
-.quick-action-btn.action-work {
-  background: var(--primary, #6366f1);
-  color: white;
-}
 
-.quick-action-btn.action-work:hover {
-  background: var(--primary-dark, #4f46e5);
-}
 
-.quick-action-btn.action-remove-work {
-  background: var(--warning, #f59e0b);
-  color: white;
-}
-
-.quick-action-btn.action-decompose {
-  background: #8b5cf6;
-  color: white;
-}
-
-.quick-action-btn.action-decompose:hover {
-  background: #7c3aed;
-}
-
-.quick-action-btn.action-complete {
-  background: var(--success, var(--success-color));
-  color: white;
-}
-
-.modal-tabs {
-  display: flex;
-  border-bottom: 1px solid var(--border-color, #e5e7eb);
-  padding: 0 1.25rem;
-  gap: 0.25rem;
-}
-
-.modal-tab {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.75rem 1rem;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary, #6b7280);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  transition: all 0.2s;
-}
-
-.modal-tab:hover {
-  color: var(--text-primary, #1f2937);
-}
-
-.modal-tab.active {
-  color: var(--primary, #6366f1);
-  border-bottom-color: var(--primary, #6366f1);
-}
-
-.modal-body-tabs {
-  flex: 1;
-  overflow-y: auto;
-  padding: 1.25rem;
-}
-
-.tab-content {
-  animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.form-input-large {
-  font-size: 1.125rem;
-  padding: 0.875rem 1rem;
-}
-
-.sphere-grid-compact {
-  gap: 0.5rem;
-}
-
-.motivation-intro {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: var(--primary-light, rgba(99, 102, 241, 0.08));
-  border-radius: 12px;
-  margin-bottom: 1.25rem;
-}
-
-.motivation-intro p {
-  margin: 0;
-  color: var(--text-secondary, #6b7280);
-  font-size: 0.875rem;
-}
-
-.motivation-icon {
-  color: var(--primary, #6366f1);
-  flex-shrink: 0;
-}
-
-.form-textarea-visible {
-  min-height: 80px;
-  resize: vertical;
-}
-
-.status-card {
-  background: var(--card-bg, #ffffff);
-  border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: 12px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-}
-
-.status-card-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 600;
-  color: var(--text-primary, #1f2937);
-  margin-bottom: 0.75rem;
-}
-
-.status-card-header svg {
-  color: var(--primary, #6366f1);
-}
-
-.status-toggle-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
-
-.toggle-label {
-  font-size: 0.9375rem;
-  color: var(--text-primary, #1f2937);
-}
-
-.toggle-switch {
-  position: relative;
-  width: 52px;
-  height: 28px;
-  background: var(--border-color, #d1d5db);
-  border-radius: 14px;
-  border: none;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.toggle-switch.active {
-  background: var(--primary, #6366f1);
-}
-
-.toggle-slider {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 24px;
-  height: 24px;
-  background: white;
-  border-radius: 50%;
-  transition: transform 0.2s;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.toggle-switch.active .toggle-slider {
-  transform: translateX(24px);
-}
-
-.status-hint {
-  font-size: 0.8125rem;
-  color: var(--text-muted, #9ca3af);
-  margin: 0;
-}
-
-.status-description {
-  font-size: 0.875rem;
-  color: var(--text-secondary, #6b7280);
-  margin: 0 0 1rem 0;
-}
-
-.validation-buttons-new {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-}
-
-.btn-validation-new {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem;
-  border-radius: 12px;
-  border: 2px solid var(--border-color, #e5e7eb);
-  background: var(--card-bg, #ffffff);
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.btn-validation-new:hover {
-  border-color: var(--text-muted, #9ca3af);
-}
-
-.btn-validation-new.btn-confirm.active {
-  background: var(--success-light, rgba(16, 185, 129, 0.1));
-  border-color: var(--success, var(--success-color));
-  color: var(--success, var(--success-color));
-}
-
-.btn-validation-new.btn-reject.active {
-  background: var(--danger-light, rgba(239, 68, 68, 0.1));
-  border-color: var(--danger, #ef4444);
-  color: var(--danger, #ef4444);
-}
-
-.btn-validation-new svg {
-  width: 24px;
-  height: 24px;
-}
-
-.progress-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.progress-bar-container {
-  flex: 1;
-  height: 8px;
-  background: var(--border-color, #e5e7eb);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress-bar-fill {
-  height: 100%;
-  background: var(--primary, #6366f1);
-  border-radius: 4px;
-  transition: width 0.3s ease;
-}
-
-.progress-text {
-  font-size: 0.8125rem;
-  color: var(--text-secondary, #6b7280);
-  white-space: nowrap;
-}
-
-.modal-footer-redesigned {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem;
-  border-top: 1px solid var(--border-color, #e5e7eb);
-}
-
-.modal-footer-with-delete {
-  justify-content: space-between;
-}
-
-.modal-footer-actions {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.btn-danger-ghost {
-  background: transparent;
-  color: #ef4444;
-  border: none;
-  padding: 0.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-danger-ghost:hover {
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.btn-secondary {
-  background: var(--bg, #f3f4f6);
-  color: var(--text-primary, #1f2937);
-  border: 1px solid var(--border-color, #e5e7eb);
-}
-
-.btn-secondary:hover {
-  background: var(--hover-bg, #e5e7eb);
-}
-
-@media (max-width: 480px) {
-  .edit-modal.edit-modal-redesigned {
-    max-width: 100%;
-    width: 100%;
-    height: 100%;
-    max-height: 100%;
-    border-radius: 0;
-  }
-  
-  .modal-tabs {
-    padding: 0 1rem;
-  }
-  
-  .modal-tab {
-    flex: 1;
-    justify-content: center;
-    padding: 0.625rem 0.5rem;
-    font-size: 0.8125rem;
-  }
-  
-  .modal-tab span {
-    display: none;
-  }
-  
-  .quick-actions {
-    padding: 0 1rem;
-  }
-  
-  .quick-action-btn {
-    flex: 1;
-    justify-content: center;
-    padding: 0.625rem 0.5rem;
-  }
-  
-  .quick-action-btn span {
-    display: none;
-  }
-  
-  .modal-body-tabs {
-    padding: 1rem;
-  }
-  
-  .validation-buttons-new {
-    grid-template-columns: 1fr;
-  }
-}
-
-.why-section-divider {
-  display: flex;
-  align-items: center;
-  margin: 1.5rem 0 1rem;
-  gap: 1rem;
-}
-
-.why-section-divider::before,
-.why-section-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--border-color);
-}
-
-.why-section-divider span {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--primary-color);
-  white-space: nowrap;
-}
-
-/* Accordion styles for why questions */
-.accordion-group {
-  margin-bottom: 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-
-.accordion-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.875rem 1rem;
-  background: var(--bg-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.accordion-header:hover {
-  background: var(--bg-tertiary);
-}
-
-.accordion-header.open {
-  border-bottom: 1px solid var(--border-color);
-}
-
-.accordion-header.filled:not(.open) {
-  background: rgba(34, 197, 94, 0.05);
-  border-color: rgba(34, 197, 94, 0.2);
-}
-
-.accordion-title {
-  flex: 1;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.accordion-preview {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.accordion-chevron {
-  color: var(--text-secondary);
-  transition: transform 0.2s ease;
-  flex-shrink: 0;
-}
-
-.accordion-chevron.open {
-  transform: rotate(180deg);
-}
-
-.accordion-content {
-  padding: 0.75rem 1rem;
-  background: var(--bg-primary);
-}
-
-.accordion-content .form-textarea {
-  margin: 0;
-}
-
-.validation-section {
-  margin-top: 1.5rem;
-  padding: 1rem;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-}
-
-.validation-label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  margin-bottom: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.tooltip-wrapper {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  cursor: help;
-}
-
-.help-icon {
-  color: var(--text-tertiary);
-  opacity: 0.7;
-  transition: opacity 0.2s, color 0.2s;
-}
-
-.tooltip-wrapper:hover .help-icon {
-  opacity: 1;
-  color: var(--primary-color);
-}
-
-.tooltip-text {
-  visibility: hidden;
-  opacity: 0;
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  width: 260px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 0.75rem;
-  font-size: 0.8125rem;
-  font-weight: 400;
-  line-height: 1.5;
-  color: var(--text-primary);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-  transition: opacity 0.2s, visibility 0.2s;
-}
-
-.tooltip-text::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 6px solid transparent;
-  border-top-color: var(--border-color);
-}
-
-.tooltip-wrapper:hover .tooltip-text {
-  visibility: visible;
-  opacity: 1;
-}
-
-.validation-buttons {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.btn-validation {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius-md);
-  font-weight: 500;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-true-goal {
-  background: rgba(34, 197, 94, 0.1);
-  border: 1.5px solid #22c55e;
-  color: #22c55e;
-}
-
-.btn-true-goal:hover {
-  background: rgba(34, 197, 94, 0.2);
-  border-color: #22c55e;
-}
-
-.btn-true-goal.active {
-  background: #22c55e;
-  color: white;
-  transform: scale(1.02);
-  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.4);
-}
-
-.btn-false-goal {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1.5px solid #ef4444;
-  color: #ef4444;
-}
-
-.btn-false-goal:hover {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: #ef4444;
-}
-
-.btn-false-goal.active {
-  background: #ef4444;
-  color: white;
-  transform: scale(1.02);
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 1.125rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.modal-header-icon {
-  color: var(--primary-color);
-}
-
-.modal-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  transition: all 0.2s ease;
-}
-
-.modal-close:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-}
-
-.modal-body {
-  padding: 1.5rem;
-}
-
-.form-group {
-  margin-bottom: 1.25rem;
-}
-
-.form-group:last-child {
-  margin-bottom: 0;
-}
-
-.form-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  font-size: 0.875rem;
-  color: var(--text-primary);
-}
-
-.form-input {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  background: var(--bg-primary);
-  font-size: 0.9375rem;
-  color: var(--text-primary);
-  transition: border-color 0.2s ease;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-}
-
-.form-textarea {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  background: var(--bg-primary);
-  font-size: 0.9375rem;
-  color: var(--text-primary);
-  font-family: inherit;
-  resize: vertical;
-  min-height: 100px;
-  transition: border-color 0.2s ease;
-}
-
-.form-textarea:focus {
-  outline: none;
-  border-color: var(--primary-color);
-}
-
-/* Секция рефлексии (опциональная) */
-.reflection-toggle-section {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.reflection-toggle-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.625rem 0.875rem;
-  background: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.reflection-toggle-btn:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-}
-
-.reflection-toggle-btn .toggle-chevron {
-  margin-left: auto;
-  transition: transform 0.2s;
-}
-
-.reflection-toggle-btn .toggle-chevron.rotated {
-  transform: rotate(180deg);
-}
-
-.optional-badge {
-  font-size: 0.7rem;
-  padding: 0.125rem 0.375rem;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  border-radius: 4px;
-}
-
-.reflection-content {
-  margin-top: 0.75rem;
-  padding: 0.75rem;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-}
-
-.reflection-fields {
-  margin-top: 0.75rem;
-}
-
-/* Шаблоны целей */
-.templates-section {
-  margin-bottom: 1rem;
-}
-
-.helpers-section {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.helper-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex: 1;
-  padding: 0.75rem 0.75rem;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
-  border: 1px dashed var(--primary-color);
-  border-radius: var(--radius-md);
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--primary-color);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.helper-toggle:hover {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.12));
-}
-
-.helper-toggle .toggle-chevron {
-  margin-left: auto;
-  transition: transform 0.2s;
-}
-
-.helper-toggle .toggle-chevron.rotated {
-  transform: rotate(180deg);
-}
-
-.mentor-toggle {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(34, 197, 94, 0.08));
-  border-color: var(--success-color);
-  color: var(--success-color);
-}
-
-.mentor-toggle:hover {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(34, 197, 94, 0.15));
-}
-
-@media (max-width: 480px) {
-  .helpers-section {
-    flex-direction: column;
-  }
-  
-  .helper-toggle span {
-    font-size: 0.8rem;
-  }
-}
-
-.templates-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
-  border: 1px dashed var(--primary-color);
-  border-radius: var(--radius-md);
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--primary-color);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.templates-toggle:hover {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.12));
-}
-
-.templates-toggle .toggle-chevron {
-  margin-left: auto;
-  transition: transform 0.2s;
-}
-
-.templates-toggle .toggle-chevron.rotated {
-  transform: rotate(180deg);
-}
-
-.templates-content {
-  margin-top: 0.75rem;
-  padding: 0.75rem;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-}
-
-.templates-sphere-tabs {
-  display: flex;
-  gap: 0.375rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.template-sphere-tab {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: 1.5px solid var(--border-color);
-  border-radius: 8px;
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.template-sphere-tab:hover {
-  border-color: var(--sphere-color);
-  color: var(--sphere-color);
-}
-
-.template-sphere-tab.active {
-  border-color: var(--sphere-color);
-  background: color-mix(in srgb, var(--sphere-color) 15%, var(--bg-primary));
-  color: var(--sphere-color);
-}
-
-.templates-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-}
-
-.template-item {
-  padding: 0.75rem;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  font-size: 0.875rem;
-  color: var(--text-primary);
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.template-item:hover {
-  border-color: var(--primary-color);
-  background: rgba(99, 102, 241, 0.05);
-}
-
-/* Slide-fade transition */
-.slide-fade-enter-active,
-.slide-fade-leave-active {
-  transition: all 0.25s ease;
-}
-
-.slide-fade-enter-from,
-.slide-fade-leave-to {
-  opacity: 0;
-  max-height: 0;
-  transform: translateY(-8px);
-}
-
-.slide-fade-enter-to,
-.slide-fade-leave-from {
-  opacity: 1;
-  max-height: 400px;
-}
-
-.sphere-select-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
-}
-
-.sphere-select-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.75rem 0.5rem;
-  border: 1.5px solid var(--border-color);
-  border-radius: var(--radius-md);
-  background: var(--bg-primary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
-}
-
-.sphere-select-btn:hover {
-  border-color: var(--sphere-color);
-  background: color-mix(in srgb, var(--sphere-color) 5%, var(--bg-primary));
-}
-
-.sphere-select-btn.active {
-  border-color: var(--sphere-color);
-  background: color-mix(in srgb, var(--sphere-color) 10%, var(--bg-primary));
-  color: var(--sphere-color);
-}
-
-.sphere-select-btn svg {
-  color: var(--sphere-color);
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  border-top: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-}
-
-.modal-footer-center {
-  justify-content: center;
-}
-
-.modal-footer-left,
-.modal-footer-right {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.modal-footer-add {
-  display: flex;
-  flex-direction: row;
-  gap: 0.75rem;
-}
-
-.modal-footer-add .btn {
-  flex: 1;
-}
-
-.modal-footer-add .btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-danger-outline {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.625rem 1rem;
-  background: transparent;
-  border: 1px solid var(--danger-color);
-  color: var(--danger-color);
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-danger-outline:hover {
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.modal-advanced {
-  padding: 1rem 1.5rem 1.5rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.advanced-divider {
-  text-align: center;
-  margin-bottom: 0.75rem;
-}
-
-.advanced-divider span {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
-}
-
-.btn-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0;
-  background: transparent;
-  border: none;
-  color: var(--primary-color);
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  width: 100%;
-  justify-content: center;
-}
-
-.btn-link:hover {
-  text-decoration: underline;
-}
-
-.btn-icon-edit {
-  background: transparent;
-  border: none;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  transition: all 0.2s ease;
-}
-
-.btn-icon-edit:hover {
-  background: rgba(99, 102, 241, 0.1);
-  color: var(--primary-color);
-}
-
-/* Modal transitions */
-.modal-fade-enter-active,
-.modal-fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-
-.modal-fade-enter-active .edit-modal,
-.modal-fade-leave-active .edit-modal {
-  transition: transform 0.2s ease;
-}
-
-.modal-fade-enter-from,
-.modal-fade-leave-to {
-  opacity: 0;
-}
-
-.modal-fade-enter-from .edit-modal,
-.modal-fade-leave-to .edit-modal {
-  transform: scale(0.95) translateY(-10px);
-}
 
 @media (max-width: 480px) {
   .empty-state-card {
@@ -7585,554 +5981,11 @@ onUnmounted(() => {
     gap: 0.25rem;
   }
   
-  .sphere-select-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .modal-footer {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .modal-footer-left,
-  .modal-footer-right {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .modal-footer-add {
-    flex-direction: row;
-  }
-  
-  .modal-footer-add .btn {
-    flex: 1;
-    padding: 0.75rem 0.5rem;
-    font-size: 0.875rem;
-  }
-
   /* Bottom nav padding */
   .goals-bank-page {
     padding-bottom: calc(var(--bottom-nav-height, 56px) + env(safe-area-inset-bottom, 0px) + 1rem);
   }
 }
 
-/* ============================================
-   NEW EDIT MODAL STYLES - Redesigned
-   ============================================ */
 
-.edit-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  padding: 1rem;
-}
-
-.edit-modal-sheet {
-  background: var(--bg-primary, #ffffff);
-  border-radius: 20px;
-  width: 100%;
-  max-width: 480px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
-}
-
-.edit-modal-drag-handle {
-  display: none;
-  justify-content: center;
-  padding: 0.75rem 0 0.25rem;
-}
-
-.edit-modal-drag-bar {
-  width: 36px;
-  height: 4px;
-  background: var(--border-color, #d1d5db);
-  border-radius: 2px;
-}
-
-.edit-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.25rem 1.25rem 1rem;
-  border-bottom: 1px solid var(--border-color, #e5e7eb);
-}
-
-.edit-modal-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary, #1f2937);
-  margin: 0;
-}
-
-.edit-modal-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: var(--bg-secondary, #f3f4f6);
-  border-radius: 8px;
-  color: var(--text-secondary, #6b7280);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.edit-modal-close:hover {
-  background: var(--bg-tertiary, #e5e7eb);
-  color: var(--text-primary, #1f2937);
-}
-
-/* Quick Actions - Row */
-.edit-modal-actions {
-  display: flex;
-  gap: 0.5rem;
-  padding: 0.875rem 1.25rem;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  border-bottom: 1px solid var(--border-color, #e5e7eb);
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.edit-modal-actions::-webkit-scrollbar {
-  display: none;
-}
-
-.edit-action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.875rem;
-  border-radius: 20px;
-  border: none;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.edit-action-btn.action-primary {
-  background: var(--primary, #6366f1);
-  color: white;
-}
-
-.edit-action-btn.action-primary:hover {
-  background: var(--primary-dark, #4f46e5);
-}
-
-.edit-action-btn.action-warning {
-  background: var(--warning, #f59e0b);
-  color: white;
-}
-
-.edit-action-btn.action-warning:hover {
-  background: #d97706;
-}
-
-.edit-action-btn.action-purple {
-  background: #8b5cf6;
-  color: white;
-}
-
-.edit-action-btn.action-purple:hover {
-  background: #7c3aed;
-}
-
-.edit-action-btn.action-success {
-  background: var(--success, var(--success-color));
-  color: white;
-}
-
-.edit-action-btn.action-success:hover {
-  background: #059669;
-}
-
-/* Modal Body */
-.edit-modal-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.edit-form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.edit-goal-input {
-  width: 100%;
-  padding: 0.875rem 1rem;
-  font-size: 1.0625rem;
-  font-weight: 500;
-  border: 1.5px solid var(--border-color, #d1d5db);
-  border-radius: 12px;
-  background: var(--bg-primary, #ffffff);
-  color: var(--text-primary, #1f2937);
-  transition: all 0.15s;
-}
-
-.edit-goal-input:focus {
-  outline: none;
-  border-color: var(--primary, #6366f1);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-.edit-goal-input::placeholder {
-  color: var(--text-tertiary, #9ca3af);
-  font-weight: 400;
-}
-
-/* Sphere Selection - Collapsible */
-.edit-sphere-section {
-  margin-bottom: 0.5rem;
-}
-
-.edit-sphere-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.875rem;
-  border: 1.5px dashed var(--border-color, #d1d5db);
-  border-radius: 20px;
-  background: transparent;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--text-secondary, #6b7280);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.edit-sphere-toggle:hover {
-  border-color: var(--primary, #6366f1);
-  color: var(--primary, #6366f1);
-  background: rgba(99, 102, 241, 0.05);
-}
-
-.edit-sphere-selected {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.875rem;
-  border: 1.5px solid var(--sphere-color);
-  border-radius: 20px;
-  background: color-mix(in srgb, var(--sphere-color) 10%, transparent);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--sphere-color);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.edit-sphere-selected:hover {
-  background: color-mix(in srgb, var(--sphere-color) 15%, transparent);
-}
-
-.edit-sphere-selected svg {
-  color: var(--sphere-color);
-}
-
-.edit-chevron {
-  margin-left: 0.25rem;
-  opacity: 0.7;
-  transition: transform 0.2s;
-}
-
-.edit-chevron.rotated {
-  transform: rotate(180deg);
-}
-
-.edit-sphere-chips-wrapper {
-  margin-top: 0.75rem;
-}
-
-.edit-sphere-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.edit-sphere-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.875rem;
-  border: 1.5px solid var(--border-color, #e5e7eb);
-  border-radius: 20px;
-  background: var(--bg-primary, #ffffff);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--text-secondary, #6b7280);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.edit-sphere-chip:hover {
-  border-color: var(--sphere-color);
-  color: var(--sphere-color);
-  background: color-mix(in srgb, var(--sphere-color) 5%, transparent);
-}
-
-.edit-sphere-chip.active {
-  border-color: var(--sphere-color);
-  background: var(--sphere-color);
-  color: white;
-}
-
-.edit-sphere-chip.active svg {
-  color: white;
-}
-
-.edit-sphere-chip svg {
-  color: var(--sphere-color);
-  transition: color 0.15s;
-}
-
-/* Divider */
-.edit-divider {
-  height: 1px;
-  background: var(--border-color, #e5e7eb);
-  margin: 0.25rem 0;
-}
-
-/* Reflection Section */
-.edit-reflection-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.edit-reflection-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 0.875rem;
-  border: none;
-  border-radius: 10px;
-  background: var(--bg-secondary, #f9fafb);
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-secondary, #6b7280);
-  cursor: pointer;
-  transition: all 0.15s;
-  width: 100%;
-  text-align: left;
-}
-
-.edit-reflection-toggle:hover {
-  background: var(--bg-tertiary, #f3f4f6);
-  color: var(--text-primary, #1f2937);
-}
-
-.edit-reflection-toggle svg:first-child {
-  color: var(--primary, #6366f1);
-}
-
-.edit-optional {
-  margin-left: auto;
-  margin-right: 0.5rem;
-  font-size: 0.6875rem;
-  font-weight: 400;
-  color: var(--text-tertiary, #9ca3af);
-  background: var(--bg-tertiary, #f3f4f6);
-  padding: 0.125rem 0.5rem;
-  border-radius: 10px;
-}
-
-.edit-reflection-fields {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 0.5rem 0;
-}
-
-.edit-field-label {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--text-secondary, #6b7280);
-}
-
-.edit-textarea {
-  width: 100%;
-  padding: 0.75rem;
-  font-size: 0.9375rem;
-  border: 1.5px solid var(--border-color, #d1d5db);
-  border-radius: 10px;
-  background: var(--bg-primary, #ffffff);
-  color: var(--text-primary, #1f2937);
-  resize: vertical;
-  min-height: 70px;
-  font-family: inherit;
-  line-height: 1.5;
-  transition: all 0.15s;
-}
-
-.edit-textarea:focus {
-  outline: none;
-  border-color: var(--primary, #6366f1);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-.edit-textarea::placeholder {
-  color: var(--text-tertiary, #9ca3af);
-}
-
-/* Footer */
-.edit-modal-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.25rem;
-  border-top: 1px solid var(--border-color, #e5e7eb);
-  background: var(--bg-secondary, #f9fafb);
-}
-
-.edit-btn-delete {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: none;
-  background: transparent;
-  color: var(--danger, #ef4444);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.edit-btn-delete:hover {
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.edit-footer-actions {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.edit-btn-cancel {
-  padding: 0.625rem 1rem;
-  border: 1px solid var(--border-color, #d1d5db);
-  border-radius: 10px;
-  background: var(--bg-primary, #ffffff);
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-secondary, #6b7280);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.edit-btn-cancel:hover {
-  background: var(--bg-tertiary, #f3f4f6);
-  border-color: var(--text-tertiary, #9ca3af);
-}
-
-.edit-btn-save {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.625rem 1.25rem;
-  border: none;
-  border-radius: 10px;
-  background: var(--primary, #6366f1);
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: white;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.edit-btn-save:hover {
-  background: var(--primary-dark, #4f46e5);
-}
-
-/* Transitions */
-.edit-modal-fade-enter-active,
-.edit-modal-fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-
-.edit-modal-fade-enter-active .edit-modal-sheet,
-.edit-modal-fade-leave-active .edit-modal-sheet {
-  transition: transform 0.25s ease, opacity 0.2s ease;
-}
-
-.edit-modal-fade-enter-from,
-.edit-modal-fade-leave-to {
-  opacity: 0;
-}
-
-.edit-modal-fade-enter-from .edit-modal-sheet,
-.edit-modal-fade-leave-to .edit-modal-sheet {
-  transform: translateY(20px);
-  opacity: 0;
-}
-
-/* Mobile Styles for Edit Modal */
-@media (max-width: 640px) {
-  .edit-modal-overlay {
-    align-items: flex-end;
-    padding: 0;
-  }
-
-  .edit-modal-sheet {
-    max-width: 100%;
-    max-height: 92vh;
-    border-radius: 20px 20px 0 0;
-    transition: transform 0.2s ease;
-  }
-
-  .edit-modal-drag-handle {
-    display: flex;
-  }
-
-  .edit-modal-header {
-    padding: 0.75rem 1rem 1rem;
-  }
-
-  .edit-modal-title {
-    font-size: 1rem;
-  }
-
-  .edit-modal-actions {
-    padding: 0.75rem 1rem;
-  }
-
-  .edit-action-btn {
-    font-size: 0.75rem;
-    padding: 0.4375rem 0.75rem;
-  }
-
-  .edit-modal-body {
-    padding: 1rem;
-  }
-
-  .edit-goal-input {
-    font-size: 1rem;
-    padding: 0.75rem;
-  }
-
-  .edit-modal-footer {
-    padding: 0.875rem 1rem;
-    padding-bottom: calc(0.875rem + env(safe-area-inset-bottom, 0px));
-  }
-
-  .edit-modal-fade-enter-from .edit-modal-sheet,
-  .edit-modal-fade-leave-to .edit-modal-sheet {
-    transform: translateY(100%);
-  }
-}
 </style>

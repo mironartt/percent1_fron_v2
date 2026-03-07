@@ -3,104 +3,94 @@
     <div v-if="isOpen" class="modal-overlay" @click.self="close">
       <div class="modal-container modal-compact">
         <div class="modal-header">
-          <h3>{{ editingHabit ? 'Редактировать привычку' : 'Новая привычка' }}</h3>
+          <button
+            class="header-icon-btn"
+            :class="{ active: activeSection === 'icon' }"
+            @click="toggleSection('icon')"
+          >
+            {{ getIconEmoji(formData.icon) }}
+          </button>
+          <input
+            ref="headerNameInput"
+            v-model="formData.name"
+            type="text"
+            class="header-name-input"
+            :placeholder="editingHabit ? 'Редактировать привычку' : 'Новая привычка'"
+            @keydown.enter="formData.name.trim() && !isSaving && saveHabit()"
+          />
           <button class="btn-close" @click="close">
             <X :size="20" :stroke-width="1.5" />
           </button>
         </div>
-        
-        <div class="modal-content">
-          <div class="icon-picker-row">
-            <button 
-              v-for="icon in quickIcons" 
-              :key="icon.name"
-              class="icon-pick-btn"
-              :class="{ selected: formData.icon === icon.name }"
-              @click="formData.icon = icon.name"
-            >
-              {{ icon.emoji }}
-            </button>
-            <button 
-              class="icon-pick-btn more-btn"
-              :class="{ active: showIconPicker }"
-              @click="showIconPicker = !showIconPicker"
-              title="Ещё иконки"
-            >
-              <Ellipsis :size="16" :stroke-width="1.5" />
-            </button>
-          </div>
-          
-          <div class="icon-grid-dropdown" v-if="showIconPicker">
-            <button 
-              v-for="icon in moreIcons" 
-              :key="icon.name"
-              class="icon-option"
-              :class="{ selected: formData.icon === icon.name }"
-              @click="formData.icon = icon.name; showIconPicker = false"
-            >
-              {{ icon.emoji }}
-            </button>
-          </div>
-          
-          <div class="habit-name-row">
-            <input 
-              ref="nameInput"
-              v-model="formData.name"
-              type="text"
-              class="form-input name-input-full"
-              placeholder="Название привычки"
-            />
-          </div>
-          
-          <div v-if="!editingHabit" class="habit-suggest-buttons">
-            <button 
-              class="btn-suggest-habit"
-              @click="openTemplatesModal"
-            >
-              <Sparkles :size="14" :stroke-width="1.5" />
-              Подобрать из шаблона
-            </button>
-            <button 
-              class="btn-suggest-ai"
-              @click="openAiSuggestionsModal"
-            >
-              <Sparkles :size="14" :stroke-width="1.5" />
-              Подбор от ментора
-            </button>
-          </div>
-          
-          <div class="xp-slider-row">
-            <label class="slider-label">Награда за выполнение</label>
-            <div class="xp-slider-control">
-              <input 
-                type="range" 
-                v-model.number="formData.xpReward"
-                min="1"
-                max="100"
-                step="1"
-                class="xp-slider"
-              />
-              <span class="xp-slider-value">+{{ formData.xpReward }} XP</span>
+
+        <div class="modal-body">
+          <div v-if="activeSection === 'icon'" class="expand-section">
+            <div class="icon-grid-full">
+              <button
+                v-for="icon in habitIconsData"
+                :key="icon.name"
+                class="icon-option"
+                :class="{ selected: formData.icon === icon.name }"
+                @click="formData.icon = icon.name; activeSection = null"
+              >
+                {{ icon.emoji }}
+              </button>
             </div>
           </div>
-          
-          <div class="schedule-compact">
+
+          <div class="action-bar">
+            <button
+              v-if="editingHabit"
+              class="action-chip action-chip-danger"
+              @click="handleDelete"
+              title="Удалить"
+            >
+              <Trash2 :size="14" :stroke-width="1.5" />
+            </button>
+            <button
+              class="action-chip"
+              :class="{ active: activeSection === 'schedule' }"
+              @click="toggleSection('schedule')"
+            >
+              <Calendar :size="14" :stroke-width="1.5" />
+              {{ scheduleChipLabel }}
+            </button>
+            <button
+              class="action-chip"
+              :class="{ active: activeSection === 'more' }"
+              @click="toggleSection('more')"
+            >
+              <SlidersHorizontal :size="14" :stroke-width="1.5" />
+              Ещё
+            </button>
+            <div class="action-bar-spacer"></div>
+            <button
+              class="btn-create"
+              @click="saveHabit"
+              :disabled="!formData.name.trim() || isSaving"
+            >
+              <Loader2 v-if="isSaving" :size="16" :stroke-width="2" class="spin" />
+              {{ editingHabit ? 'Сохранить' : 'Создать' }}
+            </button>
+          </div>
+
+          <div v-if="activeSection === 'schedule'" class="expand-section">
             <div class="schedule-presets">
-              <button 
+              <button
                 class="preset-btn"
                 :class="{ active: formData.frequencyType === 'daily' }"
                 @click="formData.frequencyType = 'daily'"
               >
                 Каждый день
               </button>
-              <button 
+              <button
                 class="preset-btn"
                 :class="{ active: formData.frequencyType === 'weekdays' }"
                 @click="formData.frequencyType = 'weekdays'"
               >
                 Будни
               </button>
-              <button 
+              <button
                 class="preset-btn"
                 :class="{ active: formData.frequencyType === 'weekends' }"
                 @click="formData.frequencyType = 'weekends'"
@@ -109,8 +99,8 @@
               </button>
             </div>
             <div class="days-row">
-              <button 
-                v-for="day in weekDaysConfig" 
+              <button
+                v-for="day in weekDaysConfig"
                 :key="day.key"
                 class="day-btn-compact"
                 :class="{ active: isDayActiveBySchedule(day.key) }"
@@ -120,69 +110,59 @@
               </button>
             </div>
           </div>
-          
-          <div class="optional-actions description-toggle" v-if="!showDescriptionField">
-            <button 
-              class="btn-link optional-btn"
-              @click="showDescriptionField = true"
-            >
-              <Plus :size="14" :stroke-width="1.5" />
-              Добавить описание
-            </button>
-          </div>
-          
-          <textarea 
-            v-if="showDescriptionField"
-            v-model="formData.description"
-            class="form-input description-input description-spacing"
-            rows="3"
-            placeholder="Зачем вам эта привычка? (опционально)"
-          />
-          
-          <div class="optional-actions" v-if="gameSettings.difficultyMode !== 'soft'">
-            <button 
-              v-if="!showPenaltyField"
-              class="btn-link optional-btn penalty"
-              @click="showPenaltyField = true"
-            >
-              <Minus :size="14" :stroke-width="1.5" />
-              Настроить штраф
-            </button>
-          </div>
-          
-          <div class="penalty-field" v-if="showPenaltyField && gameSettings.difficultyMode !== 'soft'">
-            <label class="slider-label">
-              <CircleAlert :size="14" :stroke-width="1.5" />
-              Штраф за пропуск
-            </label>
-            <div class="xp-slider-control">
-              <input 
-                type="range" 
-                v-model.number="formData.xpPenalty"
-                min="0"
-                max="200"
-                step="1"
-                class="xp-slider penalty"
-              />
-              <span class="xp-slider-value penalty">-{{ formData.xpPenalty }} XP</span>
+
+          <div v-if="activeSection === 'more'" class="expand-section">
+            <div class="xp-slider-row">
+              <label class="slider-label">Награда за выполнение</label>
+              <div class="xp-slider-control">
+                <input
+                  type="range"
+                  v-model.number="formData.xpReward"
+                  min="1"
+                  max="100"
+                  step="1"
+                  class="xp-slider"
+                />
+                <span class="xp-slider-value">+{{ formData.xpReward }} XP</span>
+              </div>
+            </div>
+            <textarea
+              v-model="formData.description"
+              class="form-input description-input"
+              rows="2"
+              placeholder="Описание (необязательно)"
+            />
+            <div v-if="gameSettings.difficultyMode !== 'soft'" class="penalty-field">
+              <label class="slider-label">
+                <CircleAlert :size="14" :stroke-width="1.5" />
+                Штраф за пропуск
+              </label>
+              <div class="xp-slider-control">
+                <input
+                  type="range"
+                  v-model.number="formData.xpPenalty"
+                  min="0"
+                  max="200"
+                  step="1"
+                  class="xp-slider penalty"
+                />
+                <span class="xp-slider-value penalty">-{{ formData.xpPenalty }} XP</span>
+              </div>
             </div>
           </div>
-        </div>
-        
-        <div class="modal-footer compact">
-          <button v-if="editingHabit" class="btn-icon-only danger" @click="handleDelete" title="Удалить">
-            <Trash2 :size="18" :stroke-width="1.5" />
-          </button>
-          <div class="spacer"></div>
-          <button class="btn btn-secondary" @click="close">Отмена</button>
-          <button 
-            class="btn btn-primary" 
-            @click="saveHabit"
-            :disabled="!formData.name.trim() || isSaving"
-          >
-            <Loader2 v-if="isSaving" :size="16" :stroke-width="2" class="spin" />
-            {{ editingHabit ? 'Сохранить' : 'Создать' }}
-          </button>
+
+          <div v-if="!editingHabit" class="suggest-row">
+            <span class="suggest-label">Нужна идея?</span>
+            <button class="suggest-link-btn" @click="openTemplatesModal">
+              <Sparkles :size="12" :stroke-width="1.5" />
+              Шаблоны
+            </button>
+            <span class="suggest-dot">&middot;</span>
+            <button class="suggest-link-btn" @click="openAiSuggestionsModal">
+              <Sparkles :size="12" :stroke-width="1.5" />
+              Ментор
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -386,12 +366,10 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
-import { 
-  X, 
-  Ellipsis, 
-  Sparkles, 
-  Minus, 
-  CircleAlert, 
+import {
+  X,
+  Sparkles,
+  CircleAlert,
   Trash2,
   Loader2,
   Target,
@@ -402,10 +380,10 @@ import {
   Square,
   Bot,
   Calendar,
+  SlidersHorizontal,
   ArrowLeft,
   CheckCircle,
-  AlertTriangle,
-  Plus
+  AlertTriangle
 } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'
 import { useHabitsStore } from '@/stores/habits'
@@ -437,11 +415,9 @@ const toast = useToastStore()
 const HABIT_TASK_TYPE = 'habit_create_help'
 const HABIT_VIEWED_RESULTS_KEY = 'habit_suggestions_viewed'
 
-const nameInput = ref(null)
+const headerNameInput = ref(null)
 const isSaving = ref(false)
-const showIconPicker = ref(false)
-const showPenaltyField = ref(false)
-const showDescriptionField = ref(false)
+const activeSection = ref(null)
 const showSuggestionsModal = ref(false)
 const suggestionsStep = ref('intro')
 const skipHabitSuggestionsIntro = ref(false)
@@ -501,8 +477,17 @@ const habitIconsData = [
   { emoji: '🏊', name: 'swimmer' }
 ]
 
-const quickIcons = habitIconsData.slice(0, 5)
-const moreIcons = habitIconsData.slice(5)
+const scheduleChipLabel = computed(() => {
+  const ft = formData.value.frequencyType
+  if (ft === 'daily') return 'Каждый день'
+  if (ft === 'weekdays') return 'Будни'
+  if (ft === 'weekends') return 'Выходные'
+  return 'Свой график'
+})
+
+function toggleSection(section) {
+  activeSection.value = activeSection.value === section ? null : section
+}
 
 const weekDaysConfig = [
   { key: 1, name: 'Понедельник', short: 'Пн' },
@@ -567,7 +552,7 @@ watch(() => props.modelValue, (newVal) => {
   if (newVal) {
     resetForm()
     nextTick(() => {
-      nameInput.value?.focus()
+      headerNameInput.value?.focus()
     })
   }
 })
@@ -587,8 +572,6 @@ watch(() => props.editingHabit, (habit) => {
       scheduleDays: scheduleDays.length > 0 ? [...scheduleDays] : [1, 2, 3, 4, 5, 6, 0],
       reminderTime: habit.reminderTime || habit.reminder_time || ''
     }
-    showPenaltyField.value = (habit.xpPenalty || habit.xp_penalty || 0) > 0
-    showDescriptionField.value = !!(habit.description)
   }
 }, { immediate: true })
 
@@ -605,17 +588,13 @@ function resetForm() {
       scheduleDays: [1, 2, 3, 4, 5, 6, 0],
       reminderTime: ''
     }
-    showPenaltyField.value = false
-    showDescriptionField.value = false
   }
-  showIconPicker.value = false
+  activeSection.value = null
 }
 
 function close() {
   isOpen.value = false
-  showIconPicker.value = false
-  showPenaltyField.value = false
-  showDescriptionField.value = false
+  activeSection.value = null
 }
 
 function getIconEmoji(iconName) {
@@ -1089,9 +1068,9 @@ async function confirmAiHabitSelection() {
 .modal-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e5e7eb;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .modal-header h3 {
@@ -1102,6 +1081,23 @@ async function confirmAiHabitSelection() {
   align-items: center;
   gap: 8px;
   margin: 0;
+}
+
+.header-name-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary, #1f2937);
+  background: transparent;
+  padding: 0;
+  min-width: 0;
+}
+
+.header-name-input::placeholder {
+  color: var(--text-tertiary, #9ca3af);
+  font-weight: 500;
 }
 
 .ai-header h3 {
@@ -1131,75 +1127,124 @@ async function confirmAiHabitSelection() {
   color: #1f2937;
 }
 
+.modal-body {
+  padding: 16px 20px;
+}
+
 .modal-content {
   padding: 24px;
 }
 
-.modal-footer {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 24px;
-  border-top: 1px solid #e5e7eb;
-}
-
-.modal-footer.compact {
-  padding: 12px 24px;
-}
-
-.spacer {
-  flex: 1;
-}
-
-.icon-picker-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-  flex-wrap: nowrap;
-}
-
-.icon-pick-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  border: 2px solid #e5e7eb;
-  background: white;
-  font-size: 20px;
+.header-icon-btn {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  font-size: 22px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.15s;
+}
+
+.header-icon-btn:hover {
+  border-color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color) 5%, transparent);
+}
+
+.header-icon-btn.active {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.action-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+}
+
+.action-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.action-chip:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color) 5%, transparent);
+}
+
+.action-chip.active {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.action-chip-danger {
+  color: var(--text-muted);
+}
+
+.action-chip-danger:hover {
+  border-color: var(--danger-color);
+  color: var(--danger-color);
+  background: color-mix(in srgb, var(--danger-color) 5%, transparent);
+}
+
+.action-bar-spacer {
+  flex: 1;
+}
+
+.btn-create {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  border-radius: var(--radius-md);
+  border: none;
+  background: var(--primary-color);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
-.icon-pick-btn:hover {
-  border-color: #c7d2fe;
-  background: #f5f3ff;
+.btn-create:hover:not(:disabled) {
+  background: var(--primary-dark);
 }
 
-.icon-pick-btn.selected {
-  border-color: #6366f1;
-  background: #eef2ff;
+.btn-create:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.icon-pick-btn.more-btn {
-  color: #6b7280;
+.expand-section {
+  padding: 10px;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  margin-top: 10px;
 }
 
-.icon-pick-btn.more-btn.active {
-  border-color: #6366f1;
-  background: #eef2ff;
-  color: #6366f1;
-}
-
-.icon-grid-dropdown {
+.icon-grid-full {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   gap: 6px;
-  margin-bottom: 16px;
-  padding: 12px;
-  background: #f9fafb;
-  border-radius: 12px;
 }
 
 .icon-option {
@@ -1207,7 +1252,7 @@ async function confirmAiHabitSelection() {
   height: 36px;
   border-radius: 8px;
   border: 1px solid transparent;
-  background: white;
+  background: var(--bg-primary);
   font-size: 18px;
   cursor: pointer;
   display: flex;
@@ -1217,17 +1262,50 @@ async function confirmAiHabitSelection() {
 }
 
 .icon-option:hover {
-  border-color: #c7d2fe;
+  border-color: color-mix(in srgb, var(--primary-color) 40%, transparent);
   transform: scale(1.1);
 }
 
 .icon-option.selected {
-  border-color: #6366f1;
-  background: #eef2ff;
+  border-color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color) 8%, transparent);
 }
 
-.habit-name-row {
-  margin-bottom: 16px;
+.suggest-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-color);
+}
+
+.suggest-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.suggest-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--primary-color);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: opacity 0.2s;
+}
+
+.suggest-link-btn:hover {
+  opacity: 0.7;
+}
+
+.suggest-dot {
+  color: var(--text-muted);
+  font-size: 0.875rem;
 }
 
 .form-input {
@@ -1250,57 +1328,9 @@ async function confirmAiHabitSelection() {
   color: #9ca3af;
 }
 
-.name-input-full {
-  font-size: 16px;
-  font-weight: 500;
-}
-
 .description-input {
   resize: none;
-}
-
-.description-spacing {
-  margin-bottom: 16px;
-}
-
-.habit-suggest-buttons {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.btn-suggest-habit,
-.btn-suggest-ai {
-  flex: 1;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  background: white;
-  font-size: 13px;
-  font-weight: 500;
-  color: #4b5563;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: all 0.2s;
-}
-
-.btn-suggest-habit:hover {
-  border-color: #c7d2fe;
-  background: #f5f3ff;
-  color: #6366f1;
-}
-
-.btn-suggest-ai {
-  background: linear-gradient(135deg, #eef2ff 0%, #faf5ff 100%);
-  border-color: #c7d2fe;
-  color: #6366f1;
-}
-
-.btn-suggest-ai:hover {
-  background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
+  margin-top: 12px;
 }
 
 .xp-slider-row {
@@ -1350,174 +1380,84 @@ async function confirmAiHabitSelection() {
 .xp-slider-value {
   min-width: 70px;
   padding: 6px 10px;
-  background: #eef2ff;
+  background: color-mix(in srgb, var(--primary-color) 8%, transparent);
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
-  color: #6366f1;
+  color: var(--primary-color);
   text-align: center;
 }
 
 .xp-slider-value.penalty {
-  background: #fef2f2;
-  color: #ef4444;
-}
-
-.schedule-compact {
-  margin-bottom: 16px;
+  background: color-mix(in srgb, var(--danger-color) 8%, transparent);
+  color: var(--danger-color);
 }
 
 .schedule-presets {
   display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 
 .preset-btn {
   flex: 1;
-  padding: 8px 12px;
+  padding: 6px 10px;
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  background: white;
-  font-size: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  font-size: 0.75rem;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
 }
 
 .preset-btn:hover {
-  border-color: #c7d2fe;
-  color: #6366f1;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .preset-btn.active {
-  border-color: #6366f1;
-  background: #eef2ff;
-  color: #6366f1;
+  border-color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color) 8%, transparent);
+  color: var(--primary-color);
 }
 
 .days-row {
   display: flex;
-  gap: 6px;
+  gap: 4px;
 }
 
 .day-btn-compact {
   flex: 1;
-  padding: 8px 4px;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  background: white;
-  font-size: 12px;
+  padding: 5px 2px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  font-size: 0.6875rem;
   font-weight: 500;
-  color: #9ca3af;
+  color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
 }
 
 .day-btn-compact:hover {
-  border-color: #c7d2fe;
+  border-color: color-mix(in srgb, var(--primary-color) 40%, transparent);
 }
 
 .day-btn-compact.active {
-  border-color: #6366f1;
-  background: #6366f1;
+  border-color: var(--primary-color);
+  background: var(--primary-color);
   color: white;
-}
-
-.optional-actions {
-  margin-bottom: 12px;
-}
-
-.btn-link {
-  background: none;
-  border: none;
-  padding: 0;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  transition: color 0.2s;
-}
-
-.btn-link.optional-btn.penalty {
-  color: #9ca3af;
-}
-
-.btn-link.optional-btn.penalty:hover {
-  color: #ef4444;
 }
 
 .penalty-field {
   padding: 12px;
-  background: #fef2f2;
+  background: color-mix(in srgb, var(--danger-color) 5%, transparent);
   border-radius: 12px;
-  margin-bottom: 16px;
+  margin-top: 12px;
 }
 
-.btn {
-  padding: 10px 20px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  border: none;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background: white;
-  border: 1px solid #e5e7eb;
-  color: #4b5563;
-}
-
-.btn-secondary:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
-}
-
-.btn-icon-only {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  border: none;
-  background: #f3f4f6;
-  color: #6b7280;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.btn-icon-only.danger {
-  color: #ef4444;
-}
-
-.btn-icon-only.danger:hover {
-  background: #fef2f2;
-}
 
 .spin {
   animation: spin 1s linear infinite;
@@ -1956,35 +1896,27 @@ async function confirmAiHabitSelection() {
     max-height: calc(100vh - 40px);
   }
   
-  .icon-grid-dropdown {
+  .icon-grid-full {
     grid-template-columns: repeat(6, 1fr);
   }
-  
+
   .ai-intro-features {
     grid-template-columns: 1fr;
   }
-  
-  /* Кнопки предложений остаются в ряд */
-  .habit-suggest-buttons {
-    flex-direction: row;
-    gap: 6px;
-  }
-  
-  .btn-suggest-habit,
-  .btn-suggest-ai {
+
+  .action-chip {
+    padding: 6px 10px;
     font-size: 12px;
-    padding: 8px 10px;
   }
-  
-  /* Пресеты расписания в одну строку */
-  .schedule-presets {
-    flex-wrap: nowrap;
+
+  .btn-create {
+    padding: 7px 16px;
+    font-size: 13px;
   }
-  
+
   .preset-btn {
-    flex: 1;
-    padding: 6px 8px;
-    font-size: 11px;
+    padding: 5px 6px;
+    font-size: 0.6875rem;
   }
 }
 </style>
