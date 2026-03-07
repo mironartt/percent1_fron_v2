@@ -14,9 +14,15 @@
           <Sparkles :size="14" :stroke-width="1.5" />
           <span class="metric-text">{{ formattedXp }} XP</span>
         </div>
-        <div class="metric" v-if="tasksTotal > 0">
-          <CheckCircle2 :size="14" :stroke-width="1.5" />
-          <span class="metric-text">{{ tasksCompleted }}/{{ tasksTotal }}</span>
+        <div class="metric" :class="{ 'metric--complete': isTasksComplete }" v-if="tasksTotal > 0">
+          <CheckCheck v-if="isTasksComplete" :size="14" :stroke-width="2" />
+          <CheckCircle2 v-else :size="14" :stroke-width="1.5" />
+          <span class="metric-text">{{ tasksCompleted }}/{{ tasksTotal }} задач</span>
+        </div>
+        <div class="metric" :class="{ 'metric--complete': isHabitsComplete }" v-if="habitsTotal > 0">
+          <CheckCheck v-if="isHabitsComplete" :size="14" :stroke-width="2" />
+          <Flame v-else :size="14" :stroke-width="1.5" />
+          <span class="metric-text">{{ habitsCompleted }}/{{ habitsTotal }} привычек</span>
         </div>
       </div>
       <button class="toggle-btn" :title="isCollapsed ? 'Развернуть' : 'Свернуть'">
@@ -82,7 +88,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useXpStore } from '@/stores/xp'
 import {
@@ -90,11 +96,13 @@ import {
   Flame,
   Sparkles,
   CheckCircle2,
+  CheckCheck,
   Circle,
   ChevronDown
 } from 'lucide-vue-next'
 import { updateGoalSteps } from '@/services/api'
 import { markHabitCompleted } from '@/services/habitsApi'
+import { useDailyCompletion } from '@/composables/useDailyCompletion'
 
 const store = useAppStore()
 const xpStore = useXpStore()
@@ -145,6 +153,24 @@ const progressPercent = computed(() => {
 const todayHabits = computed(() => {
   const habits = dashboardData.value.today_habits?.habits || []
   return habits.slice(0, 6)
+})
+
+const habitsCompleted = computed(() => dashboardData.value.today_habits?.completed_count || 0)
+const habitsTotal = computed(() => dashboardData.value.today_habits?.total_count || 0)
+
+const isTasksComplete = computed(() => tasksTotal.value > 0 && tasksCompleted.value === tasksTotal.value)
+const isHabitsComplete = computed(() => habitsTotal.value > 0 && habitsCompleted.value === habitsTotal.value)
+
+// Celebration effects
+const { setupWatchers } = useDailyCompletion()
+
+onMounted(() => {
+  setupWatchers({
+    tasksCompleted,
+    tasksTotal,
+    habitsCompleted,
+    habitsTotal
+  })
 })
 
 async function toggleTask(task) {
@@ -258,6 +284,26 @@ async function toggleHabit(habit) {
 
 .xp-metric {
   color: var(--primary-color);
+}
+
+.metric--complete {
+  color: #22c55e;
+  animation: metric-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.metric--complete svg {
+  color: #22c55e;
+}
+
+@keyframes metric-pop {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .metric--complete {
+    animation: none;
+  }
 }
 
 .toggle-btn {
