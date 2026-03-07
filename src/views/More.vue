@@ -27,7 +27,7 @@
             <div class="nav-link-icon">
               <Target :size="20" :stroke-width="1.5" />
             </div>
-            <span class="nav-link-label">ССП (Колесо баланса)</span>
+            <span class="nav-link-label">Колесо баланса</span>
             <ChevronRight :size="18" :stroke-width="1.5" class="nav-link-arrow" />
           </router-link>
 

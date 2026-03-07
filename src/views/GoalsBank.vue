@@ -2298,12 +2298,12 @@ onUnmounted(() => {
 .stats-bar {
   display: flex;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.3rem;
-  margin-bottom: 1rem;
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 14px;
+  overflow: visible;
+  width: 100%;
+  margin-bottom: 1rem;
 }
 
 .stats-bar-spacer {
@@ -2315,8 +2315,8 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.4rem 0.625rem;
-  border-radius: 10px;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0;
   border: none;
   background: transparent;
   font-size: 0.8125rem;
@@ -2345,8 +2345,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  padding: 0.4rem 0.625rem;
-  border-radius: 10px;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0 13px 13px 0;
   font-size: 0.8125rem;
   font-weight: 500;
   color: var(--success-color, #10b981);
@@ -2364,9 +2364,9 @@ onUnmounted(() => {
 
 @media (max-width: 640px) {
   .stats-bar {
-    gap: 0.25rem;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
 
   .stats-bar::-webkit-scrollbar {
@@ -2374,15 +2374,15 @@ onUnmounted(() => {
   }
 
   .stats-action-btn {
-    padding: 0.4rem;
+    padding: 0.5rem 0.625rem;
+    font-size: 0.8125rem;
+    gap: 6px;
   }
 
   .stats-ai-btn {
-    padding: 0.3rem;
-  }
-
-  .ai-btn-label {
-    display: none;
+    padding: 0.5rem 0.625rem;
+    font-size: 0.8125rem;
+    gap: 6px;
   }
 }
 

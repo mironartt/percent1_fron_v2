@@ -168,204 +168,135 @@
     </div>
   </Teleport>
 
-  <Teleport to="body">
-    <div v-if="showSuggestionsModal" class="modal-overlay suggestions-overlay" @click.self="closeSuggestionsModal">
-      <div class="modal-container modal-suggestions ai-mentor-modal">
-        <div class="modal-header ai-header">
-          <h3>
-            <Sparkles :size="20" :stroke-width="1.5" class="ai-icon" />
-            Умный подбор привычек
-          </h3>
-          <button class="btn-close" @click="closeSuggestionsModal">
-            <X :size="20" :stroke-width="1.5" />
-          </button>
-        </div>
-        
-        <div class="modal-content">
-          <template v-if="suggestionsStep === 'intro'">
-            <div class="ai-intro-section">
-              <div class="ai-intro-icon">
-                <Sparkles :size="48" />
+  <AiMentorModal
+    :show="showSuggestionsModal"
+    :step="suggestionsStep"
+    title="Умный подбор привычек"
+    subtitle="Умный подбор привычек"
+    description="AI проанализирует ваши цели, паттерны поведения и рефлексии. На основе этого предложит привычки для достижения результатов."
+    :features="habitFeatures"
+    buttonText="Подобрать привычки"
+    loadingText="AI анализирует ваш профиль..."
+    skipKey="habitSuggestionsSkipIntro"
+    :skipChecked="skipHabitSuggestionsIntro"
+    @update:skipChecked="skipHabitSuggestionsIntro = $event; saveSkipIntroPreference()"
+    @close="closeSuggestionsModal"
+    @start="startHabitSuggestions"
+  >
+    <template #selection>
+      <div class="ai-selection-section">
+        <h4>Рекомендованные привычки</h4>
+        <p class="ai-selection-hint">Выберите привычки, которые хотите добавить</p>
+        <div class="ai-suggestions-list aim-scrollable">
+          <div
+            v-for="(habit, idx) in aiSuggestedHabits"
+            :key="idx"
+            class="ai-suggestion-card"
+            :class="{ selected: selectedAiHabits.includes(idx) }"
+            @click="toggleAiHabitSelection(idx)"
+          >
+            <div class="ai-suggestion-checkbox">
+              <CheckSquare v-if="selectedAiHabits.includes(idx)" :size="20" />
+              <Square v-else :size="20" />
+            </div>
+            <div class="ai-suggestion-content">
+              <div class="ai-suggestion-header">
+                <span class="ai-habit-emoji">{{ getIconEmoji(habit.icon) }}</span>
+                <h5 class="ai-suggestion-title">{{ habit.name }}</h5>
               </div>
-              <h4>Умный подбор привычек</h4>
-              <p class="ai-intro-description">
-                AI проанализирует ваши цели, паттерны поведения и рефлексии. 
-                На основе этого предложит привычки для достижения результатов.
+              <p v-if="habit.whyUseful" class="ai-suggestion-reason">
+                <Bot :size="14" />
+                {{ habit.whyUseful }}
               </p>
-              <div class="ai-intro-features">
-                <div class="ai-feature-item">
-                  <Target :size="18" />
-                  <span>Анализ целей и ССП</span>
-                </div>
-                <div class="ai-feature-item">
-                  <RefreshCw :size="18" />
-                  <span>Паттерны поведения</span>
-                </div>
-                <div class="ai-feature-item">
-                  <BarChart3 :size="18" />
-                  <span>Персонализация</span>
-                </div>
-                <div class="ai-feature-item">
-                  <Clock :size="18" />
-                  <span>Готовое расписание</span>
-                </div>
-              </div>
-              <button class="btn btn-primary btn-ai-action" @click="startHabitSuggestions">
-                <Sparkles :size="18" />
-                Подобрать привычки
-              </button>
-              <label class="ai-skip-intro-label">
-                <input type="checkbox" v-model="skipHabitSuggestionsIntro" @change="saveSkipIntroPreference" />
-                <span>Не показывать больше</span>
-              </label>
-            </div>
-          </template>
-          
-          <template v-else-if="suggestionsStep === 'loading'">
-            <div class="ai-loading-section">
-              <div class="ai-loading-spinner"></div>
-              <h4>AI анализирует ваш профиль...</h4>
-              <p class="ai-loading-hint">Это займет несколько секунд</p>
-            </div>
-          </template>
-          
-          <template v-else-if="suggestionsStep === 'selection'">
-            <div class="ai-selection-section">
-              <h4>Рекомендованные привычки</h4>
-              <p class="ai-selection-hint">Выберите привычки, которые хотите добавить</p>
-              
-              <div class="ai-suggestions-list">
-                <div 
-                  v-for="(habit, idx) in aiSuggestedHabits" 
-                  :key="idx"
-                  class="ai-suggestion-card"
-                  :class="{ selected: selectedAiHabits.includes(idx) }"
-                  @click="toggleAiHabitSelection(idx)"
-                >
-                  <div class="ai-suggestion-checkbox">
-                    <CheckSquare v-if="selectedAiHabits.includes(idx)" :size="20" />
-                    <Square v-else :size="20" />
-                  </div>
-                  <div class="ai-suggestion-content">
-                    <div class="ai-suggestion-header">
-                      <span class="ai-habit-emoji">{{ getIconEmoji(habit.icon) }}</span>
-                      <h5 class="ai-suggestion-title">{{ habit.name }}</h5>
-                    </div>
-                    <p v-if="habit.whyUseful" class="ai-suggestion-reason">
-                      <Bot :size="14" />
-                      {{ habit.whyUseful }}
-                    </p>
-                    <div class="ai-habit-meta">
-                      <span class="ai-habit-schedule">
-                        <Calendar :size="12" />
-                        {{ habit.scheduleLabel }}
-                      </span>
-                      <span class="ai-habit-xp">+{{ habit.xpReward }} XP</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="ai-selection-actions">
-                <button class="btn btn-secondary" @click="suggestionsStep = 'intro'">
-                  <ArrowLeft :size="16" />
-                  Назад
-                </button>
-                <button 
-                  class="btn btn-primary" 
-                  :disabled="selectedAiHabits.length === 0"
-                  @click="confirmAiHabitSelection"
-                >
-                  Добавить ({{ selectedAiHabits.length }})
-                </button>
+              <div class="ai-habit-meta">
+                <span class="ai-habit-schedule">
+                  <Calendar :size="12" />
+                  {{ habit.scheduleLabel }}
+                </span>
+                <span class="ai-habit-xp">+{{ habit.xpReward }} XP</span>
               </div>
             </div>
-          </template>
-          
-          <template v-else-if="suggestionsStep === 'confirmation'">
-            <div class="ai-confirmation-section">
-              <div class="ai-success-icon">
-                <CheckCircle :size="48" />
-              </div>
-              <h4>Привычки успешно добавлены!</h4>
-              <p class="ai-confirmation-text">
-                Добавлено {{ createdAiHabits.length }} {{ getHabitsWord(createdAiHabits.length) }}
-              </p>
-              
-              <div class="ai-created-list">
-                <div v-for="habit in createdAiHabits" :key="habit.id" class="ai-created-item">
-                  <CheckCircle :size="16" class="ai-created-icon" />
-                  <span>{{ habit.name }}</span>
-                </div>
-              </div>
-
-              <button class="btn btn-primary" @click="closeSuggestionsModal">
-                Отлично!
-              </button>
-            </div>
-          </template>
-          
-          <template v-else-if="suggestionsStep === 'error'">
-            <div class="ai-error-section">
-              <div class="ai-error-icon">
-                <AlertTriangle :size="48" />
-              </div>
-              <h4>Не удалось подобрать привычки</h4>
-              <p class="ai-error-text">{{ suggestionsErrorMessage }}</p>
-              
-              <div class="ai-error-actions">
-                <button class="btn btn-secondary" @click="showTemplateHabits">
-                  Выбрать из шаблонов
-                </button>
-                <button class="btn btn-primary" @click="suggestionsStep = 'intro'">
-                  Попробовать снова
-                </button>
-              </div>
-            </div>
-          </template>
-          
-          <template v-else-if="suggestionsStep === 'templates'">
-            <div class="ai-templates-section">
-              <h4>Шаблоны привычек</h4>
-              <p class="ai-templates-hint">Выберите готовые привычки из категорий</p>
-              
-              <div class="suggestions-categories">
-                <div 
-                  v-for="category in habitSuggestions" 
-                  :key="category.name"
-                  class="suggestion-category"
-                >
-                  <div class="category-header">
-                    <span class="category-icon">{{ category.icon }}</span>
-                    <span class="category-name">{{ category.name }}</span>
-                  </div>
-                  <div class="category-habits">
-                    <button 
-                      v-for="habit in category.habits" 
-                      :key="habit.name"
-                      class="suggestion-habit"
-                      @click="selectSuggestedHabit(habit)"
-                    >
-                      <span class="habit-emoji">{{ getIconEmoji(habit.icon) }}</span>
-                      <div class="habit-details">
-                        <span class="habit-title">{{ habit.name }}</span>
-                        <span class="habit-desc">{{ habit.description }}</span>
-                      </div>
-                      <div class="habit-schedule-badge">{{ habit.scheduleLabel }}</div>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </template>
+          </div>
         </div>
       </div>
-    </div>
-  </Teleport>
+    </template>
+
+    <template #confirmation>
+      <div class="ai-confirmation-section">
+        <div class="ai-success-icon"><CheckCircle :size="48" /></div>
+        <h4>Привычки успешно добавлены!</h4>
+        <p class="ai-confirmation-text">Добавлено {{ createdAiHabits.length }} {{ getHabitsWord(createdAiHabits.length) }}</p>
+        <div class="ai-created-list">
+          <div v-for="habit in createdAiHabits" :key="habit.id" class="ai-created-item">
+            <CheckCircle :size="16" class="ai-created-icon" />
+            <span>{{ habit.name }}</span>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template #error>
+      <div class="ai-error-section">
+        <div class="ai-error-icon"><AlertTriangle :size="48" /></div>
+        <h4>Не удалось подобрать привычки</h4>
+        <p class="ai-error-text">{{ suggestionsErrorMessage }}</p>
+      </div>
+    </template>
+
+    <template #templates>
+      <div class="ai-templates-section">
+        <h4>Шаблоны привычек</h4>
+        <p class="ai-templates-hint">Выберите готовые привычки из категорий</p>
+        <div class="suggestions-categories aim-scrollable">
+          <div v-for="category in habitSuggestions" :key="category.name" class="suggestion-category">
+            <div class="category-header">
+              <span class="category-icon">{{ category.icon }}</span>
+              <span class="category-name">{{ category.name }}</span>
+            </div>
+            <div class="category-habits">
+              <button v-for="habit in category.habits" :key="habit.name" class="suggestion-habit" @click="selectSuggestedHabit(habit)">
+                <span class="habit-emoji">{{ getIconEmoji(habit.icon) }}</span>
+                <div class="habit-details">
+                  <span class="habit-title">{{ habit.name }}</span>
+                  <span class="habit-desc">{{ habit.description }}</span>
+                </div>
+                <div class="habit-schedule-badge">{{ habit.scheduleLabel }}</div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template #footer="{ step: currentStep }">
+      <template v-if="currentStep === 'selection'">
+        <button class="aim-btn aim-btn-secondary" @click="suggestionsStep = 'intro'">
+          <ArrowLeft :size="16" />
+          <span>Назад</span>
+        </button>
+        <button class="aim-btn aim-btn-primary" :disabled="selectedAiHabits.length === 0" @click="confirmAiHabitSelection">
+          Добавить ({{ selectedAiHabits.length }})
+        </button>
+      </template>
+      <template v-else-if="currentStep === 'confirmation'">
+        <button class="aim-btn aim-btn-primary aim-btn-full" @click="closeSuggestionsModal">Отлично!</button>
+      </template>
+      <template v-else-if="currentStep === 'error'">
+        <button class="aim-btn aim-btn-secondary" @click="showTemplateHabits">Выбрать из шаблонов</button>
+        <button class="aim-btn aim-btn-primary" @click="suggestionsStep = 'intro'">Попробовать снова</button>
+      </template>
+      <template v-else-if="currentStep === 'templates'">
+        <button class="aim-btn aim-btn-secondary aim-btn-full" @click="suggestionsStep = 'intro'">
+          <ArrowLeft :size="16" />
+          <span>Назад к AI</span>
+        </button>
+      </template>
+    </template>
+  </AiMentorModal>
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, onMounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, markRaw } from 'vue'
 import {
   X,
   Sparkles,
@@ -385,6 +316,7 @@ import {
   CheckCircle,
   AlertTriangle
 } from 'lucide-vue-next'
+import AiMentorModal from '@/components/AiMentorModal.vue'
 import { useAppStore } from '@/stores/app'
 import { useHabitsStore } from '@/stores/habits'
 import { useAITasksStore } from '@/stores/aiTasks'
@@ -411,6 +343,13 @@ const appStore = useAppStore()
 const habitsStore = useHabitsStore()
 const aiTasksStore = useAITasksStore()
 const toast = useToastStore()
+
+const habitFeatures = [
+  { icon: markRaw(Target), text: 'Анализ целей и ССП' },
+  { icon: markRaw(RefreshCw), text: 'Паттерны поведения' },
+  { icon: markRaw(BarChart3), text: 'Персонализация' },
+  { icon: markRaw(Clock), text: 'Готовое расписание' }
+]
 
 const HABIT_TASK_TYPE = 'habit_create_help'
 const HABIT_VIEWED_RESULTS_KEY = 'habit_suggestions_viewed'

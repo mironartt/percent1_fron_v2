@@ -268,153 +268,97 @@
       </div>
     </Teleport>
 
-    <Teleport to="body">
-      <div v-if="showAiSuggestionsModal" class="modal-overlay" @click.self="closeAiSuggestionsModal">
-        <div class="modal-container modal-md ai-suggestions-modal">
-          <div class="modal-header ai-header">
-            <div class="ai-header-title">
-              <Sparkles :size="20" :stroke-width="1.5" class="ai-header-icon" />
-              <h3>Умный подбор наград</h3>
+    <AiMentorModal
+      :show="showAiSuggestionsModal"
+      :step="aiSuggestionsStep"
+      title="Умный подбор наград"
+      subtitle="AI-ментор подберёт награды специально для вас"
+      description="На основе ваших целей, интересов и зон роста я предложу награды, которые будут мотивировать именно вас."
+      :features="rewardFeatures"
+      buttonText="Подобрать награды"
+      loadingText="AI анализирует ваш профиль..."
+      skipKey="rewardSuggestionsSkipIntro"
+      :skipChecked="skipRewardSuggestionsIntro"
+      @update:skipChecked="skipRewardSuggestionsIntro = $event; saveSkipIntroPreference()"
+      @close="closeAiSuggestionsModal"
+      @start="startAiSuggestions"
+    >
+      <template #selection>
+        <div class="ai-selection-section">
+          <p class="ai-selection-hint">Выберите награды, которые хотите добавить</p>
+          <div class="ai-rewards-list aim-scrollable">
+            <div
+              v-for="(reward, idx) in aiSuggestedRewards"
+              :key="idx"
+              class="ai-reward-card"
+              :class="{ selected: selectedAiRewards.includes(idx) }"
+              @click="toggleAiRewardSelection(idx)"
+            >
+              <div class="ai-reward-header">
+                <span class="ai-reward-icon">{{ reward.icon }}</span>
+                <div class="ai-reward-info">
+                  <span class="ai-reward-name">{{ reward.name }}</span>
+                  <span class="ai-reward-cost">{{ reward.cost }} XP</span>
+                </div>
+                <div class="ai-reward-checkbox">
+                  <Check v-if="selectedAiRewards.includes(idx)" :size="16" :stroke-width="2" />
+                </div>
+              </div>
+              <p class="ai-reward-why">{{ reward.whyMotivating }}</p>
             </div>
-            <button class="btn-close" @click="closeAiSuggestionsModal">
-              <X :size="20" :stroke-width="1.5" />
-            </button>
-          </div>
-          <div class="modal-content ai-content">
-            <template v-if="aiSuggestionsStep === 'intro'">
-              <div class="ai-intro-section">
-                <div class="ai-intro-icon">
-                  <Sparkles :size="48" :stroke-width="1.5" />
-                </div>
-                <h4>AI-ментор подберёт награды специально для вас</h4>
-                <p class="ai-intro-text">
-                  На основе ваших целей, интересов и зон роста я предложу награды, 
-                  которые будут мотивировать именно вас.
-                </p>
-                <div class="ai-features">
-                  <div class="ai-feature">
-                    <Target :size="16" :stroke-width="1.5" />
-                    <span>Анализ целей и ССП</span>
-                  </div>
-                  <div class="ai-feature">
-                    <TrendingUp :size="16" :stroke-width="1.5" />
-                    <span>Учёт зон роста</span>
-                  </div>
-                  <div class="ai-feature">
-                    <Gift :size="16" :stroke-width="1.5" />
-                    <span>Персонализированные награды</span>
-                  </div>
-                  <div class="ai-feature">
-                    <Coins :size="16" :stroke-width="1.5" />
-                    <span>Подходящая стоимость в XP</span>
-                  </div>
-                </div>
-                <button class="btn btn-ai-primary" @click="startAiSuggestions">
-                  <Sparkles :size="16" :stroke-width="1.5" />
-                  Подобрать награды
-                </button>
-                <label class="skip-checkbox">
-                  <input type="checkbox" v-model="skipRewardSuggestionsIntro" @change="saveSkipIntroPreference" />
-                  <span>Не показывать это окно снова</span>
-                </label>
-              </div>
-            </template>
-
-            <template v-else-if="aiSuggestionsStep === 'loading'">
-              <div class="ai-loading-section">
-                <Loader2 :size="48" :stroke-width="2" class="spinner ai-spinner" />
-                <h4>AI анализирует ваш профиль...</h4>
-                <p class="ai-loading-text">Подбираем награды на основе ваших целей и интересов</p>
-              </div>
-            </template>
-
-            <template v-else-if="aiSuggestionsStep === 'selection'">
-              <div class="ai-selection-section">
-                <p class="ai-selection-hint">Выберите награды, которые хотите добавить</p>
-                <div class="ai-rewards-list">
-                  <div 
-                    v-for="(reward, idx) in aiSuggestedRewards" 
-                    :key="idx"
-                    class="ai-reward-card"
-                    :class="{ selected: selectedAiRewards.includes(idx) }"
-                    @click="toggleAiRewardSelection(idx)"
-                  >
-                    <div class="ai-reward-header">
-                      <span class="ai-reward-icon">{{ reward.icon }}</span>
-                      <div class="ai-reward-info">
-                        <span class="ai-reward-name">{{ reward.name }}</span>
-                        <span class="ai-reward-cost">{{ reward.cost }} XP</span>
-                      </div>
-                      <div class="ai-reward-checkbox">
-                        <Check v-if="selectedAiRewards.includes(idx)" :size="16" :stroke-width="2" />
-                      </div>
-                    </div>
-                    <p class="ai-reward-why">{{ reward.whyMotivating }}</p>
-                  </div>
-                </div>
-                <button 
-                  class="btn btn-ai-primary"
-                  :disabled="selectedAiRewards.length === 0"
-                  @click="confirmAiRewardSelection"
-                >
-                  Добавить {{ selectedAiRewards.length }} {{ getRewardsWord(selectedAiRewards.length) }}
-                </button>
-              </div>
-            </template>
-
-            <template v-else-if="aiSuggestionsStep === 'confirmation'">
-              <div class="ai-confirmation-section">
-                <div class="ai-success-icon">
-                  <CheckCircle :size="48" :stroke-width="1.5" />
-                </div>
-                <h4>Награды успешно добавлены!</h4>
-                <p class="ai-confirmation-text">
-                  Добавлено {{ createdAiRewards.length }} {{ getRewardsWord(createdAiRewards.length) }}
-                </p>
-                <div class="ai-created-list">
-                  <div v-for="reward in createdAiRewards" :key="reward.reward_id" class="ai-created-item">
-                    <span class="ai-created-icon">{{ reward.icon }}</span>
-                    <span>{{ reward.name }}</span>
-                    <span class="ai-created-cost">{{ reward.cost }} XP</span>
-                  </div>
-                </div>
-                <button class="btn btn-primary" @click="closeAiSuggestionsModal">
-                  Отлично!
-                </button>
-              </div>
-            </template>
-
-            <template v-else-if="aiSuggestionsStep === 'error'">
-              <div class="ai-error-section">
-                <div class="ai-error-icon">
-                  <AlertTriangle :size="48" :stroke-width="1.5" />
-                </div>
-                <h4>Не удалось подобрать награды</h4>
-                <p class="ai-error-text">{{ aiSuggestionsErrorMessage }}</p>
-                <div class="ai-error-actions">
-                  <button class="btn btn-secondary" @click="openManualAddModal">
-                    Добавить вручную
-                  </button>
-                  <button class="btn btn-primary" @click="aiSuggestionsStep = 'intro'">
-                    Попробовать снова
-                  </button>
-                </div>
-              </div>
-            </template>
           </div>
         </div>
-      </div>
-    </Teleport>
+      </template>
+
+      <template #confirmation>
+        <div class="ai-confirmation-section">
+          <div class="ai-success-icon"><CheckCircle :size="48" :stroke-width="1.5" /></div>
+          <h4>Награды успешно добавлены!</h4>
+          <p class="ai-confirmation-text">Добавлено {{ createdAiRewards.length }} {{ getRewardsWord(createdAiRewards.length) }}</p>
+          <div class="ai-created-list">
+            <div v-for="reward in createdAiRewards" :key="reward.reward_id" class="ai-created-item">
+              <span class="ai-created-icon">{{ reward.icon }}</span>
+              <span>{{ reward.name }}</span>
+              <span class="ai-created-cost">{{ reward.cost }} XP</span>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <template #error>
+        <div class="ai-error-section">
+          <div class="ai-error-icon"><AlertTriangle :size="48" :stroke-width="1.5" /></div>
+          <h4>Не удалось подобрать награды</h4>
+          <p class="ai-error-text">{{ aiSuggestionsErrorMessage }}</p>
+        </div>
+      </template>
+
+      <template #footer="{ step: currentStep }">
+        <template v-if="currentStep === 'selection'">
+          <button class="aim-btn aim-btn-primary aim-btn-full" :disabled="selectedAiRewards.length === 0" @click="confirmAiRewardSelection">
+            Добавить {{ selectedAiRewards.length }} {{ getRewardsWord(selectedAiRewards.length) }}
+          </button>
+        </template>
+        <template v-else-if="currentStep === 'confirmation'">
+          <button class="aim-btn aim-btn-primary aim-btn-full" @click="closeAiSuggestionsModal">Отлично!</button>
+        </template>
+        <template v-else-if="currentStep === 'error'">
+          <button class="aim-btn aim-btn-secondary" @click="openManualAddModal">Добавить вручную</button>
+          <button class="aim-btn aim-btn-primary" @click="aiSuggestionsStep = 'intro'">Попробовать снова</button>
+        </template>
+      </template>
+    </AiMentorModal>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick, markRaw } from 'vue'
 import { useXpStore } from '../stores/xp'
 import { useToastStore } from '../stores/toast'
 import { useAppStore } from '../stores/app'
 import { useAITasksStore } from '../stores/aiTasks'
 import { Gift, Plus, Pencil, Check, X, ChevronDown, Loader2, Sparkles, Target, TrendingUp, Coins, CheckCircle, AlertTriangle, Trash2 } from 'lucide-vue-next'
+import AiMentorModal from '@/components/AiMentorModal.vue'
 
 const xpStore = useXpStore()
 const toast = useToastStore()
@@ -434,6 +378,13 @@ const selectedAiRewards = ref([])
 const createdAiRewards = ref([])
 const aiSuggestionsErrorMessage = ref('')
 const skipRewardSuggestionsIntro = ref(false)
+
+const rewardFeatures = [
+  { icon: markRaw(Target), text: 'Подбор на основе ваших целей' },
+  { icon: markRaw(TrendingUp), text: 'Учёт зон роста и интересов' },
+  { icon: markRaw(Gift), text: 'Персональные награды для мотивации' },
+  { icon: markRaw(Coins), text: 'Оптимальная стоимость в XP' }
+]
 
 const isAiGenerating = ref(false)
 const aiProgressText = ref('')
@@ -1813,5 +1764,48 @@ async function confirmAiRewardSelection() {
 
 .ai-error-actions .btn {
   flex: 1;
+}
+
+/* AiMentorModal footer buttons */
+.aim-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex: 1;
+  font-family: inherit;
+}
+
+.aim-btn-full { width: 100%; }
+
+.aim-btn-primary {
+  background: var(--success-color, #10b981);
+  color: #fff;
+}
+
+.aim-btn-primary:hover:not(:disabled) {
+  background: #059669;
+}
+
+.aim-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.aim-btn-secondary {
+  background: var(--bg-primary, #fff);
+  color: var(--text-primary, #1f2937);
+  border: 1px solid var(--border-color, #e5e7eb);
+}
+
+.aim-btn-secondary:hover {
+  background: var(--bg-tertiary, #f3f4f6);
 }
 </style>

@@ -79,16 +79,6 @@
 
       <div class="stats-bar-spacer"></div>
 
-      <button
-        class="stats-bar-badge warning"
-        v-if="goalsWithoutStepsTotal > 0"
-        @click="scrollToGoalsWithoutSteps"
-      >
-        <AlertCircle :size="13" :stroke-width="2" />
-        {{ goalsWithoutStepsTotal }}
-      </button>
-
-      <div class="stats-bar-divider" v-if="goalsWithoutStepsTotal > 0"></div>
 
       <button class="stats-bar-ai-btn" @click="openAIPlannerModal">
         <Sparkles :size="14" :stroke-width="2" />
@@ -580,125 +570,84 @@
     </div><!-- /planning-two-panel (v-else) -->
 
     <!-- AI Planner Modal -->
-    <div class="ai-planner-overlay" v-if="showAIPlannerModal" @click="closeAIPlannerModal">
-      <div class="ai-planner-modal" @click.stop>
-        <div class="ai-modal-header">
-          <div class="ai-modal-title-row">
-            <Sparkles :size="20" class="ai-modal-icon" />
-            <h3>AI планирование недели</h3>
+    <AiMentorModal
+      :show="showAIPlannerModal"
+      :step="aiPlannerStep"
+      title="AI планирование недели"
+      subtitle="Умное планирование недели"
+      description="AI проанализирует ваши задачи: приоритеты, оценки времени и сферы жизни. На основе этого распределит задачи по дням недели с учётом баланса нагрузки."
+      :features="aiPlannerFeatures"
+      buttonText="Запланировать неделю"
+      :loadingText="aiPlannerProgress.text || 'AI анализирует ваши задачи...'"
+      skipKey="aiPlannerSkipIntro"
+      :skipChecked="aiPlannerDontShowCheck"
+      @update:skipChecked="aiPlannerDontShowCheck = $event"
+      @close="closeAIPlannerModal"
+      @start="startAIPlanning"
+    >
+      <template #intro-options>
+        <div class="ai-option-toggle">
+          <label class="toggle-label">
+            <input type="checkbox" v-model="aiPlannerIncludeOverdue" />
+            <span class="toggle-text">Включить просроченные задачи ({{ overdueTasks.length }})</span>
+          </label>
+        </div>
+      </template>
+
+      <template #result>
+        <div class="ai-result-section">
+          <div class="ai-result-summary">
+            <h4 class="ai-result-title">План готов!</h4>
+            <p class="ai-result-subtitle">Распределено {{ aiPlannerResult?.totalTasks || 0 }} задач на неделю</p>
           </div>
-          <button class="ai-modal-close" @click="closeAIPlannerModal">
-            <X :size="20" />
+          <div class="ai-result-preview aim-scrollable" v-if="aiPlannerResult">
+            <div
+              v-for="day in aiPlannerResult.days"
+              :key="day.date"
+              class="ai-day-preview"
+              :class="{ collapsed: !isDayExpanded(day.date) }"
+            >
+              <div class="ai-day-header" @click="toggleDayExpand(day.date)">
+                <span class="ai-day-name">{{ day.dayName }}</span>
+                <div class="ai-day-meta">
+                  <span class="ai-day-count">{{ getSelectedCountForDay(day) }} задач</span>
+                  <ChevronRight :size="16" class="ai-day-chevron" :class="{ rotated: isDayExpanded(day.date) }" />
+                </div>
+              </div>
+              <div class="ai-day-tasks" v-show="isDayExpanded(day.date)">
+                <div
+                  v-for="task in day.tasks"
+                  :key="task.id"
+                  class="ai-task-preview"
+                  :class="{ selected: isTaskSelected(task.id), 'not-found': task.notFound }"
+                  @click="toggleTaskSelection(task.id)"
+                >
+                  <component
+                    :is="isTaskSelected(task.id) ? CheckSquare : Square"
+                    :size="18"
+                    class="ai-task-checkbox"
+                  />
+                  <div class="ai-task-info">
+                    <span class="ai-task-title">{{ task.title }}</span>
+                    <span v-if="task.goalTitle" class="ai-task-goal">{{ task.goalTitle }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <template #footer="{ step: currentStep }">
+        <template v-if="currentStep === 'result'">
+          <button class="aim-btn aim-btn-secondary" @click="goBackToIntro">Назад</button>
+          <button class="aim-btn aim-btn-primary" @click="applyAIPlan" :disabled="aiPlannerSelectedTasks.length === 0">
+            <Check :size="16" />
+            <span>Применить план ({{ aiPlannerSelectedTasks.length }})</span>
           </button>
-        </div>
-        
-        <div class="ai-modal-content" v-if="aiPlannerStep === 'intro'">
-          <div class="ai-intro-section">
-            <div class="ai-intro-icon">
-              <Sparkles :size="48" />
-            </div>
-            <h4 class="ai-intro-title">Умное планирование недели</h4>
-            <p class="ai-intro-description">
-              AI проанализирует ваши задачи: приоритеты, оценки времени и сферы жизни. 
-              На основе этого распределит задачи по дням недели с учётом баланса нагрузки.
-            </p>
-            
-            <div class="ai-feature-list">
-              <div class="ai-feature-item">
-                <Brain :size="18" />
-                <span>Анализ приоритетов и времени</span>
-              </div>
-              <div class="ai-feature-item">
-                <BarChart3 :size="18" />
-                <span>Баланс нагрузки по дням</span>
-              </div>
-              <div class="ai-feature-item">
-                <ListChecks :size="18" />
-                <span>Предпросмотр перед применением</span>
-              </div>
-            </div>
-            
-            <div class="ai-option-toggle">
-              <label class="toggle-label">
-                <input type="checkbox" v-model="aiPlannerIncludeOverdue" />
-                <span class="toggle-text">Включить просроченные задачи ({{ overdueTasks.length }})</span>
-              </label>
-            </div>
-            
-            <button class="btn btn-primary btn-lg ai-start-btn" @click="startAIPlanning" :disabled="aiPlannerLoading">
-              <Sparkles :size="18" />
-              Запланировать неделю
-            </button>
-            
-            <label class="dont-show-label">
-              <input type="checkbox" v-model="aiPlannerDontShowCheck" />
-              <span>Не показывать больше</span>
-            </label>
-          </div>
-        </div>
-        
-        <div class="ai-modal-content" v-else-if="aiPlannerStep === 'loading'">
-          <div class="ai-loading-section">
-            <div class="ai-loading-spinner"></div>
-            <p>{{ aiPlannerProgress.text || 'AI анализирует ваши задачи...' }}</p>
-            <span class="ai-loading-hint">Это займёт несколько секунд</span>
-          </div>
-        </div>
-        
-        <div class="ai-modal-content" v-else-if="aiPlannerStep === 'result'">
-          <div class="ai-result-section">
-            <div class="ai-result-summary">
-              <h4 class="ai-result-title">План готов!</h4>
-              <p class="ai-result-subtitle">Распределено {{ aiPlannerResult?.totalTasks || 0 }} задач на неделю</p>
-            </div>
-            
-            <div class="ai-result-preview" v-if="aiPlannerResult">
-              <div 
-                v-for="day in aiPlannerResult.days" 
-                :key="day.date"
-                class="ai-day-preview"
-                :class="{ collapsed: !isDayExpanded(day.date) }"
-              >
-                <div class="ai-day-header" @click="toggleDayExpand(day.date)">
-                  <span class="ai-day-name">{{ day.dayName }}</span>
-                  <div class="ai-day-meta">
-                    <span class="ai-day-count">{{ getSelectedCountForDay(day) }} задач</span>
-                    <ChevronRight :size="16" class="ai-day-chevron" :class="{ rotated: isDayExpanded(day.date) }" />
-                  </div>
-                </div>
-                <div class="ai-day-tasks" v-show="isDayExpanded(day.date)">
-                  <div 
-                    v-for="task in day.tasks" 
-                    :key="task.id" 
-                    class="ai-task-preview"
-                    :class="{ selected: isTaskSelected(task.id), 'not-found': task.notFound }"
-                    @click="toggleTaskSelection(task.id)"
-                  >
-                    <component 
-                      :is="isTaskSelected(task.id) ? CheckSquare : Square" 
-                      :size="18" 
-                      class="ai-task-checkbox"
-                    />
-                    <div class="ai-task-info">
-                      <span class="ai-task-title">{{ task.title }}</span>
-                      <span v-if="task.goalTitle" class="ai-task-goal">{{ task.goalTitle }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="ai-modal-actions">
-            <button class="btn btn-outline" @click="goBackToIntro">Назад</button>
-            <button class="btn btn-primary ai-btn" @click="applyAIPlan" :disabled="aiPlannerSelectedTasks.length === 0">
-              <Check :size="16" />
-              <span>Применить план ({{ aiPlannerSelectedTasks.length }})</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+        </template>
+      </template>
+    </AiMentorModal>
 
     <div class="bottom-sheet-overlay" v-if="showBottomSheet" @click="closeBottomSheet">
       <div class="bottom-sheet" @click.stop>
@@ -1108,10 +1057,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick, markRaw } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
+import AiMentorModal from '../components/AiMentorModal.vue'
 import { useAITasksStore } from '../stores/aiTasks'
 import { useXpStore } from '@/stores/xp'
 import { useXPNotification } from '@/composables/useXPNotification.js'
@@ -1206,6 +1156,12 @@ const aiPlannerResult = ref(null)
 const aiPlannerDontShowIntro = ref(localStorage.getItem('ai_planner_skip_intro') === 'true')
 const aiPlannerDontShowCheck = ref(false)
 const aiPlannerSelectedTasks = ref([])
+
+const aiPlannerFeatures = [
+  { icon: markRaw(Brain), text: 'Анализ приоритетов и времени' },
+  { icon: markRaw(BarChart3), text: 'Баланс нагрузки по дням' },
+  { icon: markRaw(ListChecks), text: 'Предпросмотр перед применением' }
+]
 
 const PLANNING_TASK_TYPE = 'week_planning_help'
 const PLANNING_VIEWED_RESULTS_KEY = 'planning_ai_results_viewed'
@@ -4408,10 +4364,10 @@ onUnmounted(() => {
   background: var(--card-bg, #fff);
   border: 1px solid var(--border-color);
   border-radius: 14px;
-  padding: 0.25rem 0.375rem;
   gap: 0;
   margin-bottom: 1rem;
   overflow: visible;
+  width: 100%;
 }
 
 .stats-bar-item {
@@ -4505,8 +4461,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  padding: 0.375rem 0.625rem;
-  border-radius: 10px;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0 13px 13px 0;
   font-size: 0.8125rem;
   font-weight: 500;
   color: var(--success-color, #10b981);
@@ -6828,6 +6784,19 @@ onUnmounted(() => {
   font-weight: 500;
 }
 
+/* AiMentorModal button styles */
+.aim-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 0.5rem; padding: 0.75rem 1.25rem; font-size: 0.9375rem;
+  font-weight: 500; border-radius: 10px; border: none; cursor: pointer;
+  transition: all 0.15s; flex: 1; font-family: inherit;
+}
+.aim-btn-primary { background: var(--success-color, #10b981); color: #fff; }
+.aim-btn-primary:hover:not(:disabled) { background: #059669; }
+.aim-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.aim-btn-secondary { background: var(--bg-primary, #fff); color: var(--text-primary, #1f2937); border: 1px solid var(--border-color, #e5e7eb); }
+.aim-btn-secondary:hover { background: var(--bg-tertiary, #f3f4f6); }
+
 .bottom-sheet-overlay {
   position: fixed;
   inset: 0;
@@ -7541,8 +7510,6 @@ onUnmounted(() => {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    height: 40px;
-    padding: 0.25rem 0.375rem;
   }
   .planning-stats-bar::-webkit-scrollbar { display: none; }
 
@@ -7550,7 +7517,6 @@ onUnmounted(() => {
 
   .hide-mobile { display: none; }
 
-  .ai-btn-label { display: none; }
 }
 
 /* Dark theme overrides */
