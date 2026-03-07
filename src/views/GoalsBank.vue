@@ -2416,6 +2416,10 @@ onUnmounted(() => {
 .goals-list {
   display: flex;
   flex-direction: column;
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 /* Goal Row — dense flat style */
@@ -2423,11 +2427,10 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.5rem;
+  padding: 0.75rem 1rem;
   cursor: pointer;
   transition: background 0.15s;
-  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
-  border-left: 3px solid var(--sphere-accent, transparent);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .goal-row:last-child {
@@ -4434,7 +4437,7 @@ onUnmounted(() => {
   }
 
   .goal-row {
-    padding: 0.5rem 0.375rem;
+    padding: 0.625rem 0.75rem;
     gap: 0.375rem;
   }
 
