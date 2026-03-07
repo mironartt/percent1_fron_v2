@@ -32,6 +32,11 @@
     </div>
 
     <div v-else class="edit-layout">
+      <!-- Breadcrumbs -->
+      <div class="goal-edit-breadcrumbs">
+        <Breadcrumbs :items="breadcrumbItems" />
+      </div>
+
       <!-- Compact Sticky Header -->
       <header class="goal-header-compact">
         <div class="header-row">
@@ -108,7 +113,7 @@
               </div>
             </div>
             
-            <select v-model="filterStatus" class="filter-dropdown">
+            <select v-model="filterStatus" class="step-filter-select">
               <option value="">Все</option>
               <option value="pending">Активные</option>
               <option value="completed">Готовые</option>
@@ -963,6 +968,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import Breadcrumbs from '@/components/Breadcrumbs.vue'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useAITasksStore } from '../stores/aiTasks'
@@ -2472,6 +2478,12 @@ async function saveEditModal() {
   showToast('Цель успешно обновлена')
 }
 
+const breadcrumbItems = computed(() => [
+  { label: 'Главная', to: '/app' },
+  { label: 'Банк целей', to: '/app/goals-bank' },
+  { label: goalForm.value.title || 'Цель' }
+])
+
 function getSphereIconComponent(sphereId) {
   const iconMap = {
     'wealth': Wallet,
@@ -3614,6 +3626,11 @@ function formatDate(dateString) {
   position: relative;
 }
 
+/* Breadcrumbs */
+.goal-edit-breadcrumbs {
+  margin-bottom: 0.75rem;
+}
+
 /* Compact Sticky Header */
 .goal-header-compact {
   background: var(--bg-primary, #ffffff);
@@ -3710,14 +3727,14 @@ function formatDate(dateString) {
   flex: 1;
   height: 6px;
   background: var(--border-color, #e5e7eb);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
 .progress-bar-fill {
   height: 100%;
   background: var(--primary, #6366f1);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   transition: width 0.3s ease;
 }
 
@@ -3745,14 +3762,14 @@ function formatDate(dateString) {
   min-width: 100px;
 }
 
-/* Filter dropdown (replaces filter chips) */
-.filter-dropdown {
+/* Step filter select (native select in search bar) */
+.step-filter-select {
   flex: 1;
   padding: 0.5rem 2rem 0.5rem 0.75rem;
-  border: 1px solid var(--border-color, #e5e7eb);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   font-size: 0.8125rem;
-  background: var(--bg);
+  background: var(--bg-primary);
   color: var(--text-primary);
   cursor: pointer;
   transition: border-color 0.2s;
@@ -3762,13 +3779,13 @@ function formatDate(dateString) {
   background-position: right 0.75rem center;
 }
 
-.filter-dropdown:focus {
+.step-filter-select:focus {
   outline: none;
-  border-color: var(--primary, #6366f1);
+  border-color: var(--primary-color);
 }
 
-.filter-dropdown:hover {
-  border-color: var(--primary, #6366f1);
+.step-filter-select:hover {
+  border-color: var(--primary-color);
 }
 
 /* Expandable Search */
@@ -3857,7 +3874,7 @@ function formatDate(dateString) {
 
 .btn-ai-steps-inline:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-ai-steps-inline:disabled {
@@ -3866,7 +3883,8 @@ function formatDate(dateString) {
 }
 
 .btn-ai-steps-inline.generating {
-  background: linear-gradient(135deg, #9ca3af, #6b7280);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
 }
 
 .btn-ai-steps-inline .spin {
@@ -3945,14 +3963,14 @@ function formatDate(dateString) {
   align-items: flex-start;
   gap: 0.75rem;
   padding: 1rem;
-  background: rgba(251, 191, 36, 0.1);
-  border: 1px solid rgba(251, 191, 36, 0.3);
+  background: var(--status-warning-bg);
+  border: 1px solid color-mix(in srgb, var(--warning-color) 35%, transparent);
   border-radius: var(--radius-md);
   margin-bottom: 1rem;
 }
 
 .ai-confirm-warning svg {
-  color: #f59e0b;
+  color: var(--warning-color);
   flex-shrink: 0;
   margin-top: 2px;
 }
@@ -4032,13 +4050,13 @@ function formatDate(dateString) {
 }
 
 .toast.success {
-  background: rgba(16, 185, 129, 0.1);
+  background: var(--status-success-bg);
   border-color: var(--success-color);
   color: var(--success-color);
 }
 
 .toast.error {
-  background: rgba(239, 68, 68, 0.1);
+  background: var(--status-danger-bg);
   border-color: var(--danger-color);
   color: var(--danger-color);
 }
@@ -4449,7 +4467,7 @@ function formatDate(dateString) {
 
 .btn-filter-icon.active {
   border-color: var(--primary-color);
-  background: rgba(99, 102, 241, 0.1);
+  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
   color: var(--primary-color);
 }
 
@@ -4541,11 +4559,11 @@ function formatDate(dateString) {
 
 .drag-disabled-hint {
   padding: 0.5rem 0.75rem;
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  background: var(--status-warning-bg);
+  border: 1px solid color-mix(in srgb, var(--warning-color) 35%, transparent);
   border-radius: var(--radius-sm);
   font-size: 0.8125rem;
-  color: #b45309;
+  color: var(--warning-color);
   margin-bottom: 0.75rem;
 }
 
@@ -4577,23 +4595,23 @@ function formatDate(dateString) {
 }
 
 .step-card.priority-critical:not(.step-completed) {
-  border-left-color: #ef4444;
-  background: rgba(239, 68, 68, 0.06);
+  border-left-color: var(--danger-color);
+  background: color-mix(in srgb, var(--danger-color) 6%, transparent);
 }
 
 .step-card.priority-desirable:not(.step-completed) {
-  border-left-color: #f97316;
-  background: rgba(249, 115, 22, 0.06);
+  border-left-color: var(--warning-color);
+  background: color-mix(in srgb, var(--warning-color) 6%, transparent);
 }
 
 .step-card.priority-attention:not(.step-completed) {
-  border-left-color: #3b82f6;
-  background: rgba(59, 130, 246, 0.06);
+  border-left-color: var(--info-color);
+  background: color-mix(in srgb, var(--info-color) 6%, transparent);
 }
 
 .step-card.priority-optional:not(.step-completed) {
-  border-left-color: #9ca3af;
-  background: rgba(156, 163, 175, 0.06);
+  border-left-color: var(--text-muted);
+  background: color-mix(in srgb, var(--text-muted) 6%, transparent);
 }
 
 /* Расширенный вид карточки */
@@ -4631,19 +4649,19 @@ function formatDate(dateString) {
 }
 
 .priority-indicator.priority-critical {
-  color: #ef4444;
+  color: var(--danger-color);
 }
 
 .priority-indicator.priority-desirable {
-  color: #f97316;
+  color: var(--warning-color);
 }
 
 .priority-indicator.priority-attention {
-  color: #3b82f6;
+  color: var(--info-color);
 }
 
 .priority-indicator.priority-optional {
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .priority-dot {
@@ -4792,20 +4810,20 @@ function formatDate(dateString) {
   align-items: center;
   gap: 0.5rem;
   padding: 0.625rem 1rem;
-  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  background: var(--primary-color);
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.25);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-ai-steps:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-ai-steps:active:not(:disabled) {
@@ -4921,9 +4939,9 @@ function formatDate(dateString) {
   gap: 0.5rem;
   width: 100%;
   padding: 0.75rem 1rem;
-  background: var(--bg-secondary, #f9fafb);
+  background: var(--bg-secondary);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   font-size: 0.95rem;
   font-weight: 500;
   color: var(--text-primary, #111827);
@@ -5101,20 +5119,20 @@ function formatDate(dateString) {
   gap: 0.5rem;
   width: 100%;
   padding: 0.875rem 1rem;
-  background: linear-gradient(135deg, var(--success-color), var(--success-color));
+  background: var(--success-color);
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   font-size: 0.95rem;
   font-weight: 500;
   color: white;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  box-shadow: var(--shadow-sm);
 }
 
 .plan-steps-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  box-shadow: var(--shadow-md);
 }
 
 .plan-steps-btn:active {
@@ -5146,9 +5164,9 @@ function formatDate(dateString) {
   gap: 0.5rem;
   width: 100%;
   padding: 0.75rem 1rem;
-  background: var(--card-bg, #f9fafb);
-  border: 1px solid var(--border-light, #e5e7eb);
-  border-radius: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-primary, #374151);
@@ -5298,11 +5316,11 @@ function formatDate(dateString) {
 }
 
 .quick-action-btn.danger {
-  color: #ef4444;
+  color: var(--danger-color);
 }
 
 .quick-action-btn.danger:hover {
-  background: rgba(239, 68, 68, 0.1);
+  background: var(--status-danger-bg);
 }
 
 /* Step Modal Tabs */
@@ -5492,8 +5510,8 @@ function formatDate(dateString) {
 }
 
 .checklist-remove:hover {
-  background: #fee2e2;
-  color: #ef4444;
+  background: var(--status-danger-bg);
+  color: var(--danger-color);
 }
 
 .add-checklist-btn {
@@ -7677,6 +7695,11 @@ function formatDate(dateString) {
   .btn-save-edit {
     width: 100%;
     justify-content: center;
+  }
+
+  /* Breadcrumbs */
+  .goal-edit-breadcrumbs {
+    margin-bottom: 0.5rem;
   }
 
   /* Bottom nav padding */
