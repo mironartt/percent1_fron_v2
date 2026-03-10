@@ -50,23 +50,20 @@
 
     <!-- Tasks dropdown -->
     <Transition name="dropdown">
-      <div v-if="openDropdown === 'tasks'" class="dropdown-panel">
+      <div v-if="openDropdown === 'tasks'" class="dropdown-panel" @click.stop>
         <div class="task-list">
-          <label
+          <button
             v-for="task in focusTasks"
             :key="task.id"
             class="task-item"
             :class="{ completed: task.completed }"
+            @click="toggleTask(task)"
           >
-            <input
-              type="checkbox"
-              :checked="task.completed"
-              @change="toggleTask(task)"
-              class="task-checkbox"
-            />
+            <CheckCircle2 v-if="task.completed" :size="16" :stroke-width="1.5" class="task-check" />
+            <Circle v-else :size="16" :stroke-width="1.5" class="task-circle" />
             <span class="task-title">{{ task.title }}</span>
             <span v-if="task.sphere" class="task-sphere">{{ task.sphere }}</span>
-          </label>
+          </button>
           <div v-if="focusTasks.length === 0" class="dropdown-empty">
             Нет задач на сегодня
           </div>
@@ -76,7 +73,7 @@
 
     <!-- Habits dropdown -->
     <Transition name="dropdown">
-      <div v-if="openDropdown === 'habits'" class="dropdown-panel">
+      <div v-if="openDropdown === 'habits'" class="dropdown-panel" @click.stop>
         <div class="habits-list">
           <button
             v-for="habit in todayHabits"
@@ -254,6 +251,7 @@ async function toggleHabit(habit) {
   border: 1px solid var(--border-color);
   border-radius: 14px;
   margin-bottom: 0.5rem;
+  position: relative;
 }
 
 .bar-metrics {
@@ -380,9 +378,17 @@ async function toggleHabit(habit) {
 
 /* Dropdown panels */
 .dropdown-panel {
-  border-top: 1px solid var(--border-color);
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  margin-top: 4px;
   padding: 0.5rem;
-  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .dropdown-empty {
@@ -406,9 +412,14 @@ async function toggleHabit(habit) {
   padding: 0.4rem 0.5rem;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: all 0.15s;
   font-size: 0.8125rem;
   color: var(--text-primary);
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
 }
 
 .task-item:hover {
@@ -420,12 +431,13 @@ async function toggleHabit(habit) {
   color: var(--text-tertiary);
 }
 
-.task-checkbox {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  accent-color: var(--primary-color);
-  cursor: pointer;
+.task-circle {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.task-check {
+  color: var(--success-color);
   flex-shrink: 0;
 }
 
