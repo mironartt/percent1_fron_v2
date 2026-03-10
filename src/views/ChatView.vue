@@ -1,6 +1,8 @@
 <template>
   <div class="chat-view">
 
+    <CollapsibleDashboard v-if="!isOnboardingMode" />
+
     <!-- ПУСТОЙ ЭКРАН: Claude-like центрированный layout -->
     <div v-if="!hasMessages && !chatStore.isLoading" class="empty-state">
       <!-- Верхняя полоска с кнопкой пропуска -->
@@ -231,6 +233,7 @@ import { checkAuth, skipOnboarding, updateGoalSteps } from '@/services/api.js'
 import { DEV_MODE, API_BASE_URL } from '@/config/settings'
 import { markHabitCompleted } from '@/services/habitsApi'
 import { useConfetti } from '@/composables/useConfetti'
+import CollapsibleDashboard from '@/components/CollapsibleDashboard.vue'
 import UpgradeModal from '@/components/UpgradeModal.vue'
 import VoiceMessageBubble from '@/components/VoiceMessageBubble.vue'
 import { useVoiceRecorder } from '@/composables/useVoiceRecorder'

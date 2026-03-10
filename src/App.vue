@@ -4,7 +4,6 @@
     <Sidebar v-if="hasSidebar" @collapse-change="onCollapseChange" />
     <main class="main-content">
       <TrialBanner v-if="showTrialBanner" />
-      <CollapsibleDashboard v-if="showStatsBar" />
       <router-view v-slot="{ Component, route }">
         <Suspense>
           <template #default>
@@ -50,7 +49,6 @@ import ToastNotification from './components/ToastNotification.vue'
 import XPNotification from './components/XPNotification.vue'
 import ImpersonateBanner from './components/ImpersonateBanner.vue'
 import TrialBanner from './components/subscription/TrialBanner.vue'
-import CollapsibleDashboard from './components/CollapsibleDashboard.vue'
 import SubscriptionExpiredModal from './components/subscription/SubscriptionExpiredModal.vue'
 import { useAppStore } from './stores/app'
 import { useAITasksStore } from './stores/aiTasks'
@@ -283,10 +281,6 @@ const showTrialBanner = computed(() => {
   }
   
   return false
-})
-
-const showStatsBar = computed(() => {
-  return isChatRoute.value && store.isAuthenticated && !isOnboarding.value
 })
 
 const appClasses = computed(() => ({

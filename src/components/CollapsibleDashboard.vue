@@ -254,10 +254,6 @@ async function toggleHabit(habit) {
   border: 1px solid var(--border-color);
   border-radius: 14px;
   margin-bottom: 0.5rem;
-  max-width: 800px;
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .bar-metrics {
@@ -516,11 +512,6 @@ async function toggleHabit(habit) {
 }
 
 @media (max-width: 768px) {
-  .stats-bar {
-    margin-left: 0.75rem;
-    margin-right: 0.75rem;
-  }
-
   .metric-label {
     display: none;
   }
