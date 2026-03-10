@@ -11,6 +11,7 @@
             </div>
           </div>
           <nav class="header-nav">
+            <a href="/blog/" class="nav-link">Блог</a>
             <template v-if="isAuthenticated">
               <router-link to="/app" class="btn btn-primary">Личный кабинет</router-link>
             </template>

@@ -16,6 +16,7 @@
         <nav class="hidden md:flex gap-8 font-semibold text-sm text-slate-600 items-center">
           <a href="#how-it-works" class="hover:text-brand-600 transition">Как это работает</a>
           <a href="#pricing" class="hover:text-brand-600 transition">Тарифы</a>
+          <a href="/blog/" class="hover:text-brand-600 transition">Блог</a>
         </nav>
 
         <div class="hidden md:flex items-center gap-6">
@@ -36,6 +37,7 @@
       <div v-if="mobileMenuOpen" class="md:hidden absolute top-full left-0 right-0 bg-white border-b border-slate-100 p-4 shadow-xl flex flex-col gap-4 animate-in slide-in-from-top-2">
         <a href="#how-it-works" class="text-base font-semibold text-slate-700 py-2" @click="mobileMenuOpen = false">Как это работает</a>
         <a href="#pricing" class="text-base font-semibold text-slate-700 py-2" @click="mobileMenuOpen = false">Тарифы</a>
+        <a href="/blog/" class="text-base font-semibold text-slate-700 py-2" @click="mobileMenuOpen = false">Блог</a>
         <div class="h-px bg-slate-100 my-2"></div>
         <div class="flex flex-col gap-3">
           <router-link to="/login" class="text-center font-bold text-slate-600 py-2">Войти</router-link>

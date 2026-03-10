@@ -14,6 +14,7 @@
           <router-link to="/catalog/goals" class="nav-link" :class="{ active: isActivePath('/catalog/goals') }">Цели</router-link>
           <router-link to="/catalog/habits" class="nav-link" :class="{ active: isActivePath('/catalog/habits') }">Привычки</router-link>
           <router-link to="/catalog/bundles" class="nav-link" :class="{ active: isActivePath('/catalog/bundles') }">Наборы</router-link>
+          <a href="/blog/" class="nav-link" :class="{ active: isActivePath('/blog') }">Блог</a>
           <div class="nav-divider"></div>
           <template v-if="isAuthenticated">
             <router-link to="/app" class="btn btn-primary">Личный кабинет</router-link>
@@ -35,6 +36,7 @@
       <router-link to="/catalog/goals" class="mobile-link" @click="closeMobileMenu">Цели</router-link>
       <router-link to="/catalog/habits" class="mobile-link" @click="closeMobileMenu">Привычки</router-link>
       <router-link to="/catalog/bundles" class="mobile-link" @click="closeMobileMenu">Наборы</router-link>
+      <a href="/blog/" class="mobile-link" @click="closeMobileMenu">Блог</a>
       <div class="mobile-divider"></div>
       <template v-if="isAuthenticated">
         <router-link to="/app" class="mobile-link primary" @click="closeMobileMenu">Личный кабинет</router-link>
