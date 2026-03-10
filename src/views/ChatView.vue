@@ -1,9 +1,9 @@
 <template>
   <div class="chat-view">
 
-    <!-- TOP BAR: единое меню с XP/стриками + задачи/привычки -->
+    <!-- TOP BAR: только на пустом экране (при активном чате используется CollapsibleDashboard) -->
     <div
-      v-if="!isOnboardingMode && (hasAnyStats || (!hasMessages && !chatStore.isLoading && hasDailyContent))"
+      v-if="!isOnboardingMode && !hasMessages && !chatStore.isLoading && (hasAnyStats || hasDailyContent)"
       class="top-bar"
       @click.stop
     >
