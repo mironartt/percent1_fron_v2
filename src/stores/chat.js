@@ -12,7 +12,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { DEBUG_MODE } from '@/config/settings.js'
-import { getChatMessages, sendChatMessage, markChatMessagesRead, updateChatReaction } from '@/services/api.js'
+import { getChatMessages, sendChatMessage, sendVoiceMessage as apiSendVoiceMessage, markChatMessagesRead, updateChatReaction } from '@/services/api.js'
 import chatWebSocket from '@/services/chatWebSocket.js'
 
 export const useChatStore = defineStore('chat', () => {
@@ -172,6 +172,40 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
+  async function sendVoiceMessage(audioBlob, duration, options = {}) {
+    if (!conversationId.value) {
+      return { success: false, error: 'no_conversation' }
+    }
+    if (isBotProcessing.value) {
+      return { success: false, error: 'bot_processing' }
+    }
+
+    isBotProcessing.value = true
+
+    try {
+      const result = await apiSendVoiceMessage(
+        conversationId.value,
+        audioBlob,
+        duration,
+        options.sourcePage || null
+      )
+
+      if (result.status === 'ok' && result.data?.message) {
+        addMessage(result.data.message)
+        return { success: true }
+      }
+
+      isBotProcessing.value = false
+      return { success: false, error: result.error_data?.message || 'send_failed' }
+    } catch (error) {
+      isBotProcessing.value = false
+      if (DEBUG_MODE) {
+        console.error('[ChatStore] Send voice message error:', error)
+      }
+      return { success: false, error: error.message }
+    }
+  }
+
   function addMessage(message) {
     const existingIndex = messages.value.findIndex(m => m.message_id === message.message_id)
     
@@ -246,6 +280,7 @@ export const useChatStore = defineStore('chat', () => {
     chatWebSocket.on('message_sent', handleMessageSent)
     chatWebSocket.on('new_message', handleNewMessage)
     chatWebSocket.on('bot_typing', handleBotTyping)
+    chatWebSocket.on('message_updated', handleMessageUpdated)
     chatWebSocket.on('force_disconnect', handleForceDisconnect)
     chatWebSocket.on('server_error', handleServerError)
     chatWebSocket.on('onboarding_completed', handleOnboardingCompleted)
@@ -281,6 +316,15 @@ export const useChatStore = defineStore('chat', () => {
       if (data.message.message_type === 'bot') {
         isBotProcessing.value = false
         isBotTyping.value = false
+      }
+    }
+  }
+
+  function handleMessageUpdated(data) {
+    if (data?.message) {
+      const idx = messages.value.findIndex(m => m.message_id === data.message.message_id)
+      if (idx >= 0) {
+        messages.value[idx] = { ...messages.value[idx], ...data.message }
       }
     }
   }
@@ -384,6 +428,7 @@ export const useChatStore = defineStore('chat', () => {
     loadMessages,
     loadOlderMessages,
     sendMessage,
+    sendVoiceMessage,
     addMessage,
     markAsRead,
     addReaction,

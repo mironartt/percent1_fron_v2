@@ -179,6 +179,10 @@ class ChatWebSocket {
         this.emit('new_message', data.data)
         break
 
+      case 'message_updated':
+        this.emit('message_updated', data.data)
+        break
+
       case 'bot_typing':
         this.emit('bot_typing', data.data)
         break

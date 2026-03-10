@@ -87,9 +87,13 @@ function getCredentialsMode() {
  */
 export async function apiFetch(url, options = {}) {
   const headers = {
-    'Content-Type': 'application/json',
     'Accept': 'application/json',
     ...options.headers
+  }
+
+  // Не устанавливать Content-Type для FormData — браузер сам добавит с boundary
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json'
   }
   
   const csrfToken = getCsrfToken()
@@ -1319,6 +1323,43 @@ export async function getChatMessages(params) {
  */
 export async function sendChatMessage(params) {
   return request('POST', '/api/rest/front/app/chat/messages/send/', params)
+}
+
+/**
+ * Отправить голосовое сообщение в чат (multipart/form-data)
+ * @param {number} conversationId - ID беседы
+ * @param {Blob} audioBlob - Аудио файл (webm/ogg/mp3)
+ * @param {number|null} duration - Длительность в секундах
+ * @param {string|null} sourcePage - Страница отправки
+ * @returns {Promise<object>} - Данные сообщения
+ */
+export async function sendVoiceMessage(conversationId, audioBlob, duration = null, sourcePage = null) {
+  const endpoint = '/api/rest/front/app/chat/messages/send-voice/'
+
+  // Расширение файла по MIME-типу (Safari записывает audio/mp4, не webm)
+  const mimeToExt = { 'audio/mp4': 'mp4', 'audio/ogg': 'ogg' }
+  const ext = mimeToExt[audioBlob.type] || 'webm'
+
+  const formData = new FormData()
+  formData.append('conversation_id', conversationId)
+  formData.append('audio_file', audioBlob, `voice.${ext}`)
+  if (duration != null) formData.append('duration', String(duration))
+  if (sourcePage) formData.append('source_page', sourcePage)
+
+  const url = `${API_BASE_URL}${endpoint}`
+
+  try {
+    const response = await apiFetch(url, {
+      method: 'POST',
+      body: formData
+    })
+    return await response.json()
+  } catch (error) {
+    if (DEBUG_MODE) {
+      console.error('[API] sendVoiceMessage error:', error)
+    }
+    return { status: 'error', error_data: { message: error.message, key: 'network_error' } }
+  }
 }
 
 /**
