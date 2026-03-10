@@ -254,6 +254,10 @@ async function toggleHabit(habit) {
   border: 1px solid var(--border-color);
   border-radius: 14px;
   margin-bottom: 0.5rem;
+  max-width: 800px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .bar-metrics {
