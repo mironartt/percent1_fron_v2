@@ -512,6 +512,11 @@ async function toggleHabit(habit) {
 }
 
 @media (max-width: 768px) {
+  .stats-bar {
+    margin-left: 0.75rem;
+    margin-right: 0.75rem;
+  }
+
   .metric-label {
     display: none;
   }
