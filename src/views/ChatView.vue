@@ -139,7 +139,22 @@
         <h1 class="greeting-title">{{ greetingWord }}, {{ userName }}</h1>
 
         <form @submit.prevent="handleSendMessage" class="empty-form">
-          <div class="empty-input-wrapper">
+          <!-- Recording bar (empty state) -->
+          <div v-if="voiceRecorder.isRecording.value" class="recording-bar recording-bar--empty">
+            <button type="button" class="recording-cancel-btn" @click="cancelVoiceRecording">
+              <X :size="20" :stroke-width="1.5" />
+            </button>
+            <div class="recording-indicator">
+              <span class="recording-dot"></span>
+              <span class="recording-time">{{ formatRecordingTime(voiceRecorder.duration.value) }}</span>
+            </div>
+            <button type="button" class="recording-stop-btn" @click="stopAndSendVoice">
+              <Send :size="18" :stroke-width="1.5" />
+            </button>
+          </div>
+
+          <!-- Normal input (empty state) -->
+          <div v-else class="empty-input-wrapper">
             <textarea
               v-model="inputText"
               placeholder="Напишите сообщение..."
@@ -150,7 +165,10 @@
               @keydown.enter.shift.exact="() => {}"
               @input="autoResize"
             ></textarea>
-            <button type="submit" class="empty-send-btn" :disabled="!inputText.trim() || !canSendMessage">
+            <button v-if="showMicButton" type="button" class="empty-send-btn mic-btn" @click="startVoiceRecording" :disabled="!canSendMessage">
+              <Mic :size="18" :stroke-width="1.5" />
+            </button>
+            <button v-else type="submit" class="empty-send-btn" :disabled="!inputText.trim() || !canSendMessage">
               <Send v-if="!chatStore.isBotProcessing" :size="18" :stroke-width="1.5" />
               <Loader2 v-else :size="18" :stroke-width="1.5" class="spin" />
             </button>
@@ -230,7 +248,14 @@
                   <Bot :size="16" :stroke-width="1.5" />
                 </div>
                 <div class="message-bubble">
-                  <div v-html="formatMessage(msg.content)"></div>
+                  <VoiceMessageBubble
+                    v-if="msg.is_voice_message"
+                    :audio-url="resolveMediaUrl(msg.audio_url)"
+                    :duration="msg.voice_duration_seconds"
+                    :transcription="msg.content"
+                    :is-user="msg.message_type !== 'bot'"
+                  />
+                  <div v-else v-html="formatMessage(msg.content)"></div>
                   <span class="message-time">{{ formatTime(msg.date_created) }}</span>
                 </div>
               </div>
@@ -268,7 +293,22 @@
         </div>
 
         <form class="input-container" @submit.prevent="handleSendMessage">
-          <div class="input-wrapper">
+          <!-- Recording bar -->
+          <div v-if="voiceRecorder.isRecording.value" class="recording-bar">
+            <button type="button" class="recording-cancel-btn" @click="cancelVoiceRecording">
+              <X :size="20" :stroke-width="1.5" />
+            </button>
+            <div class="recording-indicator">
+              <span class="recording-dot"></span>
+              <span class="recording-time">{{ formatRecordingTime(voiceRecorder.duration.value) }}</span>
+            </div>
+            <button type="button" class="recording-stop-btn" @click="stopAndSendVoice">
+              <Send :size="18" :stroke-width="1.5" />
+            </button>
+          </div>
+
+          <!-- Normal input -->
+          <div v-else class="input-wrapper">
             <textarea
               v-model="inputText"
               placeholder="Напишите сообщение..."
@@ -279,7 +319,10 @@
               @keydown.enter.shift.exact="() => {}"
               @input="autoResize"
             ></textarea>
-            <button type="submit" class="send-btn" :disabled="!inputText.trim() || !canSendMessage">
+            <button v-if="showMicButton" type="button" class="mic-btn" @click="startVoiceRecording" :disabled="!canSendMessage">
+              <Mic :size="18" :stroke-width="1.5" />
+            </button>
+            <button v-else type="submit" class="send-btn" :disabled="!inputText.trim() || !canSendMessage">
               <Send v-if="!chatStore.isBotProcessing" :size="18" :stroke-width="1.5" />
               <Loader2 v-else :size="18" :stroke-width="1.5" class="spin" />
             </button>
@@ -306,15 +349,18 @@ import { useXpStore } from '@/stores/xp'
 import { useSubscriptionStore } from '@/stores/subscription'
 import { useToastStore } from '@/stores/toast'
 import { checkAuth, skipOnboarding, updateGoalSteps } from '@/services/api.js'
-import { DEV_MODE } from '@/config/settings'
+import { DEV_MODE, API_BASE_URL } from '@/config/settings'
 import { markHabitCompleted } from '@/services/habitsApi'
 import { useConfetti } from '@/composables/useConfetti'
 import CollapsibleDashboard from '@/components/CollapsibleDashboard.vue'
 import UpgradeModal from '@/components/UpgradeModal.vue'
+import VoiceMessageBubble from '@/components/VoiceMessageBubble.vue'
+import { useVoiceRecorder } from '@/composables/useVoiceRecorder'
 import {
   Bot,
   Sparkles,
   Send,
+  Mic,
   Target,
   Lightbulb,
   Calendar,
@@ -329,7 +375,8 @@ import {
   ClipboardList,
   CheckCircle2,
   Circle,
-  ChevronDown
+  ChevronDown,
+  X
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -349,6 +396,67 @@ const inputRef = ref(null)
 const isInitialized = ref(false)
 const skippingOnboarding = ref(false)
 const activeDropdown = ref(null)
+
+// === Voice recording ===
+const voiceRecorder = useVoiceRecorder()
+
+const showMicButton = computed(() =>
+  !inputText.value.trim() && !voiceRecorder.isRecording.value && voiceRecorder.isSupported.value
+)
+
+// Автостоп по лимиту (120 сек) — автоматически отправить голосовое
+voiceRecorder.onAutoStop(async (result) => {
+  if (!result) return
+  await chatStore.sendVoiceMessage(result.blob, result.duration, {
+    sourcePage: route.path
+  })
+  await nextTick()
+  scrollToBottom()
+})
+
+async function startVoiceRecording() {
+  if (!canSendMessage.value) return
+
+  const hasAccess = await subscriptionStore.verifyAIAccess()
+  if (!hasAccess) {
+    showUpgradeModal.value = true
+    return
+  }
+
+  const started = await voiceRecorder.startRecording()
+  if (!started && voiceRecorder.permissionDenied.value) {
+    toastStore.showToast({ message: 'Доступ к микрофону запрещён. Разрешите в настройках браузера.', type: 'error' })
+  }
+}
+
+async function stopAndSendVoice() {
+  const result = await voiceRecorder.stopRecording()
+  if (!result) return
+
+  await chatStore.sendVoiceMessage(result.blob, result.duration, {
+    sourcePage: route.path
+  })
+
+  await nextTick()
+  scrollToBottom()
+}
+
+function cancelVoiceRecording() {
+  voiceRecorder.cancelRecording()
+}
+
+// Превратить относительный /media/... путь в абсолютный URL (для cross-origin / dev)
+function resolveMediaUrl(url) {
+  if (!url) return null
+  if (url.startsWith('http')) return url
+  return API_BASE_URL ? `${API_BASE_URL}${url}` : url
+}
+
+function formatRecordingTime(seconds) {
+  const m = Math.floor(seconds / 60)
+  const s = Math.floor(seconds % 60)
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
 
 function toggleDropdown(name) {
   activeDropdown.value = activeDropdown.value === name ? null : name
@@ -1251,6 +1359,114 @@ onUnmounted(() => {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+}
+
+/* Mic button */
+.mic-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-normal);
+  flex-shrink: 0;
+}
+
+.mic-btn:hover:not(:disabled) {
+  background: var(--primary-light);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.mic-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Recording bar */
+.recording-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-radius: 12px;
+}
+
+.recording-bar--empty {
+  margin-bottom: 12px;
+}
+
+.recording-indicator {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.recording-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: recording-pulse 1s ease-in-out infinite;
+}
+
+@keyframes recording-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.recording-time {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.recording-cancel-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.recording-cancel-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.recording-stop-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform var(--transition-fast);
+}
+
+.recording-stop-btn:hover {
+  transform: scale(1.05);
 }
 
 .skip-onboarding-btn {
