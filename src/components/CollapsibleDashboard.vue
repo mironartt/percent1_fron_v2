@@ -1,85 +1,96 @@
 <template>
-  <div class="collapsible-dashboard" :class="{ collapsed: isCollapsed }">
-    <div class="dashboard-bar" @click="toggle">
-      <div class="bar-metrics">
-        <div class="metric" v-if="focusLabel">
-          <Target :size="14" :stroke-width="1.5" />
-          <span class="metric-text">{{ focusLabel }}</span>
+  <div class="stats-bar">
+    <div class="bar-metrics">
+      <!-- XP -->
+      <button class="metric xp-metric" @click="$router.push('/app/achievements')">
+        <Trophy :size="14" :stroke-width="1.5" />
+        <span class="metric-value">{{ formattedXp }}</span>
+      </button>
+
+      <!-- Streak -->
+      <button class="metric streak-metric" v-if="habitStreak > 0" @click="$router.push('/app/habits')">
+        <BookOpen :size="14" :stroke-width="1.5" />
+        <span class="metric-value">{{ habitStreak }}</span>
+      </button>
+
+      <div class="bar-divider"></div>
+
+      <!-- Tasks -->
+      <button
+        class="metric metric-dropdown"
+        :class="{ 'metric--complete': isTasksComplete, 'metric--active': openDropdown === 'tasks' }"
+        @click.stop="toggleDropdown('tasks')"
+        v-if="tasksTotal > 0"
+      >
+        <CheckCircle2 :size="14" :stroke-width="1.5" />
+        <span class="metric-value">{{ tasksCompleted }}/{{ tasksTotal }}</span>
+        <span class="metric-label">задач</span>
+        <div class="inline-progress">
+          <div class="inline-progress-fill tasks-fill" :style="{ width: tasksPercent + '%' }"></div>
         </div>
-        <div class="metric">
-          <Flame :size="14" :stroke-width="1.5" />
-          <span class="metric-text">{{ habitStreak }} дн.</span>
+        <ChevronDown :size="12" :stroke-width="1.5" class="chevron" :class="{ rotated: openDropdown === 'tasks' }" />
+      </button>
+
+      <!-- Habits -->
+      <button
+        class="metric metric-dropdown"
+        :class="{ 'metric--complete': isHabitsComplete, 'metric--active': openDropdown === 'habits' }"
+        @click.stop="toggleDropdown('habits')"
+        v-if="habitsTotal > 0"
+      >
+        <Flame :size="14" :stroke-width="1.5" />
+        <span class="metric-value">{{ habitsCompleted }}/{{ habitsTotal }}</span>
+        <span class="metric-label">привычек</span>
+        <div class="inline-progress">
+          <div class="inline-progress-fill habits-fill" :style="{ width: habitsPercent + '%' }"></div>
         </div>
-        <div class="metric xp-metric">
-          <Sparkles :size="14" :stroke-width="1.5" />
-          <span class="metric-text">{{ formattedXp }} XP</span>
-        </div>
-        <div class="metric" :class="{ 'metric--complete': isTasksComplete }" v-if="tasksTotal > 0">
-          <CheckCheck v-if="isTasksComplete" :size="14" :stroke-width="2" />
-          <CheckCircle2 v-else :size="14" :stroke-width="1.5" />
-          <span class="metric-text">{{ tasksCompleted }}/{{ tasksTotal }} задач</span>
-        </div>
-        <div class="metric" :class="{ 'metric--complete': isHabitsComplete }" v-if="habitsTotal > 0">
-          <CheckCheck v-if="isHabitsComplete" :size="14" :stroke-width="2" />
-          <Flame v-else :size="14" :stroke-width="1.5" />
-          <span class="metric-text">{{ habitsCompleted }}/{{ habitsTotal }} привычек</span>
-        </div>
-      </div>
-      <button class="toggle-btn" :title="isCollapsed ? 'Развернуть' : 'Свернуть'">
-        <ChevronDown :size="16" :stroke-width="1.5" class="toggle-icon" :class="{ rotated: !isCollapsed }" />
+        <ChevronDown :size="12" :stroke-width="1.5" class="chevron" :class="{ rotated: openDropdown === 'habits' }" />
       </button>
     </div>
 
-    <Transition name="expand">
-      <div v-if="!isCollapsed" class="dashboard-expanded">
-        <div class="expanded-content">
-          <div v-if="focusTasks.length > 0" class="section">
-            <h4 class="section-title">Фокус дня</h4>
-            <div class="task-list">
-              <label
-                v-for="task in focusTasks"
-                :key="task.id"
-                class="task-item"
-                :class="{ completed: task.completed }"
-              >
-                <input
-                  type="checkbox"
-                  :checked="task.completed"
-                  @change="toggleTask(task)"
-                  class="task-checkbox"
-                />
-                <span class="task-title">{{ task.title }}</span>
-                <span v-if="task.sphere" class="task-sphere">{{ task.sphere }}</span>
-              </label>
-            </div>
+    <!-- Tasks dropdown -->
+    <Transition name="dropdown">
+      <div v-if="openDropdown === 'tasks'" class="dropdown-panel">
+        <div class="task-list">
+          <label
+            v-for="task in focusTasks"
+            :key="task.id"
+            class="task-item"
+            :class="{ completed: task.completed }"
+          >
+            <input
+              type="checkbox"
+              :checked="task.completed"
+              @change="toggleTask(task)"
+              class="task-checkbox"
+            />
+            <span class="task-title">{{ task.title }}</span>
+            <span v-if="task.sphere" class="task-sphere">{{ task.sphere }}</span>
+          </label>
+          <div v-if="focusTasks.length === 0" class="dropdown-empty">
+            Нет задач на сегодня
           </div>
+        </div>
+      </div>
+    </Transition>
 
-          <div v-if="tasksTotal > 0" class="section">
-            <div class="progress-row">
-              <span class="progress-label">Прогресс дня</span>
-              <span class="progress-value">{{ Math.round(progressPercent) }}%</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
-            </div>
-          </div>
-
-          <div v-if="todayHabits.length > 0" class="section">
-            <h4 class="section-title">Привычки</h4>
-            <div class="habits-row">
-              <button
-                v-for="habit in todayHabits"
-                :key="habit.habit_id"
-                class="habit-chip"
-                :class="{ done: habit.is_complete }"
-                @click="toggleHabit(habit)"
-                :title="habit.title"
-              >
-                <CheckCircle2 v-if="habit.is_complete" :size="14" :stroke-width="1.5" />
-                <Circle v-else :size="14" :stroke-width="1.5" />
-                <span class="habit-name">{{ habit.title }}</span>
-              </button>
-            </div>
+    <!-- Habits dropdown -->
+    <Transition name="dropdown">
+      <div v-if="openDropdown === 'habits'" class="dropdown-panel">
+        <div class="habits-list">
+          <button
+            v-for="habit in todayHabits"
+            :key="habit.habit_id"
+            class="habit-item"
+            :class="{ done: habit.is_complete }"
+            @click="toggleHabit(habit)"
+          >
+            <CheckCircle2 v-if="habit.is_complete" :size="16" :stroke-width="1.5" class="habit-check" />
+            <Circle v-else :size="16" :stroke-width="1.5" class="habit-circle" />
+            <span class="habit-name">{{ habit.title }}</span>
+          </button>
+          <div v-if="todayHabits.length === 0" class="dropdown-empty">
+            Нет привычек на сегодня
           </div>
         </div>
       </div>
@@ -88,15 +99,14 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useXpStore } from '@/stores/xp'
 import {
-  Target,
+  Trophy,
+  BookOpen,
   Flame,
-  Sparkles,
   CheckCircle2,
-  CheckCheck,
   Circle,
   ChevronDown
 } from 'lucide-vue-next'
@@ -107,11 +117,29 @@ import { useDailyCompletion } from '@/composables/useDailyCompletion'
 const store = useAppStore()
 const xpStore = useXpStore()
 
-const isCollapsed = computed(() => store.dashboardCollapsed)
+const openDropdown = ref(null)
 
-function toggle() {
-  store.toggleDashboardCollapsed()
+function toggleDropdown(name) {
+  openDropdown.value = openDropdown.value === name ? null : name
 }
+
+function closeDropdown() {
+  openDropdown.value = null
+}
+
+onMounted(() => {
+  document.addEventListener('click', closeDropdown)
+  setupWatchers({
+    tasksCompleted,
+    tasksTotal,
+    habitsCompleted,
+    habitsTotal
+  })
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', closeDropdown)
+})
 
 const habitStreak = computed(() => store.habitStreak || 0)
 
@@ -136,19 +164,9 @@ const focusTasks = computed(() => {
   }))
 })
 
-const focusLabel = computed(() => {
-  if (focusTasks.value.length === 0) return null
-  const first = focusTasks.value.find(t => !t.completed)
-  return first ? first.title : 'Всё выполнено!'
-})
-
 const tasksCompleted = computed(() => dashboardData.value.today_tasks?.completed_count || 0)
 const tasksTotal = computed(() => dashboardData.value.today_tasks?.total_count || 0)
-
-const progressPercent = computed(() => {
-  if (tasksTotal.value === 0) return 0
-  return (tasksCompleted.value / tasksTotal.value) * 100
-})
+const tasksPercent = computed(() => tasksTotal.value === 0 ? 0 : (tasksCompleted.value / tasksTotal.value) * 100)
 
 const todayHabits = computed(() => {
   const habits = dashboardData.value.today_habits?.habits || []
@@ -157,6 +175,7 @@ const todayHabits = computed(() => {
 
 const habitsCompleted = computed(() => dashboardData.value.today_habits?.completed_count || 0)
 const habitsTotal = computed(() => dashboardData.value.today_habits?.total_count || 0)
+const habitsPercent = computed(() => habitsTotal.value === 0 ? 0 : (habitsCompleted.value / habitsTotal.value) * 100)
 
 const isTasksComplete = computed(() => tasksTotal.value > 0 && tasksCompleted.value === tasksTotal.value)
 const isHabitsComplete = computed(() => habitsTotal.value > 0 && habitsCompleted.value === habitsTotal.value)
@@ -164,21 +183,11 @@ const isHabitsComplete = computed(() => habitsTotal.value > 0 && habitsCompleted
 // Celebration effects
 const { setupWatchers } = useDailyCompletion()
 
-onMounted(() => {
-  setupWatchers({
-    tasksCompleted,
-    tasksTotal,
-    habitsCompleted,
-    habitsTotal
-  })
-})
-
 async function toggleTask(task) {
   const tasksArray = store.userDashboardData?.today_tasks?.tasks
   const apiTask = tasksArray?.find(t => t.step_id === task.id)
   const newCompleted = !task.completed
 
-  // Optimistic update
   if (apiTask) {
     apiTask.is_complete = newCompleted
     if (newCompleted) {
@@ -197,7 +206,6 @@ async function toggleTask(task) {
       }]
     })
   } catch (e) {
-    // Rollback on error
     if (apiTask) {
       apiTask.is_complete = !newCompleted
       if (newCompleted) {
@@ -214,7 +222,6 @@ async function toggleHabit(habit) {
   const apiHabit = habitsArray?.find(h => h.habit_id === habit.habit_id)
   const newCompleted = !habit.is_complete
 
-  // Optimistic update
   if (apiHabit) {
     apiHabit.is_complete = newCompleted
     if (newCompleted) {
@@ -228,7 +235,6 @@ async function toggleHabit(habit) {
     const today = new Date().toISOString().split('T')[0]
     await markHabitCompleted(habit.habit_id, today)
   } catch (e) {
-    // Rollback on error
     if (apiHabit) {
       apiHabit.is_complete = !newCompleted
       if (newCompleted) {
@@ -242,140 +248,176 @@ async function toggleHabit(habit) {
 </script>
 
 <style scoped>
-.collapsible-dashboard {
+.stats-bar {
   flex-shrink: 0;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.dashboard-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 0;
-  cursor: pointer;
-  user-select: none;
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  margin-bottom: 0.5rem;
 }
 
 .bar-metrics {
   display: flex;
   align-items: center;
-  gap: 16px;
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
 }
 
+.bar-metrics::-webkit-scrollbar {
+  display: none;
+}
+
+/* Base metric */
 .metric {
   display: flex;
   align-items: center;
-  gap: 4px;
-  color: var(--text-secondary);
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
   font-size: 0.8125rem;
+  color: var(--text-secondary);
   white-space: nowrap;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: background 0.15s;
+  font-family: inherit;
+  flex-shrink: 0;
 }
 
-.metric-text {
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 180px;
+.metric:hover {
+  background: var(--bg-secondary);
 }
 
-.xp-metric {
+.metric-value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.metric-label {
+  color: var(--text-secondary);
+}
+
+/* XP */
+.xp-metric svg {
+  color: #f59e0b;
+}
+
+/* Streak */
+.streak-metric svg {
   color: var(--primary-color);
 }
 
-.metric--complete {
-  color: #22c55e;
-  animation: metric-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+/* Divider */
+.bar-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-color);
+  flex-shrink: 0;
 }
 
-.metric--complete svg {
-  color: #22c55e;
+/* Dropdown metrics — stretch to fill */
+.metric-dropdown {
+  flex: 1;
+  min-width: 0;
 }
 
-@keyframes metric-pop {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.15); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .metric--complete {
-    animation: none;
-  }
-}
-
-.toggle-btn {
-  background: none;
-  border: none;
-  padding: 4px;
-  cursor: pointer;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  transition: background 0.2s;
-}
-
-.toggle-btn:hover {
-  background: var(--bg-hover);
-}
-
-.toggle-icon {
-  transition: transform 0.3s ease;
-}
-
-.toggle-icon.rotated {
-  transform: rotate(180deg);
-}
-
-.dashboard-expanded {
+/* Inline progress bar */
+.inline-progress {
+  flex: 1;
+  min-width: 40px;
+  height: 4px;
+  background: var(--bg-tertiary);
+  border-radius: 2px;
   overflow: hidden;
 }
 
-.expanded-content {
-  padding: 0 0 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.inline-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
 }
 
-.section-title {
-  margin: 0 0 8px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.tasks-fill {
+  background: var(--primary-color);
 }
 
+.habits-fill {
+  background: #f59e0b;
+}
+
+/* Complete state */
+.metric--complete .metric-value {
+  color: var(--success-color);
+}
+
+.metric--complete svg {
+  color: var(--success-color);
+}
+
+.metric--complete .tasks-fill,
+.metric--complete .habits-fill {
+  background: var(--success-color);
+}
+
+/* Active dropdown */
+.metric--active {
+  background: var(--bg-secondary);
+}
+
+/* Chevron */
+.chevron {
+  transition: transform 0.2s ease;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.chevron.rotated {
+  transform: rotate(180deg);
+}
+
+/* Dropdown panels */
+.dropdown-panel {
+  border-top: 1px solid var(--border-color);
+  padding: 0.5rem;
+  overflow: hidden;
+}
+
+.dropdown-empty {
+  padding: 0.75rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--text-tertiary);
+}
+
+/* Tasks dropdown */
 .task-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
 }
 
 .task-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.15s;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: var(--text-primary);
 }
 
 .task-item:hover {
-  background: var(--bg-hover);
+  background: var(--bg-secondary);
 }
 
 .task-item.completed .task-title {
   text-decoration: line-through;
-  color: var(--text-secondary);
+  color: var(--text-tertiary);
 }
 
 .task-checkbox {
@@ -405,100 +447,87 @@ async function toggleHabit(habit) {
   flex-shrink: 0;
 }
 
-.progress-row {
+/* Habits dropdown */
+.habits-list {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.progress-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.progress-value {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--primary-color);
-}
-
-.progress-bar {
-  height: 6px;
-  background: var(--bg-secondary);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-  border-radius: 3px;
-  transition: width 0.5s ease;
-}
-
-.habits-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.habit-chip {
+.habit-item {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 5px 10px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
   border-radius: 8px;
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
 }
 
-.habit-chip:hover {
-  border-color: var(--primary-color);
-  background: var(--bg-hover);
+.habit-item:hover {
+  background: var(--bg-secondary);
 }
 
-.habit-chip.done {
-  background: rgba(99, 102, 241, 0.1);
-  border-color: var(--primary-color);
-  color: var(--primary-color);
+.habit-circle {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.habit-check {
+  color: var(--success-color);
+  flex-shrink: 0;
+}
+
+.habit-item.done .habit-name {
+  color: var(--text-tertiary);
+  text-decoration: line-through;
 }
 
 .habit-name {
-  max-width: 120px;
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Expand transition */
-.expand-enter-active,
-.expand-leave-active {
-  transition: all 0.3s ease;
-  max-height: 700px;
+/* Dropdown transition */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.2s ease;
+  max-height: 400px;
 }
 
-.expand-enter-from,
-.expand-leave-to {
+.dropdown-enter-from,
+.dropdown-leave-to {
   max-height: 0;
   opacity: 0;
 }
 
 @media (max-width: 768px) {
-  .bar-metrics {
-    gap: 10px;
-  }
-
-  /* На мобильном скрываем XP — он наименее важен в свёрнутой строке */
-  .xp-metric {
+  .metric-label {
     display: none;
   }
+
+  .metric {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .inline-progress {
+    min-width: 24px;
+  }
+}
+
+/* Dark theme */
+:root.dark .stats-bar {
+  background: var(--card-bg);
 }
 </style>
