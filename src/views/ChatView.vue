@@ -195,7 +195,7 @@
     <!-- АКТИВНЫЙ ЧАТ: есть сообщения или идёт загрузка -->
     <template v-else>
       <div class="chat-area">
-        <div class="chat-header">
+        <div v-if="isOnboardingMode" class="chat-header">
           <div class="header-left">
             <div class="mentor-avatar">
               <Bot :size="20" :stroke-width="1.5" />
@@ -208,7 +208,7 @@
               </span>
             </div>
           </div>
-          <button v-if="isOnboardingMode" @click="handleSkipOnboarding" class="skip-onboarding-btn" :disabled="skippingOnboarding">
+          <button @click="handleSkipOnboarding" class="skip-onboarding-btn" :disabled="skippingOnboarding">
             <Loader2 v-if="skippingOnboarding" :size="14" :stroke-width="1.5" class="spin" />
             Пропустить
           </button>
@@ -997,6 +997,9 @@ onUnmounted(() => {
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  background: var(--card-bg, #fff);
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
 }
 
 .chat-header {
@@ -1069,6 +1072,7 @@ onUnmounted(() => {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
+  padding: 0 1rem;
 }
 
 .chat-content {
@@ -1296,7 +1300,7 @@ onUnmounted(() => {
 }
 
 .input-container {
-  padding: 12px 0;
+  padding: 12px 1rem;
   flex-shrink: 0;
 }
 
@@ -1592,6 +1596,12 @@ onUnmounted(() => {
   .chat-view {
     height: auto;
     max-width: 100%;
+  }
+
+  .chat-area {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
   }
 
   .chat-header {
