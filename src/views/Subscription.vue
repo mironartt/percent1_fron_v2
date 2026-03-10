@@ -220,7 +220,7 @@ const selectedTerm = computed(() => {
   if (selectedTermId.value) {
     return terms.value.find(t => t.id === selectedTermId.value) || terms.value[0]
   }
-  return terms.value.find(t => t.is_hit) || terms.value[0]
+  return terms.value[0]
 })
 
 const currentTariffName = computed(() => {
@@ -369,10 +369,7 @@ onMounted(() => {
   subscriptionStore.loadPaymentHistory()
   
   if (terms.value.length > 0) {
-    const hitTerm = terms.value.find(t => t.is_hit)
-    if (hitTerm) {
-      selectedTermId.value = hitTerm.id
-    }
+    selectedTermId.value = terms.value[0].id
   }
 })
 </script>

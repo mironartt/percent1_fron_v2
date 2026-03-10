@@ -10,6 +10,7 @@
         <nav class="nav-desktop">
           <a href="#how-it-works" class="nav-link">Как это работает</a>
           <a href="#pricing" class="nav-link">Тарифы</a>
+          <a href="/blog/" class="nav-link">Блог</a>
         </nav>
 
         <div class="header-actions">
@@ -25,6 +26,7 @@
       <div v-if="mobileMenuOpen" class="mobile-menu">
         <a href="#how-it-works" class="mobile-link" @click="mobileMenuOpen = false">Как это работает</a>
         <a href="#pricing" class="mobile-link" @click="mobileMenuOpen = false">Тарифы</a>
+        <a href="/blog/" class="mobile-link" @click="mobileMenuOpen = false">Блог</a>
         <div class="mobile-divider"></div>
         <router-link to="/auth/login" class="mobile-link">Войти</router-link>
         <a href="https://t.me/onepercent_bot" class="mobile-btn-primary">Начать</a>
