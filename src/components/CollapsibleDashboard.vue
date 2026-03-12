@@ -13,7 +13,7 @@
         <span class="metric-value">{{ habitStreak }}</span>
       </button>
 
-      <div class="bar-divider"></div>
+      <div class="bar-divider" v-if="tasksTotal > 0 || habitsTotal > 0"></div>
 
       <!-- Tasks -->
       <button
@@ -45,6 +45,16 @@
           <div class="inline-progress-fill habits-fill" :style="{ width: habitsPercent + '%' }"></div>
         </div>
         <ChevronDown :size="12" :stroke-width="1.5" class="chevron" :class="{ rotated: openDropdown === 'habits' }" />
+      </button>
+
+      <!-- PRO upgrade button -->
+      <button
+        v-if="showUpgradeButton"
+        class="metric upgrade-metric"
+        @click="$router.push('/app/subscription')"
+      >
+        <Sparkles :size="13" :stroke-width="1.5" />
+        <span class="metric-label">PRO</span>
       </button>
     </div>
 
@@ -79,12 +89,12 @@
             v-for="habit in todayHabits"
             :key="habit.habit_id"
             class="habit-item"
-            :class="{ done: habit.is_complete }"
+            :class="{ done: habit.is_completed }"
             @click="toggleHabit(habit)"
           >
-            <CheckCircle2 v-if="habit.is_complete" :size="16" :stroke-width="1.5" class="habit-check" />
+            <CheckCircle2 v-if="habit.is_completed" :size="16" :stroke-width="1.5" class="habit-check" />
             <Circle v-else :size="16" :stroke-width="1.5" class="habit-circle" />
-            <span class="habit-name">{{ habit.title }}</span>
+            <span class="habit-name">{{ habit.name }}</span>
           </button>
           <div v-if="todayHabits.length === 0" class="dropdown-empty">
             Нет привычек на сегодня
@@ -105,14 +115,17 @@ import {
   Flame,
   CheckCircle2,
   Circle,
-  ChevronDown
+  ChevronDown,
+  Sparkles
 } from 'lucide-vue-next'
+import { useSubscriptionStore } from '@/stores/subscription'
 import { updateGoalSteps } from '@/services/api'
-import { markHabitCompleted } from '@/services/habitsApi'
+import { markHabitCompleted, unmarkHabitCompleted } from '@/services/habitsApi'
 import { useDailyCompletion } from '@/composables/useDailyCompletion'
 
 const store = useAppStore()
 const xpStore = useXpStore()
+const subscriptionStore = useSubscriptionStore()
 
 const openDropdown = ref(null)
 
@@ -177,6 +190,10 @@ const habitsPercent = computed(() => habitsTotal.value === 0 ? 0 : (habitsComple
 const isTasksComplete = computed(() => tasksTotal.value > 0 && tasksCompleted.value === tasksTotal.value)
 const isHabitsComplete = computed(() => habitsTotal.value > 0 && habitsCompleted.value === habitsTotal.value)
 
+const showUpgradeButton = computed(() => {
+  return !subscriptionStore.isPaid
+})
+
 // Celebration effects
 const { setupWatchers } = useDailyCompletion()
 
@@ -217,10 +234,10 @@ async function toggleTask(task) {
 async function toggleHabit(habit) {
   const habitsArray = store.userDashboardData?.today_habits?.habits
   const apiHabit = habitsArray?.find(h => h.habit_id === habit.habit_id)
-  const newCompleted = !habit.is_complete
+  const newCompleted = !habit.is_completed
 
   if (apiHabit) {
-    apiHabit.is_complete = newCompleted
+    apiHabit.is_completed = newCompleted
     if (newCompleted) {
       store.userDashboardData.today_habits.completed_count++
     } else {
@@ -230,10 +247,14 @@ async function toggleHabit(habit) {
 
   try {
     const today = new Date().toISOString().split('T')[0]
-    await markHabitCompleted(habit.habit_id, today)
+    if (newCompleted) {
+      await markHabitCompleted(habit.habit_id, today)
+    } else {
+      await unmarkHabitCompleted(habit.habit_id, today)
+    }
   } catch (e) {
     if (apiHabit) {
-      apiHabit.is_complete = !newCompleted
+      apiHabit.is_completed = !newCompleted
       if (newCompleted) {
         store.userDashboardData.today_habits.completed_count--
       } else {
@@ -250,6 +271,7 @@ async function toggleHabit(habit) {
   background: var(--card-bg, #fff);
   border: 1px solid var(--border-color);
   border-radius: 14px;
+  margin-top: 0;
   margin-bottom: 0.5rem;
   position: relative;
 }
@@ -314,6 +336,32 @@ async function toggleHabit(habit) {
   height: 20px;
   background: var(--border-color);
   flex-shrink: 0;
+}
+
+/* PRO upgrade button */
+.upgrade-metric {
+  margin-left: auto;
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+  gap: 0.25rem;
+  opacity: 0.7;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.upgrade-metric:hover {
+  opacity: 1;
+  color: var(--primary-color);
+}
+
+.upgrade-metric svg {
+  color: inherit;
+}
+
+.upgrade-metric .metric-label {
+  color: inherit;
+  font-weight: 600;
+  font-size: 0.6875rem;
+  letter-spacing: 0.03em;
 }
 
 /* Dropdown metrics — stretch to fill */

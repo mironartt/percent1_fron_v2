@@ -755,7 +755,6 @@ function selectSuggestedHabit(habit) {
     scheduleDays: habit.scheduleDays || [1, 2, 3, 4, 5, 6, 0],
     reminderTime: ''
   }
-  showDescriptionField.value = !!(habit.description)
   closeSuggestionsModal()
 }
 
@@ -1858,4 +1857,26 @@ async function confirmAiHabitSelection() {
     font-size: 0.6875rem;
   }
 }
+
+/* AiMentorModal slot buttons (scoped styles don't reach slot content) */
+.aim-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.aim-btn-full { width: 100%; }
+.aim-btn-primary { background: var(--success-color, #10b981); color: #fff; }
+.aim-btn-primary:hover:not(:disabled) { background: #059669; }
+.aim-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.aim-btn-secondary { background: var(--bg-primary, #fff); color: var(--text-primary, #1f2937); border: 1px solid var(--border-color, #e5e7eb); }
+.aim-btn-secondary:hover { background: var(--bg-tertiary, #f3f4f6); }
 </style>
