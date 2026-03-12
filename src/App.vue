@@ -228,7 +228,7 @@ const isAppPage = computed(() => {
 })
 
 const isChatRoute = computed(() => {
-  return route.path === '/app' && route.name === 'chat'
+  return route.path === '/app' || route.path === '/app/'
 })
 
 const showBottomNav = computed(() => {
