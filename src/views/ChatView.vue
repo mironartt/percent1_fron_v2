@@ -230,7 +230,7 @@ import { useXpStore } from '@/stores/xp'
 import { useSubscriptionStore } from '@/stores/subscription'
 import { useToastStore } from '@/stores/toast'
 import { checkAuth, skipOnboarding, updateGoalSteps } from '@/services/api.js'
-import { DEV_MODE, API_BASE_URL } from '@/config/settings'
+import { API_BASE_URL } from '@/config/settings'
 import { markHabitCompleted } from '@/services/habitsApi'
 import { useConfetti } from '@/composables/useConfetti'
 import CollapsibleDashboard from '@/components/CollapsibleDashboard.vue'
@@ -811,52 +811,6 @@ onMounted(() => {
   initializeChat()
   document.addEventListener('click', closeDropdowns)
 
-  // DEV: mock XP and streaks for preview
-  if (DEV_MODE) {
-    xpStore.xpBalance = 420
-    xpStore.todayXP = 35
-    const injectJournalStreak = () => {
-      if (store.user) {
-        store.user.journal_streak = 5
-      } else {
-        setTimeout(injectJournalStreak, 300)
-      }
-    }
-    injectJournalStreak()
-  }
-
-  // DEV: inject mock daily data to preview empty-state cards
-  if (DEV_MODE && !store.userDashboardData?.today_tasks?.tasks?.length) {
-    store.frontendSettings.tutorial_skipped = true
-    store.userDashboardData = {
-      today_tasks: {
-        total_count: 5,
-        completed_count: 1,
-        tasks: [
-          { step_id: 1, step_title: 'Написать отчёт за квартал', is_complete: false, goal_title: 'Карьера', goal_id: 1 },
-          { step_id: 2, step_title: 'Прочитать 20 страниц книги', is_complete: true, goal_title: 'Знания', goal_id: 2 },
-          { step_id: 3, step_title: 'Спортзал — силовая тренировка', is_complete: false, goal_title: 'Здоровье', goal_id: 3 },
-          { step_id: 4, step_title: 'Позвонить клиенту', is_complete: false, goal_title: 'Карьера', goal_id: 1 },
-          { step_id: 5, step_title: 'Медитация 10 минут', is_complete: false, goal_title: 'Здоровье', goal_id: 3 }
-        ]
-      },
-      today_habits: {
-        total_count: 4,
-        completed_count: 1,
-        habits: [
-          { habit_id: 1, title: 'Вода 2л', is_complete: true },
-          { habit_id: 2, title: 'Пробежка', is_complete: false },
-          { habit_id: 3, title: 'Чтение', is_complete: false },
-          { habit_id: 4, title: 'Без соцсетей до 10:00', is_complete: false }
-        ]
-      },
-      top_goals: { total_incomplete_goals: 3, goals: [] }
-    }
-    // DEV: mock XP and streaks
-    xpStore.xpBalance = 420
-    xpStore.todayXP = 35
-    if (store.user) store.user.journal_streak = 5
-  }
 })
 
 onUnmounted(() => {
@@ -874,6 +828,7 @@ onUnmounted(() => {
   max-width: 800px;
   margin: 0 auto;
   width: 100%;
+  padding-top: 3rem;
 }
 
 .chat-area {
@@ -1478,8 +1433,8 @@ onUnmounted(() => {
 
 @media (max-width: 768px) {
   .chat-view {
-    height: auto;
     max-width: 100%;
+    padding-top: 1rem;
   }
 
   .chat-area {

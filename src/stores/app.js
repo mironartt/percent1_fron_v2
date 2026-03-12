@@ -1998,6 +1998,8 @@ export const useAppStore = defineStore('app', () => {
     // Если tutorial пропущен или онбординг не завершён — всё открыто
     if (tutorialSkipped.value) return 6
     if (!user.value?.finish_onboarding) return 6
+    // Tutorial только для chat-first onboarding (v4). Старые пользователи — всё открыто
+    if (user.value?.onboarding_version && user.value.onboarding_version < 4) return 6
 
     // Stage 0: нет целей
     if (goals.value.length === 0) return 0

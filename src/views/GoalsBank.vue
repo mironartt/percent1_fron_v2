@@ -369,7 +369,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useXpStore } from '@/stores/xp'
 import { useXPNotification } from '@/composables/useXPNotification.js'
-import { DEBUG_MODE, SKIP_AUTH_CHECK, DEV_MODE } from '@/config/settings.js'
+import { DEBUG_MODE, SKIP_AUTH_CHECK } from '@/config/settings.js'
 import MentorGoalSuggestionsModal from '@/components/MentorGoalSuggestionsModal.vue'
 import AddGoalModal from '@/components/AddGoalModal.vue'
 import Breadcrumbs from '@/components/Breadcrumbs.vue'
@@ -1692,36 +1692,12 @@ async function loadGoals() {
   }
 }
 
-function injectMockGoals() {
-  const now = new Date()
-  const d = (daysAgo) => new Date(now - daysAgo * 86400000).toISOString()
-  store.goalsBank.rawIdeas = [
-    { id: 'mock1', backendId: 1, text: 'Увеличить доход до 300 000 руб/мес', sphereId: 'wealth', workStatus: 'work', whyImportant: 'Финансовая независимость и уверенность в завтрашнем дне', why2: 'Смогу помогать семье и путешествовать без ограничений', dateCreated: d(45) },
-    { id: 'mock2', backendId: 2, text: 'Запустить свой онлайн-курс по дизайну', sphereId: 'career', workStatus: 'work', whyImportant: 'Монетизировать накопленные знания', why2: 'Создать пассивный источник дохода и стать экспертом', dateCreated: d(30) },
-    { id: 'mock3', backendId: 3, text: 'Пробежать полумарафон', sphereId: 'health', workStatus: 'work', whyImportant: 'Повысить выносливость и физическую форму', why2: 'Докажу себе что могу достигать сложных целей', dateCreated: d(20) },
-    { id: 'mock4', backendId: 4, text: 'Выучить разговорный английский до уровня B2', sphereId: 'career', workStatus: 'idea', whyImportant: 'Открыть возможности для работы с иностранными клиентами', why2: 'Расширить профессиональный горизонт', dateCreated: d(60) },
-    { id: 'mock5', backendId: 5, text: 'Съездить в путешествие в Японию', sphereId: 'hobbies', workStatus: 'idea', whyImportant: 'Новые впечатления и культурный опыт', why2: 'Давняя мечта, откладывать больше нельзя', dateCreated: d(90) },
-    { id: 'mock6', backendId: 6, text: 'Наладить режим сна 7-8 часов', sphereId: 'health', workStatus: 'complete', whyImportant: 'Улучшить концентрацию и продуктивность', why2: 'Без нормального сна невозможно работать эффективно', dateCreated: d(120), dateCompleted: d(10) },
-    { id: 'mock7', backendId: 7, text: 'Уделять больше времени родителям', sphereId: 'love', workStatus: 'work', whyImportant: 'Укрепить семейные связи', why2: 'Не хочу потом жалеть об упущенном времени', dateCreated: d(15) },
-    { id: 'mock8', backendId: 8, text: 'Собрать подушку безопасности на 6 месяцев', sphereId: 'wealth', workStatus: 'complete', whyImportant: 'Финансовая стабильность и спокойствие', why2: 'Любой кризис будет не страшен', dateCreated: d(180), dateCompleted: d(25) },
-    { id: 'mock9', backendId: 9, text: 'Расширить круг общения — 5 новых знакомств в месяц', sphereId: 'friendship', workStatus: 'idea', whyImportant: 'Новые связи открывают новые возможности', why2: 'Окружение = судьба', dateCreated: d(7) },
-    { id: 'mock10', backendId: 10, text: 'Освоить медитацию — 10 минут каждый день', sphereId: 'health', workStatus: 'idea', whyImportant: 'Снизить уровень стресса', why2: 'Ментальное здоровье важнее всего', dateCreated: d(5) },
-    { id: 'mock11', backendId: 11, text: 'Написать и опубликовать книгу', sphereId: 'hobbies', workStatus: 'work', whyImportant: 'Творческая реализация', why2: 'Оставить след, которым можно гордиться', dateCreated: d(50) },
-    { id: 'mock12', backendId: 12, text: 'Купить квартиру без ипотеки', sphereId: 'wealth', workStatus: 'idea', whyImportant: 'Собственное жильё — основа стабильности', why2: 'Не зависеть от аренды и банков', dateCreated: d(200) },
-  ]
-  loadAttempted.value = true
-}
-
 onMounted(async () => {
   // Load filters from URL
   loadFiltersFromUrl()
 
-  // Load goals from backend (non-blocking) or inject mock data in DEV_MODE
-  if (DEV_MODE) {
-    injectMockGoals()
-  } else {
-    loadGoals()
-  }
+  // Load goals from backend
+  loadGoals()
   
   // Setup Infinite Scroll Observer
   setupInfiniteScroll()
