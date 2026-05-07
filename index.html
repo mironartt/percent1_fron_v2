@@ -67,7 +67,19 @@
   <meta name="msapplication-TileColor" content="#6366f1">
 
   <!-- Telegram Mini Apps SDK (обязательно CDN — Telegram требует свою версию) -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    (function() {
+      var hasTelegramParams = window.location.href.indexOf('tgWebApp') !== -1;
+      var hasTelegramBridge = Boolean(
+        window.TelegramWebviewProxy ||
+        (window.external && typeof window.external.notify === 'function')
+      );
+
+      if (hasTelegramParams || hasTelegramBridge) {
+        document.write('<script src="https://telegram.org/js/telegram-web-app.js"><\/script>');
+      }
+    })();
+  </script>
   
   <!-- Open Graph -->
   <meta property="og:title" content="OnePercent — Система управления жизнью">
